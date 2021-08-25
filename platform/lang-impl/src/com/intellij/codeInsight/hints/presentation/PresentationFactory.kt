@@ -16,6 +16,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.startOffset
@@ -325,7 +327,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
         onClickAction = { navigateInternal(resolve) },
         toStringProvider = {
           val element = resolve() ?: return@referenceInternal ""
-          return@referenceInternal "${element.startOffset}:${element.containingFile.virtualFile}"
+          val virtualFile = element.containingFile.virtualFile
+          val path = (virtualFile.fileSystem as? JarFileSystem)?.let {
+            val root = VfsUtilCore.getRootFile(virtualFile)
+            "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
+          } ?: virtualFile.toString()
+          return@referenceInternal "$path:${element.startOffset}"
         })
     } else {
       reference(base) { navigateInternal(resolve) }

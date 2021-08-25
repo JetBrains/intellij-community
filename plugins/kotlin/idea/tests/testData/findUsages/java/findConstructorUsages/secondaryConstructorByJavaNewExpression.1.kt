@@ -1,5 +1,5 @@
 open class B {
-    constructor(): this("") {
+    constructor() : this("") {
 
     }
 

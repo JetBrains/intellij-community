@@ -86,6 +86,20 @@ class PySuggestedRefactoringTest : PyTestCase() {
     )
   }
 
+  // PY-49466
+  fun testMethodRenameToStartingWithKeywordName() {
+    doNoIntentionTest(
+      """
+        def test<caret>(): pass
+      """.trimIndent(),
+      {
+        repeat("test".length, this::performBackspace)
+        myFixture.type("def")
+      },
+      intention = changeSignatureIntention()
+    )
+  }
+
   // PY-42285
   fun testImportedVariableRename() {
     doRenameImportedTest(

@@ -96,11 +96,11 @@ public final class GistManagerImpl extends GistManager {
   }
 
   private static void invalidateDependentCaches() {
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, () -> {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         PsiManager.getInstance(project).dropPsiCaches();
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   @TestOnly

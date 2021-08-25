@@ -13,12 +13,12 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -253,7 +253,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       }
       if (myAllItems == null) {
         T[] elements = mySingleItem;
-        myAllItems = ContainerUtil.addAll(new THashSet<>(elements.length), elements);
+        myAllItems = ContainerUtil.addAll(new HashSet<>(elements.length), elements);
       }
       ContainerUtil.addAll(myAllItems, items);
     }

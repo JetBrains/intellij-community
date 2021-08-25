@@ -256,7 +256,10 @@ public class MavenProject {
       // module name can be relative and contain either / of \\ separators
 
       name = FileUtil.toSystemIndependentName(name);
-      if (!name.endsWith('.' + extension)) {
+
+      String finalName = name;
+      boolean fullPathInModuleName = ContainerUtil.exists(MavenConstants.POM_EXTENSIONS, ext -> finalName.endsWith('.' + ext));
+      if (!fullPathInModuleName) {
         if (!name.endsWith("/")) name += "/";
         name += MavenConstants.POM_EXTENSION + '.' + extension;
       }
@@ -290,11 +293,11 @@ public class MavenProject {
     return myFile;
   }
 
-  public @NotNull @NlsSafe String getPath() {
-    return myFile.getPresentableUrl();
+  public @NotNull @NonNls String getPath() {
+    return myFile.getPath();
   }
 
-  public @NotNull @NlsSafe String getDirectory() {
+  public @NotNull @NonNls String getDirectory() {
     return myFile.getParent().getPath();
   }
 
@@ -649,7 +652,9 @@ public class MavenProject {
                                                                          getFile(),
                                                                          getActivatedProfilesIds(),
                                                                          console);
-    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) return Pair.create(false, MavenProjectChanges.NONE);
+    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) {
+      return Pair.create(false, MavenProjectChanges.NONE);
+    }
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);
   }

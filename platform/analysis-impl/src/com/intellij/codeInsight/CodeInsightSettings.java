@@ -3,8 +3,10 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -30,7 +32,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@State(name = "CodeInsightSettings", storages = @Storage("editor.xml"))
+@State(name = "CodeInsightSettings", storages = @Storage("editor.xml"), category = ComponentCategory.CODE)
 public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance(CodeInsightSettings.class);
   private final List<PropertyChangeListener> myListeners = new CopyOnWriteArrayList<>();
@@ -55,11 +57,14 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
+  public static final UINumericRange JAVADOC_INFO_DELAY_RANGE = new UINumericRange(1000, 0, 5000);
+  public static final UINumericRange PARAMETER_INFO_DELAY_RANGE = new UINumericRange(1000, 0, 5000);
+
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
-  public int PARAMETER_INFO_DELAY = 1000;
+  public int PARAMETER_INFO_DELAY = PARAMETER_INFO_DELAY_RANGE.initial;
   public boolean AUTO_POPUP_JAVADOC_INFO;
-  public int JAVADOC_INFO_DELAY = 1000;
+  public int JAVADOC_INFO_DELAY = JAVADOC_INFO_DELAY_RANGE.initial;
   public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
 
   /**

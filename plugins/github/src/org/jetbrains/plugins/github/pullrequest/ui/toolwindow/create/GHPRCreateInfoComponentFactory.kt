@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.icons.AllIcons
@@ -22,10 +23,10 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitLocalBranch
-import git4idea.GitRemoteBranch
 import git4idea.GitPushUtil
 import git4idea.GitPushUtil.findOrPushRemoteBranch
 import git4idea.GitPushUtil.findPushTarget
+import git4idea.GitRemoteBranch
 import git4idea.ui.branch.MergeDirectionComponentFactory
 import git4idea.ui.branch.MergeDirectionModel
 import net.miginfocom.layout.CC
@@ -47,7 +48,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -130,10 +130,10 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       emptyText.text = GithubBundle.message("pull.request.create.title")
       lineWrap = true
     }.also {
-      GHUIUtil.overrideUIDependentProperty(it) {
+      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
         font = UIUtil.getLabelFont()
       }
-      GHUIUtil.registerFocusActions(it)
+      CollaborationToolsUIUtil.registerFocusActions(it)
     }
 
     val descriptionField = JBTextArea(descriptionDocument).apply {
@@ -142,10 +142,10 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       emptyText.text = GithubBundle.message("pull.request.create.description")
       lineWrap = true
     }.also {
-      GHUIUtil.overrideUIDependentProperty(it) {
+      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
         font = UIUtil.getLabelFont()
       }
-      GHUIUtil.registerFocusActions(it)
+      CollaborationToolsUIUtil.registerFocusActions(it)
     }
     descriptionDocument.addAndInvokeEnabledStateListener {
       descriptionField.isEnabled = descriptionDocument.enabled

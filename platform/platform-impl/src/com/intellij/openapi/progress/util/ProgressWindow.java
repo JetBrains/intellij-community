@@ -42,15 +42,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
+public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable, ProgressIndicatorWithDelayedPresentation {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
-
-  /**
-   * This constant defines default delay for showing progress dialog (in millis).
-   *
-   * @see #setDelayInMillis(int)
-   */
-  public static final int DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS = 300;
 
   private Runnable myDialogInitialization;
   private ProgressDialog myDialog; // accessed in EDT only except for thread-safe enableCancelButtonIfNeeded(), update() and cancel()
@@ -160,6 +153,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    *
    * @param delayInMillis   new delay time in milliseconds
    */
+  @Override
   public void setDelayInMillis(int delayInMillis) {
     myDelayInMillis = delayInMillis;
   }

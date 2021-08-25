@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class ParametersFolder {
+public class ParametersFolder {
   private final Map<PsiVariable, PsiExpression> myExpressions = new HashMap<>();
   private final Map<PsiVariable, String> myArgs = new HashMap<>();
   private final Map<PsiVariable, List<PsiExpression>> myMentionedInExpressions = new HashMap<>();
@@ -232,7 +232,7 @@ class ParametersFolder {
     return expressions;
   }
 
-  private static boolean isSafeToFoldArrayAccess(@NotNull LocalSearchScope scope,
+  public static boolean isSafeToFoldArrayAccess(@NotNull LocalSearchScope scope,
                                                  PsiElement expression) {
     while (true) {
       final PsiElement parent = expression.getParent();

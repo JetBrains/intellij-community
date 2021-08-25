@@ -152,7 +152,7 @@ public interface ApplicationEx extends Application {
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
+  default boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
                                                                         @Nullable Project project,
                                                                         @Nullable JComponent parentComponent,
                                                                         @NotNull Consumer<? super ProgressIndicator> action) {
@@ -160,7 +160,7 @@ public interface ApplicationEx extends Application {
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
+  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
                                                                            @Nullable Project project,
                                                                            @Nullable JComponent parentComponent,
                                                                            @NotNull Consumer<? super ProgressIndicator> action) {

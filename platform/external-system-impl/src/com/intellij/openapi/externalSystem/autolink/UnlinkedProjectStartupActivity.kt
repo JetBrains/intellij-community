@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
@@ -31,19 +32,25 @@ import java.util.concurrent.CompletableFuture
 class UnlinkedProjectStartupActivity : StartupActivity.Background {
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("UnlinkedProjectTracker.backgroundExecutor", 1)
 
-  override fun runActivity(project: Project) {
-    val externalProjectPath = project.guessProjectDir()?.path ?: return
+  override fun runActivity(project: Project) = invokeLater {
+    if (project.isDisposed) return@invokeLater
+    val externalProjectPath = project.guessProjectDir()?.path ?: return@invokeLater
     showNotificationWhenNonEmptyProjectUnlinked(project)
     showNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
     showNotificationWhenNewBuildFileCreated(project, externalProjectPath)
     if (!project.isNewExternalProject()) {
-      if (!project.isNewPlatformProject() && project.isOpenedWithEmptyModel()) {
+      if (project.isEnabledAutoLink() && !project.isNewPlatformProject() && project.isOpenedWithEmptyModel()) {
         linkProjectIfUnlinkedProjectsFound(project, externalProjectPath)
       }
       else {
         showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
       }
     }
+  }
+
+  private fun Project.isEnabledAutoLink(): Boolean {
+    return ExternalSystemUnlinkedProjectSettings.getInstance(this).isEnabledAutoLink
+           && !Registry.`is`("external.system.auto.import.disabled")
   }
 
   private fun Project.isNewExternalProject(): Boolean {
@@ -67,7 +74,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     findUnlinkedProjectBuildFiles(project, externalProjectPath) {
       val unlinkedProjects = it.filter { (_, buildFiles) -> buildFiles.isNotEmpty() }
       val linkedProjects = it.filter { (upa, _) -> upa.isLinkedProject(project, externalProjectPath) }
-      if (unlinkedProjects.size == 1 && linkedProjects.isEmpty() && !Registry.`is`("external.system.auto.import.disabled")) {
+      if (unlinkedProjects.size == 1 && linkedProjects.isEmpty()) {
         val unlinkedProject = unlinkedProjects.keys.single()
         if (LOG.isDebugEnabled) {
           val projectId = unlinkedProject.getProjectId(externalProjectPath)

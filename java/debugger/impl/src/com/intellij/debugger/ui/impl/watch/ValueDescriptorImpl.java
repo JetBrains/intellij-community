@@ -1,17 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.memory.utils.NamesUtils;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -26,14 +27,16 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.ui.JBColor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +148,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean isShowIdLabel() {
-    return myShowIdLabel && Registry.is("debugger.showTypes");
+    return myShowIdLabel && DebuggerSettings.getInstance().SHOW_TYPES;
   }
 
   public void setShowIdLabel(boolean showIdLabel) {
@@ -572,7 +575,48 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       });
     }
 
-    return ReadAction.compute(() -> CompletableFuture.completedFuture(getDescriptorEvaluation(context)));
+    return ReadAction.nonBlocking(() -> {
+      PsiElement res = null;
+      try {
+        res = getDescriptorEvaluation(context);
+      }
+      catch (NeedMarkException e) {
+        XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
+        if (markers != null) {
+          ValueMarkup existing = markers.getMarkup(value);
+          String name;
+          if (existing != null) {
+            name = existing.getText();
+          }
+          else {
+            name = e.getMarkName();
+            markers.markValue(value, new ValueMarkup(name, new JBColor(0, 0), null));
+          }
+          res = JavaPsiFacade.getElementFactory(myProject)
+            .createExpressionFromText(name + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
+                                      PositionUtil.getContextElement(context));
+        }
+      }
+      return CompletableFuture.completedFuture(res);
+    }).executeSynchronously();
+  }
+
+  protected static class NeedMarkException extends EvaluateException {
+    private final String myMarkName;
+
+    public NeedMarkException(ObjectReference reference) {
+      super(null);
+      myMarkName = NamesUtils.getUniqueName(reference).replace("@", "");
+    }
+
+    @Override
+    public Throwable fillInStackTrace() {
+      return this;
+    }
+
+    public String getMarkName() {
+      return myMarkName;
+    }
   }
 
   private static class DebuggerTreeNodeMock implements DebuggerTreeNode {

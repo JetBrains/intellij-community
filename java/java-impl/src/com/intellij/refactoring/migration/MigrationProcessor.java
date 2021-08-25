@@ -155,7 +155,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
         String newName = entry.getNewName();
         PsiElement element = entry.getType() == MigrationMapEntry.PACKAGE ? MigrationUtil.findOrCreatePackage(myProject, psiMigration, newName)
                                                                           : MigrationUtil.findOrCreateClass(myProject, psiMigration, newName)[0];
-        MigrationUtil.doMigration(element, newName, usages, myRefsToShorten);
+        doMigration(element, newName, usages, myRefsToShorten);
         if (!sameShortNames && Comparing.strEqual(StringUtil.getShortName(entry.getOldName()), StringUtil.getShortName(entry.getNewName()))) {
           sameShortNames = true;
         }
@@ -169,6 +169,15 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
       a.finish();
       psiMigration.finish();
     }
+  }
+
+  protected void doMigration(
+    PsiElement elementToBind,
+    String newQName,
+    UsageInfo[] usages,
+    ArrayList<? super SmartPsiElementPointer<PsiElement>> refsToShorten
+  ) {
+    MigrationUtil.doMigration(elementToBind, newQName, usages, refsToShorten);
   }
 
 
@@ -189,8 +198,8 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     return getRefactoringName();
   }
 
-  static class MigrationUsageInfo extends UsageInfo {
-    MigrationMapEntry mapEntry;
+  protected static class MigrationUsageInfo extends UsageInfo {
+    public MigrationMapEntry mapEntry;
 
     MigrationUsageInfo(UsageInfo info, MigrationMapEntry mapEntry) {
       super(info.getElement(), info.getRangeInElement().getStartOffset(), info.getRangeInElement().getEndOffset());

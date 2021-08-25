@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -96,12 +97,12 @@ public final class PluginInstaller {
                                                boolean isUpdate) {
     boolean uninstalledWithoutRestart = true;
     if (pluginDescriptor.isEnabled()) {
-      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
+      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions().withDisable(false)
         .withUpdate(isUpdate)
         .withWaitForClassloaderUnload(true);
 
       uninstalledWithoutRestart = parentComponent != null ?
-                                  DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+                                  DynamicPlugins.INSTANCE.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
                                   DynamicPlugins.INSTANCE.unloadPlugin(pluginDescriptor, options);
     }
 
@@ -245,6 +246,12 @@ public final class PluginInstaller {
         return false;
       }
 
+      if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginDescriptor)) {
+        String message = IdeBundle.message("dialog.message.plugin.is.not.allowed", pluginDescriptor.getName());
+        MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
+        return false;
+      }
+
       InstalledPluginsState ourState = InstalledPluginsState.getInstance();
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
         String message = IdeBundle.message("dialog.message.plugin.was.already.installed", pluginDescriptor.getName());
@@ -276,7 +283,7 @@ public final class PluginInstaller {
                                                             InstallationSourceEnum.FROM_DISK,
                                                             installedPlugin != null ? installedPlugin.getVersion() : null);
 
-      if (Registry.is("marketplace.certificate.signature.check")) {
+      if (Registry.is("custom-repository.certificate.signature.check")) {
         if (!PluginSignatureChecker.verify(pluginDescriptor, file, true)) {
           return false;
         }

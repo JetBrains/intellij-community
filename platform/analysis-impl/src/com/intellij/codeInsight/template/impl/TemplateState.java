@@ -663,7 +663,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         return startDiff != 0 ? startDiff : o2.segmentNumber - o1.segmentNumber;
       });
     }
-    DocumentUtil.executeInBulk(getDocument(), true, () -> {
+    DocumentUtil.executeInBulk(getDocument(), () -> {
       for (TemplateDocumentChange change : changes) {
         replaceString(change.newValue, change.startOffset, change.endOffset, change.segmentNumber);
       }
@@ -1288,7 +1288,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     int finalSelectionStartLine = selectionStartLine;
     int finalSelectionEndLine = selectionEndLine;
     int finalSelectionIndent = selectionIndent;
-    DocumentUtil.executeInBulk(getDocument(), true, () -> {
+    DocumentUtil.executeInBulk(getDocument(), () -> {
       for (int i = startLineNum + 1; i <= endLineNum; i++) {
         if (i > finalSelectionStartLine && i <= finalSelectionEndLine) {
           getDocument().insertString(getDocument().getLineStartOffset(i), StringUtil.repeatSymbol(' ', finalSelectionIndent));

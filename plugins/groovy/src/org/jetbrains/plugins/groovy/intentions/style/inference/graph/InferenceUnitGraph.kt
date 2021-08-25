@@ -91,7 +91,7 @@ private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
   val components = InferenceVariablesOrder.initNodes(nodeMap.values).map { it.value!! }
   val builder = InferenceUnitGraphBuilder()
   for (component in components) {
-    val representative = component.minBy(InferenceUnitNode::toString)!!
+    val representative = component.minByOrNull(InferenceUnitNode::toString)!!
     component.forEach {
       representativeMap[it.core] = representative.core
       if (it != representative) {

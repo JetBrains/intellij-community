@@ -2,8 +2,8 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
 public final class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOption {
@@ -39,6 +39,6 @@ public final class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNot
 
   @Override
   public @NotNull String getDoNotShowMessage() {
-    return UIBundle.message("dialog.options.do.not.ask");
+    return IdeCoreBundle.message("dialog.options.do.not.ask");
   }
 }

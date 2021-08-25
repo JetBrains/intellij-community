@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
@@ -84,8 +84,9 @@ fun <T> runSuspendingAction(indicator: ProgressIndicator?, action: suspend Corou
  * @see runSuspendingAction
  * @see ProgressManager.runProcess
  */
-fun <T> CoroutineScope.runUnderIndicator(action: () -> T): T {
-  return runUnderIndicator(coroutineContext.job, coroutineContext.progressSink, action)
+suspend fun <T> runUnderIndicator(action: () -> T): T {
+  val ctx = coroutineContext
+  return runUnderIndicator(ctx.job, ctx.progressSink, action)
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
@@ -124,3 +125,5 @@ internal fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action
     throw job.getCancellationException()
   }
 }
+
+fun CoroutineScope.progress(): Progress = JobProgress(coroutineContext.job)

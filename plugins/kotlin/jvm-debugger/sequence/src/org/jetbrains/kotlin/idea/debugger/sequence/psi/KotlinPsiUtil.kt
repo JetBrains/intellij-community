@@ -8,10 +8,8 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.FlexibleType
 import org.jetbrains.kotlin.types.KotlinType
 
@@ -30,15 +28,7 @@ object KotlinPsiUtil {
     }
 }
 
-fun KtExpression.resolveType(): KotlinType =
-    this.analyze(BodyResolveMode.PARTIAL).getType(this)!!
-
 fun KtCallExpression.callName(): String = this.calleeExpression!!.text
-
-fun KtCallExpression.receiverValue(): ReceiverValue? {
-    val resolvedCall = getResolvedCall(analyze(BodyResolveMode.PARTIAL)) ?: return null
-    return resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
-}
 
 fun KtCallExpression.previousCall(): KtCallExpression? {
     val parent = this.parent as? KtDotQualifiedExpression ?: return null
@@ -48,4 +38,10 @@ fun KtCallExpression.previousCall(): KtCallExpression? {
     return null
 }
 
-fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
+@Deprecated(
+    "Use org.jetbrains.kotlin.idea.core.analyze() instead.",
+    ReplaceWith("resolveType()", "org.jetbrains.kotlin.idea.core.analyze"),
+    level = DeprecationLevel.ERROR
+)
+fun KtExpression.resolveType(): KotlinType =
+    this.analyze(BodyResolveMode.PARTIAL).getType(this)!!

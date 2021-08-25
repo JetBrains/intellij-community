@@ -276,11 +276,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     public @Nullable MavenGeneralSettings myGeneralSettings;
     public @Nullable MavenRunnerSettings myRunnerSettings;
-    public @NotNull MavenRunnerParameters myRunnerParameters;
+    public @Nullable MavenRunnerParameters myRunnerParameters;
 
     /* reflection only */
     public MavenSettings() {
-      myRunnerParameters = new MavenRunnerParameters();
     }
 
     public MavenSettings(Project project) {
@@ -345,7 +344,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
           .asyncAgent(true)
           .project(environment.getProject())
-          .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
           .create(parameters);
       }
       catch (ExecutionException e) {

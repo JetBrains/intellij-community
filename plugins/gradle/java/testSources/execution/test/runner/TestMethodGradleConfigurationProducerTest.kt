@@ -53,13 +53,13 @@ class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTes
     assertModules("project", "project.main", "project.test")
 
     currentExternalProjectSettings.testRunner = TestRunner.GRADLE
-    assertTestFilter("package1.T1Test", null, "--tests \"package1.T1Test\"")
-    assertTestFilter("package1.T1Test", "testFoo", "--tests \"package1.T1Test.testFoo[*]\"")
-    assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "param1", "--tests \"package1.T1Test.testFoo[*param1*]\"")
-    assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "param2", "--tests \"package1.T1Test.testFoo[*param2*]\"")
-    assertTestFilter("package1.T2Test", null, "--tests \"package1.T2Test\"")
-    assertTestFilter("package1.T2Test", "testFoo2", "--tests \"package1.T2Test.testFoo2[*]\"")
-    assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "param1", "--tests \"package1.T2Test.testFoo2[*param1*]\"")
-    assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "param2", "--tests \"package1.T2Test.testFoo2[*param2*]\"")
+    assertTestFilter("package1.T1Test", null, ":test --tests \"package1.T1Test\"")
+    assertTestFilter("package1.T1Test", "testFoo", ":test --tests \"package1.T1Test.testFoo[*]\"")
+    assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "param1", ":test --tests \"package1.T1Test.testFoo[*param1*]\"")
+    assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "param2", ":test --tests \"package1.T1Test.testFoo[*param2*]\"")
+    assertTestFilter("package1.T2Test", null, ":test --tests \"package1.T2Test\"")
+    assertTestFilter("package1.T2Test", "testFoo2", ":test --tests \"package1.T2Test.testFoo2[*]\"")
+    assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "param1", ":test --tests \"package1.T2Test.testFoo2[*param1*]\"")
+    assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "param2", ":test --tests \"package1.T2Test.testFoo2[*param2*]\"")
   }
 }

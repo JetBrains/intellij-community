@@ -8,11 +8,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.io.HttpRequests
+import java.io.IOException
+import java.net.HttpURLConnection
 
 class ZenDeskRequests {
   private val objectMapper by lazy { ObjectMapper() }
 
-  fun submit(form: ZenDeskForm, email: String, subject: String, text: String, fieldData: Map<String, Any>, onDone: () -> Unit) {
+  fun submit(form: ZenDeskForm, email: String, subject: String, text: String, fieldData: Map<String, Any>, onDone: () -> Unit, onError: () -> Unit) {
     val customFields = mutableListOf<ZenDeskCustomField>()
     for (field in form.fields) {
       val value = field.value
@@ -43,7 +45,15 @@ class ZenDeskRequests {
       .accept("application/json")
       .connect {
         it.write(requestData)
-        val bytes = it.inputStream.readAllBytes()
+        val bytes = try {
+          it.inputStream.readAllBytes()
+        }
+        catch (e: IOException) {
+          val errorResponse = (it.connection as HttpURLConnection).errorStream.readAllBytes().toString(Charsets.UTF_8)
+          LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nServer response:\n$errorResponse")
+          onError()
+          return@connect
+        }
         LOG.info(bytes.toString(Charsets.UTF_8))
         onDone()
       }

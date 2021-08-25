@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.BuildMessageLogger
 class DebugLogger {
   private final File tempFile
   private PrintWriter output
+  private File outputFile
   private List<PrintWriterBuildMessageLogger> loggers = []
 
   DebugLogger() {
@@ -21,11 +22,16 @@ class DebugLogger {
   }
 
   synchronized void setOutputFile(File outputFile) {
+    this.outputFile = outputFile
     output.close()
     FileUtil.createParentDirs(outputFile)
     FileUtil.rename(tempFile, outputFile)
     output = new PrintWriter(new BufferedWriter(new FileWriter(outputFile, true)), true)
     loggers*.setOutput(output)
+  }
+
+  synchronized File getOutputFile() {
+    return outputFile
   }
 
   synchronized BuildMessageLogger createLogger(String taskName) {

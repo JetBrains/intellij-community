@@ -30,7 +30,7 @@ import java.util.Collections;
 public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
   protected final ComponentType myComponent;
 
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
   private final CellRendererPane myRendererPane = new CellRendererPane();
   private final JComponent myTipComponent = new JComponent() {
     @Override
@@ -179,7 +179,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
-    if (!myEnabled) hideHint();
+    if (!isEnabled()) hideHint();
   }
 
   @Override
@@ -239,7 +239,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private boolean isHandleSelectionEnabled(@NotNull KeyType selected, boolean processIfUnfocused) {
-    return myEnabled &&
+    return isEnabled() &&
            !ScreenReader.isActive() &&
            myComponent.isEnabled() &&
            myComponent.isShowing() &&

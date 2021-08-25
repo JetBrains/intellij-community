@@ -19,10 +19,6 @@ import java.util.List;
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
 
 public interface StatusBarEx extends StatusBar {
-  void startRefreshIndication(@Tooltip String tooltipText);
-
-  void stopRefreshIndication();
-
   BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull @PopupContent String htmlBody);
 
   BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull @PopupContent String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener);

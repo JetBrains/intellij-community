@@ -10,10 +10,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiElementProcessor
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.ParametersFolder
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.areSame
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
@@ -22,6 +26,7 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
+import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.refactoring.util.VariableData
 
 object ExtractMethodPipeline {
@@ -168,37 +173,41 @@ object ExtractMethodPipeline {
     return options
   }
 
-  private fun findFoldableArrayExpression(reference: PsiElement): PsiArrayAccessExpression? {
-    val arrayAccess = reference.parent as? PsiArrayAccessExpression
-    return if (arrayAccess?.arrayExpression == reference) arrayAccess else null
+  private fun findReferencedVariable(expression: PsiExpression?): PsiVariable? {
+    val normalizedExpression = PsiUtil.skipParenthesizedExprDown(expression)
+    val referenceExpression = normalizedExpression as? PsiReferenceExpression
+    return referenceExpression?.resolve() as? PsiVariable
   }
 
-  fun withFoldedArrayParameters(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions {
-    val writtenVariables = analyzer.findWrittenVariables().mapNotNull { it.name }
+  private fun getSimpleArrayAccess(arrayReference: PsiElement): PsiExpression? {
+    val arrayAccess = PsiTreeUtil.getParentOfType(arrayReference, PsiArrayAccessExpression::class.java)
+    return arrayAccess?.takeIf { !RefactoringUtil.isAssignmentLHS(arrayAccess)
+                                 && arrayAccess.arrayExpression == arrayReference && arrayAccess.indexExpression is PsiReference }
+  }
 
-    fun findFoldedCandidate(inputParameter: InputParameter): InputParameter? {
-      val arrayAccesses = inputParameter.references.map { findFoldableArrayExpression(it) ?: return null }
-      if (arrayAccesses.any { (it.parent as? PsiAssignmentExpression)?.lExpression == it }) return null
-      if (!ExtractMethodHelper.areSame(arrayAccesses.map { it.indexExpression })) return null
-      if (arrayAccesses.any { it.indexExpression?.text in writtenVariables }) return null
-      val parameterName = arrayAccesses.first().arrayExpression.text + "Element"
-      return InputParameter(arrayAccesses, parameterName, arrayAccesses.first().type ?: return null)
-    }
+  private fun findFoldableGroup(variable: PsiVariable, scope: LocalSearchScope): List<PsiExpression>? {
+    val references: List<PsiElement> = ReferencesSearch.search(variable, scope).map { it.element }.toList()
+    val arrayAccesses = references.mapNotNull { reference -> getSimpleArrayAccess(reference) }
+    return arrayAccesses.takeIf { arrayAccesses.size == references.size }
+  }
 
-    fun findHiddenExpression(arrayAccess: PsiArrayAccessExpression?): List<InputParameter> {
-      return extractOptions.inputParameters.filter {
-        ExtractMethodHelper.areSame(it.references.first(), arrayAccess?.arrayExpression)
-        || ExtractMethodHelper.areSame(it.references.first(), arrayAccess?.indexExpression)
-      }
-    }
+  private fun isNestedExpressionGroup(parentGroup: List<PsiElement>, nestedGroup: List<PsiElement>): Boolean {
+    return nestedGroup.all { nested -> parentGroup.any { parent -> PsiTreeUtil.isAncestor(parent, nested, false) } }
+  }
 
-    val foldedCandidates = extractOptions.inputParameters.mapNotNull { findFoldedCandidate(it) }
-
-    val (folded, hidden) = foldedCandidates
-      .map { it to findHiddenExpression(it.references.first() as? PsiArrayAccessExpression) }
-      .filter { it.second.size > 1 }.unzip()
-
-    return extractOptions.copy(inputParameters = extractOptions.inputParameters - hidden.flatten() + folded)
+  fun foldParameters(parameters: List<InputParameter>, scope: LocalSearchScope): List<InputParameter> {
+    val variables = parameters.mapNotNull { parameter -> findReferencedVariable(parameter.references.firstOrNull()) }
+    val foldableVariables = variables.filter { variable -> variable.type is PsiArrayType }
+    val foldableGroups = foldableVariables
+      .mapNotNull { variable -> findFoldableGroup(variable, scope) }
+      .filter { group -> areSame(group) }
+      .filter { group -> group.all { expression -> ParametersFolder.isSafeToFoldArrayAccess(scope, expression) } }
+    val foldableGroupsWithCoveredParameters = foldableGroups
+      .associateWith { foldableGroup -> parameters.filter { parameter -> isNestedExpressionGroup(foldableGroup, parameter.references) } }
+      .filter { (_, coveredParameters) -> coveredParameters.size >= 2 }
+    val coveredParameters = foldableGroupsWithCoveredParameters.values.flatten()
+    val newParameters = foldableGroupsWithCoveredParameters.keys.map { foldableGroup -> inputParameterOf(foldableGroup) }
+    return parameters - coveredParameters + newParameters
   }
 
   fun asConstructor(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {

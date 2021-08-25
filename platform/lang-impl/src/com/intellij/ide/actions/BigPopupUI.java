@@ -13,7 +13,6 @@ import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,7 +121,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     withBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
 
     myResultsList = createList();
-    HintUpdateSupply.installDataContextHintUpdateSupply(myResultsList);
 
     JPanel topLeftPanel = createTopLeftPanel();
     JPanel settingsPanel = createSettingsPanel();

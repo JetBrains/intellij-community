@@ -1,1 +1,1 @@
-Unclassified 1 @KotlinAnnForJava(p = "a") public class JavaClassForKotlin {}
+Unclassified 1 @KotlinAnnForJava(p = "a")

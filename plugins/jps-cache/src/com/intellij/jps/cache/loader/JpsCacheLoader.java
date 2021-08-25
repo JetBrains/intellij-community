@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.IOException;
 
 class JpsCacheLoader implements JpsOutputLoader<File> {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCacheLoader");
+  private static final Logger LOG = Logger.getInstance(JpsCacheLoader.class);
   private static final String TIMESTAMPS_FOLDER_NAME = "timestamps";
   private static final String FS_STATE_FILE = "fs_state.dat";
   private final BuildManager myBuildManager;

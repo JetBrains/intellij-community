@@ -156,7 +156,7 @@ object AndroidTargetConfigurator : AndroidTargetConfiguratorBase(),
 
     override fun getConfiguratorSettings() = buildList<ModuleConfiguratorSetting<*, *>> {
         +super<AndroidTargetConfiguratorBase>.getConfiguratorSettings()
-        +super<ModuleConfiguratorWithTests>.getConfiguratorSettings()
+        +JvmModuleConfigurator.testFramework
     }
 
     override fun createModuleIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module): List<BuildSystemIR> =

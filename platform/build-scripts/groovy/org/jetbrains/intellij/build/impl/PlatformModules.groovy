@@ -33,9 +33,11 @@ final class PlatformModules {
     "intellij.platform.codeStyle",
     "intellij.platform.indexing",
     "intellij.platform.jps.model",
+    "intellij.platform.lang.core",
     "intellij.platform.lang",
     "intellij.platform.lvcs",
     "intellij.platform.ide",
+    "intellij.platform.ide.core",
     "intellij.platform.projectModel",
     "intellij.platform.remote.core",
     "intellij.platform.remoteServers.agent.rt",
@@ -46,13 +48,14 @@ final class PlatformModules {
     "intellij.platform.vcs",
     "intellij.platform.vcs.log",
     "intellij.platform.vcs.log.graph",
+    "intellij.platform.execution",
     "intellij.platform.debugger",
     "intellij.xml.analysis",
     "intellij.xml",
     "intellij.xml.psi",
     "intellij.xml.structureView",
     "intellij.platform.concurrency",
-  )
+    )
 
   /**
    * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs.
@@ -61,6 +64,7 @@ final class PlatformModules {
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
+    "intellij.platform.ide.core.impl",
     "intellij.platform.diff.impl",
     "intellij.platform.editor.ex",
     "intellij.platform.codeStyle.impl",
@@ -69,14 +73,16 @@ final class PlatformModules {
     "intellij.platform.elevation.client",
     "intellij.platform.elevation.common",
     "intellij.platform.elevation.daemon",
-    "intellij.platform.execution.impl",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.storage",
     "intellij.platform.workspaceModel.jps",
     "intellij.platform.lvcs.impl",
+    "intellij.platform.vfs.impl",
     "intellij.platform.ide.impl",
     "intellij.platform.projectModel.impl",
+    "intellij.platform.macro",
+    "intellij.platform.execution.impl",
     "intellij.platform.externalSystem.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
@@ -95,8 +101,9 @@ final class PlatformModules {
     "intellij.platform.diagnostic",
     "intellij.platform.core.ui",
     "intellij.platform.credentialStore",
+    "intellij.platform.credentialStore.ui",
     "intellij.platform.rd.community",
-    "intellij.platform.ml.impl"
+    "intellij.platform.ml.impl",
   )
 
   private static final String UTIL_JAR = "util.jar"
@@ -151,13 +158,13 @@ final class PlatformModules {
       addModule("intellij.platform.util.zip", UTIL_JAR)
       addModule("intellij.platform.util.classLoader", UTIL_JAR)
       addModule("intellij.platform.util.text.matching", UTIL_JAR)
-      addModule("intellij.platform.util.collections", UTIL_JAR)
-      addModule("intellij.platform.util.strings", UTIL_JAR)
+      addModule("intellij.platform.util.base", UTIL_JAR)
       addModule("intellij.platform.util.xmlDom", UTIL_JAR)
-      addModule("intellij.platform.util.diagnostic", UTIL_JAR)
       addModule("intellij.platform.util.ui", UTIL_JAR)
       addModule("intellij.platform.util.ex", UTIL_JAR)
       addModule("intellij.platform.ide.util.io", UTIL_JAR)
+      addModule("intellij.platform.ide.util.io.impl", UTIL_JAR)
+      addModule("intellij.platform.ide.util.netty", UTIL_JAR)
       addModule("intellij.platform.extensions", UTIL_JAR)
 
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
@@ -220,6 +227,7 @@ final class PlatformModules {
 
       layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
         "JDOM",
+        "ASM",
         "Trove4j",
         "aalto-xml",
         "netty-buffer",
@@ -227,6 +235,9 @@ final class PlatformModules {
         "netty-handler-proxy",
         "Log4J",
         "fastutil-min",
+        // used in JPS
+        "maven-resolver-provider",
+        "gson"
       ))
 
       for (JpsLibrary library in additionalProjectLevelLibraries) {

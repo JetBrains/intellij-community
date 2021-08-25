@@ -1,0 +1,9 @@
+{
+    "usages": [
+        "Main.kt",
+        "Doo.kt",
+        "Foo.kt",
+        "Usage.kt",
+        "TypeAliasUsage.kt"
+    ]
+}

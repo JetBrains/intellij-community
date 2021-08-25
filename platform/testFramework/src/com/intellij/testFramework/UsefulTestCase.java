@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -33,16 +34,11 @@ import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.PeekableIterator;
-import com.intellij.util.containers.PeekableIteratorWrapper;
+import com.intellij.util.containers.*;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -116,8 +112,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static final String ORIGINAL_TEMP_DIR = FileUtilRt.getTempDirectory();
 
-  private static final Object2LongMap<String> TOTAL_SETUP_COST_MILLIS = new Object2LongOpenHashMap<>();
-  private static final Object2LongMap<String> TOTAL_TEARDOWN_COST_MILLIS = new Object2LongOpenHashMap<>();
+  private static final ObjectIntMap<String> TOTAL_SETUP_COST_MILLIS = new ObjectIntHashMap<>();
+  private static final ObjectIntMap<String> TOTAL_SETUP_COUNT = new ObjectIntHashMap<>();
+  private static final ObjectIntMap<String> TOTAL_TEARDOWN_COST_MILLIS = new ObjectIntHashMap<>();
+  private static final ObjectIntMap<String> TOTAL_TEARDOWN_COUNT = new ObjectIntHashMap<>();
 
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
@@ -435,8 +433,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @see #disposeOnTearDown(Disposable)
    * @see #tearDown()
    */
-  @NotNull
-  public Disposable getTestRootDisposable() {
+  public @NotNull Disposable getTestRootDisposable() {
     Disposable disposable = myTestRootDisposable;
     if (disposable == null) {
       myTestRootDisposable = disposable = new TestDisposable();
@@ -486,14 +483,14 @@ public abstract class UsefulTestCase extends TestCase {
     long setupStart = System.nanoTime();
     setUp();
     long setupCost = (System.nanoTime() - setupStart) / 1000000;
-    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
+    logPerClassCost((int)setupCost, TOTAL_SETUP_COST_MILLIS, TOTAL_SETUP_COUNT);
   }
 
   protected void invokeTearDown() throws Exception {
     long teardownStart = System.nanoTime();
     tearDown();
     long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
-    logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
+    logPerClassCost((int)teardownCost, TOTAL_TEARDOWN_COST_MILLIS, TOTAL_TEARDOWN_COUNT);
   }
 
   /**
@@ -501,24 +498,35 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param cost setup cost in milliseconds
    */
-  private void logPerClassCost(long cost,
-                               @NotNull Object2LongMap<? super String> costMap) {
-    costMap.mergeLong(getClass().getSuperclass().getName(), cost, Math::addExact);
+  private void logPerClassCost(int cost,
+                               @NotNull ObjectIntMap<String> costMap,
+                               @NotNull ObjectIntMap<String> countMap) {
+    String name = getClass().getSuperclass().getName();
+    int storedCost = costMap.get(name);
+    costMap.put(name, (storedCost == -1 ? 0 : storedCost)+cost);
+    int storedCount = countMap.get(name);
+    countMap.put(name, storedCount == -1 ? 1 : storedCount+1);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void logSetupTeardownCosts() {
     System.out.println("Setup costs");
     long totalSetup = 0;
-    for (Object2LongMap.Entry<String> entry : TOTAL_SETUP_COST_MILLIS.object2LongEntrySet()) {
-      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getLongValue());
-      totalSetup += entry.getLongValue();
+    for (ObjectIntMap.Entry<String> entry : TOTAL_SETUP_COST_MILLIS.entries()) {
+      String name = entry.getKey();
+      int cost = entry.getValue();
+      long count = TOTAL_SETUP_COUNT.get(name);
+      System.out.printf("  %s: %d ms for %d executions%n", name, cost, count);
+      totalSetup += cost;
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
-    for (Object2LongMap.Entry<String> entry : TOTAL_TEARDOWN_COST_MILLIS.object2LongEntrySet()) {
-      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getLongValue());
-      totalTeardown += entry.getLongValue();
+    for (ObjectIntMap.Entry<String> entry : TOTAL_TEARDOWN_COST_MILLIS.entries()) {
+      String name = entry.getKey();
+      int cost = entry.getValue();
+      long count = TOTAL_TEARDOWN_COUNT.get(name);
+      System.out.printf("  %s: %d ms for %d executions%n", name, cost, count);
+      totalTeardown += cost;
     }
     System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);
     System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']%n", totalSetup);
@@ -546,6 +554,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
+    var testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
       TestLoggerFactory.onTestStarted();
@@ -557,8 +566,12 @@ public abstract class UsefulTestCase extends TestCase {
         success = true;
         throw e;
       }
+      catch (Throwable t) {
+        TestLoggerFactory.logTestFailure(t);
+        throw t;
+      }
       finally {
-        TestLoggerFactory.onTestFinished(success);
+        TestLoggerFactory.onTestFinished(success, testDescription);
       }
     };
   }
@@ -578,16 +591,15 @@ public abstract class UsefulTestCase extends TestCase {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 
-  @NotNull
-  public static String toString(@NotNull Iterable<?> collection) {
+  public static @NotNull String toString(@NotNull Iterable<?> collection) {
     if (!collection.iterator().hasNext()) {
       return "<empty>";
     }
 
     StringBuilder builder = new StringBuilder();
     for (Object o : collection) {
-      if (o instanceof THashSet) {
-        builder.append(new TreeSet<>((THashSet<?>)o));
+      if (o instanceof Set) {
+        builder.append(new TreeSet<>((Set<?>)o));
       }
       else {
         builder.append(o);
@@ -737,8 +749,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameElements(toString(collection), copy, expected);
   }
 
-  @NotNull
-  public static String toString(Object @NotNull [] collection, @NotNull String separator) {
+  public static @NotNull String toString(Object @NotNull [] collection, @NotNull String separator) {
     return toString(Arrays.asList(collection), separator);
   }
 
@@ -753,8 +764,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameElements(collection, expected);
   }
 
-  @NotNull
-  public static String toString(@NotNull Collection<?> collection, @NotNull String separator) {
+  public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
     List<String> list = ContainerUtil.map2List(collection, String::valueOf);
     Collections.sort(list);
     StringBuilder builder = new StringBuilder();
@@ -834,8 +844,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @Contract("null, _ -> fail")
-  @NotNull
-  public static <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
+  public static @NotNull <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
     Assert.assertNotNull("Expected instance of: " + aClass.getName() + " actual: " + null, o);
     Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));
     @SuppressWarnings("unchecked") T t = (T)o;
@@ -904,8 +913,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @NotNull
-  protected <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
+  protected @NotNull <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
     Disposer.register(getTestRootDisposable(), disposable);
     return disposable;
   }
@@ -928,18 +936,15 @@ public abstract class UsefulTestCase extends TestCase {
     assertFalse("File should not exist " + file, file.exists());
   }
 
-  @NotNull
-  protected String getTestName(boolean lowercaseFirstLetter) {
+  protected @NotNull String getTestName(boolean lowercaseFirstLetter) {
     return getTestName(getName(), lowercaseFirstLetter);
   }
 
-  @NotNull
-  public static String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
+  public static @NotNull String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
-  @NotNull
-  protected String getTestDirectoryName() {
+  protected @NotNull String getTestDirectoryName() {
     final String testName = getTestName(true);
     return testName.replaceAll("_.*", "");
   }
@@ -1204,8 +1209,7 @@ public abstract class UsefulTestCase extends TestCase {
     return false;
   }
 
-  @NotNull
-  protected String getHomePath() {
+  protected @NotNull String getHomePath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
   }
 
@@ -1220,7 +1224,7 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  public static VirtualFile refreshAndFindFile(@NotNull final File file) {
+  public static VirtualFile refreshAndFindFile(final @NotNull File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
@@ -1260,5 +1264,10 @@ public abstract class UsefulTestCase extends TestCase {
       String testName = getTestName(false);
       return UsefulTestCase.this.getClass() + (StringUtil.isEmpty(testName) ? "" : ".test" + testName);
     }
+  }
+
+  protected void setRegistryPropertyForTest(@NotNull String property, @NotNull String value) {
+    Registry.get(property).setValue(value);
+    Disposer.register(getTestRootDisposable(), () -> Registry.get(property).resetToDefault());
   }
 }

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -32,7 +30,7 @@ interface KotlinStdlibCache {
             if (IdeBuiltInsLoadingState.isFromClassLoader) {
                 Disabled
             } else {
-                ServiceManager.getService(project, KotlinStdlibCache::class.java)
+                project.getService(KotlinStdlibCache::class.java)
                     ?: error("Failed to load service ${KotlinStdlibCache::class.java.name}")
             }
 
@@ -75,7 +73,7 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
         override fun toString() = "All files under: $directories"
     }
 
-    private fun libraryScopeContainsIndexedFilesForNames(libraryInfo: LibraryInfo, names: Collection<FqName>) = runReadAction {
+    private fun libraryScopeContainsIndexedFilesForNames(libraryInfo: LibraryInfo, names: Collection<FqName>) =
         names.any { name ->
             FileBasedIndex.getInstance().getContainingFiles(
                 KotlinStdlibIndex.KEY,
@@ -83,7 +81,6 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
                 LibraryScope(project, libraryInfo.library.rootProvider.getFiles(OrderRootType.CLASSES).toSet())
             ).isNotEmpty()
         }
-    }
 
     private fun libraryScopeContainsIndexedFilesForName(libraryInfo: LibraryInfo, name: FqName) =
         libraryScopeContainsIndexedFilesForNames(libraryInfo, listOf(name))

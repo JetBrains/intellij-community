@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.getEffectiveTargetName
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
@@ -38,8 +39,8 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiPackage
+import com.intellij.psi.search.ExecutionSearchScopes
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
@@ -72,7 +73,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     override fun getValidModules(): Collection<Module> = ModuleManager.getInstance(project).modules.toList()
 
-    override fun getSearchScope(): GlobalSearchScope? = GlobalSearchScopes.executionScope(modules.toList())
+    override fun getSearchScope(): GlobalSearchScope? = ExecutionSearchScopes.executionScope(modules.toList())
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration?> {
         val group = SettingsEditorGroup<KotlinRunConfiguration>()
@@ -280,7 +281,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun needPrepareTarget(): Boolean {
-        return defaultTargetName != null || runsUnderWslJdk()
+        return getEffectiveTargetName(project) != null || runsUnderWslJdk()
     }
 
     override fun getShortenCommandLine(): ShortenCommandLine? {

@@ -2,7 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -50,7 +50,7 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
         myConstantShouldGoLeft = (e.getItem() == left);
       }
     });
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    final InspectionOptionsPanel panel = new InspectionOptionsPanel(this);
     panel.addLabeledRow(JavaAnalysisBundle.message("inspection.constant.on.wrong.side.of.a.comparison.side.option"), comboBox);
     panel.addCheckbox(InspectionGadgetsBundle.message("checkbox.ignore.null.on.wrong.side"), "myIgnoreNull");
     return panel;

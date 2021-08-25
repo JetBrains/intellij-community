@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.serializeStateInto
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -41,7 +40,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
-class ModifiableRootModelBridgeImpl(
+internal class ModifiableRootModelBridgeImpl(
   diff: WorkspaceEntityStorageBuilder,
   override val moduleBridge: ModuleBridge,
   override val accessor: RootConfigurationAccessor,
@@ -61,7 +60,17 @@ class ModifiableRootModelBridgeImpl(
   private var savedModuleEntity: ModuleEntity
 
   init {
-    savedModuleEntity = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Cannot find module entity for '$moduleBridge'")
+    savedModuleEntity = getModuleEntity(entityStorageOnDiff.current, module)
+                        ?: error("Cannot find module entity for ${module.moduleEntityId}. Bridge: '$moduleBridge'. Store: $diff")
+  }
+
+  private fun getModuleEntity(current: WorkspaceEntityStorage, myModuleBridge: ModuleBridge): ModuleEntity? {
+    // Try to get entity by module id
+    // In some cases this won't work. These cases can happen during maven or gradle import where we provide a general builder.
+    //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old persistentId. After that
+    //   we try to get modifiableRootModel. In general case it would work fine because the builder will be based on main store, but
+    //   in case of gradle/maven import we take the builder that was used for renaming. So, the old name cannot be found in the new store.
+    return current.resolve(myModuleBridge.moduleEntityId) ?: current.findModuleEntity(myModuleBridge)
   }
 
   override fun getModificationCount(): Long = diff.modificationCount
@@ -80,7 +89,7 @@ class ModifiableRootModelBridgeImpl(
 
   internal val moduleEntity: ModuleEntity
     get() {
-      val actualModuleEntity = entityStorageOnDiff.current.findModuleEntity(module) ?: return savedModuleEntity
+      val actualModuleEntity = getModuleEntity(entityStorageOnDiff.current, module) ?: return savedModuleEntity
       savedModuleEntity = actualModuleEntity
       return actualModuleEntity
     }
@@ -230,26 +239,33 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun addLibraryEntry(library: Library): LibraryOrderEntry {
-    val libraryId = if (library is LibraryBridge) library.libraryId
-    else {
-      val libraryName = library.name
-      if (libraryName.isNullOrEmpty()) {
-        error("Library name is null or empty: $library")
-      }
-
-      LibraryId(libraryName, LibraryNameGenerator.getLibraryTableId(library.table.tableLevel))
-    }
-
-    val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
-      library = libraryId,
+    appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(
+      library = library.libraryId,
       exported = false,
       scope = ModuleDependencyItem.DependencyScope.COMPILE
-    )
-
-    appendDependency(libraryDependency)
-
-
+    ))
     return (mutableOrderEntries.lastOrNull() as? LibraryOrderEntry ?: error("Unable to find library orderEntry after adding"))
+  }
+
+  private val Library.libraryId: LibraryId
+    get() {
+      val libraryId = if (this is LibraryBridge) libraryId
+      else {
+        val libraryName = name
+        if (libraryName.isNullOrEmpty()) {
+          error("Library name is null or empty: ${this}")
+        }
+
+        LibraryId(libraryName, LibraryNameGenerator.getLibraryTableId(table.tableLevel))
+      }
+      return libraryId
+    }
+
+  override fun addLibraryEntries(libraries: List<Library>, scope: DependencyScope, exported: Boolean) {
+    val dependencyScope = scope.toEntityDependencyScope()
+    appendDependencies(libraries.map {
+      ModuleDependencyItem.Exportable.LibraryDependency(it.libraryId, exported, dependencyScope)
+    })
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
@@ -277,6 +293,13 @@ class ModifiableRootModelBridgeImpl(
     return mutableOrderEntries.lastOrNull() as? ModuleOrderEntry ?: error("Unable to find module orderEntry after adding")
   }
 
+  override fun addModuleEntries(modules: MutableList<Module>, scope: DependencyScope, exported: Boolean) {
+    val dependencyScope = scope.toEntityDependencyScope()
+    appendDependencies(modules.map {
+      ModuleDependencyItem.Exportable.ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope, productionOnTest = false)
+    })
+  }
+
   override fun addInvalidModuleEntry(name: String): ModuleOrderEntry {
     val moduleDependency = ModuleDependencyItem.Exportable.ModuleDependency(
       module = ModuleId(name),
@@ -295,6 +318,16 @@ class ModifiableRootModelBridgeImpl(
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
       dependencies = dependencies + dependency
+    }
+  }
+
+  internal fun appendDependencies(dependencies: List<ModuleDependencyItem>) {
+    for (dependency in dependencies) {
+      mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
+    }
+    entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
+    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+      this.dependencies = this.dependencies + dependencies
     }
   }
 
@@ -537,7 +570,7 @@ class ModifiableRootModelBridgeImpl(
       }
     }
     else {
-      if (SdkOrderEntryBridge.findSdk(jdk.name, jdk.sdkType.name) == null) {
+      if (ModifiableRootModelBridge.findSdk(jdk.name, jdk.sdkType.name) == null) {
         error("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
       }
       setInvalidSdk(jdk.name, jdk.sdkType.name)
@@ -592,7 +625,7 @@ class ModifiableRootModelBridgeImpl(
 
   private val modelValue = CachedValue { storage ->
     RootModelBridgeImpl(
-      moduleEntity = storage.findModuleEntity(moduleBridge),
+      moduleEntity = getModuleEntity(storage, moduleBridge),
       storage = entityStorageOnDiff,
       itemUpdater = null,
       rootModel = this,

@@ -7,6 +7,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpdateQuickFix
 
 /**
  * Extension point that allows to modify the dependencies of a specific project.
@@ -36,13 +37,24 @@ interface ProjectModuleOperationProvider {
     }
 
     /**
-     * Checks if current implementation has support the given [project] for the current [psiFile].
+     * Returns whether the implementation of the interface uses the shared "packages update available"
+     * inspection and quickfix. This is `false` by default; override this property and return `true`
+     * to opt in to [PackageUpdateInspection].
+     *
+     * @return `true` opt in to [PackageUpdateInspection], false otherwise.
+     * @see PackageUpdateInspection
+     * @see PackageSearchDependencyUpdateQuickFix
+     */
+    fun usesSharedPackageUpdateInspection(): Boolean = false
+
+    /**
+     * Checks if current implementation has support in the given [project] for the current [psiFile].
      * @return `true` if the [project] and [psiFile] are supported.
      */
     fun hasSupportFor(project: Project, psiFile: PsiFile?): Boolean
 
     /**
-     * Checks if current implementation has support the given [projectModuleType].
+     * Checks if current implementation has support in the given [projectModuleType].
      * @return `true` if the [projectModuleType] is supported.
      */
     fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean

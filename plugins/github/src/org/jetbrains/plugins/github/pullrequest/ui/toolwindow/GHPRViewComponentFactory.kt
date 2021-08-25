@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentFactory
+import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -16,7 +16,10 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.ui.*
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -155,7 +158,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
 
     private fun findCommitsList(parent: JComponent): JList<VcsCommitMetadata>? {
-      UIUtil.getClientProperty(parent, CommitsBrowserComponentFactory.COMMITS_LIST_KEY)?.run {
+      UIUtil.getClientProperty(parent, CommitsBrowserComponentBuilder.COMMITS_LIST_KEY)?.run {
         return this
       }
 
@@ -235,7 +238,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     null, GithubBundle.message("cannot.load.commits"),
                                                     changesLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        val (commitBrowser, commitList) = CommitsBrowserComponentFactory(project).create(model.map { list ->
+        val commitsModel = model.map { list ->
           val logObjectsFactory = project.service<VcsLogObjectsFactory>()
           list.map { commit ->
             logObjectsFactory.createCommitMetadata(
@@ -252,16 +255,13 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
               commit.author?.date?.time ?: 0L
             )
           }
-        }, commitSelectionListener)
+        }
 
-        commitList.emptyText.text = GithubBundle.message("pull.request.does.not.contain.commits")
-
-        PopupHandler.installSelectionListPopup(
-          commitList,
-          DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
-          "GHPRCommitsPopup")
-
-        commitBrowser
+        CommitsBrowserComponentBuilder(project, commitsModel)
+          .installPopupActions(DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
+          .setEmptyCommitListText(GithubBundle.message("pull.request.does.not.contain.commits"))
+          .onCommitSelected(commitSelectionListener)
+          .create()
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,

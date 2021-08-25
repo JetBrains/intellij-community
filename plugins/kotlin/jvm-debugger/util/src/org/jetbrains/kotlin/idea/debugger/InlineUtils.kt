@@ -149,9 +149,18 @@ class InlineStackFrame private constructor(
                     // This is why there should not be any pending variables at this
                     // point, since arguments to an inline function argument would be
                     // associated with a previous active frame.
+                    //
+                    // If we do encounter pending variables, then they belong to an
+                    // inline call whose scope introduction variable was shadowed by
+                    // a later call to the same function and can be hidden.
                     name.startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) -> {
-                        assert(pendingVariables.isEmpty())
-                        activeFrames = activeFrames.subList(0, depth + 1)
+                        for (pending in pendingVariables) {
+                            variableFrameIds[pending] = -1
+                        }
+                        pendingVariables.clear()
+                        if (depth + 1 < activeFrames.size) {
+                            activeFrames = activeFrames.subList(0, depth + 1)
+                        }
                         variableFrameIds[currentIndex] = activeFrames.last()
                     }
                     // Process variables in the current frame or a previous frame (for
@@ -161,8 +170,15 @@ class InlineStackFrame private constructor(
                     }
                     // Process arguments to the next inline function call.
                     else -> {
-                        assert(depth == activeFrames.size)
-                        pendingVariables += currentIndex
+                        if (depth == activeFrames.size) {
+                            pendingVariables += currentIndex
+                        } else {
+                            // This can only happen if we skipped a scope introduction
+                            // variable due to shadowing by a later call to the same
+                            // function. In particular, the current index is not in
+                            // scope and can be hidden.
+                            variableFrameIds[currentIndex] = -1
+                        }
                     }
                 }
             }

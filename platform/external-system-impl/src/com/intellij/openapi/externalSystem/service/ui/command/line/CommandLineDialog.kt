@@ -12,6 +12,7 @@ import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.layout.*
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
@@ -41,10 +42,10 @@ class CommandLineDialog(
     }
   }
 
-  fun JTable.clearSelectionWhenSelected(table: JTable) {
-    table.selectionModel.addListSelectionListener {
-      selectRecursionGuard.doPreventingRecursion(this@CommandLineDialog, false) {
-        clearSelection()
+  fun clearSelectionWhenSelected(tableToUpdate: JTable, tableToListen: JTable) {
+    tableToListen.selectionModel.addListSelectionListener {
+      selectRecursionGuard.doPreventingRecursion(this, false) {
+        tableToUpdate.clearSelection()
       }
     }
   }
@@ -54,10 +55,10 @@ class CommandLineDialog(
       .filter { it.tableCompletionInfo.isNotEmpty() }
       .map { Table(it) }
 
-    for ((i, parent) in tables.withIndex()) {
-      for ((j, child) in tables.withIndex()) {
+    for ((i, tableToUpdate) in tables.withIndex()) {
+      for ((j, tableToListen) in tables.withIndex()) {
         if (i != j) {
-          parent.clearSelectionWhenSelected(child)
+          clearSelectionWhenSelected(tableToUpdate, tableToListen)
         }
       }
     }
@@ -125,11 +126,16 @@ class CommandLineDialog(
     }
 
     init {
-      val search = TableSpeedSearch(this)
       val nameColumn = columnModel.getColumn(0)
-      nameColumn.cellRenderer = Renderer(search, tableInfo.dataColumnIcon)
       val descriptionColumn = columnModel.getColumn(1)
+
+      val search = TableSpeedSearch(this)
+      nameColumn.cellRenderer = Renderer(search, tableInfo.dataColumnIcon)
       descriptionColumn.cellRenderer = Renderer(search, tableInfo.descriptionColumnIcon)
+
+      visibleRowCount = 8
+      nameColumn.preferredWidth = JBUIScale.scale(250)
+      descriptionColumn.preferredWidth = JBUIScale.scale(500)
     }
   }
 

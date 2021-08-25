@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
@@ -41,7 +42,7 @@ public final class SheetController implements Disposable {
 
   private static final Logger LOG = Logger.getInstance(SheetController.class);
   private static final int SHEET_MINIMUM_HEIGHT = 143;
-  private final DialogWrapper.DoNotAskOption myDoNotAskOption;
+  private final DoNotAskOption myDoNotAskOption;
   private final @Nullable JButton myHelpButton;
   private boolean myDoNotAskResult;
 
@@ -94,7 +95,7 @@ public final class SheetController implements Disposable {
                   final Icon icon,
                   final String[] buttonTitles,
                   final String defaultButtonTitle,
-                  final DialogWrapper.DoNotAskOption doNotAskOption,
+                  final DoNotAskOption doNotAskOption,
                   final String focusedButtonTitle,
                   @Nullable String helpId) {
     if (icon != null) {

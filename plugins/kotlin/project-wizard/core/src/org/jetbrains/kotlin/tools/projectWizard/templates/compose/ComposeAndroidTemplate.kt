@@ -7,11 +7,9 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.GradleOnlyPluginByNameIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.RepositoryIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
+import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidSinglePlatformModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
@@ -48,8 +46,8 @@ class ComposeAndroidTemplate : Template() {
     ) = irsList {
         +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
-        +RepositoryIR(DefaultRepository.JCENTER)
         +RepositoryIR(DefaultRepository.GOOGLE)
+        +Dependencies.ACTIVITY_COMPOSE
     }
 
     override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> = irs.filterNot {
@@ -67,7 +65,7 @@ class ComposeAndroidTemplate : Template() {
     }
 
     override fun Writer.runArbitratyTask(module: ModuleIR): TaskResult<Unit> = compute {
-        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV).ensure()
+        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV, DefaultRepository.GOOGLE).ensure()
 
         //TODO hacky!
         TemplatesPlugin.fileTemplatesToRender.update { templates ->
@@ -98,6 +96,14 @@ class ComposeAndroidTemplate : Template() {
         val manifestXml = FileTemplateDescriptor(
             templateId = "composeAndroid/AndroidManifest.xml.vm",
             relativePath = "src" / "main" / "AndroidManifest.xml",
+        )
+    }
+
+    object Dependencies {
+        val ACTIVITY_COMPOSE = ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(Repositories.JETBRAINS_COMPOSE_DEV, "androidx.activity", "activity-compose"),
+            version = Versions.COMPOSE.ANDROID_ACTIVITY_COMPOSE,
+            dependencyType = DependencyType.MAIN,
         )
     }
 }

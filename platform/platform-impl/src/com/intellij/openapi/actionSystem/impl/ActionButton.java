@@ -46,14 +46,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
-  private Icon myIcon;
+  protected Icon myIcon;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
   protected final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
   private ActionButtonLook myLook = ActionButtonLook.SYSTEM_LOOK;
   private boolean myMouseDown;
-  private boolean myRollover;
+  protected boolean myRollover;
   private static boolean ourGlobalMouseDown;
 
   private boolean myNoIconsInPopup;

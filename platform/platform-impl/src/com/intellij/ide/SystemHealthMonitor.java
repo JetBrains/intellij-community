@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
-import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.StartupUtil;
 import com.intellij.jna.JnaLoader;
@@ -30,8 +29,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.IoErrorText;
 import com.sun.jna.*;
-import com.sun.jna.platform.mac.SystemB;
-import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -102,7 +99,10 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
-    if (isUnderRosetta()) {
+    if (!CpuArch.isEmulated()) return;
+    LOG.info(CpuArch.CURRENT + " appears to be emulated");
+
+    if (SystemInfo.isMac && CpuArch.isIntel64()) {
       NotificationAction downloadAction = NotificationAction.createSimpleExpiring(
         IdeBundle.message("bundled.jre.m1.arch.message.download"),
         () -> BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide"));
@@ -162,27 +162,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
     return false;
   }
 
-  private static boolean isUnderRosetta() {
-    // Use "sysctl.proc_translated" to check if running in Rosetta
-    // See https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment#Determine-Whether-Your-App-Is-Running-as-a-Translated-Binary
-    // for more details
-
-    if (!SystemInfo.isMac || !CpuArch.isIntel64()) {
-      return false;
-    }
-
-    IntByReference size = new IntByReference(SystemB.INT_SIZE);
-    Pointer p = new Memory(size.getValue());
-
-    if (SystemB.INSTANCE.sysctlbyname(
-      "sysctl.proc_translated", p, size, null, 0) != -1)
-    {
-      return p.getInt(0) == 1;
-    }
-
-    return false;
-  }
-
   private static void checkReservedCodeCacheSize() {
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
     int minReservedCodeCacheSize = 240;  //todo[r.sh] PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
@@ -205,7 +184,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       try {
         if (StartupUtil.getShellEnvLoadingFuture().get() == Boolean.FALSE) {
-          NotificationAction action = ShowLogAction.isSupported() ? ShowLogAction.notificationAction() : null;
+          NotificationAction action = NotificationAction.createSimpleExpiring(
+            IdeBundle.message("shell.env.loading.learn.more"), () -> BrowserUtil.browse("https://jb.gg/shell-env"));
           String appName = ApplicationNamesInfo.getInstance().getFullProductName(), shell = System.getenv("SHELL");
           showNotification("shell.env.loading.failed", true, action, appName, shell);
         }

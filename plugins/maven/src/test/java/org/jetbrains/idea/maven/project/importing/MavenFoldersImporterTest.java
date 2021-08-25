@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -147,7 +147,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
     ApplicationManager.getApplication().runWriteAction(() -> {
       MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                                                     getModule("project"),
-                                                                                                    new IdeModifiableModelsProviderImpl(myProject)));
+                                                                                                    ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
       adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
       adapter.getRootModel().commit();
     });
@@ -178,7 +178,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
     ApplicationManager.getApplication().runWriteAction(() -> {
       MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                 getModule("project"),
-                                                                new IdeModifiableModelsProviderImpl(myProject)));
+                                                                ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
       adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                               new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
       adapter.getRootModel().commit();

@@ -2,8 +2,8 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.core.CoreBundle
 import com.intellij.find.FindBundle
+import com.intellij.find.FindSettings
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -98,7 +98,7 @@ abstract class DeclarationAndUsagesLesson
         text(LessonsBundle.message("declaration.and.usages.pin.motivation", strong(UIBundle.message("tool.window.name.find"))))
         text(LessonsBundle.message("declaration.and.usages.right.click.tab",
                                    strong(FindBundle.message("find.usages.of.element.in.scope.panel.title",
-                                                             entityName, CoreBundle.message("scope.name.all.places")))))
+                                                             entityName, FindSettings.getInstance().defaultScopeName))))
       }
 
       task("PinToolwindowTab") {

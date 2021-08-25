@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.findUsages
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
+import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.types.typeUtil.isUnit
@@ -23,7 +24,8 @@ class KotlinFindUsagesProvider : KotlinFindUsagesProviderBase() {
         val returnType = descriptor.returnType
         val returnTypeDescription = if (returnType != null && !returnType.isUnit()) renderer.renderType(returnType) else null
         val funDescription = "$name$paramsDescription" + (returnTypeDescription?.let { ": $it" } ?: "")
-        return funDescription + (element.containerDescription?.let { " of $it" } ?: "")
+        return element.containerDescription?.let { KotlinIdeaCompletionBundle.message("find.usage.provider.0.of.1", funDescription, it) }
+            ?: KotlinIdeaCompletionBundle.message("find.usage.provider.0", funDescription)
     }
 
     override fun getNodeText(element: PsiElement, useFullName: Boolean): String =

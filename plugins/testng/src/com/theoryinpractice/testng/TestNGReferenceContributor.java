@@ -49,6 +49,14 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         return new DataProviderReference[]{new DataProviderReference((PsiLiteral)element)};
       }
     });
+
+    registrar.registerReferenceProvider(getElementPattern("name"), new PsiReferenceProvider() {
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        return new DataProviderTestReference[]{new DataProviderTestReference((PsiLiteral)element)};
+      }
+    });
+
     registrar.registerReferenceProvider(getElementPattern("groups"), new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {

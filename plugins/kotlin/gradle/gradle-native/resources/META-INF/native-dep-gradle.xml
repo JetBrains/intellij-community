@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.konan.KotlinNativeABICompatibilityChecker"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradle.native.KotlinNativeRunConfigurationProducer"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.konan.KotlinNativeABICompatibilityCheckerService" />
+  </extensions>
+</idea-plugin>

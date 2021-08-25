@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
-import com.intellij.ide.XmlRpcServer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
@@ -15,6 +14,7 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.CustomPortServerManager
+import org.jetbrains.ide.XmlRpcServerImpl
 import java.net.InetSocketAddress
 
 internal class SubServer(private val user: CustomPortServerManager, private val server: BuiltInServer) : CustomPortServerManager.CustomPortService, Disposable {
@@ -92,6 +92,6 @@ private class XmlRpcDelegatingHttpRequestHandler internal constructor(private va
       return false
     }
 
-    return request.method() === HttpMethod.POST && XmlRpcServer.SERVICE.getInstance().process(urlDecoder.path(), request, context, handlers)
+    return request.method() === HttpMethod.POST && XmlRpcServerImpl.getInstance().process(urlDecoder.path(), request, context, handlers)
   }
 }

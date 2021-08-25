@@ -4,7 +4,7 @@ open class A<T>(t: T) {
     open var <caret>foo: T = t
 }
 
-open class B: A<String>("") {
+open class B : A<String>("") {
     override var foo: String
         get() {
             println("get")
@@ -21,6 +21,6 @@ open class B: A<String>("") {
     }
 }
 
-open class D: A<String>("") {
+open class D : A<String>("") {
     override var foo: String = ""
 }

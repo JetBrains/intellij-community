@@ -252,6 +252,7 @@ public final class ProblemDescriptorUtil {
     if (startElement == null || endElement == null) {
       return null;
     }
+    final TextRange rangeInElement = getRangeInElement(startElement, startOffset, endElement, endOffset);
 
     ProblemHighlightType highlightType = HighlightInfo.convertSeverityToProblemHighlight(severity);
     return new ProblemDescriptorBase(startElement,
@@ -260,9 +261,21 @@ public final class ProblemDescriptorUtil {
                                      quickFixes,
                                      highlightType,
                                      isAfterEndOfLine,
-                                     null,
+                                     rangeInElement,
                                      true,
                                      false);
+  }
+
+  @Nullable
+  private static TextRange getRangeInElement(@NotNull PsiElement startElement, int startOffset, PsiElement endElement, int endOffset) {
+    if (startElement != endElement) {
+      return null;
+    }
+    TextRange elementTextRange = startElement.getTextRange();
+    if (elementTextRange.getStartOffset() == startOffset && elementTextRange.getEndOffset() == endOffset) {
+      return null;
+    }
+    return new TextRange(startOffset - elementTextRange.getStartOffset(), endOffset - elementTextRange.getStartOffset());
   }
 
   private static LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,

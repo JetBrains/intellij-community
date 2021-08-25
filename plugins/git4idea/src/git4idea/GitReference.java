@@ -5,8 +5,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.FastUtilHashingStrategies;
-import it.unimi.dsi.fastutil.Hash;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class GitReference implements Comparable<GitReference> {
 
-  public static final Hash.Strategy<String> BRANCH_NAME_HASHING_STRATEGY =
-    FastUtilHashingStrategies.getStringStrategy(SystemInfoRt.isFileSystemCaseSensitive);
+  public static final HashingStrategy<String> BRANCH_NAME_HASHING_STRATEGY =
+    SystemInfoRt.isFileSystemCaseSensitive ? HashingStrategy.canonical() : HashingStrategy.caseInsensitive();
 
   @NotNull protected final String myName;
 

@@ -47,6 +47,10 @@ public class PsiGuardedPatternImpl extends CompositePsiElement implements PsiGua
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     final PsiPrimaryPattern patternVariable = getPrimaryPattern();
-    return patternVariable.processDeclarations(processor, state, null, place);
+    if (!patternVariable.processDeclarations(processor, state, null, place)) return false;
+
+    final PsiExpression expression = getGuardingExpression();
+    if (expression == null) return true;
+    return expression.processDeclarations(processor, state, lastParent, place);
   }
 }

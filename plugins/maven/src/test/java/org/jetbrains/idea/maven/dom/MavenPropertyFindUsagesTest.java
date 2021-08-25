@@ -148,7 +148,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
   public void testHighlightingFromTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
-                     "<<caret>version>1</version>" +
+                     "<version><caret>1</version>" +
 
                      "<name>${project.version}</name>" +
                      "<description>${version}</description>");

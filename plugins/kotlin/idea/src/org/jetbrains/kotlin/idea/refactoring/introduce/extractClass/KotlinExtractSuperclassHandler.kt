@@ -5,13 +5,16 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui.KotlinExtractSuperclassDialog
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 object KotlinExtractSuperclassHandler : KotlinExtractSuperHandlerBase(false) {
-    val REFACTORING_NAME = KotlinBundle.message("text.extract.superclass")
+    val REFACTORING_NAME
+        @Nls
+        get() = KotlinBundle.message("text.extract.superclass")
 
     override fun getErrorMessage(klass: KtClassOrObject): String? {
         val superMessage = super.getErrorMessage(klass)

@@ -117,13 +117,26 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
 
   @Override
   protected void refactorNoPreview() {
+    var infos = myView.getSelectedMemberInfos();
+    disableItemsCantBeAbstract(infos);
     PyExtractSuperclassHelper
-      .extractSuperclass(myClassUnderRefactoring, myView.getSelectedMemberInfos(), myView.getSuperClassName(), myView.getModuleFile());
+      .extractSuperclass(myClassUnderRefactoring, infos, myView.getSuperClassName(), myView.getModuleFile());
   }
 
   @NotNull
   @Override
   protected Iterable<? extends PyClass> getDestClassesToCheckConflicts() {
     return Collections.emptyList(); // No conflict can take place in newly created classes
+  }
+
+  /**
+   * Methods may still be marked abstract because user marked them before they were disabled
+   */
+  private void disableItemsCantBeAbstract(@NotNull Collection<PyMemberInfo<PyElement>> infos) {
+    for (var info : infos) {
+      if (info.isToAbstract() && !myModel.isAbstractEnabled(info)) {
+        info.setToAbstract(false);
+      }
+    }
   }
 }

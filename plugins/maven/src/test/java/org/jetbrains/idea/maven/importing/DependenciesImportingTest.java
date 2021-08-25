@@ -1146,8 +1146,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     List<MavenProject> modules = myProjectsTree.getModules(root);
 
     assertOrderedElementsAreEqual(root.getProblems());
-    assertOrderedElementsAreEqual(modules.get(0).getProblems(),
-                                  "Unresolved dependency: xxx:yyy:pom:1:compile");
+    assertTrue(modules.get(0).getProblems().get(0).getDescription().contains("Unresolved dependency: 'xxx:yyy:pom:1'"));
   }
 
   @Test

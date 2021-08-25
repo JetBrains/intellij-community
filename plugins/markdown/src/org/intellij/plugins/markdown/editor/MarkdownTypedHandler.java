@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import org.intellij.plugins.markdown.injection.LanguageListCompletionContributor;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownTypedHandler extends TypedHandlerDelegate {
@@ -18,7 +17,7 @@ public class MarkdownTypedHandler extends TypedHandlerDelegate {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       for (Caret caret : editor.getCaretModel().getAllCarets()) {
         final int offset = caret.getOffset();
-        if (!LanguageListCompletionContributor.isInMiddleOfUnCollapsedFence(file.findElementAt(offset), offset)) {
+        if (!CodeFenceLanguageListCompletionProvider.isInMiddleOfUnCollapsedFence(file.findElementAt(offset), offset)) {
           return Result.CONTINUE;
         }
       }
@@ -26,7 +25,10 @@ public class MarkdownTypedHandler extends TypedHandlerDelegate {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
       return Result.STOP;
     }
-
+    if (charTyped == '<') {
+      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
+      return Result.STOP;
+    }
     return super.checkAutoPopup(charTyped, project, editor, file);
   }
 }

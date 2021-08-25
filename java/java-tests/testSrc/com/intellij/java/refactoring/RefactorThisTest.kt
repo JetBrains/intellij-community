@@ -130,6 +130,10 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<IntroduceParameterObjectAction>())
   }
 
+  fun testIntroduceParameterObjectFiltered2() {
+    assertFalse(doActionExists<IntroduceParameterObjectAction>())
+  }
+
   fun testMakeStaticOnMethodDeclaration() {
     assertTrue(doActionExists<MakeStaticAction>())
   }

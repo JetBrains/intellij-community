@@ -45,7 +45,7 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
   protected DefaultTreeModel buildTreeModel(@NotNull Project project,
                                             @NotNull ChangesGroupingPolicyFactory grouping,
                                             @NotNull List<? extends PresentableChange> changes) {
-    MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = new MultiMap<>();
+    MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = MultiMap.createLinked();
 
     for (int i = 0; i < changes.size(); i++) {
       PresentableChange change = changes.get(i);

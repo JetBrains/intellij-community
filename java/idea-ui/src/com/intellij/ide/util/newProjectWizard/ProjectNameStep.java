@@ -2,6 +2,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.*;
@@ -34,8 +35,8 @@ public class ProjectNameStep extends ModuleWizardStep {
     myNamePathComponent = new NamePathComponent(
       IdeBundle.message("label.project.name"),
       IdeBundle.message("label.project.files.location"),
-      JavaUiBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
-      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      JavaUiBundle.message("title.select.project.file.directory", IdeCoreBundle.message("project.new.wizard.project.identification")),
+      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeCoreBundle.message("project.new.wizard.project.identification"))),
       true, false
     );
     final String baseDir = myWizardContext.getProjectFileDirectory();

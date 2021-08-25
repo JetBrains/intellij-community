@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed.Companion.
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable.TOOLTIPS_DELAY_RANGE
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -136,9 +137,20 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> = setOf(EP_NAME)
 
   override fun createPanel(): DialogPanel {
+    lateinit var chkEnableWheelFontSizeChange: JCheckBox
     return panel {
       titledRow(message("group.advanced.mouse.usages")) {
-        row { checkBox(enableWheelFontChange) }
+        row {
+          checkBox(enableWheelFontChange).also { chkEnableWheelFontSizeChange = it.component }
+          row {
+            cell {
+              buttonGroup({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it }) {
+                radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.current"), false).enableIf(chkEnableWheelFontSizeChange.selected)
+                radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.all"), true).enableIf(chkEnableWheelFontSizeChange.selected)
+              }
+            }
+          }
+        }
         row {
           cell(isFullWidth = true) {
             checkBox(enableDnD)
@@ -354,7 +366,8 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         row {
           cell(isFullWidth = true) {
             label(message("editor.options.tooltip.delay"))
-            intTextField(editorSettings::getTooltipsDelay, editorSettings::setTooltipsDelay, range = 1..5000, columns = 4)
+            intTextField(editorSettings::getTooltipsDelay, editorSettings::setTooltipsDelay, range = TOOLTIPS_DELAY_RANGE.asRange(),
+                         columns = 4)
             label(message("editor.options.ms"))
           }
         }

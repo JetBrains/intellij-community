@@ -28,15 +28,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Contract;
@@ -416,22 +410,61 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     private void visitSwitchLabelStatementBase(PsiSwitchLabelStatementBase statement) {
       List<Evaluator> evaluators = new SmartList<>();
-      PsiExpressionList caseValues = statement.getCaseValues();
-      if (caseValues != null) {
-        for (PsiExpression expression : caseValues.getExpressions()) {
-          Evaluator evaluator = accept(expression);
+      PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+      boolean defaultCase = statement.isDefaultCase();
+      if (labelElementList != null) {
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          if (labelElement instanceof PsiDefaultCaseLabelElement) {
+            defaultCase = true;
+            continue;
+          } else if (labelElement instanceof PsiPattern) {
+            PatternLabelEvaluator evaluator = getPatternLabelEvaluator((PsiPattern)labelElement);
+            if (evaluator != null) {
+              evaluators.add(evaluator);
+            }
+            continue;
+          }
+          Evaluator evaluator = accept(labelElement);
           if (evaluator != null) {
             evaluators.add(evaluator);
           }
         }
       }
       if (statement instanceof PsiSwitchLabeledRuleStatement) {
-        myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, statement.isDefaultCase(),
+        myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, defaultCase,
                                                                accept(((PsiSwitchLabeledRuleStatement)statement).getBody()));
       }
       else {
-        myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
+        myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, defaultCase);
       }
+    }
+
+    @Nullable
+    private PatternLabelEvaluator getPatternLabelEvaluator(@NotNull PsiPattern pattern) {
+      PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(pattern, PsiSwitchBlock.class);
+      if (switchBlock == null) return null;
+      PsiExpression selector = switchBlock.getExpression();
+      if (selector == null) return null;
+      selector.accept(this);
+      Evaluator selectorEvaluator = myResult;
+      PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
+      if (patternVariable == null) return null;
+      PsiPattern naked = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
+      Evaluator guardingEvaluator = null;
+      if (naked instanceof PsiGuardedPattern) {
+        PsiExpression guardingExpression = ((PsiGuardedPattern)naked).getGuardingExpression();
+        if (guardingExpression != null) {
+          guardingExpression.accept(this);
+          guardingEvaluator = myResult != null ? new UnBoxingEvaluator(myResult) : null;
+        }
+      }
+      String patternVariableName = patternVariable.getName();
+      myCurrentFragmentEvaluator.setInitialValue(patternVariableName, null);
+      Evaluator patternVariableEvaluator = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, patternVariableName, null);
+      PsiType type = JavaPsiPatternUtil.getPatternType(pattern);
+      if (type == null) return null;
+      return new PatternLabelEvaluator(selectorEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)),
+                                       patternVariableEvaluator, guardingEvaluator);
     }
 
     @Override

@@ -39,11 +39,6 @@ public class QuickPreviewAction extends ShowImplementationsAction {
     }
   }
 
-  @Override
-  protected boolean isSearchDeep() {
-    return false;
-  }
-
   protected boolean isQuickPreviewAvailableFor(AnActionEvent e) {
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (component instanceof JTree || component instanceof JList) {

@@ -6,8 +6,11 @@ import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
@@ -63,7 +66,8 @@ public abstract class TableHoverListener extends HoverListener {
     if (rowNew == rowOld) return;
     table.putClientProperty(HOVERED_ROW_KEY, rowNew < 0 ? null : rowNew);
     if (RenderingUtil.isHoverPaintingDisabled(table)) return;
-    table.repaint();
+    repaintRow(table, rowOld, 0);
+    repaintRow(table, rowNew, 0);
   }
 
   /**
@@ -74,5 +78,10 @@ public abstract class TableHoverListener extends HoverListener {
   public static int getHoveredRow(@NotNull JTable table) {
     Object property = table.getClientProperty(HOVERED_ROW_KEY);
     return property instanceof Integer ? (Integer)property : -1;
+  }
+
+  private static void repaintRow(@NotNull JTable table, int row, int column) {
+    Rectangle bounds = row < 0 ? null : table.getCellRect(row, column, false);
+    if (bounds != null) table.repaint(0, bounds.y, table.getWidth(), bounds.height);
   }
 }

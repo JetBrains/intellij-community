@@ -7,6 +7,7 @@ import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -26,7 +26,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Consumer;
+import com.intellij.util.FilteringProcessor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +141,7 @@ public class EditorHyperlinkSupport {
 
   @Nullable
   public Runnable getLinkNavigationRunnable(LogicalPosition logical) {
-    if (EditorUtil.inVirtualSpace(myEditor, logical)) {
+    if (EditorCoreUtil.inVirtualSpace(myEditor, logical)) {
       return null;
     }
 
@@ -254,7 +257,7 @@ public class EditorHyperlinkSupport {
   @Nullable
   public HyperlinkInfo getHyperlinkInfoByPoint(Point p) {
     LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
-    if (EditorUtil.inVirtualSpace(myEditor, pos)) {
+    if (EditorCoreUtil.inVirtualSpace(myEditor, pos)) {
       return null;
     }
 

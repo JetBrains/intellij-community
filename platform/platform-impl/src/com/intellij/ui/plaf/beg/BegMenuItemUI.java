@@ -3,6 +3,7 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -42,6 +43,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle j = new Rectangle();
   private static final Rectangle d = new Rectangle();
   private int myMaxGutterIconWidth;
+  private int myMaxGutterIconWidth2;
   private int a;
   private static Rectangle i = new Rectangle();
   private int k;
@@ -62,7 +64,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   public BegMenuItemUI() {
-    myMaxGutterIconWidth = 18;
+    myMaxGutterIconWidth2 = myMaxGutterIconWidth = 18;
 
     if (UIUtil.isUnderAquaBasedLookAndFeel() && myAquaSelectedBackgroundPainter == null) {
       myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
@@ -75,10 +77,14 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     final String propertyPrefix = getPropertyPrefix();
     Integer integer = UIUtil.getPropertyMaxGutterIconWidth(propertyPrefix);
     if (integer != null){
-      myMaxGutterIconWidth = integer.intValue();
+      myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
     selectionBackground = UIUtil.getListSelectionBackground(true);
+
+    if (IdeaPopupMenuUI.isPartOfPopupMenu(menuItem)) {
+      arrowIcon = null;
+    }
   }
 
   private static boolean isSelected(JMenuItem item) {
@@ -86,6 +92,10 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     ButtonModel model = item.getModel();
     if (model == null) return false;
     return model.isArmed() || (item instanceof JMenu) && model.isSelected();
+  }
+
+  private void checkEmptyIcon(JComponent comp) {
+    myMaxGutterIconWidth = getAllowedIcon() == null && IdeaPopupMenuUI.hideEmptyIcon(comp) ? 0 : myMaxGutterIconWidth2;
   }
 
   @Override
@@ -96,6 +106,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     int mnemonicIndex = jmenuitem.getDisplayedMnemonicIndex();
     Icon icon1 = getIcon();
     Icon icon2 = getAllowedIcon();
+    checkEmptyIcon(comp);
     int j1 = jmenuitem.getWidth();
     int k1 = jmenuitem.getHeight();
     Insets insets = comp.getInsets();
@@ -352,7 +363,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
     // Position the Accelerator text rect
 
-    acceleratorRect.x += viewRect.width - arrowIconRect.width - menuItemGap - acceleratorRect.width;
+    acceleratorRect.x += viewRect.width - arrowIconRect.width - (arrowIconRect.width > 0 ? menuItemGap : 0) - acceleratorRect.width;
     acceleratorRect.y = (viewRect.y + viewRect.height / 2) - acceleratorRect.height / 2;
 
     // Position the Check and Arrow Icons
@@ -387,6 +398,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     JMenuItem jmenuitem = (JMenuItem)comp;
     Icon icon1 = getIcon();
     Icon icon2 = getAllowedIcon();
+    checkEmptyIcon(comp);
     String text = jmenuitem.getText();
     String keyStrokeText = getKeyStrokeText(jmenuitem);
     Font font = jmenuitem.getFont();

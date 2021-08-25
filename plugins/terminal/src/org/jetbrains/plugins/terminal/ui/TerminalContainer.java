@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.ui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -180,7 +181,7 @@ public class TerminalContainer {
       }
       catch (IllegalThreadStateException ignored) {
       }
-      return text + "\n[" + IdeBundle.message("finished.with.exit.code.text.message", exitCode != null ? exitCode : "unknown") + "]";
+      return text + "\n[" + IdeCoreBundle.message("finished.with.exit.code.text.message", exitCode != null ? exitCode : "unknown") + "]";
     }
     return text;
   }

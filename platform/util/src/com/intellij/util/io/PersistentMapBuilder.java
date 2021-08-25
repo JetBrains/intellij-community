@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutorService;
 
 /**
  * A builder helper for {@link PersistentHashMap}
@@ -26,6 +28,8 @@ public final class PersistentMapBuilder<Key, Value> {
   private Boolean myIsReadOnly;
   private Boolean myHasChunks;
   private Boolean myCompactOnClose = null;
+  private @NotNull ExecutorService myWalExecutor = ConcurrencyUtil.newSameThreadExecutorService();
+  private boolean myEnableWal;
 
   private PersistentMapBuilder(@NotNull Path file,
                                @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -111,6 +115,18 @@ public final class PersistentMapBuilder<Key, Value> {
   }
 
   @NotNull
+  public PersistentMapBuilder<Key, Value> withWal(boolean enableWal) {
+    myEnableWal = enableWal;
+    return this;
+  }
+
+  @NotNull
+  public PersistentMapBuilder<Key, Value> setWalExecutor(@NotNull ExecutorService service) {
+    myWalExecutor = service;
+    return this;
+  }
+
+  @NotNull
   public PersistentMapBuilder<Key, Value> inlineValues(boolean inlineValues) {
     if (inlineValues && !(myValueExternalizer instanceof IntInlineKeyDescriptor)) {
       throw new IllegalStateException("can't inline values for externalizer " + myValueExternalizer.getClass());
@@ -175,6 +191,14 @@ public final class PersistentMapBuilder<Key, Value> {
   public boolean getCompactOnClose(boolean defaultCompactOnClose) {
     if (myCompactOnClose != null) return myCompactOnClose;
     return defaultCompactOnClose;
+  }
+
+  public boolean isEnableWal() {
+    return myEnableWal;
+  }
+
+  public ExecutorService getWalExecutor() {
+    return myWalExecutor;
   }
 
   @Nullable

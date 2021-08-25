@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.*
@@ -38,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import org.picocontainer.MutablePicoContainer
 import org.picocontainer.PicoContainer
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -58,7 +57,7 @@ private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 abstract class ComponentManagerImpl @JvmOverloads constructor(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
-) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), MutablePicoContainer, ComponentManagerEx, IComponentStoreOwner {
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), PicoContainer, ComponentManagerEx, IComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
@@ -214,20 +213,27 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     indicator.fraction = getPercentageOfComponentsLoaded()
   }
 
-  @Internal
   fun getPercentageOfComponentsLoaded(): Double {
     return instantiatedComponentCount.toDouble() / componentConfigCount
   }
 
-  override fun getExtensionArea(): ExtensionsAreaImpl {
+  final override fun getExtensionArea(): ExtensionsAreaImpl {
     if (!isExtensionSupported) {
       error("Extensions aren't supported")
     }
     return _extensionArea
   }
 
+  // convenient method - use only in a not important code
+  fun registerComponents() {
+    registerComponents(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                       app = getApplication(),
+                       precomputedExtensionModel = null,
+                       listenerCallbacks = null)
+  }
+
   @Internal
-  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+  open fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                               app: Application?,
                               precomputedExtensionModel: PrecomputedExtensionModel?,
                               listenerCallbacks: List<Runnable>?) {
@@ -243,20 +249,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
     val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.extensionPoints) else null
-    for (mainPlugin in plugins) {
+    for (rootModule in modules) {
+      executeRegisterTask(rootModule) { module ->
+        val containerDescriptor = getContainerDescriptor(module)
+        registerServices(containerDescriptor.services, module)
+        newComponentConfigCount += registerComponents(module, containerDescriptor, isHeadless)
 
-      executeRegisterTask(mainPlugin) { pluginDescriptor ->
-        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
-        registerServices(containerDescriptor.services, pluginDescriptor)
-      }
-
-      executeRegisterTask(mainPlugin) { pluginDescriptor ->
-        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
-        newComponentConfigCount += registerComponents(pluginDescriptor, containerDescriptor, isHeadless)
-      }
-
-      executeRegisterTask(mainPlugin) { pluginDescriptor ->
-        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
         containerDescriptor.listeners?.let { listeners ->
           var m = map
           if (m == null) {
@@ -272,17 +270,14 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
               continue
             }
 
-            listener.pluginDescriptor = pluginDescriptor
+            listener.pluginDescriptor = module
             m.computeIfAbsent(listener.topicClassName) { ArrayList() }.add(listener)
           }
         }
-      }
 
-      if (extensionPoints != null) {
-        executeRegisterTask(mainPlugin) { pluginDescriptor ->
-          val containerDescriptor = getContainerDescriptor(pluginDescriptor)
+        if (extensionPoints != null) {
           containerDescriptor.extensionPoints?.let {
-            ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, pluginDescriptor)
+            ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, module)
           }
         }
       }
@@ -296,10 +291,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) Collections.emptyMap() else java.util.Map.copyOf(extensionPoints)
       extensionArea.setPoints(immutableExtensionPoints)
 
-      for (mainPlugin in plugins) {
-        executeRegisterTask(mainPlugin) { pluginDescriptor ->
-          val containerDescriptor = getContainerDescriptor(pluginDescriptor)
-          pluginDescriptor.registerExtensions(immutableExtensionPoints, containerDescriptor, listenerCallbacks)
+      for (rootModule in modules) {
+        executeRegisterTask(rootModule) { module ->
+          module.registerExtensions(immutableExtensionPoints, getContainerDescriptor(module), listenerCallbacks)
         }
       }
     }
@@ -578,7 +572,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? = serviceInstanceHotCache.get(serviceClass) as T?
+  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
+    var result = serviceInstanceHotCache.get(serviceClass) as T?
+    if (result == null) {
+      result = doGetService(serviceClass, createIfNeeded = false)
+      if (result != null) {
+        serviceInstanceHotCache.putIfAbsent(serviceClass, result)
+      }
+    }
+    return result
+  }
 
   protected open fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val key = serviceClass.name
@@ -866,8 +869,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         throw e
       }
 
-      val message = "Cannot create class ${aClass.name} (classloader=${aClass.classLoader})"
-      throw PluginException(message, e, pluginId)
+      throw PluginException("Cannot create class ${aClass.name} (classloader=${aClass.classLoader})", e, pluginId)
     }
   }
 
@@ -941,8 +943,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       for (service in services) {
         val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
-        val implClass = instance.javaClass
-        clearServiceHotCacheOnUnload(implClass)
         if (instance is Disposable) {
           Disposer.dispose(instance)
         }
@@ -956,7 +956,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       while (iterator.hasNext()) {
         val adapter = iterator.next() as? LightServiceComponentAdapter ?: continue
         val instance = adapter.getComponentInstance(null)
-        serviceInstanceHotCache.remove(instance.javaClass)
         if ((instance.javaClass.classLoader as? PluginAwareClassLoader)?.pluginId == pluginId) {
           if (instance is Disposable) {
             Disposer.dispose(instance)
@@ -966,53 +965,20 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         }
       }
     }
-  }
 
-  private fun clearServiceHotCacheOnUnload(implClass: Class<Any>) {
-    if (serviceInstanceHotCache.remove(implClass) != null || Modifier.isFinal(implClass.modifiers)) {
-      return
-    }
-
-    for (it in implClass.interfaces) {
-      if (serviceInstanceHotCache.remove(it) != null) {
-        return
-      }
-    }
-
-    var aClass: Class<*> = implClass.superclass
-    if (aClass === Object::class.java) {
-      return
-    }
-
-    do {
-      if (serviceInstanceHotCache.remove(aClass) != null) {
-        return
-      }
-
-      for (it in aClass.interfaces) {
-        if (serviceInstanceHotCache.remove(it) != null) {
-          return
-        }
-      }
-
-      aClass = aClass.superclass ?: break
-      if (aClass === Object::class.java) {
-        return
-      }
-    }
-    while (true)
+    serviceInstanceHotCache.clear()
   }
 
   @Internal
   open fun activityNamePrefix(): String? = null
 
   @ApiStatus.Internal
-  open fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
-                      activityPrefix: String,
-                      onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
+  open fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
+                           activityPrefix: String,
+                           onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
     val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
-    for (plugin in plugins) {
+    for (plugin in modules) {
       serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
         if (!isServiceSuitable(service) || service.os != null && !isSuitableForOs(service.os)) {
           continue@serviceLoop
@@ -1263,7 +1229,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
   }
 
-  final override fun unregisterComponent(componentKey: Any): ComponentAdapter? {
+  fun unregisterComponent(componentKey: Any): ComponentAdapter? {
     assertComponentsSupported()
 
     val adapter = componentKeyToAdapter.remove(componentKey) ?: return null
@@ -1287,7 +1253,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     throw UnsupportedOperationException("Do not use getComponentInstanceOfType()")
   }
 
-  final override fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
+  fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
     assertComponentsSupported()
 
     val componentAdapter = object : ComponentAdapter {
@@ -1304,10 +1270,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
     componentAdapters.add(componentAdapter)
     return componentAdapter
-  }
-
-  final override fun registerComponentImplementation(componentKey: Any, componentImplementation: Class<*>): ComponentAdapter {
-    throw UnsupportedOperationException()
   }
 
   private fun assertComponentsSupported() {
@@ -1501,4 +1463,10 @@ private class LightServiceComponentAdapter(private val initializedInstance: Any)
   override fun getComponentInstance(container: PicoContainer?) = initializedInstance
 
   override fun toString() = componentKey
+}
+
+private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
+                                       crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
+  task(mainPluginDescriptor)
+  executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }

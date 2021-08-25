@@ -2,7 +2,7 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
-import gnu.trove.TObjectObjectProcedure;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -33,7 +33,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
 
   abstract void removeAll(final K key, final Collection<V> value);
 
-  abstract void forEachEntry(TObjectObjectProcedure<K, Collection<V>> procedure);
+  abstract void forEachEntry(@NotNull PairProcessor<? super K, ? super Collection<V>> procedure);
 
   abstract void flush(boolean memoryCachesOnly);
 
@@ -41,12 +41,9 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
   public void toStream(final DependencyContext context, final PrintStream stream) {
 
     final List<Pair<K, String>> keys = new ArrayList<>();
-    forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(final K a, final Collection<V> b) {
-        keys.add(Pair.create(a, debugString(a)));
-        return true;
-      }
+    forEachEntry((a, b) -> {
+      keys.add(Pair.create(a, debugString(a)));
+      return true;
     });
 
     keys.sort(Pair.comparingBySecond());

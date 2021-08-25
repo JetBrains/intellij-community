@@ -110,7 +110,7 @@ public class TemplateStateBase {
       int startDiff = o2.getStartOffset() - o1.getStartOffset();
       return startDiff != 0 ? startDiff : o2.getEndOffset() - o1.getEndOffset();
     });
-    DocumentUtil.executeInBulk(myDocument, true, () -> {
+    DocumentUtil.executeInBulk(myDocument, () -> {
       if (isDisposed()) {
         return;
       }

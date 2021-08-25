@@ -6,7 +6,7 @@ import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -18,7 +18,7 @@ class MavenRepositoriesDataServiceTest: LightIdeaTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myModelsProvider = IdeModifiableModelsProviderImpl(getProject())
+    myModelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(getProject())
   }
 
   override fun tearDown() {

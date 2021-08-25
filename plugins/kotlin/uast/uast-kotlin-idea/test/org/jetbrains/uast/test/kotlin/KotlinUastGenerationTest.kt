@@ -5,7 +5,10 @@ package org.jetbrains.uast.test.kotlin
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -24,7 +27,6 @@ import org.jetbrains.uast.kotlin.generate.KotlinUastElementFactory
 import org.jetbrains.uast.test.env.kotlin.findElementByTextFromPsi
 import org.jetbrains.uast.test.env.kotlin.findUElementByTextFromPsi
 import org.jetbrains.uast.visitor.UastVisitor
-import java.lang.StringBuilder
 import kotlin.test.fail as kfail
 
 class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -448,20 +450,36 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         ) ?: kfail("cannot create call")
 
         TestCase.assertEquals("A.kek<kotlin.String, kotlin.Int>(\"a\")", methodCall.sourcePsi?.parent?.text)
-        TestCase.assertEquals("""
+        TestCase.assertEquals(
+            """
             UQualifiedReferenceExpression
                 USimpleNameReferenceExpression (identifier = A)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (kek))
                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                     ULiteralExpression (value = "a")
-        """.trimIndent(), methodCall.uastParent?.asRecursiveLogString()?.trim())
+        """.trimIndent(), methodCall.uastParent?.asRecursiveLogString()?.trim()
+        )
     }
 
+    fun `test callable reference generation with receiver`() {
+        val receiver = uastElementFactory.createQualifiedReference("java.util.Arrays", myFixture.file)
+            ?: kfail("failed to create receiver")
+        val methodReference = uastElementFactory.createCallableReferenceExpression(receiver, "asList", myFixture.file)
+            ?: kfail("failed to create method reference")
+        TestCase.assertEquals(methodReference.sourcePsi?.text, "java.util.Arrays::asList")
+    }
+
+    fun `test callable reference generation without receiver`() {
+        val methodReference = uastElementFactory.createCallableReferenceExpression(null, "asList", myFixture.file)
+            ?: kfail("failed to create method reference")
+        TestCase.assertEquals(methodReference.sourcePsi?.text, "::asList")
+    }
 
     //not implemented (currently we dont perform resolve in code generating)
     fun `ignore method call generation with generics restoring 1 parameter with 1 unused `() {
-        val aClassFile = myFixture.configureByText("A.kt",
+        val aClassFile = myFixture.configureByText(
+            "A.kt",
             """
                 object A {
                     fun <T1, T2, T3> kek(a: T1): Map<T1, T3> {

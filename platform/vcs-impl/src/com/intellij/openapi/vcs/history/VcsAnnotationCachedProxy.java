@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,6 +54,11 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
   @Override
   public void populateCache(@NotNull VirtualFile file) throws VcsException {
     annotate(file);
+  }
+
+  @Override
+  public @Nullable FileAnnotation getFromCache(@NotNull VirtualFile file) {
+    return null;
   }
 
   /**

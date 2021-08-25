@@ -3,8 +3,8 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -36,8 +36,8 @@ public final class VcsDirtyScopeMap {
 
   private @NotNull Set<FilePath> getVcsPathsSet(@NotNull AbstractVcs vcs) {
     return myMap.computeIfAbsent(vcs, key -> {
-      Hash.Strategy<FilePath> strategy = getDirtyScopeHashingStrategy(key);
-      return strategy == null ? new HashSet<>() : new ObjectOpenCustomHashSet<>(strategy);
+      HashingStrategy<FilePath> strategy = getDirtyScopeHashingStrategy(key);
+      return strategy == null ? new HashSet<>() : CollectionFactory.createCustomHashingStrategySet(strategy);
     });
   }
 

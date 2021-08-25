@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -658,6 +658,16 @@ public class JBUI {
       }
     }
 
+    public interface DragAndDrop {
+      Color BORDER_COLOR = JBColor.namedColor("DragAndDrop.borderColor", 0x2675BF, 0x2F65CA);
+      Color ROW_BACKGROUND = JBColor.namedColor("DragAndDrop.rowBackground", 0x2675BF26, 0x2F65CA33);
+
+      interface Area {
+        Color FOREGROUND = JBColor.namedColor("DragAndDrop.areaForeground", 0x787878, 0xBABABA);
+        Color BACKGROUND = JBColor.namedColor("DragAndDrop.areaBackground", 0x3D7DCC, 0x404A57);
+      }
+    }
+
     public interface Notification {
       Color FOREGROUND = JBColor.namedColor("Notification.foreground", Label.foreground());
       Color BACKGROUND = JBColor.namedColor("Notification.background", 0xFFF8D1, 0x1D3857);
@@ -677,6 +687,11 @@ public class JBUI {
     }
 
     public static final class ToolWindow {
+      @NotNull
+      public static Color background() {
+        return JBColor.namedColor("ToolWindow.background", JBColor.background());
+      }
+
       @NotNull
       public static Color borderColor() {
         return JBColor.namedColor("ToolWindow.HeaderTab.borderColor", DefaultTabs.borderColor());
@@ -717,6 +732,11 @@ public class JBUI {
       @NotNull
       public static Color underlinedTabInactiveForeground() {
         return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", underlinedTabForeground());
+      }
+
+      @NotNull
+      public static int headerTabPadding() {
+        return getInt("ToolWindow.HeaderTab.padding", JBUIScale.scale(6));
       }
 
       /**
@@ -770,6 +790,10 @@ public class JBUI {
       @NotNull
       public static Color headerActiveBackground() {
         return JBColor.namedColor("ToolWindow.Header.background", JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC));
+      }
+
+      public static int headerPadding() {
+        return getInt("ToolWindow.Header.padding", JBUIScale.scale(6));
       }
 
       /**

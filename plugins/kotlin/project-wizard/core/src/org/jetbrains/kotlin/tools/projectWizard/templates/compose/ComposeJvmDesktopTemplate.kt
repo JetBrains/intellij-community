@@ -36,7 +36,7 @@ class ComposeJvmDesktopTemplate : Template() {
         module: ModuleIR
     ) = irsList {
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
-        +RepositoryIR(DefaultRepository.JCENTER)
+        +RepositoryIR(DefaultRepository.GOOGLE)
         +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
 
         +GradleImportIR("org.jetbrains.compose.desktop.application.dsl.TargetFormat")
@@ -47,6 +47,7 @@ class ComposeJvmDesktopTemplate : Template() {
                 "nativeDistributions" {
                     "targetFormats"(raw("TargetFormat.Dmg"), raw("TargetFormat.Msi"), raw("TargetFormat.Deb"))
                     "packageName" assign const(module.name)
+                    "packageVersion" assign const("1.0.0")
                 }
             }
         }
@@ -59,7 +60,7 @@ class ComposeJvmDesktopTemplate : Template() {
     )
 
     override fun Writer.runArbitratyTask(module: ModuleIR): TaskResult<Unit> =
-        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV)
+        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV, DefaultRepository.GOOGLE)
 
     override fun Reader.getFileTemplates(module: ModuleIR) = buildList<FileTemplateDescriptorWithPath> {
         val dependsOnMppModule: Module? =

@@ -3,6 +3,7 @@ package com.intellij.ide.hierarchy;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ public abstract class ChangeHierarchyViewActionBase extends ToggleAction impleme
     return browser != null && getTypeName().equals(browser.getCurrentViewType());
   }
 
+  @Nls
   protected abstract String getTypeName();
 
   @Override

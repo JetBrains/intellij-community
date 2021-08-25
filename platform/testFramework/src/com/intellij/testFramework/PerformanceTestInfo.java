@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PerformanceTestInfo {
   private final ThrowableRunnable<?> test; // runnable to measure
   private final int expectedMs;           // millis the test is expected to run
@@ -88,6 +87,7 @@ public class PerformanceTestInfo {
     return this;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void assertTiming() {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
@@ -204,7 +204,7 @@ public class PerformanceTestInfo {
     ACCEPTABLE, // test was completed within specified range
     BORDERLINE, // test barely managed to complete within specified range
     SLOW,       // test was too slow
-    DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g. JIT or GC)
+    DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g., JIT or GC)
   }
 
   private int getExpectedTimeOnThisMachine() {

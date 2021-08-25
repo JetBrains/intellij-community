@@ -1,4 +1,4 @@
-// TOOL: DeprecatedGradleDependencyInspection
+// TOOL: org.jetbrains.kotlin.idea.groovy.inspections.DeprecatedGradleDependencyInspection
 
 group 'Again'
 version '1.0-SNAPSHOT'

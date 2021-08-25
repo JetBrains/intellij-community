@@ -194,7 +194,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         return property.add(ktGetter).cast<KtPropertyAccessor>().also {
             if (getter is RealGetter) {
                 getter.function.forAllUsages { usage ->
-                    usage.getStrictParentOfType<KtCallExpression>()!!.replace(factory.createExpression(getter.name))
+                    usage.getStrictParentOfType<KtCallExpression>()?.replace(factory.createExpression(getter.name))
                 }
             }
         }

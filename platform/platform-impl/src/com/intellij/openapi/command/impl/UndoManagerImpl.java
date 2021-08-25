@@ -170,7 +170,7 @@ public class UndoManagerImpl extends UndoManager {
     return myProject;
   }
 
-  private ClientState getClientState() {
+  private @Nullable ClientState getClientState() {
     return getComponentManager().getService(ClientState.class);
   }
 
@@ -195,12 +195,19 @@ public class UndoManagerImpl extends UndoManager {
 
   public boolean isActive() {
     ClientState state = getClientState();
+    if (state == null) {
+      return false;
+    }
     return Comparing.equal(myProject, state.myCurrentActionProject) || myProject == null && state.myCurrentActionProject.isDefault();
   }
 
   @ApiStatus.Internal
   public boolean isInsideCommand() {
-    return getClientState().myCommandLevel > 0;
+    ClientState state = getClientState();
+    if (state == null) {
+      return false;
+    }
+    return state.myCommandLevel > 0;
   }
 
   private @NotNull List<UndoProvider> getUndoProviders() {
@@ -209,32 +216,39 @@ public class UndoManagerImpl extends UndoManager {
 
   private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     ClientState state = getClientState();
-    if (state.myCommandLevel == 0) {
+    if (state == null || state.myCommandLevel == 0) {
       for (UndoProvider undoProvider : getUndoProviders()) {
         undoProvider.commandStarted(project);
       }
-      state.myCurrentActionProject = project;
+      if (state != null) {
+        state.myCurrentActionProject = project;
+      }
     }
 
     commandStarted(undoConfirmationPolicy, myProject == project && recordOriginalReference);
 
-    LOG.assertTrue(state.myCommandLevel == 0 || !(state.myCurrentActionProject instanceof DummyProject));
+    LOG.assertTrue(state == null || state.myCommandLevel == 0 || !(state.myCurrentActionProject instanceof DummyProject));
   }
 
   private void onCommandFinished(final Project project, final @NlsContexts.Command String commandName, final Object commandGroupId) {
     ClientState state = getClientState();
     commandFinished(commandName, commandGroupId);
-    if (state.myCommandLevel == 0) {
+    if (state == null || state.myCommandLevel == 0) {
       for (UndoProvider undoProvider : getUndoProviders()) {
         undoProvider.commandFinished(project);
       }
-      state.myCurrentActionProject = DummyProject.getInstance();
+      if (state != null) {
+        state.myCurrentActionProject = DummyProject.getInstance();
+      }
     }
-    LOG.assertTrue(state.myCommandLevel == 0 || !(state.myCurrentActionProject instanceof DummyProject));
+    LOG.assertTrue(state == null || state.myCommandLevel == 0 || !(state.myCurrentActionProject instanceof DummyProject));
   }
 
   private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
     if (state.myCommandLevel == 0) {
       state.myCurrentMerger = new CommandMerger(this, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
 
@@ -269,6 +283,9 @@ public class UndoManagerImpl extends UndoManager {
 
   private void commandFinished(@NlsContexts.Command String commandName, Object groupId) {
     ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
     if (state.myCommandLevel == 0) return; // possible if command listener was added within command
     state.myCommandLevel--;
     if (state.myCommandLevel > 0) return;
@@ -282,7 +299,7 @@ public class UndoManagerImpl extends UndoManager {
     state.myCurrentMerger.setAfterState(getCurrentState());
     state.myMerger.commandFinished(commandName, groupId, state.myCurrentMerger);
 
-    disposeCurrentMerger();
+    disposeCurrentMerger(state);
   }
 
   public void addDocumentAsAffected(@NotNull Document document) {
@@ -291,7 +308,7 @@ public class UndoManagerImpl extends UndoManager {
 
   private void addDocumentAsAffected(@NotNull DocumentReference documentReference) {
     ClientState state = getClientState();
-    if (state.myCurrentMerger.hasChangesOf(documentReference, true)) {
+    if (state == null || state.myCurrentMerger.hasChangesOf(documentReference, true)) {
       return;
     }
 
@@ -310,8 +327,7 @@ public class UndoManagerImpl extends UndoManager {
     return new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO));
   }
 
-  private void disposeCurrentMerger() {
-    ClientState state = getClientState();
+  private static void disposeCurrentMerger(@NotNull ClientState state) {
     LOG.assertTrue(state.myCommandLevel == 0);
     if (state.myCurrentMerger != null) {
       state.myCurrentMerger = null;
@@ -328,6 +344,9 @@ public class UndoManagerImpl extends UndoManager {
   @Override
   public void undoableActionPerformed(@NotNull UndoableAction action) {
     ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
     ApplicationManager.getApplication().assertIsWriteThread();
     if (myProject != null && myProject.isDisposed() || state.myCurrentOperationState != OperationState.NONE) {
       return;
@@ -349,6 +368,9 @@ public class UndoManagerImpl extends UndoManager {
 
   public void markCurrentCommandAsGlobal() {
     ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
     if (state.myCurrentMerger == null) {
       LOG.error("Must be called inside command");
       return;
@@ -358,6 +380,9 @@ public class UndoManagerImpl extends UndoManager {
 
   void addAffectedDocuments(Document @NotNull ... docs) {
     ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
     if (!isInsideCommand()) {
       LOG.error("Must be called inside command");
       return;
@@ -375,6 +400,9 @@ public class UndoManagerImpl extends UndoManager {
 
   public void addAffectedFiles(VirtualFile @NotNull ... files) {
     ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
     if (!isInsideCommand()) {
       LOG.error("Must be called inside command");
       return;
@@ -412,6 +440,9 @@ public class UndoManagerImpl extends UndoManager {
 
   private void undoOrRedo(final FileEditor editor, final boolean isUndo) {
     ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
     state.myCurrentOperationState = isUndo ? OperationState.UNDO : OperationState.REDO;
     try {
       final RuntimeException[] exception = new RuntimeException[1];
@@ -436,12 +467,20 @@ public class UndoManagerImpl extends UndoManager {
 
   @Override
   public boolean isUndoInProgress() {
-    return getClientState().myCurrentOperationState == OperationState.UNDO;
+    ClientState state = getClientState();
+    if (state == null) {
+      return false;
+    }
+    return state.myCurrentOperationState == OperationState.UNDO;
   }
 
   @Override
   public boolean isRedoInProgress() {
-    return getClientState().myCurrentOperationState == OperationState.REDO;
+    ClientState state = getClientState();
+    if (state == null) {
+      return false;
+    }
+    return state.myCurrentOperationState == OperationState.REDO;
   }
 
   @Override
@@ -468,8 +507,11 @@ public class UndoManagerImpl extends UndoManager {
 
   private boolean isUndoOrRedoAvailable(@NotNull Collection<? extends DocumentReference> refs, boolean isUndo) {
     ClientState state = getClientState();
+    if (state == null) {
+      return false;
+    }
     if (isUndo && state.myMerger.isUndoAvailable(refs)) return true;
-    UndoRedoStacksHolder stackHolder = getStackHolder(isUndo);
+    UndoRedoStacksHolder stackHolder = getStackHolder(state, isUndo);
     return stackHolder.canBeUndoneOrRedone(refs);
   }
 
@@ -502,8 +544,7 @@ public class UndoManagerImpl extends UndoManager {
     return result;
   }
 
-  private @NotNull UndoRedoStacksHolder getStackHolder(boolean isUndo) {
-    ClientState state = getClientState();
+  private static @NotNull UndoRedoStacksHolder getStackHolder(@NotNull ClientState state, boolean isUndo) {
     return isUndo ? state.myUndoStacksHolder : state.myRedoStacksHolder;
   }
 
@@ -536,10 +577,13 @@ public class UndoManagerImpl extends UndoManager {
 
   private @Nullable String doFormatAvailableUndoRedoAction(FileEditor editor, boolean isUndo) {
     ClientState state = getClientState();
+    if (state == null) {
+      return null;
+    }
     Collection<DocumentReference> refs = getDocRefs(editor);
     if (refs == null) return null;
     if (isUndo && state.myMerger.isUndoAvailable(refs)) return state.myMerger.getCommandName();
-    return getStackHolder(isUndo).getLastAction(refs).getCommandName();
+    return getStackHolder(state, isUndo).getLastAction(refs).getCommandName();
   }
 
   @NotNull
@@ -554,16 +598,22 @@ public class UndoManagerImpl extends UndoManager {
 
   @NotNull
   UndoRedoStacksHolder getUndoStacksHolder() {
-    return getClientState().myUndoStacksHolder;
+    ClientState state = getClientState();
+    LOG.assertTrue(state != null);
+    return state.myUndoStacksHolder;
   }
 
   @NotNull
   UndoRedoStacksHolder getRedoStacksHolder() {
-    return getClientState().myRedoStacksHolder;
+    ClientState state = getClientState();
+    LOG.assertTrue(state != null);
+    return state.myRedoStacksHolder;
   }
 
   int nextCommandTimestamp() {
-    return getClientState().nextCommandTimestamp();
+    ClientState state = getClientState();
+    LOG.assertTrue(state != null);
+    return state.nextCommandTimestamp();
   }
 
   private static @NotNull Document getOriginal(@NotNull Document document) {
@@ -577,14 +627,13 @@ public class UndoManagerImpl extends UndoManager {
 
   protected void compact() {
     ClientState state = getClientState();
-    if (state.myCurrentOperationState == OperationState.NONE && state.myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
-      doCompact();
+    if (state != null && state.myCurrentOperationState == OperationState.NONE && state.myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
+      doCompact(state);
     }
   }
 
-  private void doCompact() {
-    ClientState state = getClientState();
-    Collection<DocumentReference> refs = collectReferencesWithoutMergers();
+  private void doCompact(@NotNull ClientState state) {
+    Collection<DocumentReference> refs = collectReferencesWithoutMergers(state);
 
     Collection<DocumentReference> openDocs = new HashSet<>();
     for (DocumentReference each : refs) {
@@ -606,32 +655,29 @@ public class UndoManagerImpl extends UndoManager {
     if (refs.size() <= FREE_QUEUES_LIMIT) return;
 
     DocumentReference[] backSorted = refs.toArray(DocumentReference.EMPTY_ARRAY);
-    Arrays.sort(backSorted, Comparator.comparingInt(this::getLastCommandTimestamp));
+    Arrays.sort(backSorted, Comparator.comparingInt(ref -> getLastCommandTimestamp(state, ref)));
 
     for (int i = 0; i < backSorted.length - FREE_QUEUES_LIMIT; i++) {
       DocumentReference each = backSorted[i];
-      if (getLastCommandTimestamp(each) + COMMANDS_TO_KEEP_LIVE_QUEUES > state.myCommandTimestamp) break;
-      clearUndoRedoQueue(each);
+      if (getLastCommandTimestamp(state, each) + COMMANDS_TO_KEEP_LIVE_QUEUES > state.myCommandTimestamp) break;
+      clearUndoRedoQueue(state, each);
     }
   }
 
-  private int getLastCommandTimestamp(@NotNull DocumentReference ref) {
-    ClientState state = getClientState();
+  private static int getLastCommandTimestamp(@NotNull ClientState state, @NotNull DocumentReference ref) {
     return Math.max(state.myUndoStacksHolder.getLastCommandTimestamp(ref), state.myRedoStacksHolder.getLastCommandTimestamp(ref));
   }
 
-  private @NotNull Collection<DocumentReference> collectReferencesWithoutMergers() {
-    ClientState state = getClientState();
+  private static @NotNull Collection<DocumentReference> collectReferencesWithoutMergers(@NotNull ClientState state) {
     Set<DocumentReference> result = new HashSet<>();
     state.myUndoStacksHolder.collectAllAffectedDocuments(result);
     state.myRedoStacksHolder.collectAllAffectedDocuments(result);
     return result;
   }
 
-  private void clearUndoRedoQueue(@NotNull DocumentReference docRef) {
-    ClientState state = getClientState();
+  private void clearUndoRedoQueue(@NotNull ClientState state, @NotNull DocumentReference docRef) {
     state.myMerger.flushCurrentCommand();
-    disposeCurrentMerger();
+    disposeCurrentMerger(state);
 
     Set<DocumentReference> set = Collections.singleton(docRef);
     state.myUndoStacksHolder.clearStacks(false, set);
@@ -653,6 +699,9 @@ public class UndoManagerImpl extends UndoManager {
   @TestOnly
   public void dropHistoryInTests() {
     ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
     flushMergers();
     LOG.assertTrue(state.myCommandLevel == 0, state.myCommandLevel);
 
@@ -670,17 +719,29 @@ public class UndoManagerImpl extends UndoManager {
 
   @TestOnly
   public void flushCurrentCommandMerger() {
-    getClientState().myMerger.flushCurrentCommand();
+    ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
+    state.myMerger.flushCurrentCommand();
   }
 
   @TestOnly
   public void clearUndoRedoQueueInTests(@NotNull VirtualFile file) {
-    clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(file));
+    ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
+    clearUndoRedoQueue(state, DocumentReferenceManager.getInstance().create(file));
   }
 
   @TestOnly
   public void clearUndoRedoQueueInTests(@NotNull Document document) {
-    clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
+    ClientState state = getClientState();
+    if (state == null) {
+      return;
+    }
+    clearUndoRedoQueue(state, DocumentReferenceManager.getInstance().create(document));
   }
 
   @ApiStatus.Internal

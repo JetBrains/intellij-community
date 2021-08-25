@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.collections
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -32,17 +32,17 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         val secondCallExpression = expression.selectorExpression as? KtCallExpression ?: return null
 
         val secondCalleeExpression = secondCallExpression.calleeExpression ?: return null
-        val languageVersion = expression.languageVersionSettings.languageVersion
+        val apiVersion by lazy { expression.languageVersionSettings.apiVersion }
         val actualConversions = conversionGroups[ConversionId(firstCalleeExpression, secondCalleeExpression)]?.filter {
-            it.replaceableLanguageVersion == null || languageVersion >= it.replaceableLanguageVersion
-        } ?: return null
+            it.replaceableApiVersion == null || apiVersion >= it.replaceableApiVersion
+        }?.sortedByDescending { it.removeNotNullAssertion } ?: return null
 
         val context = expression.analyze()
         val firstResolvedCall = firstExpression.getResolvedCall(context) ?: return null
-        val conversion = actualConversions.firstOrNull { firstResolvedCall.isCalling(FqName(it.firstFqName)) } ?: return null
         val secondResolvedCall = expression.getResolvedCall(context) ?: return null
-
-        if (!additionalCallCheck(conversion, firstResolvedCall, secondResolvedCall, context)) return null
+        val conversion = actualConversions.firstOrNull {
+            firstResolvedCall.isCalling(FqName(it.firstFqName)) && additionalCallCheck(it, firstResolvedCall, secondResolvedCall, context)
+        } ?: return null
 
         // Do not apply for lambdas with return inside
         val lambdaArgument = firstCallExpression.lambdaArguments.firstOrNull()
@@ -73,7 +73,7 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         val addNotNullAssertion: Boolean = false,
         val enableSuspendFunctionCall: Boolean = true,
         val removeNotNullAssertion: Boolean = false,
-        val replaceableLanguageVersion: LanguageVersion? = null
+        val replaceableApiVersion: ApiVersion? = null,
     ) {
         private fun String.convertToShort() = takeLastWhile { it != '.' }
 

@@ -184,12 +184,21 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
                     interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor" interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker" interface="com.intellij.json.codeinsight.JsonLiteralChecker" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.json.catalog.exclusion" interface="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.json.customStructureViewFactory" interface="com.intellij.json.structureView.JsonCustomStructureViewFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="JavaScript.JsonSchema.ContentAwareSchemaFileProvider"
+                    interface="com.jetbrains.jsonSchema.extension.ContentAwareJsonSchemaFileProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory"
+                    interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor"
+                    interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker" interface="com.intellij.json.codeinsight.JsonLiteralChecker"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.catalog.exclusion"
+                    interface="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.customStructureViewFactory"
+                    interface="com.intellij.json.structureView.JsonCustomStructureViewFactory" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

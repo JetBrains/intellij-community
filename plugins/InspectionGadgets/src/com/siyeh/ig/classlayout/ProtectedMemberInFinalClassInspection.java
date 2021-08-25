@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.BatchQuickFix;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -27,6 +30,9 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
@@ -48,7 +54,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
     return new ProtectedMemberInFinalClassVisitor();
   }
 
-  private static class WeakenVisibilityFix extends InspectionGadgetsFix {
+  private static class WeakenVisibilityFix extends InspectionGadgetsFix implements BatchQuickFix {
 
     @Override
     @NotNull
@@ -58,24 +64,36 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
-      final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMember)) {
-        return;
-      }
-      final PsiMember member = (PsiMember)grandParent;
-      final PsiModifierList modifierList = member.getModifierList();
-      if (modifierList == null) {
-        return;
-      }
-      final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-      modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
-      final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
-      final boolean canBePrivate = search.forEach(reference -> {
-        return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(), null, null);
-      });
-      modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+      applyFix(project, new CommonProblemDescriptor[] {descriptor}, List.of(), null);
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project,
+                         CommonProblemDescriptor @NotNull [] descriptors,
+                         @NotNull List<PsiElement> psiElementsToIgnore,
+                         @Nullable Runnable refreshViews) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        for (CommonProblemDescriptor descriptor : descriptors) {
+          final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+          final PsiElement parent = element.getParent();
+          final PsiElement grandParent = parent.getParent();
+          if (!(grandParent instanceof PsiMember)) {
+            return;
+          }
+          final PsiMember member = (PsiMember)grandParent;
+          final PsiModifierList modifierList = member.getModifierList();
+          if (modifierList == null) {
+            return;
+          }
+          final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
+          modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
+          final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
+          final boolean canBePrivate = search.forEach(reference -> {
+            return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(), null, null);
+          });
+          modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+        }
+      }, InspectionGadgetsBundle.message("weaken.visibility.quickfix"), true, project);
     }
   }
 

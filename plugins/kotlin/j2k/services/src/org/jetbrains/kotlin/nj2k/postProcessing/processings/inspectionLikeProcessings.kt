@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.analysis.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.callName
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
@@ -108,7 +107,7 @@ class RemoveJavaStreamsCollectCallTypeArgumentsProcessing :
     InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
     override fun isApplicableTo(element: KtCallExpression, settings: ConverterSettings?): Boolean {
         if (element.typeArgumentList == null) return false
-        if (element.callName() != COLLECT_FQ_NAME.shortName().identifier) return false
+        if (element.calleeExpression?.text != COLLECT_FQ_NAME.shortName().identifier) return false
         return element.isCalling(COLLECT_FQ_NAME)
     }
 

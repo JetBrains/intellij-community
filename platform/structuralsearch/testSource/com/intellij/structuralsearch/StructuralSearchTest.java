@@ -1915,18 +1915,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "  char b;\n" +
                 "  int c; // comment2\n" +
                 "}";
-    assertEquals("Find field by dcl with comment",2,findMatchesCount(s1, "'_Type '_Variable = '_Value?; //'Comment"));
+    assertEquals("Find field by dcl with comment", 2, findMatchesCount(s1, "'_Type '_Variable = '_Value?; //'Comment"));
 
-    String s1_2 = "class A {\n" +
+    String s2 = "class A {\n" +
                   "  // comment\n" +
                   "  int a;\n" +
                   "  char b;\n" +
                   "  // comment2\n" +
                   "  int c;\n" +
                   "}";
-    String s2_2 = "//'Comment\n" +
-                  "'_Type '_Variable = '_Value?;";
-    assertEquals("Find field by dcl with comment 2",2,findMatchesCount(s1_2,s2_2));
+    assertEquals("Find field by dcl with comment 2", 2, findMatchesCount(s2, "//'Comment\n'_Type '_Variable = '_Value?;"));
+
+    String s3 = "// comment\n" +
+                "class A {}" +
+                "class B {}" +
+                "class C {}";
+    assertEquals("Find class with comment", 1, findMatchesCount(s3, "//'_comment\nclass '_X {}"));
   }
 
   public void testSearchingEmptyModifiers() {

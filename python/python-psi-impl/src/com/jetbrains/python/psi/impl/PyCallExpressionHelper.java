@@ -755,7 +755,7 @@ public final class PyCallExpressionHelper {
     final int safeImplicitOffset = Math.min(callableType.getImplicitOffset(), parameters.size());
     final List<PyCallableParameter> explicitParameters = parameters.subList(safeImplicitOffset, parameters.size());
     final List<PyCallableParameter> implicitParameters = parameters.subList(0, safeImplicitOffset);
-    final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
+    final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters, context);
 
     return new PyCallExpression.PyArgumentsMapping(callSite,
                                                    callableType,
@@ -822,7 +822,7 @@ public final class PyCallExpressionHelper {
     final List<PyCallableParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite, resolveContext);
     final List<PyCallableParameter> implicitParameters = parameters.subList(0, parameters.size() - explicitParameters.size());
 
-    final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
+    final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters, context);
 
     return new PyCallExpression.PyArgumentsMapping(callSite,
                                                    callableType,
@@ -953,7 +953,8 @@ public final class PyCallExpressionHelper {
 
   @NotNull
   private static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments,
-                                                         @NotNull List<PyCallableParameter> parameters) {
+                                                         @NotNull List<PyCallableParameter> parameters,
+                                                         @NotNull TypeEvalContext context) {
     boolean positionalOnlyMode = ContainerUtil.exists(parameters, p -> p.getParameter() instanceof PySlashParameter);
     boolean seenSingleStar = false;
     boolean mappedVariadicArgumentsToParameters = false;
@@ -1014,6 +1015,15 @@ public final class PyCallExpressionHelper {
             parametersMappedToVariadicKeywordArguments.add(parameter);
             mappedVariadicArgumentsToParameters = true;
           }
+        }
+        else if (isParamSpecOrConcatenate(parameter, context)) {
+          for (var argument: arguments) {
+            mappedParameters.put(argument, parameter);
+          }
+          allPositionalArguments.clear();
+          keywordArguments.clear();
+          variadicPositionalArguments.clear();
+          variadicKeywordArguments.clear();
         }
         else {
           if (positionalOnlyMode) {
@@ -1100,6 +1110,11 @@ public final class PyCallExpressionHelper {
     return new ArgumentMappingResults(mappedParameters, unmappedParameters, unmappedArguments,
                                       parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments,
                                       tupleMappedParameters);
+  }
+
+  private static boolean isParamSpecOrConcatenate(@NotNull PyCallableParameter parameter, @NotNull TypeEvalContext context) {
+    final var type = parameter.getType(context);
+    return type instanceof PyParamSpecType || type instanceof PyConcatenateType;
   }
 
   @NotNull

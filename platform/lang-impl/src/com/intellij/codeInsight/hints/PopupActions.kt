@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -91,8 +91,8 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo) -> String?
 }
 
 @Suppress("IntentionDescriptionNotFoundInspection")
-class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
-  override fun getText(): String = CodeInsightBundle.message("inlay.hints.blacklist.method")
+class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityAction {
+  override fun getText(): String = CodeInsightBundle.message("inlay.hints.exclude.list.method")
   override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
@@ -132,7 +132,7 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
 
 
     Notification("Parameter Name Hints",
-                 CodeInsightBundle.message("notification.inlay.method.added.to.blacklist", methodName),
+                 CodeInsightBundle.message("notification.inlay.method.added.to.exclude.list", methodName),
                  CodeInsightBundle.message("notification.show.parameter.hints.settings.or.undo.label"),
                  NotificationType.INFORMATION)
       .setListener(listener)
@@ -147,12 +147,12 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
     val settings = ParameterNameHintsSettings.getInstance()
     val languageForSettings = getLanguageForSettingKey(language)
 
-    val diff = settings.getBlackListDiff(languageForSettings)
+    val diff = settings.getExcludeListDiff(languageForSettings)
     val updated = diff.added.toMutableSet().apply {
       remove(info.toPattern())
     }
     
-    settings.setBlackListDiff(languageForSettings, Diff(updated, diff.removed))
+    settings.setExcludeListDiff(languageForSettings, Diff(updated, diff.removed))
     refreshAllOpenEditors()
   }
 

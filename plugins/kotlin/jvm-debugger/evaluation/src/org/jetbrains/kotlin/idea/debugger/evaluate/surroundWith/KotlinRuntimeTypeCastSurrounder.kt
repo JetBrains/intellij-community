@@ -52,6 +52,7 @@ class KotlinRuntimeTypeCastSurrounder : KotlinExpressionSurrounder() {
         return null
     }
 
+    @Suppress("DialogTitleCapitalization")
     override fun getTemplateDescription(): String {
         return KotlinDebuggerEvaluationBundle.message("surround.with.runtime.type.cast.template")
     }

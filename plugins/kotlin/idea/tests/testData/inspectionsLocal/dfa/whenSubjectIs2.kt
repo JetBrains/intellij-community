@@ -1,4 +1,4 @@
-// PROBLEM: When branch is never reachable
+// PROBLEM: 'when' branch is never reachable
 // FIX: none
 fun test(obj : Any?) {
     if (obj is X) {

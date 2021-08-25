@@ -8,6 +8,8 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.SettingsAndEffectiveTarget
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import javax.swing.Icon
 
 open class RunToolbarProcessAction(override val process: RunToolbarProcess, val executor: Executor) : ExecutorRegistryImpl.ExecutorAction(executor), ExecutorRunToolbarAction, DumbAware {
 
@@ -15,10 +17,14 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     return true
   }
 
+  override fun getInformativeIcon(project: Project, selectedConfiguration: RunnerAndConfigurationSettings): Icon {
+    return executor.icon
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       if (canRun(e)) {
-        e.configuration()?.let {
+        getSelectedConfiguration(e)?.let {
           e.addWaitingForAProcess(executor.id)
           ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)
         }
@@ -26,30 +32,29 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     }
   }
 
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.text = executor.actionName
-    e.presentation.isVisible = e.project?.let {
-      e.presentation.isVisible && if (e.isItRunToolbarMainSlot()) {
-        val slotManager = RunToolbarSlotManager.getInstance(it)
-        (e.isOpened() && !e.isActiveProcess() || !slotManager.getState().isActive())
-      }
-      else !e.isActiveProcess()
-    } ?: false
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.CONFIGURATION
+  }
 
-    e.presentation.isEnabled = e.project?.let {
-      canRun(e)
-    } ?: false
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = executor.actionName
+    e.presentation.isVisible = !e.isActiveProcess()
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {
     return e.configuration()
   }
 
-  private fun canRun(e: AnActionEvent): Boolean {
+  protected fun canRun(e: AnActionEvent): Boolean {
     return e.project?.let { project->
       val activeTarget = ExecutionTargetManager.getActiveTarget(project)
-      return e.configuration()?.let {
+      return getSelectedConfiguration(e)?.let {
 
         val target = SettingsAndEffectiveTarget(it.configuration, activeTarget)
 

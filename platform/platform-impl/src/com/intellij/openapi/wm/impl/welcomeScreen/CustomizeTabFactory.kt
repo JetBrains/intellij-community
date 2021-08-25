@@ -163,8 +163,8 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         fullRow {
           val themeBuilder = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+            .accessibleName(IdeBundle.message("welcome.screen.color.theme.header"))
           colorThemeComboBox = themeBuilder.component
-          colorThemeComboBox!!.accessibleContext.accessibleName = IdeBundle.message("welcome.screen.color.theme.header")
           val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"),
                                       syncThemeProperty).withLargeLeftGap().apply {
             component.isOpaque = false
@@ -188,8 +188,9 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
-          keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty).component
-          keymapComboBox!!.accessibleContext.accessibleName = KeyMapBundle.message("keymap.display.name")
+          keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
+            .accessibleName(KeyMapBundle.message("keymap.display.name"))
+            .component
           component(ActionLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
             ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()

@@ -13,8 +13,8 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.gradle.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
 import org.jetbrains.kotlin.idea.caches.project.isMPPModule
-import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
-import org.jetbrains.kotlin.idea.configuration.readGradleProperty
+import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
+import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.perf.Stats

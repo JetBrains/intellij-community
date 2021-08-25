@@ -2,12 +2,9 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.*;
+import com.intellij.ide.ui.PopupLocator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
@@ -16,57 +13,12 @@ import org.jetbrains.annotations.ApiStatus;
 import java.awt.*;
 import java.util.Comparator;
 
-public class PlatformDataKeys extends CommonDataKeys {
-
-  public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
-
-  /**
-   * Returns the text of currently selected file/file revision
-   */
-  public static final DataKey<String> FILE_TEXT = DataKey.create("fileText");
-
-  /**
-   * Returns {@link Boolean#TRUE} if action is executed in modal context and
-   * {@link Boolean#FALSE} if action is executed not in modal context. If context
-   * is unknown returns {@code null}.
-   */
-  public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
-
-  /**
-   * Returns help id.
-   *
-   * @see HelpManager#invokeHelp(String)
-   */
-  public static final DataKey<String> HELP_ID = DataKey.create("helpId");
-
-  /**
-   * Returns project if project node is selected (in project view)
-   */
-  public static final DataKey<Project> PROJECT_CONTEXT = DataKey.create("context.Project");
-
-  /**
-   * Returns {@link Component} currently in focus, DataContext should be retrieved for.
-   */
-  public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
+public class PlatformDataKeys extends PlatformCoreDataKeys {
 
   public static final DataKey<CopyProvider> COPY_PROVIDER = DataKey.create("copyProvider");
   public static final DataKey<CutProvider> CUT_PROVIDER = DataKey.create("cutProvider");
   public static final DataKey<PasteProvider> PASTE_PROVIDER = DataKey.create("pasteProvider");
   public static final DataKey<DeleteProvider> DELETE_ELEMENT_PROVIDER = DataKey.create("deleteElementProvider");
-
-  /**
-   * Returns single selection item.
-   *
-   * @see #SELECTED_ITEMS
-   */
-  public static final DataKey<Object> SELECTED_ITEM = DataKey.create("selectedItem");
-
-  /**
-   * Returns multi selection items.
-   *
-   * @see #SELECTED_ITEM
-   */
-  public static final DataKey<Object[]> SELECTED_ITEMS = DataKey.create("selectedItems");
 
   public static final DataKey<Rectangle> DOMINANT_HINT_AREA_RECTANGLE = DataKey.create("dominant.hint.rectangle");
 
@@ -84,8 +36,6 @@ public class PlatformDataKeys extends CommonDataKeys {
    * @see com.intellij.ide.actions.ExportToTextFileAction
    */
   public static final DataKey<ExporterToTextFile> EXPORTER_TO_TEXT_FILE = DataKey.create("exporterToTextFile");
-
-  public static final DataKey<VirtualFile> PROJECT_FILE_DIRECTORY = DataKey.create("context.ProjectFileDirectory");
 
   public static final DataKey<Disposable> UI_DISPOSABLE = DataKey.create("ui.disposable");
 
@@ -106,11 +56,11 @@ public class PlatformDataKeys extends CommonDataKeys {
   public static final DataKey<Point> CONTEXT_MENU_POINT = DataKey.create("contextMenuPoint");
 
   /**
-   * Use this key to split a data provider into two parts: the quick part to be queried on EDT,
-   * and the slow part to be queried on a background thread or under a progress.
-   * That slow part shall be returned when this data key is requested.
+   * Allows more precise positioning than {@link PlatformDataKeys#CONTEXT_MENU_POINT} by using information
+   * about popup, e.g. its size.
    */
-  public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
+  @ApiStatus.Experimental
+  public static final DataKey<PopupLocator> CONTEXT_MENU_LOCATOR = DataKey.create("contextMenuLocator");
 
   /**
    * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current

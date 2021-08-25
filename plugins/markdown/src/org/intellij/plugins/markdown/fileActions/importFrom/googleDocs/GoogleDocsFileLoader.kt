@@ -8,7 +8,6 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.ByteArrayOutputStream
@@ -31,10 +30,9 @@ class GoogleDocsFileLoader : Disposable {
     }
 
     val tempFile = File.createTempFile(fileName, ".docx")
-    FileUtil.rename(tempFile, fileName)
     FileOutputStream(tempFile).use { outputStream.writeTo(it) }
 
-    return VfsUtil.findFileByIoFile(tempFile, true)!!
+    return VfsUtil.findFileByIoFile(tempFile, true)!!.apply { rename(this, "$fileName.docx") }
   }
 
   private fun getAllFilesFromDrive(credential: Credential): Drive.Files {

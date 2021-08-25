@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ResourceUtil;
@@ -15,6 +16,7 @@ import java.util.Objects;
 import static com.intellij.DynamicBundle.findLanguageBundle;
 
 final class ResourceTextDescriptor implements TextDescriptor {
+  private static final Logger LOG = Logger.getInstance(ResourceTextDescriptor.class);
   private final ClassLoader myLoader;
   private final String myResourcePath;
 
@@ -40,28 +42,32 @@ final class ResourceTextDescriptor implements TextDescriptor {
   @NotNull
   @Override
   public String getText() throws IOException {
-    InputStream stream = getStream();
-
+    InputStream languageStream = !myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME) ? null : getLanguageStream();
+    if (languageStream != null) {
+      try {
+        return ResourceUtil.loadText(languageStream); //NON-NLS
+      }
+      catch (IOException e) {
+        LOG.error("Cannot find localized resource: " + myResourcePath, e);
+      }
+    }
+    InputStream stream = myLoader.getResourceAsStream(myResourcePath);
     if (stream == null) {
-      throw new IOException("Resource not found: " + myResourcePath);
+      throw new IOException("Resource not found: " + myResourcePath + "; loader: " + myLoader);
     }
     return ResourceUtil.loadText(stream); //NON-NLS
   }
 
   @Nullable
-  private InputStream getStream() {
-    InputStream stream = myLoader.getResourceAsStream(myResourcePath);
-
-    if (!myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME)) return stream;
-
+  private InputStream getLanguageStream() {
     DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
-    if (langBundle == null) return stream;
+    if (langBundle == null) return null;
 
     PluginDescriptor descriptor = langBundle.pluginDescriptor;
-    if (descriptor == null) return stream;
+    if (descriptor == null) return null;
 
     ClassLoader classLoader = descriptor.getPluginClassLoader();
-    return classLoader != null ? classLoader.getResourceAsStream(myResourcePath) : stream;
+    return classLoader != null ? classLoader.getResourceAsStream(myResourcePath) : null;
   }
 
   @NotNull

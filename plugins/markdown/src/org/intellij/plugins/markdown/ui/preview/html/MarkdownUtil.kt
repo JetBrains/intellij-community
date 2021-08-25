@@ -9,6 +9,7 @@ import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
+import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.math.BigInteger

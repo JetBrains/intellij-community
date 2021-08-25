@@ -30,8 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXPLAIN_SHELL_USED_EVENT_ID;
-
 final class ShExplainShellIntention extends BaseIntentionAction {
   @NotNull
   @Override
@@ -102,7 +100,6 @@ final class ShExplainShellIntention extends BaseIntentionAction {
           }
         }, PsiElement::getText, ShBundle.message("sh.explain.command.to.explain"));
       }
-      EXPLAIN_SHELL_USED_EVENT_ID.log();
     }
   }
 

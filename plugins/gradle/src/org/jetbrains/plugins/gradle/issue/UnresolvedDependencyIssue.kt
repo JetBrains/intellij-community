@@ -7,7 +7,7 @@ import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
@@ -77,7 +77,7 @@ class UnresolvedDependencyBuildIssue(dependencyName: String,
 }
 
 private fun tryRerun(dataContext: DataContext): CompletableFuture<*>? {
-  val environment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(dataContext)
+  val environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(dataContext)
   if (environment != null) {
     return runAsync { ExecutionUtil.restart(environment) }
   }

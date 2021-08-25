@@ -49,7 +49,6 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.ExperimentalUI
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.*
@@ -59,6 +58,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -289,6 +289,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       for (entry in idToEntry.values) {
         if (entry.readOnlyWindowInfo.isVisible) {
           entry.toolWindow.decoratorComponent?.repaint()
+          if (Registry.`is`("ide.experimental.ui")) {
+            entry.toolWindow.decorator.headerToolbar.component.isVisible = entry.toolWindow.isActive
+          }
         }
       }
     })
@@ -683,6 +686,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       activateToolWindow(toolWindow.id, null, autoFocusContents = true)
     }
     activeStack.push(idToEntry[toolWindow.id] ?: return)
+    toolWindow.decorator.headerToolbar.component.isVisible = true
   }
 
   // mutate operation must use info from layout and not from decorator
@@ -1985,16 +1989,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val toolWindowManager = toolWindow.toolWindowManager
       toolWindowManager.focusManager
         .doWhenFocusSettlesDown(ExpirableRunnable.forProject(toolWindowManager.project) {
-          ModalityUiUtil.invokeLaterIfNeeded(Runnable {
-            val entry = toolWindowManager.idToEntry[id] ?: return@Runnable
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), toolWindowManager.project.disposed) {
+            val entry = toolWindowManager.idToEntry[id] ?: return@invokeLaterIfNeeded
             val windowInfo = entry.readOnlyWindowInfo
             if (!windowInfo.isVisible) {
-              return@Runnable
+              return@invokeLaterIfNeeded
             }
 
             toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id),
                                                  autoFocusContents = false)
-          }, ModalityState.defaultModalityState(), toolWindowManager.project.disposed)
+          }
         })
     }
   }

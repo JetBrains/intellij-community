@@ -24,12 +24,20 @@ interface JKFormattingOwner {
     var hasLeadingLineBreak: Boolean
 }
 
-inline fun <reified T : JKFormattingOwner> T.withFormattingFrom(other: JKFormattingOwner): T = also {
+fun <T : JKFormattingOwner> T.withFormattingFrom(other: JKFormattingOwner): T = also {
     trailingComments += other.trailingComments
     leadingComments += other.leadingComments
     hasTrailingLineBreak = other.hasTrailingLineBreak
     hasLeadingLineBreak = other.hasLeadingLineBreak
 }
+
+fun <T, S> T.withPsiAndFormattingFrom(
+    other: S
+): T where T : JKFormattingOwner, T : PsiOwner, S : JKFormattingOwner, S : PsiOwner = also {
+    withFormattingFrom(other)
+    this.psi = other.psi
+}
+
 
 inline fun <reified T : JKFormattingOwner> List<T>.withFormattingFrom(other: JKFormattingOwner): List<T> = also {
     if (isNotEmpty()) {

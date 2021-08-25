@@ -182,9 +182,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     // push if needed
     if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
       final List<HgRepository> preselectedRepositories = new ArrayList<>(repositoriesMap.keySet());
-      ModalityUiUtil.invokeLaterIfNeeded(() ->
-                                     new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show(),
-                                         ModalityState.defaultModalityState());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () ->
+                                     new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show()
+      );
     }
 
     return exceptions;

@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.stubindex;
 
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +68,37 @@ public class IdeStubIndexService extends StubIndexService {
         }
 
         indexSuperNames(stub, sink);
+
+        indexPrime(stub, sink);
+    }
+
+    /**
+     * Indexes non-private top-level symbols or members of top-level objects and companion objects subject to this object serving as namespaces.
+     */
+    private static void indexPrime(KotlinStubWithFqName<?> stub, IndexSink sink) {
+        String name = stub.getName();
+        if (name == null) return;
+
+        KotlinModifierListStub modifierList = getModifierListStub(stub);
+        if (modifierList != null && modifierList.hasModifier(KtTokens.PRIVATE_KEYWORD)) return;
+        if (modifierList != null && modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return;
+
+        var parent = stub.getParentStub();
+        boolean prime = false;
+        if (parent instanceof KotlinFileStub) {
+            prime = true;
+        }
+        else if (parent instanceof KotlinObjectStub) {
+            var grand = parent.getParentStub();
+            boolean primeGrand = grand instanceof KotlinClassStub && ((KotlinClassStub) grand).isTopLevel();
+
+            prime = ((KotlinObjectStub) parent).isTopLevel() ||
+                    primeGrand && ((KotlinObjectStub) parent).isCompanion();
+        }
+
+        if (prime) {
+            sink.occurrence(KotlinPrimeSymbolNameIndex.Companion.getKEY(), name);
+        }
     }
 
     @Override
@@ -78,6 +106,8 @@ public class IdeStubIndexService extends StubIndexService {
         processNames(sink, stub.getName(), stub.getFqName(), stub.isTopLevel());
 
         indexSuperNames(stub, sink);
+
+        indexPrime(stub, sink);
     }
 
     private static void processNames(
@@ -119,7 +149,7 @@ public class IdeStubIndexService extends StubIndexService {
     }
 
     @Nullable
-    private static KotlinModifierListStub getModifierListStub(@NotNull KotlinClassOrObjectStub<? extends KtClassOrObject> stub) {
+    private static KotlinModifierListStub getModifierListStub(@NotNull KotlinStubWithFqName<?> stub) {
         return stub.findChildStubByType(KtStubElementTypes.MODIFIER_LIST);
     }
 
@@ -140,6 +170,8 @@ public class IdeStubIndexService extends StubIndexService {
             if (stub.mayHaveContract()) {
                 sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.getInstance().getKey(), name);
             }
+
+            indexPrime(stub, sink);
         }
 
         if (stub.isTopLevel()) {
@@ -160,6 +192,7 @@ public class IdeStubIndexService extends StubIndexService {
         String name = stub.getName();
         if (name != null) {
             sink.occurrence(KotlinTypeAliasShortNameIndex.getInstance().getKey(), name);
+            indexPrime(stub, sink);
         }
 
         IndexUtilsKt.indexTypeAliasExpansion(stub, sink);
@@ -186,6 +219,7 @@ public class IdeStubIndexService extends StubIndexService {
             if (TypeIndexUtilKt.isProbablyNothing(stub.getPsi().getTypeReference())) {
                 sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.getInstance().getKey(), name);
             }
+            indexPrime(stub, sink);
         }
 
         if (stub.isTopLevel()) {

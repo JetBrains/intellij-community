@@ -47,7 +47,7 @@ public abstract class ToolbarUpdater implements Activatable {
 
     myListenersArmed = true;
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.addTimerListener(-1, myWeakTimerListener);
+    actionManager.addTimerListener(myWeakTimerListener);
     KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener);
     updateActionTooltips();
   }
@@ -148,7 +148,7 @@ public abstract class ToolbarUpdater implements Activatable {
       JComponent component = updater == null ? null : updater.myComponent;
       if (component == null ||
           !ApplicationManager.getApplication().isUnitTestMode() &&
-          (!component.isDisplayable() || !component.isShowing() && !myIncludeInvisible)) {
+          !UIUtil.isShowing(component) && (!component.isDisplayable() || !myIncludeInvisible)) {
         return;
       }
 

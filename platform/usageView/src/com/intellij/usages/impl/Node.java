@@ -25,15 +25,15 @@ abstract class Node extends DefaultMutableTreeNode {
   static final byte EXCLUDED_MASK = 1 << 3;
   private static final byte UPDATED_MASK = 1 << 4;
   private static final byte FORCE_UPDATE_REQUESTED_MASK = 1 << 5;
-  /**
-   * It is set if there was a structural change in one of the parent nodes (so the node has to be deleted),
-   * Otherwise unset
-   */
-  private static final byte STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK = 1 << 6;
 
   @MagicConstant(intValues = {
-    CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK,
-    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK, STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK})
+    CACHED_INVALID_MASK,
+    CACHED_READ_ONLY_MASK,
+    READ_ONLY_COMPUTED_MASK,
+    EXCLUDED_MASK,
+    UPDATED_MASK,
+    FORCE_UPDATE_REQUESTED_MASK,
+  })
   private @interface FlagConstant {
   }
 
@@ -153,17 +153,5 @@ abstract class Node extends DefaultMutableTreeNode {
   void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     setFlag(EXCLUDED_MASK, excluded);
     edtFireTreeNodesChangedQueue.consume(this);
-  }
-
-  /**
-   * @return true if there was a structural change in the tree from the root element to the current one,
-   * otherwise false
-   */
-  public boolean isStructuralChangeDetected() {
-    return isFlagSet(STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK);
-  }
-
-  public void setStructuralChangeDetected(boolean valid) {
-    setFlag(STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK, valid);
   }
 }

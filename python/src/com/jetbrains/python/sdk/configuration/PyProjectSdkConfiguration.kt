@@ -56,6 +56,7 @@ object PyProjectSdkConfiguration {
 
   fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
     runInEdt {
+      if (module.isDisposed) return@runInEdt
       SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk)
       module.excludeInnerVirtualEnv(sdk)
       notifyAboutConfiguredSdk(project, module, sdk)

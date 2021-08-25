@@ -98,11 +98,11 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
     }
   }
 
-  override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings? {
+  override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings {
     return MarkdownCustomCodeStyleSettings(settings)
   }
 
-  override fun getIndentOptionsEditor(): IndentOptionsEditor? = SmartIndentOptionsEditor()
+  override fun getIndentOptionsEditor(): IndentOptionsEditor = SmartIndentOptionsEditor()
 
   @org.intellij.lang.annotations.Language("Markdown")
   override fun getCodeSample(settingsType: SettingsType): String {

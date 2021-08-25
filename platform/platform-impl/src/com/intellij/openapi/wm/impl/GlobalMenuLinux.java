@@ -328,7 +328,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     final long xid = _getX11WindowXid(frame);
     if (xid == 0) {
-      LOG.warn("can't obtain XID of window: " + frame + ", skip global menu binding");
+      LOG.debug("can't obtain XID of window: " + frame + ", skip global menu binding");
       return;
     }
     if (myWindowHandle != null) {
@@ -345,7 +345,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     final long xid = _getX11WindowXid(frame);
     if (xid == 0) {
-      LOG.warn("can't obtain XID of window: " + frame + ", skip global menu unbinding");
+      LOG.debug("can't obtain XID of window: " + frame + ", skip global menu unbinding");
       return;
     }
     if (myWindowHandle != null) {
@@ -671,15 +671,15 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     final MenuItemInternal mi = _findMenuItem(uid);
     if (mi == null) {
-      LOG.error("can't find menu-item by uid " + uid + ", eventType=" + eventType);
+      LOG.debug("can't find menu-item by uid " + uid + ", eventType=" + eventType);
       return;
     }
     if (mi.nativePeer == null) {
-      LOG.error("menu-item hasn't native peer, uid = " + uid + ", eventType=" + eventType);
+      LOG.debug("menu-item hasn't native peer, uid = " + uid + ", eventType=" + eventType);
       return;
     }
     if (mi.action == null) {
-      LOG.error("menu-item hasn't associated AnAction, uid = " + uid + ", eventType=" + eventType);
+      LOG.debug("menu-item hasn't associated AnAction, uid = " + uid + ", eventType=" + eventType);
       return;
     }
 
@@ -720,7 +720,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
             return;
           }
           if (!(jmi instanceof ActionMenu)) {
-            LOG.error("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
+            LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
                       jmi.getClass().getName() +
                       ", event source: " +
                       mi);
@@ -765,7 +765,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         return;
       }
       if (!(jmi instanceof ActionMenuItem)) {
-        LOG.error("corresponding (clicked) swing item isn't instance of ActionMenuItem, class=" +
+        LOG.debug("corresponding (clicked) swing item isn't instance of ActionMenuItem, class=" +
                   jmi.getClass().getName() +
                   ", event source: " +
                   mi);
@@ -1076,7 +1076,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         return;
       }
       if (!(jitem instanceof ActionMenu)) {
-        LOG.error("corresponding (closing) swing item isn't instance of ActionMenu, class=" +
+        LOG.debug("corresponding (closing) swing item isn't instance of ActionMenu, class=" +
                   jitem.getClass().getName() +
                   ", event source: " +
                   toString());
@@ -1265,13 +1265,13 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       final ComponentPeer wndPeer = (ComponentPeer)_getPeerField(frame);
       if (wndPeer == null) {
         // wait a little for X11-peer to be connected
-        LOG.info("frame peer is null, wait for connection");
+        LOG.debug("frame peer is null, wait for connection");
         return 0;
       }
 
       // sun.awt.X11.XBaseWindow isn't available at all jdks => use reflection
       if (!wndPeer.getClass().getName().equals("sun.awt.X11.XFramePeer")) {
-        LOG.info("frame peer isn't instance of XBaseWindow, class of peer: " + wndPeer.getClass());
+        LOG.debug("frame peer isn't instance of XBaseWindow, class of peer: " + wndPeer.getClass());
         return 0;
       }
 

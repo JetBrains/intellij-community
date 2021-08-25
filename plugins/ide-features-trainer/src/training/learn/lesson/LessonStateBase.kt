@@ -21,7 +21,7 @@ private class LessonStateBase : PersistentStateComponent<LessonStateBase> {
 
   companion object {
     internal val instance: LessonStateBase
-    get() = ApplicationManager.getApplication().getService(LessonStateBase::class.java)
+      get() = ApplicationManager.getApplication().getService(LessonStateBase::class.java)
   }
 }
 
@@ -36,6 +36,8 @@ internal object LessonStateManager {
       lesson.setValue(LessonState.NOT_PASSED)
     }
   }
+
+  fun getPassedLessonsNumber(): Int = LessonStateBase.instance.map.values.filter { it == LessonState.PASSED }.size
 
   fun getStateFromBase(lessonId: String): LessonState =
     LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase()) { LessonState.NOT_PASSED }

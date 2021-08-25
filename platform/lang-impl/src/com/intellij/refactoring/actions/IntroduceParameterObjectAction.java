@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -39,6 +40,11 @@ public class IntroduceParameterObjectAction extends BaseRefactoringAction {
     final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>>
       delegate = IntroduceParameterObjectDelegate.findDelegate(element);
     return delegate != null ? delegate.getHandler(element) : null;
+  }
+
+  @Override
+  protected boolean isAvailableForLanguage(Language language) {
+    return IntroduceParameterObjectDelegate.EP_NAME.forLanguage(language) != null;
   }
 
   @Override

@@ -86,8 +86,7 @@ Supports Maven and Gradle projects.
         <statistics.counterUsagesCollector
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
 
-        <statistics.validation.customValidationRule
-                implementation="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsValidationRule"/>
+        <statistics.validation.customValidationRule implementation="com.jetbrains.packagesearch.intellij.plugin.fus.TopPackageIdValidationRule"/>
 
         <!--suppress PluginXmlCapitalization -->
         <notificationGroup displayType="BALLOON"

@@ -89,6 +89,9 @@
     <startupActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
     <startupActivity id="vfsStartup" implementation="com.intellij.psi.impl.file.impl.PsiVFSListener$MyStartUpActivity" order="first, after performanceReporter"/>
 
+    <applicationService serviceInterface="com.intellij.util.indexing.EntityIndexingService"
+                        serviceImplementation="com.intellij.util.indexing.EntityIndexingServiceImpl"/>
+
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
@@ -452,6 +455,9 @@
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager"/>
 
+    <applicationService serviceInterface="com.intellij.framework.detection.FileContentPattern$ParseXml"
+                        serviceImplementation="com.intellij.util.xml.NanoXmlParserImpl"/>
+
     <!-- Extension resources -->
     <applicationService serviceImplementation="com.intellij.ide.extensionResources.ResourceVersions"/>
     <obsoleteStorage file="extensionsRootType.xml">
@@ -773,7 +779,7 @@
     <search.topHitProvider implementation="com.intellij.application.options.editor.CodeFoldingOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable" id="editor.preferences.folding"
                            key="group.code.folding" bundle="messages.ApplicationBundle"/>
-    <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions" id="editor.preferences.completion"
+    <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionConfigurable" id="editor.preferences.completion"
                            key="title.code.completion" bundle="messages.ApplicationBundle"/>
     <projectConfigurable instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable"
                          id="editor.preferences.import"
@@ -790,7 +796,7 @@
       <className>com.intellij.formatting.contextConfiguration.ConfigureCodeStyleOnSelectedFragment</className>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.hints.BlacklistCurrentMethodIntention</className>
+      <className>com.intellij.codeInsight.hints.AddToExcludeListCurrentMethodIntention</className>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.hints.DisableCustomHintsOption</className>
@@ -969,6 +975,9 @@
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator"/>
 
+    <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingPanelProvider" />
+    <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewProjectErrorsPanelProvider" />
+
     <!--<projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>-->
     <projectService serviceInterface="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProviderBase"
                     serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>
@@ -1007,7 +1016,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.move.MoveUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.actions.RefactoringUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.webcore.packaging.PackageManagementUsageCollector"/>
-    <statistics.counterUsagesCollector groupId="completion" version="7"/>
+    <statistics.counterUsagesCollector groupId="completion" version="8"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.FindUsagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions"/>
@@ -1399,7 +1408,14 @@
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after aditionalFiles"/>
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 
-    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSlotManager"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleDependencyEntitiesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleCustomImlDataFilesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaSourceRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaResourceRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaModuleSettingsIndexableEntityProvider"/>
 
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>
@@ -1425,6 +1441,11 @@
                               order="first"/>
     <actionOnSave id="FormatOnSaveAction" implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveAction" order="first"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveUsagesCollector"/>
+
+    <recoveryAction implementation="com.intellij.util.indexing.RescanIndexesAction"/>
+    <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
+    <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
+
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
@@ -1435,9 +1456,4 @@
     <listener class="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationNotifier"
               topic="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationListener"/>
   </projectListeners>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.execution.runToolbar.RunToolbarComponentService</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

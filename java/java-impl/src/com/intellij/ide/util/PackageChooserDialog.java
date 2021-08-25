@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -109,7 +110,7 @@ public class PackageChooserDialog extends PackageChooser {
                 setText(name);
               }
               else {
-                setText(IdeBundle.message("node.default"));
+                setText(IdeCoreBundle.message("node.default"));
               }
             }
           }

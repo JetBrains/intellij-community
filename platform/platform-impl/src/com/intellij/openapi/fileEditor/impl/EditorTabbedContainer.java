@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.ExperimentalUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,8 +45,8 @@ import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleAlarm;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -63,6 +63,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   private final EditorWindow myWindow;
@@ -275,8 +276,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     tab = new TabInfo(component)
-      .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow)))
-      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
+      .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file)))
+      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file))
       .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)
       .setObject(file)
@@ -336,7 +337,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    return EditorTabPresentationUtil.getEditorTabTitle(project, file, null);
+    return EditorTabPresentationUtil.getEditorTabTitle(project, file);
   }
 
   public Component getComponentAt(int i) {
@@ -474,7 +475,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   @NotNull
   private static Runnable createKeepMousePositionRunnable(@NotNull MouseEvent event) {
-    return () -> new SingleAlarm(() -> {
+    return () -> EdtScheduledExecutorService.getInstance().schedule(() -> {
       Component component = event.getComponent();
       if (component != null && component.isShowing()) {
         Point p = component.getLocationOnScreen();
@@ -485,7 +486,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         catch (AWTException ignored) {
         }
       }
-    }, 50).request();
+    }, 50, TimeUnit.MILLISECONDS);
   }
 
   public void processSplit() {
@@ -579,7 +580,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   public static class DockableEditor implements DockableContent<VirtualFile> {
     final Image myImg;
-    private final DockableEditorTabbedContainer myContainer;
     private final Presentation myPresentation;
     private final Dimension myPreferredSize;
     private final boolean myPinned;
@@ -605,7 +605,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       myImg = img;
       myFile = file;
       myPresentation = presentation;
-      myContainer = new DockableEditorTabbedContainer(project);
       myPreferredSize = preferredSize;
       myPinned = isFilePinned;
       myNorthPanelAvailable = isNorthPanelAvailable;
@@ -639,7 +638,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     public void close() {
-      myContainer.close(myFile);
     }
 
     public VirtualFile getFile() {

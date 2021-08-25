@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
@@ -38,11 +39,12 @@ object SmartCastImpossibleInIfThenFactory : KotlinIntentionActionsFactory() {
 
     private fun createQuickFix(
         ifExpression: KtIfExpression,
-        fixText: (KtIfExpression) -> String,
+        @Nls fixText: (KtIfExpression) -> String,
         isApplicable: (KtIfExpression) -> Boolean,
         applyTo: (KtIfExpression, project: Project, editor: Editor?) -> Unit
     ): KotlinQuickFixAction<KtIfExpression> {
         return object : KotlinQuickFixAction<KtIfExpression>(ifExpression) {
+            @Nls
             private val text = fixText(ifExpression)
 
             override fun getText() = text

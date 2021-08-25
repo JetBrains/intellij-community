@@ -416,9 +416,24 @@ fun KtClass.isInheritable(): Boolean {
 }
 
 val KtParameter.isOverridable: Boolean
-    get() = hasValOrVar() &&
-            !hasModifier(KtTokens.FINAL_KEYWORD) &&
-            (hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD))
+    get() = hasValOrVar() && !isEffectivelyFinal
+
+val KtProperty.isOverridable: Boolean
+    get() = !isTopLevel && !isEffectivelyFinal
+
+private val KtDeclaration.isEffectivelyFinal: Boolean
+    get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
+            !(hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD)) ||
+            containingClassOrObject?.isEffectivelyFinal == true
+
+private val KtClassOrObject.isEffectivelyFinal: Boolean
+    get() = this is KtObjectDeclaration ||
+            this is KtClass && isEffectivelyFinal
+
+private val KtClass.isEffectivelyFinal: Boolean
+    get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
+            isData() ||
+            !(isSealed() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD))
 
 fun KtDeclaration.isOverridable(): Boolean {
     val parent = parent

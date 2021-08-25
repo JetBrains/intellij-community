@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -79,7 +80,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null &&
-                                             (!ActionPlaces.isPopupPlace(e.getPlace()) || editor == null || !editor.getSelectionModel().hasSelection()));
+                                             (!ActionPlaces.isPopupPlace(e.getPlace()) ||
+                                              editor == null ||
+                                              !editor.getSelectionModel().hasSelection() ||
+                                              EditorUtil.contextMenuInvokedOutsideOfSelection(e)));
     e.getPresentation().setText(getActionName(e.getPlace()));
   }
 
@@ -110,7 +114,9 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
       return getFileManagerName();
     }
-    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
+    return SystemInfo.isMac
+           ? ActionsBundle.message("action.RevealIn.name.mac")
+           : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
   }
 
   public static @NlsSafe @NotNull String getFileManagerName() {

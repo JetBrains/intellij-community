@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.cherrypick;
 
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
@@ -68,7 +68,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   private String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
     String message = commit.getFullMessage();
     if (shouldAddSuffix(repository, commit.getId())) {
-      message += String.format("\n\n(cherry picked from commit %s)", commit.getId().asString()); //NON-NLS Do not i18n commit template
+      message += String.format("\n\n(cherry-picked from commit %s)", commit.getId().asString()); //NON-NLS Do not i18n commit template
     }
     return message;
   }

@@ -7,6 +7,7 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.PortableCachesLoadListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +27,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -39,6 +40,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
@@ -134,9 +137,16 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           markAsOutdated();
         }
       });
+
+      project.getMessageBus().connect(this).subscribe(PortableCachesLoadListener.TOPIC, new PortableCachesLoadListener() {
+        @Override
+        public void loadingStarted() {
+          closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
+        }
+      });
     }
 
-    Disposer.register(this, () -> closeReaderIfNeeded(IndexCloseReason.PROJECT_CLOSED));
+    Disposer.register(this, () -> closeReaderIfNeeded(IndexCloseReason.SHUTDOWN));
   }
 
   @Nullable
@@ -361,7 +371,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
-      Set<VirtualFile> referentFileIds = new CompactVirtualFileSet();
+      Set<VirtualFile> referentFileIds = VfsUtilCore.createCompactVirtualFileSet();
       for (CompilerRef ref : compilerElementInfo.searchElements) {
         try {
           Set<VirtualFile> referents = referentFileSearcher.findReferentFiles(ref, compilerElementInfo.place);
@@ -397,7 +407,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           return null;
         }
       }
-      final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(file, true);
+      final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(psiElement, true);
       if (adapter == null) return null;
       final List<CompilerRef> refs = adapter.asCompilerRefs(psiElement, myReader.getNameEnumerator());
       if (refs == null) return null;
@@ -434,6 +444,24 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
+  public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull Function<? super @NotNull NameEnumerator, ? extends @Nullable CompilerRef> compilerRefFunction) {
+    if (!myReadDataLock.tryLock()) return null;
+    try {
+      if (myReader == null) return null;
+      try {
+        CompilerRef hierarchyElement = compilerRefFunction.fun(myReader.getNameEnumerator());
+        if (hierarchyElement == null) return null;
+        return myReader.getDirectInheritorsNames(hierarchyElement);
+      }
+      catch (StorageException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    finally {
+      myReadDataLock.unlock();
+    }
+  }
+
   public boolean isInsideLibraryScope() {
     return myIsInsideLibraryScope.get();
   }
@@ -445,10 +473,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         myActiveBuilds++;
         myDirtyScopeHolder.compilerActivityStarted();
       }
-      if (myReader != null) {
+
+      boolean myReaderIsNotNull = myReader != null;
+      if (myReaderIsNotNull) {
         myReader.close(reason == IndexCloseReason.AN_EXCEPTION);
         myReader = null;
       }
+
+      LOG.info("backward reference index reader is closed" + (myReaderIsNotNull ? "" : " (didn't exist)"));
     } finally {
       myOpenCloseLock.unlock();
     }
@@ -650,7 +682,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   protected enum IndexCloseReason {
     AN_EXCEPTION,
     COMPILATION_STARTED,
-    PROJECT_CLOSED
+    SHUTDOWN
   }
 
   protected enum IndexOpenReason {

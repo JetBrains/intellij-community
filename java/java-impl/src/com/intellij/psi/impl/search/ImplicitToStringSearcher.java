@@ -102,8 +102,6 @@ public final class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpress
               return false;
             }
           }
-        } else {
-          LOG.error(parent + " expected to be polyadic expression");
         }
       }
       return true;

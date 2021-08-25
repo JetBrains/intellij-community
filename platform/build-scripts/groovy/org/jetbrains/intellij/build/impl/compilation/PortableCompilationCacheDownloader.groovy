@@ -34,7 +34,7 @@ class PortableCompilationCacheDownloader implements AutoCloseable {
   private static final int COMMITS_COUNT = 1_000
 
   private final GetClient getClient = new GetClient(context.messages)
-  private final Git git = new Git(context.paths.projectHome.trim())
+  private final Git git
 
   private final CompilationContext context
   private final String remoteCacheUrl
@@ -68,9 +68,11 @@ class PortableCompilationCacheDownloader implements AutoCloseable {
     new CommitsHistory(json).commitsForRemote(gitUrl)
   }()
 
-  PortableCompilationCacheDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl,
+  PortableCompilationCacheDownloader(CompilationContext context, Git git,
+                                     String remoteCacheUrl, String gitUrl,
                                      boolean availableForHeadCommit, boolean downloadCompilationOutputsOnly) {
     this.context = context
+    this.git = git
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
     this.availableForHeadCommitForced = availableForHeadCommit

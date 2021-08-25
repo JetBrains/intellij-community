@@ -1,1 +1,1 @@
-Unclassified 3 public interface T: A
+Unclassified 3 public interface T : A

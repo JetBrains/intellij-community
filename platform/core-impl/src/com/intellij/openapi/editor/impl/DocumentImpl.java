@@ -1182,15 +1182,15 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @NotNull
-  String dumpState() {
+  public String dumpState() {
     @NonNls StringBuilder result = new StringBuilder();
-    result.append(", intervals:\n");
-    for (int line = 0; line < getLineCount(); line++) {
-      result.append(line).append(": ").append(getLineStartOffset(line)).append("-")
-        .append(getLineEndOffset(line)).append(", ");
+    result.append("intervals:\n");
+    int lineCount = getLineCount();
+    for (int line = 0; line < lineCount; line++) {
+      result.append(line).append(": ").append(getLineStartOffset(line)).append("-").append(getLineEndOffset(line)).append(", ");
     }
-    if (result.length() > 0) {
-      result.setLength(result.length() - 1);
+    if (lineCount > 0) {
+      result.setLength(result.length() - 2);
     }
     return result.toString();
   }

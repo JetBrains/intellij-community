@@ -1,3 +1,5 @@
+// Copyright 2000-2020 I are a incorrect comment that the developers can hardly do anything about.
+
 class ForMultiLanguageSupport {
     // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
     // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
@@ -49,4 +51,6 @@ class ForMultiLanguageSupport {
   //   <TYPO>igamma</TYPO>(a, x) = gamma(a, x) / Gamma(a)
 
   // value between hours and minutes (":" is used by default)
+
+  // Copyright refers to <warning descr="EN_A_VS_AN">an</warning> legal right bla-bla-bla, and we check for errors here.
 }

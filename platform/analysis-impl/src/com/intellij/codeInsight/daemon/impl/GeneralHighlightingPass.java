@@ -39,7 +39,6 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -127,8 +126,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
     }
     if (visitors.isEmpty()) {
-      LOG.error("No visitors registered. list=" + list + "; all visitors are:" +
-                HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(myProject));
+      LOG.error("No visitors registered. list=" + list + "; all visitors are:" + HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(myProject));
     }
 
     return visitors.toArray(new HighlightVisitor[0]);
@@ -344,7 +342,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
         catch (Exception e) {
           if (!failed) {
-            LOG.error("In file: " + myFile.getViewProvider().getVirtualFile(), e);
+            LOG.error("In file: " + getFile().getViewProvider().getVirtualFile(), e);
           }
           failed = true;
         }
@@ -419,8 +417,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return RESTART_REQUESTS.get() > 0;
   }
 
-  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
-                                                  @NotNull Project project) throws ProcessCanceledException {
+  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -519,11 +516,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  private static @NlsSafe String formatDescription(@NotNull CharSequence text, TextRange textRange, List<? extends TextRange> additionalRanges) {
+  private static @NlsSafe String formatDescription(@NotNull CharSequence text, @NotNull TextRange textRange, @NotNull List<? extends TextRange> additionalRanges) {
     StringJoiner joiner = new StringJoiner("\n");
-    JBIterable.of(textRange).append(additionalRanges).forEach(
-      range -> joiner.add(text.subSequence(range.getStartOffset(), range.getEndOffset()))
-    );
+    joiner.add(textRange.subSequence(text));
+    for (TextRange additionalRange : additionalRanges) {
+      joiner.add(additionalRange.subSequence(text));
+    }
     return joiner.toString();
   }
 

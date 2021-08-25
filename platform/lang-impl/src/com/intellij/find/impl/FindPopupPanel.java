@@ -80,7 +80,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
@@ -1971,6 +1974,42 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       add(myUsageRenderer, BorderLayout.CENTER);
       add(myFileAndLineNumber, BorderLayout.EAST);
       setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleJPanel() {
+          @Override
+          public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.UNKNOWN;
+          }
+
+          @Override
+          public AccessibleStateSet getAccessibleStateSet() {
+            AccessibleStateSet stateSet = new AccessibleStateSet();
+            stateSet.addAll(myUsageRenderer.getAccessibleContext().getAccessibleStateSet().toArray());
+            stateSet.addAll(myFileAndLineNumber.getAccessibleContext().getAccessibleStateSet().toArray());
+            return stateSet;
+          }
+
+          @Override
+          public int getAccessibleIndexInParent() {
+            return 0;
+          }
+
+          @Override
+          public int getAccessibleChildrenCount() {
+            return 0;
+          }
+
+          @Override
+          public Accessible getAccessibleChild(int i) {
+            return null;
+          }
+        };
+      }
+      return accessibleContext;
     }
 
     @Override

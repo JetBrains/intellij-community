@@ -24,7 +24,7 @@ private class LearnProjectFileEditorListener(project: Project) : FileEditorManag
   private val langSupport: LangSupport? get() = ref.get()
 
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-    val langSupport = langSupport?: return
+    val langSupport = langSupport ?: return
 
     val project = source.project
     if (ScratchUtil.isScratch(file)) {
@@ -48,7 +48,8 @@ private class LearnProjectFileEditorListener(project: Project) : FileEditorManag
             }
           }
         }
-        EditorModificationUtil.setReadOnlyHint(editorEx, LearnBundle.message("learn.project.read.only.hint", LearnBundle.message("toolwindow.stripe.Learn")), listener)
+        val hint = LearnBundle.message("learn.project.read.only.hint", LearnBundle.message("toolwindow.stripe.Learn"))
+        EditorModificationUtil.setReadOnlyHint(editorEx, hint, listener)
         editorEx.isViewer = true
       }
     }

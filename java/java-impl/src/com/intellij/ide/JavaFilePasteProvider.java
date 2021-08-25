@@ -110,7 +110,8 @@ public class JavaFilePasteProvider implements PasteProvider {
     if (project == null || ideView == null || ideView.getDirectories().length == 0) {
       return false;
     }
-    return getPastedClasses(project, CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor)).length >= 1;
+    String pasteText = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    return pasteText != null && getPastedClasses(project, pasteText).length >= 1;
   }
 
   @Nullable

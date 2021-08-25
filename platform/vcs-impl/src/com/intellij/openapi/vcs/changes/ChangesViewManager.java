@@ -449,7 +449,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myDisposed) return;
 
       boolean isEditorPreview = isEditorPreview(myProject);
-      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
+      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject) && !isOpenEditorDiffPreviewWithSingleClick.asBoolean();
 
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
@@ -838,7 +838,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void invokeLaterIfNeeded(Runnable runnable) {
-      ModalityUiUtil.invokeLaterIfNeeded(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(), runnable);
     }
 
     private class MyChangeListListener extends ChangeListAdapter {

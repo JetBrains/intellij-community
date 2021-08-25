@@ -19,7 +19,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -106,7 +105,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  protected <P extends RunConfigurationBase<?>> List<SettingsEditorFragment<P, ?>> createFragments(@NotNull P configuration) {
+  protected <P extends RunConfigurationBase<?>> List<SettingsEditor<P>> createFragments(@NotNull P configuration) {
     return Collections.singletonList(new CoverageFragment<>(configuration));
   }
 

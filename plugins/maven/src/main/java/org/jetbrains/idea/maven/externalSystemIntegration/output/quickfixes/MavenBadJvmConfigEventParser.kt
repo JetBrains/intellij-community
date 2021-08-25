@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
-import org.apache.commons.lang.StringUtils
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenImportingSettingsQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenRunnerSettingsQuickFix
 import org.jetbrains.idea.maven.execution.MavenExternalParameters
@@ -45,7 +44,7 @@ class MavenBadJvmConfigEventParser : MavenLoggedEventParser {
                             messageConsumer: Consumer<in BuildEvent?>): Boolean {
     var errorLine = logLine.line
     if (errorLine.startsWith(MavenJvmConfigBuildIssue.VM_INIT_ERROR)) {
-      val causeLine = logEntryReader.readLine()?.line ?: StringUtils.EMPTY
+      val causeLine = logEntryReader.readLine()?.line ?: ""
       if (causeLine.isNotEmpty()) {
         errorLine += "\n$causeLine"
       }
@@ -70,7 +69,7 @@ class MavenImportBadJvmConfigEventParser : MavenImportLoggedEventParser {
                               messageConsumer: Consumer<in BuildEvent>): Boolean {
     var errorLine = logLine
     if (logLine.startsWith(MavenJvmConfigBuildIssue.VM_INIT_ERROR)) {
-      val causeLine = reader.readLine() ?: StringUtils.EMPTY
+      val causeLine = reader.readLine() ?: ""
       if (causeLine.isNotEmpty()) {
         errorLine += "\n$causeLine"
       }

@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.content.*;
 import com.intellij.util.SmartList;
@@ -565,7 +566,12 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
     RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
     if (ui != null) {
-      ui.setLeftToolbarVisible(visible);
+      if (Registry.is("debugger.new.tool.window.layout")) {
+        ui.setTopLeftActionsVisible(visible);
+      }
+      else {
+        ui.setLeftToolbarVisible(visible);
+      }
       ui.setContentToolbarBefore(visible);
     }
     else {

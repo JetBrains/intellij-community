@@ -39,9 +39,9 @@ Reports common usage patterns of <code>java.util.Map</code> and suggests replaci
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   map.replaceAll((localKey, localValue) -> transform(localValue));
-</pre>
+</code></pre>
 
 <!-- tooltip end -->
 <p>Note that the replacement with <code>computeIfAbsent()</code> or <code>merge()</code> might work incorrectly for some <code>Map</code>

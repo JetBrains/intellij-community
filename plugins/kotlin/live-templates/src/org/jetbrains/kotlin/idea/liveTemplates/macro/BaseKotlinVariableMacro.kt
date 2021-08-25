@@ -85,7 +85,7 @@ abstract class BaseKotlinVariableMacro<TState> : KotlinMacro() {
     override fun calculateLookupItems(params: Array<Expression>, context: ExpressionContext): Array<LookupElement>? {
         val vars = getVariables(params, context)
         if (vars.size < 2) return null
-        val lookupElementFactory = BasicLookupElementFactory(context.project, InsertHandlerProvider(CallType.DEFAULT) { emptyList() })
+        val lookupElementFactory = BasicLookupElementFactory(context.project, InsertHandlerProvider(CallType.DEFAULT, editor = context.editor!!) { emptyList() })
         return vars.map { lookupElementFactory.createLookupElement(it) }.toTypedArray()
     }
 }

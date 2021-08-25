@@ -7,11 +7,11 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ImaginaryCaret extends UserDataHolderBase implements Caret {
+public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   private final ImaginaryCaretModel myCaretModel;
   private int myStart, myEnd;
 
-  ImaginaryCaret(ImaginaryCaretModel caretModel) {
+  public ImaginaryCaret(ImaginaryCaretModel caretModel) {
     myCaretModel = caretModel;
   }
 

@@ -57,7 +57,7 @@ public final class PersistentHashMapValueStorage {
     private final boolean myReadOnly;
     private final boolean myCompactChunksWithValueDeserialization;
     private final boolean myHasNoChunks;
-    private final boolean myDoCompression;
+    private final boolean myUseCompression;
 
     private CreationTimeOptions(@NotNull IOCancellationCallback callback,
                                 boolean readOnly,
@@ -68,15 +68,19 @@ public final class PersistentHashMapValueStorage {
       myReadOnly = readOnly;
       myCompactChunksWithValueDeserialization = compactChunksWithValueDeserialization;
       myHasNoChunks = hasNoChunks;
-      myDoCompression = doCompression;
+      myUseCompression = doCompression;
     }
 
     int getVersion() {
-      return (myHasNoChunks ? 10 : 0) * 31 + (myDoCompression ? 0x13 : 0);
+      return (myHasNoChunks ? 10 : 0) * 31 + (myUseCompression ? 0x13 : 0);
     }
 
     boolean isReadOnly() {
       return myReadOnly;
+    }
+
+    boolean useCompression() {
+      return myUseCompression;
     }
 
     @NotNull
@@ -86,7 +90,7 @@ public final class PersistentHashMapValueStorage {
         true,
         myCompactChunksWithValueDeserialization,
         myHasNoChunks,
-        myDoCompression
+        myUseCompression
       );
     }
 
@@ -157,7 +161,7 @@ public final class PersistentHashMapValueStorage {
     myPath = path;
     myOptions = options;
 
-    if (myOptions.myDoCompression) {
+    if (myOptions.useCompression()) {
       myCompressedAppendableFile = new MyCompressedAppendableFile();
       mySize = myCompressedAppendableFile.length();
     }
@@ -530,7 +534,7 @@ public final class PersistentHashMapValueStorage {
     try {
       long chunk = tailChunkAddress;
       while (chunk != 0) {
-        if (chunk < 0 || chunk > mySize) throw new PersistentEnumeratorBase.CorruptedException(myPath);
+        if (chunk < 0 || chunk > mySize) throw new CorruptedException(myPath);
 
         byte[] buffer = myBuffer.getBuffer(ourBufferLength);
         int len = (int)Math.min(ourBufferLength, mySize - chunk);
@@ -554,7 +558,7 @@ public final class PersistentHashMapValueStorage {
           reader.get(chunk + headerOffset, result, 0, chunkSize);
         }
 
-        if (prevChunkAddress >= chunk) throw new PersistentEnumeratorBase.CorruptedException(myPath);
+        if (prevChunkAddress >= chunk) throw new CorruptedException(myPath);
 
         chunk = prevChunkAddress;
         chunkCount++;
@@ -564,12 +568,12 @@ public final class PersistentHashMapValueStorage {
           assert !myOptions.myHasNoChunks;
         }
         if (result.length > mySize && myCompressedAppendableFile == null) {
-          throw new PersistentEnumeratorBase.CorruptedException(myPath);
+          throw new CorruptedException(myPath);
         }
       }
     }
     catch (OutOfMemoryError error) {
-      throw new PersistentEnumeratorBase.CorruptedException(myPath);
+      throw new CorruptedException(myPath);
     }
     finally {
       if (readerHandle != null) {

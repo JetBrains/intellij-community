@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -8,34 +8,46 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBSlider;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.lang.ref.WeakReference;
+import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class DocFontSizePopup {
-  private static WeakReference<JSlider> ourCurrentSlider;
 
-  public static void show(@NotNull Runnable changeCallback, @NotNull Component parentComponent) {
-    JSlider slider = new JSlider(SwingConstants.HORIZONTAL, 0, FontSize.values().length - 1, 3);
+  private static WeakReference<JBSlider> ourCurrentSlider;
+
+  public static void show(@NotNull Component parentComponent, @NotNull Runnable changeCallback) {
+    show(parentComponent, size -> changeCallback.run());
+  }
+
+  public static void show(@NotNull Component parentComponent, @NotNull Consumer<? super @NotNull FontSize> changeCallback) {
+    show(parentComponent, DocumentationComponent.getQuickDocFontSize(), size -> {
+      DocumentationComponent.setQuickDocFontSize(size);
+      changeCallback.accept(size);
+    });
+  }
+
+  public static void show(
+    @NotNull Component parentComponent,
+    @NotNull FontSize initial,
+    @NotNull Consumer<? super @NotNull FontSize> changeCallback
+  ) {
+    var slider = new JBSlider(SwingConstants.HORIZONTAL, 0, FontSize.values().length - 1, 3);
     slider.setOpaque(true);
     slider.setMinorTickSpacing(1);
     slider.setPaintTicks(true);
     slider.setPaintTrack(true);
     slider.setSnapToTicks(true);
     UIUtil.setSliderIsFilled(slider, true);
-    updateSliderPosition(slider);
-    slider.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        DocumentationComponent.setQuickDocFontSize(FontSize.values()[slider.getValue()]);
-        changeCallback.run();
-      }
-    });
+    slider.setValueWithoutEvents(initial.ordinal());
+    slider.addChangeListener(e -> changeCallback.accept(FontSize.values()[slider.getValue()]));
     ourCurrentSlider = new WeakReference<>(slider);
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
@@ -50,12 +62,10 @@ public final class DocFontSizePopup {
                                            location.y - panel.getPreferredSize().height / 2)).getPointOn(parentComponent));
   }
 
-  public static void update() {
-    JSlider slider = SoftReference.dereference(ourCurrentSlider);
-    if (slider != null && slider.isShowing()) updateSliderPosition(slider);
-  }
-
-  private static void updateSliderPosition(@NotNull JSlider slider) {
-    slider.setValue(DocumentationComponent.getQuickDocFontSize().ordinal());
+  public static void update(@NotNull FontSize size) {
+    JBSlider slider = SoftReference.dereference(ourCurrentSlider);
+    if (slider != null && slider.isShowing()) {
+      slider.setValueWithoutEvents(size.ordinal());
+    }
   }
 }

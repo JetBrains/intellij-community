@@ -4,18 +4,22 @@ package com.intellij.util.indexing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.SerializationManagerEx
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import kotlin.io.path.deleteExisting
 
-internal object CorruptionMarker {
+@ApiStatus.Internal
+object CorruptionMarker {
   private const val CORRUPTION_MARKER_NAME = "corruption.marker"
   private const val MARKED_AS_DIRTY_REASON = "Indexes marked as dirty (IDE is expected to be work)"
+  private const val FORCE_REBUILD_REASON = "Indexes were forcibly marked as corrupted"
   private const val EXPLICIT_INVALIDATION_REASON = "Explicit index invalidation"
 
   private val corruptionMarker
@@ -79,11 +83,8 @@ internal object CorruptionMarker {
       Files.createDirectories(indexRoot)
     }
 
-    val indexingDiagnosticDir = IndexDiagnosticDumper.indexingDiagnosticDir
-    if (indexingDiagnosticDir.exists()) {
-      indexingDiagnosticDir.directoryStreamIfExists { dirStream ->
-        dirStream.forEach { FileUtil.deleteWithRenaming(it) }
-      }
+    if (SystemProperties.getBooleanProperty("idea.index.clear.diagnostic.on.invalidation", true)) {
+      IndexDiagnosticDumper.clearDiagnostic()
     }
 
     // serialization manager is initialized before and use removed index root so we need to reinitialize it

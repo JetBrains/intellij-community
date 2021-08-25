@@ -3,8 +3,8 @@ package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -17,7 +17,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MergingUpdateQueueTest extends UsefulTestCase {
+public class MergingUpdateQueueTest extends LightPlatformTestCase {
   public void testOnShowNotify() {
     final MyUpdate first = new MyUpdate("first");
     final MyUpdate second = new MyUpdate("second");

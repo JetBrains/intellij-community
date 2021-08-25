@@ -6,14 +6,16 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.internal.psiView.formattingblocks.BlockViewerPsiBasedTree;
 import com.intellij.internal.psiView.stubtree.StubViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -29,6 +31,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -63,6 +68,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,6 +84,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -218,8 +225,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myEditor.getContentComponent(), true));
         myEditor.getCaretModel().moveToOffset(selectedEditor.getCaretModel().getOffset());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        //myEditor.getSelectionModel().setSelection(selectedEditor.getSelectionModel().getSelectionStart(),
-        //                                          selectedEditor.getSelectionModel().getSelectionEnd());
       }, ModalityState.stateForComponent(myPanel));
     }
   }
@@ -691,7 +696,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       if (source instanceof FileType) {
         final FileType type = (FileType)source;
         String ext = type.getDefaultExtension();
-        if (myExtensionComboBox.isVisible()) {
+        if (myExtensionComboBox.isVisible() && myExtensionComboBox.getSelectedItem() != null) {
           ext = StringUtil.toLowerCase(myExtensionComboBox.getSelectedItem().toString());
         }
         if (type instanceof LanguageFileType) {
@@ -712,7 +717,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
       return Collections.<DataProvider>singletonList(realDataId -> getSlowData(realDataId));
     }
     return null;
@@ -809,12 +814,20 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       ((Map<?, ?>)cache).clear();
     }
     else {
-      myRefs.putClientProperty(REFS_CACHE, new HashMap());
+      myRefs.putClientProperty(REFS_CACHE, new HashMap<>());
     }
-    if (element != null) {
-      for (PsiReference reference : element.getReferences()) {
-        model.addElement(reference.getClass().getName());
+    if (element == null) return;
+
+    final String progressTitle = LangBundle.message("psi.viewer.progress.dialog.get.references");
+    final PsiReference[] psiReferences = ProgressManager.getInstance().run(new Task.WithResult<>(myProject, progressTitle, true) {
+      @Override
+      protected PsiReference[] compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
+        return ReadAction.nonBlocking(element::getReferences).executeSynchronously();
       }
+    });
+
+    for (PsiReference reference : psiReferences) {
+      model.addElement(reference.getClass().getName());
     }
   }
 
@@ -863,21 +876,50 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     if (cache == null) {
       final PsiReference[] references = element.getReferences();
       cache = new PsiElement[references.length];
+      final Project project = element.getProject();
       for (int i = 0; i < references.length; i++) {
         final PsiReference reference = references[i];
+
         final PsiElement resolveResult;
         if (reference instanceof PsiPolyVariantReference) {
-          final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(true);
-          resolveResult = results.length == 0 ? null : results[0].getElement();
+          resolveResult = multiResolveInBgThread(project, (PsiPolyVariantReference)reference);
         }
         else {
-          resolveResult = reference.resolve();
+          resolveResult = resolveInBgThread(project, reference);
         }
+
         cache[i] = resolveResult;
       }
       map.put(element, cache);
     }
     return index >= cache.length ? null : cache[index];
+  }
+
+  @Contract(pure = true)
+  private static PsiElement resolveInBgThread(@NotNull final Project project,
+                                              @NotNull final PsiReference reference) {
+    final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.resolving.reference.text", reference.getElement().getText());
+    return ProgressManager.getInstance().run(new Task.WithResult<>(project, progressDialogTitle, true) {
+      @Override
+      protected PsiElement compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
+        return ReadAction.nonBlocking(reference::resolve).executeSynchronously();
+      }
+    });
+  }
+
+  @Contract(pure = true)
+  private static @Nullable PsiElement multiResolveInBgThread(@NotNull final Project project,
+                                                             @NotNull final PsiPolyVariantReference reference) {
+    final Callable<ResolveResult[]> resolver = () -> reference.multiResolve(true);
+
+    final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.resolving.reference.text", reference.getElement().getText());
+    return ProgressManager.getInstance().run(new Task.WithResult<>(project, progressDialogTitle, true) {
+      @Override
+      protected PsiElement compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
+        final ResolveResult[] results = ReadAction.nonBlocking(resolver).executeSynchronously();
+        return results.length == 0 ? null : results[0].getElement();
+      }
+    });
   }
 
   @Nullable
@@ -1084,10 +1126,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   }
 
   private static final class AutoExpandFocusListener extends FocusAdapter {
-    private final JComboBox myComboBox;
+    private final JComboBox<?> myComboBox;
     private final Component myParent;
 
-    private AutoExpandFocusListener(final JComboBox comboBox) {
+    private AutoExpandFocusListener(final JComboBox<?> comboBox) {
       myComboBox = comboBox;
       myParent = UIUtil.findUltimateParent(myComboBox);
     }

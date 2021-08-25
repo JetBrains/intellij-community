@@ -6,6 +6,7 @@ package org.jetbrains.idea.devkit.navigation.structure;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -31,6 +32,7 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
     moduleBuilder.addLibrary("jblist", PathUtil.getJarPathForClass(JBList.class));
+    moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
   }
 
 

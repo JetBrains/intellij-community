@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,16 +37,18 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
   }
 
   @Override
-  public boolean isProblem(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
                                                                          @NotNull VirtualFile file,
                                                                          boolean focusEditor) {
     LightEditService.getInstance().openFile(file);
     return getEditorsWithProviders(file);
+  }
+
+  @Override
+  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
+                                                                         @NotNull VirtualFile file,
+                                                                         @NotNull FileEditorOpenOptions options) {
+    return openFileImpl2(window, file, true);
   }
 
   @Override

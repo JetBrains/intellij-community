@@ -58,6 +58,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -87,6 +88,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   public static ParamsGroup getJigsawOptions(JavaParameters parameters) {
     return parameters.getVMParametersList().getParamsGroup(JIGSAW_OPTIONS);
+  }
+  public static ParamsGroup getOrCreateJigsawOptions(JavaParameters parameters) {
+    ParamsGroup group = getJigsawOptions(parameters);
+    if (group != null) {
+      return group;
+    }
+    
+    return parameters.getVMParametersList().addParamsGroup(JIGSAW_OPTIONS);
   }
 
   private @Nullable TargetBoundServerSocket myTargetBoundServerSocket;
@@ -143,6 +152,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull
   private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
+    downloadAdditionalDependencies(getJavaParameters()); //required for fork info
     appendForkInfo(executor);
     appendRepeatMode();
 
@@ -172,6 +182,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
     return processHandler;
   }
+
+  /**
+   * Should start without explicit read lock so modal or bg progress to download additional dependencies may work normally
+   */
+  public void downloadAdditionalDependencies(JavaParameters javaParameters) throws ExecutionException { }
 
   @Override
   public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
@@ -487,25 +502,27 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
     if (!useModulePath()) return;
-    PsiJavaModule testModule = findJavaModule(module, true);
-    if (testModule != null) {
-      //adding the test module explicitly as it is unreachable from `idea.rt`
-      ParametersList vmParametersList = javaParameters
-        .getVMParametersList()
-        .addParamsGroup(JIGSAW_OPTIONS)
-        .getParametersList();
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      PsiJavaModule testModule = findJavaModule(module, true);
+      if (testModule != null) {
+        //adding the test module explicitly as it is unreachable from `idea.rt`
+        ParametersList vmParametersList = javaParameters
+          .getVMParametersList()
+          .addParamsGroup(JIGSAW_OPTIONS)
+          .getParametersList();
 
-      vmParametersList.add("--add-modules");
-      vmParametersList.add(testModule.getName());
-      //setup module path
-      JavaParametersUtil.putDependenciesOnModulePath(javaParameters, testModule, true);
-    }
-    else {
-      PsiJavaModule prodModule = findJavaModule(module, false);
-      if (prodModule != null) {
-        splitDepsBetweenModuleAndClasspath(javaParameters, module, prodModule);
+        vmParametersList.add("--add-modules");
+        vmParametersList.add(testModule.getName());
+        //setup module path
+        JavaParametersUtil.putDependenciesOnModulePath(javaParameters, testModule, true);
       }
-    }
+      else {
+        PsiJavaModule prodModule = findJavaModule(module, false);
+        if (prodModule != null) {
+          splitDepsBetweenModuleAndClasspath(javaParameters, module, prodModule);
+        }
+      }
+    });
   }
 
   /**

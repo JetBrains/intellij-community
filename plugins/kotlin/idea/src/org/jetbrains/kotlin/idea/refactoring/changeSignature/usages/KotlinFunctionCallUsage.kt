@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallIntention
@@ -29,12 +30,10 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
+import org.jetbrains.kotlin.resolve.scopes.receivers.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.util.kind
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
@@ -330,8 +329,18 @@ class KotlinFunctionCallUsage(
         val extensionReceiver = resolvedCall?.extensionReceiver
         val dispatchReceiver = resolvedCall?.dispatchReceiver
 
-        // Do not add extension receiver to calls with explicit dispatch receiver
-        if (newReceiverInfo != null && fullCallElement is KtQualifiedExpression && dispatchReceiver is ExpressionReceiver) return element
+        // Do not add extension receiver to calls with explicit dispatch receiver except for objects
+        if (newReceiverInfo != null &&
+            fullCallElement is KtQualifiedExpression &&
+            dispatchReceiver is ExpressionReceiver
+        ) {
+            if (isObjectReceiver(dispatchReceiver)) {
+                //It's safe to replace object reference with a new receiver, but we shall import the function
+                addDelayedImportRequest(changeInfo.method, element.containingKtFile)
+            } else {
+                return element
+            }
+        }
 
         val newArgumentInfos = newParameters.asSequence().withIndex().map {
             val (index, param) = it
@@ -466,6 +475,8 @@ class KotlinFunctionCallUsage(
         newElement.flushElementsForShorteningToWaitList()
         return newElement
     }
+
+    private fun isObjectReceiver(dispatchReceiver: ReceiverValue) = dispatchReceiver.safeAs<ClassValueReceiver>()?.classQualifier?.descriptor?.kind == ClassKind.OBJECT
 
     private fun changeArgumentNames(changeInfo: KotlinChangeInfo, element: KtCallElement) {
         for (argument in element.valueArguments) {

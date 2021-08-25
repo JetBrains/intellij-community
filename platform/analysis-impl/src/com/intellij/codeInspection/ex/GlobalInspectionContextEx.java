@@ -53,8 +53,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   protected volatile Path myOutputDir;
   protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
-  Map<Path, Long> myProfile;
-  protected InspectionProblemConsumer myProblemConsumer = null;
+  private Map<Path, Long> myProfile;
+  protected InspectionProblemConsumer myProblemConsumer;
 
   public GlobalInspectionContextEx(@NotNull Project project) {super(project);}
 
@@ -192,7 +192,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
           try {
             if (presentation instanceof AggregateResultsExporter) {
               presentation.updateContent();
-              if (presentation.hasReportedProblems()) {
+              if (presentation.hasReportedProblems().toBoolean()) {
                 toolsWithResultsToAggregate.add(sameTools);
                 break;
               }
@@ -202,7 +202,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
             }
             else {
               presentation.updateContent();
-              if (presentation.hasReportedProblems()) {
+              if (presentation.hasReportedProblems().toBoolean()) {
                 globalToolsWithProblems.add(sameTools);
                 LOG.assertTrue(!hasProblems, toolName);
                 break;

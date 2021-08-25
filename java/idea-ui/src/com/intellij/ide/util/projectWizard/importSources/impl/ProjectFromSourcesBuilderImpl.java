@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
@@ -176,7 +177,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     }
     catch (Exception e) {
       LOG.info(e);
-      Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
+      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()), IdeCoreBundle.message("title.add.module"));
     }
 
     final Map<ModuleDescriptor, Module> descriptorToModuleMap = new HashMap<>();
@@ -221,7 +222,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     }
     catch (Exception e) {
       LOG.info(e);
-      Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
+      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()), IdeCoreBundle.message("title.add.module"));
     }
 
     // setup dependencies between modules
@@ -251,7 +252,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     }
     catch (Exception e) {
       LOG.info(e);
-      Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", e.getMessage()), IdeBundle.message("title.add.module"));
+      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()), IdeCoreBundle.message("title.add.module"));
     }
 
     WriteAction.run(() -> {

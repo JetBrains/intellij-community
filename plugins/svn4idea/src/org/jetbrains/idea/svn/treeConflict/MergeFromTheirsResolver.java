@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -11,7 +12,7 @@ import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -27,7 +28,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -440,7 +440,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
              .yesText(message("button.keep"))
              .noText(message("button.move"))
              .doNotAsk(
-               new DialogWrapper.DoNotAskOption() {
+               new DoNotAskOption() {
                  @Override
                  public boolean isToBeShown() {
                    return true;
@@ -466,7 +466,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
                  @NotNull
                  @Override
                  public String getDoNotShowMessage() {
-                   return UIBundle.message("dialog.options.do.not.ask");
+                   return IdeCoreBundle.message("dialog.options.do.not.ask");
                  }
                })
              .show();

@@ -1,6 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("HardCodedStringLiteral")
-
 package org.jetbrains.builtInWebServer
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -55,7 +54,7 @@ import javax.swing.SwingUtilities
 internal val LOG = logger<BuiltInWebServer>()
 
 private val notificationManager by lazy {
-  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION, null)
+  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP, NotificationType.INFORMATION)
 }
 
 class BuiltInWebServer : HttpRequestHandler() {
@@ -220,7 +219,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   }) ?: candidateByDirectoryName ?: return false
 
   if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify(BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), null)
+    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), null)
     return false
   }
 

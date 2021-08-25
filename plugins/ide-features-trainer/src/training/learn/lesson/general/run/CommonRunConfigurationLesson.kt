@@ -22,7 +22,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
   protected fun TaskRuntimeContext.configurations() =
     runManager().allSettings.filter { it.name.contains(demoConfigurationName) }
 
-  private fun TaskContext.runToolWindow() = strong(UIBundle.message("tool.window.name.run"))
+  private fun TaskContext.runToolWindow() = strong(ExecutionBundle.message("tool.window.name.run"))
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {

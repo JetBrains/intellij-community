@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import static org.jetbrains.idea.maven.utils.ManifestBuilder.getClasspathPrefix;
 
 /**
+ * Extension point for take additional MANIFEST.MF entries.
  * @author Vladislav.Soroka
  */
 public abstract class ManifestImporter {

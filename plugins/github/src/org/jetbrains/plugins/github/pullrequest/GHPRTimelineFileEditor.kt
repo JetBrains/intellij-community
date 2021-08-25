@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationBundle
@@ -10,14 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -46,7 +45,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
   private fun createContent(): JComponent {
     return doCreateContent().also {
-      GHUIUtil.overrideUIDependentProperty(it) {
+      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
         isOpaque = true
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }

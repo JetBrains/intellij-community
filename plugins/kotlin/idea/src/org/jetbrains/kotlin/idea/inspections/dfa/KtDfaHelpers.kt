@@ -25,14 +25,13 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
@@ -78,6 +77,23 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                 TypeConstraints.instanceOf(toPsiType(context) ?: return DfType.TOP).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             FqNames.any -> DfTypes.NOT_NULL_OBJECT
             else -> {
+                if (fqNameUnsafe.shortNameOrSpecial().isSpecial) {
+                    val source = descriptor.source
+                    if (source is KotlinSourceElement) {
+                        val psi = source.psi
+                        if (psi is KtObjectDeclaration) {
+                            var objectConstraint = TypeConstraints.EXACTLY_OBJECT.instanceOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+                            for (entry in psi.superTypeListEntries) {
+                                val ref = entry.typeReference
+                                if (ref != null) {
+                                    val kotlinType = ref.getAbbreviatedTypeOrType(ref.analyze(BodyResolveMode.FULL))
+                                    objectConstraint = objectConstraint.meet(kotlinType?.toDfTypeNotNullable(context) ?: DfType.TOP)
+                                }
+                            }
+                            return objectConstraint
+                        }
+                    }
+                }
                 val typeConstraint = when (val typeFqName = correctFqName(fqNameUnsafe)) {
                     "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
                     "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())
@@ -103,6 +119,7 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
 
 // see org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap in kotlin compiler
 private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNameUnsafe.asString()) {
+    "kotlin.Any" -> CommonClassNames.JAVA_LANG_OBJECT
     "kotlin.String" -> CommonClassNames.JAVA_LANG_STRING
     "kotlin.CharSequence" -> CommonClassNames.JAVA_LANG_CHAR_SEQUENCE
     "kotlin.Throwable" -> CommonClassNames.JAVA_LANG_THROWABLE
@@ -120,6 +137,10 @@ private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNa
     "kotlin.collections.Map", "kotlin.collections.MutableMap" -> CommonClassNames.JAVA_UTIL_MAP
     "kotlin.collections.MapEntry", "kotlin.collections.MutableMapEntry" -> CommonClassNames.JAVA_UTIL_MAP_ENTRY
     else -> rawName
+}
+
+internal fun KotlinType?.fqNameEquals(fqName: String): Boolean {
+    return this != null && this.constructor.declarationDescriptor?.fqNameUnsafe?.asString() == fqName
 }
 
 internal fun KotlinType.canBeNull() = isMarkedNullable || isNullabilityFlexible()

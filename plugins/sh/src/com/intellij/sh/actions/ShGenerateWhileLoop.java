@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.sh.statistics.ShCounterUsagesCollector.GENERATE_ACTION_USED_EVENT_ID;
-
 public class ShGenerateWhileLoop extends ShBaseGenerateAction {
   @NotNull
   @Override
@@ -27,6 +25,5 @@ public class ShGenerateWhileLoop extends ShBaseGenerateAction {
 
     moveAtNewLineIfNeeded(editor);
     templateManager.startTemplate(editor, template);
-    GENERATE_ACTION_USED_EVENT_ID.log();
   }
 }

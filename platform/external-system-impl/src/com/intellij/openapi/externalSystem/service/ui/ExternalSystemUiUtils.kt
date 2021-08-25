@@ -5,6 +5,7 @@ package com.intellij.openapi.externalSystem.service.ui
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.DocumentAdapter
@@ -20,6 +21,13 @@ import javax.swing.text.JTextComponent
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
   val position = viewToModel2D(e.point)
   return position in 1 until text.length
+}
+
+fun getActionShortcutText(actionId: String): String {
+  val keymapManager = KeymapManager.getInstance()
+  val activeKeymap = keymapManager.activeKeymap
+  val shortcuts = activeKeymap.getShortcuts(actionId)
+  return KeymapUtil.getShortcutsText(shortcuts)
 }
 
 fun getKeyStrokes(vararg actionIds: String): List<KeyStroke> {

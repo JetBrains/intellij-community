@@ -1,4 +1,4 @@
-// TOOL: DifferentKotlinGradleVersionInspection
+// TOOL: org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 
 group 'Again'
 version '1.0-SNAPSHOT'

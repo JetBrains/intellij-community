@@ -59,7 +59,7 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
 
   inner class TestOnlyApiUsageProcessor(private val holder: ProblemsHolder) : ApiUsageProcessor {
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
-      if (target is PsiMember) validate(sourceNode, target, holder)
+      if (target is PsiMember && sourceNode.uastParent !is UComment) validate(sourceNode, target, holder)
     }
 
     override fun processConstructorInvocation(

@@ -299,7 +299,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
     textField = component.childComponent.textEditor,
     browseDialogTitle = browseDialogTitle,
     fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+    textComponentAccessor = TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
     fileChosen = fileChosen
   )
   return component

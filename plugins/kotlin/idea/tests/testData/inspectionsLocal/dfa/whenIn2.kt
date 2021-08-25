@@ -1,4 +1,4 @@
-// PROBLEM: When branch is always reachable
+// PROBLEM: 'when' branch is always reachable
 // WITH_RUNTIME
 // FIX: none
 fun test(obj : Int) {

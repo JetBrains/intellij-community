@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.AbstractBundle
@@ -20,12 +21,16 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
+private val checkCompatibilityFlag = System.getProperty("idea.plugin.check.compatibility", "true") != "false"
+
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
-                               val path: Path,
+                               @JvmField val path: Path,
                                private val isBundled: Boolean,
-                               id: PluginId?) : IdeaPluginDescriptor {
-  val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
+                               id: PluginId?,
+                               @JvmField val moduleName: String?,
+                               @JvmField val useCoreClassLoader: Boolean = false) : IdeaPluginDescriptor {
+  private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name = raw.name ?: id?.idString ?: raw.id
 
   @Suppress("EnumEntryName")
@@ -72,10 +77,15 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     pluginDependencies = list ?: Collections.emptyList()
   }
 
+  companion object {
+    @ApiStatus.Internal
+    @JvmField var disableNonBundledPlugins = false
+  }
+
   @Transient @JvmField var jarFiles: List<Path>? = null
   @JvmField var classLoader: ClassLoader? = null
 
-  @JvmField val actions: List<RawPluginDescriptor.ActionDescriptor>? = raw.actions
+  @JvmField val actions: List<RawPluginDescriptor.ActionDescriptor> = raw.actions ?: Collections.emptyList()
 
   // extension point name -> list of extension descriptors
   val epNameToExtensions: Map<String, MutableList<ExtensionDescriptor>>? = raw.epNameToExtensions
@@ -91,9 +101,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   private val descriptionChildText = raw.description
 
   @JvmField val isUseIdeaClassLoader = raw.isUseIdeaClassLoader
-
-  var isUseCoreClassLoader = false
-    private set
 
   @JvmField val isBundledUpdateAllowed = raw.isBundledUpdateAllowed
 
@@ -123,10 +130,12 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                         descriptorPath: String,
                         pathResolver: PathResolver,
                         context: DescriptorListLoadingContext,
-                        dataLoader: DataLoader): IdeaPluginDescriptorImpl {
+                        dataLoader: DataLoader,
+                        moduleName: String?): IdeaPluginDescriptorImpl {
     raw.name = name
     @Suppress("TestOnlyProblems")
-    val result = IdeaPluginDescriptorImpl(raw, path = path, isBundled = isBundled, id = id)
+    val result = IdeaPluginDescriptorImpl(raw, path = path, isBundled = isBundled, id = id, moduleName = moduleName,
+                                          useCoreClassLoader = useCoreClassLoader)
     result.descriptorPath = descriptorPath
     result.vendor = vendor
     result.version = version
@@ -153,7 +162,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                                       descriptorPath = subDescriptorFile,
                                       pathResolver = pathResolver,
                                       context = context,
-                                      dataLoader = dataLoader)
+                                      dataLoader = dataLoader,
+                                      moduleName = module.name)
         module.descriptor = subDescriptor
       }
     }
@@ -181,6 +191,11 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
         markAsIncomplete(context, disabledDependency = null, shortMessage = null)
       }
       else {
+        checkCompatibility(context)
+        if (isIncomplete) {
+          return
+        }
+
         for (pluginDependency in dependencies.plugins) {
           if (context.isPluginDisabled(pluginDependency.id)) {
             markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
@@ -195,13 +210,13 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       }
     }
 
-    processOldDependencies(descriptor = this,
-                           context = context,
-                           pathResolver = pathResolver,
-                           dependencies = pluginDependencies,
-                           dataLoader = dataLoader)
-
-    checkCompatibility(context)
+    if (!isIncomplete && moduleName == null) {
+      processOldDependencies(descriptor = this,
+                             context = context,
+                             pathResolver = pathResolver,
+                             dependencies = pluginDependencies,
+                             dataLoader = dataLoader)
+    }
   }
 
   private fun processOldDependencies(descriptor: IdeaPluginDescriptorImpl,
@@ -266,22 +281,53 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                                                descriptorPath = configFile,
                                                pathResolver = pathResolver,
                                                context = context,
-                                               dataLoader = dataLoader)
+                                               dataLoader = dataLoader,
+                                               moduleName = null)
       dependency.subDescriptor = subDescriptor
       visitedFiles.clear()
     }
   }
 
   private fun checkCompatibility(context: DescriptorListLoadingContext) {
-    if (isBundled || (sinceBuild == null && untilBuild == null)) {
+    if (isBundled) {
       return
     }
 
-    val error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get()) ?: return
+    fun markAsIncompatible(error: PluginLoadingError) {
+      if (isIncomplete) {
+        return
+      }
 
-    // error will be added by reportIncompatiblePlugin
-    markAsIncomplete(context = context, disabledDependency = null, shortMessage = null)
-    context.result.reportIncompatiblePlugin(this, error)
+      isIncomplete = true
+      isEnabled = false
+      context.result.addIncompletePlugin(plugin = this, error = error)
+    }
+
+    if (disableNonBundledPlugins) {
+      markAsIncompatible(PluginLoadingError(
+        plugin = this,
+        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },
+        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled") },
+        isNotifyUser = false
+      ))
+      return
+    }
+
+    if (checkCompatibilityFlag && (sinceBuild != null || untilBuild != null)) {
+      PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get())?.let {
+        markAsIncompatible(it)
+        return
+      }
+    }
+
+    // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve "Plugin Error" (IDEA-232675)"
+    if (context.result.isBroken(this)) {
+      markAsIncompatible(PluginLoadingError(
+        plugin = this,
+        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.marked.as.broken", name, version) },
+        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.marked.as.broken") }
+      ))
+    }
   }
 
   private fun markAsIncomplete(context: DescriptorListLoadingContext,
@@ -301,17 +347,11 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     else {
       PluginLoadingError(plugin = this,
                          detailedMessageSupplier = null,
-                         shortMessageSupplier = {
-                           CoreBundle.message(shortMessage, pluginId!!)
-                         },
+                         shortMessageSupplier = { CoreBundle.message(shortMessage, pluginId!!) },
                          isNotifyUser = false,
                          disabledDependency = disabledDependency)
     }
     context.result.addIncompletePlugin(this, pluginError)
-  }
-
-  fun collectExtensionPoints() {
-
   }
 
   @ApiStatus.Internal
@@ -457,10 +497,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getPluginClassLoader(): ClassLoader = classLoader ?: javaClass.classLoader
 
-  fun setUseCoreClassLoader() {
-    isUseCoreClassLoader = true
-  }
-
   override fun isEnabled() = isEnabled
 
   override fun setEnabled(enabled: Boolean) {
@@ -479,13 +515,31 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun isRequireRestart() = isRestartRequired
 
-  override fun equals(other: Any?) = this === other || id == if (other is IdeaPluginDescriptorImpl) other.id else null
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    if (other !is IdeaPluginDescriptorImpl) {
+      return false
+    }
+    return id == other.id && descriptorPath == other.descriptorPath
+  }
 
-  override fun hashCode() = id.hashCode()
+  override fun hashCode(): Int {
+    return 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
+  }
 
   override fun toString(): String {
-    return "PluginDescriptor(name=$name, id=$id, descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-           "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix), isBundled=$isBundled"
+    return "PluginDescriptor(" +
+           "name=$name, " +
+           "id=$id, " +
+           (if (moduleName == null) "" else "moduleName=$moduleName, ") +
+           "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
+           "path=${pluginPathToUserString(path)}, " +
+           "version=$version, " +
+           "package=$packagePrefix, " +
+           "isBundled=$isBundled" +
+           ")"
   }
 }
 

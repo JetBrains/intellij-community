@@ -1,0 +1,11 @@
+{
+    "mainFile": "Main.kt",
+    "usages": [
+        "Explicit.kt",
+        "Instance.java",
+        "InstanceExplicit.kt",
+        "Type.java",
+        "Type.kt",
+        "Usage.java"
+    ]
+}

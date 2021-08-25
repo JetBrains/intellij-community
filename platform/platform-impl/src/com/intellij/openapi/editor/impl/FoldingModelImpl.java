@@ -18,9 +18,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MultiMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,6 +110,17 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     updateTextAttributes();
   }
 
+  private static final HashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new HashingStrategy<>() {
+    @Override
+    public int hashCode(@Nullable FoldRegion o) {
+      return o == null ? 0 : o.getStartOffset() * 31 + o.getEndOffset();
+    }
+
+    @Override
+    public boolean equals(@Nullable FoldRegion o1, @Nullable FoldRegion o2) {
+      return o1 == o2 || (o1 != null && o2 != null && o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset());
+    }
+  };
   @Override
   @NotNull
   public List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
@@ -807,7 +819,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         if (!r2.isExpanded() && r2s <= r1s && r2e >= r1e && (r1s != r2s || r1e != r2e || r2c)) invisibleRegions[i] = true;
       }
     }
-    Set<FoldRegion> visibleRegions = new ObjectOpenCustomHashSet<>(FoldRegionsTree.OFFSET_BASED_HASHING_STRATEGY);
+    Set<FoldRegion> visibleRegions = CollectionFactory.createCustomHashingStrategySet(OFFSET_BASED_HASHING_STRATEGY);
     List<FoldRegion> topLevelRegions = new ArrayList<>();
     for (int i = 0; i < allFoldRegions.length; i++) {
       if (!invisibleRegions[i]) {
@@ -832,7 +844,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (actualTopLevels != null) {
       LOG.assertTrue(actualTopLevels.length == topLevelRegions.size(), "Wrong number of top-level regions");
       for (int i = 0; i < actualTopLevels.length; i++) {
-        LOG.assertTrue(FoldRegionsTree.OFFSET_BASED_HASHING_STRATEGY.equals(actualTopLevels[i], topLevelRegions.get(i)),
+        LOG.assertTrue(OFFSET_BASED_HASHING_STRATEGY.equals(actualTopLevels[i], topLevelRegions.get(i)),
                        "Unexpected top-level region");
       }
     }

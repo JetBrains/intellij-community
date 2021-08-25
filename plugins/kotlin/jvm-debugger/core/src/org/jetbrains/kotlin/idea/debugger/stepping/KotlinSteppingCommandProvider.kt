@@ -13,8 +13,11 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.psi.PsiElement
 import com.intellij.util.Range
+import com.intellij.util.containers.addIfNotNull
 import com.sun.jdi.*
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineNumber
@@ -24,13 +27,17 @@ import org.jetbrains.kotlin.idea.debugger.stepping.filter.LocationToken
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.StepOverCallerInfo
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import kotlin.math.max
 import kotlin.math.min
 
@@ -46,7 +53,6 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         return getStepOverCommand(suspendContext, ignoreBreakpoints, sourcePosition)
     }
 
-    @TestOnly
     fun getStepOverCommand(
         suspendContext: SuspendContextImpl,
         ignoreBreakpoints: Boolean,
@@ -75,20 +81,6 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
 
 private operator fun PsiElement?.contains(element: PsiElement): Boolean {
     return this?.textRange?.contains(element.textRange) ?: false
-}
-
-private fun findInlinedFunctionArguments(sourcePosition: SourcePosition): List<KtFunction> {
-    val args = mutableListOf<KtFunction>()
-
-    for (call in findInlineFunctionCalls(sourcePosition)) {
-        for (arg in call.valueArguments) {
-            val expression = arg.getArgumentExpression()
-            val functionExpression = (expression as? KtLambdaExpression)?.functionLiteral ?: expression
-            args += functionExpression as? KtFunction ?: continue
-        }
-    }
-
-    return args
 }
 
 private fun findInlineFunctionCalls(sourcePosition: SourcePosition): List<KtCallExpression> {
@@ -155,19 +147,20 @@ fun getStepOverAction(
         return KotlinStepAction.StepInto(KotlinStepOverParamDefaultImplsMethodFilter.create(location, lineNumbers))
     }
 
-    val inlinedFunctionArgumentRanges = sourcePosition.collectInlineFunctionArgumentRanges()
+    val inlinedFunctionArgumentRangesToSkip = sourcePosition.collectInlineFunctionArgumentRangesToSkip()
     val positionManager = suspendContext.debugProcess.positionManager
 
     val tokensToSkip = mutableSetOf(token)
-
     for (candidate in method.allLineLocations() ?: emptyList()) {
-        val candidateKotlinLineNumber = candidate.safeKotlinPreferredLineNumber()
+        val candidateKotlinLineNumber =
+            suspendContext.getSourcePositionLine(candidate) ?:
+            candidate.safeKotlinPreferredLineNumber()
         val candidateStackFrame = StackFrameForLocation(frameProxy.stackFrame, candidate)
         val candidateToken = LocationToken.from(candidateStackFrame)
 
         val isAcceptable = candidateToken.lineNumber >= 0
                 && candidateToken.lineNumber != token.lineNumber
-                && inlinedFunctionArgumentRanges.none { range -> range.contains(candidateKotlinLineNumber) }
+                && inlinedFunctionArgumentRangesToSkip.none { range -> range.contains(candidateKotlinLineNumber) }
                 && candidateToken.inlineVariables.none { it !in token.inlineVariables }
                 && !isInlineFunctionFromLibrary(positionManager, candidate, candidateToken)
 
@@ -182,6 +175,9 @@ fun getStepOverAction(
 fun Method.isSyntheticMethodForDefaultParameters(): Boolean {
     return isSynthetic && name().endsWith(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX)
 }
+
+private fun SuspendContextImpl.getSourcePositionLine(location: Location) =
+    debugProcess.positionManager.getSourcePosition(location)?.line
 
 private fun isInlineFunctionFromLibrary(positionManager: PositionManager, location: Location, token: LocationToken): Boolean {
     if (token.inlineVariables.isEmpty()) {
@@ -213,16 +209,57 @@ private fun isInlineFunctionFromLibrary(positionManager: PositionManager, locati
     return false
 }
 
-private fun SourcePosition.collectInlineFunctionArgumentRanges(): List<IntRange> {
-    return runReadAction {
-        val ranges = mutableListOf<IntRange>()
-        for (arg in findInlinedFunctionArguments(this)) {
-            val range = arg.getLineRange() ?: continue
-            if (range.count() > 1) {
-                ranges += range
-            }
-        }
-        return@runReadAction ranges
+private fun SourcePosition.collectInlineFunctionArgumentRangesToSkip() = runReadAction {
+    val inlineFunctionCalls = findInlineFunctionCalls(this)
+    if (inlineFunctionCalls.isEmpty()) {
+        return@runReadAction emptyList()
+    }
+
+    val firstCall = inlineFunctionCalls.first()
+    val resolutionFacade = KotlinCacheService.getInstance(firstCall.project).getResolutionFacade(inlineFunctionCalls)
+    val bindingContext = resolutionFacade.analyze(firstCall, BodyResolveMode.FULL)
+
+    return@runReadAction inlineFunctionCalls.collectInlineFunctionArgumentRangesToSkip(bindingContext)
+}
+
+private fun List<KtCallExpression>.collectInlineFunctionArgumentRangesToSkip(bindingContext: BindingContext): List<IntRange> {
+    val ranges = mutableListOf<IntRange>()
+    for (call in this) {
+        ranges.addLambdaArgumentRanges(call)
+        val callDescriptor = call.getResolvedCall(bindingContext)?.resultingDescriptor ?: continue
+        ranges.addDefaultParametersRanges(call.valueArguments.size, callDescriptor)
+        /*
+            Also add the first line of the calling expression
+            to handle cases like this:
+                inline fun foo( // Add this line
+                    i: Int,
+                    j: Int
+                ) {
+                    ...
+                }
+        */
+        val callElement = callDescriptor.findPsi() as? KtElement ?: continue
+        val line = callElement.getLineNumber(start = true)
+        ranges.addIfNotNull(line..line)
+    }
+
+    return ranges
+}
+
+private fun MutableList<IntRange>.addLambdaArgumentRanges(call: KtCallExpression) {
+    for (arg in call.valueArguments) {
+        val expression = arg.getArgumentExpression()
+        val functionExpression = (expression as? KtLambdaExpression)?.functionLiteral ?: expression
+        val function = functionExpression as? KtFunction ?: continue
+        addIfNotNull(function.getLineRange())
+    }
+}
+
+private fun MutableList<IntRange>.addDefaultParametersRanges(nonDefaultArgumentsNumber: Int, callDescriptor: CallableDescriptor) {
+    val allArguments = callDescriptor.valueParameters
+    for (i in nonDefaultArgumentsNumber until allArguments.size) {
+        val argument = allArguments[i].findPsi() as? KtElement ?: continue
+        addIfNotNull(argument.getLineRange())
     }
 }
 

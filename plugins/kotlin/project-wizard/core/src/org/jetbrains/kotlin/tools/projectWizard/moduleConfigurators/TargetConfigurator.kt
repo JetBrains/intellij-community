@@ -13,10 +13,13 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleStri
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetAccessIR
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.compiler
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.jsCompilerParam
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.irOrLegacyCompiler
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.kind
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.browserSubTarget
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.cssSupport
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedConfigurator.Companion.nodejsSubTarget
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.buildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
@@ -31,10 +34,8 @@ interface TargetConfigurator : ModuleConfiguratorWithModuleType {
     fun canCoexistsWith(other: List<TargetConfigurator>): Boolean = true
 
     fun Reader.createTargetIrs(module: Module): List<BuildSystemIR>
-    fun createInnerTargetIrs(
-        reader: Reader,
-        module: Module
-    ): List<BuildSystemIR> = emptyList()
+
+    fun createInnerTargetIrs(reader: Reader, module: Module): List<BuildSystemIR> = emptyList()
 }
 
 abstract class TargetConfiguratorWithTests : ModuleConfiguratorWithTests, TargetConfigurator
@@ -86,14 +87,9 @@ enum class JsCompiler(override val text: String) : DisplayableSettingItem {
     BOTH("BOTH")
 }
 
-object JsBrowserTargetConfigurator : JsTargetConfigurator, ModuleConfiguratorWithTests {
+abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleConfiguratorWithTests {
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
-        super<ModuleConfiguratorWithTests>.getConfiguratorSettings() +
-                super<JsTargetConfigurator>.getConfiguratorSettings() +
-                cssSupport
-
-    @NonNls
-    override val id = "jsBrowser"
+         super<JsTargetConfigurator>.getConfiguratorSettings()
 
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.js.browser")
 
@@ -105,12 +101,32 @@ object JsBrowserTargetConfigurator : JsTargetConfigurator, ModuleConfiguratorWit
         +DefaultTargetConfigurationIR(
             module.createTargetAccessIr(
                 ModuleSubType.js,
-                paramsWithJsCompiler(module)
+                createAdditionalParams(module)
             )
         ) {
             browserSubTarget(module, this@createTargetIrs)
         }
     }
+
+    abstract fun Reader.createAdditionalParams(module: Module): List<String>
+}
+
+object JsBrowserTargetConfigurator : AbstractBrowserTargetConfigurator() {
+    @NonNls
+    override val id = "jsBrowser"
+
+    override fun Reader.createAdditionalParams(module: Module): List<String> = listOf(irOrLegacyCompiler(module))
+}
+
+object MppLibJsBrowserTargetConfigurator : AbstractBrowserTargetConfigurator() {
+    @NonNls
+    override val id = "mppLibJsBrowser"
+
+    override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> {
+        return listOf(testFramework, kind, compiler)
+    }
+
+    override fun Reader.createAdditionalParams(module: Module): List<String> = jsCompilerParam(module)?.let { listOf(it) } ?: emptyList()
 }
 
 object JsNodeTargetConfigurator : JsTargetConfigurator {
@@ -119,13 +135,11 @@ object JsNodeTargetConfigurator : JsTargetConfigurator {
 
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.js.node")
 
-    override fun Reader.createTargetIrs(
-        module: Module
-    ): List<BuildSystemIR> = irsList {
+    override fun Reader.createTargetIrs(module: Module): List<BuildSystemIR> = irsList {
         +DefaultTargetConfigurationIR(
             module.createTargetAccessIr(
                 ModuleSubType.js,
-                paramsWithJsCompiler(module)
+                listOf(irOrLegacyCompiler(module))
             )
         ) {
             nodejsSubTarget(module, this@createTargetIrs)
@@ -133,15 +147,13 @@ object JsNodeTargetConfigurator : JsTargetConfigurator {
     }
 }
 
-internal fun Reader.paramsWithJsCompiler(module: Module): List<String> = jsCompilerParam(module)?.let {
-    listOf(it)
-} ?: emptyList()
-
 object CommonTargetConfigurator : TargetConfiguratorWithTests(), SimpleTargetConfigurator, SingleCoexistenceTargetConfigurator {
     override val moduleSubType = ModuleSubType.common
     override val text: String = KotlinNewProjectWizardBundle.message("module.configurator.common")
 
     override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.COMMON
+
+    override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> = emptyList()
 }
 
 object JvmTargetConfigurator : JvmModuleConfigurator,
@@ -171,7 +183,7 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
                     "withJava"()
                 }
             }
-            val testFramework = inContextOfModuleConfigurator(module) { ModuleConfiguratorWithTests.testFramework.reference.settingValue }
+            val testFramework = inContextOfModuleConfigurator(module) { getTestFramework(module) }
             if (testFramework != KotlinTestFramework.NONE) {
                 testFramework.usePlatform?.let { usePlatform ->
                     "testRuns[\"test\"].executionTask.configure" {

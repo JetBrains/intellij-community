@@ -12,5 +12,7 @@ data class LearningBalloonConfig(
   val highlightingComponent: JComponent? = null,
   val delayBeforeShow: Int = 0,
   val animationCycle: Int = 0,
+  /** -1 means to place the pointer in the center of the balloon */
+  val cornerToPointerDistance: Int = -1,
   val gotItCallBack: (() -> Unit)? = null
 )

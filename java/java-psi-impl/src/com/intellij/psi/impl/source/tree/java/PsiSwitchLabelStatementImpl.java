@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -96,8 +97,21 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
     final AtomicBoolean thisSwitchLabelIsImmediate = new AtomicBoolean();
 
     PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, __) -> {
-      final PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(currentScope.getPrevSibling());
-      if (sibling == this) {
+
+      PsiSwitchLabelStatementBase immediateSwitchLabel;
+
+      if (currentScope instanceof PsiSwitchLabelStatementBase) {
+        immediateSwitchLabel = (PsiSwitchLabelStatementBase)currentScope;
+      }
+      else {
+        immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(currentScope, PsiSwitchLabelStatementBase.class);
+      }
+
+      while (immediateSwitchLabel != null && isFallthrough(immediateSwitchLabel) && isSpecialCaseLabel(immediateSwitchLabel)) {
+        immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiSwitchLabelStatementBase.class);
+      }
+
+      if (immediateSwitchLabel == this) {
         thisSwitchLabelIsImmediate.set(true);
         return false;
       }
@@ -105,5 +119,35 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
     });
 
     return thisSwitchLabelIsImmediate.get();
+  }
+
+  private static boolean isFallthrough(@NotNull PsiSwitchLabelStatementBase immediateSwitchLabel) {
+    final PsiStatement prevStmt = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiStatement.class);
+
+    if (prevStmt == null) return false;
+    if (prevStmt instanceof PsiSwitchLabelStatementBase) return true;
+
+    try {
+      final ControlFlow flow = ControlFlowFactory.getControlFlow(prevStmt, new LocalsControlFlowPolicy(prevStmt), ControlFlowOptions.NO_CONST_EVALUATE);
+      return ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
+    }
+    catch (AnalysisCanceledException e) {
+      return false;
+    }
+  }
+
+  private static boolean isSpecialCaseLabel(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
+    return isCase(switchCaseLabel, JavaTokenType.NULL_KEYWORD) ||
+           isCase(switchCaseLabel, JavaTokenType.DEFAULT_KEYWORD) ||
+           switchCaseLabel.isDefaultCase();
+  }
+
+  private static boolean isCase(@NotNull PsiSwitchLabelStatementBase item, @NotNull IElementType keyword) {
+    if (item.getCaseLabelElementList() == null) return false;
+
+    final PsiCaseLabelElement[] elements = item.getCaseLabelElementList().getElements();
+    if (elements.length != 1) return false;
+
+    return elements[0].getNode().getFirstChildNode().getElementType() == keyword;
   }
 }

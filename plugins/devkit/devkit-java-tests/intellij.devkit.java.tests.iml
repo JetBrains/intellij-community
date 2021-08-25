@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="intellij.properties" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
+    <orderEntry type="library" name="CGLIB" level="project" />
   </component>
 </module>

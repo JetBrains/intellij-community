@@ -12,6 +12,6 @@ fun foo(): Any {
     return Bar()
 }
 
-val x = Bar()
+class Bar
 
-// DISABLE-ERRORS
+val x = Bar()

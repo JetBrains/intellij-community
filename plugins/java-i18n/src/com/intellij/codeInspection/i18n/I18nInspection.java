@@ -3,15 +3,23 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.i18n.JavaI18nBundle;
+import com.intellij.lang.jvm.JvmModifiersOwner;
+import com.intellij.lang.jvm.actions.AnnotationRequestsKt;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -42,7 +50,6 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
@@ -437,9 +444,8 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
            new Class[] {UInjectionHost.class};
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return "nls";
   }
 
@@ -596,14 +602,43 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
       NlsInfo targetInfo = getExpectedNlsInfo(myHolder.getProject(), ref, value, new HashSet<>(), myOnTheFly, true);
       if (targetInfo instanceof NlsInfo.Localized) {
-        AddAnnotationFix fix =
-          new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
-        AddAnnotationFix fixSafe = null;
-        if (JavaPsiFacade.getInstance(target.getProject()).findClass(NlsInfo.NLS_SAFE, target.getResolveScope()) != null) {
-          fixSafe = new MarkAsSafeFix(target);
+        List<LocalQuickFix> fixes = new ArrayList<>();
+        String fqn = ((NlsInfo.Localized)targetInfo).suggestAnnotation(target);
+        ExternalAnnotationsManager.AnnotationPlace annotationPlace = AddAnnotationPsiFix.choosePlace(fqn, target);
+        boolean addNullSafe = JavaPsiFacade.getInstance(target.getProject()).findClass(NlsInfo.NLS_SAFE, target.getResolveScope()) != null;
+        if (annotationPlace == ExternalAnnotationsManager.AnnotationPlace.IN_CODE && target instanceof JvmModifiersOwner) {
+          String displayName = sourcePsi.getLanguage().getDisplayName();
+          String suffix = "";
+          if (!myHolder.isOnTheFly()) {
+            suffix = " [" + displayName + "]";
+          }
+          fillAddAnnotationFixes(((JvmModifiersOwner)target), fqn, QuickFixBundle.message("create.annotation.family") + suffix, fixes);
+          if (addNullSafe) {
+            fillAddAnnotationFixes((JvmModifiersOwner)target, NlsInfo.NLS_SAFE, JavaI18nBundle.message("intention.family.name.mark.as.nlssafe") + suffix, fixes);
+          }
+        }
+        else {
+          fixes.add(new AddAnnotationFix(fqn, target, AnnotationUtil.NON_NLS));
+          if (addNullSafe) {
+            fixes.add(new MarkAsSafeFix(target));
+          }
         }
         String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
-        myHolder.registerProblem(sourcePsi, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix, fixSafe);
+        myHolder.registerProblem(sourcePsi, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      }
+    }
+
+    private void fillAddAnnotationFixes(JvmModifiersOwner target,
+                                        @NotNull @NlsSafe String annotationFQN,
+                                        @NotNull @Nls final String familyName,
+                                        List<LocalQuickFix> fixes) {
+      for (IntentionAction action : JvmElementActionFactories.createAddAnnotationActions(target, AnnotationRequestsKt.annotationRequest(annotationFQN))) {
+        fixes.add(new IntentionWrapper(action) {
+          @Override
+          public @NotNull String getFamilyName() {
+            return familyName;
+          }
+        });
       }
     }
 

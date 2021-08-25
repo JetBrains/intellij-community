@@ -64,10 +64,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     showWarningIfModalCommitEnabled()
 
-    lateinit var clickLineMarkerTaskId: TaskContext.TaskId
     task {
-      clickLineMarkerTaskId = taskId
-      text(GitLessonsBundle.message("git.changelists.shelf.introduction"))
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) l@{ ui: EditorGutterComponentEx ->
         val offset = editor.document.charsSequence.indexOf(commentText)
         if (offset == -1) return@l null
@@ -75,6 +72,14 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
         val y = editor.visualLineToY(line)
         return@l Rectangle(ui.x + ui.width - 15, y, 10, editor.lineHeight)
       }
+    }
+
+    lateinit var clickLineMarkerTaskId: TaskContext.TaskId
+    task {
+      clickLineMarkerTaskId = taskId
+      text(GitLessonsBundle.message("git.changelists.shelf.introduction"))
+      text(GitLessonsBundle.message("git.changelists.shelf.click.line.marker.balloon"),
+           LearningBalloonConfig(Balloon.Position.below, 0))
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: DropDownLink<*> ->
         ui.text?.contains(defaultChangelistName) == true
       }
@@ -216,6 +221,10 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
       stateCheck { editor.document.text.contains(commentText) }
       restoreByUi(delayMillis = defaultRestoreDelay)
+    }
+
+    task {
+      text(GitLessonsBundle.message("git.changelists.shelf.congratulations"))
     }
   }
 

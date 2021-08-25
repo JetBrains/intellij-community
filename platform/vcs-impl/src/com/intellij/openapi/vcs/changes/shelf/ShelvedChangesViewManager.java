@@ -29,7 +29,6 @@ import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.PlainSimplePatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -289,11 +288,11 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private void runAfterUpdate(@NotNull Runnable postUpdateRunnable) {
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(), () -> {
       myUpdateQueue.cancelAllUpdates();
       myPostUpdateEdtActivity.add(postUpdateRunnable);
       updateTreeModel();
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    });
   }
 
   @Override
@@ -599,6 +598,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
+    @Nls
     private static String constructDeleteSuccessfullyMessage(int fileNum, int listNum, @Nullable ShelvedChangeList first) {
       String filesMessage = fileNum != 0 ? VcsBundle.message("shelve.delete.files.successful.message", fileNum) : "";
       String changelistsMessage = listNum != 0 ? VcsBundle
@@ -1094,8 +1094,8 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
-      FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
-      DiffContent shelfContent = factory.createBinary(myProject, binaryContent, fileType, title);
+      FilePath filePath = VcsUtil.getFilePath(binaryFile.SHELVED_PATH);
+      DiffContent shelfContent = factory.createFromBytes(myProject, binaryContent, filePath);
       return new SimpleDiffRequest(title, factory.createEmpty(), shelfContent, null, null);
     }
   }

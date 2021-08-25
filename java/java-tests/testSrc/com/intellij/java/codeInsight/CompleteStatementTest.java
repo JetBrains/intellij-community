@@ -192,6 +192,12 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testOverloadedMethodOneOrThree3() { doTest(); }
   public void testMissingComma() { doTest(); }
   public void testInInjection() { doTest(); }
+  public void testNativeMethod() {
+    doTest();
+  }
+  public void testNativePrivateMethod() {
+    doTest();
+  }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

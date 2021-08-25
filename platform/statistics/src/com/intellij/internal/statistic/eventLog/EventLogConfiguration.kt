@@ -41,6 +41,7 @@ class EventLogConfiguration {
     private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"
     private const val IDEA_HEADLESS_STATISTICS_DEVICE_ID = "idea.headless.statistics.device.id"
     private const val IDEA_HEADLESS_STATISTICS_SALT = "idea.headless.statistics.salt"
+    private const val IDEA_HEADLESS_STATISTICS_MAX_FILES_TO_SEND = "idea.headless.statistics.max.files.to.send"
 
     @JvmStatic
     fun getInstance(): EventLogConfiguration = ApplicationManager.getApplication().getService(EventLogConfiguration::class.java)
@@ -98,6 +99,10 @@ class EventLogConfiguration {
     return getRecorderBasedProperty(recorderId, IDEA_HEADLESS_STATISTICS_SALT)
   }
 
+  internal fun getHeadlessMaxFilesToSendProperty(recorderId: String): String {
+    return getRecorderBasedProperty(recorderId, IDEA_HEADLESS_STATISTICS_MAX_FILES_TO_SEND)
+  }
+
   private fun getRecorderBasedProperty(recorderId: String, property: String): String {
     return if (isDefaultRecorderId(recorderId)) property else property + "." + StringUtil.toLowerCase(recorderId)
   }
@@ -120,6 +125,8 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
 
   val machineId: MachineId
     get() = machineIdReference.getValue()
+
+  val maxFilesToSend: Int = getMaxFilesToSend()
 
   init {
     val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
@@ -215,6 +222,25 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       EventLogConfiguration.LOG.info("Generating new salt for $recorderId")
     }
     return salt
+  }
+
+  /**
+   * Returns the number of files that could be sent at once or -1 if there is no limit
+   */
+  internal fun getMaxFilesToSend(): Int {
+    val app = ApplicationManager.getApplication()
+    if (app != null && app.isHeadlessEnvironment) {
+      val property = eventLogConfiguration.getHeadlessMaxFilesToSendProperty(recorderId)
+      val value = System.getProperty(property)?.toIntOrNull()
+      if (value != null && (value == -1 || value >= 0)) {
+        return value
+      }
+    }
+    return DEFAULT_MAX_FILES_TO_SEND
+  }
+
+  companion object {
+    private const val DEFAULT_MAX_FILES_TO_SEND = 5
   }
 }
 

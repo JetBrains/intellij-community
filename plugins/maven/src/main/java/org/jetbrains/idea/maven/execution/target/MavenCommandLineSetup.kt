@@ -3,8 +3,11 @@ package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
@@ -18,12 +21,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.text.nullize
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.idea.maven.execution.MavenExecutionOptions
+import org.jetbrains.idea.maven.execution.*
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.MAVEN_OPTS
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
-import org.jetbrains.idea.maven.execution.MavenRunConfiguration
-import org.jetbrains.idea.maven.execution.MavenRunner
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.RunnerBundle.message
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
@@ -131,7 +131,7 @@ class MavenCommandLineSetup(private val project: Project,
       .forEach { (key, value) -> mavenPropertiesList.addProperty(key, value) }
     commandLine.addParameters(mavenPropertiesList.parameters)
 
-    val runnerParameters = settings.myRunnerParameters
+    val runnerParameters = settings.myRunnerParameters ?: MavenRunnerParameters()
     for (goal in runnerParameters.goals) {
       commandLine.addParameter(goal)
     }
@@ -212,10 +212,8 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun setupTargetProjectDirectories(settings: MavenRunConfiguration.MavenSettings) {
-    val workingDirectory = settings.myRunnerParameters.workingDirFile
-
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    val file = VfsUtil.findFileByIoFile(workingDirectory, false) ?: throw CantRunException(
+    val file = settings.myRunnerParameters?.let { VfsUtil.findFileByIoFile(it.workingDirFile, false) } ?: throw CantRunException(
       message("maven.target.message.unable.to.use.working.directory", name))
     val module = ProjectFileIndex.getInstance(project).getModuleForFile(file) ?: throw CantRunException(
       message("maven.target.message.unable.to.find.maven.project.for.working.directory", name))

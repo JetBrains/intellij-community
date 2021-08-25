@@ -14,6 +14,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -103,7 +104,7 @@ public class ConfigurationContext {
   private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection, String place) {
     RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
     if (configuration == null) {
-      ExecutionEnvironment environment = dataContext.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+      ExecutionEnvironment environment = dataContext.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
       if (environment != null) {
         myConfiguration = environment.getRunnerAndConfigurationSettings();
         if (myConfiguration != null) {

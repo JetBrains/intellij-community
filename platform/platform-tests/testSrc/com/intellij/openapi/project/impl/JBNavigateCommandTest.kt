@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.navigation.areOriginsEqual
@@ -174,9 +174,8 @@ class JBNavigateCommandTest {
   }
 
   private fun navigate(projectName: String, parameters: Map<String, String>) {
-    val map = hashMapOf("project" to projectName)
-    map.putAll(parameters)
-    JBProtocolCommand.findCommand("navigate")!!.perform("reference", map)
+    val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> acc + "&${e.key}=${e.value}" }
+    JBProtocolCommand.execute("jetbrains://idea/navigate/reference?${query}")
     UIUtil.dispatchAllInvocationEvents()
   }
 }

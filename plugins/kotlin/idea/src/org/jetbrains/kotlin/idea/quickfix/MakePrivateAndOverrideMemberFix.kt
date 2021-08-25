@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -30,6 +31,7 @@ class MakePrivateAndOverrideMemberFix(
     override fun getText(): String {
         val descriptor = memberToOverride.descriptor
         val implement = (descriptor.containingDeclaration as? ClassDescriptor)?.kind == ClassKind.INTERFACE
+        @NlsSafe
         val name = descriptor.name.asString()
         return if (makePrivate) {
             KotlinBundle.message(

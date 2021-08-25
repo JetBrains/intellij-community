@@ -2,17 +2,18 @@
 
 package org.jetbrains.kotlin.idea.core.util
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 
 fun <T : Any> runInReadActionWithWriteActionPriorityWithPCE(f: () -> T): T =
     runInReadActionWithWriteActionPriority(f) ?: throw ProcessCanceledException()
 
 fun <T : Any> runInReadActionWithWriteActionPriority(f: () -> T): T? {
-    if (with(ApplicationManager.getApplication()) { isDispatchThread && isUnitTestMode }) {
+    if (isDispatchThread()) {
         return f()
     }
 
@@ -25,7 +26,7 @@ fun <T : Any> runInReadActionWithWriteActionPriority(f: () -> T): T? {
     return r!!
 }
 
-fun <T : Any> Project.runSynchronouslyWithProgress(progressTitle: String, canBeCanceled: Boolean, action: () -> T): T? {
+fun <T : Any> Project.runSynchronouslyWithProgress(@NlsContexts.ProgressTitle progressTitle: String, canBeCanceled: Boolean, action: () -> T): T? {
     var result: T? = null
     ProgressManager.getInstance().runProcessWithProgressSynchronously({ result = action() }, progressTitle, canBeCanceled, this)
     return result

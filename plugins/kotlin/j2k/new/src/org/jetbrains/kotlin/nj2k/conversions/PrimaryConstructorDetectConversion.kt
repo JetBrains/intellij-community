@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.declarationList
-import org.jetbrains.kotlin.nj2k.replace
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
@@ -34,8 +32,13 @@ class PrimaryConstructorDetectConversion(context: NewJ2kConverterContext) : Recu
             primaryConstructorCandidate.forEachModifier { modifierElement ->
                 modifierElement.clearFormatting()
             }
+            val lastInitBlockOrFieldIndex = element.classBody.declarations.indexOfLast { it is JKInitDeclaration || it is JKField }
             element.classBody.declarations =
-                element.classBody.declarations.replace(primaryConstructorCandidate, initDeclaration)
+                element.classBody.declarations.mutate {
+                    val insertAfter = maxOf(lastInitBlockOrFieldIndex, indexOf(primaryConstructorCandidate))
+                    add(insertAfter + 1, initDeclaration)
+                    remove(primaryConstructorCandidate)
+                }
         } else {
             element.classBody.declarations -= primaryConstructorCandidate
         }

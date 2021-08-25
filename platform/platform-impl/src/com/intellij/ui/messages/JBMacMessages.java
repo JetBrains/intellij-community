@@ -3,7 +3,7 @@ package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
@@ -30,7 +30,7 @@ public final class JBMacMessages extends MacMessages {
                                    @NotNull String noText,
                                    @NotNull String cancelText,
                                    @Nullable Window window,
-                                   @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                                   @Nullable DoNotAskOption doNotAskOption,
                                    @Nullable Icon icon,
                                    @Nullable String helpId) {
     if (window == null) {
@@ -63,7 +63,7 @@ public final class JBMacMessages extends MacMessages {
                                @Nullable Window window,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                               @Nullable DoNotAskOption doNotAskDialogOption,
                                @Nullable Icon icon,
                                @Nullable String helpId) {
 
@@ -162,7 +162,7 @@ public final class JBMacMessages extends MacMessages {
                                  @NotNull String yesText,
                                  @NotNull String noText,
                                  @Nullable Window window,
-                                 @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                                 @Nullable DoNotAskOption doNotAskDialogOption,
                                  @Nullable Icon icon,
                                  @Nullable String helpId) {
     SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, icon,

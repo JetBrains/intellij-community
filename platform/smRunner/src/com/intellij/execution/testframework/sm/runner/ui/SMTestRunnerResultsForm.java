@@ -73,8 +73,6 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
-
 /**
  * @author: Roman Chernyatchik
  */
@@ -305,8 +303,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final RunProfile configuration = consoleProperties.getConfiguration();
     if (configuration instanceof RunConfiguration &&
         !(consoleProperties instanceof ImportedTestConsoleProperties) &&
-        !myDisposed) {
-      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration, myHistoryFileName);
+        !isDisposed()) {
+      final MySaveHistoryTask backgroundable =
+        new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration, myHistoryFileName);
       Disposer.register(parentDisposable, new Disposable() {
         @Override
         public void dispose() {
@@ -330,7 +329,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   @Override
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
-    if (!testProxy.isConfig() && !CLASS_CONFIGURATION.equals(testProxy.getName())) {
+    if (!testProxy.isConfig() && !TestListenerProtocol.CLASS_CONFIGURATION.equals(testProxy.getName())) {
       updateOnTestStarted(false);
     }
     _addTestOrSuite(testProxy);
@@ -510,6 +509,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     });
   }
 
+  private boolean isDisposed() {
+    return myDisposed || Disposer.isDisposed(this);
+  }
+
   @Override
   public void dispose() {
     super.dispose();
@@ -574,7 +577,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       update.run();
     }
-    else if (!myDisposed && myRequests.add(update)) {
+    else if (!isDisposed() && myRequests.add(update)) {
       myUpdateTreeRequests.addRequest(update, 50);
     }
 

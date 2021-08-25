@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -21,6 +21,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
@@ -198,7 +200,7 @@ public class JavaDocInfoGenerator {
     };
   }
 
-  private String sanitizeHtml(StringBuilder buffer) {
+  private @Nls String sanitizeHtml(@Nls StringBuilder buffer) {
     String text = buffer.toString();
     if (text.isEmpty()) return null;
 
@@ -223,7 +225,7 @@ public class JavaDocInfoGenerator {
       }
       if (lastRef > 0) {  // don't copy text over if there are no matches
         result.append(text, lastRef, text.length());
-        text = result.toString();
+        text = result.toString(); //NON-NLS
       }
     }
 
@@ -232,7 +234,7 @@ public class JavaDocInfoGenerator {
       LOG.debug(text);
     }
 
-    text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>");
+    text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>"); //NON-NLS
     text = StringUtil.replace(text, "/>", ">");
     return text;
   }
@@ -387,9 +389,8 @@ public class JavaDocInfoGenerator {
     return buf.toString();
   }
 
-  @Nullable
-  public String generateDocInfo(List<String> docURLs) {
-    StringBuilder buffer = new StringBuilder();
+  public @Nls @Nullable String generateDocInfo(List<@NlsSafe String> docURLs) {
+    @Nls StringBuilder buffer = new StringBuilder();
 
     if (!generateDocInfoCore(buffer, true)) {
       return null;
@@ -400,22 +401,19 @@ public class JavaDocInfoGenerator {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
       else {
-        buffer.append(DocumentationMarkup.CONTENT_START).append("<p class='centered'>");
-        buffer.append(DocumentationMarkup.GRAYED_START);
-        buffer.append("The following documentation url").append(docURLs.size() > 1 ? "s were" : " was").append(" checked:");
-        buffer.append(BR_TAG).append(NBSP);
-        buffer.append(StringUtil.join(docURLs, XmlStringUtil::escapeString, BR_TAG + NBSP));
-        buffer.append(DocumentationMarkup.GRAYED_END);
-        buffer.append(BR_TAG);
-        buffer.append("<a href=\"open://Project Settings\">Edit API docs paths</a>");
-        buffer.append("</p>").append(DocumentationMarkup.CONTENT_END);
+        HtmlChunk urlList = DocumentationMarkup.GRAYED_ELEMENT
+          .addText(JavaBundle.message("javadoc.documentation.url.checked", docURLs.size()))
+          .children(ContainerUtil.map(docURLs, url -> new HtmlBuilder().br().nbsp().append(url).toFragment()));
+        HtmlChunk settingsLink = HtmlChunk.link("open://Project Settings", JavaBundle.message("javadoc.edit.api.docs.paths"));
+        buffer.append(DocumentationMarkup.CONTENT_ELEMENT.child(
+          DocumentationMarkup.CENTERED_ELEMENT.children(urlList, HtmlChunk.br(), settingsLink)));
       }
     }
 
     return sanitizeHtml(buffer);
   }
 
-  public @Nullable String generateRenderedDocInfo() {
+  public @Nls @Nullable String generateRenderedDocInfo() {
     StringBuilder buffer = new StringBuilder();
 
     if (myElement instanceof PsiClass) {
@@ -518,7 +516,7 @@ public class JavaDocInfoGenerator {
 
   private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, SignaturePlace place) {
     boolean generateLink = place == SignaturePlace.Javadoc;
-    generateAnnotations(buffer, aClass, place, true);
+    generateAnnotations(buffer, aClass, place, true, false);
     generateModifiers(buffer, aClass, false);
     buffer.append(aClass.isInterface() ? PsiKeyword.INTERFACE :
                   aClass.isEnum() ? PsiKeyword.ENUM :
@@ -677,7 +675,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static void generateFieldSignature(StringBuilder buffer, PsiField field, SignaturePlace place) {
-    generateAnnotations(buffer, field, place, true);
+    generateAnnotations(buffer, field, place, true, false);
     generateModifiers(buffer, field, false);
     generateType(buffer, field.getType(), field, place == SignaturePlace.Javadoc);
     buffer.append(" <b>");
@@ -698,7 +696,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  // not a javadoc in fact..
+  // not a javadoc in fact.
   private void generateVariableJavaDoc(StringBuilder buffer, PsiVariable variable, boolean generatePrologue) {
     if (generatePrologue) generatePrologue(buffer);
 
@@ -741,7 +739,7 @@ public class JavaDocInfoGenerator {
 
     if (!rendered) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
-      generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
+      generateAnnotations(buffer, module, SignaturePlace.Javadoc, true, false);
       buffer.append("module <b>").append(module.getName()).append("</b>");
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
@@ -910,23 +908,31 @@ public class JavaDocInfoGenerator {
     return modifiers.length();
   }
 
-  private static void generateTypeAnnotations(StringBuilder buffer, PsiAnnotationOwner owner, PsiElement context, boolean leadingSpace) {
+  private static int generateTypeAnnotations(StringBuilder buffer, PsiAnnotationOwner owner, PsiElement context, boolean leadingSpace) {
+    int len = 0;
     List<AnnotationDocGenerator> generators = AnnotationDocGenerator.getAnnotationsToShow(owner, context);
     if (leadingSpace && !generators.isEmpty()) {
       buffer.append(NBSP);
+      len++;
     }
     for (AnnotationDocGenerator anno : generators) {
-      anno.generateAnnotation(buffer, AnnotationFormat.JavaDocShort);
+      StringBuilder buf = new StringBuilder();
+      anno.generateAnnotation(buf, AnnotationFormat.JavaDocShort);
+      len += StringUtil.unescapeXmlEntities(StringUtil.stripHtml(buf.toString(), true)).length() + 1;
+      buffer.append(buf);
       buffer.append(NBSP);
     }
+    return len;
   }
 
   private static void generateAnnotations(StringBuilder buffer,
                                           PsiModifierListOwner owner,
                                           SignaturePlace place,
-                                          boolean splitAnnotations) {
+                                          boolean splitAnnotations,
+                                          boolean ignoreNonSourceAnnotations) {
     AnnotationFormat format = place == SignaturePlace.Javadoc ? AnnotationFormat.JavaDocShort : AnnotationFormat.ToolTip;
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
+      if (ignoreNonSourceAnnotations && (anno.isInferred() || anno.isExternal())) continue;
       anno.generateAnnotation(buffer, format);
 
       buffer.append(NBSP);
@@ -947,7 +953,7 @@ public class JavaDocInfoGenerator {
     buffer.append(DocumentationMarkup.DEFINITION_START);
     generateModifiers(buffer, variable, false);
     if (annotations) {
-      generateAnnotations(buffer, variable, SignaturePlace.Javadoc, true);
+      generateAnnotations(buffer, variable, SignaturePlace.Javadoc, true, false);
     }
     generateType(buffer, variable.getType(), variable);
     buffer.append(" <b>");
@@ -1134,7 +1140,7 @@ public class JavaDocInfoGenerator {
     boolean isTooltip = place == SignaturePlace.ToolTip;
     boolean generateLink = place == SignaturePlace.Javadoc;
 
-    generateAnnotations(buffer, method, place, true);
+    generateAnnotations(buffer, method, place, true, false);
 
     int modLength = isTooltip ? 0 : generateModifiers(buffer, method, true);
     int indent = modLength == 0 ? 0 : modLength + 1;
@@ -1162,7 +1168,7 @@ public class JavaDocInfoGenerator {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parm = parameters[i];
-      generateAnnotations(buffer, parm, place, false);
+      generateAnnotations(buffer, parm, place, false, false);
       generateType(buffer, parm.getType(), method, generateLink, isTooltip);
       if (!isTooltip) {
         buffer.append(NBSP);
@@ -1871,23 +1877,23 @@ public class JavaDocInfoGenerator {
     if (type instanceof PsiArrayType) {
       int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context, generateLink, useShortNames);
 
-      generateTypeAnnotations(buffer, type, context, true);
+      int len = generateTypeAnnotations(buffer, type, context, true);
       if (type instanceof PsiEllipsisType) {
         buffer.append("...");
-        return rest + 3;
+        return len + rest + 3;
       }
       else {
         buffer.append("[]");
-        return rest + 2;
+        return len + rest + 2;
       }
     }
 
-    generateTypeAnnotations(buffer, type, context, false);
+    int typAnnoLength = generateTypeAnnotations(buffer, type, context, false);
 
     if (type instanceof PsiPrimitiveType) {
-      String text = StringUtil.escapeXmlEntities(type.getCanonicalText());
-      buffer.append(text);
-      return text.length();
+      String text = type.getCanonicalText();
+      buffer.append(StringUtil.escapeXmlEntities(text));
+      return typAnnoLength + text.length();
     }
 
     if (type instanceof PsiCapturedWildcardType) {
@@ -1901,10 +1907,10 @@ public class JavaDocInfoGenerator {
       if (bound != null) {
         String keyword = wt.isExtends() ? " extends " : " super ";
         buffer.append(keyword);
-        return generateType(buffer, bound, context, generateLink, useShortNames) + 1 + keyword.length();
+        return typAnnoLength + generateType(buffer, bound, context, generateLink, useShortNames) + 1 + keyword.length();
       }
       else {
-        return 1;
+        return typAnnoLength + 1;
       }
     }
 
@@ -1924,31 +1930,31 @@ public class JavaDocInfoGenerator {
         if (DumbService.isDumb(context.getProject())) {
           String text = ((PsiClassType)type).getClassName();
           buffer.append(StringUtil.escapeXmlEntities(text));
-          return text.length();
+          return typAnnoLength + text.length();
         }
         String canonicalText = type.getCanonicalText();
         String text = "<font color=red>" + StringUtil.escapeXmlEntities(canonicalText) + "</font>";
         buffer.append(text);
-        return canonicalText.length();
+        return typAnnoLength + canonicalText.length();
       }
 
       String qName = psiClass.getQualifiedName();
 
       if (qName == null || psiClass instanceof PsiTypeParameter) {
-        String text = StringUtil.escapeXmlEntities(useShortNames ? type.getPresentableText() : type.getCanonicalText());
-        buffer.append(text);
-        return text.length();
+        String typeText = useShortNames ? type.getPresentableText() : type.getCanonicalText();
+        buffer.append(StringUtil.escapeXmlEntities(typeText));
+        return typAnnoLength + typeText.length();
       }
 
       String name = useShortNames ? getClassNameWithOuterClasses(psiClass) : qName;
 
-      int length;
+      int length = typAnnoLength;
       if (generateLink) {
-        length = generateLink(buffer, name, null, context, false);
+        length += generateLink(buffer, name, null, context, false);
       }
       else {
         buffer.append(name);
-        length = buffer.length();
+        length += name.length();
       }
 
       if (psiClass.hasTypeParameters()) {
@@ -1971,15 +1977,14 @@ public class JavaDocInfoGenerator {
 
           if (i < params.length - 1) {
             subst.append(", ");
+            length += 2;
           }
         }
 
         subst.append(GT);
-        length += 1;
+        length ++;
         if (goodSubst) {
-          String text = subst.toString();
-
-          buffer.append(text);
+          buffer.append(subst);
         }
       }
 
@@ -1989,9 +1994,8 @@ public class JavaDocInfoGenerator {
     if (type instanceof PsiDisjunctionType || type instanceof PsiIntersectionType) {
       if (!generateLink) {
         String canonicalText = useShortNames ? type.getPresentableText() : type.getCanonicalText();
-        String text = StringUtil.escapeXmlEntities(canonicalText);
-        buffer.append(text);
-        return canonicalText.length();
+        buffer.append(StringUtil.escapeXmlEntities(canonicalText));
+        return typAnnoLength + canonicalText.length();
       }
       else {
         String separator = type instanceof PsiDisjunctionType ? " | " : " & ";
@@ -2002,7 +2006,7 @@ public class JavaDocInfoGenerator {
         else {
           componentTypes = ((PsiDisjunctionType)type).getDisjunctions();
         }
-        int length = 0;
+        int length = typAnnoLength;
         for (PsiType psiType : componentTypes) {
           if (length > 0) {
             buffer.append(separator);
@@ -2283,6 +2287,10 @@ public class JavaDocInfoGenerator {
     }
   }
 
+  public static void generateTooltipAnnotations(PsiModifierListOwner owner, @Nls StringBuilder buffer) {
+    generateAnnotations(buffer, owner, SignaturePlace.ToolTip, true, true);
+  }
+  
   private enum SignaturePlace {
     Javadoc, ToolTip
   }

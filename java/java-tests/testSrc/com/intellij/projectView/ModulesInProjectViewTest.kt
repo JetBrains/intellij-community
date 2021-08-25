@@ -10,7 +10,6 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
-import java.lang.RuntimeException
 
 // directory-based project must be used to ensure that .iws/.ipr file won't break the test (they may be created if workspace model is used)
 class ModulesInProjectViewTest : BaseProjectViewTestCase() {
@@ -165,6 +164,29 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
       |  Group: baz
       |   module2
       |    subdir
+      |
+      """.trimMargin())
+  }
+
+  fun `test modules in nested groups`() {
+    val root = directoryContent {
+      dir("module1") {
+        dir("subdir") {}
+      }
+      dir("module2") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("foo.module2"), root.findChild("module2")!!)
+    assertStructureEqual("""
+      |Project
+      | Group: foo
+      |  Group: bar
+      |   module1
+      |    subdir
+      |  module2
+      |   subdir
       |
       """.trimMargin())
   }

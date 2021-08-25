@@ -7,6 +7,7 @@
       <excludeFolder url="file://$MODULE_DIR$/config" />
       <excludeFolder url="file://$MODULE_DIR$/system" />
       <excludeFolder url="file://$MODULE_DIR$/docs/plugin-graph/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/docs/dist-visualizer/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -143,6 +144,7 @@
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.packageSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" scope="RUNTIME" />

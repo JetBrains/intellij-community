@@ -8,9 +8,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
-import com.intellij.codeInsight.actions.CodeInsightEditorAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -41,15 +38,6 @@ public abstract class NextPrevParameterAction extends CodeInsightAction implemen
 
   public static boolean hasSuitablePolicy(Editor editor, PsiFile file) {
     return NextPrevParameterHandler.hasSuitablePolicy(editor, file);
-  }
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-    if (file != null && NextPrevParameterHandler.hasSuitablePolicy(file)) {
-      CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    }
-    update(e);
   }
 
   private class Handler implements CodeInsightActionHandler {

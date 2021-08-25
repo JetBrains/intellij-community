@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 
-class ConsoleJvmApplicationTemplate : Template() {
+object ConsoleJvmApplicationTemplate : Template() {
     @NonNls
     override val id: String = "consoleJvmApp"
 

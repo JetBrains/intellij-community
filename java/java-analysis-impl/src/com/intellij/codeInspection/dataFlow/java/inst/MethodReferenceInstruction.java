@@ -70,6 +70,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
       Set<DfaMemoryState> results = new HashSet<>();
       currentStates = MethodCallInstruction.addContractResults(contract, currentStates, runner.getFactory(), results);
       for (DfaMemoryState result : results) {
+        ContractValue.flushContractTempVariables(result);
         DfaValue value = result.pop();
         runner.getListener().beforePush(args, value, anchor, result);
         result.push(value);
@@ -78,6 +79,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     for (DfaCallState currentState: currentStates) {
       runner.getListener().beforePush(args, defaultResult, anchor, currentState.getMemoryState());
       currentState.getMemoryState().push(defaultResult);
+      ContractValue.flushContractTempVariables(currentState.getMemoryState());
     }
   }
 
@@ -102,8 +104,9 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
       else {
         int idx = i - ((isStatic || instanceBound) ? 0 : 1);
         if (idx >= arguments.length) break;
-        if (!(parameters[idx].getType() instanceof PsiEllipsisType)) {
-          arguments[idx] = value;
+        PsiType parameterType = parameters[idx].getType();
+        if (!(parameterType instanceof PsiEllipsisType)) {
+          arguments[idx] = DfaUtil.boxUnbox(value, parameterType);
         }
       }
     }

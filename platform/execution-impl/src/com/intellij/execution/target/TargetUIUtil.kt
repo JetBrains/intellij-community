@@ -4,6 +4,7 @@
 package com.intellij.execution.target
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
@@ -21,7 +22,7 @@ class TargetUIUtil {
       val textFieldWithBrowseButton = TextFieldWithBrowseButton()
       val browser = targetType.createBrowser(project,
                                              title,
-                                             com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+                                             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                                              textFieldWithBrowseButton.textField,
                                              targetSupplier)
       textFieldWithBrowseButton.addActionListener(browser)

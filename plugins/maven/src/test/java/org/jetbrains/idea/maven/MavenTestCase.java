@@ -28,8 +28,8 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -78,6 +78,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     super.setUp();
 
 
+    setupErrorLoggingFor_IDEA_274474();
     setUpFixtures();
     myProject = myTestFixture.getProject();
     setupWsl();
@@ -118,16 +119,28 @@ public abstract class MavenTestCase extends UsefulTestCase {
     if (wslMsId == null) return;
     List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
     if (distributions.isEmpty()) throw new IllegalStateException("no WSL distributions configured!");
-    myWSLDistribution = distributions.stream().filter(it -> wslMsId.equals(it.getMsId())).findFirst().orElseThrow(
-      () -> new IllegalStateException("Distribution " + wslMsId + " was not found"));
+    myWSLDistribution = distributions.stream().filter(it -> wslMsId.equals(it.getMsId())).findFirst()
+      .orElseThrow(() -> new IllegalStateException("Distribution " + wslMsId + " was not found"));
     String jdkPath = System.getProperty("wsl.jdk.path");
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
     }
 
-    Sdk sdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
-    WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(sdk));
+    Sdk wslSdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
+    WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(wslSdk));
     assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
+  }
+
+  private void setupErrorLoggingFor_IDEA_274474() {
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+        if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
+          return false;
+        }
+        return super.processError(category, message, t, details);
+      }
+    });
   }
 
   private Sdk getWslSdk(String jdkPath) {
@@ -167,6 +180,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> super.tearDown()
     ).run();
   }
+
 
   private void checkAllMavenConnectorsDisposed() {
     assertEmpty("all maven connectors should be disposed", MavenServerManager.getInstance().getAllConnectors());
@@ -543,8 +557,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
-    assertEquals(new SetWithToString<>(new THashSet<>(expected, FileUtil.PATH_HASHING_STRATEGY)),
-                 new SetWithToString<>(new THashSet<>(actual, FileUtil.PATH_HASHING_STRATEGY)));
+    assertEquals(new SetWithToString<>(CollectionFactory.createFilePathSet(expected)),
+                 new SetWithToString<>(CollectionFactory.createFilePathSet(actual)));
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ColumnName
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileTooBigException
@@ -55,7 +56,6 @@ import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.io.IOException
-import java.util.*
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
@@ -494,8 +494,8 @@ open class MultipleFileMergeDialog(
 
   private data class ConflictData(
     val mergeData: MergeData,
-    val title: String?,
-    val contentTitles: List<String?>,
+    val title: @NlsContexts.DialogTitle String?,
+    val contentTitles: List<@NlsContexts.Label String?>,
     val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList
   )
 }

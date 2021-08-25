@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -10,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
+import java.awt.Color
 
 
 abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject) {
@@ -49,6 +51,8 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     }
     renderer.setIcon(path, path.isDirectory || !isLeaf)
   }
+
+  override fun getBackgroundColor(project: Project): Color? = getBackgroundColorFor(project, filePath)
 
   private fun appendOriginText(renderer: ChangesBrowserNodeRenderer) {
     originText?.let {

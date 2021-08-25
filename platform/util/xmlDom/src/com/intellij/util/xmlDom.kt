@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("XmlDomReader")
 @file:ApiStatus.Internal
 package com.intellij.util
@@ -37,12 +37,37 @@ object NoOpXmlInterner : XmlInterner {
 @ApiStatus.Internal
 fun readXmlAsModel(inputStream: InputStream): XmlElement {
   val reader = createXmlStreamReader(inputStream)
-  val tag = nextTag(reader)
-  val rootName = when(tag) {
-    XMLStreamConstants.START_ELEMENT -> reader.localName
-    else -> null
+  try {
+    val tag = nextTag(reader)
+    val rootName = if (tag == XMLStreamConstants.START_ELEMENT) {
+      reader.localName
+    }
+    else {
+      null
+    }
+    return readXmlAsModel(reader, rootName, NoOpXmlInterner)
   }
-  return readXmlAsModel(reader, rootName, NoOpXmlInterner)
+  finally {
+    reader.closeCompletely()
+  }
+}
+
+@ApiStatus.Internal
+fun readXmlAsModel(inputStream: ByteArray): XmlElement {
+  val reader = createXmlStreamReader(inputStream)
+  try {
+    val tag = nextTag(reader)
+    val rootName = if (tag == XMLStreamConstants.START_ELEMENT) {
+      reader.localName
+    }
+    else {
+      null
+    }
+    return readXmlAsModel(reader, rootName, NoOpXmlInterner)
+  }
+  finally {
+    reader.close()
+  }
 }
 
 @ApiStatus.Internal
@@ -154,7 +179,7 @@ private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map
 
 private fun nextTag(reader: XMLStreamReader2): Int {
   while (true) {
-    val next: Int = reader.next()
+    val next = reader.next()
     when (next) {
       XMLStreamConstants.SPACE, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION, XMLStreamConstants.DTD -> continue
       XMLStreamConstants.CDATA, XMLStreamConstants.CHARACTERS -> {

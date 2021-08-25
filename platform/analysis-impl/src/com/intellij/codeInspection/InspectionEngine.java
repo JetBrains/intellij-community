@@ -33,26 +33,34 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
-  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES =
-    ContainerUtil.newConcurrentSet();
+  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
 
   public static @NotNull PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
                                                                           @NotNull ProblemsHolder holder,
                                                                           boolean isOnTheFly,
                                                                           @NotNull LocalInspectionToolSession session,
                                                                           @NotNull List<? extends PsiElement> elements) {
-    PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
-    //noinspection ConstantConditions
-    if (visitor == null) {
-      LOG.error("Tool " + tool + " (" + tool.getClass()+ ") must not return null from the buildVisitor() method");
-    }
-    else if (visitor instanceof PsiRecursiveVisitor && RECURSIVE_VISITOR_TOOL_CLASSES.add(tool.getClass())) {
-      LOG.error("The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool);
-    }
+    PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
     // if inspection returned empty visitor then it should be skipped
     if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
       tool.inspectionStarted(session, isOnTheFly);
       acceptElements(elements, visitor);
+    }
+    return visitor;
+  }
+
+  @NotNull
+  public static PsiElementVisitor createVisitor(@NotNull LocalInspectionTool tool,
+                                                @NotNull ProblemsHolder holder,
+                                                boolean isOnTheFly,
+                                                @NotNull LocalInspectionToolSession session) {
+    PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
+    //noinspection ConstantConditions
+    if (visitor == null) {
+      LOG.error("Tool " + tool + " (" + tool.getClass() + ") must not return null from the buildVisitor() method");
+    }
+    else if (visitor instanceof PsiRecursiveVisitor && RECURSIVE_VISITOR_TOOL_CLASSES.add(tool.getClass())) {
+      LOG.error("The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool);
     }
     return visitor;
   }
@@ -79,7 +87,6 @@ public final class InspectionEngine {
     return result;
   }
 
-  // public for Upsource
   // returns map (toolName -> problem descriptors)
   public static @NotNull Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                         @NotNull PsiFile file,
@@ -239,7 +246,7 @@ public final class InspectionEngine {
     });
   }
 
-  private static @NotNull Set<String> getDialectIdsSpecifiedForTool(String langId, boolean applyToDialects) {
+  private static @NotNull Set<String> getDialectIdsSpecifiedForTool(@NotNull String langId, boolean applyToDialects) {
     Language language = Language.findLanguageByID(langId);
     Set<String> result;
     if (language == null) {

@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.remoteRun" />
-    <orderEntry type="module" module-name="intellij.platform.ssh" />
+    <orderEntry type="module" module-name="intellij.platform.ssh.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.diff.util.FileEditorBase
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
@@ -29,12 +31,21 @@ internal class GHPRDiffFileEditor(project: Project,
   override fun isValid() = !Disposer.isDisposed(diffProcessor)
 
   init {
+    Disposer.register(diffProcessor, Disposable {
+      firePropertyChange(FileEditor.PROP_VALID, true, false)
+    })
+
     diffRequestModel.addAndInvokeRequestChainListener(diffChainUpdateQueue) {
       val chain = diffRequestModel.requestChain
       diffChainUpdateQueue.run(Update.create(diffRequestModel) {
         diffProcessor.chain = chain
       })
     }
+  }
+
+  override fun dispose() {
+    Disposer.dispose(diffProcessor)
+    super.dispose()
   }
 
   override fun getName(): String = GithubBundle.message("pull.request.editor.diff")

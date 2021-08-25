@@ -86,7 +86,7 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   public void select() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
       if (myRunContentDescriptor != null) {
         RunContentManager manager = RunContentManager.getInstance(myProject);
         ToolWindow toolWindow = manager.getToolWindowByDescriptor(myRunContentDescriptor);
@@ -94,6 +94,6 @@ public abstract class DebuggerSessionTabBase extends RunTab {
         if (toolWindow == null || content == null) return;
         manager.selectRunContent(myRunContentDescriptor);
       }
-    }, ModalityState.defaultModalityState());
+    });
   }
 }

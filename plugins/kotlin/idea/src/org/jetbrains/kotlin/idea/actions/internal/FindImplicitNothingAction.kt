@@ -44,7 +44,7 @@ class FindImplicitNothingAction : AnAction() {
 
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             { find(selectedFiles, project) },
-            KotlinBundle.message("finding.implicit.nothing.s"),
+            KotlinBundle.message("progress.finding.implicit.nothing.s"),
             true,
             project
         )

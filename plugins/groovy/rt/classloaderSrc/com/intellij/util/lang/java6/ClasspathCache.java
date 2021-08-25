@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BloomFilterBase;
+import com.intellij.util.containers.IntObjectHashMap;
 import com.intellij.util.lang.java6.fastutil.StrippedIntOpenHashSet;
 import com.intellij.util.lang.java6.fastutil.StrippedLongOpenHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +20,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class ClasspathCache {
   static final int NUMBER_OF_ACCESSES_FOR_LAZY_CACHING = 1000;
-  private final IntObjectHashMap myResourcePackagesCache = new IntObjectHashMap();
-  private final IntObjectHashMap myClassPackagesCache = new IntObjectHashMap();
+  private static final IntObjectHashMap.ArrayProducer<Object[]> OBJECT_ARRAY_PRODUCER = new IntObjectHashMap.ArrayProducer<Object[]>() {
+    @Override
+    public Object[] produce(int s) {
+      return s==0?ArrayUtilRt.EMPTY_OBJECT_ARRAY:new Object[s];
+    }
+  };
+  private final IntObjectHashMap<Object/*Loader|Loader[]*/> myResourcePackagesCache = new IntObjectHashMap<Object>(OBJECT_ARRAY_PRODUCER);
+  private final IntObjectHashMap<Object/*Loader|Loader[]*/>  myClassPackagesCache = new IntObjectHashMap<Object>(OBJECT_ARRAY_PRODUCER);
 
   private static final double PROBABILITY = 0.005d;
 

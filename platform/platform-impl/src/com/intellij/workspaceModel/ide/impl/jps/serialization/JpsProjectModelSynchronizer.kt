@@ -89,8 +89,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
           val storage = builder.toStorage()
-          updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources) },
-                                  storage)
+          updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources)
+                                    || it is DummyParentEntitySource }, storage)
           runAutomaticModuleUnloader(updater)
         }
         sourcesToSave.removeAll(changedSources)
@@ -188,13 +188,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val serializers = prepareSerializers()
     registerListener()
     val builder = WorkspaceEntityStorageBuilder.create()
-    childActivity = childActivity?.endAndStart("unloaded modules loading")
-
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
-      childActivity = childActivity?.endAndStart("entities loading")
+      childActivity = childActivity?.endAndStart("loading entities from files")
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
-      childActivity = childActivity?.endAndStart("project model changes saving (in queue)")
+      childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       return builder.toStorage() to sourcesToUpdate
     }
     else {
@@ -210,10 +208,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     if (storeToEntitySources == null) return
     WriteAction.runAndWait<RuntimeException> {
       if (project.isDisposed) return@runAndWait
-      childActivity = childActivity?.endAndStart("project model changes saving")
+      childActivity = childActivity?.endAndStart("applying loaded changes")
       WorkspaceModel.getInstance(project).updateProjectModel { updater ->
         updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
                                   || it is DummyParentEntitySource }, storeToEntitySources.first)
+        childActivity = childActivity?.endAndStart("unloaded modules loading")
         runAutomaticModuleUnloader(updater)
       }
       childActivity?.end()

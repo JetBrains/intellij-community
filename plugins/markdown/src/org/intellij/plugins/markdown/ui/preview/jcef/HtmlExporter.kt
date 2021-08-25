@@ -68,11 +68,11 @@ class HtmlExporter(htmlSource: String,
 
   private fun inlineImagesContent(images: Elements) {
     images.forEach {
-      val url = it.attr("src")
-      val content = getResource(url)
+      val imgSrc = getImgUriWithProtocol(it.attr("src"))
+      val content = getResource(imgSrc)
 
-      if (content != null && url.isNotEmpty()) {
-        it.attr("src", encodeImage(url, content))
+      if (content != null && imgSrc.isNotEmpty()) {
+        it.attr("src", encodeImage(imgSrc, content))
       }
     }
   }
@@ -86,18 +86,24 @@ class HtmlExporter(htmlSource: String,
 
   private fun saveImages(images: Elements) {
     images.forEach {
-      val url = it.attr("src")
-      val content = getResource(url)
+      val imgSrc = it.attr("src")
+      val imgUri = getImgUriWithProtocol(imgSrc)
+      val content = getResource(imgUri)
 
-      if (content != null && url.isNotEmpty()) {
-        val savedImgFile = getSavedImageFile(savingSettings.resourceDir, url)
+      if (content != null && imgSrc.isNotEmpty()) {
+        val savedImgFile = getSavedImageFile(savingSettings.resourceDir, imgSrc)
         FileUtil.createIfDoesntExist(savedImgFile)
         savedImgFile.writeBytes(content)
 
         val relativeImgPath = getRelativeImagePath(savingSettings.resourceDir)
-        it.attr("src", FileUtil.join(relativeImgPath, File(url).name))
+        it.attr("src", FileUtil.join(relativeImgPath, File(imgSrc).name))
       }
     }
+  }
+
+  private fun getImgUriWithProtocol(imgSrc: String): String {
+    return if (imgSrc.startsWith("file:")) imgSrc
+    else File(imgSrc).toURI().toString()
   }
 
   private fun getResource(url: String): ByteArray? =

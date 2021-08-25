@@ -13,6 +13,7 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 /**
  * @author: db
@@ -27,10 +28,9 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   public IntObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<Integer> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
-                                        final BuilderCollectionFactory<V> collectionFactory) throws IOException {
+                                        final Supplier<? extends Collection<V>> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<>(file, keyExternalizer,
-                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
+    myMap = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<Integer, Collection>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override
@@ -221,10 +221,9 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
   private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
-    private final BuilderCollectionFactory<V> myCollectionFactory;
+    private final Supplier<? extends Collection<V>> myCollectionFactory;
 
-    CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
-                                      BuilderCollectionFactory<V> collectionFactory) {
+    CollectionDataExternalizer(DataExternalizer<V> elementExternalizer, Supplier<? extends Collection<V>> collectionFactory) {
       myElementExternalizer = elementExternalizer;
       myCollectionFactory = collectionFactory;
     }
@@ -238,7 +237,7 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
     @Override
     public Collection<V> read(@NotNull final DataInput in) throws IOException {
-      final Collection<V> result = myCollectionFactory.create();
+      final Collection<V> result = myCollectionFactory.get();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         result.add(myElementExternalizer.read(in));

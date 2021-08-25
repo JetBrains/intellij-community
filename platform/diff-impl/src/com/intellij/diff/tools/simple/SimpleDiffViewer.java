@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -163,6 +163,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   public FoldingModelSupport.Settings getFoldingModelSettings() {
     return TextDiffViewerUtil.getFoldingModelSettings(myContext);
+  }
+
+  @NotNull
+  public FoldingModelSupport getFoldingModel() {
+    return myFoldingModel;
+  }
+
+  @NotNull
+  public TwosideTextDiffProvider getTextDiffProvider() {
+    return myTextDiffProvider;
   }
 
   @Override

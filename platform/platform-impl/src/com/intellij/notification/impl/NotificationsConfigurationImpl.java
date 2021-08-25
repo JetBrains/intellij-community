@@ -3,6 +3,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"))
+@State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"), category = ComponentCategory.UI)
 public final class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(NotificationsConfiguration.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";

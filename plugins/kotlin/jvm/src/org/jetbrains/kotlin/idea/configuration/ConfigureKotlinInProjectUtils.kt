@@ -29,10 +29,12 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
+import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
 import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
@@ -45,8 +47,6 @@ import org.jetbrains.kotlin.resolve.jvm.modules.KOTLIN_STDLIB_MODULE_NAME
 import org.jetbrains.kotlin.utils.ifEmpty
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
-
-data class RepositoryDescription(val id: String, val name: String, val url: String, val bintrayUrl: String?, val isSnapshot: Boolean)
 
 const val LAST_SNAPSHOT_VERSION = "1.5.255-SNAPSHOT"
 
@@ -122,7 +122,7 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  */
 @RequiresBackgroundThread
 fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
-    if (!isUnitTestMode() && ApplicationManager.getApplication().isDispatchThread) {
+    if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 

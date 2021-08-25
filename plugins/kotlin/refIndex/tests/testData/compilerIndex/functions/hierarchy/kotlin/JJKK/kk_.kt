@@ -1,0 +1,3 @@
+fun kk() {
+    KK().test()
+}

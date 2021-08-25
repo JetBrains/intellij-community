@@ -2,16 +2,19 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.StringFlowUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-import java.util.Objects;
 
 public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -26,24 +29,24 @@ public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionT
         AnnotationContext annotationContext = AnnotationContext.fromExpression(usage);
         TaintValue contextValue = TaintValueFactory.INSTANCE.of(annotationContext);
         if (contextValue != TaintValue.UNTAINTED) return;
-        TaintValue taintValue = TaintAnalyzer.getTaintValue(uExpression);
-        if (taintValue == null) return;
+        TaintAnalyzer taintAnalyzer = new TaintAnalyzer();
+        TaintValue taintValue = taintAnalyzer.analyze(uExpression);
         taintValue = taintValue.join(contextValue);
         if (taintValue == TaintValue.UNTAINTED) return;
-        String errorMessage = Objects.requireNonNull(taintValue.getErrorMessage());
-        LocalQuickFix fix = null;
-        if (taintValue == TaintValue.UNKNOWN) {
-          PsiModifierListOwner target = getTarget(uExpression);
-          if (target == null) return;
-          fix = new UntaintedAnnotationProvider().createFix(target);
-        }
-        holder.registerProblem(element, JvmAnalysisBundle.message(errorMessage), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+        String errorMessage = JvmAnalysisBundle.message(taintValue.getErrorMessage(annotationContext));
+        LocalQuickFix fix = taintValue == TaintValue.UNKNOWN ? createFix(element, uExpression) : null;
+        holder.registerProblem(element, errorMessage, fix);
       }
     };
   }
-  
-  private static @Nullable PsiModifierListOwner getTarget(@NotNull UExpression expression) {
-    if (!(expression instanceof UResolvable)) return null;
-    return ObjectUtils.tryCast(((UResolvable)expression).resolve(), PsiModifierListOwner.class);
+
+  private static @Nullable LocalQuickFix createFix(@NotNull PsiElement element, @NotNull UExpression uExpression) {
+    UResolvable uResolvable = ObjectUtils.tryCast(uExpression, UResolvable.class);
+    if (uResolvable == null) return null;
+    PsiNamedElement namedElement = ObjectUtils.tryCast(uResolvable.resolve(), PsiNamedElement.class);
+    if (namedElement == null) return null;
+    String name = namedElement.getName();
+    if (name == null) return null;
+    return new MarkAsSafeFix(element, name);
   }
 }

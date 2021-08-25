@@ -34,9 +34,9 @@ internal class LangManager : SimplePersistentStateComponent<LangManager.State>(S
   init {
     val productName = ApplicationNamesInfo.getInstance().productName
     val onlyLang =
-      languages.singleOrNull() ?:
-      languages.singleOrNull { it.instance.defaultProductName == productName } ?:
-      languages.firstOrNull()?.also {
+      languages.singleOrNull()
+      ?: languages.singleOrNull { it.instance.defaultProductName == productName }
+      ?: languages.firstOrNull()?.also {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
           logger<LangManager>().warn("No default language for $productName. Selected ${it.language}.")
         }

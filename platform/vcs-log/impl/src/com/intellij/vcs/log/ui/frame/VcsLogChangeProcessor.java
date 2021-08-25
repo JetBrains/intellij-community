@@ -12,14 +12,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.vcs.changes.ui.PresentableChange;
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser.ChangesBrowserParentNode;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +87,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
     @Override
     public void select(@NotNull PresentableChange change) {
-      VcsLogChangeProcessor.this.selectFilePath(change.getFilePath());
+      selectChange(change);
     }
 
     @Nullable
@@ -99,7 +99,22 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @NotNull
   private Stream<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {
-    return modelData.userObjectsStream(Change.class).map(MyChangeWrapper::new);
+    return StreamEx.of(modelData.nodesStream()).select(ChangesBrowserChangeNode.class)
+      .map(n -> new MyChangeWrapper(n.getUserObject(), wrapTag(n)));
+  }
+
+  @Nullable
+  private ChangesBrowserNode.Tag wrapTag(@NotNull ChangesBrowserChangeNode n) {
+    ChangesBrowserNode<?> parent = n;
+
+    while (parent != null) {
+      if (parent instanceof ChangesBrowserParentNode) {
+        return ((ChangesBrowserParentNode)parent).wrap();
+      }
+      parent = parent.getParent();
+    }
+
+    return null;
   }
 
   @Override
@@ -110,6 +125,15 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     TreePath path = objectNode != null ? TreeUtil.getPathFromRoot(objectNode) : null;
     if (path != null) {
       TreeUtil.selectPath(tree, path, false);
+    }
+  }
+
+  private void selectChange(@NotNull PresentableChange change) {
+    Wrapper changeToSelect =
+      ContainerUtil.find(getAllChanges().iterator(), c -> c.getFilePath().equals(change.getFilePath()) &&
+                                                          Objects.equals(change.getTag(), c.getTag()));
+    if (changeToSelect != null) {
+      selectChange(changeToSelect);
     }
   }
 
@@ -130,8 +154,8 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   }
 
   private class MyChangeWrapper extends ChangeWrapper {
-    MyChangeWrapper(@NotNull Change change) {
-      super(change);
+    MyChangeWrapper(@NotNull Change change, @Nullable ChangesBrowserNode.Tag tag) {
+      super(change, tag);
     }
 
     @Nullable

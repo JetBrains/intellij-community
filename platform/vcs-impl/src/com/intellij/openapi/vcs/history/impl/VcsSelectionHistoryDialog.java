@@ -136,7 +136,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myFile = file;
     myActiveVcs = vcs;
     myVcsHistoryProvider = vcsHistoryProvider;
-
+    
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
@@ -222,12 +222,12 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       }
 
       private void runOnEdt(@NotNull Runnable task) {
-        ModalityUiUtil.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.stateForComponent(mySplitter), () -> {
           VcsSelectionHistoryDialog dialog = VcsSelectionHistoryDialog.this;
           if (!dialog.isDisposed() && dialog.getFrame().isShowing()) {
             task.run();
           }
-        }, ModalityState.stateForComponent(mySplitter));
+        });
       }
     };
     myBlockLoader.start(this);

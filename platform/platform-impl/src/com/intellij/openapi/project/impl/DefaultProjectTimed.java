@@ -47,6 +47,6 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
         WriteAction.run(() -> super.dispose());
       }
     };
-    ModalityUiUtil.invokeLaterIfNeeded(doDispose, ModalityState.NON_MODAL, myParentDisposable.getDisposed());
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myParentDisposable.getDisposed(), doDispose);
   }
 }

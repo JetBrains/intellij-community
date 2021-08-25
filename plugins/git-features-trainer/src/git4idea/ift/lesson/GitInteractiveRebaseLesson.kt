@@ -83,7 +83,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       openRebaseDialogTaskId = taskId
       text(GitLessonsBundle.message("git.interactive.rebase.open.context.menu"))
       text(GitLessonsBundle.message("git.interactive.rebase.click.commit.tooltip"),
-           LearningBalloonConfig(Balloon.Position.above, 250))
+           LearningBalloonConfig(Balloon.Position.above, 0))
       triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
         ui.text == interactiveRebaseMenuItemText
       }
@@ -92,7 +92,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
     task {
       text(GitLessonsBundle.message("git.interactive.rebase.choose.interactive.rebase",
-                                    strong(interactiveRebaseMenuItemText), LessonUtil.rawEnter()))
+                                    strong(interactiveRebaseMenuItemText)))
       val rebasingDialogTitle = GitBundle.message("rebase.interactive.dialog.title")
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title?.contains(rebasingDialogTitle) == true
@@ -234,6 +234,6 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
   private fun VcsLogData.getCommitMetadata(hash: Hash): VcsCommitMetadata {
     val index = getCommitIndex(hash, roots.single())
-    return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index, listOf(index))
+    return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index)
   }
 }

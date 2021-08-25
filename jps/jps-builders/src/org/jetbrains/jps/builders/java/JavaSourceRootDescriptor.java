@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
    * @deprecated use {@link #JavaSourceRootDescriptor(File, ModuleBuildTarget, boolean, boolean, String, Set, FileFilter)} instead;
    * this constructor method doesn't honor excluded patterns which may be specified for the module.
    */
+  @Deprecated
   public JavaSourceRootDescriptor(@NotNull File root,
                                   @NotNull ModuleBuildTarget target,
                                   boolean isGenerated,

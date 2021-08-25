@@ -6,6 +6,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
@@ -57,6 +59,7 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
     private var versionForInstallation: String? = null
 
     private var installedVersion: String? = null
+    @Nls
     private var installingStatus: String? = null
 
     override fun getId(): String = ID
@@ -72,7 +75,7 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
         form.experimentalFeaturesPanel.applySelectedChanges()
     }
 
-    private fun setInstalledVersion(installedVersion: String?, installingStatus: String?) {
+    private fun setInstalledVersion(@NlsSafe installedVersion: String?, @Nls installingStatus: String?) {
         this.installedVersion = installedVersion
         this.installingStatus = installingStatus
     }

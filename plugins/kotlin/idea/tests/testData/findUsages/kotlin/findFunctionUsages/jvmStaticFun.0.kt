@@ -2,7 +2,8 @@
 // OPTIONS: usages
 class Foo {
     companion object {
-        @JvmStatic fun <caret>foo() {
+        @JvmStatic
+        fun <caret>foo() {
 
         }
     }

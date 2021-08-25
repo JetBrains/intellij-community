@@ -91,19 +91,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
   }
 
-  private boolean isNodeTreePathValid() {
-    boolean isValid = true;
-    if (this.isStructuralChangeDetected()) {
-      isValid = false;
-    }
-    else {
-      if (getParent() != null) {
-        isValid = !((Node)getParent()).isStructuralChangeDetected();
-      }
-    }
-    return isValid;
-  }
-
 
   @NotNull
   private GroupNode insertGroupNode(@NotNull UsageGroup group,
@@ -245,12 +232,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   @NotNull
   UsageNode addOrGetUsage(@NotNull Usage usage,
                           boolean filterDuplicateLines,
-                          @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue,
-                          @NotNull Consumer<? super Usage> invalidatedUsagesConsumer) {
-    if (!isNodeTreePathValid()) {
-      invalidatedUsagesConsumer.consume(usage);
-      return new UsageNode(this, usage);
-    }
+                          @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
     UsageNode newNode;
     synchronized (this) {
       if (filterDuplicateLines) {

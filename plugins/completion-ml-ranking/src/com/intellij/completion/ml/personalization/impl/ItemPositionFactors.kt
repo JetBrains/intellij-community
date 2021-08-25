@@ -55,12 +55,12 @@ class AverageSelectedItemPosition
 class MaxSelectedItemPosition
     : UserFactorBase<ItemPositionReader>("maxSelectedItemPosition", UserFactorDescriptions.SELECTED_ITEM_POSITION) {
     override fun compute(reader: ItemPositionReader): String? =
-            reader.getCountsByPosition().asSequence().filter { it.value != 0.0 }.maxBy { it.key }?.key?.toString()
+            reader.getCountsByPosition().asSequence().filter { it.value != 0.0 }.maxByOrNull { it.key }?.key?.toString()
 }
 
 class MostFrequentSelectedItemPosition
     : UserFactorBase<ItemPositionReader>("mostFrequentItemPosition", UserFactorDescriptions.SELECTED_ITEM_POSITION) {
     override fun compute(reader: ItemPositionReader): String? =
-            reader.getCountsByPosition().maxBy { it.value }?.key?.toString()
+            reader.getCountsByPosition().maxByOrNull { it.value }?.key?.toString()
 }
 

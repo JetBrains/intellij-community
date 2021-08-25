@@ -1,12 +1,10 @@
-fun foo() {
-    public interface T: A
+open class T : A()
 
-    public object O1: A()
+fun foo() {
+    val O1 = object : A() {}
 
     fun bar() {
-        public object O2: T
+        val O2 = object : T() {}
     }
 }
-
-
 

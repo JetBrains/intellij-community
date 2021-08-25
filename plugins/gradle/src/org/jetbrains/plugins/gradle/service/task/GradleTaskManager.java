@@ -25,12 +25,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.gradle.tooling.model.build.GradleEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -101,48 +99,61 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     myCancellationMap.put(id, cancellationTokenSource);
-    Function<ProjectConnection, Void> f = connection -> {
-      BuildEnvironment buildEnvironment = null;
-      try {
-        buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
-        setupGradleScriptDebugging(effectiveSettings);
-        setupDebuggerDispatchPort(effectiveSettings);
-        appendInitScriptArgument(tasks, jvmParametersSetup, effectiveSettings,
-                                 Optional.ofNullable(buildEnvironment)
-                                   .map(BuildEnvironment::getGradle)
-                                   .map(GradleEnvironment::getGradleVersion).orElse(null));
-        try {
-          for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
-            effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
-          }
-
-          if (testLauncherIsApplicable(tasks, effectiveSettings)) {
-            TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, effectiveSettings, listener);
-            launcher.withCancellationToken(cancellationTokenSource.token());
-            launcher.run();
-          }
-          else {
-            BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-            launcher.forTasks(ArrayUtil.toStringArray(tasks));
-            launcher.withCancellationToken(cancellationTokenSource.token());
-            launcher.run();
-          }
-        }
-        finally {
-          myCancellationMap.remove(id);
-        }
+    try {
+      if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
+        String rootProjectPath = determineRootProject(projectPath);
+        CancellationToken cancellationToken = cancellationTokenSource.token();
+        myHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
+      }
+      myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, connection -> {
+        executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationTokenSource);
         return null;
-      }
-      catch (RuntimeException e) {
-        LOG.debug("Gradle build launcher error", e);
-        final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain();
-        throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
-      }
-    };
-    if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
-      myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
+      });
     }
-    myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
+    finally {
+      myCancellationMap.remove(id);
+    }
+  }
+
+  private void executeTasks(@NotNull ExternalSystemTaskId id,
+                            @NotNull List<String> tasks,
+                            @NotNull String projectPath,
+                            @NotNull GradleExecutionSettings settings,
+                            @Nullable String jvmParametersSetup,
+                            @NotNull ExternalSystemTaskNotificationListener listener,
+                            @NotNull ProjectConnection connection,
+                            @NotNull CancellationTokenSource cancellationTokenSource) {
+    BuildEnvironment buildEnvironment = null;
+    try {
+      buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
+      String gradleVersion = Optional.ofNullable(buildEnvironment)
+        .map(it -> it.getGradle())
+        .map(it -> it.getGradleVersion())
+        .orElse(null);
+      setupGradleScriptDebugging(settings);
+      setupDebuggerDispatchPort(settings);
+      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion);
+      for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
+        settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+      }
+
+      if (testLauncherIsApplicable(tasks, settings)) {
+        TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, settings, listener);
+        launcher.withCancellationToken(cancellationTokenSource.token());
+        launcher.run();
+      }
+      else {
+        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
+        launcher.forTasks(ArrayUtil.toStringArray(tasks));
+        launcher.withCancellationToken(cancellationTokenSource.token());
+        launcher.run();
+      }
+    }
+    catch (RuntimeException e) {
+      LOG.debug("Gradle build launcher error", e);
+      final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain();
+      throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
+    }
   }
 
   private static boolean testLauncherIsApplicable(@NotNull List<String> taskNames,

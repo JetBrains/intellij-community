@@ -12,7 +12,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
@@ -104,7 +104,7 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
                                                    RefactoringBundle.message("the.file.will.be.moved.to.this.directory"),
                                                    myProject,
                                                    descriptor,
-                                                   TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+                                                   TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     final JTextField textField = myTargetDirectoryField.getChildComponent().getTextEditor();
     FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, getDisposable());
     textField.getDocument().addDocumentListener(new DocumentAdapter() {

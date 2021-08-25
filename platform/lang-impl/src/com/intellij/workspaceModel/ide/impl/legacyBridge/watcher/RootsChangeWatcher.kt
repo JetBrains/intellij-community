@@ -166,7 +166,7 @@ internal class RootsChangeWatcher(val project: Project) {
             if (log.isTraceEnabled) {
               log.trace("Roots changed: changed urls = $changedUrlsList, changed module store paths = $changedModuleStorePaths")
             }
-            projectRootManager.rootsChanged.rootsChanged(result!!)
+            projectRootManager.rootsChanged.rootsChanged(ProjectRootManagerImpl.transfer(result!!))
           }
         }
       }

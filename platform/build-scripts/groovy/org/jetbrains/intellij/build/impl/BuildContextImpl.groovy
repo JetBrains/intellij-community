@@ -84,6 +84,12 @@ final class BuildContextImpl extends BuildContext {
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
+
+    if (systemSelector.contains(" ")) {
+      messages.error("System selector must not contain spaces: " + systemSelector)
+    }
+
+    options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
@@ -243,12 +249,10 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void signExeFile(String path) {
+  void signFile(String path, Map<String, String> options) {
     if (proprietaryBuildTools.signTool != null) {
-      executeStep("Signing $path", BuildOptions.WIN_SIGN_STEP) {
-        proprietaryBuildTools.signTool.signExeFile(path, this)
-        messages.info("Signed $path")
-      }
+      proprietaryBuildTools.signTool.signFile(path, this, options)
+      messages.info("Signed $path")
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")
@@ -354,6 +358,10 @@ final class BuildContextImpl extends BuildContext {
       jvmArgs.add('-Didea.jre.check=true')
     }
 
+    if (productProperties.useSplash) {
+      //noinspection SpellCheckingInspection
+      jvmArgs.add('-Dsplash=true')
+    }
     return jvmArgs
   }
 }

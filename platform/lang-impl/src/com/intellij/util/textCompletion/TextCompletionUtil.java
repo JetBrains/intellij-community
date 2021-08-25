@@ -84,11 +84,6 @@ public final class TextCompletionUtil {
           }
           return false;
         }
-
-        @Override
-        public void focusLost(@NotNull Editor editor) {
-          // Do nothing
-        }
       });
     }
   }

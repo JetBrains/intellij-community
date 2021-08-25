@@ -84,6 +84,7 @@
     <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
+        <add-to-group group-id="RightToolbarSideGroup" anchor="first"/>
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
@@ -124,6 +125,7 @@
         <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"/>
         <separator/>
         <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"/>
+        <action id="MarkVfsCorrupted" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.MarkVfsCorruptedAction"/>
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
         <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
@@ -397,6 +399,10 @@
       <add-to-group group-id="DebugReloadGroup" anchor="last"/>
     </action>
 
+    <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction" icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges">
+      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
+    </action>
+
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
       <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ForceRunToCursor"/>
       <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
@@ -475,7 +481,6 @@
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
-      <action id="Debugger.EditTypeSource" class="com.intellij.debugger.actions.JumpToObjectAction"/>
       <reference ref="Debugger.PopFrame"/>
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
@@ -617,54 +622,6 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <group id="Debugger.FramePanelPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
-    <group id="Debugger.EvaluationDialogPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
-    <group id="Debugger.InspectPanelPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
     <group id="Debugger.ThreadsPanelPopup">
       <reference ref="Debugger.ResumeThread"/>
       <reference ref="Debugger.FreezeThread"/>
@@ -675,23 +632,6 @@
       <reference ref="Debugger.AddSteppingFilter"/>
       <separator/>
       <reference ref="Debugger.CustomizeThreadsView"/>
-    </group>
-
-    <group id="Debugger.WatchesPanelPopup">
-      <separator/>
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >

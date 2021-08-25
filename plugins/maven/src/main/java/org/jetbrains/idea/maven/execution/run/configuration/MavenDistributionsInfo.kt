@@ -19,7 +19,6 @@ class MavenDistributionsInfo : DistributionsInfo {
   override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
   override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.hint")
 
-  override val comboBoxPreferredWidth: Int = JBUI.scale(120)
   override val comboBoxActionName: String = MavenConfigurableBundle.message("maven.run.configuration.specify.distribution.action.name")
 
   override val fileChooserTitle: String = MavenProjectBundle.message("maven.select.maven.home.directory")

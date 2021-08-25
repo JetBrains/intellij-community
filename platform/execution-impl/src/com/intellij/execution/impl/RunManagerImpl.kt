@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -372,14 +372,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
             // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
             StartupManager.getInstance(project).runAfterOpened {
-              ModalityUiUtil.invokeLaterIfNeeded(Runnable {
+              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {
                 // Empty string means that there's no information about initially selected RC in workspace.xml
                 // => IDE should select any if still none selected (CLion could have set the selected RC itself).
                 if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {
                   selectedConfiguration = runConfig
                 }
                 notYetAppliedInitialSelectedConfigurationId = null
-              }, ModalityState.NON_MODAL, project.disposed)
+              })
             }
           }
         }
@@ -573,6 +573,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
       eventPublisher.runConfigurationSelected(value)
     }
+
+  internal fun isFileContainsRunConfiguration(file: VirtualFile): Boolean {
+    val runConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path)) }
+    return runConfigs.isNotEmpty()
+  }
 
   internal fun selectConfigurationStoredInFile(file: VirtualFile) {
     val runConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path)) }

@@ -15,18 +15,17 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Set;
-import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public interface MavenServerIndexer extends Remote {
   String SEARCH_TERM_CLASS_NAMES = "c"; // see org.sonatype.nexus.index.ArtifactInfo
@@ -49,7 +48,7 @@ public interface MavenServerIndexer extends Remote {
 
   IndexedMavenId addArtifact(int indexId, File artifactFile, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
-  Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult, MavenToken token) throws RemoteException, MavenServerIndexerException;
+  Set<MavenArtifactInfo> search(int indexId, Object query, int maxResult, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
   Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException;
 

@@ -31,7 +31,7 @@ object ConversionsRunner {
         JetbrainsNullableAnnotationsConverter(context),
         DefaultArgumentsConversion(context),
         ConstructorConversion(context),
-        StaticInitDeclarationConversion(context),
+        MoveConstructorsAfterFieldsConversion(context),
         ImplicitInitializerConversion(context),
         ParameterModificationInMethodCallsConversion(context),
         BlockToRunConversion(context),
@@ -42,7 +42,8 @@ object ConversionsRunner {
         JavaMethodToKotlinFunctionConversion(context),
         MainFunctionConversion(context),
         AssertStatementConversion(context),
-        SwitchStatementConversion(context),
+        SwitchToWhenConversion(context),
+        YieldStatementConversion(context),
         LiteralConversion(context),
         ForConversion(context),
         LabeledStatementConversion(context),
@@ -62,13 +63,13 @@ object ConversionsRunner {
         },
         BuiltinMembersConversion(context),
         ImplicitCastsConversion(context),
+        PrimitiveTypeCastsConversion(context),
         LiteralConversion(context),
         StaticMemberAccessConversion(context),
         RemoveRedundantQualifiersForCallsConversion(context),
         FunctionalInterfacesConverter(context),
 
         FilterImportsConversion(context),
-        MoveInitBlocksToTheEndConversion(context),
         AddElementsInfoConversion(context)
     )
 

@@ -1,4 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
 
 package org.jetbrains.kotlin.tools.projectWizard
 
@@ -11,10 +14,14 @@ object Versions {
     val KTOR = version("1.5.2")
     val JUNIT = version("4.13")
     val JUNIT5 = version("5.6.0")
-    val JETBRAINS_COMPOSE = version("0.3.0-build149")
+    val JETBRAINS_COMPOSE = version("1.0.0-alpha3")
 
-    val KOTLIN_VERSION_FOR_COMPOSE = version("1.4.30")
-    val GRADLE_VERSION_FOR_COMPOSE = version("6.7.1")
+    val KOTLIN_VERSION_FOR_COMPOSE = version("1.5.21")
+    val GRADLE_VERSION_FOR_COMPOSE = version("6.9")
+
+    object COMPOSE {
+        val ANDROID_ACTIVITY_COMPOSE = version("1.3.0")
+    }
 
     object ANDROID {
         val ANDROID_MATERIAL = version("1.2.1")
@@ -41,7 +48,7 @@ object Versions {
     }
 
     object GRADLE_PLUGINS {
-        val ANDROID = version("4.0.1")
+        val ANDROID = version("4.0.2")
     }
 
     object MAVEN_PLUGINS {

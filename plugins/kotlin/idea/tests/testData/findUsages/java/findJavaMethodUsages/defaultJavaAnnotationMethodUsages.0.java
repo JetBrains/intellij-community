@@ -6,8 +6,12 @@ public @interface JAnn {
 
 class Test {
     @JAnn("abc")
-    void test1() { }
+    void test1() {
+    }
 
     @JAnn(value = "abc")
-    void test2() { }
+    void test2() {
+    }
 }
+
+// CRI_IGNORE

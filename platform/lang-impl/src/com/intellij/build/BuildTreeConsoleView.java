@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -36,7 +36,7 @@ import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -142,6 +142,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
     asyncTreeModel.addTreeModelListener(new ExecutionNodeAutoExpandingListener());
     myTree = initTree(asyncTreeModel);
+    myTree.getAccessibleContext().setAccessibleName(IdeBundle.message("buildToolWindow.tree.accessibleName"));
 
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
@@ -917,7 +918,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                        @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
       myProject = project;
       myPanel = new NonOpaquePanel(new BorderLayout());
-      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
       myViewSettingsProvider = buildViewSettingsProvider;
       myExecutionConsoleFilters = executionConsoleFilters;
       Disposer.register(parentDisposable, this);

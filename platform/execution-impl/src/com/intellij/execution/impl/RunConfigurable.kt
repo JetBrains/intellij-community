@@ -247,7 +247,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
 
       tree.requestFocusInWindow()
-      val settings = runManager.selectedConfiguration
+      val settings = getSelectedConfiguration()
       if (settings != null) {
         if (selectConfiguration(settings.configuration)) {
           return@invokeLater
@@ -258,6 +258,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
       drawPressAddButtonMessage(null)
     }, ModalityState.stateForComponent(wholePanel!!))
+  }
+
+  open protected fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+    return runManager.selectedConfiguration
   }
 
   private fun selectConfiguration(configuration: RunConfiguration): Boolean {

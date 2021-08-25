@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api.trackers
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiTreeChangeEvent
@@ -22,7 +21,7 @@ class KotlinOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
     }
 
     private fun incrementModificationsCount() {
-        project.service<KotlinFirModificationTrackerService>().increaseModificationCountForAllModules()
+        project.getService(KotlinFirModificationTrackerService::class.java).increaseModificationCountForAllModules()
     }
 
     // Copy logic from PsiModificationTrackerImpl.treeChanged(). Some out-of-code-block events are written to language modification

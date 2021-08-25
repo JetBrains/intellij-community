@@ -4,7 +4,7 @@ class Usages {
         println("${a.a} ${a.b}")
         println("${a.t} ${a.u}")
         a.b = 12
-        a.u = 13
+        a.u = "13"
     }
 
     fun foo(x: X) {

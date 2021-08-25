@@ -5,9 +5,9 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -102,13 +102,19 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   public static boolean isWslPath(@NotNull String path) {
-    return FileUtilRt.toSystemDependentName(path).startsWith(WSLDistribution.UNC_PREFIX);
+    return FileUtilRt.toSystemDependentName(path).startsWith(WslConstants.UNC_PREFIX);
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
     final int releaseId = WSLUtil.getWindowsReleaseId();
-    if (releaseId > 0 && releaseId  < 1903) return WSLUtil.getAvailableDistributions();
+    if (releaseId > 0 && releaseId < 2004) {
+      final WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
+      if (wslTool == null || (!wslTool.isVerboseFlagAvailable && !wslTool.isQuietFlagAvailable)) {
+        return WSLUtil.getAvailableDistributions();
+      }
+    }
 
+    // we assume that after "2004" Windows release wsl.exe and all required flags are available
     if (Registry.is("wsl.list.prefer.verbose.output", true)) {
       try {
         final var result = loadInstalledDistributionsWithVersions();

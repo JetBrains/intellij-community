@@ -15,15 +15,17 @@
  */
 package com.intellij.find.findUsages;
 
+import com.ibm.icu.text.ListFormatter;
+import com.intellij.DynamicBundle;
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -98,6 +100,9 @@ public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions 
     if (strings.isEmpty()) {
       return AnalysisBundle.message("find.usages.panel.title.usages");
     }
-    return StringUtil.capitalize(NlsMessages.formatOrList(strings));
+    return formatOrList(strings);
+  }
+  private static @NotNull @Nls String formatOrList(Collection<?> list) {
+    return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE).format(list);
   }
 }

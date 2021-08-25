@@ -9,12 +9,12 @@ and its name and exported packages could change if and when it's
 The first option increases awareness of when automatic modules are used.
 The second warns the authors of a module that they're putting the users of that module at risk by establishing implied readability to an automatic module.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   //module-info.java
   module org.printer {
     requires transitive drivers.corp.org; // reported in case 'drivers.corp.org' is an automatic module
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Use the <b>Highlight only transitive dependencies</b> option to warn only about transitive dependencies.

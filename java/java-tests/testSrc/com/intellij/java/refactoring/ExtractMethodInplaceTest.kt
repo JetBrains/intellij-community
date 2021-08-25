@@ -5,8 +5,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
@@ -14,6 +12,7 @@ import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
@@ -70,7 +69,7 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testShortenClassReferences(){
-    withLanguageLevel(project, LanguageLevel.JDK_11) {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_11) {
       doTest()
     }
   }
@@ -88,18 +87,14 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testRuntimeCatchMayChangeSemantic1(){
-    try {
+    assertThrows(RefactoringErrorHintException::class.java, JavaRefactoringBundle.message("extract.method.error.many.exits")) {
       doTest()
-      fail("RuntimeException may change code semantic")
-    } catch (e: RefactoringErrorHintException) {
     }
   }
 
   fun testRuntimeCatchMayChangeSemantic2(){
-    try {
+    assertThrows(RefactoringErrorHintException::class.java, JavaRefactoringBundle.message("extract.method.error.many.exits")) {
       doTest()
-      fail("RuntimeException may change code semantic")
-    } catch (e: RefactoringErrorHintException) {
     }
   }
 
@@ -116,7 +111,9 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
       var startReceived = false
       var doneReceived = false
-      project.messageBus.connect().subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, object : RefactoringEventListener {
+      val connection = project.messageBus.connect()
+      Disposer.register(testRootDisposable, connection)
+      connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, object : RefactoringEventListener {
         override fun refactoringStarted(refactoringId: String, beforeData: RefactoringEventData?) {
           startReceived = true
         }
@@ -130,17 +127,6 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
       require(startReceived)
       finishTemplate(template)
       require(doneReceived)
-    }
-  }
-
-  private inline fun withLanguageLevel(project: Project, languageLevel: LanguageLevel, body: () -> Unit) {
-    val extension = LanguageLevelProjectExtension.getInstance(project)
-    val previousLanguageLevel = extension.languageLevel
-    try {
-      extension.languageLevel = languageLevel
-      body()
-    } finally {
-      extension.languageLevel = previousLanguageLevel
     }
   }
 

@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -65,7 +64,7 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
 
     if (artifactModel == null) {
       logger<GradleDependencyModificator>().warn("Unable to update dependency '$oldDescriptor': not found in module ${module.name}")
-       return
+      return
     }
 
     if (oldDescriptor.coordinates.groupId != newDescriptor.coordinates.groupId) {
@@ -146,7 +145,7 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
     applyChanges(model)
   }
 
-  override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency> {
+  override fun declaredDependencies(module: Module): List<DeclaredDependency> {
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     return model.dependencies().artifacts().map {
       val dataContext = DataContext { dataId ->

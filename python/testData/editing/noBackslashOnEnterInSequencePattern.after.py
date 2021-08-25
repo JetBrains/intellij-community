@@ -1,4 +1,4 @@
 match x:
     case [1, 
-    <caret>2]:
+          <caret>2]:
         pass

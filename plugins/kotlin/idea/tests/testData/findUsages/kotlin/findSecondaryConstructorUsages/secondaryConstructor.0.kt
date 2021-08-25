@@ -1,7 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtSecondaryConstructor
 // OPTIONS: usages
 open class B {
-    constructor(): this("") {
+    constructor() : this("") {
 
     }
 
@@ -16,7 +16,7 @@ open class A : B {
     }
 }
 
-class C: B("") {
+class C : B("") {
 
 }
 

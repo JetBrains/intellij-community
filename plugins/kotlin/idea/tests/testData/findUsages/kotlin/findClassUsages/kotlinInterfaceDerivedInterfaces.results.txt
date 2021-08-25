@@ -1,0 +1,2 @@
+[kotlinInterfaceDerivedInterfaces.0.kt] Unclassified 11 interface Y : X {
+[kotlinInterfaceDerivedInterfaces.1.kt] Unclassified 19 interface D : Y {}

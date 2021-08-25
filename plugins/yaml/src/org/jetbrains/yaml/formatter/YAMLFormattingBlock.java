@@ -84,6 +84,9 @@ class YAMLFormattingBlock extends AbstractBlock {
       if (YAMLElementTypes.SPACE_ELEMENTS.contains(subNodeType)) {
         // just skip them (comment processed above)
       }
+      else if (YAMLElementTypes.SCALAR_QUOTED_STRING == subNodeType) {
+        res.addAll(buildSubBlocks(context, subNode));
+      }
       else if (YAMLElementTypes.CONTAINERS.contains(subNodeType)) {
         res.addAll(YamlInjectedBlockFactory.substituteInjectedBlocks(
           context.mySettings,

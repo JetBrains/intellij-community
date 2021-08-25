@@ -21,7 +21,7 @@ class NativeConsoleApplicationTemplatePlugin(context: Context) : TemplatePlugin(
 
         val addTemplate by pipelineTask(GenerationPhase.PREPARE) {
             withAction {
-                TemplatesPlugin.addTemplate.execute(NativeConsoleApplicationTemplate())
+                TemplatesPlugin.addTemplate.execute(NativeConsoleApplicationTemplate)
             }
         }
     }

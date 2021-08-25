@@ -15,7 +15,6 @@ interface DistributionsInfo : FileChooserInfo, SettingsFragmentInfo {
 
   override val fileChooserMacroFilter get() = FileChooserInfo.DIRECTORY_PATH
 
-  val comboBoxPreferredWidth: Int?
   val comboBoxActionName: @Nls(capitalization = Nls.Capitalization.Sentence) String
 
   val distributions: List<DistributionInfo>

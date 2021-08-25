@@ -59,6 +59,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
         )
     }
 
+    @Suppress("HardCodedStringLiteral")
     private fun createPatches(backupDir: File, project: Project, indicator: ProgressIndicator) {
         runReadAction {
             val localHistoryImpl = LocalHistoryImpl.getInstanceImpl()!!

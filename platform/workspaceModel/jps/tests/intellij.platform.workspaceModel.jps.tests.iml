@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" scope="TEST" name="Velocity" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.workspaceModel.jps" />
 </module>

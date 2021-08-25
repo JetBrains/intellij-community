@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectLoadHelper")
 @file:ApiStatus.Internal
 package com.intellij.openapi.project.impl
@@ -22,10 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 internal fun registerComponents(project: ProjectImpl) {
   var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
   //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-  project.registerComponents(plugins = PluginManagerCore.getLoadedPlugins(null),
-                             app = ApplicationManager.getApplication(),
-                             precomputedExtensionModel = null,
-                             listenerCallbacks = null)
+  project.registerComponents()
 
   activity = activity?.endAndStart("projectComponentRegistered")
   runOnlyCorePluginExtensions(
@@ -41,7 +38,9 @@ private inline fun createActivity(project: ProjectImpl, message: () -> String): 
 
 internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
   ep.processWithPluginDescriptor(true) { handler, pluginDescriptor ->
-    if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID && pluginDescriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID) {
+    if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID && pluginDescriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
+        // K/N Platform Deps is a repackaged Java plugin
+        pluginDescriptor.pluginId.idString != "com.intellij.kotlinNative.platformDeps") {
       logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
     }
 

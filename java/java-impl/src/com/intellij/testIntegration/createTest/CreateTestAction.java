@@ -14,8 +14,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,12 +25,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static com.intellij.testIntegration.createTest.CreateTestUtils.computeSuitableTestRootUrls;
+import static com.intellij.testIntegration.createTest.CreateTestUtils.computeTestRoots;
 
 public class CreateTestAction extends PsiElementBaseIntentionAction {
 
@@ -150,36 +150,6 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
   protected CreateTestDialog createTestDialog(Project project, Module srcModule, PsiClass srcClass, PsiPackage srcPackage) {
     return new CreateTestDialog(project, getText(), srcClass, srcPackage, srcModule);
-  }
-
-  static List<String> computeSuitableTestRootUrls(@NotNull Module module) {
-    return suitableTestSourceFolders(module).map(SourceFolder::getUrl).collect(Collectors.toList());
-  }
-
-  protected static List<VirtualFile> computeTestRoots(@NotNull Module mainModule) {
-    if (!computeSuitableTestRootUrls(mainModule).isEmpty()) {
-      //create test in the same module, if the test source folder doesn't exist yet it will be created
-      return suitableTestSourceFolders(mainModule)
-        .map(SourceFolder::getFile)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-    }
-
-    //suggest to choose from all dependencies modules
-    final HashSet<Module> modules = new HashSet<>();
-    ModuleUtilCore.collectModulesDependsOn(mainModule, modules);
-    return modules.stream()
-      .flatMap(CreateTestAction::suitableTestSourceFolders)
-      .map(SourceFolder::getFile)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
-  }
-
-  private static Stream<SourceFolder> suitableTestSourceFolders(@NotNull Module module) {
-    Predicate<SourceFolder> forGeneratedSources = JavaProjectRootsUtil::isForGeneratedSources;
-    return Arrays.stream(ModuleRootManager.getInstance(module).getContentEntries())
-      .flatMap(entry -> entry.getSourceFolders(JavaSourceRootType.TEST_SOURCE).stream())
-      .filter(forGeneratedSources.negate());
   }
 
   /**

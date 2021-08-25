@@ -93,7 +93,7 @@ class AddNameToArgumentFix(argument: KtValueArgument) : KotlinQuickFixAction<KtV
     }
 
     private fun getNamePopup(project: Project, names: List<Name>): ListPopupStep<Name> {
-        return object : BaseListPopupStep<Name>(KotlinBundle.message("fix.add.argument.name.step.choose.parameter.name"), names) {
+        return object : BaseListPopupStep<Name>(KotlinBundle.message("fix.add.argument.name.step.choose.parameter.title"), names) {
             override fun onChosen(selectedValue: Name, finalChoice: Boolean): PopupStep<*>? {
                 addName(project, element!!, selectedValue)
                 return PopupStep.FINAL_CHOICE

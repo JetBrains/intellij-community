@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.CommonBundle;
@@ -12,7 +12,8 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -23,12 +24,14 @@ import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.awt.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 public final class RunContentBuilder extends RunTab {
   private static final String JAVA_RUNNER = "JavaRunner";
@@ -92,16 +95,23 @@ public final class RunContentBuilder extends RunTab {
     ActionGroup toolbar = createActionToolbar(contentDescriptor, consoleActionsToMerge);
     if (Registry.is("debugger.new.tool.window.layout")) {
       mySupplier = new RunTabSupplier(toolbar) {
+        {
+          setMoveToolbar(true);
+        }
+
         @Override
         public @NotNull List<AnAction> getContentActions() {
-          return Collections.singletonList(myUi.getOptions().getLayoutActions());
+          return List.of(myUi.getOptions().getLayoutActions());
         }
       };
       if (myUi instanceof RunnerLayoutUiImpl) {
         ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(false);
       }
-      myUi.getOptions().setTopLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
-
+      // wrapped into DefaultActionGroup to prevent loading all actions instantly
+      DefaultActionGroup topToolbar = new DefaultActionGroup(
+        new EmptyWhenDuplicate(toolbar, group -> group instanceof RunTab.ToolbarActionGroup)
+      );
+      myUi.getOptions().setTopLeftToolbar(topToolbar, ActionPlaces.RUNNER_TOOLBAR);
     } else {
       myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
     }
@@ -139,7 +149,7 @@ public final class RunContentBuilder extends RunTab {
   public static Content buildConsoleUiDefault(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
     Content consoleContent = ui.createContent(ExecutionConsole.CONSOLE_CONTENT_ID, console.getComponent(),
                                               CommonBundle.message("title.console"),
-                                              AllIcons.Debugger.Console,
+                                              null,
                                               console.getPreferredFocusableComponent());
 
     consoleContent.setCloseable(false);
@@ -166,7 +176,18 @@ public final class RunContentBuilder extends RunTab {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
     final AnAction[] actions = contentDescriptor.getRestartActions();
-    actionGroup.addAll(actions);
+    final MoreActionGroup moreGroup = new MoreActionGroup();
+    if (!isNewLayout) {
+      actionGroup.addAll(actions);
+    } else {
+      for (AnAction action : actions) {
+        if (action.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
+          moreGroup.add(action);
+        } else {
+          actionGroup.add(action);
+        }
+      }
+    }
     if (!isNewLayout) {
       actionGroup.add(new CreateAction(AllIcons.General.Settings));
       actionGroup.addSeparator();
@@ -179,43 +200,31 @@ public final class RunContentBuilder extends RunTab {
       actionGroup.addAll(consoleActions);
     }
 
-    if (isNewLayout) {
-      actionGroup.addSeparator();
-    }
-
-    for (AnAction anAction : myRunnerActions) {
-      if (anAction != null) {
-        actionGroup.add(anAction);
-      }
-      else {
-        actionGroup.addSeparator();
-      }
-    }
-
     if (!isNewLayout) {
+      for (AnAction anAction : myRunnerActions) {
+        if (anAction != null) {
+          actionGroup.add(anAction);
+        }
+        else {
+          actionGroup.addSeparator();
+        }
+      }
+
       actionGroup.addSeparator();
       actionGroup.add(myUi.getOptions().getLayoutActions());
       actionGroup.addSeparator();
       actionGroup.add(PinToolwindowTabAction.getPinAction());
     } else {
-      DefaultActionGroup more = new DefaultActionGroup() {
-        {
-          setPopup(true);
-          getTemplatePresentation().setIcon(AllIcons.Actions.More);
-          getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+      actionGroup.addSeparator();
+      for (AnAction action : myRunnerActions) {
+        if (PreferredPlace.TOOLBAR == action.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE)) {
+          actionGroup.add(action);
+        } else {
+          moreGroup.add(action);
         }
+      }
 
-        @Override
-        public boolean isDumbAware() {
-          return true;
-        }
-
-        @Override
-        public boolean hideIfNoVisibleChildren() {
-          return true;
-        }
-      };
-      actionGroup.add(more);
+      actionGroup.add(moreGroup);
     }
     return actionGroup;
   }
@@ -264,6 +273,44 @@ public final class RunContentBuilder extends RunTab {
         RunContentManager.getInstance(myProject).toFrontRunContent(myExecutor, myRunContentDescriptor);
         myUi.selectAndFocus(myUi.findContent(ExecutionConsole.CONSOLE_CONTENT_ID), false, false);
       }
+    }
+  }
+
+  private static class EmptyWhenDuplicate extends ActionGroup {
+
+    private final @NotNull ActionGroup myDelegate;
+    private final @NotNull Predicate<ActionGroup> myDuplicatePredicate;
+
+    private EmptyWhenDuplicate(@NotNull ActionGroup delegate, @NotNull Predicate<ActionGroup> isDuplicate) {
+      myDelegate = delegate;
+      myDuplicatePredicate = isDuplicate;
+    }
+
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      if (isToolbarDuplicatedAnywhere(getEventComponent(e))) {
+        return AnAction.EMPTY_ARRAY;
+      }
+      return myDelegate.getChildren(e);
+    }
+
+    @Nullable
+    protected Component getEventComponent(@Nullable AnActionEvent e) {
+      if (e == null) return null;
+      SingleContentSupplier supplier = e.getData(SingleContentSupplier.KEY);
+      return supplier != null ? supplier.getTabs().getComponent() : null;
+    }
+
+    private boolean isToolbarDuplicatedAnywhere(@Nullable Component parent) {
+      for (Component component : UIUtil.uiTraverser(parent)) {
+        if (component instanceof ActionToolbarImpl) {
+          ActionGroup group = ((ActionToolbarImpl)component).getActionGroup();
+          if (myDuplicatePredicate.test(group)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
   }
 

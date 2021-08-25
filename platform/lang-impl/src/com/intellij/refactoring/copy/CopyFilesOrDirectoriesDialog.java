@@ -20,7 +20,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -238,7 +238,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
                                                      RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
                                                      myProject, descriptor,
-                                                     TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+                                                     TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
       getTargetDirectoryComponent().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {

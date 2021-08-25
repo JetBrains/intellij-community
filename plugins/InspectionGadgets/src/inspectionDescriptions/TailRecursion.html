@@ -7,7 +7,7 @@ Reports tail recursion, that is, when a method calls itself as its last action b
   performance characteristics on different virtual machines.
 </p>
 <p>Example:</p>
-<pre>
+<pre><code>
   int factorial(int val, int runningVal) {
     if (val == 1) {
       return runningVal;
@@ -15,9 +15,9 @@ Reports tail recursion, that is, when a method calls itself as its last action b
       return factorial(val - 1, runningVal * val);
     }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   int factorial(int val, int runningVal) {
     while (true) {
       if (val == 1) {
@@ -28,7 +28,7 @@ Reports tail recursion, that is, when a method calls itself as its last action b
       }
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 
 </body>

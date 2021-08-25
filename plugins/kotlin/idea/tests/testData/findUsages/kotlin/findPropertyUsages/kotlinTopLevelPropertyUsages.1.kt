@@ -5,6 +5,6 @@ import server.foo
 class Client {
     fun fooBar() {
         println("foo = ${server.foo}")
-        println("length: ${server.foo.length()}")
+        println("length: ${server.foo.length}")
     }
 }

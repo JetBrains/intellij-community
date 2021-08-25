@@ -32,7 +32,7 @@ public abstract class SymbolBasedStructureViewModel extends TextEditorBasedStruc
   }
 
   @NotNull
-  ArrayList<StructureViewTreeElement> collectClosestChildrenSymbols(@NotNull PsiElement rootElement) {
+  public ArrayList<StructureViewTreeElement> collectClosestChildrenSymbols(@NotNull PsiElement rootElement) {
     var result = new ArrayList<StructureViewTreeElement>();
     PsiElementVisitor visitor = new PsiElementVisitor() {
       @Override

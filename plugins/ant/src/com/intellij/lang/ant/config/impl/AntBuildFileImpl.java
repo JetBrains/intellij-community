@@ -94,7 +94,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
         entry.addFilesTo(files);
       }
     }
-
+                                                                       
     @Override
     public void set(AbstractProperty.AbstractPropertyContainer container, List<File> files) {
       throw new UnsupportedOperationException(getName());
@@ -107,7 +107,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   public static final BooleanProperty RUN_IN_BACKGROUND = new BooleanProperty("runInBackground", true);
-  public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 128);
+  public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 512);
   public static final IntProperty MAX_STACK_SIZE = new IntProperty("maximumStackSize", 2);
   public static final BooleanProperty VERBOSE = new BooleanProperty("verbose", true);
   public static final BooleanProperty TREE_VIEW = new BooleanProperty("treeView", true);

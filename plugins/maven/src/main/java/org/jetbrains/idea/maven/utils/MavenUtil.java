@@ -23,7 +23,10 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.service.execution.*;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
+import com.intellij.openapi.externalSystem.service.execution.InvalidJavaHomeException;
+import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -72,6 +75,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -1382,7 +1386,7 @@ public class MavenUtil {
   }
 
   public static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
-    VirtualFile baseDir = VfsUtil.findFileByIoFile(getBaseDir(mavenProject.getDirectoryFile()), false);
+    VirtualFile baseDir = getVFileBaseDir(mavenProject.getDirectoryFile());
     if (baseDir != null) {
       return baseDir.findFileByRelativePath(fileRelativePath);
     }
@@ -1409,10 +1413,15 @@ public class MavenUtil {
 
     if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
       Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
+
+      if (res == null) {
+        res = getProjectJDKOnImportingStageWhileJdkIsNotSet(project);
+      }
+
       if (res != null && res.getSdkType() instanceof JavaSdkType) {
         return res;
       }
-      throw new ProjectJdkNotFoundException();
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
@@ -1428,11 +1437,15 @@ public class MavenUtil {
     throw new InvalidSdkException(name);
   }
 
+  private static Sdk getProjectJDKOnImportingStageWhileJdkIsNotSet(Project project) {
+    return MavenProjectBuilder.suggestProjectSdk(project);
+  }
+
   @Nullable
   protected static Sdk getSdkByExactName(@NotNull String name) {
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName().equals(name)) {
-        if(projectJdk.getSdkType() instanceof JavaSdkType) {
+        if (projectJdk.getSdkType() instanceof JavaSdkType) {
           return projectJdk;
         }
       }
@@ -1442,7 +1455,7 @@ public class MavenUtil {
 
   public static File getMavenPluginParentFile() {
     File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-    return luceneLib.getParentFile().getParentFile().getParentFile();
+    return luceneLib.getParentFile().getParentFile();
   }
 
   public static MavenDistribution getEffectiveMavenHome(Project project, String workingDirectory) {

@@ -70,6 +70,7 @@ public class PagePool {
   @NotNull
   public Page alloc(@NotNull RandomAccessDataFile owner, long offset) {
     synchronized (lock) {
+      RandomAccessDataFile.ensureNonNegative(offset, "offset");
       offset -= offset % Page.PAGE_SIZE;
       hits++;
 

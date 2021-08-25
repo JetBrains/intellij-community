@@ -417,8 +417,14 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<DiffTool> getToolOrderFromSettings(@NotNull List<? extends DiffTool> availableTools) {
+    return getToolOrderFromSettings(getSettings(), availableTools);
+  }
+
+  @NotNull
+  protected static List<DiffTool> getToolOrderFromSettings(@NotNull DiffSettings diffSettings,
+                                                           @NotNull List<? extends DiffTool> availableTools) {
     List<DiffTool> result = new ArrayList<>();
-    List<String> savedOrder = getSettings().getDiffToolsOrder();
+    List<String> savedOrder = diffSettings.getDiffToolsOrder();
 
     for (final String clazz : savedOrder) {
       DiffTool tool = ContainerUtil.find(availableTools, t -> t.getClass().getCanonicalName().equals(clazz));

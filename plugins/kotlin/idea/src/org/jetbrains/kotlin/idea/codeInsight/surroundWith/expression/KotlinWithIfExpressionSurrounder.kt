@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.surroundWith.KotlinExpressionSurrounder
@@ -18,7 +19,7 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
     override fun isApplicable(expression: KtExpression) =
         super.isApplicable(expression) && (expression.analyze(BodyResolveMode.PARTIAL).getType(expression)?.isBoolean() ?: false)
 
-    override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange? {
+    override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange {
         val factory = KtPsiFactory(project)
         val replaceResult = expression.replace(
             factory.createIf(
@@ -41,5 +42,6 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
         return TextRange(firstStatementInThenRange.startOffset, firstStatementInThenRange.startOffset)
     }
 
+    @NlsSafe
     override fun getTemplateDescription() = "if (expr) { ... }" + (if (withElse) " else { ... }" else "")
 }

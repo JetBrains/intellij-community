@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -16,6 +16,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
+import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.IntentionName;
@@ -44,6 +45,7 @@ import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
 import com.siyeh.ig.fixes.RenameFix;
@@ -406,9 +408,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new RenameFileFix(newName);
   }
 
+  @Nullable
   @Override
-  public @NotNull LocalQuickFix createRenameFix() {
-    return new RenameFix();
+  public IntentionAction createRenameFix(@NotNull PsiElement element, @Nullable Object highlightInfo) {
+    if (highlightInfo == null) return null;
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, (HighlightInfo)highlightInfo);
+    if (descriptor == null) return null;
+    return new LocalQuickFixAsIntentionAdapter(new RenameFix(), descriptor);
   }
 
   @NotNull
@@ -1050,5 +1058,19 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createIterateFix(@NotNull PsiExpression expression) {
     return new IterateOverIterableIntention(expression);
+  }
+
+  @Override
+  public @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement) {
+    return new DeleteSwitchLabelFix(labelElement);
+  }
+
+  @Nullable
+  @Override
+  public IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo) {
+    if (highlightInfo == null) return null;
+    ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, (HighlightInfo)highlightInfo);
+    if (descriptor == null) return null;
+    return new LocalQuickFixAsIntentionAdapter(new UnnecessaryDefaultInspection.DeleteDefaultFix(), descriptor);
   }
 }

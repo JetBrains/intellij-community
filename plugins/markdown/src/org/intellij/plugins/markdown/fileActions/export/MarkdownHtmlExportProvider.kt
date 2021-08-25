@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.fileActions.export
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.TextComponentAccessors
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.RecentsManager
@@ -107,7 +107,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
         MarkdownBundle.message("markdown.import.export.dialog.target.directory.description"),
         project,
         FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-        TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
+        TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
       )
     }
 

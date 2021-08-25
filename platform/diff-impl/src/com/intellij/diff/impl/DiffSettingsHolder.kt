@@ -5,17 +5,14 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Key
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-@State(name = "DiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
+@State(name = "DiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = ComponentCategory.CODE)
 class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
   data class SharedSettings(
     var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true

@@ -3,10 +3,9 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.nj2k.*
-import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
-import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
-import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
+import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 import org.jetbrains.kotlin.nj2k.types.isStringType
@@ -79,6 +78,8 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 true
             }
         else -> null
+    }?.takeIf { conversion ->
+        conversion.sinceKotlin?.let { it <= moduleApiVersion } ?: true
     }
 
 
@@ -188,6 +189,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
     private data class Conversion(
         val from: SymbolInfo,
         val to: Info,
+        val sinceKotlin: ApiVersion? = null,
         val replaceType: ReplaceType = ReplaceType.REPLACE_SELECTOR,
         val filter: ((JKExpression) -> Boolean)? = null,
         val byArgumentsFilter: ((List<JKExpression>) -> Boolean)? = null,
@@ -197,6 +199,9 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private infix fun SymbolInfo.convertTo(to: Info) =
         Conversion(this, to)
+
+    private infix fun Conversion.sinceKotlin(apiVersion: ApiVersion) =
+        copy(sinceKotlin = apiVersion)
 
     private infix fun Conversion.withReplaceType(replaceType: ReplaceType) =
         copy(replaceType = replaceType)
@@ -273,6 +278,38 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             Field("java.lang.Double.NEGATIVE_INFINITY") convertTo Field("kotlin.Double.Companion.NEGATIVE_INFINITY")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Field("java.lang.Double.NaN") convertTo Field("kotlin.Double.Companion.NaN")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.lang.Character.toUpperCase") convertTo ExtensionMethod("kotlin.text.uppercaseChar")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Character.toLowerCase") convertTo ExtensionMethod("kotlin.text.lowercaseChar")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Character.toTitleCase") convertTo ExtensionMethod("kotlin.text.titlecaseChar")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.lang.Character.digit") convertTo CustomExpression { expression ->
+                val arguments = (expression as JKCallExpression).arguments.arguments
+                if (arguments.size != 2) return@CustomExpression expression
+
+                val digit = arguments[0]::value.detached()
+                val radix = arguments[1]::value.detached()
+                val argumentList = if (radix is JKLiteralExpression && radix.literal == "10") JKArgumentList() else JKArgumentList(radix)
+                JKBinaryExpression(
+                    JKQualifiedExpression(
+                        digit,
+                        JKCallExpressionImpl(
+                            symbolProvider.provideMethodSymbol("kotlin.text.digitToIntOrNull"),
+                            argumentList
+                        )
+                    ),
+                    JKLiteralExpression("-1", JKLiteralExpression.LiteralType.INT),
+                    JKKtOperatorImpl(JKOperatorToken.ELVIS, typeFactory.types.int)
+                )
+            }
+                    sinceKotlin ApiVersion.KOTLIN_1_5
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
             Method("java.io.PrintStream.println") convertTo Method("kotlin.io.println")
@@ -384,6 +421,13 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     )
                 )
             },
+
+            Method("java.lang.String.toUpperCase") convertTo Method("kotlin.text.uppercase")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withArgumentsProvider(::stringConversionArgumentsProvider),
+            Method("java.lang.String.toLowerCase") convertTo Method("kotlin.text.lowercase")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withArgumentsProvider(::stringConversionArgumentsProvider),
 
             Method("java.lang.String.compareToIgnoreCase")
                     convertTo Method("kotlin.text.compareTo")
@@ -521,7 +565,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private fun JKExpression.callOn(symbol: JKMethodSymbol, arguments: List<JKArgument> = emptyList()) =
         JKQualifiedExpression(
-            this,
+            this.parenthesizeIfBinaryExpression(),
             JKCallExpressionImpl(
                 symbol,
                 JKArgumentList(arguments),
@@ -545,4 +589,29 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private fun JKExpression.castToTypedArray() =
         callOn(symbolProvider.provideMethodSymbol("kotlin.collections.toTypedArray"))
+
+
+    private fun stringConversionArgumentsProvider(arguments: JKArgumentList): JKArgumentList {
+        if (arguments.arguments.isEmpty()) {
+            return JKArgumentList(
+                JKArgumentImpl(
+                    JKClassAccessExpression(symbolProvider.provideClassSymbol("java.util.Locale")).callOn(
+                        symbolProvider.provideMethodSymbol("java.util.Locale.getDefault")
+                    )
+                )
+            )
+        }
+
+        val singleArgument = arguments.arguments.singleOrNull() ?: return arguments
+        val expression = (singleArgument.value as? JKQualifiedExpression) ?: return arguments
+
+        if (expression.selector.identifier?.fqName in neutralLocaleFQNames) return JKArgumentList()
+        return arguments
+    }
+
+    private val neutralLocaleFQNames = listOf(
+        "java.util.Locale.ROOT",
+        "java.util.Locale.US",
+        "java.util.Locale.ENGLISH"
+    )
 }

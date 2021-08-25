@@ -24,7 +24,8 @@ internal val homePath by lazy {
   Path.of(getHomePath())
 }
 
-private val modulesSkipList = setOf(
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+private val moduleSkipList = java.util.Set.of(
   "fleet",
   "intellij.indexing.shared.ultimate.plugin.internal.generator",
   "intellij.indexing.shared.ultimate.plugin.public",
@@ -36,9 +37,8 @@ private val modulesSkipList = setOf(
   "intellij.cwm.plugin", /* platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
 )
 
-internal class PluginModelValidator(sourceModules: List<Module>) {
-
-  internal interface Module {
+class PluginModelValidator(sourceModules: List<Module>) {
+  interface Module {
     val name: String
 
     val sourceRoots: List<Path>
@@ -66,7 +66,7 @@ internal class PluginModelValidator(sourceModules: List<Module>) {
     for (module in sourceModules) {
       val moduleName = module.name
       if (moduleName.startsWith("fleet.")
-          || modulesSkipList.contains(moduleName)) {
+          || moduleSkipList.contains(moduleName)) {
         continue
       }
 
@@ -245,7 +245,7 @@ internal class PluginModelValidator(sourceModules: List<Module>) {
           }
           if (id == "com.intellij.modules.java") {
             _errors.add(PluginValidationError(
-              "Use com.intellij.modules.java id instead of com.intellij.modules.java",
+              "Use com.intellij.java id instead of com.intellij.modules.java",
               getErrorInfo(),
             ))
             continue
@@ -556,7 +556,7 @@ internal class PluginModelValidator(sourceModules: List<Module>) {
       return
     }
 
-    if (fileInfo.pluginDescriptorFile != null && moduleDescriptor != null) {
+    if (fileInfo.pluginDescriptorFile != null) {
       _errors.add(PluginValidationError(
         "Module cannot have both plugin.xml and module descriptor",
         mapOf(

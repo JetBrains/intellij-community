@@ -1,2 +1,0 @@
-Unclassified 6 interface T: A
-Unclassified 9 interface U: T

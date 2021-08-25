@@ -19,7 +19,7 @@ public abstract class TextChecker {
   }
 
   /**
-   * @return all the rules this checker supports in the language determined by the given locale,
+   * @return all the UI-configurable rules this checker provides in the language determined by the given locale,
    * possibly taking region into account.
    */
   public abstract @NotNull Collection<? extends Rule> getRules(@NotNull Locale locale);

@@ -142,7 +142,9 @@ class JavaVersionTest {
       "java $versionString",
       "openjdk $versionString",
       // `release` file (1.7+)
-      "JAVA_VERSION=\"$versionString\""
+      "JAVA_VERSION=\"$versionString\"",
+      // OpenJ9
+      "AdoptOpenJDK (OpenJ9) version $versionString",
     ).forEach { assertThat(JavaVersion.parse(it)).describedAs(it).isEqualTo(expected) }
   }
 

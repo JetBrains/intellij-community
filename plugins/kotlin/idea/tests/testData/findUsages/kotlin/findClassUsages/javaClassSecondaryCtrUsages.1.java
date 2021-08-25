@@ -1,5 +1,5 @@
 class B {
     public static void foo() {
-        new A()
+        new A();
     }
 }

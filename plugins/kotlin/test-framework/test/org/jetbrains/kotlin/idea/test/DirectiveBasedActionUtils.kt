@@ -13,8 +13,10 @@ import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
 object DirectiveBasedActionUtils {
+    const val DISABLE_ERRORS_DIRECTIVE = "// DISABLE-ERRORS"
+
     fun checkForUnexpectedErrors(file: KtFile, diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }) {
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// DISABLE-ERRORS").isNotEmpty()) {
+        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
             return
         }
 

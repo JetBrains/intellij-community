@@ -126,8 +126,13 @@ public abstract class ContractReturnValue {
       memState.meetDfType(newValue, result);
       return newValue;
     }
-    if (defaultValue instanceof DfaWrappedValue && newType.isSuperType(defaultValue.getDfType())) {
-      return defaultValue;
+    if (defaultValue instanceof DfaWrappedValue) {
+      if (newType.isSuperType(defaultValue.getDfType())) {
+        return defaultValue;
+      }
+      DerivedVariableDescriptor field = ((DfaWrappedValue)defaultValue).getSpecialField();
+      return defaultValue.getFactory().getWrapperFactory()
+        .createWrapper(result.getBasicType(), field, ((DfaWrappedValue)defaultValue).getWrappedValue());
     }
     if (defaultValue instanceof DfaVariableValue) {
       memState.meetDfType(defaultValue, result);

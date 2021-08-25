@@ -69,6 +69,8 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
@@ -673,18 +675,20 @@ public final class AboutPopup {
 
     extraInfo += "Cores: " + Runtime.getRuntime().availableProcessors() + "\n";
 
+    Collector<CharSequence, ?, String> joiner = Collectors.joining("\n");
+
     String registryKeys = Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
-      .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining());
+      .map(v -> "    " + v.getKey() + "=" + v.asString()).collect(joiner);
     if (!StringUtil.isEmpty(registryKeys)) {
-      extraInfo += "Registry: " + registryKeys + "\n";
+      extraInfo += "Registry:\n" + registryKeys + "\n\n";
     }
 
     String nonBundledPlugins = PluginManagerCore.getLoadedPlugins().stream()
       .filter(p -> !p.isBundled())
-      .map(p -> p.getPluginId().getIdString() + " (" + p.getVersion() + ")")
-      .collect(StringUtil.joining());
+      .map(p -> "    " + p.getPluginId().getIdString() + " (" + p.getVersion() + ")")
+      .collect(joiner);
     if (!StringUtil.isEmpty(nonBundledPlugins)) {
-      extraInfo += "Non-Bundled Plugins: " + nonBundledPlugins;
+      extraInfo += "Non-Bundled Plugins:\n" + nonBundledPlugins + "\n";
     }
 
     if (PlatformUtils.isIntelliJ()) {

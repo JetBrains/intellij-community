@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
+import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.project.Project
@@ -21,13 +22,12 @@ import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.MultiMap
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.keysToMap
 import kotlin.math.max
@@ -115,14 +114,14 @@ class MoveDeclarationsDescriptor @JvmOverloads constructor(
 
 class ConflictUsageInfo(element: PsiElement, val messages: Collection<String>) : UsageInfo(element)
 
-private object ElementHashingStrategy : Hash.Strategy<PsiElement> {
+private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     override fun equals(e1: PsiElement?, e2: PsiElement?): Boolean {
         if (e1 === e2) return true
         // Name should be enough to distinguish different light elements based on the same original declaration
         if (e1 is KtLightDeclaration<*, *> && e2 is KtLightDeclaration<*, *>) {
             return e1.kotlinOrigin == e2.kotlinOrigin && e1.name == e2.name
         }
-        return e1 == e2
+        return false
     }
 
     override fun hashCode(e: PsiElement?): Int {
@@ -160,8 +159,8 @@ class MoveKotlinDeclarationsProcessor(
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
         val targetContainerFqName = descriptor.moveTarget.targetContainerFqName?.let {
-            if (it.isRoot) UsageViewBundle.message("default.package.presentable.name") else it.asString()
-        } ?: UsageViewBundle.message("default.package.presentable.name")
+            if (it.isRoot) IdeDeprecatedMessagesBundle.message("default.package.presentable.name") else it.asString()
+        } ?: IdeDeprecatedMessagesBundle.message("default.package.presentable.name")
         return MoveMultipleElementsViewDescriptor(elementsToMove.toTypedArray(), targetContainerFqName)
     }
 
@@ -338,7 +337,7 @@ class MoveKotlinDeclarationsProcessor(
         try {
             descriptor.delegate.preprocessUsages(descriptor, usages)
 
-            val oldToNewElementsMapping = Object2ObjectOpenCustomHashMap<PsiElement, PsiElement>(ElementHashingStrategy)
+            val oldToNewElementsMapping = CollectionFactory.createCustomHashingStrategyMap<PsiElement, PsiElement>(ElementHashingStrategy)
 
             val newDeclarations = ArrayList<KtNamedDeclaration>()
 
@@ -402,5 +401,5 @@ class MoveKotlinDeclarationsProcessor(
         }
     }
 
-    override fun getCommandName(): String = KotlinBundle.message("text.move.declarations")
+    override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
 }

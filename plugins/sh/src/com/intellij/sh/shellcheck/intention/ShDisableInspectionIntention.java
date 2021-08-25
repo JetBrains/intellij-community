@@ -17,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.sh.statistics.ShCounterUsagesCollector.DISABLE_INSPECTION_USED_EVENT_ID;
-
 public class ShDisableInspectionIntention implements IntentionAction, LowPriorityAction, Iconable {
   private final String myInspectionCode;
   private final String myMessage;
@@ -56,7 +54,6 @@ public class ShDisableInspectionIntention implements IntentionAction, LowPriorit
       }
     });
     DaemonCodeAnalyzer.getInstance(project).restart(file);
-    DISABLE_INSPECTION_USED_EVENT_ID.log();
   }
 
   @Override

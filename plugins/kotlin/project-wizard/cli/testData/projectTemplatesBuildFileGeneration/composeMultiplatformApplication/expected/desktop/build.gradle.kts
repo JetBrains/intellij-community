@@ -3,7 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.compose") version "0.3.0-build149"
+    id("org.jetbrains.compose") version "1.0.0-alpha3"
 }
 
 group = "me.user"
@@ -33,6 +33,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "jvm"
+            packageVersion = "1.0.0"
         }
     }
 }

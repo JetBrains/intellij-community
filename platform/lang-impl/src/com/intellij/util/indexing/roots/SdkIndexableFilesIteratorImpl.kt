@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-import com.intellij.util.indexing.roots.kind.SdkOriginImpl
+import com.intellij.util.indexing.roots.origin.SdkOriginImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -38,5 +38,10 @@ class SdkIndexableFilesIteratorImpl(private val sdk: Sdk) : IndexableFilesIterat
       rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
     }
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
+  }
+
+  override fun getRootUrls(): Set<String> {
+    val rootProvider = sdk.rootProvider
+    return (rootProvider.getUrls(OrderRootType.SOURCES) + rootProvider.getUrls(OrderRootType.CLASSES)).toSet()
   }
 }

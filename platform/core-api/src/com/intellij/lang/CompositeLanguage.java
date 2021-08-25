@@ -5,32 +5,35 @@
 package com.intellij.lang;
 
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CompositeLanguage extends Language {
-  private final List<LanguageFilter> myFilters = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final ConcurrentList<LanguageFilter> myFilters = ContainerUtil.createConcurrentList();
 
-  protected CompositeLanguage(final String id) {
+  protected CompositeLanguage(@NotNull String id) {
     super(id);
   }
 
-  protected CompositeLanguage(final String ID, final String... mimeTypes) {
+  protected CompositeLanguage(@NotNull String ID, @NotNull String @NotNull ... mimeTypes) {
     super(ID, mimeTypes);
   }
 
-  protected CompositeLanguage(Language baseLanguage, final String ID, final String... mimeTypes) {
+  protected CompositeLanguage(@NotNull Language baseLanguage, @NotNull String ID, @NotNull String @NotNull ... mimeTypes) {
     super(baseLanguage, ID, mimeTypes);
   }
 
-  public void registerLanguageExtension(LanguageFilter filter) {
-    if (!myFilters.contains(filter)) myFilters.add(filter);
+  public void registerLanguageExtension(@NotNull LanguageFilter filter) {
+    myFilters.addIfAbsent(filter);
   }
 
-  public boolean unregisterLanguageExtension(LanguageFilter filter) {
+  @ApiStatus.Internal
+  public boolean unregisterLanguageExtension(@NotNull LanguageFilter filter) {
     return myFilters.remove(filter);
   }
 

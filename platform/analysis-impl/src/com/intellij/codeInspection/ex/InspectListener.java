@@ -1,10 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
-public interface InspectListener {
-  default void inspectionFinished(long duration, long threadId, InspectionToolWrapper<?, ?> tool, InspectionKind kind) {}
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 
-  default void activityFinished(long duration, long threadId, ActivityKind activityKind) {}
+public interface InspectListener {
+  default void inspectionFinished(long duration, long threadId, int problemsCount, InspectionToolWrapper<?, ?> tool, InspectionKind kind,
+                                  Project project) {}
+
+  default void activityFinished(long duration, long threadId, ActivityKind activityKind, Project project) {}
+
+  default void fileAnalyzed(PsiFile file, Project project) {}
 
   enum InspectionKind {
     LOCAL,

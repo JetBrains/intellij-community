@@ -7,6 +7,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.project.DumbAware
 
 class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBarAction {
@@ -18,18 +19,26 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
     }
   }
 
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
+
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.environment()?.let {
-      if(e.isItRunToolbarMainSlot()
-         && !RunToolbarSlotManager.getInstance(it.project).getState().isSingleProcess()
-         && !e.isOpened()
-      ) return@let false
 
       e.presentation.icon = e.environment()?.getRunToolbarProcess()?.getStopIcon() ?: templatePresentation.icon
       it.contentToReuse?.let {
         canBeStopped(it)
       }
     } ?: false
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   private fun canBeStopped(descriptor: RunContentDescriptor?): Boolean {

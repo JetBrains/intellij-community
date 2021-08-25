@@ -25,10 +25,7 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -128,9 +125,10 @@ public class MarkerType {
     StringBuilder sb = new StringBuilder(prefix);
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
-    sb.append(JavaBundle.message(isSuperAbstract && !isAbstract ? "tooltip.implements.method" : "tooltip.overrides.method")).append(" ");
-    if (isSameSignature(method, superMethod)) sb.append(JavaBundle.message("tooltip.in")).append(" ");
-    return sb.toString();
+    String key = isSameSignature(method, superMethod)
+                 ? (isSuperAbstract && !isAbstract ? "tooltip.implements.method.in" : "tooltip.overrides.method.in")
+                 : (isSuperAbstract && !isAbstract ? "tooltip.implements.method" : "tooltip.overrides.method");
+    return sb.append(JavaBundle.message(key)).append(" ").toString();
   }
 
   private static boolean isSameSignature(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
@@ -252,10 +250,7 @@ public class MarkerType {
       GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method));
       OverridingMethodsSearch.search(method, scope,true).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
       if (isAbstract && collectProcessor.getCollection().size() < 2) {
-        final PsiClass aClass = ReadAction.compute(method::getContainingClass);
-        if (aClass != null) {
-          FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
-        }
+        FunctionalExpressionSearch.search(method).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
       }
     }, JavaAnalysisBundle.message("searching.for.overriding.methods"), true, method.getProject(), (JComponent)e.getComponent())) {
       return;
@@ -352,8 +347,10 @@ public class MarkerType {
       super(project, title, createComparatorWrapper((Comparator)renderer.getComparator()));
     }
 
-    void collectFunctionalInheritors(@NotNull ProgressIndicator indicator, PsiClass psiClass) {
-      FunctionalExpressionSearch.search(psiClass).forEach(expr -> {
+    void collectFunctionalInheritors(@NotNull ProgressIndicator indicator, PsiMember member) {
+      Query<PsiFunctionalExpression> search = member instanceof PsiClass ? FunctionalExpressionSearch.search((PsiClass)member) 
+                                                                         : FunctionalExpressionSearch.search((PsiMethod)member);
+      search.forEach(expr -> {
         if (!updateComponent(expr)) {
           indicator.cancel();
         }
@@ -448,9 +445,7 @@ public class MarkerType {
             return super.process(psiMethod);
           }
         });
-      if (ReadAction.compute(() -> myMethod.hasModifierProperty(PsiModifier.ABSTRACT))) {
-        collectFunctionalInheritors(indicator, ReadAction.compute(myMethod::getContainingClass));
-      }
+      collectFunctionalInheritors(indicator, myMethod);
     }
   }
 }

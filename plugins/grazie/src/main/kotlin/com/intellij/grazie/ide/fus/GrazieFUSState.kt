@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "grazie.state"
-  override fun getVersion(): Int = 2
+  override fun getVersion(): Int = 3
 
   override fun getMetrics(): Set<MetricEvent> {
     val metrics = HashSet<MetricEvent>()

@@ -44,7 +44,7 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
     final Project project = event.getProject();
     assert project != null;
 
-    final VcsSelection selection = VcsSelectionUtil.getSelection(event.getDataContext());
+    final VcsSelection selection = VcsSelectionUtil.getSelection(event);
     assert selection != null;
 
     final VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
@@ -81,7 +81,7 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
     }
 
     Project project = event.getData(CommonDataKeys.PROJECT);
-    VcsSelection selection = VcsSelectionUtil.getSelection(event.getDataContext());
+    VcsSelection selection = VcsSelectionUtil.getSelection(event);
 
     presentation.setEnabled(isEnabled(project, selection));
     if (selection != null) {

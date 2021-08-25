@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
@@ -248,3 +248,12 @@ internal class InSmartMode(private val project: Project) : ContextConstraint {
 internal enum class ExecutionThread {
   EDT, WT
 }
+
+/**
+ * Please don't use unless absolutely needed.
+ * The code in this context can only perform purely UI operations,
+ * it shouldn't access any PSI, VFS, or project model.
+ *
+ * @return a special dispatching context that's equivalent to using no modality state at all in invokeLater.
+ */
+fun uiContext(): ContinuationInterceptor = AppUIExecutor.onUiThread(ModalityState.any()).later().coroutineDispatchingContext()

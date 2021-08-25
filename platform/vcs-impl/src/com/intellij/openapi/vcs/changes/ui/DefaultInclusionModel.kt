@@ -4,10 +4,10 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.util.EventDispatcher
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.vcsUtil.VcsUtil
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.*
 
 abstract class BaseInclusionModel : InclusionModel {
@@ -35,11 +35,11 @@ object NullInclusionModel : InclusionModel {
 }
 
 class DefaultInclusionModel(
-  private val inclusionHashingStrategy: Hash.Strategy<Any>? = null
+  private val inclusionHashingStrategy: HashingStrategy<Any>? = null
 ) : BaseInclusionModel() {
-  private val inclusion: MutableSet<Any> = if (inclusionHashingStrategy == null) HashSet() else ObjectOpenCustomHashSet(inclusionHashingStrategy)
+  private val inclusion: MutableSet<Any> = if (inclusionHashingStrategy == null) HashSet() else CollectionFactory.createCustomHashingStrategySet(inclusionHashingStrategy)
 
-  override fun getInclusion(): Set<Any> = Collections.unmodifiableSet<Any>((if (inclusionHashingStrategy == null) HashSet(inclusion) else ObjectOpenCustomHashSet(inclusion, inclusionHashingStrategy)))
+  override fun getInclusion(): Set<Any> = Collections.unmodifiableSet<Any>((if (inclusionHashingStrategy == null) HashSet(inclusion) else CollectionFactory.createCustomHashingStrategySet(inclusionHashingStrategy).also { it.addAll(inclusion) }))
 
   override fun getInclusionState(item: Any): ThreeStateCheckBox.State =
     if (item in inclusion) ThreeStateCheckBox.State.SELECTED else ThreeStateCheckBox.State.NOT_SELECTED

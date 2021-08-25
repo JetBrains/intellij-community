@@ -26,6 +26,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.XPathFile;
@@ -379,7 +380,8 @@ public final class XsltSupport {
       }
 
       final XsltChecker xsltChecker = new XsltChecker();
-      NanoXmlUtil.parseFile(psiFile, xsltChecker);
+      CharSequenceReader reader = new CharSequenceReader(psiFile.getViewProvider().getContents());
+      NanoXmlUtil.parse(reader, xsltChecker);
       return CachedValueProvider.Result.create(xsltChecker.getLanguageLevel(), psiFile);
     }
   }

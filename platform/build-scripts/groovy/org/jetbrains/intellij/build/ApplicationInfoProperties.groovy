@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.text.StringUtil
@@ -17,9 +17,11 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @CompileStatic
-class ApplicationInfoProperties {
+final class ApplicationInfoProperties {
+  @SuppressWarnings('SpellCheckingInspection')
   private static final DateTimeFormatter BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
   @VisibleForTesting
+  @SuppressWarnings('SpellCheckingInspection')
   static final DateTimeFormatter MAJOR_RELEASE_DATE_PATTERN = DateTimeFormatter.ofPattern('uuuuMMdd')
   private final String appInfoXml
   final String majorVersion
@@ -91,6 +93,10 @@ class ApplicationInfoProperties {
     svgProductIcons = (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
 
     patchesUrl = root."update-urls"[0]?.@"patches"
+  }
+
+  String getAppInfoXml() {
+    return appInfoXml
   }
 
   @VisibleForTesting

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -107,11 +107,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
-      return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
+      return myLogData.getMiniDetailsGetter().getCommitData(index);
     }, withEditorDiffPreview, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
-                                                           ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+                                                           ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Dimension getMinimumSize() {
         return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), myChangesBrowser.getToolbar().getComponent());

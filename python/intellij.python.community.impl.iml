@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.smRunner" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
@@ -77,5 +77,6 @@
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="jcef" level="project" />
+    <orderEntry type="library" name="Velocity" level="project" />
   </component>
 </module>

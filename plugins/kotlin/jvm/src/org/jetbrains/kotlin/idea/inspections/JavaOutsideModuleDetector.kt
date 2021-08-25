@@ -11,8 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.framework.isGradleModule
 import org.jetbrains.kotlin.idea.util.findModule
 import org.jetbrains.kotlin.idea.util.sourceRoots
 

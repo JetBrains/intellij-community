@@ -12,9 +12,10 @@ import com.intellij.execution.configurations.JavaRunConfigurationModule
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.getEffectiveConfiguration
 import com.intellij.execution.util.ExecutionErrorDialog
 import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -72,8 +73,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val javaModuleName: String?
     val javaExePath: String
     try {
-      val targetEnvironmentAwareRunProfile = runProfile as? TargetEnvironmentAwareRunProfile
-      if (targetEnvironmentAwareRunProfile?.defaultTargetName != null) {
+      if (getEffectiveConfiguration(runProfile, project) != null) {
         javaModuleName = null
         javaExePath = GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey
       }
@@ -140,9 +140,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
     private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
       return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
-        DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
-          JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
-        }?.name ?: return null
+        runReadAction {
+          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
+            JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
+          }?.name
+        } ?: return null
       }
       else null
     }

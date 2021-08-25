@@ -216,10 +216,10 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       return myGetChildren();
     }
     else {
-      ExternalEntityMapping<Object> mapping = myStorage.getCurrent().getExternalMapping("intellij.artifacts.packaging.elements");
+      ExternalEntityMapping<Object> mapping = myStorage.getBase().getExternalMapping("intellij.artifacts.packaging.elements");
       List<WorkspaceEntity> mappedEntities = mapping.getEntities(this);
       if (mappedEntities.isEmpty()) {
-        throw new RuntimeException(this.getClass().getName());
+        throw new RuntimeException(this.getClass().getName() + " - " + myStorage.getBase().getClass().getName());
       }
       PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mappedEntities.get(0);
       if (packagingElementEntity instanceof CompositePackagingElementEntity) {

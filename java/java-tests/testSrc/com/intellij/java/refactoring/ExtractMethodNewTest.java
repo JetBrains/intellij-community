@@ -800,10 +800,6 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testReturnStatementFolding() throws Exception {
-    doTest();
-  }
-
   public void testWriteArrayAccess() throws Exception {
     doTest();
   }

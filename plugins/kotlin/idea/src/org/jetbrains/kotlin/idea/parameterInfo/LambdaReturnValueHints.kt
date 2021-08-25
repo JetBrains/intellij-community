@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
+import org.jetbrains.kotlin.idea.codeInsight.hints.*
 import org.jetbrains.kotlin.idea.core.util.isOneLiner
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -15,42 +15,41 @@ import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_RESULT_OF_LAMBDA
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 @Suppress("UnstableApiUsage")
-fun provideLambdaReturnValueHints(expression: KtExpression): List<HintType.InlayInfoDetails> {
+fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {
     if (expression is KtWhenExpression || expression is KtBlockExpression) {
-        return emptyList()
+        return null
     }
 
     if (expression is KtIfExpression && !expression.isOneLiner()) {
-        return emptyList()
+        return null
     }
 
     if (expression.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
-        return emptyList()
+        return null
     }
 
     if (!KtPsiUtil.isStatement(expression)) {
         if (!allowLabelOnExpressionPart(expression)) {
-            return emptyList()
+            return null
         }
     } else if (forceLabelOnExpressionPart(expression)) {
-        return emptyList()
+        return null
     }
 
     val functionLiteral = expression.getParentOfType<KtFunctionLiteral>(true)
-    val body = functionLiteral?.bodyExpression ?: return emptyList()
+    val body = functionLiteral?.bodyExpression ?: return null
     if (body.statements.size == 1 && body.statements[0] == expression) {
-        return emptyList()
+        return null
     }
 
     val bindingContext = expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
     if (bindingContext[USED_AS_RESULT_OF_LAMBDA, expression] == true) {
-        val lambdaExpression = expression.getStrictParentOfType<KtLambdaExpression>() ?: return emptyList()
+        val lambdaExpression = expression.getStrictParentOfType<KtLambdaExpression>() ?: return null
         val lambdaName = lambdaExpression.getNameOfFunctionThatTakesLambda() ?: "lambda"
-        return listOf(
-            HintType.PsiInlayInfoDetails(InlayInfo("^$lambdaName", expression.endOffset), lambdaExpression),
-        )
+        val inlayInfo = InlayInfo("", expression.endOffset)
+        return InlayInfoDetails(inlayInfo, listOf(TextInlayInfoDetail("^"), PsiInlayInfoDetail(lambdaName, lambdaExpression)))
     }
-    return emptyList()
+    return null
 }
 
 private fun KtLambdaExpression.getNameOfFunctionThatTakesLambda(): String? {

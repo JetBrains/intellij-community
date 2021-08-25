@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
@@ -9,6 +9,7 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.presentation.java.ClassPresentationUtil
@@ -93,5 +94,7 @@ internal class CreatePropertyAction(
     override fun getTargetSubstitutor() = request.targetSubstitutor
 
     override fun isConstant(): Boolean = false
+
+    override fun getInitializer(): PsiElement? = null
   }
 }

@@ -202,6 +202,10 @@ public abstract class AbstractLayoutCodeProcessor {
   @NotNull
   protected abstract FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException;
 
+  protected boolean needsReadActionToPrepareTask() {
+    return true;
+  }
+
   public void run() {
     if (myFile != null) {
       runProcessFile(myFile);
@@ -417,8 +421,10 @@ public abstract class AbstractLayoutCodeProcessor {
                        ? AbstractLayoutCodeProcessor.this.toString()
                        : AbstractLayoutCodeProcessor.this.toString() + file.hashCode();
       for (AbstractLayoutCodeProcessor processor : myProcessors) {
-        final FutureTask<Boolean> writeTask = ReadAction.nonBlocking(() -> processor.prepareTask(file, myProcessChangedTextOnly))
-          .executeSynchronously();
+        FutureTask<Boolean> writeTask = processor.needsReadActionToPrepareTask() ?
+                                        ReadAction.nonBlocking(() -> processor.prepareTask(file, myProcessChangedTextOnly))
+                                          .executeSynchronously() :
+                                        processor.prepareTask(file, myProcessChangedTextOnly);
 
         ProgressIndicatorProvider.checkCanceled();
 

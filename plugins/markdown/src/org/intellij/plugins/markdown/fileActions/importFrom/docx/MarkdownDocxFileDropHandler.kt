@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.CustomFileDropHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import java.awt.datatransfer.Transferable
@@ -26,7 +27,10 @@ internal class MarkdownDocxFileDropHandler : CustomFileDropHandler() {
 
     return if (vFileToImport != null) {
       val suggestedFilePath = MarkdownImportExportUtils.suggestFileNameToCreate(project, vFileToImport, dataContext)
-      MarkdownImportDocxDialog(vFileToImport, project, suggestedFilePath).show()
+      val importTaskTitle = MarkdownBundle.message("markdown.import.docx.convert.task.title")
+      val importDialogTitle = MarkdownBundle.message("markdown.import.from.docx.dialog.title")
+
+      MarkdownImportDocxDialog(vFileToImport, importTaskTitle, importDialogTitle, project, suggestedFilePath).show()
       true
     }
     else false

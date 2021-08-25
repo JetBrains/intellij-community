@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInServerOptions;
@@ -73,8 +74,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return myReferenceConverters;
   }
 
+  @Nls
   @Nullable
-  public static String filterInternalDocInfo(String text) {
+  public static String filterInternalDocInfo(@Nls String text) {
     return text == null ? null : PlatformDocumentationUtil.fixupText(text);
   }
 

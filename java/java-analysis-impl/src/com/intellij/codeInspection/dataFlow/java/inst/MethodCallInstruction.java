@@ -258,6 +258,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     int i = 0;
     DfaValue[] args = callArguments.toArray();
     for (DfaMemoryState state : finalStates) {
+      ContractValue.flushContractTempVariables(state);
       callArguments.flush(state, factory, realMethod);
       pushResult(interpreter, state, state.pop(), args);
       result[i++] = nextState(interpreter, state);
@@ -305,6 +306,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     Set<DfaCallState> falseStates = new LinkedHashSet<>();
 
     for (DfaCallState callState : states) {
+      for (ContractValue condition : contract.getConditions()) {
+        callState = condition.updateState(callState);
+      }
       DfaMemoryState state = callState.getMemoryState();
       DfaCallArguments arguments = callState.getCallArguments();
       for (ContractValue contractValue : contract.getConditions()) {
@@ -314,14 +318,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         if (contract.getReturnValue().isFail() ?
             falseState.applyCondition(falseCondition) :
             falseState.applyContractCondition(falseCondition)) {
-          DfaCallArguments falseArguments = contractValue.updateArguments(arguments, true);
-          falseStates.add(callState.withMemoryState(falseState).withArguments(falseArguments));
+          falseStates.add(callState.withMemoryState(falseState).withArguments(arguments));
         }
         if (!state.applyContractCondition(condition)) {
           state = null;
           break;
         }
-        arguments = contractValue.updateArguments(arguments, false);
       }
       if (state != null) {
         DfaValue result = contract.getReturnValue().getDfaValue(factory, callState.withArguments(arguments));

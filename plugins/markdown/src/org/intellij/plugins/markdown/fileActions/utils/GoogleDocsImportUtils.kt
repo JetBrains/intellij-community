@@ -5,9 +5,9 @@ object GoogleDocsImportUtils {
   private const val docsUrlPrefix = "https://docs.google.com/document/d/"
   private const val docsUrlSuffix = "/edit"
 
-  private val docsRegEx: Regex get() = "$docsUrlPrefix(\\S*)$docsUrlSuffix".toRegex()
+  private val docsRegEx: Regex get() = "$docsUrlPrefix(\\S{32,})($docsUrlSuffix)?".toRegex()
 
   fun isLinkToDocumentCorrect(link: String): Boolean = docsRegEx.containsMatchIn(link)
 
-  fun extractDocsId(link: String) = link.removePrefix(docsUrlPrefix).removeSuffix(docsUrlSuffix)
+  fun extractDocsId(link: String) = link.takeWhile { it != '#' }.removePrefix(docsUrlPrefix).removeSuffix(docsUrlSuffix)
 }

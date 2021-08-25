@@ -471,4 +471,9 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     }
     return super.getAccessor(codeStyleObject, field);
   }
+
+  @Override
+  public boolean usesCommonKeepLineBreaks() {
+    return true;
+  }
 }

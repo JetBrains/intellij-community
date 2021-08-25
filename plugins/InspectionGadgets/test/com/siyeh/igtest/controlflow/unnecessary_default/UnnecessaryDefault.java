@@ -157,8 +157,66 @@ public class UnnecessaryDefault{
             default: break;
         };
     }
+
+    void defaultLabelElementInEnum1(MyEnum e) {
+        switch (e) {
+          case foo, bar, baz:
+            break;
+          case /**test**/ <warning descr="'default' branch is unnecessary">default</warning> /**test**/:
+            break;
+        }
+    }
+
+    void defaultLabelElementInEnum2(MyEnum e) {
+        switch (e) {
+          case MyEnum ee && ee != null:
+            break;
+          default:
+            break;
+        }
+    }
+
+    void defaultLabelWithSealed1(I i) {
+        switch (i) {
+          case C1 c1:
+            break;
+          case C2 c2:
+            break;
+          case /**test**/ <warning descr="'default' branch is unnecessary">default</warning> /**test**/:
+            break;
+        }
+    }
+
+    void defaultLabelWithSealed2(I i) {
+        switch (i) {
+          case C1 c1:
+            break;
+          case C2 c2 && c2 != null:
+            break;
+          default:
+            break;
+        }
+    }
+
+    void defaultLabelWithNonSealed(I2 i) {
+        switch (i) {
+          case C3 c3:
+            break;
+          case C4 c4:
+            break;
+          case default:
+            break;
+        }
+    }
 }
 enum MyEnum{
     foo, bar, baz;
 }
 
+sealed interface I {}
+final class C1 implements I {}
+final class C2 implements I {}
+
+interface I2 {}
+final class C3 implements I2 {}
+final class C4 implements I2 {}

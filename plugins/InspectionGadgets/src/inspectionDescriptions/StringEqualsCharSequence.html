@@ -6,17 +6,17 @@ Reports calls to <code>String.equals()</code> with a <code>CharSequence</code> a
   To compare the contents of a <code>String</code> with a non-<code>String</code> <code>CharSequence</code> argument,
   use the <code>contentEquals()</code> method.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   boolean equals(String s, CharSequence ch) {
     return s.equals(ch);
   }
-</pre>
+</code></pre>
 <p>After quick-fix is applied:</p>
-<pre>
+<pre><code>
   boolean equals(String s, CharSequence ch) {
     return s.contentEquals(ch);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 <small>New in 2017.3</small>

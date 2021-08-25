@@ -65,9 +65,6 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     val offset = channel.position()
     entryCount++
     assert(method != -1)
-    if (size >= 0xFFFFFFFFL || compressedSize >= 0xFFFFFFFFL) {
-      throw UnsupportedOperationException("Entry is too big")
-    }
 
     tempArray[0] = header
     tempArray[1] = content
@@ -87,9 +84,6 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     val offset = channel.position()
     entryCount++
     assert(method != -1)
-    if (size >= 0xFFFFFFFFL || compressedSize >= 0xFFFFFFFFL) {
-      throw UnsupportedOperationException("Entry is too big")
-    }
 
     writeBuffer(content)
     writeCentralFileHeader(size, compressedSize, method, crc, metadataBuffer, name, offset)

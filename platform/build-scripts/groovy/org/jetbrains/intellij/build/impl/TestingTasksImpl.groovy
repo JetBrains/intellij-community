@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
+
 
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
@@ -22,8 +25,16 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.lang.annotation.Annotation
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.function.Predicate
 import java.util.jar.Manifest
+import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 @CompileStatic
 class TestingTasksImpl extends TestingTasks {
@@ -302,8 +313,12 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.info("Environment variables: $envVariables")
     }
 
-    runJUnitTask(mainModule, allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() && !isRunningInBatchMode() ? bootstrapClasspath : testsClasspath)
-
+    if (options.preferAntRunner) {
+      runJUnitTask(mainModule, allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() && !isRunningInBatchMode() ? bootstrapClasspath : testsClasspath)
+    }
+    else {
+      runJUnit5Engine(mainModule, allSystemProperties, allJvmArgs, envVariables, bootstrapClasspath, testsClasspath)
+    }
     notifySnapshotBuilt(allJvmArgs)
   }
 
@@ -316,11 +331,10 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   @Override
-  @CompileDynamic
-  File createSnapshotsDirectory() {
-    File snapshotsDir = new File("$context.paths.projectHome/out/snapshots")
-    context.ant.delete(dir: snapshotsDir)
-    context.ant.mkdir(dir: snapshotsDir)
+  java.nio.file.Path createSnapshotsDirectory() {
+    java.nio.file.Path snapshotsDir = context.paths.projectHomeDir.resolve("out/snapshots")
+    NioFiles.deleteRecursively(snapshotsDir)
+    Files.createDirectories(snapshotsDir)
     return snapshotsDir
   }
 
@@ -333,8 +347,8 @@ class TestingTasksImpl extends TestingTasks {
       classPath.addAll(utilClasspath - classPath)
     }
 
-    File snapshotsDir = createSnapshotsDirectory()
-    String hprofSnapshotFilePath = new File(snapshotsDir, "intellij-tests-oom.hprof").absolutePath
+    java.nio.file.Path snapshotsDir = createSnapshotsDirectory()
+    String hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     List<String> defaultJvmArgs = VmOptionsGenerator.COMMON_VM_OPTIONS + [
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:HeapDumpPath=' + hprofSnapshotFilePath,
@@ -360,6 +374,7 @@ class TestingTasksImpl extends TestingTasks {
       "idea.system.path"                                  : "$tempDir/system".toString(),
       "intellij.build.compiled.classes.archives.metadata" : System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive"           : System.getProperty("intellij.build.compiled.classes.archive"),
+      (BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY): "$context.projectOutputDirectory".toString(),
       "idea.coverage.enabled.build"                       : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                            : System.getProperty("teamcity.buildConfName"),
       "java.io.tmpdir"                                    : tempDir,
@@ -379,8 +394,6 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     if (PortableCompilationCache.CAN_BE_USED) {
-      def compiledClassesDir = "$context.projectOutputDirectory"
-      systemProperties[BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY] = compiledClassesDir.toString()
       systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = "true"
     }
 
@@ -412,6 +425,110 @@ class TestingTasksImpl extends TestingTasks {
 ------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
 ---------------------------------------^------^------^------^------^------^------^----------------------------------------
 """)
+    }
+  }
+
+  @CompileDynamic
+  private void runJUnit5Engine(String mainModule,
+                               Map<String, String> systemProperties,
+                               List<String> jvmArgs,
+                               Map<String, String> envVariables,
+                               List<String> bootstrapClasspath,
+                               List<String> testClasspath) {
+    if (isRunningInBatchMode()) {
+      def mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
+      def pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
+      def root = Paths.get(mainModuleTestsOutput);
+      Files.walk(root)
+        .filter({ it -> 
+            pattern.matcher(root.relativize(it).toString()).matches() 
+        })
+        .forEach({ it ->
+          def qName = FileUtil.getNameWithoutExtension(root.relativize(it).toString()).replaceAll("/", ".")
+          try {
+            def loader = UrlClassLoader.build()
+              .files(testClasspath.stream().map({ u -> Paths.get(u) }).collect(Collectors.toList()))
+              .get()
+            def aClazz = Class.forName(qName, false, loader)
+            def testAnnotation = Class.forName(Test.class.getName(), false, loader)
+            for (Method m : aClazz.getDeclaredMethods()) {
+              if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
+                runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
+              }
+            }
+          }
+          catch (Throwable e) {
+            context.messages.error("Failed to process $qName", e)
+          }
+        })
+    }
+    else {
+      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
+    }
+  }
+  
+  @CompileDynamic
+  private void runJUnit5Engine(Map<String, String> systemProperties,
+                               List<String> jvmArgs,
+                               Map<String, String> envVariables,
+                               List<String> bootstrapClasspath,
+                               List<String> testClasspath, 
+                               String suiteName,
+                               String methodName) {
+    List<String> args = new ArrayList<>()
+    args.add("-classpath")
+    List<String> classpath = new ArrayList<>(bootstrapClasspath)
+    if (!isBootstrapSuiteDefault() || isRunningInBatchMode()) {
+      classpath.addAll(testClasspath)
+    }
+    args.add(classpath.join(File.pathSeparator))
+    args.addAll(jvmArgs)
+
+    args.add("-Dintellij.build.test.runner=junit5")
+
+    systemProperties.forEach { k, v ->
+      if (v != null) {
+        args.add("-D" + k + "=" + v)
+      }
+    }
+
+    args.add("com.intellij.tests.JUnit5SuiteRunner")
+    args.add(suiteName)
+    if (methodName != null) {
+      args.add(methodName)
+    }
+    File argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
+    def builder = new ProcessBuilder((options.customJrePath != null ? "$options.customJrePath" : context.paths.jdkHome) + "/bin/java", 
+                                     '@' + argFile.getAbsolutePath())
+    builder.environment().putAll(envVariables)
+    final Process exec = builder.start()
+    new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start()
+    new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output").start()
+    exec.waitFor()
+  }
+
+  private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
+    return new Runnable() {
+      @Override
+      void run() {
+        try {
+          final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))
+          try {
+            while (true) {
+              String line = inputReader.readLine()
+              if (line == null) break
+              outputStream.println(line)
+            }
+          }
+          finally {
+            inputReader.close()
+          }
+        }
+        catch (UnsupportedEncodingException ignored) { }
+        catch (IOException e) {
+          e.printStackTrace()
+        }
+      }
     }
   }
 

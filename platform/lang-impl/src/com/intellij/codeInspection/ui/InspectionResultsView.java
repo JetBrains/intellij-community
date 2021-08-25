@@ -55,6 +55,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.Alarm;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
@@ -778,17 +779,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                     @NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionRVContentProvider contentProvider) {
     for (Tools currentTools : tools) {
-      boolean hasProblems = ReadAction.compute(() -> {
-        for (ScopeToolState state : contentProvider.getTools(currentTools)) {
-          InspectionToolWrapper toolWrapper = state.getTool();
-          if (context.getPresentation(toolWrapper).hasReportedProblems() || contentProvider.checkReportedProblems(context, toolWrapper)) {
-            return true;
-          }
+      for (ScopeToolState state : contentProvider.getTools(currentTools)) {
+        InspectionToolWrapper toolWrapper = state.getTool();
+        ThreeState hasReportedProblems = context.getPresentation(toolWrapper).hasReportedProblems();
+        if (hasReportedProblems == ThreeState.NO) continue;
+        if (hasReportedProblems == ThreeState.YES || ReadAction.compute(() -> contentProvider.checkReportedProblems(context, toolWrapper))) {
+          return true;
         }
-        return false;
-      });
-      if (hasProblems) {
-        return true;
       }
     }
     return false;

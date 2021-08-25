@@ -31,14 +31,21 @@ class CleanBrokenArtifactsAndReimportQuickFix(val unresolvedArtifactFiles: Colle
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    unresolvedArtifactFiles.forEach {
-      val deleted = FileUtil.delete(it)
-      if (!deleted) {
-        MavenLog.LOG.warn("${it} not deleted")
-      }
-    }
+    unresolvedArtifactFiles.forEach { deleteLastUpdatedFiles(it) }
     MavenProjectsManager.getInstance(project).forceUpdateProjects()
     return CompletableFuture.completedFuture(null)
+  }
+
+  private fun deleteLastUpdatedFiles(unresolvedArtifactDirectory: File) {
+    MavenLog.LOG.info("start deleting lastUpdated file from $unresolvedArtifactDirectory")
+    val files: Array<File> = unresolvedArtifactDirectory.listFiles { dir, name -> name.endsWith(".lastUpdated", true) } ?: return
+
+    for (childFiles in files) {
+      val deleted = FileUtil.delete(childFiles)
+      if (!deleted) {
+        MavenLog.LOG.warn("$childFiles not deleted")
+      }
+    }
   }
 
   companion object {

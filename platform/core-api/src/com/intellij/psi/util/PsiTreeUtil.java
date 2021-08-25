@@ -18,8 +18,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1298,7 +1297,7 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null; !null, _ -> !null")
   public static <T extends PsiElement> T findSameElementInCopy(@Nullable T element, @NotNull PsiFile copy) throws IllegalStateException {
     if (element == null) return null;
-    IntList offsets = new IntArrayList();
+    IntArrayList offsets = new IntArrayList();
     PsiElement cur = element;
     while (!cur.getClass().equals(copy.getClass())) {
       int pos = 0;
@@ -1313,7 +1312,7 @@ public class PsiTreeUtil {
     }
     cur = copy;
     for (int level = offsets.size() - 1; level >= 0; level--) {
-      int pos = offsets.getInt(level);
+      int pos = offsets.get(level);
       cur = cur.getFirstChild();
       if (cur == null) {
         throw new IllegalStateException("File structure differs: no child");

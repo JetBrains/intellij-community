@@ -13,7 +13,6 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
-import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
@@ -126,9 +125,9 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Nullable
     private PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected) {
-      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext);
+      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext, null);
       if (promotedToLiteral != null) return promotedToLiteral;
-      return PyTypedDictTypeProvider.Companion.promoteToTypedDict(value, expected, myTypeEvalContext);
+      return myTypeEvalContext.getType(value);
     }
 
     @Override
@@ -212,28 +211,57 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Nullable
-    private AnalyzeCalleeResults analyzeCallee(@NotNull PyCallSiteExpression callSite, @NotNull PyCallExpression.PyArgumentsMapping mapping) {
+    private AnalyzeCalleeResults analyzeCallee(@NotNull PyCallSiteExpression callSite,
+                                               @NotNull PyCallExpression.PyArgumentsMapping mapping) {
       final PyCallableType callableType = mapping.getCallableType();
       if (callableType == null) return null;
 
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
 
-      final PyExpression receiver = callSite.getReceiver(callableType.getCallable());
-      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
-      final Map<PyExpression, PyCallableParameter> mappedParameters = mapping.getMappedParameters();
+      final var receiver = callSite.getReceiver(callableType.getCallable());
+      final var substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
+      final var mappedParameters = mapping.getMappedParameters();
+      final var regularMappedParameters = getRegularMappedParameters(mappedParameters);
 
-      for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(mappedParameters).entrySet()) {
+      for (Map.Entry<PyExpression, PyCallableParameter> entry : regularMappedParameters.entrySet()) {
         final PyExpression argument = entry.getKey();
         final PyCallableParameter parameter = entry.getValue();
         final PyType expected = parameter.getArgumentType(myTypeEvalContext);
-        final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(argument, expected, myTypeEvalContext);
+        final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(argument, expected, myTypeEvalContext, substitutions);
         final var actual = promotedToLiteral != null ? promotedToLiteral : myTypeEvalContext.getType(argument);
-        final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
-        result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
+
+        if (expected instanceof PyParamSpecType) {
+          final var allArguments = callSite.getArguments(callableType.getCallable());
+          analyzeParamSpec((PyParamSpecType)expected, allArguments, substitutions, result);
+          break;
+        }
+        else if (expected instanceof PyConcatenateType) {
+          final var allArguments = callSite.getArguments(callableType.getCallable());
+          if (allArguments.isEmpty()) break;
+
+          final var concatenateType = (PyConcatenateType)expected;
+          final var firstExpectedTypes = concatenateType.getFirstTypes();
+          final var argumentRightBound = Math.min(firstExpectedTypes.size(), allArguments.size());
+          final var firstArguments = allArguments.subList(0, argumentRightBound);
+          matchArgumentsAndTypes(firstArguments, firstExpectedTypes, substitutions, result);
+
+          if (argumentRightBound < allArguments.size()) {
+            final var paramSpec = concatenateType.getParamSpec();
+            final var restArguments = allArguments.subList(argumentRightBound, allArguments.size());
+            analyzeParamSpec(paramSpec, restArguments, substitutions, result);
+          }
+
+          break;
+        }
+        else {
+          final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+          result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
+        }
       }
       final PyCallableParameter positionalContainer = getMappedPositionalContainer(mappedParameters);
       if (positionalContainer != null) {
-        result.addAll(analyzeContainerMapping(positionalContainer, getArgumentsMappedToPositionalContainer(mappedParameters), substitutions));
+        result.addAll(
+          analyzeContainerMapping(positionalContainer, getArgumentsMappedToPositionalContainer(mappedParameters), substitutions));
       }
       final PyCallableParameter keywordContainer = getMappedKeywordContainer(mappedParameters);
       if (keywordContainer != null) {
@@ -242,16 +270,40 @@ public class PyTypeCheckerInspection extends PyInspection {
       return new AnalyzeCalleeResults(callableType, callableType.getCallable(), result);
     }
 
+    private void analyzeParamSpec(@NotNull PyParamSpecType paramSpec, @NotNull List<PyExpression> arguments,
+                                  @NotNull PyTypeChecker.GenericSubstitutions substitutions,
+                                  @NotNull List<AnalyzeArgumentResult> result) {
+      final var substParamSpec = substitutions.getParamSpecs().get(paramSpec);
+      paramSpec = substParamSpec == null ? paramSpec : substParamSpec;
+      final var parameters = paramSpec.getParameters();
+      if (parameters == null) return;
+      final var parametersTypes = ContainerUtil.map(parameters, it -> it.getType(myTypeEvalContext));
+      matchArgumentsAndTypes(arguments, parametersTypes, substitutions, result);
+    }
+
+    private void matchArgumentsAndTypes(@NotNull List<PyExpression> arguments, @NotNull List<PyType> types,
+                                        @NotNull PyTypeChecker.GenericSubstitutions substitutions,
+                                        @NotNull List<AnalyzeArgumentResult> result) {
+      final var size = Math.min(arguments.size(), types.size());
+      for (int i = 0; i < size; ++i) {
+        final var expected = types.get(i);
+        final var argument = arguments.get(i);
+        final var actual = myTypeEvalContext.getType(argument);
+        final var matched = matchParameterAndArgument(expected, actual, substitutions);
+        result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
+      }
+    }
+
     @NotNull
     private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyCallableParameter container,
                                                                 @NotNull List<PyExpression> arguments,
-                                                                @NotNull Map<PyGenericType, PyType> substitutions) {
+                                                                @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       final PyType expected = container.getArgumentType(myTypeEvalContext);
       final PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
         final PyType actual = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
-        final boolean matched = matchParameterAndArgument(expected, actual, null, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
         return ContainerUtil.map(arguments,
                                  argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
       }
@@ -260,7 +312,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           arguments,
           argument -> {
             final PyType actual = myTypeEvalContext.getType(argument);
-            final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
+            final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
           }
         );
@@ -269,16 +321,13 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private boolean matchParameterAndArgument(@Nullable PyType parameterType,
                                               @Nullable PyType argumentType,
-                                              @Nullable PyExpression argument,
-                                              @NotNull Map<PyGenericType, PyType> substitutions) {
-      return parameterType instanceof PyTypedDictType && argument instanceof PyDictLiteralExpression
-             ? PyTypedDictType.Companion.match((PyTypedDictType)parameterType, (PyDictLiteralExpression)argument, myTypeEvalContext)
-             : (PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
-                !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext));
+                                              @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
+      return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
+             !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
     }
 
     @Nullable
-    private PyType substituteGenerics(@Nullable PyType expectedArgumentType, @NotNull Map<PyGenericType, PyType> substitutions) {
+    private PyType substituteGenerics(@Nullable PyType expectedArgumentType, @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       return PyTypeChecker.hasGenerics(expectedArgumentType, myTypeEvalContext)
              ? PyTypeChecker.substitute(expectedArgumentType, substitutions, myTypeEvalContext)
              : null;
@@ -327,8 +376,8 @@ public class PyTypeCheckerInspection extends PyInspection {
     private final List<AnalyzeArgumentResult> myResults;
 
     AnalyzeCalleeResults(@NotNull PyCallableType callableType,
-                                @Nullable PyCallable callable,
-                                @NotNull List<AnalyzeArgumentResult> results) {
+                         @Nullable PyCallable callable,
+                         @NotNull List<AnalyzeArgumentResult> results) {
       myCallableType = callableType;
       myCallable = callable;
       myResults = results;
@@ -367,10 +416,10 @@ public class PyTypeCheckerInspection extends PyInspection {
     private final boolean myIsMatched;
 
     AnalyzeArgumentResult(@NotNull PyExpression argument,
-                                 @Nullable PyType expectedType,
-                                 @Nullable PyType expectedTypeAfterSubstitution,
-                                 @Nullable PyType actualType,
-                                 boolean isMatched) {
+                          @Nullable PyType expectedType,
+                          @Nullable PyType expectedTypeAfterSubstitution,
+                          @Nullable PyType actualType,
+                          boolean isMatched) {
       myArgument = argument;
       myExpectedType = expectedType;
       myExpectedTypeAfterSubstitution = expectedTypeAfterSubstitution;

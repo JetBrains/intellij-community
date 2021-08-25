@@ -3,8 +3,8 @@ package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.HashingStrategy;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Pavel.Dolgov
  */
-final class ExpressionHashingStrategy implements Hash.Strategy<PsiExpression> {
+final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> {
   private static final EquivalenceChecker EQUIVALENCE_CHECKER = new NoSideEffectExpressionEquivalenceChecker();
 
   @Override

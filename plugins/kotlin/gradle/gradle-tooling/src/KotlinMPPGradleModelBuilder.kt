@@ -161,6 +161,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         @Suppress("UNCHECKED_CAST")
         val dependsOnSourceSets = (getDependsOn(gradleSourceSet) as? Set<Named>)?.mapTo(LinkedHashSet()) { it.name } ?: emptySet<String>()
 
+
         val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
             buildSourceSetDependencies(gradleSourceSet, dependencyResolver, project, androidDeps)
                 .map { dependencyMapper.getId(it) }
@@ -176,13 +177,14 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         }
 
         return KotlinSourceSetProto(
-            gradleSourceSet.name,
-            languageSettings,
-            sourceDirs,
-            resourceDirs,
-            sourceSetDependenciesBuilder,
-            intransitiveSourceSetDependenciesBuilder,
-            dependsOnSourceSets
+            name = gradleSourceSet.name,
+            languageSettings = languageSettings,
+            sourceDirs = sourceDirs,
+            resourceDirs = resourceDirs,
+            regularDependencies = sourceSetDependenciesBuilder,
+            intransitiveDependencies = intransitiveSourceSetDependenciesBuilder,
+            dependsOnSourceSets = dependsOnSourceSets,
+            additionalVisibleSourceSets = getAdditionalVisibleSourceSets(project, gradleSourceSet)
         )
     }
 
@@ -721,8 +723,9 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val abstractKotlinCompileClass =
             compileKotlinTask.javaClass.classLoader.loadClass(AbstractKotlinGradleModelBuilder.ABSTRACT_KOTLIN_COMPILE_CLASS)
         val getCompileClasspath =
-            abstractKotlinCompileClass.getDeclaredMethodOrNull("getCompileClasspath") ?:
-            abstractKotlinCompileClass.getDeclaredMethodOrNull("getClasspath") ?: return emptyList()
+            abstractKotlinCompileClass.getDeclaredMethodOrNull("getCompileClasspath") ?: abstractKotlinCompileClass.getDeclaredMethodOrNull(
+                "getClasspath"
+            ) ?: return emptyList()
         @Suppress("UNCHECKED_CAST")
         return (getCompileClasspath(compileKotlinTask) as? Collection<File>)?.map { it.path } ?: emptyList()
     }

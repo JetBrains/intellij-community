@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildA
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
-import org.jetbrains.kotlin.idea.configuration.RepositoryDescription
+import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly

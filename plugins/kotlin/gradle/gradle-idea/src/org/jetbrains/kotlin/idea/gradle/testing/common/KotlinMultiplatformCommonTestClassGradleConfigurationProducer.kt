@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.gradle.testing.common
 
 import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.idea.run.AbstractKotlinMultiplatformTestClassGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.gradle.run.AbstractKotlinMultiplatformTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 

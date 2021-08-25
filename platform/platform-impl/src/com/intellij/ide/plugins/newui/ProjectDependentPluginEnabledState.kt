@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui
 
 import com.intellij.icons.AllIcons.General.ProjectConfigurable
@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.ProjectPluginTrackerManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.annotations.Nls
 
 class ProjectDependentPluginEnabledState(
@@ -16,20 +17,22 @@ class ProjectDependentPluginEnabledState(
   private val project: Project?,
 ) {
 
-  private var _projectNames: String? = null
-  private val projectNames: String
-    get() {
-      if (_projectNames == null) {
-        _projectNames = if (isEnabled)
-          ""
-        else
-          ProjectPluginTrackerManager.openProjectsExcludingCurrent(project)
-            .map { ProjectPluginTrackerManager.instance.getPluginTracker(it) }
-            .filter { !PluginManagerCore.isDisabled(pluginId) || it.isEnabled(pluginId) }
-            .joinToString(limit = 3) { "<code>${it.projectName}</code>" }
-      }
-      return _projectNames ?: throw IllegalStateException("Should not be used outside EDT")
+  private val projectNames: List<String> by lazy {
+    if (isEnabled) {
+      emptyList()
     }
+    else {
+      val trackerManager = ProjectPluginTrackerManager.instance
+      ProjectManager.getInstance()
+        .openProjects
+        .asSequence()
+        .filterNot { it == project }
+        .map { trackerManager.getPluginTracker(it) }
+        .filter { !PluginManagerCore.isDisabled(pluginId) || it.isEnabled(pluginId) }
+        .map { it.projectName }
+        .toList()
+    }
+  }
 
   val isEnabled get() = state.isEnabled
 
@@ -37,7 +40,7 @@ class ProjectDependentPluginEnabledState(
 
   @Nls
   override fun toString(): String {
-    val stateText = state.toString()
+    val stateText = state.presentableText
 
     return if (projectNames.isEmpty())
       stateText
@@ -45,7 +48,7 @@ class ProjectDependentPluginEnabledState(
       IdeBundle.message(
         "plugins.configurable.loaded.for.projects",
         stateText,
-        projectNames
+        projectNames.joinToString(limit = 3) { "<code>${it}</code>" }
       )
   }
 

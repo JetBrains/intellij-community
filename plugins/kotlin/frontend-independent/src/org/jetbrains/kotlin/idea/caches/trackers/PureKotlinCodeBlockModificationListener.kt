@@ -74,7 +74,9 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
 
         private inline fun isFormattingChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiWhiteSpace }
 
-        private inline fun isStringLiteralChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it?.elementType == KtTokens.REGULAR_STRING_PART }
+        private inline fun isStringLiteralChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) {
+            it?.elementType == KtTokens.REGULAR_STRING_PART && it?.psi?.getTopmostParentOfType<KtAnnotationEntry>() == null
+        }
 
         /**
          * Has to be aligned with [getInsideCodeBlockModificationScope] :
@@ -104,12 +106,6 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
             // should not be local declaration
             if (KtPsiUtil.isLocal(blockDeclaration))
                 return null
-
-            PsiTreeUtil.collectParents(element, KtStringTemplateExpression::class.java, true) {
-                it == blockDeclaration
-            }.lastOrNull()?.let {
-                return BlockModificationScopeElement(blockDeclaration, it)
-            }
 
             when (blockDeclaration) {
                 is KtNamedFunction -> {

@@ -312,7 +312,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
         true, module.project)
 
       StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
-        ModalityUiUtil.invokeLaterIfNeeded(Runnable {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, module.disposed, Runnable {
           if (module.isDisposed) return@Runnable
 
           ReformatCodeProcessor(module.project, module, false).run()
@@ -320,7 +320,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
           openSampleFiles(module, getFilePathsToOpen())
 
           importModule(module)
-        }, ModalityState.NON_MODAL, module.disposed)
+        })
       }
     }
     else {

@@ -87,7 +87,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @NotNull
   private final GradleProjectSettings myInitialSettings;
   @NotNull
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm();
   /**
    * The target {@link Project} reference of the UI control.
    * It can be the current project of the settings UI configurable (see {@org.jetbrains.plugins.gradle.service.settings.GradleConfigurable}),

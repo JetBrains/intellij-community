@@ -5,6 +5,7 @@ import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
@@ -44,7 +45,7 @@ final class SheetMessage implements Disposable {
                @Nls String message,
                Icon icon,
                String[] buttons,
-               DialogWrapper.DoNotAskOption doNotAskOption,
+               DoNotAskOption doNotAskOption,
                String defaultButton,
                String focusedButton,
                @Nullable String helpId) {

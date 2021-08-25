@@ -270,7 +270,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   }
 }
 
-open class SourceRootEntity(
+class SourceRootEntity(
   val url: VirtualFileUrl,
   val rootType: String
 ) : WorkspaceEntityBase() {
@@ -456,12 +456,12 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAsse
   }
 }
 
-open class ContentRootEntity(
+class ContentRootEntity(
   val url: VirtualFileUrl,
   val excludedUrls: List<VirtualFileUrl>,
   val excludedPatterns: List<String>
 ) : WorkspaceEntityBase() {
-  open val module: ModuleEntity by moduleDelegate
+  val module: ModuleEntity by moduleDelegate
   val sourceRoots: Sequence<SourceRootEntity> by sourceRootDelegate
 
   companion object {

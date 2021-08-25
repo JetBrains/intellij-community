@@ -3,7 +3,7 @@
       <psi.referenceContributor language="kotlin" implementation="org.jetbrains.kotlin.idea.i18n.KotlinPropertiesReferenceContributor"/>
 
       <localInspection implementationClass="org.jetbrains.kotlin.idea.i18n.KotlinInvalidBundleOrPropertyInspection"
-                       groupName="Kotlin"
+                       groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
                        enabledByDefault="true"
                        level="ERROR"
                        suppressId="InvalidBundleOrProperty"

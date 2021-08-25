@@ -46,7 +46,9 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
   }
 
   private void updateVisibility() {
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.stateForComponent(this), () -> {
+      if (Disposer.isDisposed(this)) return;
+
       boolean hasCollectors = updateCollectors(myCrumbsShown);
       if (hasCollectors != isVisible()) {
         setVisible(hasCollectors);
@@ -54,7 +56,7 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
         repaint();
       }
       queueUpdate();
-    }, ModalityState.stateForComponent(this));
+    });
   }
 
   protected abstract boolean updateCollectors(boolean enabled);

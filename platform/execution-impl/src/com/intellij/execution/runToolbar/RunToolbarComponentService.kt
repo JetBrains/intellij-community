@@ -10,38 +10,45 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 
-class RunToolbarComponentService(project: Project) {
+class RunToolbarComponentService(val project: Project) {
   companion object {
-    private val LOGGER = Logger.getInstance(RunToolbarComponentService::class.java)
+    private val LOG = Logger.getInstance(RunToolbarComponentService::class.java)
   }
-
-  private val extraSlots =  RunToolbarSlotManager.getInstance(project)
+  private val extraSlots = RunToolbarSlotManager.getInstance(project)
 
   private val executions: MutableMap<Long, ExecutionEnvironment> = mutableMapOf()
+
   init {
     if (RunToolbarProcess.isAvailable()) {
       ExecutionManager.EXECUTION_TOPIC.subscribe(project, object : ExecutionListener {
         override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
-            if(LOGGER.isTraceEnabled) {
-              LOGGER.trace("Execution started: ${env.executionId} executor: $executorId" +
-                                              "${if(handler.isProcessTerminated) "terminated" else if(handler.isProcessTerminating) " terminating" else ""} ")
+            if (env.project == project) {
+              start(env)
             }
-            start(env)
           }
         }
 
         override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
           ApplicationManager.getApplication().invokeLater {
-            if(LOGGER.isTraceEnabled) {
-              LOGGER.trace("Execution stopped: " +
-                                              "${env.executionId}, " +
-                                              "executor: $executorId, " +
-                                              "exitCode: $exitCode, " +
-                                              "${if(handler.isProcessTerminated) "terminated" else if(handler.isProcessTerminating) " terminating" else ""} ")
+            if (env.project == project) {
+              stop(env)
             }
-            stop(env)
           }
+          }
+      })
+
+      extraSlots.addListener(object : ActiveListener {
+        override fun enabled() {
+          LOG.info("slot manager ACTIVATION. put data ${executions.map{it.value}.map{"$it (${it.executionId}); "}} ")
+          executions.forEach{
+            extraSlots.processStarted(it.value)
+          }
+        }
+
+        override fun disabled() {
+          LOG.info("slot manager INACTIVATION")
+          super.disabled()
         }
       })
     }
@@ -50,14 +57,20 @@ class RunToolbarComponentService(project: Project) {
   private fun start(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions[env.executionId] = env
-      extraSlots.processStarted(env)
+      LOG.info("new active process added: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
+      if(extraSlots.active) {
+        extraSlots.processStarted(env)
+      }
     }
   }
 
   private fun stop(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions.remove(env.executionId)
-      extraSlots.processStopped(env.executionId)
+      LOG.info("new active process removed: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
+      if(extraSlots.active) {
+        extraSlots.processStopped(env.executionId)
+      }
     }
   }
 

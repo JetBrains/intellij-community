@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -51,6 +52,7 @@ abstract class OverrideImplementMembersHandler : LanguageCodeInsightActionHandle
         return chooser
     }
 
+    @NlsContexts.DialogTitle
     protected abstract fun getChooserTitle(): String
 
     protected open fun isValidForClass(classOrObject: KtClassOrObject) = true
@@ -62,6 +64,7 @@ abstract class OverrideImplementMembersHandler : LanguageCodeInsightActionHandle
         return classOrObject != null && isValidForClass(classOrObject)
     }
 
+    @NlsContexts.HintText
     protected abstract fun getNoMembersFoundHint(): String
 
     fun invoke(project: Project, editor: Editor, file: PsiFile, implementAll: Boolean) {

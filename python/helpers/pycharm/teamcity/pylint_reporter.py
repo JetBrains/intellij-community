@@ -4,7 +4,11 @@ This allows PyLint messages to be processed by TeamCity and displayed on the Cod
 
 import os
 from pylint import reporters
-from pylint.__pkginfo__ import version as pylint_version
+try:
+    from pylint import version as pylint_version
+except ImportError:
+    # Backwards compatibility for pylint < 2.8.0
+    from pylint.__pkginfo__ import version as pylint_version
 
 from teamcity.common import get_class_fullname
 from teamcity import messages

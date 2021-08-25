@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositorie
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
 
-class KtorServerTemplate : Template() {
+object KtorServerTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.description")
 
@@ -54,7 +54,7 @@ class KtorServerTemplate : Template() {
     }
 
     override fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = buildList {
-        +WizardGradleRunConfiguration("Run", "run", emptyList())
+        +WizardGradleRunConfiguration(KotlinNewProjectWizardBundle.message("configuration.name.run"), "run", emptyList())
     }
 
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> = listOf(

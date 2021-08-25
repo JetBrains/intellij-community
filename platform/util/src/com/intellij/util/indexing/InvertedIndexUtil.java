@@ -17,7 +17,6 @@ public final class InvertedIndexUtil {
   @NotNull
   public static <K, V, I> IntSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,
                                                                   @NotNull Collection<? extends K> dataKeys,
-                                                                  @Nullable Condition<? super K> keyChecker,
                                                                   @Nullable Condition<? super V> valueChecker,
                                                                   @Nullable IntPredicate idChecker)
     throws StorageException {
@@ -25,8 +24,6 @@ public final class InvertedIndexUtil {
 
     for (K dataKey : dataKeys) {
       IOCancellationCallbackHolder.checkCancelled();
-
-      if (keyChecker != null && !keyChecker.value(dataKey)) continue;
 
       IntSet copy = new IntOpenHashSet();
       ValueContainer<V> container = index.getData(dataKey);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.ide.DataManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -17,6 +16,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -41,9 +41,11 @@ import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -184,13 +186,7 @@ public class XDebuggerTreeInlayPopup<D> {
     public void actionPerformed(@NotNull AnActionEvent e) {
       InlineWatchNodeImpl watch = (InlineWatchNodeImpl)myValueNode;
       XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
-      XDebugSession session = e.getData(XDebugSession.DATA_KEY);
-      if (session == null) {
-        Project project = e.getProject();
-        if (project != null) {
-          session = XDebuggerManager.getInstance(project).getCurrentSession();
-        }
-      }
+      XDebugSession session = DebuggerUIUtil.getSession(e);
       if (session != null) {
         myPopup.cancel();
         watchesManager.inlineWatchesRemoved(Collections.singletonList(watch.getWatch()), null);
@@ -235,6 +231,7 @@ public class XDebuggerTreeInlayPopup<D> {
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(popupContent, tree)
       .setRequestFocus(true)
       .setResizable(true)
+      .setModalContext(false)
       .setMovable(true)
       .setDimensionServiceKey(mySession.getProject(), DIMENSION_SERVICE_KEY, false)
       .setMayBeParent(true)
@@ -286,20 +283,7 @@ public class XDebuggerTreeInlayPopup<D> {
     }
     myPopup.setSize(new Dimension(0, 0));
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
-
-    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
-      @Override
-      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
-                                 @NotNull List<? extends XValueContainerNode<?>> children,
-                                 boolean last) {
-        if (last) {
-          updateDebugPopupBounds(tree, myToolbar, myPopup);
-          ((XDebuggerTree)tree).removeTreeListener(this);
-        }
-      }
-    });
-
-    updateDebugPopupBounds(tree, myToolbar, myPopup);
+    setAutoResize(tree, myToolbar, myPopup);
   }
 
   private void resize(final TreePath path, JTree tree) {
@@ -322,26 +306,54 @@ public class XDebuggerTreeInlayPopup<D> {
     popupWindow.repaint();
   }
 
-  public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup) {
+  public static void setAutoResize(Tree tree, JComponent myToolbar, JBPopup myPopup) {
+    Ref<Boolean> canShrink = Ref.create(true);
+    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
+                                 @NotNull List<? extends XValueContainerNode<?>> children,
+                                 boolean last) {
+        if (last) {
+          updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink.get());
+          canShrink.set(false);
+        }
+      }
+
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
+        updateDebugPopupBounds(tree, myToolbar, myPopup, false);
+      }
+    });
+    updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink.get());
+  }
+
+  public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup, boolean canShrink) {
     final Window popupWindow = SwingUtilities.windowForComponent(popup.getContent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
-    int hMargin = JBUI.scale(150);
-    int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
-    int maxWidth = JBUI.scale(600);
-    int row = Math.min(12, tree.getRowCount() - 1);
-    Rectangle bounds = tree.getRowBounds(row);
+    int hMargin = JBUI.scale(30);
     int vMargin = JBUI.scale(30);
+    int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
+    Rectangle bounds = tree.getRowBounds(tree.getRowCount() - 1);
     int height = toolbar.getHeight() + vMargin + (bounds == null ? 0 : bounds.y + bounds.height);
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(toolbar);
+    int maxWidth = screenRectangle.width / 2;
+    int maxHeight = screenRectangle.height / 2;
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
                                                  Math.min(width, maxWidth),
-                                                 height);
+                                                 Math.min(height, maxHeight));
 
+    if (!canShrink) {
+      targetBounds.width = Math.max(targetBounds.width, popupWindow.getWidth());
+      targetBounds.height = Math.max(targetBounds.height, popupWindow.getHeight());
+    }
     ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    popupWindow.setBounds(targetBounds);
-    popupWindow.validate();
-    popupWindow.repaint();
+    if (targetBounds.width != popupWindow.getWidth() || targetBounds.height != popupWindow.getHeight()) {
+      popupWindow.setBounds(targetBounds);
+      popupWindow.validate();
+      popupWindow.repaint();
+    }
   }
 
   private static class ActionWrapper extends AnAction implements CustomComponentAction {

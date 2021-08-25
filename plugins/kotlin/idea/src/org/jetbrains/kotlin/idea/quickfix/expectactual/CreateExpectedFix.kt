@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showOkNoDialog
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -158,6 +160,7 @@ private fun showUnknownTypeInDeclarationDialog(
     declarationsWithNonExistentClasses: Collection<KtNamedDeclaration>
 ): Boolean {
     if (declarationsWithNonExistentClasses.isEmpty()) return true
+    @NlsSafe
     val message = escapeXml(
         declarationsWithNonExistentClasses.joinToString(
             prefix = "${KotlinBundle.message("these.declarations.cannot.be.transformed")}\n",
@@ -168,7 +171,7 @@ private fun showUnknownTypeInDeclarationDialog(
 
     TypeAccessibilityChecker.testLog?.append("$message\n")
     return ApplicationManager.getApplication().isUnitTestMode || showOkNoDialog(
-        KotlinBundle.message("unknown.types"),
+        KotlinBundle.message("unknown.types.title"),
         message,
         project
     )
@@ -198,7 +201,7 @@ private fun chooseMembers(project: Project, collection: Collection<KtNamedDeclar
         true,
         project
     ).run {
-        title = KotlinBundle.message("choose.actual.members")
+        title = KotlinBundle.message("choose.actual.members.title")
         setCopyJavadocVisible(false)
         selectElements(classMembers.filter { filter((it.element as KtNamedDeclaration)) }.toTypedArray())
         show()
@@ -210,8 +213,13 @@ private class Member(val prefix: String, element: KtElement, descriptor: Declara
     DescriptorMemberChooserObject(element, descriptor) {
     override fun getText(): String {
         val text = super.getText()
-        return if (descriptor is ClassDescriptor) text.removePrefix(prefix)
-        else text
+        return if (descriptor is ClassDescriptor) {
+            @NlsSafe
+            val p = prefix
+            text.removePrefix(p)
+        } else {
+            text
+        }
     }
 }
 

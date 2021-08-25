@@ -53,6 +53,10 @@ public abstract class StubTreeLoader {
     return null;
   }
 
+  protected boolean isTooLarge(@NotNull VirtualFile file) {
+    return false;
+  }
+
   @NotNull
   public RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree stubTree,
                                                      @NotNull PsiFileWithStubSupport psiFile,
@@ -160,7 +164,9 @@ public abstract class StubTreeLoader {
            ", languages = [" + StringUtil.join(provider.getLanguages(), Language::getID, ", ") +
            "], fileTypes = [" + StringUtil.join(provider.getAllFiles(), file -> file.getFileType().getName(), ", ") +
            "], files = [" + StringUtil.join(provider.getAllFiles(), fileClassName, ", ") +
-           "], roots = [" + StringUtil.join(roots, stubRootToString, ", ") + "]";
+           "], roots = [" + StringUtil.join(roots, stubRootToString, ", ") +
+           "], indexingInfo = " + getInstance().getIndexingStampInfo(provider.getVirtualFile()) +
+           ", isTooLarge = " + getInstance().isTooLarge(provider.getVirtualFile());
   }
 }
 

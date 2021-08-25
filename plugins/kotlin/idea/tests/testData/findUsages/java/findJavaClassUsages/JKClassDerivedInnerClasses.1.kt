@@ -1,11 +1,12 @@
-public class Outer {
-    public open class X: A()
+class Outer {
+    open class X : A()
 
-    public interface T: A
+    @Suppress("LOCAL_INTERFACE_NOT_ALLOWED", "INTERFACE_WITH_SUPERCLASS")
+    interface T : A
 
-    public class Inner {
-        public open class Y: X()
+    class Inner {
+        open class Y : X()
 
-        public class Z: Y(), T
+        class Z : Y(), T
     }
 }

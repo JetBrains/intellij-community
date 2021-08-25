@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
@@ -104,8 +105,10 @@ public final class CompilerTester {
         Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject())).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
         if (!myModules.isEmpty()) {
           JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
-          for (Module module : myModules) {
-            ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+          if ((project.getBasePath() != null) && (WslPath.getDistributionByWindowsUncPath(project.getBasePath()) == null)) {
+            for (Module module : myModules) {
+              ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+            }
           }
         }
       });

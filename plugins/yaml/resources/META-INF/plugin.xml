@@ -20,6 +20,7 @@
     <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLEnterAtIndentHandler" order="first"/>
     <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLInjectedElementEnterHandler" order="last"/>
     <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
+    <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
@@ -32,6 +33,9 @@
     <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>
+    <lang.whiteSpaceFormattingStrategy language="yaml"
+                                       implementationClass="org.jetbrains.yaml.formatter.YamlWhiteSpaceFormattingStrategy"/>
+    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.yaml.formatter.YamlStripTrailingSpacesFilterFactory"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
     <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>

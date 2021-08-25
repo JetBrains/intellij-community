@@ -21,7 +21,7 @@ class SimpleNodeJsTemplatesPlugin(context: Context) : TemplatePlugin(context) {
 
         val addTemplate by pipelineTask(GenerationPhase.PREPARE) {
             withAction {
-                TemplatesPlugin.addTemplate.execute(SimpleNodeJsTemplate())
+                TemplatesPlugin.addTemplate.execute(SimpleNodeJsTemplate)
             }
         }
     }

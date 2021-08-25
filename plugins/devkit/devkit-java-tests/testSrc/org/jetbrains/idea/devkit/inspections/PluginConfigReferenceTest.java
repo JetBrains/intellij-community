@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.pom.java.LanguageLevel;
@@ -38,6 +39,7 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP.class));
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
+    moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
   }
 
   public void testRegistryKeyIdHighlighting() {

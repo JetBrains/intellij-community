@@ -5,10 +5,7 @@ import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
@@ -18,7 +15,7 @@ import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
+@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = ComponentCategory.CODE)
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)

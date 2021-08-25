@@ -465,8 +465,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     }
 
     for (GotoActionAliasMatcher m : GotoActionAliasMatcher.EP_NAME.getExtensions()) {
-      if (m.match(anAction, pattern)) {
-        return MatchMode.NAME;
+      MatchMode match = m.matchAction(anAction, pattern);
+      if (match != MatchMode.NONE) {
+        return match;
       }
     }
     return MatchMode.NONE;
@@ -496,10 +497,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     TreeSet<Object> objects = new TreeSet<>(this);
     objects.addAll(elements);
     return objects;
-  }
-
-  public enum MatchMode {
-    NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU, SYNONYM
   }
 
   @Override

@@ -27,9 +27,16 @@ internal class GrazieRuleSettingsAction(private val ruleName: String, private va
   override fun applyFix(project: Project, file: PsiFile?, editor: Editor?) {
     val state1 = GrazieConfig.get()
 
-    val configurable = GrazieConfigurable()
-    configurable.selectRule(rule.globalId)
-    val ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable)
+    val ok: Boolean
+    val navigatable = rule.editSettings()
+    if (navigatable != null && navigatable.canNavigate()) {
+      navigatable.navigate(true)
+      ok = true
+    } else {
+      val configurable = GrazieConfigurable()
+      configurable.selectRule(rule.globalId)
+      ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable)
+    }
 
     val result = if (!ok) "canceled" else analyzeStateChange(state1, GrazieConfig.get())
     GrazieFUSCounter.quickFixInvoked(rule, project, "rule.settings:$result")

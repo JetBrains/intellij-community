@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.ReadAction;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -20,9 +21,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.*;
 
-
 public class TestDataReferenceCollector {
-  
   private final String myTestDataPath;
   private final String myTestName;
   private final List<String> myLogMessages = new ArrayList<>();
@@ -198,23 +197,10 @@ public class TestDataReferenceCollector {
 
     // copied from com.intellij.testFramework.PlatformTestUtil
     private @NotNull String lowercaseFirstLetter(@NotNull String name) {
-      if (!isAllUppercaseName(name)) {
+      if (!PlatformTestUtil.isAllUppercaseName(name)) {
         name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
       }
       return name;
-    }
-
-    private boolean isAllUppercaseName(@NotNull String name) {
-      int uppercaseChars = 0;
-      for (int i = 0; i < name.length(); i++) {
-        if (Character.isLowerCase(name.charAt(i))) {
-          return false;
-        }
-        if (Character.isUpperCase(name.charAt(i))) {
-          uppercaseChars++;
-        }
-      }
-      return uppercaseChars >= 3;
     }
   }
 }

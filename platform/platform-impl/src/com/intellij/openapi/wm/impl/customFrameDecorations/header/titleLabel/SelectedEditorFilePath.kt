@@ -59,7 +59,7 @@ internal open class SelectedEditorFilePath {
     }
   }
 
-  private fun updateProjectPath() {
+  protected fun updateProjectPath() {
     updateTitlePaths()
     updateProject()
   }
@@ -259,7 +259,7 @@ internal open class SelectedEditorFilePath {
     update()
   }
 
-  protected fun updateProject() {
+  private fun updateProject() {
     project?.let {
       projectTitle.project = it
       classTitle.project = it

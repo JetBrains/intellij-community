@@ -12,7 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -176,7 +176,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
   public void startProgress(DebuggerCommandImpl command, ProgressWindow progressWindow) {
-    new ProgressIndicatorListenerAdapter() {
+    new ProgressIndicatorListener() {
       @Override
       public void cancelled() {
         command.release();

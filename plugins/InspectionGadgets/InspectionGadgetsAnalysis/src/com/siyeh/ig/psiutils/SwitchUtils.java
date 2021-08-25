@@ -24,6 +24,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -153,34 +154,37 @@ public final class SwitchUtils {
    * Returns true if given switch block has a rule-based format (like 'case 0 ->')
    * @param block a switch block to test
    * @return true if given switch block has a rule-based format; false if it has conventional label-based format (like 'case 0:')
-   * If switch body has no labels yet and language level permits,
-   * the rule-based format is assumed if the switch block is of the {@link PsiSwitchExpression} type.
+   * If switch body has no labels yet and language level permits the rule-based format is assumed.
    */
+  @Contract(pure = true)
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
     if (!HighlightingFeature.ENHANCED_SWITCH.isAvailable(block)) {
       return false;
     }
 
-    final PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
-
-    if (label == null || isBeingCompletedSwitchLabel(label)) {
-      return block instanceof PsiSwitchExpression;
+    final PsiCodeBlock switchBody = block.getBody();
+    if (switchBody != null) {
+      for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiSwitchLabelStatementBase && !isBeingCompleted((PsiSwitchLabelStatementBase)child)) {
+          return child instanceof PsiSwitchLabeledRuleStatement;
+        }
+      }
     }
 
-    return label instanceof PsiSwitchLabeledRuleStatement;
+    return true;
   }
 
   /**
-   * Checks if the passed switch label is the one that is being completed
-   * (see {@link com.intellij.codeInsight.completion.CompletionProvider}).
-   * A switch label that is being completed is distinct from the other switch labels
-   * by the fact that the very last child of the label is a {@link PsiErrorElement}
-   * which notifies that the colon character <code>":"</code> is expected.
-   * @param label a case label to check
-   * @return true if the passed case label is the one that is being completed right now.
+   * Checks if the label is being completed and there are no other case label elements in the list of the case label's elements
+   * @param label the label to analyze
+   * @return true if the label is currently being completed
    */
-  private static boolean isBeingCompletedSwitchLabel(@NotNull PsiSwitchLabelStatementBase label) {
-    return label.getLastChild() instanceof PsiErrorElement;
+  @Contract(pure = true)
+  private static boolean isBeingCompleted(@NotNull PsiSwitchLabelStatementBase label) {
+    if (!(label.getLastChild() instanceof PsiErrorElement)) return false;
+
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
+    return list != null && list.getElements().length == 1;
   }
 
   public static boolean canBeSwitchSelectorExpression(PsiExpression expression, LanguageLevel languageLevel) {
@@ -202,9 +206,7 @@ public final class SwitchUtils {
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return true;
       }
-      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
-        return true;
-      }
+      return HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression);
     }
     return false;
   }
@@ -337,6 +339,27 @@ public final class SwitchUtils {
     }
   }
 
+  /**
+   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
+   * or null, if nothing was found.
+   */
+  @Nullable
+  public static PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) return null;
+    for (PsiStatement statement : body.getStatements()) {
+      PsiSwitchLabelStatementBase switchLabelStatement = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
+      if (switchLabelStatement == null) continue;
+      if (switchLabelStatement.isDefaultCase()) return switchLabelStatement;
+      PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
+      if (labelElementList == null) return null;
+      PsiCaseLabelElement defaultElement = ContainerUtil.find(labelElementList.getElements(),
+                                                              labelElement -> labelElement instanceof PsiDefaultCaseLabelElement);
+      if (defaultElement != null) return defaultElement;
+    }
+    return null;
+  }
+
   public static @Nullable @NonNls String createPatternCaseText(PsiExpression expression){
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiInstanceOfExpression) {
@@ -446,14 +469,18 @@ public final class SwitchUtils {
     if (label == null) {
       return Collections.emptyList();
     }
-    final PsiExpressionList list = label.getCaseValues();
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
     if (list == null) {
       return Collections.emptyList();
     }
     List<PsiEnumConstant> constants = new ArrayList<>();
-    for (PsiExpression value : list.getExpressions()) {
-      if (value instanceof PsiReferenceExpression) {
-        final PsiElement target = ((PsiReferenceExpression)value).resolve();
+    for (PsiCaseLabelElement labelElement : list.getElements()) {
+      if (labelElement instanceof PsiDefaultCaseLabelElement ||
+          ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(labelElement, PsiExpression.class))) {
+        continue;
+      }
+      if (labelElement instanceof PsiReferenceExpression) {
+        final PsiElement target = ((PsiReferenceExpression)labelElement).resolve();
         if (target instanceof PsiEnumConstant) {
           constants.add((PsiEnumConstant)target);
           continue;
@@ -462,6 +489,18 @@ public final class SwitchUtils {
       return Collections.emptyList();
     }
     return constants;
+  }
+
+  /**
+   * Returns {@code true} if the element represents a {@code default} section
+   * or list of case labels contains default element, {@code false} otherwise.
+   */
+  public static boolean isDefaultLabel(@Nullable PsiSwitchLabelStatementBase label) {
+    if (label == null) return false;
+    if (label.isDefaultCase()) return true;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    if (labelElementList == null) return false;
+    return ContainerUtil.exists(labelElementList.getElements(), element -> element instanceof PsiDefaultCaseLabelElement);
   }
 
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {

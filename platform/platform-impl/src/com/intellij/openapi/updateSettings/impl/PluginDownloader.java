@@ -123,7 +123,16 @@ public final class PluginDownloader {
     return myReleaseVersion;
   }
 
-  public boolean isFromMarketplace() { return myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST); }
+  public boolean isFromMarketplace() {
+    try {
+      URL pluginURL = new URL(myPluginUrl);
+      URL defaultPluginsHost = new URL(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
+      return pluginURL.getHost().equals(defaultPluginsHost.getHost());
+    }
+    catch (MalformedURLException ignored) {
+      return false;
+    }
+  }
 
   public boolean isLicenseOptional() {
     return myLicenseOptional;
@@ -187,7 +196,7 @@ public final class PluginDownloader {
     if (myFile == null) return null;
 
     // The null check is required for cases when plugins are requested during initial IDE setup (e.g. in Rider initial setup wizard).
-    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check") && !isPluginFromBuiltinRepo()) {
+    if (requiresSignatureCheck()) {
       boolean certified = PluginSignatureChecker.verify(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
@@ -226,6 +235,18 @@ public final class PluginDownloader {
     }
 
     return actualDescriptor;
+  }
+
+  private boolean requiresSignatureCheck() {
+    if (ApplicationManager.getApplication() == null) {
+      return false;
+    }
+    if (isFromMarketplace()) {
+      return Registry.is("marketplace.certificate.signature.check");
+    }
+    else {
+      return Registry.is("custom-repository.certificate.signature.check");
+    }
   }
 
   private boolean isPluginFromBuiltinRepo() {
@@ -313,26 +334,24 @@ public final class PluginDownloader {
 
   public boolean tryInstallWithoutRestart(@Nullable JComponent ownerComponent) {
     assert myDescriptor instanceof IdeaPluginDescriptorImpl;
-    final IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)myDescriptor;
-    if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptorImpl)) {
+    IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)myDescriptor;
+    if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
       return false;
     }
 
     if (myOldFile != null) {
-      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(myDescriptor.getPluginId());
-      IdeaPluginDescriptorImpl fullDescriptor = installedPlugin instanceof IdeaPluginDescriptorImpl ?
-                                                (IdeaPluginDescriptorImpl)installedPlugin :
-                                                null;
-      if (fullDescriptor == null ||
-          !DynamicPlugins.INSTANCE.unloadPlugin(fullDescriptor,
-                                                new DynamicPlugins.UnloadPluginOptions()
-                                                  .withUpdate(true)
-                                                  .withWaitForClassloaderUnload(true))) {
+      IdeaPluginDescriptorImpl installedPlugin = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(myDescriptor.getPluginId());
+      // yes, if no installed plugin by id, it means that something goes wrong, so do not try to install and load
+      if (installedPlugin == null || !DynamicPlugins.INSTANCE.unloadPlugin(descriptor,
+                                                                           new DynamicPlugins.UnloadPluginOptions()
+                                                                             .withDisable(false)
+                                                                             .withUpdate(true)
+                                                                             .withWaitForClassloaderUnload(true))) {
         return false;
       }
     }
 
-    return PluginInstaller.installAndLoadDynamicPlugin(myFile.toPath(), ownerComponent, descriptorImpl);
+    return PluginInstaller.installAndLoadDynamicPlugin(myFile.toPath(), ownerComponent, descriptor);
   }
 
   private @Nullable File tryDownloadPlugin(@NotNull ProgressIndicator indicator, boolean showMessageOnError) {

@@ -36,8 +36,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedLambdaName
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
@@ -270,7 +272,15 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
         val currentLocationClassName =
             JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
 
-        for (literal in literalsOrFunctions) {
+        return literalsOrFunctions.getAppropriateLiteralBasedOnDeclaringClassName(location, currentLocationClassName) ?:
+               literalsOrFunctions.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
+    }
+
+    private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(
+        location: Location,
+        currentLocationClassName: String
+    ): KtFunction? {
+        for (literal in this) {
             if (InlineUtil.isInlinedArgument(literal, literal.analyze(BodyResolveMode.PARTIAL), true)) {
                 if (isInsideInlineArgument(literal, location, myDebugProcess as DebugProcessImpl)) {
                     return literal
@@ -289,6 +299,34 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
             }
         }
 
+        return null
+    }
+
+    private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
+        val method = location.safeMethod() ?: return null
+        if (!method.name().isGeneratedLambdaName()) {
+            return null
+        }
+
+        val lambdas = location.declaringType().methods()
+            .filter {
+                it.name().isGeneratedLambdaName() &&
+                DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
+            }
+
+        return getSamLambdaWithIndex(lambdas.indexOf(method))
+    }
+
+    private fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {
+        var samLambdaCounter = 0
+        for (literal in this) {
+            if (literal.isSamLambda()) {
+                if (samLambdaCounter == index) {
+                    return literal
+                }
+                samLambdaCounter++
+            }
+        }
         return null
     }
 

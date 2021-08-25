@@ -129,9 +129,9 @@ fun Code.appendModifiers(modifiers: Set<Modifier>): Code {
     return this
 }
 
-fun Code.appendMultilineComment(text: String?): Code {
+fun Code.appendDocComment(text: String?): Code {
     if (text != null && text.isNotBlank()) {
-        append("/*").newLine()
+        append("/**").newLine()
         for (line in text.lineSequence()) {
             append(" * ").append(line).newLine()
         }

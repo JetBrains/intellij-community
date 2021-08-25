@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -121,7 +121,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           PsiMethod targetMethod = (PsiMethod)((CandidateInfo)(highlighted == null ? objects[0] : highlighted)).getElement();
           CompletionMemory.registerChosenMethod(targetMethod, methodCall);
           controller.setPreservedOnHintHidden(true);
-          ParameterHintsPass.syncUpdate(methodCall, context.getEditor());
+          ParameterHintsPass.asyncUpdate(methodCall, context.getEditor());
         }
       }
     }
@@ -190,8 +190,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                 document != null && psiDocumentManager.isCommitted(document) &&
                 isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
               JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
-              ParameterHintsPass.syncUpdate(parent, context.getEditor()); // make sure the statement above takes effect
-              highlightHints(context.getEditor(), null, -1, context.getCustomContext());
+              // make sure the statement above takes effect
+              ParameterHintsPass.asyncUpdate(parent, context.getEditor())
+                .then(o -> {
+                  highlightHints(context.getEditor(), null, -1, context.getCustomContext());
+                  return null;
+                });
             }
             else {
               int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(),
@@ -364,9 +368,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           chosenInfo = candidate;
         }
 
-        if (parms.length == args.length && realResolve == method &&
-            isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor)) {
-          completeMatch = candidate;
+        if (realResolve == method) {
+          if (parms.length == args.length && isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor) ||
+              method.isVarArgs() && parms.length - 1 <= args.length &&
+              isAssignableParametersBeforeGivenIndex(parms, args, Math.min(parms.length, args.length), substitutor)) {
+            completeMatch = candidate;
+          }
         }
       }
     }
@@ -477,7 +484,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       resetHints(context.getCustomContext());
       PsiElement parameterOwner = context.getParameterOwner();
       if (!editor.isDisposed() && parameterOwner != null && parameterOwner.isValid()) {
-        ParameterHintsPass.syncUpdate(parameterOwner.getParent(), editor);
+        ParameterHintsPass.asyncUpdate(parameterOwner.getParent(), editor);
       }
     }
   }

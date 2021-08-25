@@ -21,8 +21,6 @@ abstract class BaseCommitExecutorAction : JButtonAction(null) {
 
     e.presentation.isVisible = workflowHandler != null && executor != null
     e.presentation.isEnabled = workflowHandler != null && executor != null && workflowHandler.isExecutorEnabled(executor)
-
-    updateButtonFromPresentation(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

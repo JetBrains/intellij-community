@@ -21,7 +21,9 @@ enum JetBrainsRuntimeDistribution {
   /**
    * JBR with DCEVM and both JavaFX and JCEF
    */
-  DCEVM('dcevm')
+  DCEVM('dcevm'),
+
+  NOMOD('nomod'),
 
   /**
    * Distinguishes artifacts of different JBR distributions

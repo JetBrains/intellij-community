@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.treeView.FileNameComparator;
@@ -204,7 +204,13 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   public @NotNull JBIterable<?> traverseObjectsUnder() {
-    return TreeUtil.treeNodeTraverser(this).traverse().map(TreeUtil::getUserObject);
+    return traverse().map(TreeUtil::getUserObject);
+  }
+
+  public @NotNull JBIterable<ChangesBrowserNode<?>> traverse() {
+    JBIterable<?> iterable = TreeUtil.treeNodeTraverser(this).traverse();
+    //noinspection unchecked
+    return (JBIterable<ChangesBrowserNode<?>>)iterable;
   }
 
   @NotNull
@@ -396,6 +402,10 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
     public WrapperTag(@NotNull Object value) {
       myValue = value;
+    }
+
+    public @NotNull Object getValue() {
+      return myValue;
     }
 
     @Nls

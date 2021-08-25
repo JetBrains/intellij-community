@@ -3,8 +3,8 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
   private static final int NON_ID_WEIGHT = (Rule.DEFAULT_WEIGHT - 1) / 2;
 
   /** Holds symbols wrap rules by symbol. */
-  private final Int2ObjectMap<Rule> myRules = new Int2ObjectOpenHashMap<>();
+  private final IntObjectMap<Rule> myRules = ContainerUtil.createConcurrentIntObjectMap();
   private final Storage myOffset2weight = new Storage();
 
   @Override

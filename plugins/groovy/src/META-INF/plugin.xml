@@ -535,6 +535,7 @@
     <refactoring.moveInnerHandler language="Groovy"
                                   implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyInnerHandler"/>
     <refactoring.moveClassToInnerHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.GroovyMoveClassToInnerHandler"/>
+    <refactoring.moveHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyStaticInnerClassHandler" id="groovy"/>
     <moveFileHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyFileHandler"/>
     <refactoring.moveMemberHandler language="Groovy"
                                    implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyMemberHandler"/>

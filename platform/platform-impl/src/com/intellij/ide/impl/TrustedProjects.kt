@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TrustedProjects")
 @file:ApiStatus.Experimental
 
@@ -7,17 +7,17 @@ package com.intellij.ide.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.TrustedCheckResult.NotTrusted
 import com.intellij.ide.impl.TrustedCheckResult.Trusted
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
@@ -31,7 +31,7 @@ fun confirmOpeningUntrustedProject(
   virtualFile: VirtualFile,
   projectTypeNames: List<String>,
 ): OpenUntrustedProjectChoice {
-  val systemsPresentation: String = StringUtil.naturalJoin(projectTypeNames)
+  val systemsPresentation: String = NlsMessages.formatAndList(projectTypeNames)
   return confirmOpeningUntrustedProject(
     virtualFile,
     IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, projectTypeNames.size),
@@ -111,14 +111,14 @@ enum class OpenUntrustedProjectChoice {
 
 fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 
-fun Project.getTrustedState() : ThreeState {
+fun Project.getTrustedState(): ThreeState {
   val explicit = this.service<TrustedProjectSettings>().trustedState
   if (explicit != ThreeState.UNSURE) return explicit
   return if (getImplicitTrustedCheckResult(this) is Trusted) ThreeState.YES else ThreeState.UNSURE
 }
 
 fun Project.setTrusted(value: Boolean) {
-  val oldValue = this.service<TrustedProjectSettings>().trustedState;
+  val oldValue = this.service<TrustedProjectSettings>().trustedState
   this.service<TrustedProjectSettings>().trustedState = ThreeState.fromBoolean(value)
 
   if (value && oldValue != ThreeState.YES) {
@@ -126,8 +126,8 @@ fun Project.setTrusted(value: Boolean) {
   }
 }
 
-fun createDoNotAskOptionForLocation(projectLocationPath: String): DialogWrapper.DoNotAskOption {
-  return object : DialogWrapper.DoNotAskOption.Adapter() {
+fun createDoNotAskOptionForLocation(projectLocationPath: String): DoNotAskOption {
+  return object : DoNotAskOption.Adapter() {
     override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
       if (isSelected && exitCode == Messages.YES) {
         TrustedProjectsStatistics.TRUST_LOCATION_CHECKBOX_SELECTED.log()
@@ -148,11 +148,11 @@ fun isProjectImplicitlyTrusted(projectDir: Path?): Boolean {
 
 private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                        ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                       SystemProperties.`is`("idea.is.integration.test")
+                                       java.lang.Boolean.getBoolean("idea.is.integration.test")
 
 private sealed class TrustedCheckResult {
-  object Trusted: TrustedCheckResult()
-  class NotTrusted(val url: String?): TrustedCheckResult()
+  object Trusted : TrustedCheckResult()
+  class NotTrusted(val url: String?) : TrustedCheckResult()
 }
 
 private fun getImplicitTrustedCheckResult(project: Project): TrustedCheckResult =
@@ -196,7 +196,7 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
 }
 
 @ApiStatus.Experimental
-interface TrustChangeNotifier {
+fun interface TrustChangeNotifier {
   fun projectTrusted(project: Project)
 
   companion object {

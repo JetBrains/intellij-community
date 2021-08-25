@@ -4,10 +4,7 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
-import com.intellij.openapi.components.ReportValue;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -22,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-@State(name = "DefaultFont", storages = @Storage("editor.xml"))
+@State(name = "DefaultFont", storages = @Storage("editor.xml"), category = ComponentCategory.UI)
 public final class AppEditorFontOptions implements
                                         PersistentStateComponentWithModificationTracker<AppEditorFontOptions.PersistentFontPreferences> {
   private static final Logger LOG = Logger.getInstance(AppEditorFontOptions.class);

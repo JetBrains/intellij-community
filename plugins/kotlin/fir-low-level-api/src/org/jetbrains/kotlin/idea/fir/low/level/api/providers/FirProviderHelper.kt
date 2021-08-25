@@ -5,7 +5,8 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api.providers
 
-import com.google.common.collect.Sets
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
@@ -54,7 +55,7 @@ internal class FirProviderHelper(
         val callableId = CallableId(packageFqName, name)
         return executeOrReturnDefaultValueOnPCE(emptyList()) {
             cache.callableByCallableId.computeIfAbsent(callableId) {
-                val files = Sets.newIdentityHashSet<KtFile>().apply {
+                val files = CollectionFactory.createCustomHashingStrategySet<KtFile>(HashingStrategy.identity()).apply {
                     indexHelper.getTopLevelFunctions(callableId).mapTo(this) { it.containingKtFile }
                     indexHelper.getTopLevelProperties(callableId).mapTo(this) { it.containingKtFile }
                 }

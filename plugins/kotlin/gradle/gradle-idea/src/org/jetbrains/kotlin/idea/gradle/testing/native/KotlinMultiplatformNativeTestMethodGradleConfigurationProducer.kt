@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradle.testing.native
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.ide.konan.KotlinNativeRunConfigurationProvider
-import org.jetbrains.kotlin.idea.run.AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.gradle.run.AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.isNative
 

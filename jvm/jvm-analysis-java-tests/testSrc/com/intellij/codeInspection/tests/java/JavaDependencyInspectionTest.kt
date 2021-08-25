@@ -7,6 +7,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
 class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
+
   override fun setUp() {
     super.setUp()
     myFixture.addFileToProject("$clientFileNameImport.java", """
@@ -54,8 +55,8 @@ class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
 
   companion object {
     const val clientFileName: String = "ClientFile"
-    const val clientFileNameImport: String = "${clientFileName}Import"
-    const val clientFileNameFq: String = "${clientFileName}Fq"
+    const val clientFileNameImport: String = "ClientFileImport"
+    const val clientFileNameFq: String = "ClientFileFq"
     const val apiFileName: String = "ApiFile"
     const val errorMessage = "Dependency rule 'Deny usages of scope '$apiFileName' in scope '$clientFileName'.' is violated"
   }

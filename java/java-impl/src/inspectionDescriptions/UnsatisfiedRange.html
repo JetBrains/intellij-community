@@ -13,12 +13,12 @@ You can declare method return range using a number of annotations:
   <li><code>javax.validation.constraints.Max</code> (specify maximum value)</li>
 </ul>
 <p>Example:</p>
-<pre>
+<pre><code>
   @Range(from = 0, to = Integer.MAX_VALUE) int getValue() {
     // Warning: -1 is outside of declared range
     return -1;
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2021.2</small></p>
 </body>

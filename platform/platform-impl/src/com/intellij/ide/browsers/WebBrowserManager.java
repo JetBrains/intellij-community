@@ -3,6 +3,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"))
+@State(name = "WebBrowsersConfiguration", storages = @Storage(value = "web-browsers.xml", roamingType = RoamingType.DISABLED))
 public final class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
@@ -44,6 +45,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     PREDEFINED_EXPLORER_ID,
     PREDEFINED_EDGE_ID
   };
+
+  public static final ReloadMode BROWSER_RELOAD_MODE_DEFAULT = ReloadMode.RELOAD_ON_SAVE;
+  public static final ReloadMode PREVIEW_RELOAD_MODE_DEFAULT = ReloadMode.RELOAD_ON_SAVE;
 
   @NotNull
   private static String getEdgeExecutionPath() {
@@ -82,6 +86,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private boolean myShowBrowserHover = true;
   private boolean myShowBrowserHoverXml = false;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
+  ReloadMode webServerReloadMode = BROWSER_RELOAD_MODE_DEFAULT;
+  ReloadMode webPreviewReloadMode = PREVIEW_RELOAD_MODE_DEFAULT;
 
   public WebBrowserManager() {
     browsers = new ArrayList<>(getPredefinedBrowsers());
@@ -144,11 +150,27 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     return defaultBrowserPolicy;
   }
 
+  @NotNull
+  public ReloadMode getWebServerReloadMode() {
+    return webServerReloadMode;
+  }
+
+  @NotNull
+  public ReloadMode getWebPreviewReloadMode() {
+    return webPreviewReloadMode;
+  }
+
   @Override
   public Element getState() {
     Element state = new Element("state");
     if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
       state.setAttribute("default", StringUtil.toLowerCase(defaultBrowserPolicy.name()));
+    }
+    if (webServerReloadMode != ReloadMode.RELOAD_ON_SAVE) {
+      state.setAttribute("serverReloadMode", StringUtil.toLowerCase(webServerReloadMode.name()));
+    }
+    if (webPreviewReloadMode != ReloadMode.RELOAD_ON_CHANGE) {
+      state.setAttribute("previewReloadMode", StringUtil.toLowerCase(webPreviewReloadMode.name()));
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
@@ -249,14 +271,22 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
 
   @Override
   public void loadState(@NotNull Element element) {
-    String defaultValue = element.getAttributeValue("default");
-    if (!StringUtil.isEmpty(defaultValue)) {
-      try {
-        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
+    try {
+      String defaultValue = element.getAttributeValue("default");
+      if (!StringUtil.isEmpty(defaultValue)) {
+          defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
       }
-      catch (IllegalArgumentException e) {
-        LOG.warn(e);
+      String serverReload = element.getAttributeValue("serverReloadMode");
+      if (!StringUtil.isEmpty(serverReload)) {
+        webServerReloadMode = ReloadMode.valueOf(StringUtil.toUpperCase(serverReload));
       }
+      String previewReload = element.getAttributeValue("previewReloadMode");
+      if (!StringUtil.isEmpty(previewReload)) {
+        webPreviewReloadMode = ReloadMode.valueOf(StringUtil.toUpperCase(previewReload));
+      }
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn(e);
     }
 
     myShowBrowserHover = !"false".equals(element.getAttributeValue("showHover"));

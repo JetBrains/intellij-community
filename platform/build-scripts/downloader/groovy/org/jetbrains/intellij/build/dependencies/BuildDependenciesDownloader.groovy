@@ -57,7 +57,9 @@ class BuildDependenciesDownloader {
   }
 
   private static Path getProjectLocalDownloadCache(Path communityRoot) {
-    return communityRoot.resolve("build").resolve("download")
+    Path projectLocalDownloadCache = communityRoot.resolve("build").resolve("download")
+    Files.createDirectories(projectLocalDownloadCache)
+    return projectLocalDownloadCache
   }
 
   private static Path getDownloadCachePath(Path communityRoot) {
@@ -163,7 +165,7 @@ class BuildDependenciesDownloader {
     extractFileWithFlagFileLocation(archiveFile, target, flagFile)
   }
 
-  static void downloadFile(URI uri, Path target) {
+  private static void downloadFile(URI uri, Path target) {
     if (Files.exists(target)) {
       debug("Target file $target already exists, skipping download from $uri")
 

@@ -93,10 +93,9 @@ class FileBasedIndexTumbler {
           dumbModeSemaphore.up()
         }
 
-        val runRescanning = Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
-                            !RebuildStatus.isOk() ||
+        val runRescanning = CorruptionMarker.requireInvalidation() || (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
                             snapshot is FbiSnapshot.RebuildRequired ||
-                            FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture())
+                            FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
           beforeIndexTasksStarted?.run()
           cleanupProcessedFlag()

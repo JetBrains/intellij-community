@@ -2,11 +2,13 @@
 package org.intellij.plugins.markdown.settings;
 
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+@Deprecated
 public final class MarkdownCssSettings {
   public static final MarkdownCssSettings DEFAULT = new MarkdownCssSettings();
 
@@ -38,7 +40,7 @@ public final class MarkdownCssSettings {
     this(false,
          "",
          false, "",
-         Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_SIZE, //note: may be get from default.css
+         JBCefApp.normalizeScaledSize(Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_SIZE),//note: may be get from default.css
          Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_FAMILY); //note: may be get from default.css
   }
 

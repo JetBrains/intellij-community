@@ -171,7 +171,7 @@ public abstract class ContentLabel extends BaseLabel {
       }
     }
 
-    boolean additionalIconsOnly = StringUtil.isEmptyOrSpaces(getText());
+    boolean additionalIconsOnly = StringUtil.isEmptyOrSpaces(getText()) && getIcon() == null;
     int left = DEFAULT_HORIZONTAL_INSET;
     int right = DEFAULT_HORIZONTAL_INSET;
     if (additionalIconsOnly) {

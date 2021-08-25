@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Extension point for delegate artifact builds to maven goals.
+ * Usage on execute maven goal. {@link MavenProjectTaskRunner}
  * @author ibessonov
  */
 public interface MavenArtifactBuilder {
@@ -19,6 +21,13 @@ public interface MavenArtifactBuilder {
 
   boolean isApplicable(ProjectModelBuildTask task);
 
+  /**
+   * build maven custom artifact.
+   * @param project
+   * @param task - build task model.
+   * @param context - task context, include {@link RunConfiguration} and other data.
+   * @param callback
+   */
   void build(@NotNull Project project,
              @NotNull ProjectModelBuildTask task,
              @NotNull ProjectTaskContext context,

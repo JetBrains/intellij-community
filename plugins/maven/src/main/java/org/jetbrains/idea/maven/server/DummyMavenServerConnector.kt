@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import org.apache.lucene.search.Query
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.model.*
@@ -130,7 +129,7 @@ class DummyIndexer : MavenServerIndexer {
     return IndexedMavenId(null, null, null, null, null)
   }
 
-  override fun search(indexId: Int, query: Query?, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
+  override fun search(indexId: Int, query: Any, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
     return emptySet()
   }
 

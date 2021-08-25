@@ -292,7 +292,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
         target.append(paramText).append(")");
       }
     }
-    else if (rhsType instanceof PyCollectionType && "dict".equals(rhsType.getName())) {
+    else if (PyTypeUtil.isDict(rhsType)) {
       target.append("(**").append(paramText).append(")");
     }
     else target.append("(").append(paramText).append(")"); // tuple is ok as is

@@ -7,6 +7,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.lang.java.JavaFindUsagesProvider
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisIndependentBundle
 import org.jetbrains.kotlin.idea.KotlinIndependentBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -50,20 +51,30 @@ open class KotlinFindUsagesProviderBase : FindUsagesProvider {
         return when (element) {
             is PsiDirectory, is PsiPackage, is PsiFile -> javaProvider.getDescriptiveName(element)
             is KtClassOrObject -> {
-                if (element is KtObjectDeclaration && element.isObjectLiteral()) return "<unnamed>"
-                element.fqName?.asString() ?: element.name ?: "<unnamed>"
+                if (element is KtObjectDeclaration && element.isObjectLiteral()) return KotlinIdeaAnalysisIndependentBundle.message("usage.provider.text.unnamed")
+                run {
+                    @Suppress("HardCodedStringLiteral")
+                    element.fqName?.asString()
+                } ?: element.name ?: KotlinIdeaAnalysisIndependentBundle.message("usage.provider.text.unnamed")
             }
-            is KtProperty -> (element.name ?: "") + (element.containerDescription?.let { " of $it" } ?: "")
+            is KtProperty -> {
+                val name = element.name ?: ""
+                element.containerDescription?.let { KotlinIdeaAnalysisIndependentBundle.message("usage.provider.text.property.of.0", name, it) } ?: name
+            }
             is KtFunction -> {
                 //TODO: Correct FIR implementation
                 return element.name?.let { "$it(...)" } ?: ""
             }
-            is KtLabeledExpression -> element.getLabelName() ?: ""
+            is KtLabeledExpression -> {
+                @Suppress("HardCodedStringLiteral")
+                element.getLabelName() ?: ""
+            }
             is KtImportAlias -> element.name ?: ""
             is KtLightElement<*, *> -> element.kotlinOrigin?.let { getDescriptiveName(it) } ?: ""
             is KtParameter -> {
                 if (element.isPropertyParameter()) {
-                    (element.name ?: "") + (element.containerDescription?.let { " of $it" } ?: "")
+                    val name = element.name ?: ""
+                    element.containerDescription?.let { KotlinIdeaAnalysisIndependentBundle.message("usage.provider.text.property.of.0", name, it) } ?: name
                 } else {
                     element.name ?: ""
                 }

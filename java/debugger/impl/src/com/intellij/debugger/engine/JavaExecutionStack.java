@@ -362,12 +362,13 @@ public class JavaExecutionStack extends XExecutionStack {
     });
     CompletableFuture<String> statusTextFuture = threadReference.statusAsync().thenApply(DebuggerUtilsEx::getThreadStatusText);
 
+    long uniqueID = threadReference.uniqueID();
     return DebuggerUtilsAsync.reschedule(groupNameFuture).thenCompose(grname -> {
       return nameFuture.thenCombine(statusTextFuture, (name, threadStatusText) -> {
         if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
-          return JavaDebuggerBundle.message("label.thread.node.in.group", name, thread.uniqueID(), threadStatusText, grname);
+          return JavaDebuggerBundle.message("label.thread.node.in.group", name, uniqueID, threadStatusText, grname);
         }
-        return JavaDebuggerBundle.message("label.thread.node", name, thread.uniqueID(), threadStatusText);
+        return JavaDebuggerBundle.message("label.thread.node", name, uniqueID, threadStatusText);
       });
     });
   }

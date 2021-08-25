@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -71,7 +71,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @param additionalInfo  additional information provided by a user.
    * @param parentComponent UI component to use as a parent in any UI activity from a submitter.
    * @param consumer        a callback to be called after sending is finished (or failed).
-   * @return {@code true} if reporting was started, {@code false} if a report can't be sent at the moment.
+   * @return {@code true} if reporting was started (must invoke {@code consumer} callback with result), {@code false} if a report can't be sent at the moment.
    */
   public boolean submit(IdeaLoggingEvent @NotNull [] events,
                         @Nullable String additionalInfo,

@@ -17,7 +17,7 @@ class ConsoleJvmApplicationTemplatePlugin(context: Context) : TemplatePlugin(con
 
         val addTemplate by pipelineTask(GenerationPhase.PREPARE) {
             withAction {
-                TemplatesPlugin.addTemplate.execute(ConsoleJvmApplicationTemplate())
+                TemplatesPlugin.addTemplate.execute(ConsoleJvmApplicationTemplate)
             }
         }
     }

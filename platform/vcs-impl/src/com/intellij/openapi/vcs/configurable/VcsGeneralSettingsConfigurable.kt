@@ -107,17 +107,19 @@ class VcsGeneralSettingsConfigurable(val project: Project)
       }
 
       titledRow(message("settings.general.changes.group.title")) {
-        if (!project.isDefault) {
-          fullRow {
-            val checkBox = checkBox(message("vcs.config.track.changed.on.server"),
-                                    vcsConfiguration::CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND)
-              .onApply { RemoteRevisionsCache.getInstance(project).updateAutomaticRefreshAlarmState(true) }
-            spinner(vcsConfiguration::CHANGED_ON_SERVER_INTERVAL,
-                    5, 48 * 10 * 60, 5)
-              .enableIf(checkBox.selected)
-            @Suppress("DialogTitleCapitalization")
-            label(message("settings.check.every.minutes"))
-          }
+        fullRow {
+          val checkBox = checkBox(message("vcs.config.track.changed.on.server"),
+                                  vcsConfiguration::CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND)
+            .onApply {
+              if (!project.isDefault) {
+                RemoteRevisionsCache.getInstance(project).updateAutomaticRefreshAlarmState(true)
+              }
+            }
+          spinner(vcsConfiguration::CHANGED_ON_SERVER_INTERVAL,
+                  5, 48 * 10 * 60, 5)
+            .enableIf(checkBox.selected)
+          @Suppress("DialogTitleCapitalization")
+          label(message("settings.check.every.minutes"))
         }
         fullRow {
           val checkBox = checkBox(message("settings.checkbox.show.changed.in.last"),

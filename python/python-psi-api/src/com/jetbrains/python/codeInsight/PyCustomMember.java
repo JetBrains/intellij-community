@@ -1,9 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
-import com.google.common.base.Preconditions;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
@@ -13,11 +12,8 @@ import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPsiFacade;
-import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +27,7 @@ import java.util.Objects;
  * @author Dennis.Ushakov
  */
 public class PyCustomMember extends UserDataHolderBase {
+  private static final Logger LOG = Logger.getInstance(PyCustomMember.class);
   private static final Key<ParameterizedCachedValue<PyClass, PsiElement>>
     RESOLVE = Key.create("resolve");
   private final String myName;
@@ -45,7 +42,7 @@ public class PyCustomMember extends UserDataHolderBase {
   boolean myFunction = false;
 
   /**
-   * Force resolving to {@link MyInstanceElement} even if element is function
+   * Force resolving to {@link com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl.MyInstanceElement} even if element is function
    */
   private boolean myAlwaysResolveToCustomElement;
   private Icon myIcon = AllIcons.Nodes.Method;
@@ -127,7 +124,7 @@ public class PyCustomMember extends UserDataHolderBase {
   }
 
   /**
-   * Force resolving to {@link MyInstanceElement} even if element is function
+   * Force resolving to {@link com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl.MyInstanceElement} even if element is function
    */
   @NotNull
   public final PyCustomMember alwaysResolveToCustomElement() {
@@ -219,7 +216,8 @@ public class PyCustomMember extends UserDataHolderBase {
       if (targetClass == null && resolveTarget instanceof PyClass) {
         targetClass = (PyClass)resolveTarget;
       }
-      return new MyInstanceElement(targetClass, context, resolveTarget);
+
+      return PyCustomMemberProvider.getInstance().createPyCustomMemberTarget(this, targetClass, context, resolveTarget, myTypeCallback, myCustomTypeInfo, myResolveToInstance);
     }
     return null;
   }
@@ -257,11 +255,7 @@ public class PyCustomMember extends UserDataHolderBase {
    * @return true if reference points to it
    */
   public final boolean isReferenceToMe(@NotNull final PsiReference reference) {
-    final PsiElement element = reference.resolve();
-    if (!(element instanceof MyInstanceElement)) {
-      return false;
-    }
-    return ((MyInstanceElement)element).getThis().equals(this);
+    return PyCustomMemberProvider.getInstance().isReferenceToMe(reference, this);
   }
 
   /**
@@ -279,65 +273,9 @@ public class PyCustomMember extends UserDataHolderBase {
    * @param customInfo custom info to add
    */
   public PyCustomMember withCustomTypeInfo(@NotNull final PyCustomMemberTypeInfo<?> customInfo) {
-    Preconditions.checkState(myTypeName != null, "Cant add custom type info if no type provided");
+    LOG.assertTrue(myTypeName != null, "Cant add custom type info if no type provided");
     myCustomTypeInfo = customInfo;
     return this;
   }
 
-  private class MyInstanceElement extends ASTWrapperPsiElement implements PyTypedElement {
-    private final PyClass myClass;
-    private final PsiElement myContext;
-
-    MyInstanceElement(PyClass clazz, PsiElement context, PsiElement resolveTarget) {
-      super(resolveTarget != null ? resolveTarget.getNode() : clazz.getNode());
-      myClass = clazz;
-      myContext = context;
-    }
-
-    private PyCustomMember getThis() {
-      return PyCustomMember.this;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      MyInstanceElement element = (MyInstanceElement)o;
-      return Objects.equals(getThis(), element.getThis()) &&
-             Objects.equals(myClass, element.myClass) &&
-             Objects.equals(myContext, element.myContext) &&
-             Objects.equals(getNode(), element.getNode());
-    }
-
-    @Override
-    public String toString() {
-      return "MyInstanceElement{" +
-             "myClass=" + myClass +
-             "member=" + getThis() +
-             "node=" + getNode() +
-             ", myContext=" + myContext +
-             '}';
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myClass, myContext, getNode(), getThis());
-    }
-
-    @Override
-    @Nullable
-    public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-      if (myTypeCallback != null) {
-        return myTypeCallback.fun(myContext);
-      }
-      else if (myClass != null) {
-        final PyClassType type = PyPsiFacade.getInstance(getProject()).createClassType(myClass, !myResolveToInstance);
-        if (myCustomTypeInfo != null) {
-          myCustomTypeInfo.fill(type);
-        }
-        return type;
-      }
-      return null;
-    }
-  }
 }

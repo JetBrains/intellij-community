@@ -2,6 +2,7 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.paint.LinePainter2D;
@@ -25,6 +26,7 @@ public class IdeaMenuUI extends BasicMenuUI{
   private static final Rectangle ourTextRect = new Rectangle();
   private static final Rectangle ourArrowIconRect = new Rectangle();
   private int myMaxGutterIconWidth;
+  private int myMaxGutterIconWidth2;
   private int a;
   private static Rectangle ourPreferredSizeRect = new Rectangle();
   private int k;
@@ -48,10 +50,14 @@ public class IdeaMenuUI extends BasicMenuUI{
     super.installDefaults();
     Integer integer = UIUtil.getPropertyMaxGutterIconWidth(getPropertyPrefix());
     if (integer != null){
-      myMaxGutterIconWidth = integer.intValue();
+      myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
     selectionBackground = UIUtil.getListSelectionBackground(true);
+  }
+
+  private void checkEmptyIcon(JComponent comp) {
+    myMaxGutterIconWidth = getAllowedIcon() == null && IdeaPopupMenuUI.hideEmptyIcon(comp) ? 0 : myMaxGutterIconWidth2;
   }
 
   @Override
@@ -62,6 +68,7 @@ public class IdeaMenuUI extends BasicMenuUI{
     int mnemonicIndex = jMenu.getDisplayedMnemonicIndex();
     Icon icon = getIcon();
     Icon allowedIcon = getAllowedIcon();
+    checkEmptyIcon(comp);
     Insets insets = comp.getInsets();
     resetRects();
 
@@ -318,6 +325,7 @@ public class IdeaMenuUI extends BasicMenuUI{
     JMenu jMenu = (JMenu)comp;
     Icon icon1 = getIcon();
     Icon icon2 = getAllowedIcon();
+    checkEmptyIcon(comp);
     String text = jMenu.getText();
     Font font = jMenu.getFont();
     FontMetrics fontmetrics = jMenu.getToolkit().getFontMetrics(font);

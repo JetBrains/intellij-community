@@ -2,5 +2,4 @@
 // OPTIONS: usages
 package test
 
-public data class KotlinDataClass(val <caret>foo: Int, val bar: String) {
-}
+public data class KotlinDataClass(val <caret>foo: Int, val bar: String)

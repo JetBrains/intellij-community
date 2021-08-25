@@ -197,7 +197,7 @@
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
     <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
 
-    <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider"/>
+    <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider" dynamic="true"/>
 
     <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
@@ -304,9 +304,18 @@
     <extensionPoint name="diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor" dynamic="true"/>
     <extensionPoint name="diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
     <extensionPoint name="diff.merge.external.AutomaticExternalMergeTool" interface="com.intellij.diff.merge.external.AutomaticExternalMergeTool" dynamic="true"/>
+    <extensionPoint name="diff.tools.combined.diffBlockFactory" interface="com.intellij.diff.tools.combined.CombinedDiffBlockFactory" dynamic="true"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
+    <extensionPoint name="executionActionSuppressor"
+                    interface="com.intellij.execution.ExecutionActionSuppressor"
+                    dynamic="true"/>
+
     <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="diff.actions.ShowStandaloneDiffAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
 
@@ -434,6 +443,11 @@
 
     <extensionPoint name="contentTabActionProvider" interface="com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider"/>
 
-    <extensionPoint name="inspectionPopupExtension" interface="com.intellij.openapi.editor.impl.InspectionPopupExtension" dynamic="true"/>
+    <extensionPoint name="inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
+    <extensionPoint name="commandLineCustomHandler" interface="com.intellij.ide.CommandLineCustomHandler" dynamic="true"/>
+
+    <extensionPoint name="recoveryAction"
+                    interface="com.intellij.ide.actions.cache.RecoveryAction"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

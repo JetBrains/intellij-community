@@ -42,8 +42,7 @@ public abstract class RuleAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-
-    e.getPresentation().setEnabled(getUsageViewImpl(e) != null);
+    e.getPresentation().setEnabled(getUsageViewSettingsOrNull(e) != null);
   }
 
   @Override
@@ -57,14 +56,23 @@ public abstract class RuleAction extends ToggleAction implements DumbAware {
   }
 
   protected @NotNull UsageViewSettings getUsageViewSettings(@NotNull AnActionEvent e) {
-    UsageView plainView = e.getData(UsageView.USAGE_VIEW_KEY);
-    if (plainView instanceof UsageViewImpl) {
-      return ((UsageViewImpl)plainView).getUsageViewSettings();
-    }
-    return UsageViewSettings.getInstance();
+    UsageViewSettings settings = getUsageViewSettingsOrNull(e);
+    return settings != null ? settings : UsageViewSettings.getInstance();
   }
 
-  protected @Nullable UsageViewImpl getUsageViewImpl(@NotNull AnActionEvent e) {
+  private static @Nullable UsageViewSettings getUsageViewSettingsOrNull(@NotNull AnActionEvent e) {
+    UsageViewSettings settings = e.getData(UsageView.USAGE_VIEW_SETTINGS_KEY);
+    if (settings != null) {
+      return settings;
+    }
+    UsageViewImpl plainView = getUsageViewImpl(e);
+    if (plainView != null) {
+      return plainView.getUsageViewSettings();
+    }
+    return null;
+  }
+
+  protected static @Nullable UsageViewImpl getUsageViewImpl(@NotNull AnActionEvent e) {
     UsageView plainView = e.getData(UsageView.USAGE_VIEW_KEY);
     if (plainView instanceof UsageViewImpl) {
       return (UsageViewImpl)plainView;

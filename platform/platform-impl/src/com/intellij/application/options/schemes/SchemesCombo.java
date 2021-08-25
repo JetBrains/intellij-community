@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
@@ -6,10 +6,9 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,11 +123,11 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
                                                   boolean hasFocus) {
       Component c;
       if (value != null && value.isSeparator()) {
-        c = new MyTitledSeparator(IdeBundle.message("separator.scheme.stored.in", value.getPresentableText()));
+        c = new SeparatorWithText();
+        ((SeparatorWithText)c).setCaption(IdeBundle.message("separator.scheme.stored.in", value.getPresentableText()));
       }
       else {
         c = super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-        if (!selected) c.setBackground(JBColor.WHITE);
       }
       return c;
     }
@@ -157,7 +156,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   private static class MyComboBoxModel<T extends Scheme> extends DefaultComboBoxModel<MySchemeListItem<T>> {
     @Override
     public void setSelectedItem(Object anObject) {
-      if (anObject instanceof SchemesCombo.MySchemeListItem && ((MySchemeListItem)anObject).isSeparator()) {
+      if (anObject instanceof SchemesCombo.MySchemeListItem && ((MySchemeListItem<?>)anObject).isSeparator()) {
         return;
       }
       super.setSelectedItem(anObject);
@@ -182,34 +181,6 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     @Override
     public String getPresentableText() {
       return myTitle;
-    }
-  }
-
-  private static class MyTitledSeparator extends JPanel {
-
-    MyTitledSeparator(@NlsContexts.Separator @NotNull String titleText) {
-      super();
-      setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-      JLabel label = new JLabel(titleText);
-      int verticalSeparatorOffset = label.getPreferredSize().height / 2;
-      setBackground(JBColor.WHITE);
-      add(createSeparator(verticalSeparatorOffset));
-      label.setHorizontalAlignment(SwingConstants.CENTER);
-      add(label);
-      label.setBackground(JBColor.WHITE);
-      label.setForeground(JBColor.GRAY);
-      label.setFont(UIUtil.getTitledBorderFont());
-      add(createSeparator(verticalSeparatorOffset));
-    }
-
-    private static JComponent createSeparator(int verticalOffset) {
-      JPanel separatorPanel = new JPanel();
-      separatorPanel.setBackground(JBColor.WHITE);
-      separatorPanel.setLayout(new BoxLayout(separatorPanel, BoxLayout.Y_AXIS));
-      separatorPanel.add(Box.createVerticalStrut(verticalOffset));
-      JSeparator separator = new JSeparator();
-      separatorPanel.add(separator);
-      return separatorPanel;
     }
   }
 }

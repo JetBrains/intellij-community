@@ -15,10 +15,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
@@ -217,7 +213,7 @@ public final class HighlightClassUtil {
     TextRange textRange = identifier.getTextRange();
     HighlightInfo info =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(message).create();
-    registerRenameFix(aClass, info);
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameFix(aClass, info));
     QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix(dupClass));
     return info;
   }
@@ -264,19 +260,11 @@ public final class HighlightClassUtil {
       TextRange textRange = identifier.getTextRange();
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(message).create();
-      registerRenameFix(aClass, info);
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameFix(aClass, info));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix((PsiClass)element));
       return info;
     }
     return null;
-  }
-
-  static void registerRenameFix(@Nullable PsiElement element, @Nullable HighlightInfo info) {
-    if (info == null || element == null) return;
-    final ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(element.getContainingFile(), info);
-    if (descriptor == null) return;
-    final LocalQuickFix fix = QUICK_FIX_FACTORY.createRenameFix();
-    QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor));
   }
 
   static HighlightInfo checkPublicClassInRightFile(@NotNull PsiClass aClass) {
@@ -309,7 +297,7 @@ public final class HighlightClassUtil {
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     return errorResult;
   }
-  
+
   static HighlightInfo checkClassMemberDeclaredOutside(@NotNull PsiErrorElement errorElement) {
     PsiJavaFile file = ObjectUtils.tryCast(errorElement.getContainingFile(), PsiJavaFile.class);
     if (file == null) return null;
@@ -349,8 +337,8 @@ public final class HighlightClassUtil {
         firstChild = sibling.getFirstChild();
       }
     }
-    return firstChild instanceof PsiComment && 
-           ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT && 
+    return firstChild instanceof PsiComment &&
+           ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT &&
            firstChild.getText().startsWith("#!");
   }
 

@@ -118,6 +118,21 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         return createSingleImportAction(project, editor, element, suggestions)
     }
 
+    fun createActionWithAutoImportsFilter(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
+        val filteredSuggestions = filterSuggestions(element)
+
+        return createSingleImportAction(project, editor, element, filteredSuggestions)
+    }
+
+    private fun filterSuggestions(
+        element: KtExpression
+    ): Collection<FqName> {
+        return KotlinAutoImportsFilter
+            .findRelevantExtension(element.containingKtFile)
+            ?.filterSuggestions(suggestions)
+            ?: suggestions
+    }
+
     fun collectSuggestions(): Collection<FqName> {
         val element = element ?: return emptyList()
         if (!element.isValid) return emptyList()

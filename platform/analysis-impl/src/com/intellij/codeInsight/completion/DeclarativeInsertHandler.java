@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class DeclarativeInsertHandler implements InsertHandler<LookupElement> {
@@ -53,6 +54,11 @@ public final class DeclarativeInsertHandler implements InsertHandler<LookupEleme
            document.getText(TextRange.create(startOffset, startOffset + valueLength)).equals(valueToInsert);
   }
 
+  /**
+   * @deprecated Use {@link DeclarativeInsertHandler2.Builder} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public final static class Builder {
     private String myIgnoredCharacters;
     private String myValueToInsert;

@@ -83,7 +83,8 @@ public final class EmptyAction extends AnAction {
            new MyDelegatingAction(action);
   }
 
-  public static class MyDelegatingAction extends AnAction implements ActionWithDelegate<AnAction>, UpdateInBackground {
+  public static class MyDelegatingAction extends AnAction
+    implements ActionWithDelegate<AnAction>, UpdateInBackground, PerformWithDocumentsCommitted {
     @NotNull private final AnAction myDelegate;
 
     public MyDelegatingAction(@NotNull AnAction action) {
@@ -113,6 +114,11 @@ public final class EmptyAction extends AnAction {
     }
 
     @Override
+    public boolean isPerformWithDocumentsCommitted() {
+      return PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(myDelegate);
+    }
+
+    @Override
     public boolean isInInjectedContext() {
       return myDelegate.isInInjectedContext();
     }
@@ -124,7 +130,8 @@ public final class EmptyAction extends AnAction {
     }
   }
 
-  public static class MyDelegatingActionGroup extends ActionGroup implements UpdateInBackground {
+  public static class MyDelegatingActionGroup extends ActionGroup
+    implements UpdateInBackground, PerformWithDocumentsCommitted {
     @NotNull private final ActionGroup myDelegate;
 
     public MyDelegatingActionGroup(@NotNull ActionGroup action) {
@@ -171,6 +178,11 @@ public final class EmptyAction extends AnAction {
     @Override
     public boolean isUpdateInBackground() {
       return UpdateInBackground.isUpdateInBackground(myDelegate);
+    }
+
+    @Override
+    public boolean isPerformWithDocumentsCommitted() {
+      return PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(myDelegate);
     }
 
     @Override

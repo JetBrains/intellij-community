@@ -328,7 +328,7 @@ public abstract class AnAction implements PossiblyDumbAware {
       if (actionManager != null && actionManager.getId(this) != null) {
         LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
                  "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
-                 "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+                 "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable(this.toString()));
       }
     }
     myShortcutSet = shortcutSet;

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.HelpID
@@ -44,7 +45,7 @@ class KotlinInlinePropertyDialog(
         init()
     }
 
-    fun shouldBeShown() = !simpleLocal || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
+    fun shouldBeShown() = !simpleLocal || reference != null && EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
     override fun doHelpAction() = HelpManager.getInstance().invokeHelp(HelpID.INLINE_VARIABLE)
     override val inlineThisOption: KMutableProperty1<KotlinRefactoringSettings, Boolean> get() = KotlinRefactoringSettings::INLINE_LOCAL_THIS
     override val inlineKeepOption: KMutableProperty1<KotlinRefactoringSettings, Boolean> get() = KotlinRefactoringSettings::INLINE_PROPERTY_KEEP

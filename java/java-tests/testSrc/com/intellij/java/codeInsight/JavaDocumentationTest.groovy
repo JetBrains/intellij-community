@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -113,6 +113,18 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
         }.run();
       }}""",
       "private void m()")
+  }
+
+  void testAnnotationInCtrlHoverDoc() {
+    doTestCtrlHoverDoc("""\
+      class Foo {
+          {<caret>m();}
+          @Anno
+          private void m() {}
+      }
+      @java.lang.annotation.Documented
+      @interface Anno {} """,
+      "<a href=\"psi_element://Foo\">Foo</a><br/> @Anno&nbsp;<br/>private void m()")
   }
 
   void testInnerClass() {

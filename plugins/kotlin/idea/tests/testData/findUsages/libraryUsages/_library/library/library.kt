@@ -1,10 +1,10 @@
 package library;
 
 open class A(n: Int) {
-    constructor(): this(1)
+    constructor() : this(1)
 
     open class T(n: Int) {
-        constructor(): this(1)
+        constructor() : this(1)
 
         fun bar(b: Int): Int = b
     }
@@ -16,28 +16,28 @@ open class A(n: Int) {
     }
 }
 
-class B: A {
-    constructor(n: Int): super(n)
+class B : A {
+    constructor(n: Int) : super(n)
 
-    class U: A.T {
-        constructor(n: Int): super(n)
+    class U : A.T {
+        constructor(n: Int) : super(n)
     }
 }
 
-class C(): A(1) {
-    class V(): A.T(1)
+class C() : A(1) {
+    class V() : A.T(1)
 }
 
-class BB: A {
-    constructor(): super()
+class BB : A {
+    constructor() : super()
 
-    class UU: A.T {
-        constructor(): super()
+    class UU : A.T {
+        constructor() : super()
     }
 }
 
-class CC(): A() {
-    class VV(): A.T()
+class CC() : A() {
+    class VV() : A.T()
 }
 
 fun foo() {

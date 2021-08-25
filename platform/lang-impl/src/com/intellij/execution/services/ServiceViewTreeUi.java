@@ -4,6 +4,8 @@ package com.intellij.execution.services;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.navigationToolbar.NavBarBorder;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.*;
@@ -124,22 +126,24 @@ class ServiceViewTreeUi implements ServiceViewUi {
     if (component == null) {
       component = myMessagePanel;
     }
-    if (component.getParent() == myDetailsPanel) return;
-
-    myDetailsComponents.add(component);
-    myDetailsPanel.removeAll();
-    myDetailsPanel.add(component, BorderLayout.CENTER);
-    myDetailsPanel.revalidate();
-    myDetailsPanel.repaint();
-
+    if (component.getParent() != myDetailsPanel) {
+      myDetailsComponents.add(component);
+      myDetailsPanel.removeAll();
+      myDetailsPanel.add(component, BorderLayout.CENTER);
+      myDetailsPanel.revalidate();
+      myDetailsPanel.repaint();
+    }
     ActionToolbar serviceActionToolbar = myServiceActionToolbar;
     if (serviceActionToolbar != null) {
+      ((ActionToolbarImpl)serviceActionToolbar).clearPresentationCache();
       serviceActionToolbar.updateActionsImmediately();
     }
-    ActionToolbar masterActionToolbar = myMasterActionToolbar;
-    if (masterActionToolbar != null) {
-      masterActionToolbar.updateActionsImmediately();
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ActionToolbar masterActionToolbar = myMasterActionToolbar;
+      if (masterActionToolbar != null) {
+        masterActionToolbar.updateActionsImmediately();
+      }
+    });
   }
 
   @Nullable

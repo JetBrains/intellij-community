@@ -10,5 +10,6 @@ public class JavaClass4 {
     }
 
     public static NestedPublic getNested() {
+        return (NestedPublic) new Object();
     }
 }

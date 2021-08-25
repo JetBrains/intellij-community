@@ -2,8 +2,8 @@ package client
 
 import server.Server
 
-class Client: Server() {
-    var nextServer: Server? = new Server()
+class Client : Server("") {
+    var nextServer: Server? = Server("")
     val name = Server.NAME
 
     fun foo(s: Server) {
@@ -11,7 +11,7 @@ class Client: Server() {
         println("Server: $server")
     }
 
-    fun getNextServer(): Server? {
+    fun getNextServer2(): Server? {
         return nextServer
     }
 
@@ -21,16 +21,16 @@ class Client: Server() {
     }
 }
 
-object ClientObject: Server() {
+object ClientObject : Server("") {
 
 }
 
-class Client2: Server {
-    constructor(name: String) {
+class Client2 : Server {
+    constructor(name: String) : super(name) {
 
     }
 
-    constructor(): super() {
+    constructor() : super("") {
 
     }
 }
@@ -40,7 +40,7 @@ fun Client.bar(s: Server) {
 }
 
 fun Client.hasNextServer(): Boolean {
-    return getNextServer() != null
+    return getNextServer2() != null
 }
 
 fun Any.asServer(): Server? {

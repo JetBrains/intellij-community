@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import gnu.trove.TObjectIntHashMap;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +9,7 @@ import java.util.Map;
 
 public final class GradleVersionComparator implements Comparable<GradleVersion> {
   private final GradleVersion myVersion;
-  private final TObjectIntHashMap<String> myResults = new TObjectIntHashMap<String>();
+  private final Map<String, Integer> myResults = new HashMap<String, Integer>();
   private final Map<String, GradleVersion> myVersionsMap = new HashMap<String, GradleVersion>();
 
   public GradleVersionComparator(@NotNull GradleVersion gradleVersion) {
@@ -22,10 +21,10 @@ public final class GradleVersionComparator implements Comparable<GradleVersion> 
     if (myVersion == gradleVersion) return 0;
     String version = gradleVersion.getVersion();
     if (myVersion.getVersion().equals(version)) return 0;
-    int result = myResults.get(version);
-    if (result != 0) return result;
+    Integer cached = myResults.get(version);
+    if (cached != null) return cached;
 
-    result = myVersion.compareTo(gradleVersion);
+    int result = myVersion.compareTo(gradleVersion);
     myResults.put(version, result);
     return result;
   }

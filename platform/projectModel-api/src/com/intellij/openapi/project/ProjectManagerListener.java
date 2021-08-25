@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 /**
- * Listener for Project.
+ * Listener for the {@link Project} lifecycle events.
+ * @see ProjectManager#TOPIC
  */
 public interface ProjectManagerListener extends EventListener {
   ProjectManagerListener[] EMPTY_ARRAY = new ProjectManagerListener[0];
@@ -20,7 +21,7 @@ public interface ProjectManagerListener extends EventListener {
   }
 
   /**
-   * @deprecated Please use {@link VetoableProjectManagerListener}
+   * @deprecated Use {@link VetoableProjectManagerListener} instead
    */
   @Deprecated
   default boolean canCloseProject(@NotNull Project project) {

@@ -64,6 +64,7 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
       myTree.delete(myFilesToDelete, mySettings, indicator);
       myTree.update(myFilesToUpdate, myForce, mySettings, indicator);
     }
+    mySettings.updateFromMavenConfig(myTree.getRootProjectsFiles());
 
     if (myOnCompletion != null) myOnCompletion.run();
   }

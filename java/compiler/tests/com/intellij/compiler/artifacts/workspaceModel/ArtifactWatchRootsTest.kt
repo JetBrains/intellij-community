@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts.workspaceModel
 
 import com.intellij.compiler.artifacts.ArtifactsTestCase
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
@@ -14,30 +14,19 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assume.assumeTrue
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
+import java.nio.file.Files
+import java.nio.file.Path
 
 class ArtifactWatchRootsTest : ArtifactsTestCase() {
-
-  @Rule
-  var folder: TemporaryFolder = TemporaryFolder()
-
   override fun runInDispatchThread(): Boolean = true
-
-  override fun setUp() {
-    super.setUp()
-    folder.create()
-  }
 
   fun `test watch roots rename artifact content via workspace model`() {
     assumeTrue(WorkspaceModel.enabledForArtifacts)
-    val outputDir = folder.newFolder("output")
-    val sourceDir = folder.newFolder("source")
 
+    val testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
+    val outputDir = Files.createDirectories(Path.of(FileUtil.getTempDirectory(), "output")).toFile()
     val file = runWriteAction {
-      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceDir)!!
-      val file = virtualFile.createChildData(Any(), "JustAFile")
-      file
+      testRoot.createChildDirectory(Any(), "source").createChildData(Any(), "JustAFile")
     }
 
     val outputVirtualUrl = VirtualFileUrlManager.getInstance(project).fromPath(outputDir.path)
@@ -50,8 +39,7 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
       }
     }
     runWriteAction {
-      VirtualFileManagerEx.getInstance().syncRefresh()
-
+      testRoot.refresh(false, true)
       file.rename(this, "AnotherName")
     }
 
@@ -62,12 +50,10 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
 
   fun `test watch roots rename artifact content via bridge`() {
     assumeTrue(WorkspaceModel.enabledForArtifacts)
-    val sourceDir = folder.newFolder("source")
 
+    val testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
     val file = runWriteAction {
-      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceDir)!!
-      val file = virtualFile.createChildData(Any(), "JustAFile")
-      file
+      testRoot.createChildDirectory(Any(), "source").createChildData(Any(), "JustAFile")
     }
 
     runWriteAction {
@@ -78,13 +64,13 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
       modifiableModel.commit()
     }
     runWriteAction {
-      VirtualFileManagerEx.getInstance().syncRefresh()
-
+      testRoot.refresh(false, true)
       file.rename(this, "AnotherName")
     }
 
     val resultingFilePath = (ArtifactManager.getInstance(project).artifacts[0].rootElement.children.single() as FileCopyPackagingElement).filePath
     assertTrue(resultingFilePath.endsWith("AnotherName"))
   }
+
   object MySource : EntitySource
 }

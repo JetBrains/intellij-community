@@ -14,14 +14,14 @@ abstract class CreateClassFromUsageFactory<E : KtElement> : KotlinIntentionActio
     override fun createFixes(
         originalElementPointer: SmartPsiElementPointer<E>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> ClassInfo?
+        quickFixDataFactory: (E) -> ClassInfo?
     ): List<QuickFixWithDelegateFactory> {
         val possibleClassKinds = getPossibleClassKinds(originalElementPointer.element ?: return emptyList(), diagnostic)
 
         return possibleClassKinds.map { classKind ->
             QuickFixWithDelegateFactory(classKind.actionPriority) {
                 val currentElement = originalElementPointer.element ?: return@QuickFixWithDelegateFactory null
-                val data = quickFixDataFactory() ?: return@QuickFixWithDelegateFactory null
+                val data = quickFixDataFactory(currentElement) ?: return@QuickFixWithDelegateFactory null
                 CreateClassFromUsageFix.create(currentElement, data.copy(kind = classKind))
             }
         }

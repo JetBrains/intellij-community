@@ -186,19 +186,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return myCurrentChange;
   }
 
-  /**
-   * In case of conflict, will select first change with this file path
-   */
-  @Deprecated
-  protected void selectFilePath(@NotNull FilePath filePath) {
-    Wrapper changeToSelect = ContainerUtil.find(getAllChanges().iterator(), change -> change.getFilePath().equals(filePath));
-
-    if (changeToSelect != null) {
-      myCurrentChange = changeToSelect;
-      selectChange(changeToSelect);
-    }
-  }
-
   @Override
   protected boolean hasNextChange(boolean fromUpdate) {
     PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
@@ -358,9 +345,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   protected static class ChangeWrapper extends Wrapper {
     @NotNull protected final Change change;
+    @Nullable protected final ChangesBrowserNode.Tag nodeTag;
 
     public ChangeWrapper(@NotNull Change change) {
+      this(change, null);
+    }
+
+    public ChangeWrapper(@NotNull Change change, @Nullable ChangesBrowserNode.Tag nodeTag) {
       this.change = change;
+      this.nodeTag = nodeTag;
     }
 
     @NotNull
@@ -383,6 +376,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public String getPresentableName() {
       return getFilePath().getName();
+    }
+
+    @Override
+    public @Nullable ChangesBrowserNode.Tag getTag() {
+      return nodeTag;
     }
 
     @Nullable
@@ -409,12 +407,12 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       if (getClass() != o.getClass()) return false;
 
       ChangeWrapper wrapper = (ChangeWrapper)o;
-      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change);
+      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change) && Objects.equals(wrapper.nodeTag, nodeTag);
     }
 
     @Override
     public int hashCode() {
-      return change.hashCode();
+      return Objects.hash(change, nodeTag);
     }
   }
 

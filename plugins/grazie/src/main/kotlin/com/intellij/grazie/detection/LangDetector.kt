@@ -3,16 +3,13 @@ package com.intellij.grazie.detection
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.DetectionContext
-import com.intellij.grazie.detector.chain.ChainDetectorBuilder
+import com.intellij.grazie.detector.DefaultLanguageDetectors
 import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.ide.msg.GrazieStateLifecycle
-import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.utils.lazyConfig
+import com.intellij.grazie.detector.utils.resources.JVMResourceLoader
+import com.intellij.grazie.detector.utils.words
 
-object LangDetector : GrazieStateLifecycle {
-  private var available: Set<Lang> by lazyConfig(this::init)
-
-  private val detector by lazy { ChainDetectorBuilder.standard() }
+object LangDetector {
+  private val detector by lazy { DefaultLanguageDetectors.standard(JVMResourceLoader) }
 
   /**
    * Get natural language of text.
@@ -23,7 +20,7 @@ object LangDetector : GrazieStateLifecycle {
    */
   @Suppress("MemberVisibilityCanBePrivate")
   fun getLanguage(text: String): Language? {
-    val detected = detector.detect(text.take(1_000))
+    val detected = detector.detect(text.take(1_000), isReliable = false)
 
     if (detected.preferred == Language.UNKNOWN) return null
 
@@ -36,24 +33,16 @@ object LangDetector : GrazieStateLifecycle {
    * @return Lang that is detected and enabled in grazie
    */
   fun getLang(text: String) = getLanguage(text)?.let {
-    available.find { lang -> lang.equalsTo(it) }
+    GrazieConfig.get().availableLanguages.find { lang -> lang.equalsTo(it) }
   }
 
   /**
    * Update local detection context from text
    */
   fun updateContext(text: CharSequence, context: DetectionContext.Local) {
-    val details = detector.detectWithDetails(text.take(1_000))
-    context.update(text.length, details)
-  }
-
-  override fun init(state: GrazieConfig.State) {
-    available = state.availableLanguages
-  }
-
-  override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-    if (prevState.availableLanguages != newState.availableLanguages) {
-      init(newState)
-    }
+    val textToDetect = text.take(1_000)
+    val details = detector.detectWithDetails(textToDetect, isReliable = true)
+    val wordsCount = textToDetect.words().count()
+    context.update(text.length, wordsCount, details)
   }
 }

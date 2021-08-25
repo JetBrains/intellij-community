@@ -93,7 +93,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return null
   }
 
-  private fun buildStructureViewModel(file: PsiFile, editor: Editor? = null): StructureViewModel? {
+  protected fun buildStructureViewModel(file: PsiFile, editor: Editor? = null): StructureViewModel? {
     if (currentFile?.get() == file && currentFileModCount == file.modificationStamp) {
       if (editor == null) {
         currentFileStructure?.get()?.let { return it }

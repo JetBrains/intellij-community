@@ -404,10 +404,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
         AsyncStacksUtils.setupAgent(this);
       }
 
-      if (canBeModified) {
-        MemoryAgentUtil.setupAgent(this);
-      }
-
       XDebugSessionImpl session = (XDebugSessionImpl)getSession().getXDebugSession();
 
       // breakpoints should be initialized after all processAttached listeners work
@@ -597,6 +593,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }, ModalityState.NON_MODAL);
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
+        }
+        catch (Exception e) { // catch everything here to be able vote
+          LOG.error(e);
         }
         finally {
           if (start > 0) {

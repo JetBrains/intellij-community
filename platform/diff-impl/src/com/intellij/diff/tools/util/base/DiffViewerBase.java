@@ -25,7 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
@@ -133,7 +133,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     abortRediff();
 
     if (getComponent().isShowing()) {
-      myTaskAlarm.addRequest(this::rediff, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      myTaskAlarm.addRequest(this::rediff, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     }
   }
 
@@ -158,7 +158,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     onBeforeRediff();
 
     boolean forceEDT = forceRediffSynchronously();
-    int waitMillis = trySync || tryRediffSynchronously() ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+    int waitMillis = trySync || tryRediffSynchronously() ? ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
 
     myTaskExecutor.executeAndTryWait(
       indicator -> {

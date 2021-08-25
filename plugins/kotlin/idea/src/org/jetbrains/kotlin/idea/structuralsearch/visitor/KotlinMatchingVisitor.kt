@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.fir.builder.toUnaryName
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.resolveType
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.calleeName
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor

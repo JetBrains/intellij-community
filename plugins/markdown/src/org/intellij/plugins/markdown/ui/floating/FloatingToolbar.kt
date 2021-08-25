@@ -11,13 +11,21 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.psi.util.parents
 import com.intellij.ui.LightweightHint
+import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.util.hasType
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import kotlin.properties.Delegates
 
-internal class FloatingToolbar(val editor: Editor) : Disposable {
+@ApiStatus.Internal
+class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : Disposable {
   companion object {
     private const val verticalGap = 2
   }
@@ -30,21 +38,21 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
   private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
 
-
   init {
     registerListeners()
   }
 
-
   fun isShown() = hint != null
 
-  fun hideIfShown() { hint?.hide() }
-
+  fun hideIfShown() {
+    hint?.hide()
+  }
 
   fun showIfHidden() {
-    if (hint != null) return
-
-    val leftGroup = ActionManager.getInstance().getAction("Markdown.Toolbar.Floating") as ActionGroup
+    if (hint != null || !canBeShownAtCurrentSelection()) {
+      return
+    }
+    val leftGroup = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, leftGroup, true)
     toolbar.setTargetComponent(editor.contentComponent)
     toolbar.setReservePlaceAutoPopupIcon(false)
@@ -58,7 +66,6 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
     this.hint = newHint
   }
 
-
   fun updateLocationIfShown() {
     showOrUpdateLocation(hint ?: return)
   }
@@ -69,10 +76,12 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
 
   private fun showOrUpdateLocation(hint: LightweightHint) {
     HintManagerImpl.getInstanceImpl().showEditorHint(
-      hint, editor,
+      hint,
+      editor,
       getHintPosition(hint),
       HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING,
-      0, true
+      0,
+      true
     )
   }
 
@@ -86,6 +95,19 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
     editor.removeEditorMouseListener(mouseListener)
     editor.removeEditorMouseMotionListener(mouseMotionListener)
     editor.contentComponent.removeKeyListener(keyboardListener)
+  }
+
+  private fun canBeShownAtCurrentSelection(): Boolean {
+    val file = PsiEditorUtil.getPsiFile(editor)
+    PsiDocumentManager.getInstance(file.project).commitDocument(editor.document)
+    val selectionModel = editor.selectionModel
+    val elementAtStart = file.findElementAt(selectionModel.selectionStart)
+    val elementAtEnd = file.findElementAt(selectionModel.selectionEnd)
+    return elementAtStart?.let(::hasFenceParent) == false && elementAtEnd?.let(::hasFenceParent) == false
+  }
+
+  private fun hasFenceParent(element: PsiElement): Boolean {
+    return element.parents(withSelf = true).any { it.hasType(MarkdownElementTypes.CODE_FENCE) }
   }
 
   private fun getHintPosition(hint: LightweightHint): Point {
@@ -110,47 +132,47 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
     lastSelection = newSelection
   }
 
-
   private inner class MouseListener : EditorMouseListener {
     override fun mouseReleased(e: EditorMouseEvent) {
       updateOnProbablyChangedSelection {
-        if (isShown())
+        if (isShown()) {
           updateLocationIfShown()
-        else showIfHidden()
+        } else {
+          showIfHidden()
+        }
       }
     }
   }
-
 
   private inner class KeyboardListener : KeyAdapter() {
     override fun keyReleased(e: KeyEvent) {
       super.keyReleased(e)
-      if (e.source != editor.contentComponent) return
-
+      if (e.source != editor.contentComponent) {
+        return
+      }
       updateOnProbablyChangedSelection { selection ->
-        if ('\n' in selection)
+        if ('\n' in selection) {
           hideIfShown()
-        else if (isShown())
+        } else if (isShown()) {
           updateLocationIfShown()
-        else
+        } else {
           showIfHidden()
+        }
       }
     }
   }
 
-
   private inner class MouseMotionListener : EditorMouseMotionListener {
     override fun mouseMoved(e: EditorMouseEvent) {
       val visualPosition = e.visualPosition
-
       val hoverSelected = editor.caretModel.allCarets.any {
         val beforeSelectionEnd = it.selectionEndPosition.after(visualPosition)
         val afterSelectionStart = visualPosition.after(it.selectionStartPosition)
         beforeSelectionEnd && afterSelectionStart
       }
-
-      if (hoverSelected)
+      if (hoverSelected) {
         showIfHidden()
+      }
     }
   }
 }

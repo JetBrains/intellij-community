@@ -135,7 +135,9 @@ abstract class HtmlTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : BaseHtmlEm
       if (baseLexer.tokenType == null) break
       if (baseLexer.tokenType === XmlTokenType.XML_NAME) {
         val tokenText = buf.subSequence(baseLexer.tokenStart, baseLexer.tokenEnd)
-        if (namesEqual(tagName, tokenText)
+        if ((baseLexer.tokenEnd < buf.length
+             && buf[baseLexer.tokenEnd].let { it == '>' || it == '/' || it.isWhitespace() }
+             && namesEqual(tagName, tokenText))
             || namesEqual(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED, tokenText)) {
           break // really found end
         }

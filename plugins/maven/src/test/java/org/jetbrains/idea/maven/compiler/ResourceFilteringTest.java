@@ -879,47 +879,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   @Test 
-  public void testPluginDirectoriesFiltering() throws Exception {
-    if (ignore()) return;
-
-    createProjectSubFile("filters/filter.properties", "xxx=value");
-    createProjectSubFile("webdir1/file1.properties", "value=${xxx}");
-    createProjectSubFile("webdir2/file2.properties", "value=${xxx}");
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>war</packaging>" +
-
-                  "<build>" +
-                  "  <filters>" +
-                  "    <filter>filters/filter.properties</filter>" +
-                  "  </filters>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-war-plugin</artifactId>\n" +
-                  "      <configuration>" +
-                  "        <webResources>" +
-                  "          <resource>" +
-                  "            <directory>webdir1</directory>" +
-                  "            <filtering>true</filtering>" +
-                  "          </resource>" +
-                  "          <resource>" +
-                  "            <directory>webdir2</directory>" +
-                  "            <filtering>false</filtering>" +
-                  "          </resource>" +
-                  "        </webResources>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    compileModules("project");
-    assertResult("target/classes/file1.properties", "value=value");
-    assertResult("target/classes/file2.properties", "value=${xxx}");
-  }
-
-  @Test 
   public void testEscapingFiltering() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",

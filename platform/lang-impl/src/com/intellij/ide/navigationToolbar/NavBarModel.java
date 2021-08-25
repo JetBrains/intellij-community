@@ -4,10 +4,7 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ModalityState;
@@ -124,7 +121,7 @@ public class NavBarModel {
       CommonDataKeys.VIRTUAL_FILE,
       LangDataKeys.MODULE,
       CommonDataKeys.EDITOR,
-      PlatformDataKeys.SELECTED_ITEMS).build();
+      PlatformCoreDataKeys.SELECTED_ITEMS).build();
   }
 
   private void setModelWithUpdate(@Nullable List<Object> model) {
@@ -204,19 +201,7 @@ public class NavBarModel {
   }
 
   protected void updateModel(final PsiElement psiElement, @Nullable NavBarModelExtension ownerExtension) {
-    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(psiElement);
-    ReadAction.nonBlocking(() -> {
-        PsiElement element = pointer.getElement();
-        if (element == null) return null;
-        return createModel(element, null, ownerExtension);
-      })
-      .expireWith(myProject)
-      .finishOnUiThread(ModalityState.current(), model -> {
-        if (model != null) {
-          setModel(model);
-        }
-      })
-      .submit(ourExecutor);
+    setModel(createModel(psiElement, null, ownerExtension));
   }
 
   @NotNull
@@ -335,7 +320,7 @@ public class NavBarModel {
     return child;
   }
 
-  protected List<Object> getChildren(final Object object) {
+  public List<Object> getChildren(final Object object) {
     final List<Object> result = new ArrayList<>();
     PairProcessor<Object, NavBarModelExtension> processor = (o, ext) -> {
       ContainerUtil.addIfNotNull(result, o instanceof PsiElement && ext.normalizeChildren() ? normalize((PsiElement)o) : o);

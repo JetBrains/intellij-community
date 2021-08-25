@@ -40,7 +40,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
                         serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
-    <applicationService serviceImplementation="com.intellij.diagnostic.PerformanceWatcher" preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
+                        serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON"/>
 
     <projectService serviceInterface="com.intellij.psi.PsiManager"

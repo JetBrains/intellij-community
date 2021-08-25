@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositorie
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 
-class ReactJsClientTemplate : JsClientTemplate() {
+object ReactJsClientTemplate : JsClientTemplate() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.js.react.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.js.react.description")
 

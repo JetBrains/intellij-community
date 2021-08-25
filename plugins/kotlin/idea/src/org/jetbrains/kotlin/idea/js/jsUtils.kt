@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.js
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.CompilerModuleExtension
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.idea.configuration.isGradleModule
+import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.framework.isGradleModule
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.js.isJs
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 
 val Module.jsTestOutputFilePath: String?
     get() {
@@ -36,4 +36,7 @@ val Module.jsProductionOutputFilePath: String?
 fun Module.asJsModule(): Module? = takeIf { it.platform.isJs() }
 
 val Module.shouldUseJpsOutput: Boolean
-    get() = !(isGradleModule() && GradleProjectSettings.isDelegatedBuildEnabled(this))
+    get() {
+        val gradleFacade = KotlinGradleFacade.instance ?: return false
+        return !(isGradleModule() && gradleFacade.isDelegatedBuildEnabled(this))
+    }

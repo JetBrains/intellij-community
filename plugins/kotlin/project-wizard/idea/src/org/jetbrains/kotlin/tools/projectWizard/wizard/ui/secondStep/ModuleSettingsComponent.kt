@@ -60,14 +60,18 @@ class ModuleSettingsComponent(
         settingsList.setComponents(moduleSettingComponents)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun createTemplatesListComponentForModule(module: Module): ModuleTemplateComponent? {
-        val templates = read { availableTemplatesFor(module) }.takeIf { it.isNotEmpty() } ?: return null
-        val templatesWithNoneTemplate = buildList {
-            add(NoneTemplate)
-            addAll(templates)
+        val templates = read { availableTemplatesFor(module) }
+        if (templates.isEmpty()) return null
+
+        assert(templates.all { it.isPermittedForModule(module)}) {
+            "Templates available for the module contain non-permitted one: templates=$templates, module=$module"
         }
-        return ModuleTemplateComponent(context, module, templatesWithNoneTemplate, uiEditorUsagesStats) {
+
+        // we don't display the component for a single template matching module's default one (nothing to choose from)
+        if (templates.size == 1 && templates.first() == module.template) return null
+
+        return ModuleTemplateComponent(context, module, templates, uiEditorUsagesStats) {
             updateModule(module)
             component.updateUI()
         }
@@ -98,7 +102,7 @@ private class ModuleNameComponent(context: Context, private val module: Module) 
                 textField.disable(KotlinNewProjectWizardUIBundle.message("module.settings.name.same.as.project"))
             }
             module.configurator == CommonTargetConfigurator -> {
-                textField.disable(ModuleType.common.name + " " + KotlinNewProjectWizardUIBundle.message("module.settings.name.can.not.be.modified"))
+                textField.disable(KotlinNewProjectWizardUIBundle.message("module.settings.name.0.can.not.be.modified", ModuleType.common.name))
             }
         }
     }

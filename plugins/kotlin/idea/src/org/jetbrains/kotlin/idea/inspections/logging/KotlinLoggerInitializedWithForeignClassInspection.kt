@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -54,15 +53,16 @@ class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspecti
             { (className, methodName) -> FqName("${className}.${methodName}") }
         )
 
+    @Suppress("DialogTitleCapitalization")
     override fun createOptionsPanel(): JComponent? {
         val table = ListTable(
             ListWrappingTableModel(
                 listOf(loggerFactoryClassNames, loggerFactoryMethodNames),
-                KotlinBundle.message("logger.factory.class.name"),
-                KotlinBundle.message("logger.factory.method.name")
+                KotlinBundle.message("title.logger.factory.class.name"),
+                KotlinBundle.message("title.logger.factory.method.name")
             )
         )
-        return UiUtils.createAddRemoveTreeClassChooserPanel(table, KotlinBundle.message("choose.logger.factory.class"))
+        return UiUtils.createAddRemoveTreeClassChooserPanel(table, KotlinBundle.message("title.choose.logger.factory.class"))
     }
 
     override fun readSettings(element: Element) {
@@ -88,7 +88,8 @@ class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspecti
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(call) {
-        val containingClassName = call.containingClass()?.name ?: return
+        val containingClassNames = call.containingClassNames()
+        if (containingClassNames.isEmpty()) return
 
         val callee = call.calleeExpression ?: return
         val loggerMethodFqNames = loggerFactoryFqNames[callee.text] ?: return
@@ -114,16 +115,25 @@ class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspecti
             else -> return
         }
         val classLiteralName = classLiteral.receiverExpression?.text ?: return
-        if (containingClassName == classLiteralName) return
+        if (classLiteralName in containingClassNames) return
 
         if (call.resolveToCall()?.resultingDescriptor?.fqNameOrNull() !in loggerMethodFqNames) return
 
         holder.registerProblem(
             classLiteral,
             KotlinBundle.message("logger.initialized.with.foreign.class", "$classLiteralName::class"),
-            ReplaceForeignFix(containingClassName)
+            ReplaceForeignFix(containingClassNames.last())
         )
     })
+
+    private fun KtCallExpression.containingClassNames(): List<String> {
+        val classOrObject = getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
+        return if (classOrObject is KtObjectDeclaration && classOrObject.isCompanion()) {
+            listOfNotNull(classOrObject.name, classOrObject.getStrictParentOfType<KtClass>()?.name)
+        } else {
+            listOfNotNull(classOrObject.name)
+        }
+    }
 
     private class ReplaceForeignFix(private val containingClassName: String) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("replace.with.0", "$containingClassName::class")

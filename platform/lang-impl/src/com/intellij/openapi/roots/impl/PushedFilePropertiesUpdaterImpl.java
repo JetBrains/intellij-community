@@ -140,7 +140,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       queueTasks(delayedTasks);
     }
     if (pushingSomethingSynchronously) {
-      ModalityUiUtil.invokeLaterIfNeeded(() -> scheduleDumbModeReindexingIfNeeded(), ModalityState.defaultModalityState());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> scheduleDumbModeReindexingIfNeeded());
     }
   }
 
@@ -427,9 +427,9 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private static void reloadPsi(final VirtualFile file, final Project project) {
     final FileManagerImpl fileManager = (FileManagerImpl)PsiManagerEx.getInstanceEx(project).getFileManager();
     if (fileManager.findCachedViewProvider(file) != null) {
-      ModalityUiUtil.invokeLaterIfNeeded(() -> WriteAction.run(() -> fileManager.forceReload(file)),
-                                         ModalityState.defaultModalityState(),
-                                         project.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.getDisposed(),
+                                         () -> WriteAction.run(() -> fileManager.forceReload(file))
+      );
     }
   }
 

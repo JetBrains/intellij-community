@@ -3,8 +3,8 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,7 +162,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     };
   }
 
-  private Int2ObjectMap<MostlyUShortIntList> tempMap() {
+  private IntObjectMap<MostlyUShortIntList> tempMap() {
     assert myTempState != null;
     return Objects.requireNonNull(myTempState.myTempJoinedChildrenMap);
   }
@@ -221,7 +221,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   private final class TempState {
-    @Nullable Int2ObjectMap<MostlyUShortIntList> myTempJoinedChildrenMap;
+    @Nullable IntObjectMap<MostlyUShortIntList> myTempJoinedChildrenMap;
 
     int myCurrentParent = -1;
     int myExpectedChildrenCount;
@@ -269,7 +269,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
     private void switchChildrenToTempMap(int parentId) {
       if (myTempJoinedChildrenMap == null) {
-        myTempJoinedChildrenMap = new Int2ObjectOpenHashMap<>();
+        myTempJoinedChildrenMap = ContainerUtil.createConcurrentIntObjectMap();
       }
 
       int start = getChildrenStart(parentId);
@@ -286,7 +286,10 @@ abstract class StubList extends AbstractList<StubBase<?>> {
       }
 
       MostlyUShortIntList prev = myTempJoinedChildrenMap.put(parentId, ids);
-      assert prev == null;
+      if (parentId == 311133) {
+        new RuntimeException(Thread.currentThread() + "; prev=" + prev).printStackTrace();
+      }
+      assert prev == null: parentId;
 
       myStubData.set(childrenStartIndex(parentId), IN_TEMP_MAP);
     }

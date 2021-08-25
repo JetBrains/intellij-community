@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -148,6 +148,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private ActionGroup myLeftToolbarActions;
 
   private boolean myContentToolbarBefore = true;
+  private boolean myTopLeftActionsVisible = true;
 
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
@@ -243,6 +244,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     myContextActions.clear();
     updateTabsUI(false);
+  }
+
+  void setTopLeftActionsVisible(boolean visible) {
+    myTopLeftActionsVisible = visible;
+    rebuildCommonActions();
   }
 
   private void initUi() {
@@ -1030,7 +1036,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       TopToolbarContextActions topToolbarContextActions = myContextActions.get(entry.getKey());
 
       DefaultActionGroup leftGroupToBuild = new DefaultActionGroup();
-      leftGroupToBuild.addAll(myTopLeftActions);
+      if (myTopLeftActionsVisible) {
+        leftGroupToBuild.addAll(myTopLeftActions);
+      }
       final AnAction[] leftActions = leftGroupToBuild.getChildren(null);
 
       if (topToolbarContextActions == null || !Arrays.equals(leftActions, topToolbarContextActions.left)) {
@@ -1505,7 +1513,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
+      g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
       g.fill(myBoundingBox);
     }
 
@@ -1843,6 +1851,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     ArrayList<AnAction> result = new ArrayList<>();
     if (myLeftToolbarActions != null) {
       AnAction[] kids = myLeftToolbarActions.getChildren(null);
+      ContainerUtil.addAll(result, kids);
+    }
+    if (myTopLeftActions != null && Registry.is("debugger.new.tool.window.layout")) {
+      AnAction[] kids = myTopLeftActions.getChildren(null);
       ContainerUtil.addAll(result, kids);
     }
     return result;

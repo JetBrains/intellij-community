@@ -4,9 +4,7 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.actions.AbstractCommonCheckinAction
 import com.intellij.openapi.vcs.actions.VcsContext
@@ -35,15 +33,12 @@ abstract class AbstractCommitChangesAction : AbstractCommonCheckinAction() {
       }
 
       if (presentation.isEnabled && !changes.isNullOrEmpty()) {
-        disableIfAnyHijackedChanges(vcsContext.project!!, presentation, changes)
+        val manager = ChangeListManager.getInstance(vcsContext.project!!)
+        presentation.isEnabled = changes.all { isActionEnabled(manager, it) }
       }
     }
   }
 
-  private fun disableIfAnyHijackedChanges(project: Project, presentation: Presentation, changes: Array<Change>) {
-    val manager = ChangeListManager.getInstance(project)
-    val hasHijackedChanges = changes.any { it.fileStatus == FileStatus.HIJACKED && manager.getChangeList(it) == null }
-
-    presentation.isEnabled = !hasHijackedChanges
-  }
+  protected open fun isActionEnabled(manager: ChangeListManager,
+                                     it: Change) = manager.getChangeList(it) != null
 }

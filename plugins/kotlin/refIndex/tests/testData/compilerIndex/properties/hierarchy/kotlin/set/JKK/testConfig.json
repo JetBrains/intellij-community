@@ -1,0 +1,11 @@
+{
+    "usages": [
+        "JKK.java",
+        "JJKK.java",
+        "jkk_.java",
+        "jjkk_.java"
+    ],
+    "shouldBeUsage": [
+        "kjkk_.java"
+    ]
+}

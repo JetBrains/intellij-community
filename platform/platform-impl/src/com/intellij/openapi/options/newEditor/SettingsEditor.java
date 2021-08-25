@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.options.Configurable;
@@ -359,7 +360,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider, Place
   private JComponent withHistoryToolbar(JComponent component) {
     ActionGroup group = ActionUtil.getActionGroup("Back", "Forward");
     if (group == null) return component;
-    JComponent toolbar = ActionUtil.createToolbarComponent(this, "SettingsHistory", group, true);
+    JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.fill = GridBagConstraints.HORIZONTAL;

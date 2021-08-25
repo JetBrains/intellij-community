@@ -100,7 +100,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/java/lib/jshell-frontend.jar"                      : "9",
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
-    "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
     "plugins/Groovy/lib/groovy-rt.jar"                          : "1.6",
     "plugins/Groovy/lib/groovy-constants-rt.jar"                : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",
@@ -120,7 +119,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
-    "plugins/android/lib/layoutlib-27.2.0.0.jar"                : "9",
   ]
 
   BaseIdeaProperties() {
@@ -140,10 +138,10 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
         withModule("intellij.java.rt", "idea_rt.jar")
 
-        //for compatibility with users' projects which take these libraries from IDEA installation
+        // for compatibility with users' projects which take these libraries from IDEA installation
         withProjectLibrary("jetbrains-annotations")
         removeVersionFromProjectLibraryJarNames("jetbrains-annotations")
-        withProjectLibrary("JUnit3")
+        withProjectLibrary("JUnit3", "", true)
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
         withProjectLibrary("commons-net")
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -136,7 +136,7 @@ public final class GithubNotifications {
   public static boolean showYesNoDialog(@Nullable Project project,
                                         @NotificationTitle @NotNull String title,
                                         @NotificationContent @NotNull String message,
-                                        @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
+                                        @NotNull DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNo(title, message)
       .icon(Messages.getQuestionIcon())
       .doNotAsk(doNotAskOption)

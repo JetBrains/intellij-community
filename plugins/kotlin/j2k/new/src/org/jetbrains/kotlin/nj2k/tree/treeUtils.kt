@@ -11,6 +11,10 @@ inline fun <reified T : JKElement> JKElement.parentOfType(): T? {
     return generateSequence(parent) { it.parent }.filterIsInstance<T>().firstOrNull()
 }
 
+fun JKElement.parents(): Sequence<JKElement> {
+    return generateSequence(parent) { it.parent }
+}
+
 private fun <T : JKElement> KProperty0<Any>.detach(element: T) {
     if (element.parent == null) return
     // TODO: Fix when KT-16818 is implemented

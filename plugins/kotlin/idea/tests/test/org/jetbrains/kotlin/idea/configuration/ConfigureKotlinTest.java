@@ -3,7 +3,8 @@
 package org.jetbrains.kotlin.idea.configuration;
 
 import com.intellij.jarRepository.RepositoryLibraryType;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -44,8 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 
 @RunWith(JUnit38ClassRunner.class)
 public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
@@ -328,7 +328,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     private void configureFacetAndCheckJvm(JvmTarget jvmTarget) {
-        IdeModifiableModelsProviderImpl modelsProvider = new IdeModifiableModelsProviderImpl(getProject());
+      IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(getProject());
         try {
             KotlinFacet facet = FacetUtilsKt.getOrCreateFacet(getModule(), modelsProvider, false, null, false);
             TargetPlatform platform = JvmPlatforms.INSTANCE.jvmPlatformByTargetVersion(jvmTarget);
@@ -336,7 +336,8 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
                     facet,
                     "1.4",
                     platform,
-                    modelsProvider
+                    modelsProvider,
+                    emptySet()
             );
             assertEquals(platform, facet.getConfiguration().getSettings().getTargetPlatform());
             assertEquals(jvmTarget.getDescription(),

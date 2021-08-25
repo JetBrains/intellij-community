@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -19,10 +19,19 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
     checkQuickFixAll();
   }
 
+  public void testIgnoreNonPublicClasses() {
+    final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
+    inspection.ignoreNonPublicClasses = true;
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new LoggerInitializedWithForeignClassInspection();
+    final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
+    inspection.ignoreSuperClass = true;
+    return inspection;
   }
 
   @Override
@@ -33,6 +42,7 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
       "  public static Logger getLogger(String name) {" +
       "    return null;" +
       "  }" +
+      "  public void info(String s) {}" +
       "}",
 
       "package org.apache.logging.log4j;" +

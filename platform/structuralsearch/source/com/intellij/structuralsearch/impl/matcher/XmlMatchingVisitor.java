@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -40,15 +40,22 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
 
   @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
     final XmlAttributeValue another = (XmlAttributeValue)myMatchingVisitor.getElement();
-    final String text = value.getValue();
+    final PsiElement pattern = XmlMatchUtil.getElementToMatch(value);
+    final PsiElement match = XmlMatchUtil.getElementToMatch(another);
+    if (!(pattern instanceof XmlToken)) {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(pattern, match));
+    }
+    else {
+      final String text = value.getValue();
 
-    if (myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text)) {
-      final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(text);
-      final String text2 = another.getText();
-      final int offset = StringUtil.isQuotedString(text2) ? 1 : 0;
-      myMatchingVisitor.setResult(handler.handle(another, offset, text2.length() - offset, myMatchingVisitor.getMatchContext()));
-    } else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(text, another.getValue()));
+      if (myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text)) {
+        final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(text);
+        final String text2 = another.getText();
+        final int offset = StringUtil.isQuotedString(text2) ? 1 : 0;
+        myMatchingVisitor.setResult(handler.handle(another, offset, text2.length() - offset, myMatchingVisitor.getMatchContext()));
+      } else {
+        myMatchingVisitor.setResult(myMatchingVisitor.matchText(text, another.getValue()));
+      }
     }
   }
 

@@ -3,9 +3,11 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class InstallFromDiskAction extends DumbAwareAction {
@@ -15,8 +17,22 @@ public class InstallFromDiskAction extends DumbAwareAction {
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
+      getTemplatePresentation().setEnabled(false);
+      getTemplatePresentation().setDescription(IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"));
+    }
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
+
+    if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
+      Messages.showErrorDialog(project, IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"), IdeBundle.message("action.InstallFromDiskAction.text"));
+      return;
+    }
+
     PluginInstaller.chooseAndInstall(project,
                                      null,
                                      (file, __) -> PluginInstaller.installFromDisk(file, project, null));

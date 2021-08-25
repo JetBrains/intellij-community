@@ -11,11 +11,12 @@ internal class A(p1: Int, p2: Int, a: A?) {
     private val field10: Int = TODO("_root_ide_package_")
     private val field11: Int = TODO("_root_ide_package_")
     private val field12: Int = TODO("_root_ide_package_")
-    fun foo() {
+
+    init {
         TODO("_root_ide_package_")
     }
 
-    init {
+    fun foo() {
         TODO("_root_ide_package_")
     }
 }

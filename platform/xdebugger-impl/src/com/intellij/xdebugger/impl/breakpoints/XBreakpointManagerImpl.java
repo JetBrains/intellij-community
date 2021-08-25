@@ -101,6 +101,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull XBreakpointType type, @NotNull PluginDescriptor pluginDescriptor) {
+        //the project may be 'temporarily disposed' in tests if this class was created from a light test
+        if (project.isDisposed()) return;
         //noinspection unchecked
         WriteAction.run(() -> addDefaultBreakpoint(type));
       }

@@ -4,9 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowManager
@@ -24,9 +22,28 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
+class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
   companion object {
     val PROP_ACTIVE_ENVIRONMENT = Key<ExecutionEnvironment>("PROP_ACTIVE_ENVIRONMENT")
+
+    fun updatePresentation(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = e.project?.let { project ->
+        e.runToolbarData()?.let {
+          it.environment?.let { environment ->
+            e.presentation.putClientProperty(PROP_ACTIVE_ENVIRONMENT, environment)
+            it.configuration?.let {
+              val shortenNameIfNeeded = Executor.shortenNameIfNeeded(it.name)
+              e.presentation.setText(shortenNameIfNeeded, false)
+              e.presentation.icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(it, true)
+            } ?: run {
+              e.presentation.text = ""
+              e.presentation.icon = null
+            }
+            true
+          } ?: false
+        } ?: false
+      } ?: false
+    }
   }
 
   override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup = DefaultActionGroup()
@@ -35,40 +52,45 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
 
   }
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible =  e.project?.let { project ->
-      if(!shouldBeShown(e)) return@let false
-
-      e.runToolbarData()?.let {
-        it.environment?.let { environment ->
-          e.presentation.putClientProperty(PROP_ACTIVE_ENVIRONMENT, environment)
-          it.configuration?.let {
-            val shortenNameIfNeeded = Executor.shortenNameIfNeeded(it.name)
-            e.presentation.text = shortenNameIfNeeded
-            e.presentation.icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(it, true)
-          } ?: run {
-            e.presentation.text = ""
-            e.presentation.icon = null
-          }
-          true
-        } ?: false
-      }
-    } ?: false
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
   }
 
-  private fun shouldBeShown(e: AnActionEvent): Boolean {
-    return if(e.isItRunToolbarMainSlot()) e.project?.let {
-      RunToolbarSlotManager.getInstance(it).getState().isSingleMain() || (e.isOpened() && e.isActiveProcess())
-    } ?: false else true
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    updatePresentation(e)
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun createComboBoxButton(presentation: Presentation): ComboBoxButton {
     return object : ComboBoxButton(presentation) {
+
       override fun showPopup() {
         presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
           ToolWindowManager.getInstance(environment.project).getToolWindow(
-            environment.contentToReuse?.contentToolWindowId ?: environment.executor.id)?.show()
+            environment.contentToReuse?.contentToolWindowId ?: environment.executor.id)?.let {
+            val contentManager = it.contentManager
+            contentManager.contents.firstOrNull { it.executionId == environment.executionId }?.let { content ->
+              contentManager.setSelectedContent(content)
+            }
+            it.show()
+          }
         }
+      }
+
+
+      override fun doRightClick() {
+        RunToolbarRunConfigurationsAction.doRightClick(dataContext)
+      }
+
+      override fun doShiftClick() {
+        dataContext.editConfiguration()
+        doClick()
       }
 
       override fun isArrowVisible(presentation: Presentation): Boolean {
@@ -82,10 +104,10 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
             true
           }
         } ?: false
+
       }
 
       private fun updatePresentation(it: RunToolbarProcess) {
-        putClientProperty("JButton.backgroundColor", it.pillColor)
         setting.text = presentation.text
         presentation.icon?.let {
           icon = it
@@ -95,7 +117,8 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
           icon = null
         }
 
-        setting.isEnabled = presentation.isEnabled
+        isEnabled = true
+
         toolTipText = presentation.description
         process.text = it.name
         putClientProperty("JButton.backgroundColor", it.pillColor)
@@ -127,7 +150,7 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
         add(setting, "ay center, pushx, wmin 10")
         add(process, "ay center, pushx")
 
-        setting.font = UIUtil.getToolbarFont()
+       // setting.font = UIUtil.getToolbarFont()
         process.font = UIUtil.getToolbarFont()
 
         setting.border = JBUI.Borders.empty()
@@ -146,7 +169,9 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
       }
 
       override fun getPreferredSize(): Dimension {
-        return Dimension(JBUI.scale(180), super.getPreferredSize().height)
+        val d = super.getPreferredSize()
+        d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
+        return d
       }
 
 

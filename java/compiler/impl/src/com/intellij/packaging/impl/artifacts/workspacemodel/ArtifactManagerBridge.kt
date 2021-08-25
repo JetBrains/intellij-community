@@ -5,6 +5,8 @@ import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.JDOMUtil
@@ -159,6 +161,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   fun commit(artifactModel: ArtifactModifiableModelBridge) {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
+    LOG.trace { "Committing artifact manager bridge. diff: ${artifactModel.diff}" }
     updateCustomElements(artifactModel.diff)
 
     val current = WorkspaceModel.getInstance(project).entityStorage.current
@@ -308,6 +311,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     internal val WorkspaceEntityStorageBuilder.mutableArtifactsMap: MutableExternalEntityMapping<ArtifactBridge>
       get() = getMutableExternalMapping(ARTIFACT_BRIDGE_MAPPING_ID)
+
+    private val LOG = logger<ArtifactManagerBridge>()
   }
 
   override fun dispose() {

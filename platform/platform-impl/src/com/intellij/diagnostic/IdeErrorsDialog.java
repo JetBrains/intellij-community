@@ -712,10 +712,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         continue;
       }
 
-      if (!PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, (pluginId, descriptor) ->
-        Objects.requireNonNull(descriptor).isEnabled() ?
-        pluginIdsToDisable.contains(pluginId) ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE :
-        FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
+      if (!PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor,
+                                                               pluginIdMap,
+                                                               (pluginId, descriptor) ->
+                                                                 Objects.requireNonNull(descriptor).isEnabled() ?
+                                                                 pluginIdsToDisable.contains(pluginId) ?
+                                                                 FileVisitResult.TERMINATE :
+                                                                 FileVisitResult.CONTINUE :
+                                                                 FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
       )) {
         return true;
       }

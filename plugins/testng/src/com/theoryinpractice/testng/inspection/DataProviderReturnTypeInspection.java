@@ -62,30 +62,27 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
     return null;
   }
 
-  private static boolean isAppropriateType(@NotNull PsiMethod method, PsiType returnType, @NotNull PsiAnnotation annotation) {
+  private static boolean isAppropriateType(PsiType returnType, @NotNull PsiAnnotation annotation) {
     PsiAnnotationMemberValue nameValue = annotation.findAttributeValue("name");
-    String testMethodName = null;
+    ArrayList<PsiReference> references = new ArrayList<>();
     if (nameValue != null) {
-      testMethodName = nameValue.getText();
+      PsiReference[] refs = nameValue.getReferences();
+      if (refs.length != 0) {
+        references.addAll(Arrays.asList(refs));
+      }
     }
-    PsiClass testClass = method.getContainingClass();
-    PsiMethod foundTest = null;
-    if (testClass != null) {
-      for (PsiMethod fMethod : testClass.getMethods()) {
-        PsiAnnotation testAnnotation = AnnotationUtil.findAnnotation(fMethod, TEST_ANNOTATION_FQN);
-        if (testAnnotation == null) continue;
-        PsiAnnotationMemberValue dataProviderValue = testAnnotation.findAttributeValue("dataProvider");
-        if (dataProviderValue == null) continue;
-        if (dataProviderValue.getText().equals(testMethodName)) {
-          foundTest = fMethod;
-          break;
+    PsiMethod resolvedMethod = null;
+    if (references.size() > 0) {
+      for (PsiReference ref : references) {
+        PsiElement resolve = ref.resolve();
+        if (resolve instanceof PsiMethod && AnnotationUtil.findAnnotation((PsiMethod)resolve, TEST_ANNOTATION_FQN) != null) {
+          resolvedMethod = (PsiMethod)resolve;
         }
       }
     }
-    PsiParameter[] parameters = PsiParameter.EMPTY_ARRAY;
-    if (foundTest != null) {
-      parameters = foundTest.getParameterList().getParameters();
-    }
+    if (resolvedMethod == null) return false;
+    PsiParameter[] parameters;
+    parameters = resolvedMethod.getParameterList().getParameters();
     ArrayList<PsiType> appropriateTypes = Arrays.stream(parameters).map(PsiParameter::getType).map(PsiType::getDeepComponentType)
       .collect(Collectors.toCollection(ArrayList::new));
     return appropriateTypes.contains(returnType.getDeepComponentType());
@@ -133,7 +130,7 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
 
   private static boolean isAppropriateTypeArray(PsiMethod method, final @NotNull PsiType type, @NotNull PsiAnnotation annotation) {
     if (!(type instanceof PsiArrayType)) {
-      return supportOneDimensional(method) && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || isAppropriateType(method, type, annotation));
+      return supportOneDimensional(method) && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || isAppropriateType(type, annotation));
     }
     final PsiType componentType = type.getDeepComponentType();
     if (!(componentType instanceof PsiClassType)) {
@@ -143,6 +140,6 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
     if (resolvedClass == null) {
       return false;
     }
-    return CommonClassNames.JAVA_LANG_OBJECT.equals(resolvedClass.getQualifiedName()) || isAppropriateType(method, type, annotation);
+    return CommonClassNames.JAVA_LANG_OBJECT.equals(resolvedClass.getQualifiedName()) || isAppropriateType(type, annotation);
   }
 }

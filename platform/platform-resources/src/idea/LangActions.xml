@@ -627,48 +627,31 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
+    <action id="SmallSpacer" class="com.intellij.ide.navigationToolbar.experimental.SmallSpacerAction"/>
+    <action id="BigSpacer" class="com.intellij.ide.navigationToolbar.experimental.BigSpacerAction"/>
+    <action id="TinySpacer" class="com.intellij.ide.navigationToolbar.experimental.TinySpacerAction"/>
 
     <group id="NewToolbarActions">
       <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
-        <separator/>
+        <reference id="BigSpacer"/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
+        <reference id="SmallSpacer"/>
         <action id="SegmentedSearchEverywhereAction" class="com.intellij.ide.navigationToolbar.experimental.SegmentedSearchEverywhereAction"/>
       </group>
       <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
-        <action id="RunToolbarWidgetAction" class="com.intellij.execution.runToolbar.RunToolbarWidgetAction"/>
+        <reference id="BigSpacer"/>
+        <reference id="RunToolbarWidgetAction"/>
+        <reference id="SmallSpacer"/>
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
 
     <group id="SegmentedSearchEverywhereGroup">
       <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
-    </group>
-
-    <group id="RunToolbarActionsGroup" popup="false">
-      <action id="RunToolbarProcessStartedAction" class="com.intellij.execution.runToolbar.RunToolbarProcessStartedAction"/>
-      <action id="RunToolbarRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarRunConfigurationsAction"/>
-      <action id="RunToolbarRerunAction" class="com.intellij.execution.runToolbar.RunToolbarRerunAction"/>
-      <group id="RunToolbarAdditionalProcessActions"/>
-      <group id="RunToolbarProcessActionGroup"/>
-      <action id="RunToolbarStopAction" class="com.intellij.execution.runToolbar.RunToolbarStopAction"/>
-      <group id="RunToolbarMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup"/>
-    </group>
-
-    <group id="RunToolbarMainActionsGroup" popup="false">
-      <action id="RunToolbarExtraSlotsAction" class="com.intellij.execution.runToolbar.RunToolbarExtraSlotsAction" icon="AllIcons.Toolbar.AddSlot"/>
-      <reference id="RunToolbarProcessStartedAction"/>
-      <action id="RunToolbarMainMultipleProcessStartedAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleProcessStartedAction"/>
-      <reference id="RunToolbarRunConfigurationsAction"/>
-      <reference id="RunToolbarRerunAction"/>
-      <reference id="RunToolbarAdditionalProcessActions"/>
-      <reference id="RunToolbarProcessActionGroup"/>
-      <reference id="RunToolbarStopAction"/>
-      <action id="RunToolbarMainMultipleStopAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleStopAction" icon="AllIcons.Actions.Suspend"/>
-      <reference id="RunToolbarMoreActionGroup"/>
     </group>
 
     <group id="ProjectViewPopupMenuRefactoringGroup" compact="true">
@@ -811,34 +794,44 @@
     </group>
 
     <group id="ProjectView.ToolWindow.SecondaryActions">
-      <action id="ProjectView.ShowModules"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowModules"
-              icon="AllIcons.Actions.GroupByModule"/>
-      <action id="ProjectView.ShowMembers"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowMembers"
-              icon="AllIcons.ObjectBrowser.ShowMembers"/>
-      <action id="ProjectView.ShowExcludedFiles"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowExcludedFiles"/>
-      <action id="ProjectView.ShowVisibilityIcons"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowVisibilityIcons"/>
-      <action id="ProjectView.ShowLibraryContents"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowLibraryContents"
-              icon="AllIcons.ObjectBrowser.ShowLibraryContents"/>
-      <separator/>
-      <action id="ProjectView.FlattenModules"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
-              icon="AllIcons.ObjectBrowser.FlattenModules"/>
-      <action id="ProjectView.FlattenPackages"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
-              icon="AllIcons.ObjectBrowser.FlattenPackages"/>
-      <action id="ProjectView.HideEmptyMiddlePackages"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
-      <action id="ProjectView.AbbreviatePackageNames"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
-              icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
-      <action id="ProjectView.CompactDirectories"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
-      <separator/>
+      <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
+        <action id="ProjectView.ShowModules"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowModules"
+                icon="AllIcons.Actions.GroupByModule"/>
+        <action id="ProjectView.ShowMembers"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowMembers"
+                icon="AllIcons.ObjectBrowser.ShowMembers"/>
+        <action id="ProjectView.ShowExcludedFiles"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowExcludedFiles"/>
+        <action id="ProjectView.ShowVisibilityIcons"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowVisibilityIcons"/>
+        <action id="ProjectView.ShowLibraryContents"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowLibraryContents"
+                icon="AllIcons.ObjectBrowser.ShowLibraryContents"/>
+        <separator/>
+        <action id="ProjectView.FlattenModules"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
+                icon="AllIcons.ObjectBrowser.FlattenModules"/>
+        <action id="ProjectView.FlattenPackages"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
+                icon="AllIcons.ObjectBrowser.FlattenPackages"/>
+        <action id="ProjectView.HideEmptyMiddlePackages"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
+        <action id="ProjectView.AbbreviatePackageNames"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
+                icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
+        <action id="ProjectView.CompactDirectories"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
+        <separator/>
+        <action id="ProjectView.ManualOrder"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ManualOrder"
+                icon="AllIcons.ObjectBrowser.Sorted"/>
+        <action id="ProjectView.SortByType"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
+                icon="AllIcons.ObjectBrowser.SortByType"/>
+        <action id="ProjectView.FoldersAlwaysOnTop"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
+      </group>
       <action id="ProjectView.OpenInPreviewTab"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
       <action id="ProjectView.AutoscrollToSource"
@@ -848,14 +841,6 @@
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
               icon="AllIcons.General.AutoscrollFromSource"/>
       <separator/>
-      <action id="ProjectView.ManualOrder"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ManualOrder"
-              icon="AllIcons.ObjectBrowser.Sorted"/>
-      <action id="ProjectView.SortByType"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
-              icon="AllIcons.ObjectBrowser.SortByType"/>
-      <action id="ProjectView.FoldersAlwaysOnTop"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
       <action id="ScopeView.EditScopes"
               class="com.intellij.ide.scopeView.EditScopesAction"
               icon="AllIcons.Ide.LocalScope"/>
@@ -1060,8 +1045,7 @@
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"
               use-shortcut-of="EditSource"/>
-      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"
-              use-shortcut-of="Debugger.EditTypeSource"/>
+      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"/>
 
       <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
 
@@ -1121,18 +1105,19 @@
       <separator/>
       <reference ref="ViewBreakpoints"/>
       <reference ref="XDebugger.MuteBreakpoints"/>
-      <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.xdebugger.impl.ui.MorePopupGroup">
-        <reference ref="ForceStepOver"/>
-        <reference ref="ForceStepInto"/>
-        <reference ref="SmartStepInto"/>
-        <separator/>
-        <reference ref="RunToCursor"/>
-        <reference ref="ForceRunToCursor"/>
-        <separator/>
-        <reference ref="Pause"/>
-        <reference ref="ShowExecutionPoint"/>
-        <separator/>
-      </group>
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
+      <reference ref="ForceStepOver"/>
+      <reference ref="ForceStepInto"/>
+      <reference ref="SmartStepInto"/>
+      <separator/>
+      <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
+      <separator/>
+      <reference ref="Pause"/>
+      <reference ref="ShowExecutionPoint"/>
+      <separator/>
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -1584,10 +1569,12 @@
     <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
 
     <action id="SwitchFileBasedIndexStorageAction"
-            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"
-            text="Switch File-Based Index Storage"/>
+            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
 
     <action id="ClickLink" class="com.intellij.codeInsight.navigation.actions.ClickLinkAction"
             use-shortcut-of="GotoDeclaration" />
+
+    <action id="ForceIndexRescanning" internal="true" class="com.intellij.util.indexing.ForceIndexRescanningAction" icon="AllIcons.Actions.Refresh"/>
+    <action id="ForceIndexRebuild" internal="true" class="com.intellij.util.indexing.ForceIndexRebuildAction" icon="AllIcons.Actions.Refresh"/>
   </actions>
 </idea-plugin>

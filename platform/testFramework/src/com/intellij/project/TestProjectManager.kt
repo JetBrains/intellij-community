@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.project
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
@@ -17,21 +16,19 @@ import com.intellij.openapi.project.impl.ProjectManagerExImpl
 import com.intellij.project.TestProjectManager.Companion.getCreationPlace
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.publishHeapDump
-import com.intellij.util.PairProcessor
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.function.Predicate
 
 private const val MAX_LEAKY_PROJECTS = 5
 private val LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30)
 private var CHECK_START = System.currentTimeMillis()
 private val LOG_PROJECT_LEAKAGE = System.getProperty("idea.log.leaked.projects.in.tests", "true")!!.toBoolean()
+var totalCreatedProjectsCount = 0
 
 @ApiStatus.Internal
 open class TestProjectManager : ProjectManagerExImpl() {
@@ -39,11 +36,6 @@ open class TestProjectManager : ProjectManagerExImpl() {
     @JvmStatic
     fun getInstanceExIfCreated(): TestProjectManager? {
       return ProjectManager.getInstanceIfCreated() as TestProjectManager?
-    }
-
-    // can be called without application (e.g. Marketplace Tests)
-    fun getTotalCreatedProjectCount(): Int {
-      return (ApplicationManager.getApplication()?.getServiceIfCreated(ProjectManager::class.java) as TestProjectManager?)?.totalCreatedProjectCount ?: 0
     }
 
     @JvmStatic
@@ -63,7 +55,6 @@ open class TestProjectManager : ProjectManagerExImpl() {
   private val trackingProjects = UnsafeWeakList<Project>()
 
   override fun newProject(projectFile: Path, options: OpenProjectTask): Project? {
-    totalCreatedProjectCount++
     checkProjectLeaksInTests()
 
     val project = super.newProject(projectFile, options)
@@ -109,6 +100,7 @@ open class TestProjectManager : ProjectManagerExImpl() {
 
   override fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
     val project = super.instantiateProject(projectStoreBaseDir, options)
+    totalCreatedProjectCount++
     trackProject(project)
     return project
   }
@@ -205,7 +197,7 @@ open class TestProjectManager : ProjectManagerExImpl() {
 }
 
 private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
-  val hashCodes = IntOpenHashSet()
+  val hashCodes = HashSet<Int>()
   for (project in leakedProjects) {
     hashCodes.add(System.identityHashCode(project))
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -81,30 +81,6 @@ public final class PredefinedConfigurationUtil {
                                                   @Nullable PatternContext context) {
     final Configuration config = createSearchTemplateInfo(name, criteria, category, fileType, context);
     config.setRefName(refName);
-    return config;
-  }
-
-  @NotNull
-  public static Configuration createNonRecursiveConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                                              @NotNull @NonNls String refName,
-                                                              @NotNull @NonNls String criteria,
-                                                              @NotNull String category,
-                                                              @NotNull LanguageFileType fileType,
-                                                              @Nullable PatternContext context) {
-    final Configuration config = createConfiguration(name, refName, criteria, category, fileType, context);
-    config.getMatchOptions().setRecursiveSearch(false);
-    return config;
-  }
-
-  @NotNull
-  public static Configuration createLegacyNonRecursiveConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                                                    @NotNull @NonNls String refName,
-                                                                    @NotNull @NonNls String criteria,
-                                                                    @NotNull String category,
-                                                                    @NotNull LanguageFileType fileType,
-                                                                    @Nullable PatternContext context) {
-    final Configuration config = createLegacyConfiguration(name, refName, criteria, category, fileType, context);
-    config.getMatchOptions().setRecursiveSearch(false);
     return config;
   }
 }

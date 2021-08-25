@@ -6,10 +6,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import gnu.trove.*;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
+import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -34,6 +38,7 @@ public final class Mappings {
   private final static Logger LOG = Logger.getInstance(Mappings.class);
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
   private boolean myProcessConstantsIncrementally = !Boolean.valueOf(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
+  private static final boolean USE_NATURAL_INT_MULTIMAP_IMPLEMENTATION = Boolean.valueOf(System.getProperty("jps.mappings.natural.int.multimap.impl", "true"));
 
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";
@@ -129,29 +134,36 @@ public final class Mappings {
       myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
       myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
-      final BuilderCollectionFactory<String> fileCollectionFactory = new BuilderCollectionFactory<String>() {
-        @Override
-        public Collection<String> create() {
-          return new THashSet<>(FileUtil.PATH_HASHING_STRATEGY); // todo: do we really need set and not a list here?
-        }
-      };
+      final Supplier<Collection<String>> fileCollectionFactory = CollectionFactory::createFilePathSet; // todo: do we really need set and not a list here?
       if (myIsDelta) {
         myClassToSubclasses = new IntIntTransientMultiMaplet();
         myClassToClassDependency = new IntIntTransientMultiMaplet();
         myShortClassNameIndex = null;
-        myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(FileUtil.PATH_HASHING_STRATEGY, () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR));
+        myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(
+          FileCollectionFactory.FILE_PATH_HASH_STRATEGY, () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
+        );
         myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
       }
       else {
-        myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES),
-                                                              EnumeratorIntegerDescriptor.INSTANCE);
-        myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS),
-                                                                   EnumeratorIntegerDescriptor.INSTANCE);
-        myShortClassNameIndex = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, SHORT_NAMES),
-                                                                EnumeratorIntegerDescriptor.INSTANCE);
+        myClassToSubclasses = new IntIntPersistentMultiMaplet(
+          DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES), EnumeratorIntegerDescriptor.INSTANCE
+        );
+        if (USE_NATURAL_INT_MULTIMAP_IMPLEMENTATION) {
+          myClassToClassDependency = new NaturalIntIntPersistentMultiMaplet(
+            DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), EnumeratorIntegerDescriptor.INSTANCE
+          );
+        }
+        else {
+          myClassToClassDependency = new IntIntPersistentMultiMaplet(
+            DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), EnumeratorIntegerDescriptor.INSTANCE
+          );
+        }
+        myShortClassNameIndex = new IntIntPersistentMultiMaplet(
+          DependencyContext.getTableFile(myRootDir, SHORT_NAMES), EnumeratorIntegerDescriptor.INSTANCE
+        );
         myRelativeSourceFilePathToClasses = new ObjectObjectPersistentMultiMaplet<String, ClassFileRepr>(
           DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), PathStringDescriptor.INSTANCE, new ClassFileReprExternalizer(myContext),
-          () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
+          () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
         ) {
           @NotNull
           @Override
@@ -2331,9 +2343,7 @@ public final class Mappings {
           processDisappearedClasses();
 
           final List<FileClasses> newClasses = new ArrayList<>();
-          myDelta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
-            @Override
-            public boolean execute(String relativeFilePath, Collection<ClassFileRepr> content) {
+          myDelta.myRelativeSourceFilePathToClasses.forEachEntry((relativeFilePath, content) -> {
               File file = toFull(relativeFilePath);
               if (myFilesToCompile == null || myFilesToCompile.contains(file)) {
                 // Consider only files actually compiled in this round.
@@ -2341,8 +2351,7 @@ public final class Mappings {
                 newClasses.add(new FileClasses(file, content));
               }
               return true;
-            }
-          });
+            });
 
           for (final FileClasses compiledFile : newClasses) {
             final File fileName = compiledFile.myFileName;
@@ -2575,7 +2584,6 @@ public final class Mappings {
   private void cleanupBackDependency(final int className, @Nullable Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
     if (usages == null) {
       final ClassFileRepr repr = getReprByName(null, className);
-
       if (repr != null) {
         usages = repr.getUsages();
       }
@@ -2583,7 +2591,10 @@ public final class Mappings {
 
     if (usages != null) {
       for (final UsageRepr.Usage u : usages) {
-        buffer.put(u.getOwner(), className);
+        final int owner = u.getOwner();
+        if (owner != className) {
+          buffer.put(owner, className);
+        }
       }
     }
   }
@@ -2734,12 +2745,9 @@ public final class Mappings {
           // In case some of these sources was not compiled, but the class was changed, we need to update
           // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
           Set<File> unchangedSources = FileCollectionFactory.createCanonicalFileSet();
-          delta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
-            @Override
-            public boolean execute(String source, Collection<ClassFileRepr> b) {
-              unchangedSources.add(toFull(source));
-              return true;
-            }
+          delta.myRelativeSourceFilePathToClasses.forEachEntry((source, b) -> {
+            unchangedSources.add(toFull(source));
+            return true;
           });
           unchangedSources.removeAll(delta.getChangedFiles());
           if (!unchangedSources.isEmpty()) {
@@ -2774,9 +2782,8 @@ public final class Mappings {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
           myClassToRelativeSourceFilePath.replaceAll(delta.myClassToRelativeSourceFilePath);
           myRelativeSourceFilePathToClasses.replaceAll(delta.myRelativeSourceFilePathToClasses);
-          delta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
-            @Override
-            public boolean execute(String src, Collection<ClassFileRepr> classes) {
+          delta.myRelativeSourceFilePathToClasses.forEachEntry(
+            (src, classes) -> {
               for (ClassFileRepr repr : classes) {
                 if (repr instanceof ClassRepr) {
                   final ClassRepr clsRepr = (ClassRepr)repr;
@@ -2786,8 +2793,7 @@ public final class Mappings {
                 }
               }
               return true;
-            }
-          });
+            });
         }
 
         // updating classToClass dependencies
@@ -2798,34 +2804,13 @@ public final class Mappings {
         addAllKeys(affectedClasses, delta.myClassToClassDependency);
 
         affectedClasses.forEach(aClass -> {
-          final TIntHashSet now = delta.myClassToClassDependency.get(aClass);
           final TIntHashSet toRemove = dependenciesTrashBin.get(aClass);
-          final boolean hasDataToAdd = now != null && !now.isEmpty();
-
-          if (toRemove != null && !toRemove.isEmpty()) {
-            final TIntHashSet current = myClassToClassDependency.get(aClass);
-            if (current != null && !current.isEmpty()) {
-              final TIntHashSet before = new TIntHashSet();
-              addAll(before, current);
-
-              final boolean removed1 = current.removeAll(toRemove.toArray());
-              final boolean added = hasDataToAdd && current.addAll(now.toArray());
-
-              if ((removed1 && !added) || (!removed1 && added) || !before.equals(current)) {
-                myClassToClassDependency.replace(aClass, current);
-              }
-            }
-            else {
-              if (hasDataToAdd) {
-                myClassToClassDependency.put(aClass, now);
-              }
-            }
+          if (toRemove != null) {
+            myClassToClassDependency.removeAll(aClass, toRemove);
           }
-          else {
-            // nothing to remove for this class
-            if (hasDataToAdd) {
-              myClassToClassDependency.put(aClass, now);
-            }
+          final TIntHashSet toAdd = delta.myClassToClassDependency.get(aClass);
+          if (toAdd != null) {
+            myClassToClassDependency.put(aClass, toAdd);
           }
           return true;
         });

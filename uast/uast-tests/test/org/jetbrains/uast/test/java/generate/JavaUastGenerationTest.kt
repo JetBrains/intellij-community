@@ -353,6 +353,14 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     TestCase.assertEquals("a.<Integer>method()", callExpression.sourcePsi?.text)
   }
 
+  fun `test callable reference generation with receiver`() {
+    val receiver = uastElementFactory.createQualifiedReference("java.util.Arrays", myFixture.file)
+                   ?: fail("failed to create receiver")
+    val methodReference = uastElementFactory.createCallableReferenceExpression(receiver, "asList", myFixture.file)
+                          ?: fail("failed to create method reference")
+    TestCase.assertEquals(methodReference.sourcePsi?.text, "java.util.Arrays::asList")
+  }
+
   fun `test removing unnecessary type parameters while replace`() {
     val newClass = myFixture.addClass("""
       class A {
@@ -396,7 +404,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
   }
 
   fun `test qualified reference`() {
-    val reference = uastElementFactory.createQualifiedReference("java.util.List", myFixture.file.toUElement())
+    val reference = uastElementFactory.createQualifiedReference("java.util.List", myFixture.file)
     TestCase.assertEquals("java.util.List", reference?.sourcePsi?.text)
   }
 }

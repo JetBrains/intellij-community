@@ -18,9 +18,10 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   companion object {
     @kotlin.jvm.JvmField
     public var newToolbarRegistryKey: String = "ide.new.navbar"
+
+    val newToolbarEnabled: Boolean
+      get() = Registry.`is`(newToolbarRegistryKey, false)
   }
-  val newToolbarEnabled: Boolean
-    get() = Registry.`is`(newToolbarRegistryKey, false)
 
   private var toolbarState = ExperimentalToolbarStateWrapper()
 

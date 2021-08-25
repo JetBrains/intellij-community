@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -11,6 +11,7 @@ import com.jetbrains.python.documentation.PyDocumentationBuilder;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 public class PydevDocumentationProvider extends AbstractDocumentationProvider {
@@ -24,7 +25,7 @@ public class PydevDocumentationProvider extends AbstractDocumentationProvider {
   }
 
   @Override
-  public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
+  public @Nls String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
     // Process PydevConsoleElement case
     if (element instanceof PydevConsoleElement){
       return PydevConsoleElement.generateDoc((PydevConsoleElement)element);
@@ -33,7 +34,7 @@ public class PydevDocumentationProvider extends AbstractDocumentationProvider {
   }
 
   @Nullable
-  public static String createDoc(final PsiElement element, final PsiElement originalElement) {
+  public static @Nls String createDoc(final PsiElement element, final PsiElement originalElement) {
     final PyReferenceExpression expression = PsiTreeUtil.getNonStrictParentOfType(originalElement, PyReferenceExpression.class);
     // Indicates that we are inside console, not a lookup element!
     if (expression == null){

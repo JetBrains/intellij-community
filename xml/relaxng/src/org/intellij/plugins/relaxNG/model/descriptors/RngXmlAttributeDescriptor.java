@@ -23,11 +23,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   @NonNls
   private static final QName UNKNOWN = new QName("", "#unknown");
 
-  private static final Hash.Strategy<Locator> HASHING_STRATEGY = new Hash.Strategy<>() {
+  private static final HashingStrategy<Locator> HASHING_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(@Nullable Locator o) {
       if (o == null) {
@@ -73,7 +73,7 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   private final Map<String, String> myValues;
   private final boolean myOptional;
   private final RngElementDescriptor myElementDescriptor;
-  private final Set<Locator> myDeclarations = new ObjectOpenCustomHashSet<>(HASHING_STRATEGY);
+  private final Set<Locator> myDeclarations = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
   private final QName myName;
 
   RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor, DAttributePattern pattern, Map<String, String> values, boolean optional) {
@@ -99,7 +99,8 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
     Map<String, String> values = new LinkedHashMap<>(myValues);
     values.putAll(d.myValues);
 
-    Set<Locator> locations = new ObjectOpenCustomHashSet<>(myDeclarations, HASHING_STRATEGY);
+    Set<Locator> locations = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
+    locations.addAll(myDeclarations);
     locations.addAll(d.myDeclarations);
     return new RngXmlAttributeDescriptor(myElementDescriptor, name, values, myOptional || d.myOptional, locations.toArray(new Locator[0]));
   }

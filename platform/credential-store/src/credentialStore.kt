@@ -8,7 +8,7 @@ import java.nio.CharBuffer
 import java.security.SecureRandom
 import java.util.*
 
-internal val LOG = logger<CredentialStore>()
+val LOG = logger<CredentialStore>()
 
 fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {
@@ -74,9 +74,6 @@ private fun parseString(data: String, @Suppress("SameParameterValue") delimiter:
 // check isEmpty before
 @JvmOverloads
 fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
-
-val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
-val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
 
 fun createSecureRandom(): SecureRandom {
   // do not use SecureRandom.getInstanceStrong()

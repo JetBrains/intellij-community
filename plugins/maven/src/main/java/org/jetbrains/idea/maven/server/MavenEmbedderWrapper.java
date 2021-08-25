@@ -51,17 +51,26 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
 
   public void customizeForResolve(MavenWorkspaceMap workspaceMap, MavenConsole console, MavenProgressIndicator indicator,
                                   boolean alwaysUpdateSnapshot, @Nullable Properties userProperties) {
-    setCustomization(console, indicator, workspaceMap, false, alwaysUpdateSnapshot, userProperties);
+
+    MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
+    setCustomization(console, indicator, serverWorkspaceMap, false, alwaysUpdateSnapshot, userProperties);
     perform(() -> {
       doCustomize();
       return null;
     });
   }
 
+  private MavenWorkspaceMap convertWorkspaceMap(MavenWorkspaceMap map) {
+    Transformer transformer = RemotePathTransformerFactory.createForProject(myProject);
+    if (transformer == Transformer.ID) return map;
+    return MavenWorkspaceMap.copy(map, transformer::toRemotePath);
+  }
+
   public void customizeForStrictResolve(MavenWorkspaceMap workspaceMap,
                                         MavenConsole console,
                                         MavenProgressIndicator indicator) {
-    setCustomization(console, indicator, workspaceMap, true, false, null);
+    MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
+    setCustomization(console, indicator, serverWorkspaceMap, true, false, null);
     perform(() -> {
       doCustomize();
       return null;

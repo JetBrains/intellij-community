@@ -2,14 +2,17 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableRootModelBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.toBuilder
 import org.junit.ClassRule
 import org.junit.Rule
@@ -32,16 +35,54 @@ class ModifiableRootModelBridgeTest {
       val module = projectModel.createModule()
       val moduleRootManager = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
 
-      val initialStore = WorkspaceModel.getInstance(projectModel.project).entityStorage.current
-      val diff = initialStore.toBuilder()
+      val diff = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
 
-      val modifiableModel = moduleRootManager.getModifiableModel(diff, initialStore,
-                                                                 RootConfigurationAccessor.DEFAULT_INSTANCE) as ModifiableRootModelBridgeImpl
+      val modifiableModel = moduleRootManager.getModifiableModel(diff,
+                                                                 RootConfigurationAccessor.DEFAULT_INSTANCE) as ModifiableRootModelBridge
 
       (ModuleManager.getInstance(projectModel.project) as ModuleManagerBridgeImpl).getModifiableModel(diff).disposeModule(module)
 
       modifiableModel.prepareForCommit()
       modifiableModel.postCommit()
+    }
+  }
+
+  @Test(expected = Test.None::class)
+  fun `getting module root model from modifiable module`() {
+    runWriteActionAndWait {
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).modifiableModel
+      val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
+                                                      EmptyModuleType.EMPTY_MODULE) as ModuleBridge
+
+
+      val moduleRootManager = ModuleRootManager.getInstance(newModule) as ModuleRootComponentBridge
+
+      // Assert no exceptions
+      val model = moduleRootManager.getModifiableModel(newModule.diff!! as WorkspaceEntityStorageBuilder,
+                                                       RootConfigurationAccessor.DEFAULT_INSTANCE)
+      model.dispose()
+      moduleModifiableModel.dispose()
+    }
+  }
+
+  @Test(expected = Test.None::class)
+  fun `get modifiable models of renamed module`() {
+    runWriteActionAndWait {
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).modifiableModel
+      val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
+                                                      EmptyModuleType.EMPTY_MODULE) as ModuleBridge
+      moduleModifiableModel.commit()
+
+      val builder = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
+
+      val anotherModifiableModel = (ModuleManager.getInstance(projectModel.project) as ModuleManagerBridgeImpl).getModifiableModel(builder)
+      anotherModifiableModel.renameModule(newModule, "newName")
+
+      val moduleRootManager = ModuleRootManager.getInstance(newModule) as ModuleRootComponentBridge
+
+      // Assert no exceptions
+      val model = moduleRootManager.getModifiableModel(builder, RootConfigurationAccessor.DEFAULT_INSTANCE)
+      anotherModifiableModel.dispose()
     }
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -78,9 +79,10 @@ public class IndentCalculator {
         CodeStyle.getLanguageSettings(file, language).getIndentOptions() :
         fileOptions;
       if (options != null) {
-        return baseIndent 
-               + new IndentInfo(0, indentToSize(myIndent, options), 0, false)
-                 .generateNewWhiteSpace(options);
+        final int indentLength =
+          baseIndent.replaceAll("\t", StringUtil.repeatSymbol(' ', options.TAB_SIZE)).length()
+          + indentToSize(myIndent, options);
+        return new IndentInfo(0, indentLength, 0, false).generateNewWhiteSpace(options);
       }
     }
     return null;

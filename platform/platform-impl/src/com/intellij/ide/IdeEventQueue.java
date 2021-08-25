@@ -34,6 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -220,8 +221,6 @@ public final class IdeEventQueue extends EventQueue {
     //addDispatcher(new UIMouseTracker(), null);
 
     abracadabraDaberBoreh();
-
-    IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
 
     if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
       myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
@@ -431,10 +430,16 @@ public final class IdeEventQueue extends EventQueue {
       Runnable runnable = extractRunnable(e);
       Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
-        Application application = ApplicationManager.getApplication();
-        ProgressManager progressManager = application != null && !application.isDisposed() ?
-                                          ProgressManager.getInstance() :
-                                          null;
+        ProgressManager progressManager = null;
+        Application app = ApplicationManager.getApplication();
+        if (app != null && !app.isDisposed()) {
+          try {
+            progressManager = ProgressManager.getInstance();
+          }
+          catch (RuntimeException ex) {
+            LOG.warn("app services aren't yet initialized", ex);
+          }
+        }
 
         try (AccessToken ignored = startActivity(finalE1)) {
           if (progressManager != null) {
@@ -697,10 +702,6 @@ public final class IdeEventQueue extends EventQueue {
 
     myEventCount++;
 
-    if (e instanceof WindowEvent) {
-      processAppActivationEvent((WindowEvent)e);
-    }
-
     myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
 
     if (e instanceof KeyEvent) {
@@ -727,6 +728,10 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
+    if (e instanceof WindowEvent) {
+      processAppActivationEvent((WindowEvent)e);
+    }
+
     if (dispatchByCustomDispatchers(e)) {
       return;
     }
@@ -739,7 +744,7 @@ public final class IdeEventQueue extends EventQueue {
     if (e instanceof ComponentEvent &&
         ourAppIsLoaded &&
         !application.isHeadlessEnvironment()) {
-      WindowManagerEx windowManager = application.getServiceIfCreated(WindowManagerEx.class);
+      WindowManagerEx windowManager = (WindowManagerEx)application.getServiceIfCreated(WindowManager.class);
       if (windowManager != null) {
         windowManager.dispatchComponentEvent((ComponentEvent)e);
       }
@@ -859,7 +864,7 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    WindowManagerEx windowManager = ApplicationManager.getApplication().getServiceIfCreated(WindowManagerEx.class);
+    WindowManagerEx windowManager = (WindowManagerEx)ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
     if (windowManager == null) {
       return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonBundle;
@@ -7,6 +7,7 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,6 +18,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,13 +30,13 @@ import java.util.List;
 public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return findSchemaAndGenerateDoc(element, originalElement, true, null);
   }
 
   @Nullable
   @Override
-  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     String forcedPropName = null;
     if (element instanceof FakeDocElement) {
       forcedPropName = ((FakeDocElement)element).myAltName;
@@ -44,6 +46,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
+  @Nls
   public static String findSchemaAndGenerateDoc(PsiElement element,
                                                 @Nullable PsiElement originalElement,
                                                 final boolean preferShort,
@@ -76,6 +79,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
+  @Nls
   public static String generateDoc(@NotNull final PsiElement element,
                                    @NotNull final JsonSchemaObject rootSchema,
                                    final boolean preferShort,
@@ -132,6 +136,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
+  @NlsSafe
   private static String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
                                              @NotNull String apiInfo,
                                              @NotNull List<JsonSchemaType> possibleTypes,

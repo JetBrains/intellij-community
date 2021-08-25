@@ -25,7 +25,7 @@ import training.util.getFeedbackLink
 import java.nio.file.Path
 
 class JavaLangSupport : AbstractLangSupport() {
-  override val defaultProjectName = "IdeaLearningProject"
+  override val contentRootDirectoryName = "IdeaLearningProject"
   override val projectResourcePath = "learnProjects/java/LearnProject"
 
   override val primaryLanguage: String = "JAVA"
@@ -38,12 +38,12 @@ class JavaLangSupport : AbstractLangSupport() {
 
   override val langCourseFeedback get() = getFeedbackLink(this, false)
 
-  override val readMeCreator= ReadMeCreator()
+  override val readMeCreator = ReadMeCreator()
 
-  override fun installAndOpenLearningProject(projectPath: Path,
+  override fun installAndOpenLearningProject(contentRoot: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
-    super.installAndOpenLearningProject(projectPath, projectToClose) { project ->
+    super.installAndOpenLearningProject(contentRoot, projectToClose) { project ->
       findJavaSdkAsync(project) { sdk ->
         if (sdk != null) {
           applyProjectSdk(sdk, project)
@@ -89,7 +89,7 @@ class JavaLangSupport : AbstractLangSupport() {
       .executeLookup()
   }
 
-  override fun getSdkForProject(project: Project): Sdk? {
+  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
     return null
   }
 

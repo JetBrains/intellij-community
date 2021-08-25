@@ -51,7 +51,7 @@ object DetectionContext {
       return langs.toSet()
     }
 
-    fun update(size: Int, details: ChainLanguageDetector.ChainDetectionResult) {
+    fun update(size: Int, wordsTotal: Int, details: ChainLanguageDetector.ChainDetectionResult) {
       val result = details.result
       val language = result.preferred
 
@@ -61,12 +61,12 @@ object DetectionContext {
       //Check threshold by text size is not met
       if (size < TEXT_SIZE_THRESHOLD) return
       //Check threshold by number of words is not met (if language has words at all)
-      if (language.hasWhitespaces && details.info.wordsTotal < WORDS_SIZE_THRESHOLD) return
+      if (language.hasWhitespaces && wordsTotal < WORDS_SIZE_THRESHOLD) return
 
       if (language in ListDetector.supported) {
         //Check if threshold by list detector is not met
         val listResult = details[LanguageDetector.Type.List]?.detected ?: return
-        val maxList = listResult.maxBy { it.probability } ?: return
+        val maxList = listResult.maxByOrNull { it.probability } ?: return
         if (maxList.probability < LIST_CONFIDENCE_THRESHOLD || maxList.lang != result.preferred) return
       }
 
@@ -75,7 +75,7 @@ object DetectionContext {
         val ngramResult = details[LanguageDetector.Type.Ngram]?.detected
         //Check ngram only it was used. Otherwise, we believe to list detector
         if (ngramResult != null) {
-          val maxNgram = ngramResult.maxBy { it.probability } ?: return
+          val maxNgram = ngramResult.maxByOrNull { it.probability } ?: return
           if (maxNgram.probability < NGRAM_CONFIDENCE_THRESHOLD || maxNgram.lang != result.preferred) return
         }
       }

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
@@ -93,7 +93,7 @@ private class JpsModuleConfigurationUpdater(
             }
         } else {
             val jvmTarget = modules.first { it.name == module.name }.jvmTarget()
-            val modelsProvider = IdeModifiableModelsProviderImpl(project)
+            val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
             try {
                 val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = true, commitModel = true)
                 val platform = JvmTarget.fromString(jvmTarget.value)

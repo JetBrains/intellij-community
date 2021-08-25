@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -13,14 +13,17 @@ import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockableContent;
-import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsEx;
+import com.intellij.ui.tabs.JBTabsPosition;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
@@ -38,7 +41,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.ide.actions.DragEditorTabsFusEventFields.SAME_WINDOW;
 import static javax.swing.SwingConstants.*;
 
-public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
+public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable, Disposable {
   private final EditorsSplitters mySplitters;
   private final Project myProject;
 
@@ -54,14 +57,15 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   private boolean myWasEverShown;
 
-  DockableEditorTabbedContainer(Project project) {
-    this(project, null, true);
-  }
-
-  DockableEditorTabbedContainer(Project project, @Nullable EditorsSplitters splitters, boolean disposeWhenEmpty) {
+  DockableEditorTabbedContainer(Project project, @NotNull EditorsSplitters splitters, boolean disposeWhenEmpty) {
     myProject = project;
     mySplitters = splitters;
     myDisposeWhenEmpty = disposeWhenEmpty;
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(mySplitters);
   }
 
   @Override
@@ -203,14 +207,25 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   private void recordDragStats(int dropSide, boolean sameWindow) {
     String actionId = null;
     switch (dropSide) {
-      case -1: actionId = "OpenElementInNewWindow";break;
-      case TOP: actionId = "SplitVertically";break;
-      case LEFT: actionId = "SplitHorizontally"; break;
-      case BOTTOM: actionId = "MoveTabDown"; break;
-      case RIGHT: actionId = "MoveTabRight";break;
-      case CENTER: return;// This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
+      case -1:
+        actionId = "OpenElementInNewWindow";
+        break;
+      case TOP:
+        actionId = "SplitVertically";
+        break;
+      case LEFT:
+        actionId = "SplitHorizontally";
+        break;
+      case BOTTOM:
+        actionId = "MoveTabDown";
+        break;
+      case RIGHT:
+        actionId = "MoveTabRight";
+        break;
+      case CENTER:
+        return;// This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
     }
-    if (actionId != null && mySplitters != null) {
+    if (actionId != null) {
       AnActionEvent event = AnActionEvent.createFromInputEvent(
         new MouseEvent(mySplitters, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false,
                        MouseEvent.BUTTON1), ActionPlaces.EDITOR_TAB, null, DataContext.EMPTY_CONTEXT);
@@ -246,8 +261,9 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     if (myCurrentPainter == null) {
       myCurrentPainter = new MyDropAreaPainter();
       myGlassPaneListenersDisposable = Disposer.newDisposable("GlassPaneListeners");
-      Disposer.register(mySplitters.parentDisposable, myGlassPaneListenersDisposable);
-      IdeGlassPaneUtil.find(myCurrentOver.getComponent()).addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
+      Disposer.register(this, myGlassPaneListenersDisposable);
+      IdeGlassPaneUtil.find(myCurrentOver.getComponent())
+        .addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
     }
     if (myCurrentPainter instanceof MyDropAreaPainter) {
       ((MyDropAreaPainter)myCurrentPainter).processDropOver();
@@ -331,7 +347,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
+      g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
       g.fill(myBoundingBox);
     }
 

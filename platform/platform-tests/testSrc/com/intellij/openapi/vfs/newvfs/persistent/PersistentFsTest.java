@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
@@ -329,6 +329,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     ManagingFS managingFS = ManagingFS.getInstance();
     int globalModCount = managingFS.getFilesystemModificationCount();
     int parentModCount = managingFS.getModificationCount(vFile.getParent());
+    int fileModCount = managingFS.getModificationCount(vFile);
     int inSessionModCount = managingFS.getModificationCount();
 
     FSRecords.force();
@@ -341,7 +342,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       }
     });
 
-    assertEquals(globalModCount, managingFS.getModificationCount(vFile));
+    assertEquals(fileModCount, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
@@ -354,7 +355,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     FSRecords.setTimestamp(fileId, FSRecords.getTimestamp(fileId));
     FSRecords.setLength(fileId, FSRecords.getLength(fileId));
 
-    assertEquals(globalModCount, managingFS.getModificationCount(vFile));
+    assertEquals(fileModCount, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
@@ -751,7 +752,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testReadOnlyFsCachesLength() throws IOException {
     String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jar-wrapper\" physical=\"true\"/>";
-    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader()));
+    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, "com.intellij"));
 
     try {
       File generationDir = tempDirectory.newDirectory("gen");
@@ -796,7 +797,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testDoNotRecalculateLengthIfEndOfInputStreamIsNotReached() throws IOException {
     String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jar-wrapper\" physical=\"true\"/>";
-    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader()));
+    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, "com.intellij"));
 
     try {
       File generationDir = tempDirectory.newDirectory("gen");

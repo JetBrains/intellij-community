@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -276,7 +276,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.3+")
   public void testCompositeBuildWithProjectNameDuplicates() throws Exception {
-    IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
     modelsProvider.newModule(getProjectPath() + "/api.iml", StdModuleTypes.JAVA.getId());
     modelsProvider.newModule(getProjectPath() + "/api_main.iml", StdModuleTypes.JAVA.getId());
     modelsProvider.newModule(getProjectPath() + "/my-app-api.iml", StdModuleTypes.JAVA.getId());

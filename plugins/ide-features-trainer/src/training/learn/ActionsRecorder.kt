@@ -315,7 +315,7 @@ internal class ActionsRecorder(private val project: Project,
         }
         LessonManager.instance.setRestoreNotification(notification)
       }
-      if (!StatisticBase.isLearnProjectClosing) {
+      if (!StatisticBase.isLearnProjectCloseLogged) {
         StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_FILE)
       }
       LessonManager.instance.stopLesson()

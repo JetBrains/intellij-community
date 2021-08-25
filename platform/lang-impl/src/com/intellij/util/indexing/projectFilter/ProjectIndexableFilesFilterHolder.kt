@@ -2,26 +2,43 @@
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ConcurrentFactoryMap
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.UnindexedFilesUpdater
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentMap
+
+internal enum class FileAddStatus {
+  ADDED, PRESENT, SKIPPED
+}
 
 internal sealed class ProjectIndexableFilesFilterHolder {
   abstract fun getProjectIndexableFiles(project: Project): IdFilter?
 
-  abstract fun addFileId(fileId: Int, projects: () -> Set<Project>)
+  abstract fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus
 
-  abstract fun addFileId(fileId: Int, project: Project): Boolean
+  abstract fun addFileId(fileId: Int, project: Project): FileAddStatus
 
   abstract fun entireProjectUpdateStarted(project: Project)
 
   abstract fun entireProjectUpdateFinished(project: Project)
 
   abstract fun removeFile(fileId: Int)
+
+  abstract fun findProjectForFile(fileId: Int): Project?
+
+  abstract fun runHealthCheck()
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder() {
@@ -54,22 +71,82 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     myProjectFilters[project]?.resetPreviousFileIds()
   }
 
-  override fun addFileId(fileId: Int, projects: () -> Set<Project>) {
+  override fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus {
     val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }
-    for ((p, filter) in myProjectFilters) {
+    val statuses = myProjectFilters.map { (p, filter) ->
       filter.ensureFileIdPresent(fileId) {
         matchedProjects.contains(p)
       }
     }
+
+    if (statuses.all { it == FileAddStatus.SKIPPED }) return FileAddStatus.SKIPPED
+    if (statuses.any { it == FileAddStatus.ADDED }) return FileAddStatus.ADDED
+    return FileAddStatus.PRESENT
   }
 
-  override fun addFileId(fileId: Int, project: Project): Boolean {
+  override fun addFileId(fileId: Int, project: Project): FileAddStatus {
     return myProjectFilters.get(project)!!.ensureFileIdPresent(fileId) { true }
   }
 
   override fun removeFile(fileId: Int) {
     for (filter in myProjectFilters.values) {
       filter.removeFileId(fileId)
+    }
+  }
+
+  override fun findProjectForFile(fileId: Int): Project? {
+    for ((project, filter) in myProjectFilters) {
+      if (filter.containsFileId(fileId)) {
+        return project
+      }
+    }
+    return null
+  }
+
+  override fun runHealthCheck() {
+    for ((project, filter) in myProjectFilters) {
+      val errors = ReadAction
+        .nonBlocking(Callable { runHealthCheck(project, filter) })
+        .inSmartMode(project)
+        .executeSynchronously()
+
+      if (errors.isNotEmpty()) {
+        for (error in errors) {
+          error.fix(filter)
+        }
+
+        val message = StringUtil.first(errors.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
+                                       300,
+                                       true)
+        FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
+      }
+      else {
+        FileBasedIndexImpl.LOG.info("Health check heartbeat")
+      }
+    }
+  }
+
+  private fun runHealthCheck(project: Project, filter: IncrementalProjectIndexableFilesFilter): List<HealthCheckError> {
+    val errors = mutableListOf<HealthCheckError>()
+    val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
+    index.iterateIndexableFiles(ContentIterator {
+      if (it is VirtualFileWithId) {
+        val fileId = it.id
+        if (!filter.containsFileId(fileId)) {
+          filter.ensureFileIdPresent(fileId) { true }
+        }
+      }
+      true
+    }, project, ProgressManager.getInstance().progressIndicator)
+    return errors
+  }
+
+  private class HealthCheckError(private val project: Project, private val virtualFile: VirtualFile) {
+    val presentableText: String
+      get() = "file ${virtualFile.path} not found in ${project.name}"
+
+    fun fix(filter: IncrementalProjectIndexableFilesFilter) {
+      filter.ensureFileIdPresent((virtualFile as VirtualFileWithId).id) { true }
     }
   }
 }

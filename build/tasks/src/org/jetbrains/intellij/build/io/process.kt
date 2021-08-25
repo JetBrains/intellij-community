@@ -127,22 +127,33 @@ private fun InputStream.consume(process: Process, timeout: Timeout, consume: (St
   bufferedReader().use { reader ->
     var linesCount = 0
     var linesBuffer = StringBuilder()
+    val flushTimeoutMs = 5000L
+    var lastCharReceived = System.currentTimeMillis()
     while (!timeout.isElapsed && (process.isAlive || reader.ready())) {
       if (reader.ready()) {
         val char = reader.read().takeIf { it != -1 }?.toChar()
         if (char == '\n' || char == '\r') linesCount++
-        if (char != null) linesBuffer.append(char)
-        if (char == null || !reader.ready() || linesCount > 100) {
-          consume(linesBuffer.toString())
-          linesBuffer = StringBuilder()
-          linesCount = 0
+        if (char != null) {
+          linesBuffer.append(char)
+          lastCharReceived = System.currentTimeMillis()
+        }
+        if (char == null || !reader.ready() || linesCount > 100 || (System.currentTimeMillis() - lastCharReceived) > flushTimeoutMs) {
+          if (linesBuffer.isNotEmpty()) {
+            consume(linesBuffer.toString())
+            linesBuffer = StringBuilder()
+            linesCount = 0
+          }
         }
       }
       else {
         Thread.sleep(100L)
       }
     }
-  }
+
+    if (linesBuffer.isNotBlank()) {
+      consume(linesBuffer.toString())
+    }
+   }
 }
 
 private fun appendArg(value: String, builder: StringBuilder) {

@@ -3,7 +3,7 @@
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <content>
-    <module name="intellij.pycharm.community.customization.impl/training"/>
+    <module name="intellij.pycharm.community.ide.impl/training"/>
   </content>
   <projectListeners>
     <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
@@ -24,7 +24,7 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
                          instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         groupWeight="5"/>
+                         groupWeight="5"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
                          bundle="messages.PyBundle"

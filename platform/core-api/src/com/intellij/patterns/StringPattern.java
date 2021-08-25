@@ -4,10 +4,6 @@ package com.intellij.patterns;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ProcessingContext;
-import dk.brics.automaton.Automaton;
-import dk.brics.automaton.DatatypesAutomatonProvider;
-import dk.brics.automaton.RegExp;
-import dk.brics.automaton.RunAutomaton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,46 +90,6 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
       @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         return pattern.matcher(newBombedCharSequence(str)).matches();
-      }
-
-      @Override
-      public Collection<String> getValues() {
-        return Collections.singleton(s);
-      }
-    });
-  }
-
-  @NotNull
-  public StringPattern matchesBrics(@NonNls @NotNull final String s) {
-    final String escaped = StringUtil.escapeToRegexp(s);
-    if (escaped.equals(s)) {
-      return equalTo(s);
-    }
-
-    @NonNls StringBuilder sb = new StringBuilder(s.length() * 5);
-    for (int i = 0; i < s.length(); i++) {
-      final char c = s.charAt(i);
-      if(c == ' ') {
-        sb.append("<whitespacechar>");
-      }
-      else
-      //This is really stupid and inconvenient builder - it breaks any normal pattern with uppercase
-      if(Character.isUpperCase(c)) {
-        sb.append('[').append(Character.toUpperCase(c)).append(Character.toLowerCase(c)).append(']');
-      }
-      else
-      {
-        sb.append(c);
-      }
-    }
-    final RegExp regExp = new RegExp(sb.toString());
-    final Automaton automaton = regExp.toAutomaton(new DatatypesAutomatonProvider());
-    final RunAutomaton runAutomaton = new RunAutomaton(automaton, true);
-
-    return with(new ValuePatternCondition<String>("matchesBrics") {
-      @Override
-      public boolean accepts(@NotNull String str, final ProcessingContext context) {
-        return runAutomaton.run(str);
       }
 
       @Override

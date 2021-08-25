@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -39,6 +39,7 @@ import com.intellij.find.usages.impl.AllSearchOptions;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
@@ -88,13 +89,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -1396,9 +1397,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByText(@NotNull final String fileName, @NotNull final String text) {
     assertInitialized();
-    VirtualFile vFile;
+    VirtualFile vFile = createFile(fileName, text);
+    configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
+    return getFile();
+  }
+
+  @Override
+  public VirtualFile createFile(@NotNull String fileName, @NotNull String text) {
+    assertInitialized();
     try {
-      vFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+      return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
         final VirtualFile file;
         if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
           final VirtualFile root = LightPlatformTestCase.getSourceRoot();
@@ -1431,8 +1439,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
-    return getFile();
   }
 
   @Override
@@ -1602,6 +1608,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return elapsed;
   }
 
+  /**
+   * Sets filter to check for which files AST loading is forbidden in {@link #collectAndCheckHighlighting(ExpectedHighlightingData)} method.
+   * <p>
+   * Other testing methods are not affected,
+   * consider using {@link PsiManagerEx#setAssertOnFileLoadingFilter(VirtualFileFilter, Disposable)}.
+   * <p>
+   * Files loaded with <b>configure*</b> methods (which are called e.g. from {@link #testHighlighting(String...)}) won't be checked
+   * because their AST will be loaded before setting filter. Use {@link #copyFileToProject(String)} and similar methods.
+   */
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
     myVirtualFileFilter = filter;
   }
@@ -1960,7 +1975,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
-    SearchEverywhereContributor<Object> contributor = createMockContributor(searchEverywhere);
+    SearchEverywhereContributor<Object> contributor = createMockClassSearchEverywhereContributor(searchEverywhere);
+    final ArrayList<Object> results = new ArrayList<>();
+    contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
+    return results;
+  }
+
+  @Override
+  public @NotNull List<Object> getGotoSymbolResults(@NotNull String pattern,
+                                                    boolean searchEverywhere,
+                                                    @Nullable PsiElement contextForSorting) {
+    SearchEverywhereContributor<Object> contributor = createMockSymbolSearchEverywhereContributor(searchEverywhere);
     final ArrayList<Object> results = new ArrayList<>();
     contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
     return results;
@@ -1972,10 +1997,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myEditorTestFixture.getBreadcrumbsAtCaret();
   }
 
-  private SearchEverywhereContributor<Object> createMockContributor(boolean everywhere) {
+  private SearchEverywhereContributor<Object> createMockClassSearchEverywhereContributor(boolean everywhere) {
     DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
     ClassSearchEverywhereContributor contributor = new ClassSearchEverywhereContributor(event) {{
+      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
+    }};
+    Disposer.register(getProjectDisposable(), contributor);
+    return contributor;
+  }
+
+  private SearchEverywhereContributor<Object> createMockSymbolSearchEverywhereContributor(boolean everywhere) {
+    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    SymbolSearchEverywhereContributor contributor = new SymbolSearchEverywhereContributor(event) {{
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
     }};
     Disposer.register(getProjectDisposable(), contributor);

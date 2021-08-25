@@ -298,7 +298,7 @@ class VisiblePackBuilderTest {
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {
       return object : DataGetter<VcsFullCommitDetails> {
-        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails {
+        override fun getCommitData(row: Int): VcsFullCommitDetails {
           throw UnsupportedOperationException()
         }
 

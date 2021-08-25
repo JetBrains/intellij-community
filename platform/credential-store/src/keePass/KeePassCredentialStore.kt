@@ -17,11 +17,11 @@ import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal const val DB_FILE_NAME = "c.kdbx"
+const val DB_FILE_NAME = "c.kdbx"
 
-internal fun getDefaultKeePassBaseDirectory() = PathManager.getConfigDir()
+fun getDefaultKeePassBaseDirectory() = PathManager.getConfigDir()
 
-internal fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
+fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
 
 /**
  * preloadedMasterKey [MasterKey.value] will be cleared

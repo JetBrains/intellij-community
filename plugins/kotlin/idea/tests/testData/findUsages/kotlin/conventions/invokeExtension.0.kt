@@ -3,6 +3,7 @@
 package pack
 
 class P
+
 operator fun P.<caret>invoke() = 1
 
 fun f(p: P) {

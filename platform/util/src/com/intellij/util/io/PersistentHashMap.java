@@ -192,6 +192,9 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl.markDirty();
   }
 
+  /**
+   * @deprecated use {@link PersistentHashMap#processKeysWithExistingMapping(Processor)} instead.
+   */
   @Deprecated
   @NotNull
   public final Collection<Key> getAllKeysWithExistingMapping() throws IOException {

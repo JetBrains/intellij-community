@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
@@ -122,11 +122,12 @@ fun <T> Stream<T>?.isEmpty(): Boolean = this == null || !this.findAny().isPresen
 
 fun <T> Stream<T>?.notNullize(): Stream<T> = this ?: Stream.empty()
 
-fun <T> Stream<T>?.getIfSingle(): T? =
-  this?.limit(2)
+fun <T> Stream<T>?.getIfSingle(): T? {
+  return this?.limit(2)
     ?.map { Optional.ofNullable(it) }
     ?.reduce(Optional.empty()) { a, b -> if (a.isPresent xor b.isPresent) b else Optional.empty() }
     ?.orNull()
+}
 
 /**
  * There probably could be some performance issues if there is lots of streams to concat. See
@@ -164,9 +165,11 @@ inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
 inline fun <T, reified R> Array<out T>.map2Array(transform: (T) -> R): Array<R> = Array(this.size) { i -> transform(this[i]) }
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T, reified R> Collection<T>.map2Array(transform: (T) -> R): Array<R> = arrayOfNulls<R>(this.size).also { array ->
-  this.forEachIndexed { index, t -> array[index] = transform(t) }
-} as Array<R>
+inline fun <T, reified R> Collection<T>.map2Array(transform: (T) -> R): Array<R> {
+  return arrayOfNulls<R>(this.size).also { array ->
+    this.forEachIndexed { index, t -> array[index] = transform(t) }
+  } as Array<R>
+}
 
 inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
   return when (val size = size) {
@@ -267,11 +270,13 @@ fun <T> Collection<T>.minimalElements(comparator: Comparator<in T>): Collection<
  * ```
  * @return an iterator, which stops [this] Iterator after first element for which [predicate] returns `true`
  */
-inline fun <T> Iterator<T>.stopAfter(crossinline predicate: (T) -> Boolean): Iterator<T> = iterator {
-  for (element in this@stopAfter) {
-    yield(element)
-    if (predicate(element)) {
-      break
+inline fun <T> Iterator<T>.stopAfter(crossinline predicate: (T) -> Boolean): Iterator<T> {
+  return iterator {
+    for (element in this@stopAfter) {
+      yield(element)
+      if (predicate(element)) {
+        break
+      }
     }
   }
 }
@@ -297,20 +302,22 @@ fun <T> Array<T>.mapInPlace(transform: (T) -> T): Array<T> {
 /**
  * @return sequence of distinct nodes in breadth-first order
  */
-fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: (Node) -> Sequence<Node>): Sequence<Node> = sequence {
-  val initialIterator = initialSequence.iterator()
-  if (!initialIterator.hasNext()) {
-    return@sequence
-  }
-  val visited = HashSet<Node>()
-  val sequences = ArrayDeque<Sequence<Node>>()
-  sequences.addLast(initialIterator.asSequence())
-  while (sequences.isNotEmpty()) {
-    val currentSequence = sequences.removeFirst()
-    for (node in currentSequence) {
-      if (visited.add(node)) {
-        yield(node)
-        sequences.addLast(children(node))
+fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: (Node) -> Sequence<Node>): Sequence<Node> {
+  return sequence {
+    val initialIterator = initialSequence.iterator()
+    if (!initialIterator.hasNext()) {
+      return@sequence
+    }
+    val visited = HashSet<Node>()
+    val sequences = ArrayDeque<Sequence<Node>>()
+    sequences.addLast(initialIterator.asSequence())
+    while (sequences.isNotEmpty()) {
+      val currentSequence = sequences.removeFirst()
+      for (node in currentSequence) {
+        if (visited.add(node)) {
+          yield(node)
+          sequences.addLast(children(node))
+        }
       }
     }
   }
@@ -319,4 +326,4 @@ fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: 
 /**
  * Returns a new sequence either of single given element, if it is not null, or empty sequence if the element is null.
  */
-fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element != null) sequenceOf(element) else emptySequence()
+fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element == null) emptySequence() else sequenceOf(element)

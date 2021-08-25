@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.formatter
 
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.psi.TokenType
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.util.applyIf
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
@@ -79,13 +80,6 @@ internal object MarkdownSpacingBuilder {
         between(MarkdownTokenTypes.TEXT, MarkdownTokenTypes.TEXT).spacing(1, spaces, 0, false, 0)
       }
 
-  }
-
-  private fun SpacingBuilder.applyIf(condition: Boolean, body: SpacingBuilder.() -> SpacingBuilder) = if (condition) {
-    body(this)
-  }
-  else {
-    this
   }
 
   private fun SpacingBuilder.RuleBuilder.blankLinesRange(from: Int, to: Int): SpacingBuilder {

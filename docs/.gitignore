@@ -1,4 +1,4 @@
 dist
-plugin-graph/node_modules
+node_modules
 plugin-graph/plugin-graph.local.json
 .DS_Store

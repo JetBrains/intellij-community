@@ -59,13 +59,27 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private boolean myConvertLfToCrlfForNonPtyProcess = false;
 
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
-    this(project, 200, 24, processHandler);
+    this(project, processHandler, getProvider());
+  }
+
+  public TerminalExecutionConsole(@NotNull Project project,
+                                  @Nullable ProcessHandler processHandler,
+                                  @NotNull JBTerminalSystemSettingsProviderBase settingsProvider) {
+    this(project, 200, 24, processHandler, settingsProvider);
   }
 
   public TerminalExecutionConsole(@NotNull Project project, int columns, int lines, @Nullable ProcessHandler processHandler) {
+    this(project, columns, lines, processHandler, getProvider());
+  }
+
+  public TerminalExecutionConsole(@NotNull Project project,
+                                  int columns,
+                                  int lines,
+                                  @Nullable ProcessHandler processHandler,
+                                  @NotNull JBTerminalSystemSettingsProviderBase settingsProvider) {
     myProject = project;
     myDataStream = new AppendableTerminalDataStream();
-    myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, getProvider());
+    myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, settingsProvider);
     if (processHandler != null) {
       attachToProcess(processHandler);
     }
@@ -339,7 +353,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     @Override
     protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
-      return new TerminalStarter(terminal, connector, myDataStream) {
+      return new TerminalStarter(terminal, connector, myDataStream, myTerminalWidget.getTypeAheadManager()) {
         @Override
         public byte[] getCode(int key, int modifiers) {
           if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {

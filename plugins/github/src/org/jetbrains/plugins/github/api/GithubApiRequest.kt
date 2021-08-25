@@ -20,8 +20,6 @@ sealed class GithubApiRequest<out T>(val url: String) {
   var operationName: String? = null
   abstract val acceptMimeType: String?
 
-  open val tokenHeaderType = GithubApiRequestExecutor.TokenHeaderType.TOKEN
-
   protected val headers = mutableMapOf<String, String>()
   val additionalHeaders: Map<String, String>
     get() = headers
@@ -124,8 +122,6 @@ sealed class GithubApiRequest<out T>(val url: String) {
                                    private val queryName: String,
                                    private val variablesObject: Any)
       : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url) {
-
-      override val tokenHeaderType = GithubApiRequestExecutor.TokenHeaderType.BEARER
 
       override val body: String
         get() {

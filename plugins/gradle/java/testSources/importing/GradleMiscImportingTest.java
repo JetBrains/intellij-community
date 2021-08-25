@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -278,7 +277,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testSourceSetModuleNamesForDeduplicatedMainModule() throws Exception {
-    IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
     modelsProvider.newModule(getProjectPath() + "/app.iml", StdModuleTypes.JAVA.getId());
     modelsProvider.newModule(getProjectPath() + "/my_group.app.main.iml", StdModuleTypes.JAVA.getId());
     edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));

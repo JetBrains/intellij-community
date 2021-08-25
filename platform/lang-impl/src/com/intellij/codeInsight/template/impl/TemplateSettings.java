@@ -9,6 +9,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -44,7 +45,8 @@ import java.util.*;
 @State(
   name = "TemplateSettings",
   storages = @Storage("templates.xml"),
-  additionalExportDirectory = TemplateSettings.TEMPLATES_DIR_PATH
+  additionalExportDirectory = TemplateSettings.TEMPLATES_DIR_PATH,
+  category = ComponentCategory.CODE
 )
 public final class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);

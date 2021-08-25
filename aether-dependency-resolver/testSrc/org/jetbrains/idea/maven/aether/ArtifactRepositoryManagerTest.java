@@ -94,9 +94,10 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     ArtifactDependencyNode second = result.getDependencies().get(1);
     assertCoordinates(first.getArtifact(), "org.apache.httpcomponents", "httpclient", "4.5.5");
     assertCoordinates(second.getArtifact(), "commons-logging", "commons-logging", "1.2");
-    assertEquals(2, first.getDependencies().size());
+    assertEquals(3, first.getDependencies().size());
     assertCoordinates(first.getDependencies().get(0).getArtifact(), "org.apache.httpcomponents", "httpcore", "4.4.9");
-    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-codec", "commons-codec", "1.10");
+    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-logging", "commons-logging", "1.2");
+    assertCoordinates(first.getDependencies().get(2).getArtifact(), "commons-codec", "commons-codec", "1.10");
   }
 
   public void testTransitiveSnapshotDependenciesExcluded() throws Exception {

@@ -8,12 +8,14 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
+import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.PyTestFactory
 import com.jetbrains.python.testing.TestRunnerService
+import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
 import com.jetbrains.python.testing.isTestElement
 
 private val decoratorNames = arrayOf("pytest.fixture", "fixture")
@@ -111,7 +113,15 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
   return classBasedFixtures + topLevelixtures
 }
 
-internal fun isPyTestEnabled(module: Module) =
-  TestRunnerService.getInstance(module).projectConfiguration == PyTestFactory.id
+internal fun isPyTestEnabled(module: Module): Boolean {
+  val factory = TestRunnerService.getInstance(module).selectedFactory
+  // Must be true even if SDK is not set
+  if (factory.id == PyTestFactory.id) return true
+
+  val sdk = module.getSdk() ?: return false
+  val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk) else factory).id
+  return factoryId == PyTestFactory.id
+}
+
 
 

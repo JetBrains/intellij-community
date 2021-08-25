@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.ExperimentalUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -837,7 +837,7 @@ public class JBTabsImpl extends JComponent
 
   private void addTimerUpdate() {
     if (!myListenerAdded) {
-      ActionManager.getInstance().addTimerListener(500, this);
+      ActionManager.getInstance().addTimerListener(this);
       myListenerAdded = true;
     }
   }

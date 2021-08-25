@@ -19,7 +19,7 @@ package com.intellij.ide.impl.dataRules;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class PsiElementFromSelectionRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
-    Object item = PlatformDataKeys.SELECTED_ITEM.getData(dataProvider);
+    Object item = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
     PsiElement element = null;
     if (item instanceof PsiElement) {
       element = (PsiElement)item;

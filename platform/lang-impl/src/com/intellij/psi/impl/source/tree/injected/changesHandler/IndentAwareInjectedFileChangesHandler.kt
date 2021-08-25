@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor
@@ -6,6 +6,7 @@ import com.intellij.injected.editor.InjectionMeta
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -74,15 +75,17 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       var rangeInHost = affectedMarker.hostMarker.range
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
-      val newText0 = if (affectedMarker.host?.getUserData(InjectionMeta.SUPPRESS_COPY_PASTE_HANDLER_IN_FE) == true)
-        markerText
-      else
+      val newText0 =
         CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
           preProcessor.preprocessOnPaste(myProject, hostPsiFile, myHostEditor, newText, null).also { r ->
             if (r != newText) {
               LOG.debug { "preprocessed by $preProcessor '${newText.esclbr()}' -> '${r.esclbr()}'" }
             }
           }
+        }.let { preprocessed ->
+          val firstLineWhiteSpaces = markerText.takeWhile { it.isWhitespace() }
+          if (preprocessed.startsWith(firstLineWhiteSpaces)) preprocessed
+          else firstLineWhiteSpaces + preprocessed
         }
 
       val indent = affectedMarker.host?.getUserData(InjectionMeta.INJECTION_INDENT)

@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.nextLeafs
+import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -38,10 +43,18 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
                 } else {
                     appendExpression(expression)
                 }
-                appendFixedText(")\n")
+                appendFixedText(")")
+                val tailComments = expression.tailComments()
+                if (tailComments.isNotEmpty()) {
+                    appendFixedText(" ")
+                    tailComments.forEach { appendFixedText(it.text) }
+                }
+                appendFixedText("\n")
             }
             appendFixedText("}")
         }
+        element.deleteTailComments()
+
         val replaced = element.replaced(buildStringCall)
         ShortenReferences.DEFAULT.process(replaced)
     }
@@ -68,4 +81,24 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
         collect(this)
         return expressions
     }
+
+    private fun KtExpression.tailComments(): List<PsiElement> {
+        val tailElements = this.nextLeafs
+            .takeWhile { it is PsiWhiteSpace || it is PsiComment || it.elementType == KtTokens.PLUS }
+            .dropWhile { it !is PsiComment }
+        return if (tailElements.any { it is PsiComment }) {
+            tailElements.toList().dropLastWhile { it is PsiWhiteSpace }
+        } else {
+            emptyList()
+        }
+    }
+
+    private fun KtExpression.deleteTailComments() {
+        siblings(withSelf = false)
+            .takeWhile { !it.isWhiteSpaceWithLineBreak() }
+            .filter { it is PsiComment }
+            .forEach { it.delete() }
+    }
+
+    private fun PsiElement.isWhiteSpaceWithLineBreak() = this is PsiWhiteSpace && this.textContains('\n')
 }

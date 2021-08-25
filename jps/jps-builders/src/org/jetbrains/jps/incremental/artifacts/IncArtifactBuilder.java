@@ -4,9 +4,10 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -83,9 +84,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
       final ArtifactOutputToSourceMapping outSrcMapping = pd.dataManager.getStorage(target, ArtifactOutToSourceStorageProvider.INSTANCE);
 
-      final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<>();
+      final Int2ObjectMap<Set<String>> filesToProcess = new Int2ObjectOpenHashMap<>();
       final MultiMap<String, String> filesToDelete = new MultiMap<>();
-      final Set<String> deletedOutputPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> deletedOutputPaths = CollectionFactory.createFilePathSet();
       for (String sourcePath : deletedFiles) {
         final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
         if (outputPaths != null) {
@@ -97,7 +98,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         }
       }
 
-      final Set<String> changedOutputPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> changedOutputPaths = CollectionFactory.createFilePathSet();
       holder.processDirtyFiles(new FileProcessor<ArtifactRootDescriptor, ArtifactBuildTarget>() {
         @Override
         public boolean apply(ArtifactBuildTarget target, File file, ArtifactRootDescriptor root) throws IOException {
@@ -173,7 +174,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
   private static void collectSourcesCorrespondingToOutput(String outputPath, String sourcePath,
                                                           Collection<String> deletedFiles,
                                                           ArtifactOutputToSourceMapping outSrcMapping,
-                                                          TIntObjectHashMap<Set<String>> filesToProcess,
+                                                          Int2ObjectMap<Set<String>> filesToProcess,
                                                           MultiMap<String, String> filesToDelete) throws IOException {
     filesToDelete.putValue(outputPath, sourcePath);
     final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
@@ -203,7 +204,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     }
   }
 
-  private static void addFileToProcess(TIntObjectHashMap<Set<String>> filesToProcess,
+  private static void addFileToProcess(Int2ObjectMap<Set<String>> filesToProcess,
                                        final int rootIndex,
                                        final String path,
                                        Collection<String> deletedFiles) {
@@ -212,7 +213,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     }
     Set<String> paths = filesToProcess.get(rootIndex);
     if (paths == null) {
-      paths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      paths = CollectionFactory.createFilePathSet();
       filesToProcess.put(rootIndex, paths);
     }
     paths.add(path);
@@ -225,8 +226,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
     context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.deleting.outdated.files")));
     int notDeletedFilesCount = 0;
-    final THashSet<String> notDeletedPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    final THashSet<String> deletedPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> notDeletedPaths = CollectionFactory.createFilePathSet();
+    Set<String> deletedPaths = CollectionFactory.createFilePathSet();
 
     for (String filePath : filesToDelete.keySet()) {
       if (notDeletedPaths.contains(filePath)) {

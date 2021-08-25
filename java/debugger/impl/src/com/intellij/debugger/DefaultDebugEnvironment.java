@@ -12,8 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.KeyWithDefaultValue;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,7 +47,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   }
 
   private static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
-    GlobalSearchScope scope = GlobalSearchScopes.executionScope(project, runProfile);
+    GlobalSearchScope scope = ExecutionSearchScopes.executionScope(project, runProfile);
     // prefer sources over class files
     return new DebuggerGlobalSearchScope(scope, project);
   }

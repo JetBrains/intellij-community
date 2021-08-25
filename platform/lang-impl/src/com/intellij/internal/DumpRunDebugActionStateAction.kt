@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.Messages
 import javax.swing.JComponent
 
+@Deprecated(message = "not really needed anymore")
 class DumpRunDebugActionStateAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

@@ -8,7 +8,6 @@
     <gradle.version>7.1.1</gradle.version>
     <junit.version>5.7.1</junit.version>
     <kotlin.version>1.5.10</kotlin.version>
-    <jersey.version>2.33</jersey.version>
 
     <!-- OpenJFX release trains -->
     <fx.default.version>11.0.2</fx.default.version>
@@ -18,7 +17,8 @@
     <fx14.version>14.0.2.1</fx14.version>
     <fx15.version>15.0.1</fx15.version>
     <fx16.version>16</fx16.version>
-    <fx17.version>17-ea+11</fx17.version>
+    <fx17.version>17-ea+16</fx17.version>
+    <fx18.version>18-ea+1</fx18.version>
   </properties>
 
   <dependencyManagement>
@@ -38,6 +38,11 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
       </dependency>
+      <dependency>
+        <groupId>org.beryx</groupId>
+        <artifactId>badass-jlink-plugin</artifactId>
+        <version>2.24.1</version>
+      </dependency>
 
       <dependency>
         <groupId>org.controlsfx</groupId>
@@ -47,7 +52,7 @@
       <dependency>
         <groupId>com.dlsc.formsfx</groupId>
         <artifactId>formsfx-core</artifactId>
-        <version>11.4.2</version>
+        <version>11.3.2</version>
       </dependency>
       <dependency>
         <groupId>net.synedra</groupId>

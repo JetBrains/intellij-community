@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 1.6" allPlatforms="JVM [1.6]">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable" />
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend" />
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="1.6" />

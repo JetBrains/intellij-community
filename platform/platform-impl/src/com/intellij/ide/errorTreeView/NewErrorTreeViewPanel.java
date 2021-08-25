@@ -60,7 +60,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   private volatile float myFraction;
   private final ErrorViewStructure myErrorViewStructure;
   private final StructureTreeModel<ErrorViewStructure> myStructureModel;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
   private volatile boolean myIsDisposed;
   private final ErrorTreeViewConfiguration myConfiguration;
 

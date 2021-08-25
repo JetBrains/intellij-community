@@ -27,7 +27,7 @@ final class CompilationTasksImpl extends CompilationTasks {
   void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules) {
     reuseCompiledClassesIfProvided()
     if (context.options.useCompiledClassesFromProjectOutput) {
-      context.messages.info("Compilation skipped, the compiled classes from the project output will be used")
+      context.messages.info("Compilation skipped, the compiled classes from '${context.projectOutputDirectory}' will be used")
       resolveProjectDependencies()
     }
     else if (jpsCache.canBeUsed) {
@@ -49,7 +49,7 @@ final class CompilationTasksImpl extends CompilationTasks {
       if (jdkInfo.version.feature != 11) {
         context.messages.error("Build script must be executed under Java 11 to compile intellij project, but it's executed under Java $jdkInfo.version ($currentJdk)")
       }
-
+      resolveProjectDependencies()
       context.messages.progress("Compiling project")
       JpsCompilationRunner runner = new JpsCompilationRunner(context)
       try {
@@ -123,12 +123,10 @@ final class CompilationTasksImpl extends CompilationTasks {
            options.pathToCompiledClassesArchivesMetadata != null
   }
 
-  private static boolean areCompiledClassesReusedOrNotProvided
-
   @Override
   void reuseCompiledClassesIfProvided() {
     synchronized (CompilationTasksImpl) {
-      if (areCompiledClassesReusedOrNotProvided) {
+      if (context.compilationData.compiledClassesAreLoaded) {
         return
       }
       if (context.options.cleanOutputFolder) {
@@ -138,7 +136,7 @@ final class CompilationTasksImpl extends CompilationTasks {
         context.messages.info("cleanOutput step was skipped")
       }
       if (context.options.useCompiledClassesFromProjectOutput) {
-        context.messages.info("Compiled classes reused from project output")
+        context.messages.info("Compiled classes reused from '${context.projectOutputDirectory}'")
       }
       else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
         CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
@@ -149,7 +147,7 @@ final class CompilationTasksImpl extends CompilationTasks {
       else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
         jpsCache.downloadCacheAndCompileProject()
       }
-      areCompiledClassesReusedOrNotProvided = true
+      context.compilationData.compiledClassesAreLoaded = true
     }
   }
 

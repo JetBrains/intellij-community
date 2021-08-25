@@ -6,10 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ReportValue;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
@@ -25,7 +22,7 @@ import org.jetbrains.annotations.SystemDependent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML))
+@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML), category = ComponentCategory.SYSTEM)
 public final class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
   public static final String IDE_GENERAL_XML = "ide.general.xml";
 

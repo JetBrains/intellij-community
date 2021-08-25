@@ -26,7 +26,7 @@ internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
     GitExecutableProblemsNotifier.notify(project, notification)
   }
 
-  private fun createNotification(text: String, description: String?): BadGitExecutableNotification {
+  private fun createNotification(text: @NlsContexts.NotificationTitle String, description: @NlsContexts.NotificationContent String?): BadGitExecutableNotification {
     val notification = BadGitExecutableNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
                                                     getErrorTitle(text, description),
                                                     getErrorMessage(text, description),
@@ -51,8 +51,8 @@ internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
     ProgressManager.getInstance().progressIndicator?.text = text
   }
 
-  override fun showMessage(@NlsContexts.NotificationContent text: String) {
-    VcsNotifier.getInstance(project).notifyInfo(null, "", text)
+  override fun showMessage(@NlsContexts.NotificationContent message: String) {
+    VcsNotifier.getInstance(project).notifyInfo(null, "", message)
   }
 
   override fun hideProgress() {

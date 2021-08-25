@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.sh.statistics.ShCounterUsagesCollector.RENAMING_ACTION_USED_EVENT_ID;
-
 final class ShTextRenameRefactoring {
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
@@ -81,7 +79,6 @@ final class ShTextRenameRefactoring {
     }
     createCaretRangeMarker();
     WriteCommandAction.writeCommandAction(myProject).withName(ShBundle.message("sh.rename.occurence", myOccurrenceText)).run(() -> startTemplate(builder));
-    RENAMING_ACTION_USED_EVENT_ID.log();
   }
 
   private void createCaretRangeMarker() {

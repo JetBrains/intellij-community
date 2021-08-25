@@ -21,6 +21,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@link FileType} which is determined by the particular {@link VirtualFile}.
+ * For example, text file located in "META-INF/services" directory should be treated as of SPI file type.
+ *
+ * <p/>As an implementation example, please
+ * @see com.intellij.spi.SPIFileType
+ */
 public interface FileTypeIdentifiableByVirtualFile extends FileType {
   boolean isMyFileType(@NotNull VirtualFile file);
 

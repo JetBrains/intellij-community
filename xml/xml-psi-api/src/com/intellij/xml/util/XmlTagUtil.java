@@ -12,8 +12,8 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtilRt;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public final class XmlTagUtil {
-  private static final Object2IntMap<String> ourCharacterEntities = new Object2IntOpenHashMap<>(6);
+  private static final ObjectIntMap<String> ourCharacterEntities = new ObjectIntHashMap<>(6);
 
   static {
     ourCharacterEntities.put("lt", '<');
@@ -85,7 +85,8 @@ public final class XmlTagUtil {
   }
 
   public static char getCharacterByEntityName(String entityName) {
-    return (char)ourCharacterEntities.getInt(entityName);
+    int c = ourCharacterEntities.get(entityName);
+    return c==-1?0:(char)c;
   }
 
   @Nullable

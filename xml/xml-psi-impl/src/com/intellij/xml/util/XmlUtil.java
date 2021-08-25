@@ -3,16 +3,19 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -1247,6 +1250,17 @@ public final class XmlUtil {
       }
     }
     return (XmlComment)curElement;
+  }
+
+  public static boolean hasNonEditableInjectionFragmentAt(@NotNull XmlAttribute attribute, int offset) {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(attribute.getProject());
+    PsiElement host = manager.getInjectionHost(attribute);
+    if (host == null) return false;
+    Document doc = PsiDocumentManager.getInstance(attribute.getProject()).getDocument(attribute.getContainingFile());
+    if (!(doc instanceof DocumentWindow)) return false;
+    return ContainerUtil.exists(manager.getNonEditableFragments((DocumentWindow)doc), range -> {
+      return range.getStartOffset() <= offset && offset <= (range.getEndOffset() + 1);
+    });
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {

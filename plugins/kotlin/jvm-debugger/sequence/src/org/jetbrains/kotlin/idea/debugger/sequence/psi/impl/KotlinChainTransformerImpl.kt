@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.CallTypeExtractor
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.callName
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.resolveType
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument

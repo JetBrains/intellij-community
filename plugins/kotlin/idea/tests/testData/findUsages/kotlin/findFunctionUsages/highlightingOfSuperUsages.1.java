@@ -1,3 +1,3 @@
-interface I {
+public interface I {
     void foo();
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
@@ -198,22 +199,7 @@ final class BuildTasksImpl extends BuildTasks {
       this.buildContext = buildContext
     }
 
-    protected static List<File> jars(String pluginPath) {
-      File libFile = new File(pluginPath, "lib")
-      return libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }.collect { jarName ->
-        new File(libFile, jarName)
-      }
-    }
-
     Set<String> customize(Set<String> ideClasspath) {
-      List<Path> additionalPluginPaths = buildContext.productProperties.getAdditionalPluginPaths(buildContext)
-      for (Path pluginPath : additionalPluginPaths) {
-        for (File jarFile : jars(pluginPath.toString())) {
-          if (ideClasspath.add(jarFile.absolutePath)) {
-            buildContext.messages.debug("$jarFile from plugin $pluginPath")
-          }
-        }
-      }
       return ideClasspath
     }
   }
@@ -224,7 +210,6 @@ final class BuildTasksImpl extends BuildTasks {
                                     List<String> arguments,
                                     Map<String, Object> systemProperties = Collections.emptyMap(),
                                     List<String> vmOptions = List.of("-Xmx512m"),
-                                    List<String> pluginsToDisable = Collections.emptyList(),
                                     long timeoutMillis = TimeUnit.MINUTES.toMillis(10L),
                                     ApplicationStarterClasspathCustomizer classpathCustomizer = new ApplicationStarterClasspathCustomizer(context)) {
     Files.createDirectories(tempDir)
@@ -239,6 +224,14 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
+    //todo remove this when KTIJ-11539 is fixed; currently if we add kotlin.idea module to the classpath as a transitive dependency of some other module,
+    //     it'll cause conflicts with Kotlin plugin loaded from JAR
+    String pathToIgnore = new File(context.projectOutputDirectory, "production/kotlin.idea").absolutePath
+    if (ideClasspath.remove(pathToIgnore)) {
+      context.messages.debug(" remove $pathToIgnore from classpath to avoid conflicts")
+    }
+
+
     List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
       "idea.home.path"   : context.paths.projectHome,
       "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
@@ -250,10 +243,24 @@ final class BuildTasksImpl extends BuildTasks {
     }
     jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
     jvmArgs.addAll(vmOptions)
+    String debugPort = System.getProperty("intellij.build.${arguments.first()}.debug.port")
+    if (debugPort != null) {
+      jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$debugPort".toString())
+    }
 
+    List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    Set<String> additionalPluginIds = new HashSet<>()
+    for (Path pluginPath : additionalPluginPaths) {
+      for (File jarFile : BuildUtils.getPluginJars(pluginPath.toString())) {
+        if (ideClasspath.add(jarFile.absolutePath)) {
+          context.messages.debug("$jarFile from plugin $pluginPath")
+          ContainerUtil.addIfNotNull(additionalPluginIds, BuildUtils.readPluginId(jarFile))
+        }
+      }
+    }
     ideClasspath = classpathCustomizer.customize(ideClasspath)
 
-    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), pluginsToDisable)
+    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), additionalPluginIds)
 
     BuildHelper.runJava(
       context,
@@ -266,11 +273,15 @@ final class BuildTasksImpl extends BuildTasks {
 
   private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context,
                                                       @NotNull Path configDir,
-                                                      @NotNull List<String> pluginsToDisable) {
-    Set<String> toDisable = new HashSet<>(pluginsToDisable)
+                                                      @NotNull Set<String> explicitlyEnabledPlugins) {
+    Set<String> toDisable = new HashSet<>()
     for (String moduleName : context.productProperties.productLayout.compatiblePluginsToIgnore) {
       Path pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
-      toDisable.add(JDOMUtil.load(pluginXml).getChildTextTrim("id"))
+      def pluginId = JDOMUtil.load(pluginXml).getChildTextTrim("id")
+      if (!explicitlyEnabledPlugins.contains(pluginId)) {
+        toDisable.add(pluginId)
+        context.messages.debug("runApplicationStarter: '$pluginId' will be disabled, because it's mentioned in 'compatiblePluginsToIgnore'")
+      }
     }
     if (!toDisable.isEmpty()) {
       Files.createDirectories(configDir)
@@ -374,9 +385,11 @@ idea.fatal.error.notification=disabled
     Path src = buildContext.paths.communityHomeDir.resolve("bin/log.xml")
     Path dst = buildContext.paths.distAllDir.resolve("bin/log.xml")
     Files.createDirectories(dst.parent)
-    Files.newBufferedWriter(dst).withCloseable {
-      src.filterLine { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(it)
-    }
+
+    String text = Files.readAllLines(src)
+      .findAll { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }
+      .join("\n")
+    Files.writeString(dst, text)
   }
 
   private static @NotNull BuildTaskRunnable<Path> createDistributionForOsTask(@NotNull String taskName,
@@ -435,13 +448,15 @@ idea.fatal.error.notification=disabled
   }
 
   private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Set<PluginLayout> pluginsToPublish) {
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, "$buildContext.applicationInfo", pluginsToPublish)
-    compileModules(distributionJARsBuilder.getModulesForPluginsToPublish())
+    DistributionJARsBuilder distBuilder = new DistributionJARsBuilder(buildContext, pluginsToPublish)
+    compileModules(distBuilder.getModulesForPluginsToPublish())
 
-    //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
-    CompilationTasks.create(buildContext).resolveProjectDependencies()
-    CompilationTasks.create(buildContext).buildProjectArtifacts(distributionJARsBuilder.includedProjectArtifacts)
-    return distributionJARsBuilder
+    // we need this to ensure that all libraries which may be used in the distribution are resolved,
+    // even if product modules don't depend on them (e.g. JUnit5)
+    CompilationTasks compilationTasks = CompilationTasks.create(buildContext)
+    compilationTasks.resolveProjectDependencies()
+    compilationTasks.buildProjectArtifacts(distBuilder.includedProjectArtifacts)
+    return distBuilder
   }
 
   @Override
@@ -483,11 +498,11 @@ idea.fatal.error.notification=disabled
            distributionJARsBuilder.buildJARs()
            DistributionJARsBuilder.buildAdditionalArtifacts(buildContext, distributionJARsBuilder.projectStructureMapping)
            scramble(buildContext)
-           DistributionJARsBuilder.reorderJars(buildContext)
+           reorderJars(buildContext)
          }
          else {
            buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-           DistributionJARsBuilder.reorderJars(buildContext)
+           reorderJars(buildContext)
            DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
            distributionJARsBuilder.buildNonBundledPlugins(true)
          }
@@ -576,17 +591,15 @@ idea.fatal.error.notification=disabled
     checkProductProperties()
     checkPluginModules(mainPluginModules, "mainPluginModules", buildContext.productProperties.productLayout.allNonTrivialPlugins)
     copyDependenciesFile()
-    def pluginsToPublish = new LinkedHashSet<PluginLayout>(
-      DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
-    def distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
+    Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
+    DistributionJARsBuilder distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
     DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
     distributionJARsBuilder.buildNonBundledPlugins(true)
   }
 
   @Override
   void generateProjectStructureMapping(File targetFile) {
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, "$buildContext.applicationInfo")
-    jarsBuilder.generateProjectStructureMapping(targetFile)
+    new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath())
   }
 
   private void setupJBre(String targetArch = null) {
@@ -675,7 +688,7 @@ idea.fatal.error.notification=disabled
     Files.createDirectories(destProjectorLibDir)
 
     def libNamesToCopy = new ArrayList<String>()
-    libNamesToCopy.addAll("projector-server", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
+    libNamesToCopy.addAll("projector-server", "projector-server-core", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
 
     ArrayList<File> projectorLibsToCopy = new ArrayList<>()
     ArrayList<String> failedLibs = new ArrayList<>()
@@ -711,7 +724,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void scramble(BuildContext buildContext) {
+  private static void scramble(BuildContext buildContext) {
     if (!buildContext.productProperties.scrambleMainJar) {
       return
     }
@@ -806,11 +819,33 @@ idea.fatal.error.notification=disabled
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.each { plugin ->
-      checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
-      checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
-      checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
-      checkArtifacts(plugin.includedArtifacts.keySet(), "'$plugin.mainModule' plugin")
+      checkBaseLayout(plugin, "'$plugin.mainModule' plugin")
     }
+  }
+
+  private void checkBaseLayout(BaseLayout layout, String description) {
+    checkModules(layout.moduleJars.values(), "moduleJars in $description")
+    checkArtifacts(layout.includedArtifacts.keySet(), "includedArtifacts in $description")
+    checkModules(layout.resourcePaths.collect { it.moduleName }, "resourcePaths in $description")
+    checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description")
+    checkProjectLibraries(layout.includedProjectLibraries.collect { it.libraryName }, "includedProjectLibraries in $description")
+    for (data in layout.includedModuleLibraries) {
+      checkModules([data.moduleName], "includedModuleLibraries in $description")
+      if (buildContext.findRequiredModule(data.moduleName).libraryCollection.libraries.find { LayoutBuilder.LayoutSpec.getLibraryName(it) == data.libraryName } == null) {
+        buildContext.messages.error("Cannot find library '$data.libraryName' in '$data.moduleName' (used in $description)")
+      }
+    }
+    checkModules(layout.excludedModuleLibraries.keySet(), "excludedModuleLibraries in $description")
+    for (entry in layout.excludedModuleLibraries.entrySet()) {
+      def libraries = buildContext.findRequiredModule(entry.key).libraryCollection.libraries
+      for (libraryName in entry.value) {
+      if (libraries.find { LayoutBuilder.LayoutSpec.getLibraryName(it) == libraryName } == null) {
+          buildContext.messages.error("Cannot find library '$libraryName' in '$entry.key' (used in 'excludedModuleLibraries' in $description)")
+        }
+      }
+    }
+    checkProjectLibraries(layout.projectLibrariesToUnpack.values(), "projectLibrariesToUnpack in $description")
+    checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description")
   }
 
   private void checkPluginDuplicates(List<PluginLayout> nonTrivialPlugins) {
@@ -1010,7 +1045,7 @@ idea.fatal.error.notification=disabled
     distributionJARsBuilder.buildJARs()
     DistributionJARsBuilder.buildInternalUtilities(buildContext)
     scramble(buildContext)
-    DistributionJARsBuilder.reorderJars(buildContext)
+    reorderJars(buildContext)
     layoutShared()
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
@@ -1040,7 +1075,7 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    DistributionJARsBuilder.reorderJars(buildContext)
+    reorderJars(buildContext)
     JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
     if (includeBinAndRuntime) {
       setupJBre(arch.name())
@@ -1104,5 +1139,19 @@ idea.fatal.error.notification=disabled
       Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
       buildContext.patchInspectScript(targetPath)
     }
+  }
+
+  private static void reorderJars(@NotNull BuildContext buildContext) {
+    if (buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+      return
+    }
+
+    BuildHelper.getInstance(buildContext).reorderJars
+      .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
+                           buildContext.getBootClassPathJarNames(),
+                           buildContext.paths.tempDir,
+                           buildContext.productProperties.productLayout.mainJarName,
+                           buildContext.productProperties.isAntRequired ? Path.of(buildContext.paths.communityHome, "lib/ant/lib") : null,
+                           buildContext.messages)
   }
 }

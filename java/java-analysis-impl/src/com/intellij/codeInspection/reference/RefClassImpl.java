@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -63,16 +63,15 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     LOG.assertTrue(uClass != null);
 
-    UElement parent = UDeclarationKt.getContainingDeclaration(uClass);
+    UDeclaration parent = UDeclarationKt.getContainingDeclaration(uClass);
     while (parent != null) {
       if (parent instanceof UMethod || parent instanceof UClass || parent instanceof UField) {
         break;
       }
       parent = UDeclarationKt.getContainingDeclaration(parent);
     }
-    if (parent != null) {
-      RefElement refParent = getRefManager().getReference(parent.getSourcePsi());
-      LOG.assertTrue(refParent != null);
+    RefElement refParent = parent != null ? getRefManager().getReference(parent.getSourcePsi()) : null;
+    if (refParent != null) {
       ((RefElementImpl)refParent).add(this);
     } else {
       PsiFile containingFile = getContainingFile();

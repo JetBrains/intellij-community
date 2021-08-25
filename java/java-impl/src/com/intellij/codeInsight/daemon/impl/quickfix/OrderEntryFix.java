@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -138,7 +138,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     registrar.register(moduleDependencyFix);
     result.add(moduleDependencyFix);
 
-    Set<Object> librariesToAdd = new HashSet<>();
+    Map<Library, String> librariesToAdd = new HashMap<>();
+    Set<VirtualFile> jars = new HashSet<>();
+    Set<Library> excluded = new HashSet<>();
     ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(currentModule).getFileIndex();
     for (PsiClass aClass : allowedDependencies) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
@@ -155,19 +157,30 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           if (files.length == 0) continue;
           final VirtualFile jar = files[0];
 
-          if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar) || !librariesToAdd.add(library)) continue;
+          String qualifiedName = aClass.getQualifiedName();
+          if (qualifiedName == null) continue;
+
+          if (jar == null || 
+              libraryEntry.isModuleLevel() && !jars.add(jar) || 
+              librariesToAdd.putIfAbsent(library, qualifiedName) != null) {
+            continue;
+          }
           OrderEntry entryForFile = moduleFileIndex.getOrderEntryForFile(virtualFile);
           if (entryForFile != null &&
               !(entryForFile instanceof ExportableOrderEntry &&
                 ((ExportableOrderEntry)entryForFile).getScope() == DependencyScope.TEST &&
                 !moduleFileIndex.isInTestSourceContent(refVFile))) {
-            continue;
+            excluded.add(library);
           }
-
-          OrderEntryFix fix = new AddLibraryDependencyFix(reference, currentModule, library, scope, false, aClass.getQualifiedName());
-          registrar.register(fix);
-          result.add(fix);
         }
+      }
+
+      excluded.forEach(librariesToAdd::remove);
+      
+      if (!librariesToAdd.isEmpty()) {
+        OrderEntryFix fix = new AddLibraryDependencyFix(reference, currentModule, librariesToAdd, scope, false);
+        registrar.register(fix);
+        result.add(fix);
       }
     }
 
@@ -220,14 +233,16 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       result.add(0, new AddModuleDependencyFix(reference, currentModule, modules, scope, exported));
     }
 
-    targets.stream()
+    Map<Library, String> libraries = targets.stream()
       .map(e -> e instanceof PsiCompiledElement ? e.getContainingFile() : null)
       .map(f -> f != null ? f.getVirtualFile() : null)
       .flatMap(vf -> vf != null ? index.getOrderEntriesForFile(vf).stream() : Stream.empty())
       .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
       .filter(Objects::nonNull)
-      .distinct()
-      .forEach(l -> result.add(new AddLibraryDependencyFix(reference, currentModule, l, scope, exported, null)));
+      .distinct().collect(Collectors.toMap(l -> l, l -> null));
+    if (!libraries.isEmpty()) {
+      result.add(new AddLibraryDependencyFix(reference, currentModule, libraries, scope, exported));
+    }
   }
 
   private static void registerExternalFixes(PsiReference reference,

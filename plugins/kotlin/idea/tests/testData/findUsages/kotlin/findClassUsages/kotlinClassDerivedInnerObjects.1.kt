@@ -1,13 +1,13 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
 // OPTIONS: derivedClasses
 class Outer {
-    interface Z: A {
+    open class Z : A() {
 
     }
 
-    object O1: A()
+    object O1 : A()
 
     class Inner {
-        object O2: Z
+        object O2 : Z()
     }
 }

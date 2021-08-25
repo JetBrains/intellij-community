@@ -30,10 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -92,6 +89,18 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     this(fileEditorSupplier(fileEditor));
   }
 
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor,
+                                 @NotNull Color backgroundColor) {
+    this(fileEditorSupplier(fileEditor));
+    myBackgroundColor = backgroundColor;
+  }
+
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor,
+                                 @NotNull ColorKey backgroundColorKey) {
+    this(fileEditorSupplier(fileEditor));
+    myBackgroundColorKey = backgroundColorKey;
+  }
+
   public EditorNotificationPanel(@NotNull Supplier<? extends EditorColorsScheme> schemeSupplier) {
     super(new BorderLayout());
 
@@ -117,10 +126,25 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     });
   }
 
+  @ApiStatus.Internal
+  public @Nullable ColorKey getBackgroundColorKey() {
+    return myBackgroundColor == null ? myBackgroundColorKey : null;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Color getOverriddenBackgroundColor() {
+    return myBackgroundColor;
+  }
+
   @Override
   public Color getBackground() {
-    return ObjectUtils.notNull(myBackgroundColor,
-             ObjectUtils.notNull(mySchemeSupplier.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()));
+    return ObjectUtils.notNull(getOverriddenBackgroundColor(),
+             ObjectUtils.notNull(mySchemeSupplier.get().getColor(getBackgroundColorKey()), getFallbackBackgroundColor()));
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Color getFallbackBackgroundColor() {
+    return UIUtil.getToolTipBackground();
   }
 
   public void setProject(Project project) {

@@ -22,10 +22,10 @@ import javax.swing.JCheckBox
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
-data class GitNewBranchOptions(val name: String,
-                               @get:JvmName("shouldCheckout") val checkout: Boolean = true,
-                               @get:JvmName("shouldReset") val reset: Boolean = false,
-                               @get:JvmName("shouldSetTracking") val setTracking: Boolean = false)
+data class GitNewBranchOptions @JvmOverloads constructor(val name: String,
+                                                         @get:JvmName("shouldCheckout") val checkout: Boolean = true,
+                                                         @get:JvmName("shouldReset") val reset: Boolean = false,
+                                                         @get:JvmName("shouldSetTracking") val setTracking: Boolean = false)
 
 
 enum class GitBranchOperationType(@Nls val text: String, @Nls val description: String = "") {

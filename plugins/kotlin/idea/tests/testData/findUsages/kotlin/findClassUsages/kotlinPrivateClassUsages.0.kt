@@ -12,7 +12,7 @@ public open class Server() {
     open fun processRequest() = Foo()
 }
 
-public class ServerEx(): Server() {
+public class ServerEx() : Server() {
     override fun processRequest() = Server.Foo()
 }
 

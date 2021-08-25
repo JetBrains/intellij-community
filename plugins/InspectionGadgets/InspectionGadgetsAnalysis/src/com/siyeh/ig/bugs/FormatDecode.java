@@ -16,25 +16,28 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FormatUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
-final class FormatDecode {
+public final class FormatDecode {
 
   private static final Pattern fsPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d*)?([tT])?([a-zA-Z%])");
 
-  private FormatDecode() {}
+  private FormatDecode() { }
 
   private static final Validator ALL_VALIDATOR = new AllValidator();
 
@@ -297,13 +300,49 @@ final class FormatDecode {
     }
   }
 
+  /**
+   * @return true if cast is required to please argument validator
+   */
+  public static boolean isSuspiciousFormatCall(PsiMethodCallExpression expression, PsiTypeCastExpression cast) {
+    FormatArgument formatArgument =
+      FormatArgument.extract(expression, Collections.emptyList(), Collections.emptyList());
+    if (formatArgument == null) {
+      return false;
+    }
+
+    String value = formatArgument.calculateValue();
+    if (value == null) {
+      return false;
+    }
+
+    int formatArgumentIndex = formatArgument.getIndex();
+
+    PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+
+    final Validator[] validators;
+    try {
+      validators = decode(value, arguments.length - formatArgumentIndex);
+    }
+    catch (IllegalFormatException e) {
+      return false;
+    }
+
+    int idx = IntStream.range(0, arguments.length)
+      .filter(i -> PsiTreeUtil.isAncestor(arguments[i], cast, false)).findFirst()
+      .orElse(-1);
+    Validator validator = validators[idx - formatArgumentIndex];
+    PsiTypeElement castType = cast.getCastType();
+    return validator.valid(Objects.requireNonNull(castType).getType()) &&
+           !validator.valid(Objects.requireNonNull(cast.getOperand()).getType());
+  }
+
   public static class IllegalFormatException extends RuntimeException {
 
     public IllegalFormatException(@Nls String message) {
       super(message);
     }
 
-    public IllegalFormatException() {}
+    public IllegalFormatException() { }
   }
 
   private static class AllValidator extends Validator {
@@ -438,6 +477,61 @@ final class FormatDecode {
 
     public String getSpecifier() {
       return mySpecifier;
+    }
+  }
+
+  public static class FormatArgument {
+    private final int myIndex;
+    private final PsiExpression myExpression;
+
+    private FormatArgument(int index, PsiExpression expression) {
+      myIndex = index;
+      myExpression = expression;
+    }
+
+    public int getIndex() {
+      return myIndex;
+    }
+
+    public PsiExpression getExpression() {
+      return myExpression;
+    }
+    
+    public static FormatArgument extract(PsiMethodCallExpression expression, List<String> methodNames, List<String> classNames) {
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      PsiExpression[] arguments = argumentList.getExpressions();
+
+      final PsiExpression formatArgument;
+      int formatArgumentIndex;
+      if (FormatUtils.STRING_FORMATTED.matches(expression)) {
+        formatArgument = expression.getMethodExpression().getQualifierExpression();
+        formatArgumentIndex = 0;
+      }
+      else {
+        if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
+          return null;
+        }
+
+        formatArgumentIndex = IntStream.range(0, arguments.length).filter(i -> ExpressionUtils.hasStringType(arguments[i])).findFirst().orElse(-1);
+        if (formatArgumentIndex < 0) {
+          return null;
+        }
+        
+        formatArgument = arguments[formatArgumentIndex];
+        formatArgumentIndex++;
+      }
+      if (!ExpressionUtils.hasStringType(formatArgument) || !PsiUtil.isConstantExpression(formatArgument)) {
+        return null;
+      }
+      return new FormatArgument(formatArgumentIndex, formatArgument);
+    }
+    
+    public String calculateValue() {
+       final PsiType formatType = myExpression.getType();
+      if (formatType == null) {
+        return null;
+      }
+      return (String)ConstantExpressionUtil.computeCastTo(myExpression, formatType);
     }
   }
 }

@@ -29,5 +29,5 @@ class NewProjectWizardWithSettings<T>(wizard: NewProjectWizard<T>) : NewProjectW
 
 
 sealed class SettingsComponent(val component: JComponent)
-class LabelAndComponent(val label: JLabel? = null, component: JComponent) : SettingsComponent(component)
+class LabelAndComponent(val label: JLabel, component: JComponent) : SettingsComponent(component)
 class JustComponent(component: JComponent) : SettingsComponent(component)

@@ -29,7 +29,7 @@ final class PlatformVcsDetector implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.getDisposed(), () -> {
       String projectBasePath = project.getBasePath();
       if (projectBasePath == null) {
         return;
@@ -49,6 +49,6 @@ final class PlatformVcsDetector implements StartupActivity.DumbAware {
           vcsManager.setAutoDirectoryMappings(singletonList(new VcsDirectoryMapping(virtualFile.getPath(), vcs.getName())));
         }
       }
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    });
   }
 }

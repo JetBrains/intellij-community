@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.EnvironmentUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownNotifier
 import java.io.File
@@ -17,6 +18,15 @@ class PandocExecutableDetector {
   private val UNIX_PATHS = listOf("/usr/local/bin", "/opt/local/bin", "/usr/bin", "/opt/bin")
   private val UNIX_EXECUTABLE = "pandoc"
   private val WIN_EXECUTABLE = "pandoc.exe"
+  private val WIN_PANDOC_DIR_NAME = "Pandoc"
+  private val WIN_PATHS = lazy {
+    listOf(
+      EnvironmentUtil.getValue("LOCALAPPDATA"),
+      EnvironmentUtil.getValue("ProgramFiles"),
+      EnvironmentUtil.getValue("ProgramFiles(x86)"),
+      EnvironmentUtil.getValue("HOMEPATH")
+    )
+  }
 
   var isCanceled = false
     private set
@@ -44,7 +54,8 @@ class PandocExecutableDetector {
         if (output.stderr.isEmpty()) {
           MarkdownNotifier.notifyPandocDetected(project)
           pandocVersion = output.stdoutLines.first()
-        } else {
+        }
+        else {
           MarkdownNotifier.notifyPandocDetectionFailed(project, output.stderr)
         }
       }
@@ -62,7 +73,7 @@ class PandocExecutableDetector {
 
     return when {
       executableFromPath != null -> return executableFromPath.absolutePath
-      SystemInfo.isWindows -> "" //todo
+      SystemInfo.isWindows -> detectForWindows() ?: ""
       else -> detectForUnix() ?: ""
     }
   }
@@ -71,6 +82,18 @@ class PandocExecutableDetector {
     UNIX_PATHS.forEach {
       val file = File(it, UNIX_EXECUTABLE)
       if (file.exists()) return file.path
+    }
+
+    return null
+  }
+
+  private fun detectForWindows(): String? {
+    WIN_PATHS.value.forEach {
+      it?.let { basePath ->
+        val path = File(basePath, WIN_PANDOC_DIR_NAME)
+        val file = File(path, WIN_EXECUTABLE)
+        if (file.exists()) return file.path
+      }
     }
 
     return null

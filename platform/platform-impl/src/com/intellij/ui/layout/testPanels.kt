@@ -290,7 +290,29 @@ fun hideableRow(): JPanel {
       textField(dummyTextBinding)
     }
     hideableRow("Bar") {
-      textField(dummyTextBinding)
+      row {
+        textField(dummyTextBinding)
+      }
+      hideableRow("Nested hideable") {
+        row {
+          label("Label 1")
+        }
+        row {
+          label("Label 2")
+        }
+      }
+      row {
+        label("Text with largeGapAfter")
+      }.largeGapAfter()
+      row {
+        label("Text without largeGapAfter")
+      }
+      row {
+        label("Last Text with largeGapAfter")
+      }.largeGapAfter()
+    }
+    row {
+      label("Non hideable text")
     }
   }
 }

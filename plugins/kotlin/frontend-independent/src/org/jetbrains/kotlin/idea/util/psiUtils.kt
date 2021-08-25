@@ -49,6 +49,29 @@ fun KtClassOrObject.classIdIfNonLocal(): ClassId? {
 val KtClassOrObject.jvmFqName: String?
     get() = classIdIfNonLocal()?.let { JvmClassName.byClassId(it) }?.fqNameForTopLevelClassMaybeWithDollars?.asString()
 
+/**
+ * it is impossible to unambiguously convert "fqName" into "jvmFqName" without additional information
+ */
+val FqName.toJvmFqName: String
+    get() {
+        val asString = asString()
+        var startIndex = 0
+        while (startIndex != -1) { // always true
+            val dotIndex = asString.indexOf('.', startIndex)
+            if (dotIndex == -1) return asString
+
+            startIndex = dotIndex + 1
+            val charAfterDot = asString.getOrNull(startIndex) ?: return asString
+            if (!charAfterDot.isLetter()) return asString
+            if (charAfterDot.isUpperCase()) return buildString {
+                append(asString.subSequence(0, startIndex))
+                append(asString.substring(startIndex).replace('.', '$'))
+            }
+        }
+
+        return asString
+    }
+
 fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement = let {
     CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
 }

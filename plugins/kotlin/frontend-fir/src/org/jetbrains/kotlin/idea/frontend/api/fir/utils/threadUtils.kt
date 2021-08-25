@@ -5,12 +5,12 @@
 
 package org.jetbrains.kotlin.idea.frontend.api.fir.utils
 
-import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.idea.frontend.api.HackToForceAllowRunningAnalyzeOnEDT
 import org.jetbrains.kotlin.idea.frontend.api.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 
 @HackToForceAllowRunningAnalyzeOnEDT
 internal inline fun <R> runInPossiblyEdtThread(action: () -> R): R = when {
-    !ApplicationManager.getApplication().isDispatchThread -> action()
+    !isDispatchThread() -> action()
     else -> hackyAllowRunningOnEdt(action)
 }

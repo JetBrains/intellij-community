@@ -303,4 +303,28 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   public void testNoCaseOutsideMatchStatement() {
     doTest();
   }
+
+  // PY-49728
+  public void testNoNonLiteralExpressionKeywordsInsidePattern() {
+    List<String> variants = doTestByTestName();
+    assertDoesntContain(variants, PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+    assertContainsElements(variants, PyNames.NONE, PyNames.TRUE, PyNames.FALSE);
+  }
+
+  // PY-49728
+  public void testNoNonLiteralExpressionKeywordsAfterPattern() {
+    List<String> variants = doTestByTestName();
+    assertDoesntContain(variants, PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+    assertContainsElements(variants, PyNames.NONE, PyNames.TRUE, PyNames.FALSE);
+  }
+
+  // PY-49728
+  public void testNonLiteralExpressionKeywordsInGuardCondition() {
+    assertContainsElements(doTestByTestName(), PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+  }
+
+  // PY-49728
+  public void testNonLiteralExpressionKeywordsInCaseClauseBody() {
+    assertContainsElements(doTestByTestName(), PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+  }
 }

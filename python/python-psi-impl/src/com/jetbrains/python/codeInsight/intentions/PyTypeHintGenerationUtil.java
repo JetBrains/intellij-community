@@ -39,7 +39,7 @@ public final class PyTypeHintGenerationUtil {
 
   public static final String TYPE_COMMENT_PREFIX = "# type: ";
 
-  private PyTypeHintGenerationUtil() {}
+  private PyTypeHintGenerationUtil() { }
 
   public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
                                                           @NotNull TypeEvalContext context,
@@ -331,6 +331,9 @@ public final class PyTypeHintGenerationUtil {
       }
       else if (type instanceof PyTupleType) {
         typingTypes.add("Tuple");
+      }
+      else if (type instanceof PyTypedDictType) {
+        typingTypes.add("Dict");
       }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
         collectImportTargetsFromType(pyType, context, symbols, typingTypes);

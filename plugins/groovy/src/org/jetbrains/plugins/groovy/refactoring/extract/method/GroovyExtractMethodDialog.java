@@ -18,8 +18,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.JBUI;
-import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -245,7 +245,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     ArrayList<String> conflicts = new ArrayList<>();
     PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
-    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new Hash.Strategy<>() {
+    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new HashingStrategy<>() {
       @Override
       public int hashCode(@Nullable PsiMethod method) {
         return method == null ? 0 : method.getSignature(PsiSubstitutor.EMPTY).hashCode();

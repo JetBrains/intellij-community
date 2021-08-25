@@ -52,7 +52,10 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       row {
         cell(isFullWidth = true) {
           val cbBlinkCaret = checkBox(myCbBlinkCaret)
-          intTextField(model::getBlinkPeriod, model::setBlinkPeriod, columns = 5).enableIf(cbBlinkCaret.selected)
+          intTextField(model::getBlinkPeriod, model::setBlinkPeriod,
+                       columns = 5,
+                       range = EditorSettingsExternalizable.BLINKING_RANGE.asRange(),
+                       step = 100).enableIf(cbBlinkCaret.selected)
         }
       }
       row {

@@ -136,7 +136,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
   private fun createFrameManager(): ProjectUiFrameManager {
     if (options.frameManager is ProjectUiFrameManager) {
-      return options.frameManager
+      return options.frameManager as ProjectUiFrameManager
     }
 
     return invokeAndWaitIfNeeded {
@@ -149,7 +149,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
         if (preAllocated == null) {
           if (options.frameManager is FrameInfo) {
-            SingleProjectUiFrameManager(options.frameManager, createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = options.frameManager))
+            SingleProjectUiFrameManager(options.frameManager as FrameInfo, createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = options.frameManager as FrameInfo))
           }
           else {
             DefaultProjectUiFrameManager(frame = createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = null), frameHelper = null)

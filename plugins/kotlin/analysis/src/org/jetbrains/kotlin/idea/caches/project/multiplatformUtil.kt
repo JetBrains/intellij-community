@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 
 val Module.isNewMPPModule: Boolean
     get() = facetSettings?.mppVersion.isNewMPP ||
-        facetSettings?.mppVersion.isHmpp // TODO: review clients, correct them to use precise checks for MPP version
+            facetSettings?.mppVersion.isHmpp // TODO: review clients, correct them to use precise checks for MPP version
 
 val Module.externalProjectId: String
     get() = facetSettings?.externalProjectId ?: ""
@@ -133,6 +133,14 @@ val Module.implementedModules: List<Module>
                 val modelsProvider = IdeModelsProviderImpl(project)
                 findOldFashionedImplementedModuleNames().mapNotNull { modelsProvider.findIdeModule(it) }
             }
+        }
+    }
+
+val Module.additionalVisibleModules: List<Module>
+    get() = cacheInvalidatingOnRootModifications cache@{
+        val facetSettings = facetSettings ?: return@cache emptyList()
+        facetSettings.additionalVisibleModuleNames.mapNotNull { moduleName ->
+            project.modulesByLinkedKey[moduleName]
         }
     }
 

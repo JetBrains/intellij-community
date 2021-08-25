@@ -28,7 +28,7 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
   public String getCachedEventsScheme() {
     try {
       Path file = getEventsSchemeFile();
-      if (Files.exists(file)) {
+      if (Files.exists(file) && Files.isRegularFile(file)) {
         return Files.readString(file);
       }
     }

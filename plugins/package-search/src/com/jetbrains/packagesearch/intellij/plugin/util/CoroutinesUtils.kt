@@ -1,7 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -15,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,19 +48,19 @@ internal object ReadActionsCoroutineDispatcher : CoroutineDispatcher() {
     }
 }
 
-internal fun <T> Flow<T>.replayOnSignal(signal: Flow<Any>) = channelFlow {
+internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlow {
     var lastValue: T? = null
     onEach { send(it) }
         .onEach { lastValue = it }
         .launchIn(this)
 
-    signal.mapNotNull { lastValue }
+    merge(*signals).mapNotNull { lastValue }
         .onEach { send(it) }
         .launchIn(this)
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T1, T2, T3, T4, T5, T6, T7, R> combine(
+fun <T1, T2, T3, T4, T5, T6, T7, T8, R> combineTyped(
     flow: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
@@ -68,8 +68,9 @@ fun <T1, T2, T3, T4, T5, T6, T7, R> combine(
     flow5: Flow<T5>,
     flow6: Flow<T6>,
     flow7: Flow<T7>,
-    transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
-): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6, flow7) { args: Array<Any?> ->
+    flow8: Flow<T8>,
+    transform: suspend (T1, T2, T3, T4, T5, T6, T7, T8) -> R
+): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6, flow7, flow8) { args: Array<Any?> ->
     transform(
         args[0] as T1,
         args[1] as T2,
@@ -78,5 +79,6 @@ fun <T1, T2, T3, T4, T5, T6, T7, R> combine(
         args[4] as T5,
         args[5] as T6,
         args[6] as T7,
+        args[7] as T8
     )
 }

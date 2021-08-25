@@ -3,8 +3,8 @@ package com.intellij.formatting;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 
 /**
  * Defines possible types of a wrap.
@@ -39,7 +39,7 @@ public enum WrapType {
    */
   CHOP_DOWN_IF_LONG(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM);
 
-  private static final Int2ObjectMap<WrapType> LEGACY_MAPPINGS = new Int2ObjectOpenHashMap<>();
+  private static final IntObjectMap<WrapType> LEGACY_MAPPINGS = ContainerUtil.createConcurrentIntObjectMap();
 
   static {
     for (WrapType wrapType : values()) {

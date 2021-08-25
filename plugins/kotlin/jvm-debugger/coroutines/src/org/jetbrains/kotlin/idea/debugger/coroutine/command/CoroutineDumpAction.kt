@@ -22,7 +22,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CompleteCoroutineInfoData
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
 
@@ -37,12 +38,12 @@ class CoroutineDumpAction : AnAction() {
             val process = context.debugProcess ?: return
             process.managerThread.schedule(object : SuspendContextCommandImpl(context.suspendContext) {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
-                    val states = CoroutineDebugProbesProxy(suspendContext)
-                        .dumpCoroutines()
+                    val states = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
                     if (states.isOk()) {
                         val f = fun() {
                             val ui = session.xDebugSession?.ui ?: return
-                            addCoroutineDump(project, states.cache, ui, session.searchScope)
+                            val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
+                            addCoroutineDump(project, coroutines, ui, session.searchScope)
                         }
                         ApplicationManager.getApplication().invokeLater(f, ModalityState.NON_MODAL)
                     } else {
@@ -57,7 +58,7 @@ class CoroutineDumpAction : AnAction() {
     /**
      * Analog of [DebuggerUtilsEx.addThreadDump].
      */
-    fun addCoroutineDump(project: Project, coroutines: List<CoroutineInfoData>, ui: RunnerLayoutUi, searchScope: GlobalSearchScope) {
+    fun addCoroutineDump(project: Project, coroutines: List<CompleteCoroutineInfoData>, ui: RunnerLayoutUi, searchScope: GlobalSearchScope) {
         val consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
         consoleBuilder.filters(ExceptionFilters.getFilters(searchScope))
         val consoleView = consoleBuilder.console
@@ -65,6 +66,7 @@ class CoroutineDumpAction : AnAction() {
         consoleView.allowHeavyFilters()
         val panel = CoroutineDumpPanel(project, consoleView, toolbarActions, coroutines)
 
+        @Suppress("HardCodedStringLiteral")
         val id = "DumpKt " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis())
         val content = ui.createContent(id, panel, id, null, null).apply {
             putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, true)
@@ -78,10 +80,8 @@ class CoroutineDumpAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val presentation = e.presentation
-        val project = e.project
-        if (project == null) {
-            presentation.isEnabled = false
-            presentation.isVisible = false
+        val project = e.project ?: run {
+            presentation.isEnabledAndVisible = false
             return
         }
         // cannot be called when no SuspendContext

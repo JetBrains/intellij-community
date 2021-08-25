@@ -247,7 +247,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       MergeChangeCollector collector = new MergeChangeCollector(project, repository, currentRev);
       collector.collect(files);
 
-      ModalityUiUtil.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
         UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, ActionInfo.UPDATE, false);
         if (tree != null) {
@@ -255,7 +255,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, GitBundle.message("merge.action.after.update.label")));
           ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
         }
-      }, ModalityState.defaultModalityState());
+      });
     }
     catch (VcsException e) {
       GitVcs.getInstance(project).showErrors(singletonList(e), actionName);

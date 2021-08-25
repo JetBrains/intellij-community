@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -88,10 +88,21 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
     for ((name, list ) in activities) {
       StartUpPerformanceReporter.sortItems(list)
 
-      val measureThreshold = if (name == ActivityCategory.DEFAULT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
+      val measureThreshold = if (name == ActivityCategory.DEFAULT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) {
+        -1
+      }
+      else {
+        StartUpMeasurer.MEASURE_THRESHOLD
+      }
       val ownDurations = Object2LongOpenHashMap<ActivityImpl>()
       ownDurations.defaultReturnValue(-1)
-      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold, timeUnit = TimeUnit.MILLISECONDS)
+      writeActivities(activities = list,
+                      startTime = startTime,
+                      writer = writer,
+                      fieldName = activityNameToJsonFieldName(name),
+                      ownDurations = ownDurations,
+                      measureThreshold = measureThreshold,
+                      timeUnit = TimeUnit.MILLISECONDS)
     }
   }
 

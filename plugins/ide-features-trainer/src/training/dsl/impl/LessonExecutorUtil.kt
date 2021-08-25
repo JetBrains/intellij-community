@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl.impl
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
@@ -93,8 +93,8 @@ internal object LessonExecutorUtil {
       it.background = Color(0, true)
       it.putClientProperty("gotItButton", true)
       it.putClientProperty("JButton.backgroundColor", UISettings.instance.tooltipButtonBackgroundColor)
-      it.foreground = UISettings.instance.tooltipTextColor
-      it.action = object : AbstractAction(UIBundle.message("got.it")) {
+      it.foreground = UISettings.instance.tooltipButtonForegroundColor
+      it.action = object : AbstractAction(IdeBundle.message("got.it.button.name")) {
         override fun actionPerformed(e: ActionEvent?) {
           gotItCallBack()
         }
@@ -108,12 +108,13 @@ internal object LessonExecutorUtil {
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
       .setCloseButtonEnabled(false)
       .setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
+      .setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
       .setPointerSize(Dimension(16, 8))
       .setHideOnAction(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
       .setFillColor(UISettings.instance.tooltipBackgroundColor)
-      .setBorderColor(UISettings.instance.tooltipBackgroundColor)
+      .setBorderColor(UISettings.instance.tooltipBorderColor)
       .setHideOnCloseClick(false)
       .setDisposable(actionsRecorder)
       .createBalloon()
@@ -156,7 +157,6 @@ internal object LessonExecutorUtil {
 }
 
 
-
 private class ExtractTaskPropertiesContext(override val project: Project) : TaskContext() {
   var textCount = 0
   var hasDetection = false
@@ -173,6 +173,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   override fun trigger(checkId: (String) -> Boolean) {
     hasDetection = true
   }
+
   override fun <T> trigger(actionId: String, calculateState: TaskRuntimeContext.() -> T, checkState: TaskRuntimeContext.(T, T) -> Boolean) {
     hasDetection = true
   }

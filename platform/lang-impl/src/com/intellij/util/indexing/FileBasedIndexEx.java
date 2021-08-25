@@ -362,7 +362,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return set != null && processVirtualFiles(set, filter, processor);
   }
 
-  private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+  private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                                @NotNull GlobalSearchScope filter,
                                                                Processor<? super VirtualFile> processor,
                                                                IdFilter filesSet) {
@@ -404,7 +404,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+  public boolean processFilesContainingAllKeys(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                @NotNull GlobalSearchScope filter,
                                                @NotNull Processor<? super VirtualFile> processor) {
     Project project = filter.getProject();
@@ -492,16 +492,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                         @Nullable final IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
-    IntPredicate idChecker = projectFilesFilter == null ? accessibleFileFilter : id ->
-      projectFilesFilter.containsFileId(id) && accessibleFileFilter.test(id) && (restrictedIds == null || restrictedIds.contains(id));
-    Condition<? super K> keyChecker = __ -> {
-      ProgressManager.checkCanceled();
-      return true;
-    };
+    IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
+                                   accessibleFileFilter.test(id) &&
+                                   (restrictedIds == null || restrictedIds.contains(id));
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, IntSet, StorageException> convertor = index -> {
       IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
       try {
-        return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, keyChecker, valueChecker, idChecker);
+        return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
       }
       finally {
         IndexDebugProperties.DEBUG_INDEX_ID.remove();

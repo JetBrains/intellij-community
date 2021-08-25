@@ -1,15 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.remote.wizard
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.remote.*
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ui.LibrariesSearchTextField
 import com.intellij.ide.starters.shared.ui.LibraryDescriptionPanel
 import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -411,11 +412,11 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
     textField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         searchMergingUpdateQueue.queue(Update.create("", Runnable {
-          ModalityUiUtil.invokeLaterIfNeeded(Runnable {
+          ModalityUiUtil.invokeLaterIfNeeded(getModalityState(), Runnable {
             currentSearchString = textField.text
             loadLibrariesList()
             librariesList.repaint()
-          }, getModalityState())
+          })
         }))
       }
     })
@@ -423,7 +424,7 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
   }
 
   protected fun getModalityState(): ModalityState {
-    return ModalityState.stateForComponent(wizardContext.wizard.contentComponent)
+    return ModalityState.stateForComponent(wizardContext.getUserData(AbstractWizard.KEY)!!.contentComponent)
   }
 
   protected fun getDisposed(): Condition<Any> = Condition<Any> { Disposer.isDisposed(parentDisposable) }

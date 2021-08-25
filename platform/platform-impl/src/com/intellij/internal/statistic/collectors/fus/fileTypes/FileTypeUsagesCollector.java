@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -33,10 +33,11 @@ import org.jetbrains.concurrency.Promises;
 
 import java.util.*;
 
+// todo disable in guest (no file types)
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  private final EventLogGroup GROUP = new EventLogGroup("file.types", 3);
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 4);
 
   private final EventId3<Object, FileType, Integer> FILE_IN_PROJECT = GROUP.registerEvent(
     "file.in.project",
@@ -78,7 +79,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
         Integer count = counter.get();
         if (count != 0) {
-          events.add(FILE_IN_PROJECT.metric(fileType, fileType, StatisticsUtil.getNextPowerOfTwo(count)));
+          events.add(FILE_IN_PROJECT.metric(fileType, fileType, StatisticsUtil.roundToPowerOfTwo(count)));
         }
       }).wrapProgress(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }

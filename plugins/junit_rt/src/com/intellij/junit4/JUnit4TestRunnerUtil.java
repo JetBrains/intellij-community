@@ -183,6 +183,10 @@ public final class JUnit4TestRunnerUtil {
               if (description.isTest() && description.getDisplayName().startsWith("warning(junit.framework.TestSuite$")) {
                 return true;
               }
+              
+              if (description.isTest() && isParameterizedMethodName(description.getMethodName(), methodName)) {
+                return true;
+              }
 
               return methodFilter.shouldRun(description);
             }
@@ -229,11 +233,11 @@ public final class JUnit4TestRunnerUtil {
       return true;
     }
     if (methodName != null) {
-      try {
-        Method method = clazz.getMethod(methodName);
-        return method.getParameterTypes().length > 0;
+      for (Method method : clazz.getDeclaredMethods()) {
+        if (methodName.equals(method.getName()) && method.getParameterTypes().length > 0) {
+          return true;
+        }
       }
-      catch (NoSuchMethodException ignored) { }
     }
     return false;
   }
@@ -270,9 +274,7 @@ public final class JUnit4TestRunnerUtil {
             //filter only selected method
             if (methodName != null && descriptionMethodName != null &&
                 !descriptionMethodName.equals(methodName) && //If fork mode is used, a parameter is included in the name itself
-                !(descriptionMethodName.startsWith(methodName) &&
-                  //methodName[ valid for any parameter for the current method.
-                  descriptionMethodName.length() > methodName.length() && descriptionMethodName.substring(methodName.length()).trim().startsWith("["))) {
+                !isParameterizedMethodName(descriptionMethodName, methodName)) {
               return false;
             }
             return true;
@@ -295,6 +297,13 @@ public final class JUnit4TestRunnerUtil {
       }
     }
     return null;
+  }
+
+  private static boolean isParameterizedMethodName(String parameterizedMethodName, String baseMethodName) {
+    return parameterizedMethodName.startsWith(baseMethodName) &&
+           //methodName[ valid for any parameter for the current method.
+           parameterizedMethodName.length() > baseMethodName.length() && 
+           parameterizedMethodName.substring(baseMethodName.length()).trim().startsWith("[");
   }
 
   private static Request getClassRequestsUsing44API(String suiteName, Class<?>[] classes) {
@@ -333,7 +342,7 @@ public final class JUnit4TestRunnerUtil {
       System.err.print(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), clazz));
       System.exit(1);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.cannot.instantiate.tests"),
                                               e.toString()));
       System.exit(1);

@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,7 +51,7 @@ final class PluginUpdateDialog extends DialogWrapper {
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
-  private final PluginsGroup myGroup = new PluginsGroup("");
+  private final PluginsGroup myGroup = new PluginsGroup("", PluginsGroupType.UPDATE);
   private final PluginDetailsPageComponent myDetailsPage;
   private final JLabel myTotalLabel = new JLabel();
   private final ActionLink myIgnoreAction;
@@ -109,8 +110,8 @@ final class PluginUpdateDialog extends DialogWrapper {
 
     myPluginsPanel = new PluginsGroupComponent(eventHandler) {
       @Override
-      protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, LinkListener.NULL, true);
+      protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, group, LinkListener.NULL, true);
         component.setOnlyUpdateMode();
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;
@@ -187,34 +188,38 @@ final class PluginUpdateDialog extends DialogWrapper {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<PluginDownloader> downloaders = downloadPluginUpdates(toDownload, indicator);
-        if (!downloaders.isEmpty()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, dl -> !dl.tryInstallWithoutRestart(ownerComponent));
-            if (result.getPluginsInstalled().size() > 0) {
-              if (!result.getRestartRequired()) {
-                String message;
-                if (result.getPluginsInstalled().size() == 1) {
-                  IdeaPluginDescriptor plugin = result.getPluginsInstalled().get(0);
-                  message = IdeBundle.message("notification.content.updated.plugin.to.version", plugin.getName(), plugin.getVersion());
-                }
-                else {
-                  String names = result.getPluginsInstalled().stream().map(PluginDescriptor::getName).collect(Collectors.joining(", "));
-                  message = IdeBundle.message("notification.content.updated.plugins", names);
-                }
-                UpdateChecker.getNotificationGroupForUpdateResults()
-                  .createNotification(message, NotificationType.INFORMATION)
-                  .setDisplayId("plugins.updated.without.restart")
-                  .notify(myProject);
-              }
-              else if (WelcomeFrame.getInstance() == null) {
-                PluginManagerMain.notifyPluginsUpdated(null);
-              }
-              else {
-                PluginManagerConfigurable.shutdownOrRestartApp();
-              }
-            }
-          }, ownerComponent != null ? ModalityState.stateForComponent(ownerComponent) : ModalityState.defaultModalityState());
+        if (downloaders.isEmpty()) {
+          return;
         }
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, dl -> !dl.tryInstallWithoutRestart(ownerComponent));
+          if (result.getPluginsInstalled().isEmpty()) {
+            return;
+          }
+
+          if (!result.getRestartRequired()) {
+            String message;
+            if (result.getPluginsInstalled().size() == 1) {
+              IdeaPluginDescriptor plugin = result.getPluginsInstalled().get(0);
+              message = IdeBundle.message("notification.content.updated.plugin.to.version", plugin.getName(), plugin.getVersion());
+            }
+            else {
+              String names = result.getPluginsInstalled().stream().map(PluginDescriptor::getName).collect(Collectors.joining(", "));
+              message = IdeBundle.message("notification.content.updated.plugins", names);
+            }
+            UpdateChecker.getNotificationGroupForUpdateResults()
+              .createNotification(message, NotificationType.INFORMATION)
+              .setDisplayId("plugins.updated.without.restart")
+              .notify(myProject);
+          }
+          else if (WelcomeFrame.getInstance() == null) {
+            PluginManagerMain.notifyPluginsUpdated(null);
+          }
+          else {
+            PluginManagerConfigurable.shutdownOrRestartApp();
+          }
+        }, ownerComponent != null ? ModalityState.stateForComponent(ownerComponent) : ModalityState.defaultModalityState());
       }
 
       @Override

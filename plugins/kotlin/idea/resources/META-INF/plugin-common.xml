@@ -5,6 +5,8 @@
   <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="refIndex.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="idea.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="project-wizard.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
@@ -34,10 +36,6 @@
     </group>
 
     <action id="KotlinConfigureUpdates" class="org.jetbrains.kotlin.idea.actions.ConfigurePluginUpdatesAction">
-      <add-to-group group-id="KotlinToolsGroup"/>
-    </action>
-
-    <action id="DecompileKotlinToJava" class="org.jetbrains.kotlin.idea.actions.DecompileKotlinToJavaAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
 
@@ -317,6 +315,7 @@
 
     <iconProvider implementation="org.jetbrains.kotlin.idea.KotlinIconProvider"/>
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoSymbolContributor"/>
+    <gotoPrimeSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoPrimeSymbolContributor"/>
     <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>
     <searchEverywhereClassifier implementation="org.jetbrains.kotlin.idea.goto.KotlinSearchEverywhereClassifier"/>
     <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer"/>
@@ -401,13 +400,20 @@
 
     <projectConfigurable instance="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerConfigurableTab"
                          id="project.kotlinCompiler"
-                         displayName="Kotlin Compiler"
+                         bundle="messages.KotlinBundle"
+                         key="kotlin.compiler.configurable"
                          parentId="project.propCompiler"/>
 
-    <applicationConfigurable groupId="language" displayName="Kotlin" id="preferences.language.Kotlin"
+    <applicationConfigurable groupId="language"
+                             bundle="messages.KotlinBundle"
+                             key="kotlin.language.configurable"
+                             id="preferences.language.Kotlin"
                              instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
 
-    <projectConfigurable groupId="language" displayName="Kotlin Scripting" id="preferences.language.Kotlin.scripting"
+    <projectConfigurable groupId="language"
+                         bundle="messages.KotlinBundle"
+                         key="kotlin.scripting.configurable"
+                         id="preferences.language.Kotlin.scripting"
                          instance="org.jetbrains.kotlin.idea.script.configuration.KotlinScriptingSettingsConfigurable"
                          parentId="preferences.language.Kotlin"/>
 
@@ -423,6 +429,10 @@
 
     <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinReferencesTypeHintsProvider"/>
     <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinLambdasHintsProvider"/>
+    <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProvider"/>
+    <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinRangesHintsProvider"/>
+
+    <search.projectOptionsTopHitProvider implementation="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayHintsTopHitProvider"/>
 
     <codeInsight.gotoSuper language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.GotoSuperActionHandler"/>
 
@@ -582,8 +592,6 @@
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInDecompiler"/>
 
-    <attachSourcesProvider implementation="org.jetbrains.kotlin.idea.actions.DecompileKotlinToJavaActionProvider"/>
-
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAliasedImportedElementSearcher"/>
@@ -681,8 +689,6 @@
 
     <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.CommonModuleResolveScopeEnlarger"/>
 
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.statistics.KotlinGradleFUSLogger"/>
-
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.versions.KotlinUpdatePluginStartupActivity"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.kotlin.idea.roots.ui.NonJvmKotlinModuleEditorsProvider"/>
@@ -698,10 +704,9 @@
 
     <lang.substitutor language="kotlin" order="last" implementationClass="org.jetbrains.kotlin.idea.KotlinLanguageSubstitutor"/>
 
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.RedundantAsSequenceInspection"
                      groupPath="Kotlin"
-                     groupName="Style issues"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin"
@@ -711,7 +716,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
 
-    <referenceImporter implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
+    <referenceImporter implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter" id="KotlinReferenceImporter"/>
     <autoImportOptionsProvider instance="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettingsProvider"/>
 
     <fileType.fileViewProviderFactory filetype="KJSM" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
@@ -724,8 +729,10 @@
 
     <!--kotlin script specific extensions-->
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
-    <indexedRootsProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesIndexableSetContributor"/>
-    <psi.clsCustomNavigationPolicy implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
+    <indexedRootsProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesIndexableSetContributor"/>
+    <psi.clsCustomNavigationPolicy
+            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
@@ -734,8 +741,12 @@
 
     <navbar implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension" order="first"/>
 
+    <codeInsight.inlayProvider language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCodeAuthorInlayHintsProvider"/>
+
     <statistics.counterUsagesCollector groupId="kotlin.code.vision" version="1"/>
-    <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
+    <codeInsight.inlayProvider language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
 
     <psi.referenceContributor implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
   </extensions>

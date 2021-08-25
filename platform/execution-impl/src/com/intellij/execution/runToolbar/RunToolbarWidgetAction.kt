@@ -27,11 +27,12 @@ class RunToolbarWidgetAction : SegmentedBarActionComponent(ActionPlaces.RUN_TOOL
     }
   }
 
+  /*
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = isRunToolbar()
-    e.presentation.putClientProperty(RunToolbarMainWidgetComponent.PROP_POJECT, e.project)
   }
+  */
 
   override fun createSegmentedActionToolbar(presentation: Presentation, place: String, group: ActionGroup): SegmentedActionToolbarComponent {
     val component = RunToolbarMainWidgetComponent(presentation, place, group)

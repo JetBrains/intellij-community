@@ -1,5 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.system;
+
+import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.sun.jna.platform.mac.SystemB;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinBase;
+import com.sun.jna.ptr.IntByReference;
+import org.jetbrains.annotations.Nullable;
 
 public enum CpuArch {
   X86(32), X86_64(64), ARM64(64), OTHER(0), UNKNOWN(0);
@@ -49,4 +58,63 @@ public enum CpuArch {
   public static boolean isArm64() { return CURRENT == ARM64; }
 
   public static boolean is32Bit() { return CURRENT.width == 32; }
+
+  /**
+   * The method tries to detect whether this JVM is executed in a known emulated environment - Rosetta 2, WoW64, etc.
+   */
+  public static boolean isEmulated() {
+    if (ourEmulated == null) {
+      if (CURRENT == X86_64) {
+        ourEmulated = SystemInfoRt.isMac && isUnderRosetta() || SystemInfoRt.isWindows && !matchesWindowsNativeArch();
+      }
+      else if (CURRENT == X86) {
+        ourEmulated = SystemInfoRt.isWindows && !matchesWindowsNativeArch();
+      }
+      else {
+        ourEmulated = Boolean.FALSE;
+      }
+    }
+
+    return ourEmulated == Boolean.TRUE;
+  }
+
+  private static @Nullable Boolean ourEmulated;
+
+  //<editor-fold desc="Emulated environment detection">
+  // https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment
+  private static boolean isUnderRosetta() {
+    try {
+      if (JnaLoader.isLoaded()) {
+        IntByReference size = new IntByReference(SystemB.INT_SIZE), p = new IntByReference();
+        if (SystemB.INSTANCE.sysctlbyname("sysctl.proc_translated", p.getPointer(), size, null, 0) != -1) {
+          return p.getValue() == 1;
+        }
+      }
+    }
+    catch (Throwable t) {
+      Logger.getInstance(CpuArch.class).error(t);
+    }
+
+    return false;
+  }
+
+  // https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getnativesysteminfo
+  private static boolean matchesWindowsNativeArch() {
+    try {
+      if (JnaLoader.isLoaded()) {
+        WinBase.SYSTEM_INFO systemInfo = new WinBase.SYSTEM_INFO();
+        Kernel32.INSTANCE.GetNativeSystemInfo(systemInfo);
+        int arch = systemInfo.processorArchitecture.dwOemID.getLow().intValue();
+        if (arch == 0) return CURRENT == X86;
+        if (arch == 9) return CURRENT == X86_64;
+        if (arch == 12) return CURRENT == ARM64;
+      }
+    }
+    catch (Throwable t) {
+      Logger.getInstance(CpuArch.class).error(t);
+    }
+
+    return true;
+  }
+  //</editor-fold>
 }

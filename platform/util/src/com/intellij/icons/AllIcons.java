@@ -19,6 +19,7 @@ public class AllIcons {
 
   public static final class Actions {
     /** 16x16 */ public static final @NotNull Icon AddFile = load("actions/addFile.svg", 7984914808516043214L, 2);
+    /** 16x16 */ public static final @NotNull Icon AddList = load("actions/addList.svg", -980605403902306076L, 2);
     /** 16x16 */ public static final @NotNull Icon AddMulticaret = load("actions/AddMulticaret.svg", 3016061797824075751L, 2);
     /** 16x16 */ public static final @NotNull Icon AddToDictionary = load("actions/addToDictionary.svg", -1161870638152852017L, 2);
     /** 16x16 */ public static final @NotNull Icon Annotate = load("actions/annotate.svg", 2411839449499269073L, 2);
@@ -719,7 +720,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AnonymousClass = load("nodes/anonymousClass.svg", 4399892964933631120L, 0);
     /** 16x16 */ public static final @NotNull Icon Artifact = load("nodes/artifact.svg", -3254375564343235015L, 0);
     /** 16x16 */ public static final @NotNull Icon Aspect = load("nodes/aspect.svg", 5323027972373212490L, 0);
-    /** 16x16 */ public static final @NotNull Icon BookmarkGroup = load("nodes/bookmarkGroup.svg", 1659074700901225627L, 2);
+    /** 16x16 */ public static final @NotNull Icon BookmarkGroup = load("nodes/bookmarkGroup.svg", 1659074700901225627L, 0);
     /** 16x16 */ public static final @NotNull Icon C_plocal = load("nodes/c_plocal.svg", 3501127193229261037L, 0);
     /** 16x16 */ public static final @NotNull Icon C_private = load("nodes/c_private.svg", 522391154330779219L, 0);
     /** 16x16 */ public static final @NotNull Icon C_protected = load("nodes/c_protected.svg", -2444857138846209853L, 0);

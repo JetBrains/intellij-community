@@ -22,6 +22,10 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor;
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PotemkinOverlayProgress;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -591,23 +595,61 @@ public final class IdeKeyEventDispatcher {
     Project project = CommonDataKeys.PROJECT.getData(wrappedContext);
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
 
-    Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
     List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
-    Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
-      e, wrappedContext, place, processor, presentationFactory,
-      event -> events.put(event.getPresentation(), event),
-      session -> Utils.tryInReadAction(
-        () -> rearrangeByPromoters(actions, Utils.freezeDataContext(wrappedContext, null))) ?
-                 doUpdateActionsInner(actions, dumb, wouldBeEnabledIfNotDumb, session, events::get) : null);
+    ProgressIndicator indicator = Registry.is("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate") ?
+                                  new PotemkinOverlayProgress(PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext)) :
+                                  new EmptyProgressIndicator();
+    Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean> chosenPair = ProgressManager.getInstance().runProcess(() -> {
+      Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
+      Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
+        e, wrappedContext, place, processor, presentationFactory,
+        event -> events.put(event.getPresentation(), event),
+        session -> Utils.tryInReadAction(
+          () -> rearrangeByPromoters(actions, Utils.freezeDataContext(wrappedContext, null))) ?
+                   doUpdateActionsInner(actions, dumb, wouldBeEnabledIfNotDumb, session, events::get) : null);
+      if (chosen == null) return null;
 
-    doPerformActionInner(chosen, e, processor, wrappedContext, project, wouldBeEnabledIfNotDumb, () -> {
-      //invokeLater to make sure correct dataContext is taken from focus
-      ApplicationManager.getApplication().invokeLater(() ->
-        DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(ctx ->
-          processAction(e, place, ctx, actions, processor, presentationFactory)
-        )
-      );
-    });
+      if (!myContext.getSecondStrokeActions().contains(chosen.first)) {
+        AnActionEvent actionEvent = chosen.second.withDataContext(wrappedContext); // use not frozen data context
+        if (Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") &&
+            !ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
+          LOG.warn("Action '" + actionEvent.getPresentation().getText() + "' (" + chosen.first.getClass() + ") " +
+                   "has become disabled in `beforeActionPerformedUpdate` right after successful `update`");
+          logTimeMillis(chosen.third, chosen.first);
+        }
+        else {
+          return Pair.create(Trinity.create(chosen.first, actionEvent, chosen.third), true);
+        }
+      }
+      return Pair.create(chosen, false);
+    }, indicator);
+
+    Trinity<AnAction, AnActionEvent, Long> chosen = chosenPair != null ? chosenPair.first : null;
+    boolean doPerform = chosen != null && chosenPair.second;
+    boolean hasSecondStroke = chosen != null && myContext.getSecondStrokeActions().contains(chosen.first);
+
+    if (e.getID() == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
+      myIgnoreNextKeyTypedEvent = true;
+    }
+
+    if (doPerform) {
+      doPerformActionInner(e, processor, context, chosen.first, chosen.second);
+      logTimeMillis(chosen.third, chosen.first);
+    }
+    else if (hasSecondStroke) {
+      waitSecondStroke(chosen.first, chosen.second.getPresentation());
+    }
+    else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
+      showDumbModeBalloonLater(project, getActionUnavailableMessage(wouldBeEnabledIfNotDumb), () -> {
+        //invokeLater to make sure correct dataContext is taken from focus
+        ApplicationManager.getApplication().invokeLater(() ->
+          DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(ctx ->
+            processAction(e, place, ctx, actions, processor, presentationFactory)
+          )
+        );
+      }, __ -> e.isConsumed());
+    }
     return chosen != null;
   }
 
@@ -639,67 +681,30 @@ public final class IdeKeyEventDispatcher {
     return null;
   }
 
-  private void doPerformActionInner(@Nullable Trinity<AnAction, AnActionEvent, Long> chosen,
-                                    @NotNull InputEvent e,
-                                    @NotNull ActionProcessor processor,
-                                    @NotNull DataContext context,
-                                    @Nullable Project project,
-                                    @NotNull List<? extends AnAction> wouldBeEnabledIfNotDumb,
-                                    @NotNull Runnable retryRunnable) {
-    if (chosen != null) {
-      AnAction action = chosen.first;
-      if (myContext.getSecondStrokeActions().contains(chosen.first)) {
-        waitSecondStroke(chosen.first, chosen.second.getPresentation());
-        return;
-      }
+  private static void doPerformActionInner(@NotNull InputEvent e,
+                                           @NotNull ActionProcessor processor,
+                                           @NotNull DataContext context,
+                                           @NotNull AnAction action,
+                                           @NotNull AnActionEvent actionEvent) {
+    processor.onUpdatePassed(e, action, actionEvent);
 
-      AnActionEvent actionEvent = chosen.second.withDataContext(context); // use not frozen data context
-      long startedAt = chosen.third;
-      if (Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") &&
-          !ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
-        LOG.warn("Action '" + actionEvent.getPresentation().getText() + "' (" + action.getClass() + ") " +
-                 "has become disabled in `beforeActionPerformedUpdate` right after successful `update`");
-        return;
-      }
-      processor.onUpdatePassed(e, action, actionEvent);
-
-      int eventCount = IdeEventQueue.getInstance().getEventCount();
-      if (context instanceof EdtDataContext) { // this is not true for test data contexts
-        ((EdtDataContext)context).setEventCount(eventCount);
-      }
-      ActionUtil.performDumbAwareWithCallbacks(action, actionEvent, () -> {
-        if (e.getID() == KeyEvent.KEY_PRESSED) {
-          myIgnoreNextKeyTypedEvent = true;
-        }
-        LOG.assertTrue(eventCount == IdeEventQueue.getInstance().getEventCount(),
-                       "Event counts do not match: " + eventCount + " != " + IdeEventQueue.getInstance().getEventCount());
-        try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
-          processor.performAction(e, action, actionEvent);
-        }
-      });
-      logTimeMillis(startedAt, action);
-      return;
+    int eventCount = IdeEventQueue.getInstance().getEventCount();
+    if (context instanceof EdtDataContext) { // this is not true for test data contexts
+      ((EdtDataContext)context).setEventCount(eventCount);
     }
-
-    if (!wouldBeEnabledIfNotDumb.isEmpty()) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
-        myIgnoreNextKeyTypedEvent = true;
+    ActionUtil.performDumbAwareWithCallbacks(action, actionEvent, () -> {
+      LOG.assertTrue(eventCount == IdeEventQueue.getInstance().getEventCount(),
+                     "Event counts do not match: " + eventCount + " != " + IdeEventQueue.getInstance().getEventCount());
+      try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
+        processor.performAction(e, action, actionEvent);
       }
-      if (dumbModeWarningListener != null) {
-        dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
-      }
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
-      String message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb);
-      showDumbModeBalloonLaterIfNobodyConsumesEvent(project, message, retryRunnable, __ -> e.isConsumed());
-    }
+    });
   }
 
-  private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,
-                                                                    @NotNull @Nls String message,
-                                                                    @NotNull Runnable retryRunnable,
-                                                                    @NotNull Condition<Object> expired) {
-
-
+  private static void showDumbModeBalloonLater(@Nullable Project project,
+                                               @NotNull @Nls String message,
+                                               @NotNull Runnable retryRunnable,
+                                               @NotNull Condition<Object> expired) {
     if (project == null || expired.value(null)) return;
     ApplicationManager.getApplication().invokeLater(() -> {
       if (expired.value(null)) return;
@@ -732,12 +737,6 @@ public final class IdeKeyEventDispatcher {
   public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
     return plural ? IdeBundle.message("dumb.balloon.0.are.not.available.while.indexing", action) :
            IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", action);
-  }
-
-  private static DumbModeWarningListener dumbModeWarningListener;
-
-  public static void addDumbModeWarningListener (DumbModeWarningListener listener) {
-    dumbModeWarningListener = listener;
   }
 
   /**

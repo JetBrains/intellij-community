@@ -74,7 +74,7 @@ abstract class Template : SettingsOwner, EntitiesOwnerDescriptor, DisplayableSet
          return isPermittedForModule(module) && isApplicableTo(module, projectKind)
     }
 
-    private fun isPermittedForModule(module: Module): Boolean {
+    fun isPermittedForModule(module: Module): Boolean {
         return module.permittedTemplateIds?.contains(id) ?: true // not specified? - no restrictions, let template decide
     }
 

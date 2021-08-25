@@ -1,60 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.rd
 
-import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
-import com.jetbrains.rd.swing.awtMousePoint
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.ISource
-import com.jetbrains.rd.util.reactive.map
-import org.jetbrains.annotations.ApiStatus
-import java.awt.*
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
-import javax.swing.JComponent
-import javax.swing.SwingUtilities
-
-
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-@Deprecated("Use version from `SwingReactiveEx`")
-internal fun IdeGlassPane.mouseMoved(): ISource<MouseEvent> {
-    return object : ISource<MouseEvent> {
-        override fun advise(lifetime: Lifetime, handler: (MouseEvent) -> Unit) {
-            val listener = object : MouseMotionAdapter() {
-                override fun mouseMoved(e: MouseEvent?) {
-                    if (e != null) {
-                        handler(e)
-                    }
-                }
-            }
-
-            this@mouseMoved.addMouseMotionPreprocessor(listener, lifetime.createNestedDisposable())
-        }
-    }
-}
-
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-@Deprecated("Use version from `SwingReactiveEx`")
-internal fun IdeGlassPane.childAtMouse(container: Container): ISource<Component?> = this@childAtMouse.mouseMoved()
-    .map { SwingUtilities.convertPoint(it.component, it.x, it.y, container) }
-    .map { container.getComponentAt(it) }
-
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-@Deprecated("Use version from `SwingReactiveEx`")
-internal fun JComponent.childAtMouse(): IPropertyView<Component?> = this@childAtMouse.awtMousePoint()
-    .map {
-        if (it == null) null
-        else {
-            this@childAtMouse.getComponentAt(it)
-        }
-    }
-
-fun Graphics2D.draw2DRect(rect: Rectangle, strokeWidth: Double, color: Color) {
-    this.color = color
-    RectanglePainter2D.DRAW.paint(this, rect, null, LinePainter2D.StrokeType.CENTERED, strokeWidth, RenderingHints.VALUE_ANTIALIAS_OFF)
-}
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 
 fun Graphics2D.fill2DRect(rect: Rectangle, color: Color) {
     this.color = color

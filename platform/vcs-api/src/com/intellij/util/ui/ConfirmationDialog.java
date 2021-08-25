@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
@@ -9,7 +10,6 @@ import com.intellij.openapi.util.NlsContexts.Checkbox;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public class ConfirmationDialog extends OptionsMessageDialog {
       dialog.setDoNotAskOption(null);
     }
     else {
-      dialog.setDoNotShowAgainMessage(UIBundle.message("dialog.options.do.not.ask"));
+      dialog.setDoNotShowAgainMessage(IdeCoreBundle.message("dialog.options.do.not.ask"));
     }
     return dialog.showAndGet();
   }

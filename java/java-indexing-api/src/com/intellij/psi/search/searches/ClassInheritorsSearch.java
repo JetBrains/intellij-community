@@ -33,12 +33,12 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
     @NotNull
     private final Project myProject;
 
-    public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean checkDeep, boolean checkInheritance, boolean includeAnonymous) {
       this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.alwaysTrue());
     }
 
-    public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
-                            boolean includeAnonymous, @NotNull final Condition<String> nameCondition) {
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean checkDeep, boolean checkInheritance,
+                            boolean includeAnonymous, @NotNull Condition<String> nameCondition) {
       myClass = aClass;
       myScope = scope;
       myCheckDeep = checkDeep;
@@ -129,7 +129,11 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
   }
 
   @NotNull
-  public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
+  public static Query<PsiClass> search(@NotNull PsiClass aClass,
+                                       @NotNull SearchScope scope,
+                                       boolean checkDeep,
+                                       boolean checkInheritance,
+                                       boolean includeAnonymous) {
     return search(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
   }
 
@@ -143,18 +147,17 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
       }
       return AbstractQuery.wrapInReadAction(directQuery);
     }
-    return INSTANCE.createUniqueResultsQuery(parameters, psiClass -> {
-      return ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass));
-    });
+    return INSTANCE.createUniqueResultsQuery(parameters, psiClass ->
+      ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
 
   @NotNull
-  public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep) {
+  public static Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean checkDeep) {
     return search(aClass, scope, checkDeep, true, true);
   }
 
   @NotNull
-  public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
+  public static Query<PsiClass> search(@NotNull PsiClass aClass, boolean checkDeep) {
     return search(aClass, ReadAction.compute(() -> {
       if (!aClass.isValid()) {
         throw new ProcessCanceledException();

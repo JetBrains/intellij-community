@@ -5,11 +5,14 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.internal.isKotlinDecompiledFile
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+
+var VirtualFile.isKotlinDecompiledFile: Boolean by NotNullableUserDataProperty(Key.create("IS_KOTLIN_DECOMPILED_FILE"), false)
 
 class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProvider() {
     override fun getDefaultSetting(project: Project, file: VirtualFile): FileHighlightingSetting? {

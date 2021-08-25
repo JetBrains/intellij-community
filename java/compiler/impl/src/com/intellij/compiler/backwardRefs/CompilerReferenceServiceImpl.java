@@ -202,7 +202,7 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
       if (!myReadDataLock.tryLock()) throw new ReferenceIndexUnavailableException();
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
-        return myReader.getNameEnumerator().getName(idx);
+        return myReader.getNameEnumerator().valueOf(idx);
       }
       finally {
         myReadDataLock.unlock();
@@ -235,11 +235,12 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
   }
 
   @Override
-  public CompilerRef.CompilerClassHierarchyElementDef @NotNull [] getDirectInheritors(@NotNull CompilerRef.CompilerClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+  public @NotNull Collection<CompilerRef.CompilerClassHierarchyElementDef> getDirectInheritors(@NotNull CompilerRef.CompilerClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
     try {
-      if (!myReadDataLock.tryLock()) return CompilerRef.CompilerClassHierarchyElementDef.EMPTY_ARRAY;
+      if (!myReadDataLock.tryLock()) return Collections.emptyList();
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
+
         return myReader.getDirectInheritors(baseClass);
       }
       finally {

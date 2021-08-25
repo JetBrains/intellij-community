@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 
-class NativeConsoleApplicationTemplate : Template() {
+object NativeConsoleApplicationTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.native.console.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.native.console.description")
 

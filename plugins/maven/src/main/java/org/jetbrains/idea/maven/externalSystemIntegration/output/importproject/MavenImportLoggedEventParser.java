@@ -7,15 +7,24 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.buildtool.MavenImportEventProcessor;
+import org.jetbrains.idea.maven.importing.output.MavenImportOutputParser;
+import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport;
 
 import java.util.function.Consumer;
 
+/**
+ * Log parser for maven import vm process.
+ * {@link MavenImportOutputParser}
+ * {@link MavenImportEventProcessor}
+ * {@link AbstractMavenServerRemoteProcessSupport}
+ */
 @ApiStatus.Experimental
 public interface MavenImportLoggedEventParser {
   ExtensionPointName<MavenImportLoggedEventParser> EP_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.log.import.parser");
 
   /**
-   * processing log line from vm process - maven server.
+   * Processing log line from vm process - maven server.
    * @param project - project
    * @param logLine - log line
    * @param reader - log reader

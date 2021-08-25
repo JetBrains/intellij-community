@@ -1,6 +1,6 @@
 <idea-plugin>
   <applicationListeners>
-    <listener topic="com.intellij.execution.ExecutionListener"
+    <listener topic="com.intellij.openapi.project.ProjectManagerListener"
               class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"
               os="windows"
               activeInHeadlessMode="false"/>
@@ -9,6 +9,7 @@
   <extensionPoints>
     <extensionPoint name="xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings" dynamic="true"/>
     <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType" dynamic="true"/>
+    <extensionPoint name="xdebugger.breakpointGroupingRule" interface="com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule" dynamic="true"/>
     <extensionPoint name="xdebugger.debuggerSupport" interface="com.intellij.xdebugger.impl.DebuggerSupport" dynamic="true"/>
     <extensionPoint name="xdebugger.configurableProvider" interface="com.intellij.xdebugger.settings.DebuggerConfigurableProvider" dynamic="true"/>
 
@@ -26,9 +27,6 @@
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
-    <projectService serviceInterface="com.intellij.ui.XDebugSessionService"
-                    serviceImplementation="com.intellij.xdebugger.impl.ui.XDebugSessionServiceImpl"/>
-
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>
@@ -45,6 +43,11 @@
     <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.xdebugger.impl.XDebuggerSupport" order="first" id="XDebuggerSupport"/>
+
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule"/>
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule"/>
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroupingRule"/>
+
     <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
     <editor.linePainter implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter"/>
 
@@ -97,7 +100,7 @@
       <separator text="Debug"/>
       <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
-      <add-to-group group-id="RunToolbarMoreActionGroup"/>
+      <add-to-group group-id="RunToolbarMainMoreActionGroup"/>
     </group>
 
     <group id="RunToolbarDebuggerAdditionalActions">

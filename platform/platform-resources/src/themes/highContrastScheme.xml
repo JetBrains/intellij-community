@@ -824,5 +824,42 @@
         <option name="EFFECT_TYPE" value="0"/>
       </value>
     </option>
+    <option name="GO_EXPORTED_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="EDB98E" />
+      </value>
+    </option>
+    <option name="GO_LOCAL_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="EDB98E" />
+      </value>
+    </option>
+    <option name="GO_METHOD_RECEIVER">
+      <value>
+        <option name="FOREGROUND" value="3DB8FF" />
+        <option name="FONT_TYPE" value="1"/>
+      </value>
+    </option>
+    <option name="GO_PACKAGE">
+      <value>
+        <option name="FOREGROUND" value="A8CC5C" />
+      </value>
+    </option>
+    <option name="GO_TYPE_REFERENCE">
+      <value>
+        <option name="FOREGROUND" value="73D0E6" />
+      </value>
+    </option>
+    <option name="GO_COMMENT_REFERENCE">
+      <value>
+        <option name="FOREGROUND" value="7ec3e6"/>
+        <option name="FONT_TYPE" value="2"/>
+      </value>
+    </option>
+    <option name="GO_SHADOWING_VARIABLE">
+      <value>
+        <option name="FOREGROUND" value="38D996"/>
+      </value>
+    </option>
   </attributes>
 </scheme>

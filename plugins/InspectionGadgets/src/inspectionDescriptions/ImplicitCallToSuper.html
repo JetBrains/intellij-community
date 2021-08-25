@@ -6,25 +6,25 @@ another constructor of the same class.
   call to <code>super()</code>. Some coding standards prefer that such calls to
   <code>super()</code> be made explicitly.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Foo {
     Foo() {}
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Foo {
     Foo() {
       super();
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Use the inspection settings to ignore classes extending directly from <code>Object</code>.
   For instance:
 </p>
-<pre>
+<pre><code>
   class Foo {
     Foo() {} // Not reported
   }
@@ -32,6 +32,6 @@ another constructor of the same class.
   class Bar extends Foo {
     Bar() {} // Implicit call to 'super()'
   }
-</pre>
+</code></pre>
 </body>
 </html>

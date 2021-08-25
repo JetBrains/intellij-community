@@ -1,4 +1,4 @@
-open class B: A<String>() {
+open class B : A<String>() {
     override fun foo(t: String) {
         super<A>.foo(t)
     }
@@ -7,7 +7,7 @@ open class B: A<String>() {
         foo("", 0)
     }
 
-    open fun baz(a: A<Number>) {
+    open fun bas(a: A<Number>) {
         a.foo(0, "")
     }
 }

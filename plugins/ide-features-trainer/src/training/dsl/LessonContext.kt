@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 
 @LearningDsl
-abstract class LessonContext: LearningDslBase {
+abstract class LessonContext : LearningDslBase {
   /**
    * Start a new task in a lesson context
    */
@@ -16,7 +16,7 @@ abstract class LessonContext: LearningDslBase {
 
   /**
    * There will not be any freeze in GUI thread.
-   * The continue of the script will be scheduled with the [delayMillis]
+   * The continuation of the script will be scheduled with the [delayMillis]
    */
   open fun waitBeforeContinue(delayMillis: Int) = Unit
 

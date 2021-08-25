@@ -46,7 +46,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 62);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 63);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
@@ -213,7 +213,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     }
 
     private static void onChange(DataContext dataContext) {
-      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+      final Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
       if (editor == null) return;
       Project project = editor.getProject();
       if (project == null) return;

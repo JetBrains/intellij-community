@@ -55,15 +55,18 @@ class KotlinStepOverRequestHint(
                 return if (isAcceptable) STOP else StepRequest.STEP_OVER
             } else if (isSteppedOut) {
                 val location = frameProxy.safeLocation()
+
+                processSteppingFilters(context, location)?.let { return it }
+
                 val method = location?.safeMethod()
-                if (method != null && method.isSyntheticMethodForDefaultParameters() && isSteppedFromDefaultParamsOriginal(location)) {
+                if (method != null && method.isSyntheticMethodForDefaultParameters() &&
+                    isSteppedFromDefaultParamsOriginal(location)) {
                     return StepRequest.STEP_OVER
                 }
 
                 val lineNumber = location?.safeLineNumber(JAVA_STRATUM) ?: -1
                 return if (lineNumber >= 0) STOP else StepRequest.STEP_OVER
             }
-
             return StepRequest.STEP_OUT
         } catch (ignored: VMDisconnectedException) {
         } catch (e: EvaluateException) {

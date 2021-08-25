@@ -23,7 +23,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.ExperimentalUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;

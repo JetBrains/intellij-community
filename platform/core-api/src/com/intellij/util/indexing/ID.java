@@ -5,10 +5,9 @@ import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,7 @@ import java.util.Objects;
  */
 public class ID<K, V> extends IndexId<K,V> {
   private static final Logger LOG = Logger.getInstance(ID.class);
-  private static final Int2ObjectMap<ID<?, ?>> ourRegistry = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
+  private static final IntObjectMap<ID<?, ?>> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
 
   private static final SimpleStringPersistentEnumerator ourNameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
 

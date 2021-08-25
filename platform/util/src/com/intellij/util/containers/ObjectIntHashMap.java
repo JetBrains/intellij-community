@@ -86,6 +86,9 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
     });
   }
 
+  /**
+   * If the map contains {@code key} then increment its value and return true, otherwise do nothing and return false
+   */
   public boolean increment(@NotNull K key) {
     if (!myMap.containsKey(key)) {
       return false;

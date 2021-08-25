@@ -6,7 +6,7 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -79,7 +79,7 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
                                         ExecutionBundle.message("run.configuration.select.jre.dir.label"),
                                         null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                        TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+                                        TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
 
     setLayout(new MigLayout("ins 0, gap 10, fill, flowx"));
     add(myCbEnabled, "shrinkx");

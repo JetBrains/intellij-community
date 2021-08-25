@@ -133,7 +133,7 @@ class ExternalEntityMappingTest {
     assertEquals(1, mapping.getDataByEntity(entity))
 
     val diff = createBuilderFrom(builder.toStorage())
-    diff.removeExternalMapping(INDEX_ID)
+    diff.indexes.removeExternalMapping(INDEX_ID)
     assertNull(diff.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
     assertEquals(1, mapping.getDataByEntity(entity))
 

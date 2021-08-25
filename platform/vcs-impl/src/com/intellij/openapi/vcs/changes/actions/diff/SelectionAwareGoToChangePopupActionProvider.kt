@@ -19,8 +19,8 @@ abstract class SelectionAwareGoToChangePopupActionProvider {
         val selectedChange = getSelectedChange()
         val selectedIndex = changes.indexOfFirst {
           it.filePath == selectedChange?.filePath &&
-          it.fileStatus == selectedChange.fileStatus
-          //it.tag == selectedChange.tag //TODO tag should be supported in all implementation
+          it.fileStatus == selectedChange.fileStatus &&
+          it.tag == selectedChange.tag
         }
 
         return ListSelection.createAt(changes, selectedIndex)

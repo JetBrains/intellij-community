@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -55,11 +56,21 @@ public final class SealedUtils {
       .anyMatch(parent -> parent != null && parent.hasModifierProperty(PsiModifier.SEALED));
   }
 
+  public static Collection<PsiClass> findSameFileInheritorsClasses(@NotNull PsiClass psiClass, PsiClass @NotNull ... classesToExclude) {
+    return getClasses(psiClass, Function.identity(), classesToExclude);
+  }
+
   public static Collection<String> findSameFileInheritors(@NotNull PsiClass psiClass, PsiClass @NotNull ... classesToExclude) {
+    return getClasses(psiClass, PsiClass::getQualifiedName, classesToExclude);
+  }
+
+  private static @NotNull <T> Collection<T> getClasses(@NotNull PsiClass psiClass,
+                                                       Function<PsiClass, T> mapper,
+                                                       PsiClass @NotNull ... classesToExclude) {
     GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
     return DirectClassInheritorsSearch.search(psiClass, fileScope)
       .filtering(inheritor -> !ArrayUtil.contains(inheritor, classesToExclude))
-      .mapping(inheritor -> inheritor.getQualifiedName())
+      .mapping(mapper)
       .findAll();
   }
 

@@ -189,7 +189,7 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
             val fqName = declaration.unsafeResolveToDescriptor(BodyResolveMode.PARTIAL).importableFqName
             if (fqName != null) {
                 ProgressManager.getInstance().run(
-                    object : Task.Modal(project, KotlinBundle.message("searching.for.imports.to.delete"), true) {
+                    object : Task.Modal(project, KotlinBundle.message("searching.for.imports.to.delete.title"), true) {
                         override fun run(indicator: ProgressIndicator) {
                             val importsToDelete = runReadAction {
                                 val searchScope = KotlinSourceFilterScope.projectSources(GlobalSearchScope.projectScope(project), project)
@@ -198,23 +198,24 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
                                     .mapNotNull { ref -> ref.expression.getStrictParentOfType<KtImportDirective>() }
                                     .filter { import -> !import.isAllUnder && import.targetDescriptors().size == 1 }
                             }
-                          ModalityUiUtil.invokeLaterIfNeeded({
-                                                                                                    project.executeWriteCommand(text) {
-                                                                                                      importsToDelete.forEach { import ->
-                                                                                                        if (!FileModificationService.getInstance()
-                                                                                                            .preparePsiElementForWrite(
-                                                                                                              import)
-                                                                                                        ) return@forEach
-                                                                                                        try {
-                                                                                                          import.delete()
-                                                                                                        }
-                                                                                                        catch (e: Exception) {
-                                                                                                          LOG.error(e)
-                                                                                                        }
-                                                                                                      }
-                                                                                                      declaration.delete()
-                                                                                                    }
-                                                                                                  }, ModalityState.NON_MODAL)
+                            ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL)
+                            {
+                                project.executeWriteCommand(text) {
+                                    importsToDelete.forEach { import ->
+                                        if (!FileModificationService.getInstance()
+                                                .preparePsiElementForWrite(
+                                                    import
+                                                )
+                                        ) return@forEach
+                                        try {
+                                            import.delete()
+                                        } catch (e: Exception) {
+                                            LOG.error(e)
+                                        }
+                                    }
+                                    declaration.delete()
+                                }
+                            }
                         }
                     })
             } else {

@@ -12,6 +12,7 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -35,7 +36,7 @@ abstract class KotlinExtractSuperDialogBase(
     protected val targetParent: PsiElement,
     private val conflictChecker: (KotlinExtractSuperDialogBase) -> Boolean,
     private val isExtractInterface: Boolean,
-    refactoringName: String,
+    @Nls refactoringName: String,
     private val refactoring: (ExtractSuperInfo) -> Unit
 ) : JavaExtractSuperBaseDialog(originalClass.project, originalClass.toLightClass()!!, emptyList(), refactoringName) {
     private var initComplete: Boolean = false
@@ -85,7 +86,7 @@ abstract class KotlinExtractSuperDialogBase(
 
     protected abstract fun createMemberInfoModel(): MemberInfoModelBase
 
-    override fun getDocCommentPanelName() = KotlinBundle.message("name.kdoc.for.abstracts")
+    override fun getDocCommentPanelName() = KotlinBundle.message("title.kdoc.for.abstracts")
 
     override fun checkConflicts() = conflictChecker(this)
 

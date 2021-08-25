@@ -28,6 +28,7 @@
   <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
     zendesk-form-id="360001912739" zendesk-url="https://jbsintellij.zendesk.com">
     <field id="28147552" value="ij_idea"/>
+    <field id="28102551" value="sl_unknown"/>   <!-- country -->
     <field id="29444529" type="rating"/>
     <field id="28500325" type="build"/>
     <field id="28151042" type="os"/>

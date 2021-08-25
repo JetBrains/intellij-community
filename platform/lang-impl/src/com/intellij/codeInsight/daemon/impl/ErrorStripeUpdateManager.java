@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -72,10 +73,20 @@ public final class ErrorStripeUpdateManager implements Disposable {
       markupModelImpl.repaintTrafficLightIcon();
       if (tlr.isValid()) return;
     }
-    Editor editor = editorMarkupModel.getEditor();
-    if (editor.isDisposed()) return;
 
-    editorMarkupModel.setErrorStripeRenderer(createRenderer(editor, file));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Editor editor = editorMarkupModel.getEditor();
+      if (editor.isDisposed()) return;
+
+      TrafficLightRenderer tlRenderer = createRenderer(editor, file);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (editor.isDisposed()) {
+          Disposer.dispose(tlRenderer); // would be registered in setErrorStripeRenderer() below
+          return;
+        }
+        editorMarkupModel.setErrorStripeRenderer(tlRenderer);
+      });
+    });
   }
 
   @NotNull
@@ -83,17 +94,18 @@ public final class ErrorStripeUpdateManager implements Disposable {
     return new DaemonTooltipRendererProvider(myProject, editor);
   }
 
-  private TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+  private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
     for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
       TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
-      if (renderer != null) {
-        return renderer;
-      }
+      if (renderer != null) return renderer;
     }
+    return createFallbackRenderer(editor);
+  }
+
+  private @NotNull TrafficLightRenderer createFallbackRenderer(@NotNull Editor editor) {
     return new TrafficLightRenderer(myProject, editor.getDocument()) {
       @Override
-      @NotNull
-      protected UIController createUIController() {
+      protected @NotNull UIController createUIController() {
         return super.createUIController(editor);
       }
     };

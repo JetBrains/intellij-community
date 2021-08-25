@@ -64,7 +64,7 @@ object ProbabilityProvider {
       filePrefixCounter.append(StringUtil.commonPrefixLength(candidateFileName, it.name))
     }
 
-    factors[Factor.MAX_INTERSECTION.ordinal] = intersectionCounters.values.maxBy { it.sum }?.sum ?: 0.0
+    factors[Factor.MAX_INTERSECTION.ordinal] = intersectionCounters.values.maxByOrNull { it.sum }?.sum ?: 0.0
     factors[Factor.SUM_INTERSECTION.ordinal] = intersectionCounters.values.sumByDouble { it.sum }
     factors[Factor.MIN_DISTANCE_TIME.ordinal] = timeDistanceCounter.min
     factors[Factor.COMMIT_SIZE.ordinal] = newCommit.files.size.toDouble()

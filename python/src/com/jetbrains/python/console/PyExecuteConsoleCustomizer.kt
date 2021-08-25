@@ -66,5 +66,5 @@ interface PyExecuteConsoleCustomizer {
 }
 
 enum class DescriptorType {
-  NEW, EXISTING, STARTING
+  NEW, EXISTING, STARTING, NON_INTERACTIVE
 }

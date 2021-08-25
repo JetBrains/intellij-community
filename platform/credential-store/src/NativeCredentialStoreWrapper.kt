@@ -1,13 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.jna.JnaLoader
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
-import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Conditions
@@ -19,16 +15,10 @@ import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
-internal val NOTIFICATION_MANAGER by lazy {
-  // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
-  SingletonNotificationManager(NotificationGroup("Password Safe", displayType = NotificationDisplayType.STICKY_BALLOON,
-                                                 isLogByDefault = true), NotificationType.ERROR)
-}
-
 private val REMOVED_CREDENTIALS = Credentials("REMOVED_CREDENTIALS")
 
-// used only for native keychains, not for KeePass, so, postponedCredentials and other is not overhead if KeePass is used
-private class NativeCredentialStoreWrapper internal constructor(
+// used only for native keychains, not for KeePass, so `postponedCredentials` and others do not add any overhead when KeePass is used
+private class NativeCredentialStoreWrapper(
   private val store: CredentialStore,
   private val queueProcessor: QueueProcessor<() -> Unit>
 ) : CredentialStore, Closeable {
@@ -117,12 +107,12 @@ private class NativeCredentialStoreWrapper internal constructor(
 private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
   LOG.error(e)
   var message = CredentialStoreBundle.message("notification.content.native.keychain.unavailable",
-                                              ApplicationNamesInfo.getInstance().fullProductName);
+                                              ApplicationNamesInfo.getInstance().fullProductName)
   if (SystemInfo.isLinux) {
-    message += "\n";
-    message += CredentialStoreBundle.message("notification.content.native.keychain.unavailable.linux.addition");
+    message += "\n"
+    message += CredentialStoreBundle.message("notification.content.native.keychain.unavailable.linux.addition")
   }
-  NOTIFICATION_MANAGER.notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message)
+  CredentialStoreUiService.getInstance().notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message, null, null)
 }
 
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {
@@ -135,7 +125,7 @@ private class MacOsCredentialStoreFactory : CredentialStoreFactory {
 private class LinuxCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? = when {
     SystemInfo.isLinux -> {
-      val preferWallet = Registry.`is`("credentialStore.linux.prefer.kwallet", false)
+      @Suppress("SpellCheckingInspection") val preferWallet = Registry.`is`("credentialStore.linux.prefer.kwallet", false)
       var res: CredentialStore? = if (preferWallet)
         KWalletCredentialStore.create()
       else

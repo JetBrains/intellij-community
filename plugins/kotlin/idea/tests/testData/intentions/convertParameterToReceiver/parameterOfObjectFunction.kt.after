@@ -1,0 +1,10 @@
+import Foo.bar
+
+// WITH_RUNTIME
+object Foo {
+    fun String.bar() {}
+}
+
+fun test() {
+    "abc".bar()
+}

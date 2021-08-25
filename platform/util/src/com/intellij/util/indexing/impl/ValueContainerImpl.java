@@ -8,7 +8,6 @@ import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IntIdsIterator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.function.IntPredicate;
 
 /**
@@ -329,11 +325,10 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       ValueToInputMap<Value> mapping = asMapping();
       if (mapping != null) {
         final ValueToInputMap<Value> cloned = mapping.clone();
-        cloned.forEachEntry((key, val) -> {
+        cloned.forEach((key, val) -> {
           if (val instanceof ChangeBufferingList) {
             cloned.put(key, ((ChangeBufferingList)val).clone());
           }
-          return true;
         });
 
         clone.myInputIdMapping = cloned;
@@ -580,7 +575,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   private static final IntPredicate EMPTY_PREDICATE = __ -> false;
 
   // a class to distinguish a difference between user-value with THashMap type and internal value container
-  private static final class ValueToInputMap<Value> extends THashMap<Value, Object> {
+  private static final class ValueToInputMap<Value> extends HashMap<Value, Object> {
     ValueToInputMap(int size) {
       super(size);
     }

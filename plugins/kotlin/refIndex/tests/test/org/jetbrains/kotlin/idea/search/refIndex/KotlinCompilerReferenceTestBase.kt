@@ -13,17 +13,12 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.runAll
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import kotlin.properties.Delegates
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     private var defaultEnableState by Delegates.notNull<Boolean>()
-
-    protected fun getTestDataPath(testDirectory: String): String = KotlinRoot.DIR
-        .resolve("refIndex/tests/testData/")
-        .resolve(testDirectory)
-        .path + "/"
 
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.instance.kotlinStdlib.path)
@@ -43,14 +38,15 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     protected fun getReferentFilesForElementUnderCaret(): Set<String>? {
         val elementAtCaret = myFixture.elementAtCaret
         val declarationAtCaret = elementAtCaret.parentOfType<PsiNamedElement>(withSelf = true) ?: error("declaration at caret not found")
-        return getReferentFiles(declarationAtCaret)
+        return getReferentFiles(declarationAtCaret, true)
     }
 
-    protected fun getReferentFiles(element: PsiElement): Set<String>? {
+    protected fun getReferentFiles(element: PsiElement, withJavaIndex: Boolean): Set<String>? {
         val fromKotlinIndex = KotlinCompilerReferenceIndexService[project].findReferenceFilesInTests(element)
         val fromJavaIndex = CompilerReferenceService.getInstance(project)
-            .cast<CompilerReferenceServiceBase<*>>()
-            .getReferentFilesForTests(element)
+            .takeIf { withJavaIndex }
+            ?.cast<CompilerReferenceServiceBase<*>>()
+            ?.getReferentFilesForTests(element)
 
         if (fromKotlinIndex == null && fromJavaIndex == null) return null
         return mutableSetOf<String>().apply {
@@ -58,4 +54,23 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
             fromJavaIndex?.mapTo(this, VirtualFile::getName)
         }
     }
+
+    protected fun findSubOrSuperTypes(name: String, deep: Boolean, subtypes: Boolean): List<String>? {
+        val service = KotlinCompilerReferenceIndexService[project]
+        val fqName = FqName(name)
+        val sequence = if (subtypes)
+            service.getSubtypesOfInTests(fqName, deep)
+        else
+            throw NotImplementedError("supertypes not supported")
+
+        return sequence?.map { it.asString() }?.sorted()?.toList()
+    }
+
+    protected fun findHierarchy(hierarchyElement: PsiElement): List<String> = KotlinCompilerReferenceIndexService[project]
+        .getSubtypesOfInTests(hierarchyElement)
+        .map(FqName::asString)
+        .sorted()
+        .toList()
+
+    protected fun forEachBoolean(action: (Boolean) -> Unit) = listOf(true, false).forEach(action)
 }

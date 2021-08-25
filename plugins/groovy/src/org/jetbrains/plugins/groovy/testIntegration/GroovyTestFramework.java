@@ -1,18 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.testIntegration;
 
-import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.junit.JUnitTestFramework;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +26,7 @@ import static org.jetbrains.plugins.groovy.bundled.BundledGroovy.getBundledGroov
 /**
  * @author Max Medvedev
  */
-public class GroovyTestFramework extends JavaTestFramework {
+public class GroovyTestFramework extends JUnitTestFramework {
   private static final Logger LOG = Logger.getInstance(GroovyTestFramework.class);
 
   @Override
@@ -134,16 +132,6 @@ public class GroovyTestFramework extends JavaTestFramework {
   @Override
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEST_METHOD_GROOVY);
-  }
-
-  @Override
-  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element, checkAbstract) != null;
-  }
-
-  @Override
-  public boolean isMyConfigurationType(ConfigurationType type) {
-    return "JUnit".equals(type.getId());
   }
 
   @Override

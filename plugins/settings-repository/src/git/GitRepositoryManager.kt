@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.Disposable
@@ -25,6 +25,7 @@ import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.concurrent.write
 
@@ -98,7 +99,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun isRepositoryExists(): Boolean {
     val repo = _repository
     if (repo == null) {
-      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir.toFile()).setUseSystemConfig(false).setup().objectDirectory.exists()
+      return Files.exists(dir) && FileRepositoryBuilder().setWorkTree(dir.toFile()).setUseSystemConfig(false).setup().objectDirectory.exists()
     }
     else {
       return repo.objectDatabase.exists()

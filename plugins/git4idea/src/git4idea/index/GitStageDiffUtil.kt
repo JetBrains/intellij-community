@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
 import com.intellij.diff.DiffContentFactory
@@ -311,7 +311,7 @@ private class StagedContentRevision(val project: Project, val root: VirtualFile,
   override fun getContentAsBytes(): ByteArray = stagedContentFile(project, root, status).contentsToByteArray()
 }
 
-private class KindTag(private val kind: NodeKind) : ChangesBrowserNode.Tag {
+internal class KindTag(private val kind: NodeKind) : ChangesBrowserNode.Tag {
   override fun toString(): String = GitBundle.message(kind.key)
 
   override fun equals(other: Any?): Boolean {

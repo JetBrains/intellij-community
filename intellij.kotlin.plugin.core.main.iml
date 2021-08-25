@@ -26,7 +26,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" />
     <orderEntry type="module" module-name="kotlin.core" exported="" />
-    <orderEntry type="module" module-name="kotlin.eval4j" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" exported="" />
     <orderEntry type="module" module-name="kotlin.fir" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter" exported="" />
@@ -59,6 +59,18 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" exported="" />
     <orderEntry type="module" module-name="kotlin.refIndex" exported="" />
+    <orderEntry type="module" module-name="kotlin.coverage" exported="" />
+    <orderEntry type="module" module-name="kotlin.testng" exported="" />
+    <orderEntry type="module" module-name="kotlin.junit" exported="" />
+    <orderEntry type="module" module-name="kotlin.grazie" exported="" />
+    <orderEntry type="module" module-name="kotlin.ml-completion" exported="" />
+    <orderEntry type="module" module-name="kotlin.groovy" exported="" />
+    <orderEntry type="module" module-name="kotlin.copyright" exported="" />
+    <orderEntry type="module" module-name="kotlin.spellchecker" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-decompiler" exported="" />
+    <orderEntry type="module" module-name="kotlin.properties" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.maven" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.gradle" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-script-util" level="project" />

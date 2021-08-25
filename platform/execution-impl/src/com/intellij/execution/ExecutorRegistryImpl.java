@@ -112,12 +112,18 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
         .add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
     }
-    
+
     AnAction nonExistingAction = registerAction(actionManager, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
     ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
       .add(nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"), actionManager);
 
-    if(RunToolbarProcess.isAvailable()) {
+    initRunToolbarExecutorActions(executor, actionManager);
+
+    myContextActionIdSet.add(executor.getContextActionId());
+  }
+
+  private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
+    if (RunToolbarProcess.isAvailable()) {
       RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
         if (executor instanceof ExecutorGroup) {
 
@@ -132,25 +138,30 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
             registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
                                   myRunWidgetIdToAction);
-          } else {
+          }
+          else {
             RunToolbarAdditionActionsHolder holder = new RunToolbarAdditionActionsHolder(executorGroup, process);
 
-            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(), process.getMoreActionSubGroupName(),
+            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(),
+                                  process.getMoreActionSubGroupName(),
                                   myRunWidgetIdToAction);
-            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process), holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
+            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process),
+                                  holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
                                   myRunWidgetIdToAction);
           }
-
         }
         else {
           ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
+          ExecutorAction wrappedMainAction = new RunToolbarProcessMainAction(process, executor);
+
           registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
+                                myRunWidgetIdToAction);
+
+          registerActionInGroup(actionManager, process.getMainActionId(), wrappedMainAction, RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
                                 myRunWidgetIdToAction);
         }
       });
     }
-
-    myContextActionIdSet.add(executor.getContextActionId());
   }
 
   @NonNls
@@ -195,6 +206,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
       unregisterAction(process.getActionId(), RunToolbarProcess.RUN_WIDGET_GROUP, myRunWidgetIdToAction);
+      unregisterAction(process.getMainActionId(), RunToolbarProcess.RUN_WIDGET_MAIN_GROUP, myRunWidgetIdToAction);
 
       if (executor instanceof ExecutorGroup) {
         unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionId(process), process.getMoreActionSubGroupName(),
@@ -282,12 +294,16 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         presentation.setIcon(getInformativeIcon(project, selectedSettings));
         RunConfiguration configuration = selectedSettings.getConfiguration();
-        if (configuration instanceof CompoundRunConfiguration) {
-          enabled = canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets());
+        if (!isSuppressed(project)) {
+          if (configuration instanceof CompoundRunConfiguration) {
+            enabled = canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets());
+          }
+          else {
+            ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
+            enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(configuration, target)));
+          }
         }
-        else {
-          ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-          enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(configuration, target)));
+        if (!(configuration instanceof CompoundRunConfiguration)) {
           hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
         }
         if (enabled) {
@@ -312,7 +328,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       presentation.setText(text);
     }
 
-    private Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
+    private static boolean isSuppressed(Project project) {
+      for (ExecutionActionSuppressor suppressor : ExecutionActionSuppressor.EP_NAME.getExtensionList()) {
+        if (suppressor.isSuppressed(project)) return true;
+      }
+      return false;
+    }
+
+    protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
       ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
       RunConfiguration configuration = selectedConfiguration.getConfiguration();
       if (configuration instanceof RunnerIconProvider) {

@@ -44,7 +44,7 @@ private val LOG = Logger.getInstance(UsageReplacementStrategy::class.java)
 fun UsageReplacementStrategy.replaceUsagesInWholeProject(
     targetPsiElement: PsiElement,
     @NlsContexts.DialogTitle progressTitle: String,
-    commandName: String
+    @NlsContexts.Command commandName: String
 ) {
     val project = targetPsiElement.project
     ProgressManager.getInstance().run(
@@ -57,14 +57,11 @@ fun UsageReplacementStrategy.replaceUsagesInWholeProject(
                         .map { ref -> ref.expression }
                 }
 
-              ModalityUiUtil.invokeLaterIfNeeded(
-                {
+              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) {
                   project.executeWriteCommand(commandName) {
-                    this@replaceUsagesInWholeProject.replaceUsages(usages)
+                      this@replaceUsagesInWholeProject.replaceUsages(usages)
                   }
-                },
-                ModalityState.NON_MODAL
-              )
+              }
             }
         })
 }

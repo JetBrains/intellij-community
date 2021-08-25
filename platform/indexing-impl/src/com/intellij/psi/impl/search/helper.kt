@@ -29,6 +29,11 @@ import kotlin.collections.set
 
 private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.searcher")
 
+@Suppress("UNCHECKED_CAST")
+internal fun <R : Any> searchers(parameters: SearchParameters<R>): List<Searcher<SearchParameters<R>, R>> {
+  return searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
+}
+
 internal val indicatorOrEmpty: ProgressIndicator
   get() = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator())
 
@@ -106,9 +111,8 @@ private fun <R : Any> collectSearchRequests(parameters: SearchParameters<R>): Co
 
 private fun <R : Any> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
   val queries = ArrayList<Query<out R>>()
-
-  @Suppress("UNCHECKED_CAST")
-  val searchers = searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
+  queries.add(SearchersQuery(parameters))
+  val searchers = searchers(parameters)
   for (searcher: Searcher<SearchParameters<R>, R> in searchers) {
     ProgressManager.checkCanceled()
     queries += searcher.collectSearchRequests(parameters)

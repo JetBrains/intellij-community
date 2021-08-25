@@ -45,7 +45,6 @@ public class RemoteConnectionBuilder {
   private final String myAddress;
   private boolean myCheckValidity;
   private boolean myAsyncAgent;
-  private boolean myMemoryAgent;
   private boolean myQuiet;
   private boolean mySuspend = true;
   private Project myProject;
@@ -68,11 +67,6 @@ public class RemoteConnectionBuilder {
 
   public RemoteConnectionBuilder project(Project project) {
     myProject = project;
-    return this;
-  }
-
-  public RemoteConnectionBuilder memoryAgent(boolean useAgent) {
-    myMemoryAgent = useAgent;
     return this;
   }
 
@@ -130,10 +124,6 @@ public class RemoteConnectionBuilder {
 
       if (myAsyncAgent) {
         addDebuggerAgent(parameters, myProject);
-      }
-
-      if (myMemoryAgent) {
-        MemoryAgentUtil.addMemoryAgent(parameters, myProject);
       }
 
       final boolean forceNoJIT = DebuggerSettings.getInstance().DISABLE_JIT;

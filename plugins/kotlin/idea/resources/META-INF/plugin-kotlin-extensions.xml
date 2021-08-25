@@ -29,4 +29,8 @@
     <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
     <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.quickfix.unambiguousImports"
+                    interface="org.jetbrains.kotlin.idea.quickfix.KotlinAutoImportsFilter" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

@@ -5,16 +5,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.THashMap;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +21,7 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   private final Map<K, ValueContainerImpl<V>> myMap;
 
   public InMemoryIndexStorage(@NotNull KeyDescriptor<K> keyDescriptor) {
-    myMap = new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<>() {
+    myMap = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
       public int hashCode(@Nullable K o) {
         if (o == null) return 0;

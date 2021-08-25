@@ -20,7 +20,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
 
     productLayout.mainModules = ["intellij.pycharm.community.main"]
     productLayout.productApiModules = ["intellij.xml.dom"]
-    productLayout.productImplementationModules = [
+    productLayout.productImplementationModules = NotebookProperties.NOTEBOOK_IMPLEMENTATION_MODULES + [
       "intellij.xml.dom.impl",
       "intellij.platform.main",
       "intellij.pycharm.community"
@@ -34,7 +34,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       plugin("intellij.pycharm.community.customization") {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"
-        withModule("intellij.pycharm.community.customization.impl", mainJarName)
+        withModule("intellij.pycharm.community.ide.impl", mainJarName)
       }
     ]
     productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]

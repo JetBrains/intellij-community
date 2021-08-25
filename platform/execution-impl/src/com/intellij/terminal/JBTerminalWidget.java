@@ -53,12 +53,14 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
-  public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
-  public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
+
+  public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
+  public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
 
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
+  private final Project myProject;
 
   public JBTerminalWidget(@NotNull Project project,
                           @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -74,6 +76,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
     myCompositeFilterWrapper = new CompositeFilterWrapper(project, console, this);
+    myProject = project;
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
     Disposer.register(parent, this);
@@ -152,6 +155,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public void setListener(JBTerminalWidgetListener listener) {
     myListener = listener;
+  }
+
+  public @NotNull Project getProject() {
+    return myProject;
   }
 
   @Override
@@ -307,7 +314,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   @Override
   public Object getData(@NotNull String dataId) {
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
-      return getSelectedText();
+      return getSelectedText(getTerminalPanel());
     }
     if (TERMINAL_DATA_KEY.is(dataId)) {
       return this;
@@ -315,24 +322,33 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return null;
   }
 
-  @Nullable
-  private String getSelectedText() {
-    TerminalPanel terminalPanel = getTerminalPanel();
+  static @Nullable String getSelectedText(@NotNull TerminalPanel terminalPanel) {
     TerminalSelection selection = terminalPanel.getSelection();
-    if (selection != null) {
+    if (selection == null) return null;
+    TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
+    buffer.lock();
+    try {
       Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
-      if (points.first != null && points.second != null) {
-        TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
-        buffer.lock();
-        try {
-          return SelectionUtil.getSelectionText(points.first, points.second, buffer);
-        }
-        finally {
-          buffer.unlock();
-        }
-      }
+      return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
-    return null;
+    finally {
+      buffer.unlock();
+    }
+  }
+
+  static @NotNull String getText(@NotNull TerminalPanel terminalPanel) {
+    TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
+    buffer.lock();
+    try {
+      TerminalSelection selection = new TerminalSelection(
+        new Point(0, -buffer.getHistoryLinesCount()),
+        new Point(terminalPanel.getWidth(), buffer.getScreenLinesCount()));
+      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+      return SelectionUtil.getSelectionText(points.first, points.second, buffer);
+    }
+    finally {
+      buffer.unlock();
+    }
   }
 
   public void writePlainMessage(@NotNull @Nls String message) {

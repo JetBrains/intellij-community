@@ -41,7 +41,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
   public static final Key<ConfigurationPane> CONTEXT_KEY = Key.create("jshell.editor.toolbar");
 
   public static class ConfigurationPane extends EditorHeaderComponent {
-    private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private final Alarm myUpdateAlarm = new Alarm();
     private final JrePathEditor myJreEditor;
     private final ConfigurationModuleSelector myModuleSelector;
     private MessageBusConnection myBusConnection;

@@ -65,7 +65,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     myProjectsManager.fireActivatedInTests();
     assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
   }
 
   @Test
@@ -83,7 +83,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     assertEquals(1, getRootNodes().size());
     assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
-    assertEquals(0, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
+    assertEquals(0, getRootNodes().get(0).getProjectNodesInTests().size());
 
     VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
                                          "<artifactId>m</artifactId>" +
@@ -92,8 +92,8 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     assertEquals(1, getRootNodes().size());
     assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
-    assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getVirtualFile());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+    assertEquals(m, getRootNodes().get(0).getProjectNodesInTests().get(0).getVirtualFile());
   }
 
   @Test
@@ -119,8 +119,8 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     assertEquals(1, getRootNodes().size());
     assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
-    assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getVirtualFile());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+    assertEquals(m, getRootNodes().get(0).getProjectNodesInTests().get(0).getVirtualFile());
   }
 
   @Test
@@ -149,8 +149,8 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     assertEquals(1, getRootNodes().size());
     assertEquals(myProjectPom, getRootNodes().get(0).getVirtualFile());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
-    assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getVirtualFile());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+    assertEquals(m, getRootNodes().get(0).getProjectNodesInTests().get(0).getVirtualFile());
   }
 
   @Test
@@ -196,16 +196,16 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     readFiles(myProjectPom, m, mm);
 
     assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getModulesNode().getProjectNodesInTests().size());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().get(0).getProjectNodesInTests().size());
 
     myNavigator.setGroupModules(false);
     assertEquals(3, getRootNodes().size());
 
     myNavigator.setGroupModules(true);
     assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().get(0).getModulesNode().getProjectNodesInTests().size());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().get(0).getProjectNodesInTests().size());
   }
 
   @Test
@@ -228,12 +228,12 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     myProjectsTree.setIgnoredFilesPaths(Arrays.asList(m.getPath()));
 
     myNavigator.setShowIgnored(true);
-    assertTrue(getRootNodes().get(0).getModulesNode().isVisible());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getChildren().length);
+    assertTrue(getRootNodes().get(0).isVisible());
+    assertEquals(2, getRootNodes().get(0).getChildren().length);
 
     myNavigator.setShowIgnored(false);
-    assertFalse(getRootNodes().get(0).getModulesNode().isVisible());
-    assertEquals(0, getRootNodes().get(0).getModulesNode().getChildren().length);
+    assertTrue(getRootNodes().get(0).isVisible());
+    assertEquals(1, getRootNodes().get(0).getChildren().length);
   }
 
   @Test
@@ -260,14 +260,14 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, myStructure.getRootElement().getChildren().length);
     MavenProjectsStructure.ProjectNode projectNode = (MavenProjectsStructure.ProjectNode)myStructure.getRootElement().getChildren()[0];
     assertEquals(myProjectPom, projectNode.getVirtualFile());
-    assertEquals(1, projectNode.getModulesNode().getProjectNodesInTests().size());
+    assertEquals(1, projectNode.getProjectNodesInTests().size());
 
     myNavigator.setShowIgnored(false);
     assertEquals(2, getRootNodes().size());
     assertEquals(1, myStructure.getRootElement().getChildren().length); // only one of them is visible
     projectNode = (MavenProjectsStructure.ProjectNode)myStructure.getRootElement().getChildren()[0];
     assertEquals(m, projectNode.getVirtualFile());
-    assertEquals(0, projectNode.getModulesNode().getProjectNodesInTests().size());
+    assertEquals(0, projectNode.getProjectNodesInTests().size());
   }
 
   @Test
@@ -315,7 +315,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     readFiles(myProjectPom, m);
 
     assertEquals(1, getRootNodes().size());
-    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodesInTests().size());
+    assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
 
     MavenProjectsNavigatorState newState = new MavenProjectsNavigatorState();
     newState.groupStructurally = false;

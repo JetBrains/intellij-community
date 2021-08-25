@@ -525,7 +525,8 @@ public final class EventLog {
           }
 
           EventLogConsole console = Objects.requireNonNull(getConsole(notification));
-          ModalityUiUtil.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(),
+                                             () -> console.doPrintNotification(notification));
         }
       });
     }
@@ -545,7 +546,8 @@ public final class EventLog {
       else {
         StartupManager.getInstance(myProject).runAfterOpened(() -> {
           if (!ShutDownTracker.isShutdownHookRunning()) {
-            ModalityUiUtil.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
+            ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(),
+                                               () -> console.doPrintNotification(notification));
           }
         });
       }

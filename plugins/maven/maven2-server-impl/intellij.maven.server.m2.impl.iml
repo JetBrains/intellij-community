@@ -76,5 +76,14 @@
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/lucene-core-2.4.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

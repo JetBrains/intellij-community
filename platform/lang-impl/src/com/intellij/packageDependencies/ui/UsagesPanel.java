@@ -31,7 +31,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   ProgressIndicator myCurrentProgress;
   private JComponent myCurrentComponent;
   private UsageView myCurrentUsageView;
-  protected final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  protected final Alarm myAlarm = new Alarm();
 
   public UsagesPanel(@NotNull Project project) {
     super(new BorderLayout());

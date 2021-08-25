@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsightFixtureTestCase {
@@ -55,16 +56,16 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
         console.print("start\n", ConsoleViewContentType.NORMAL_OUTPUT);
         console.flushDeferredText();
         console.getEditor().getCaretModel().moveToOffset(0); // avoid stick-to-end
-        console.getEditor().getDocument().setInBulkUpdate(true); // avoid editor size validation
-        for (int i = 0; i < 25; i++) {
-          for (int j = 0; j < 1_000; j++) {
-            console.print(trace, ConsoleViewContentType.ERROR_OUTPUT);
+        DocumentUtil.executeInBulk(console.getEditor().getDocument(), ()-> { // avoid editor size validation
+          for (int i = 0; i < 25; i++) {
+            for (int j = 0; j < 1_000; j++) {
+              console.print(trace, ConsoleViewContentType.ERROR_OUTPUT);
+            }
+            // Write action is necessary to apply filters right in the current thread
+            // see AsyncFilterRunner#highlightHyperlinks
+            WriteAction.run(console::flushDeferredText);
           }
-          // Write action is necessary to apply filters right in the current thread
-          // see AsyncFilterRunner#highlightHyperlinks
-          WriteAction.run(console::flushDeferredText);
-        }
-        console.getEditor().getDocument().setInBulkUpdate(false);
+        });
         console.waitAllRequests();
       }
       finally {

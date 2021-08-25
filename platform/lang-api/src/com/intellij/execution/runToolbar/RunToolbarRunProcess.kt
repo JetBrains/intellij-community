@@ -11,10 +11,9 @@ class RunToolbarRunProcess : RunToolbarProcess {
   override val name: String = ExecutionBundle.message("run.toolbar.run")
 
   override val actionId: String = "RunToolbarRunProcess"
-  override val moreActionGroupName: String = "RunToolbarRunMoreActionGroupName"
   override val moreActionSubGroupName: String = "RunToolbarRunMoreActionSubGroupName"
 
   override val showInBar: Boolean = true
 
-  override val pillColor: JBColor =  JBColor.namedColor("RunToolbar.Run.activeBackground", JBColor(0xBAEEBA, 0xBAEEBA))
+  override val pillColor: JBColor =  JBColor.namedColor("RunToolbar.Run.activeBackground", JBColor(0xBAEEBA, 0x375E37))
 }

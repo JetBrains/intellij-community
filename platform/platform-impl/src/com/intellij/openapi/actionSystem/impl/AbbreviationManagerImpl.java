@@ -2,10 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.AbbreviationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +12,13 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "AbbreviationManager", storages = @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS))
+@State(
+  name = "AbbreviationManager", storages =
+  {
+    @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS, deprecated = true),
+    @Storage("abbrevs.xml")
+  },
+  category = ComponentCategory.KEYMAP)
 public final class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
   private final Map<String, List<String>> myAbbreviation2ActionId = new HashMap<>();
   private final Map<String, Set<String>> myActionId2Abbreviations = new HashMap<>();

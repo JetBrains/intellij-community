@@ -131,14 +131,14 @@ public final class EnvironmentUtil {
       return false;
     }
 
-    // The method is called too early when the IDE starts up, at this point the registry values have not been loaded yet from the service.
+    // The method is called too early when the IDE starts up; at this point, the registry values have not been loaded yet from the service.
     // Using a system property is a good alternative.
     if (!Boolean.parseBoolean(System.getProperty("ij.load.shell.env", "true"))) {
       LOG.info("loading shell env is turned off");
       return false;
     }
 
-    // On macOS, login shell session is not run when a user logs in, thus "SHLVL > 0" likely means that IDE is run from a terminal.
+    // On macOS, login shell session is not run when a user logs in, so the very presence of `SHLVL` likely means that IDE started from a terminal.
     String shLvl = System.getenv(SHLVL);
     if (shLvl != null) {
       LOG.info("loading shell env is skipped: IDE has been launched from a terminal (" + SHLVL + '=' + shLvl + ')');
@@ -157,7 +157,7 @@ public final class EnvironmentUtil {
       // It shouldn't be passed to child processes as per 'Startup notification protocol'
       // (https://specifications.freedesktop.org/startup-notification-spec/startup-notification-latest.txt).
       // Ideally, JDK should clear this variable, and it actually does, but the snapshot of the environment variables,
-      // returned by System.getenv(), is captured before the removal.
+      // returned by `System#getenv`, is captured before the removal.
       Map<String, String> env = System.getenv();
       if (env.containsKey(DESKTOP_STARTUP_ID)) {
         env = new HashMap<>(env);
@@ -173,7 +173,7 @@ public final class EnvironmentUtil {
 
   /**
    * Same as {@code getEnvironmentMap().get(name)}.
-   * Returns value for the passed environment variable name, or null if no such variable found.
+   * Returns value for the passed environment variable name, or {@code null} if no such variable was found.
    *
    * @see #getEnvironmentMap()
    */
@@ -265,8 +265,7 @@ public final class EnvironmentUtil {
         try {
           Files.delete(envFile);
         }
-        catch (NoSuchFileException ignore) {
-        }
+        catch (NoSuchFileException ignore) { }
         catch (IOException e) {
           LOG.warn("Cannot delete temporary file", e);
         }
@@ -303,7 +302,7 @@ public final class EnvironmentUtil {
       throws IOException {
       return runProcessAndReadOutputAndEnvs(command, workingDir, (it) -> {
         if (scriptEnvironment != null) {
-          // we might need default environment for the process to launch correctly
+          // we might need the default environment for a process to launch correctly
           it.putAll(scriptEnvironment);
         }
       }, envFile);
@@ -377,7 +376,7 @@ public final class EnvironmentUtil {
     List<String> commands = new ArrayList<>();
     commands.add(shellScript);
     if (isLogin && !(shellScript.endsWith("/tcsh") || shellScript.endsWith("/csh"))) {
-      // *csh do not allow to use -l with any other options
+      // *csh do not allow using `-l` with any other options
       commands.add(SHELL_LOGIN_ARGUMENT);
     }
     if (isInteractive && !shellScript.endsWith("/fish")) {

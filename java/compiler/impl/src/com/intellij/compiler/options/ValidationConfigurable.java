@@ -21,10 +21,10 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -104,17 +104,18 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     if (markedValidators.size() != selectedElements.size()) {
       return true;
     }
-    Set<Validator> set = new THashSet<>(selectedElements, new TObjectHashingStrategy<>() {
+    Set<Validator> set = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(Validator object) {
-        return object.getId().hashCode();
+      public int hashCode(Validator object) {
+        return object==null?0:object.getId().hashCode();
       }
 
       @Override
       public boolean equals(Validator o1, Validator o2) {
-        return o1.getId().equals(o2.getId());
+        return (o1==null?"":o1.getId()).equals(o2==null?"":o2.getId());
       }
     });
+    set.addAll(selectedElements);
     return myConfiguration.isValidateOnBuild() != myValidateBox.isSelected() ||
         set.retainAll(markedValidators) ||
         myExcludedConfigurable.isModified();

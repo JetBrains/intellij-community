@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.StdlibType
 import java.util.*
 
 //TODO maybe split into interfaces like it made with module configurators
 @Suppress("EnumEntryName")
-enum class ModuleType(val projectTypeName: String) {
+enum class ModuleType(@Nls val projectTypeName: String) {
     jvm(KotlinNewProjectWizardBundle.message("module.type.jvm")),
     js(KotlinNewProjectWizardBundle.message("module.type.js")),
     native(KotlinNewProjectWizardBundle.message("module.type.native")),

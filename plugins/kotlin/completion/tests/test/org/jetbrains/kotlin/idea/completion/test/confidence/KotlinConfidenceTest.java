@@ -17,8 +17,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
-import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.completion.test.CompletionTestUtilKt;
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
@@ -143,7 +143,7 @@ public class KotlinConfidenceTest extends LightCompletionTestCase {
 
     @Override
     protected Sdk getProjectJDK() {
-        return JavaSdk.getInstance().createJdk("JDK", SystemUtils.getJavaHome().getAbsolutePath());
+        return JavaSdk.getInstance().createJdk("JDK", new File(SystemProperties.getJavaHome()).getAbsolutePath());
     }
 
     @Override

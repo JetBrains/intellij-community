@@ -10,7 +10,7 @@ enum UnqualifiedStaticUsage {
     }
     return switch (c) {
       case RED -> 1;
-      case BLUE -> 2;
+      case <error descr="Constant expression required">(BLUE)</error> -> 2;
     };
   }
 }

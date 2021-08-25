@@ -1,3 +1,3 @@
-Unclassified 5 System.out.println(Foo.CONST);
-Unclassified 6 Foo.s();
-Unclassified 7 Foo.Companion.f();
+Unclassified 3 System.out.println(Foo.CONST);
+Unclassified 4 Foo.s();
+Unclassified 5 Foo.Companion.f();

@@ -79,6 +79,9 @@
       <action id="Table-scrollDownChangeSelection" class="com.intellij.ui.TableActions$PageDown" use-shortcut-of="EditorPageDown"/>
       <action id="Table-scrollDownExtendSelection" class="com.intellij.ui.TableActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
+      <action id="Table-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.table.StartEditingAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      </action>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -108,6 +111,9 @@
               use-shortcut-of="EditorPageDownWithSelection"/>
       <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
       <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
+      <action id="Tree-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.tree.StartEditingAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      </action>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -323,6 +329,7 @@
     <group id="Diff.KeymapGroup" searchable="false">
       <action id="Diff.ShowDiff" class="com.intellij.diff.actions.ShowDiffAction"
               icon="AllIcons.Actions.Diff"/> <!-- CommonShortcuts.getDiff() -->
+      <action id="Diff.ShowStandaloneDiff" class="com.intellij.diff.actions.ShowStandaloneDiffAction" icon="AllIcons.Actions.Diff"/>
       <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff"/>
       <action id="CompareFileWithEditor" class="com.intellij.diff.actions.CompareFileWithEditorAction"/>
       <action id="CompareClipboardWithSelection" class="com.intellij.diff.actions.CompareClipboardWithSelectionAction"
@@ -409,8 +416,10 @@
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
+    <action id="PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction" internal="true" class="com.intellij.ide.plugins.org.PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction"/>
+    <action id="PluginManagerFiltersConfigureResetTrustDebugAction" internal="true" class="com.intellij.ide.plugins.org.PluginManagerFiltersConfigureResetTrustDebugAction"/>
+
     <action id="CloseGotItTooltip" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-    <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
@@ -453,6 +462,12 @@
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction">
           <synonym text="Restart"/>
         </action>
+        <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
+        <group id="CacheRecovery" internal="true" popup="true">
+          <action id="CallSaul" class="com.intellij.ide.actions.cache.CallSaulAction"/>
+          <separator/>
+          <group id="RecoveryActions" class="com.intellij.ide.actions.cache.CacheRecoveryActionGroup"/>
+        </group>
         <separator/>
         <group id="ExportImportGroup" popup="true">
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
@@ -733,7 +748,9 @@
           <action id="TabList" class="com.intellij.ide.actions.TabListAction"/>
           <separator/>
           <group id="CloseEditorsGroup">
-            <action id="CloseContent" class="com.intellij.ide.actions.CloseAction"/>
+            <action id="CloseContent" class="com.intellij.ide.actions.CloseAction">
+              <override-text place="EditorTabPopup"/>
+            </action>
             <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
             <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
             <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
@@ -1088,6 +1105,8 @@
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
       <action id="ResetGotItTooltips" internal="true" class="com.intellij.internal.ResetGotItTooltips"/>
+      <action id="ListPersistentStateComponents" internal="true"
+              class="com.intellij.internal.components.ListPersistentStateComponentsAction"/>
       <group id="Internal.Performance" popup="true">
         <action id="TurnOnOffCachedValueProfilerAction" internal="true"
                 class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"/>
@@ -1109,6 +1128,7 @@
         <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
         <action id="AnimationPanelTestAction" internal="true" class="com.intellij.internal.ui.AnimationPanelTestAction"/>
         <action id="RoundedIconTestAction" internal="true" class="com.intellij.internal.ui.RoundedIconTestAction"/>
+        <action id="WrapLayoutTestAction" internal="true" class="com.intellij.internal.ui.WrapLayoutTestAction"/>
         <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.internal.ui.JEditorPaneDemoAction"/>
         <separator/>
         <group id="Internal.focusAndModality" popup="true">
@@ -1161,6 +1181,8 @@
         <action id="ShowcaseUiDslAction" internal="true" class="com.intellij.ui.layout.ShowcaseUiDslAction"/>
         <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
         <action id="DefaultBundleIndex" internal="true" class="com.intellij.ide.util.gotoByName.DefaultBundleIndexAction"/>
+        <action id="JBGridLayoutTestAction" internal="true" class="com.intellij.internal.ui.JBGridLayoutTestAction"/>
+        <action id="UiDslDemoAction" internal="true" class="com.intellij.internal.ui.UiDslDemoAction"/>
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>

@@ -30,6 +30,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     return moduleEntity?.externalSystemOptions
   }
 
+  @Synchronized
   private fun editEntity(action: ModifiableExternalSystemModuleOptionsEntity.() -> Unit) {
     module as ModuleBridge
     val moduleDiff = getModuleDiff()
@@ -49,6 +50,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     }
   }
 
+  @Synchronized
   private fun updateSource() {
     val storage = (module as ModuleBridge).entityStorage.current
     val moduleEntity = storage.findModuleEntity(module) ?: return

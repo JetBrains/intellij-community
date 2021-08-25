@@ -2,7 +2,7 @@ package b
 
 import a.Outer
 
-public class X(bar: String? = Outer.A.bar): Outer.A() {
+public class X(bar: String? = Outer.A.bar) : Outer.A() {
     var next: Outer.A? = Outer.A()
     val myBar: String? = Outer.A.bar
 
@@ -16,7 +16,7 @@ public class X(bar: String? = Outer.A.bar): Outer.A() {
         aa.bar = ""
     }
 
-    fun getNext(): Outer.A? {
+    fun getNext2(): Outer.A? {
         return next
     }
 
@@ -24,12 +24,12 @@ public class X(bar: String? = Outer.A.bar): Outer.A() {
         super<Outer.A>.foo()
     }
 
-    companion object: Outer.A() {
+    companion object : Outer.A() {
 
     }
 }
 
-object O: Outer.A() {
+object O : Outer.A() {
 
 }
 

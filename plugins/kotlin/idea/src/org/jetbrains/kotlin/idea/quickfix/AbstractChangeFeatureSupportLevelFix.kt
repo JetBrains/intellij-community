@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -27,6 +28,7 @@ abstract class AbstractChangeFeatureSupportLevelFix(
     override fun getText(): String = getFixText(featureSupport, featureShortName)
 
     companion object {
+        @Nls
         fun getFixText(state: LanguageFeature.State, featureShortName: String): String {
             return when (state) {
                 LanguageFeature.State.ENABLED -> {

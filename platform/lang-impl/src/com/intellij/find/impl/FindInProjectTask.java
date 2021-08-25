@@ -264,7 +264,7 @@ final class FindInProjectTask {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
     final GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, myProject);
 
-    final Set<VirtualFile> result = new CompactVirtualFileSet();
+    final Set<VirtualFile> result = VfsUtilCore.createCompactVirtualFileSet();
 
     class EnumContentIterator implements ContentIterator {
 
@@ -363,7 +363,7 @@ final class FindInProjectTask {
 
   @NotNull
   private Set<VirtualFile> getFilesForFastWordSearch() {
-    final Set<VirtualFile> resultFiles = new CompactVirtualFileSet();
+    final Set<VirtualFile> resultFiles = VfsUtilCore.createCompactVirtualFileSet();
     for(VirtualFile file:myFilesToScanInitially) {
       if (myFileMask.value(file)) {
         resultFiles.add(file);

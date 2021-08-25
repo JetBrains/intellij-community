@@ -82,13 +82,7 @@ private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != nul
 class KotlinUastElementFactory(project: Project) : UastElementFactory {
     private val psiFactory = KtPsiFactory(project)
 
-    @Deprecated("use version with context parameter")
-    override fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression? {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createQualifiedReference(qualifiedName, context?.sourcePsi)
-    }
-
-    /*override*/ fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
+    override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
         return psiFactory.createExpression(qualifiedName).let {
             when (it) {
                 is KtDotQualifiedExpression -> KotlinUQualifiedReferenceExpression(it, null)
@@ -142,16 +136,34 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
     }
 
+    override fun createCallableReferenceExpression(
+        receiver: UExpression?,
+        methodName: String,
+        context: PsiElement?
+    ): UCallableReferenceExpression? {
+        val text = receiver?.sourcePsi?.text ?: ""
+        val callableExpression = psiFactory.createCallableReferenceExpression("$text::$methodName") ?: return null
+        return KotlinUCallableReferenceExpression(callableExpression, null)
+    }
+
     override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
         return KotlinStringULiteralExpression(psiFactory.createExpression(StringUtil.wrapWithDoubleQuote(text)), null)
     }
 
+    override fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression? {
+        return when (val literalExpr = psiFactory.createExpression(long.toString() + "L")) {
+            is KtConstantExpression -> KotlinULiteralExpression(literalExpr, null)
+            is KtPrefixExpression -> KotlinUPrefixExpression(literalExpr, null)
+            else -> null
+        }
+    }
+
     override fun createNullLiteral(context: PsiElement?): ULiteralExpression {
-        return psiFactory.createExpression("null").toUElementOfType<ULiteralExpression>()!!
+        return psiFactory.createExpression("null").toUElementOfType()!!
     }
 
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
-        return psiFactory.createExpression(value.toString()).toUElementOfType<ULiteralExpression>()!!
+        return psiFactory.createExpression(value.toString()).toUElementOfType()!!
     }
 
     private fun KtExpression.ensureBlockExpressionBraces(): KtExpression {

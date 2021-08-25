@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.dnd.DnDEvent;
@@ -23,7 +24,6 @@ import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
@@ -104,7 +104,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
           @Override
           protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
             JBList<AnAction> projectsList = super.createList(recentProjectActions, size);
-            projectsList.setEmptyText(UIBundle.message("message.nothingToShow"));
+            projectsList.setEmptyText(IdeCoreBundle.message("message.nothingToShow"));
             SpeedSearch speedSearch = new SpeedSearch();
 
             NameFilteringListModel<AnAction> model = new NameFilteringListModel<>(

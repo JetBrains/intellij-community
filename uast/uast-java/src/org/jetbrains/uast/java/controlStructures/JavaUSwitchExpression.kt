@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
@@ -113,7 +113,10 @@ class JavaUSwitchEntry(
         listOf(JavaUDefaultCaseExpression(it, this))
       }
       else {
-        it.caseValues?.expressions.orEmpty().map { JavaConverter.convertOrEmpty(it, this) }
+        it.caseLabelElementList?.elements.orEmpty().map { element ->
+          if (element is PsiExpression) JavaConverter.convertOrEmpty(element, this)
+          else UnknownJavaExpression(element, this)
+        }
       }
     }
   }

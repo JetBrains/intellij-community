@@ -75,6 +75,32 @@ public final class JavaPsiPatternUtil {
     return pattern;
   }
 
+  public static PsiElement skipParenthesizedPatternUp(PsiElement parent) {
+    while (parent instanceof PsiParenthesizedPattern) {
+      parent = parent.getParent();
+    }
+    return parent;
+  }
+
+  /**
+   * @param pattern
+   * @return extracted pattern variable or null if the pattern is incomplete or unknown
+   */
+  @Contract(value = "null -> null", pure = true)
+  @Nullable
+  public static PsiPatternVariable getPatternVariable(@Nullable PsiPattern pattern) {
+    if (pattern instanceof PsiGuardedPattern) {
+      return getPatternVariable(((PsiGuardedPattern)pattern).getPrimaryPattern());
+    }
+    if (pattern instanceof PsiParenthesizedPattern) {
+      return getPatternVariable(((PsiParenthesizedPattern)pattern).getPattern());
+    }
+    if (pattern instanceof PsiTypeTestPattern) {
+      return ((PsiTypeTestPattern)pattern).getPatternVariable();
+    }
+    return null;
+  }
+
   /**
    * @param pattern
    * @return type of variable in pattern, or null if pattern is incomplete
@@ -161,6 +187,24 @@ public final class JavaPsiPatternUtil {
       return overWhomType != null && isTotalForType(who, overWhomType);
     }
     return false;
+  }
+
+  /**
+   * 14.11.1 Switch Blocks
+   */
+  @Contract(value = "_,null -> false", pure = true)
+  public static boolean dominates(@NotNull PsiPattern who, @Nullable PsiType overWhom) {
+    if (overWhom == null) return false;
+    PsiType whoType = TypeConversionUtil.erasure(getPatternType(who));
+    if (whoType == null) return false;
+    PsiType overWhomType = null;
+    if (overWhom instanceof PsiPrimitiveType) {
+      overWhomType = ((PsiPrimitiveType)overWhom).getBoxedType(who);
+    }
+    else if (overWhom instanceof PsiClassType) {
+      overWhomType = overWhom;
+    }
+    return overWhomType != null && TypeConversionUtil.areTypesConvertible(overWhomType, whoType);
   }
 
   private static void collectPatternVariableCandidates(@NotNull PsiExpression scope, @NotNull PsiExpression expression,

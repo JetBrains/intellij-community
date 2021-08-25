@@ -163,6 +163,15 @@ fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverterContext)
     return usages
 }
 
+internal fun JKTreeElement.forEachDescendant(action: (JKElement) -> Unit) {
+    action(this)
+    this.forEachChild { it.forEachDescendant(action) }
+}
+
+internal inline fun <reified E: JKElement> JKTreeElement.forEachDescendantOfType(crossinline action: (E) -> Unit) {
+    forEachDescendant { if (it is E) action(it) }
+}
+
 fun JKExpression.unboxFieldReference(): JKFieldAccessExpression? = when {
     this is JKFieldAccessExpression -> this
     this is JKQualifiedExpression && receiver is JKThisExpression -> selector as? JKFieldAccessExpression
@@ -225,6 +234,13 @@ fun runExpression(body: JKStatement, symbolProvider: JKSymbolProvider): JKExpres
         listOf(lambda).toArgumentList()
     )
 }
+
+fun assignmentStatement(target: JKVariable, expression: JKExpression, symbolProvider: JKSymbolProvider): JKKtAssignmentStatement =
+    JKKtAssignmentStatement(
+        field = JKFieldAccessExpression(symbolProvider.provideUniverseSymbol(target)),
+        expression = expression,
+        token = JKOperatorToken.EQ,
+    )
 
 fun JKTreeElement.asQualifierWithThisAsSelector(): JKQualifiedExpression? =
     parent?.safeAs<JKQualifiedExpression>()

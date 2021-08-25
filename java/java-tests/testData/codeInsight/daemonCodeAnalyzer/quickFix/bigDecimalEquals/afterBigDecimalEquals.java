@@ -15,9 +15,13 @@ class BigDecimalEquals {
     if(!(foo.compareTo(bar) == 0)) {
       System.out.println("not equals");
     }
-    if(qux == null ? bar == null : qux.compareTo(bar) == 0) {
+    if(qux != null && qux.compareTo(bar) == 0) {
       System.out.println("equals");
     }
+  }
+
+  boolean x(BigDecimal upper, BigDecimal lower) {
+    return upper == null ? lower == null : upper.compareTo(lower) == 0;
   }
 
   boolean test(int x, BigDecimal d1, BigDecimal d2) {

@@ -116,7 +116,6 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
         connection = new RemoteConnectionBuilder(true, transport, transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "")
           .asyncAgent(true)
           .project(environment.getProject())
-          .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
           .create(parameters);
         isPollConnection = true;
       }
@@ -234,7 +233,6 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
       .asyncAgent(beforeExecution)
       .project(project)
-      .memoryAgent(beforeExecution && DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(javaParameters);
   }
 

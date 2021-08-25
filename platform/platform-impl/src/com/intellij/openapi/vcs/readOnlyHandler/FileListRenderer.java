@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
-import com.intellij.ide.presentation.VirtualFilePresentation;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -16,7 +16,7 @@ public class FileListRenderer extends ColoredListCellRenderer<VirtualFile> {
     // paint selection only as a focus rectangle
     mySelected = false;
     setBackground(null);
-    setIcon(VirtualFilePresentation.getIcon(vf));
+    setIcon(FileTypeRegistry.getInstance().getFileTypeByFileName(vf.getNameSequence()).getIcon());
     append(vf.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     VirtualFile parent = vf.getParent();
     if (parent != null) {

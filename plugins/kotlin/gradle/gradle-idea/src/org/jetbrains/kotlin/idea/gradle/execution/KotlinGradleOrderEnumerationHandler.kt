@@ -14,7 +14,7 @@ import com.intellij.util.PathUtilRt
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.caches.project.isMPPModule
 import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
-import org.jetbrains.kotlin.idea.configuration.KotlinOutputPathsData
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinOutputPathsData
 import org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData

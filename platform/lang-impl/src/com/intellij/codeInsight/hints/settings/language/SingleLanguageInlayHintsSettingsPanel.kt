@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -13,11 +13,14 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
@@ -30,10 +33,12 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.layout.*
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.GridLayout
 import java.awt.datatransfer.StringSelection
+import java.util.concurrent.Callable
 import javax.swing.*
 import javax.swing.border.LineBorder
 
@@ -269,14 +274,20 @@ class SingleLanguageInlayHintsSettingsPanel(
 
   private fun updateHints() {
     if (myBottomPanel.isVisible) {
-      val document = myEditorTextField.document
-      ApplicationManager.getApplication().runWriteAction {
-        PsiDocumentManager.getInstance(myProject).commitDocument(document)
-        val psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document)
-        val editor = myEditorTextField.editor
-        if (editor != null && psiFile != null) {
-          myCurrentProvider.collectAndApply(editor, psiFile)
-        }
+      myEditorTextField.editor?.let { editor ->
+        val model = myCurrentProvider
+        val document = myEditorTextField.document
+        val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
+        ReadAction.nonBlocking(Callable {
+          model.createFile(myProject, fileType, document)
+        })
+          .inSmartMode(myProject)
+          .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
+            ApplicationManager.getApplication().runWriteAction {
+              myCurrentProvider.collectAndApply(editor, psiFile)
+            }
+          }
+          .submit(AppExecutorUtil.getAppExecutorService())
       }
     }
   }

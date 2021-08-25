@@ -54,7 +54,7 @@ public class FakeRerunAction extends AnAction  {
 
   @Nullable
   protected ExecutionEnvironment getEnvironment(@NotNull AnActionEvent event) {
-    ExecutionEnvironment environment = event.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+    ExecutionEnvironment environment = event.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (environment == null) {
       Project project = event.getProject();
       RunContentManager runContentManager = project == null ? null : RunContentManager.getInstanceIfCreated(project);
@@ -62,7 +62,7 @@ public class FakeRerunAction extends AnAction  {
       if (contentDescriptor != null) {
         JComponent component = contentDescriptor.getComponent();
         if (component != null) {
-          environment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
+          environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
         }
       }
     }

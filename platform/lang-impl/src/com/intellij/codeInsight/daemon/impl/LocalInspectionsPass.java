@@ -14,6 +14,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.JobLauncherImpl;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -22,6 +24,8 @@ import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -32,6 +36,7 @@ import com.intellij.openapi.editor.markup.UnmodifiableTextAttributes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -47,14 +52,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -79,8 +82,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                               int endOffset,
                               @NotNull TextRange priorityRange,
                               boolean ignoreSuppressed,
-                              @NotNull HighlightInfoProcessor highlightInfoProcessor, boolean inspectInjectedPsi) {
-    super(file.getProject(), document, getPresentableNameText(), file, null, new TextRange(startOffset, endOffset), true, highlightInfoProcessor);
+                              @NotNull HighlightInfoProcessor highlightInfoProcessor,
+                              boolean inspectInjectedPsi) {
+    super(file.getProject(), document, DaemonBundle.message("pass.inspection"), file, null, new TextRange(startOffset, endOffset), true, highlightInfoProcessor);
     assert file.isPhysical() : "can't inspect non-physical file: " + file + "; " + file.getVirtualFile();
     myPriorityRange = priorityRange;
     myIgnoreSuppressed = ignoreSuppressed;
@@ -200,16 +204,30 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_INSPECT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
     List<PsiElement> inside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
+    TextRange finalPriorityRange = allDivided.isEmpty() ? myPriorityRange : allDivided.get(0).priorityRange; // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
+    for (int i = 1; i < allDivided.size(); i++) {
+      Divider.DividedElements dividedElements = allDivided.get(i);
+      finalPriorityRange = finalPriorityRange.union(dividedElements.priorityRange);
+    }
     List<PsiElement> outside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.outside, d.parents)));
 
+    // advance by 1 when a tool finished scanning the visible part, then the rest part, hence *2
     setProgressLimit(toolWrappers.size() * 2L);
     LocalInspectionToolSession session = new LocalInspectionToolSession(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset());
 
-    List<InspectionContext> init = visitPriorityElementsAndInit(
-      InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside)),
-      iManager, isOnTheFly, progress, inside, session);
+    List<LocalInspectionToolWrapper> filteredWrappers =
+      InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside));
+    InspectionContext TOMB_STONE = InspectionContext.createTombStone(this);
+    long start = System.nanoTime();
+    List<InspectionContext> init = visitPriorityElementsAndInit(filteredWrappers, iManager, isOnTheFly, progress, inside, finalPriorityRange, session, TOMB_STONE);
     Set<PsiFile> alreadyVisitedInjected = inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
-    visitRestElementsAndCleanup(progress, outside, session, init, isOnTheFly);
+    visitRestElementsAndCleanup(progress, outside, finalPriorityRange, session, init, TOMB_STONE);
+    boolean isWholeFileInspectionsPass = !toolWrappers.isEmpty() && toolWrappers.get(0).getTool().runForWholeFile();
+    if (isOnTheFly && !isWholeFileInspectionsPass) {
+      // do not save stats for batch process, there could be too many files
+      InspectionProfilerDataHolder.getInstance(myProject).saveStats(getFile(), init, System.nanoTime() - start);
+    }
+    reportStatsToQodana(isOnTheFly, init);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
     ProgressManager.checkCanceled();
 
@@ -218,6 +236,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     if (isOnTheFly) {
       highlightRedundantSuppressions(toolWrappers, iManager, inside, outside);
+    }
+  }
+
+  private void reportStatsToQodana(boolean isOnTheFly, @NotNull List<? extends InspectionContext> contexts) {
+    if (!isOnTheFly) {
+      for (InspectionContext context : contexts) {
+        InspectionProblemsHolder holder = context.holder;
+        long durationMs = TimeUnit.NANOSECONDS.toMillis(holder.finishTimeStamp - holder.initTimeStamp);
+        int problemCount = context.holder.getResultCount();
+        myInspectTopicPublisher.inspectionFinished(durationMs, 0, problemCount, context.tool, InspectListener.InspectionKind.LOCAL, myProject);
+      }
     }
   }
 
@@ -259,7 +288,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           ProgressManager.checkCanceled();
           PsiElement element = descriptor.getPsiElement();
           if (element != null) {
-            Document thisDocument = documentManager.getDocument(getFile());
+            Document thisDocument = Objects.requireNonNull(documentManager.getDocument(getFile()));
             createHighlightsForDescriptor(myInfos, emptyActionRegistered, ilManager, getFile(), thisDocument,
                                           new LocalInspectionToolWrapper(localTool), severity, descriptor, element, false);
           }
@@ -272,101 +301,179 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                         @NotNull InspectionManager iManager,
                                                                         boolean isOnTheFly,
                                                                         @NotNull ProgressIndicator indicator,
-                                                                        @NotNull List<? extends PsiElement> elements,
-                                                                        @NotNull LocalInspectionToolSession session) {
-    List<InspectionContext> init = new ArrayList<>();
-
+                                                                        @NotNull List<? extends PsiElement> inside,
+                                                                        @NotNull TextRange finalPriorityRange,
+                                                                        @NotNull LocalInspectionToolSession session,
+                                                                        @NotNull InspectionContext TOMB_STONE) {
     PsiFile file = session.getFile();
-    Processor<LocalInspectionToolWrapper> processor = toolWrapper ->
-      AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
-        if (elements.isEmpty() || isOnTheFly) {
-          runToolOnElements(toolWrapper, iManager, isOnTheFly, indicator, elements, session, init);
-        }
-        else {
-          InspectionEventsKt.reportWhenInspectionFinished(
-            myInspectTopicPublisher,
-            toolWrapper,
-            InspectListener.InspectionKind.LOCAL_PRIORITY,
-            () -> runToolOnElements(toolWrapper, iManager, false, indicator, elements, session, init));
-        }
+    List<InspectionContext> init = ContainerUtil.mapNotNull(wrappers, wrapper -> createContext(wrapper, iManager, isOnTheFly, indicator, session));
 
-        return true;
-      }));
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(wrappers, indicator, processor)) {
-      throw new ProcessCanceledException();
+    if (InspectionProfilerDataHolder.isInspectionSortByLatencyEnabled()) {
+      //sort init according to the priorities saved earlier to run in order
+      InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myProject);
+      profileData.sort(getFile(), init);
+      profileData.retrieveFavoriteElements(getFile(), init);
+
+      processInOrder(init, inside, true, finalPriorityRange, file, TOMB_STONE, indicator, context -> {
+        InspectionProblemsHolder holder = context.holder;
+        if (holder.hasResults()) {
+          appendDescriptors(getFile(), holder.getResults(), context.tool);
+        }
+        holder.applyIncrementally = false; // do not apply incrementally outside visible range
+      });
+    }
+    else {
+      Processor<InspectionContext> processor = context ->
+        AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
+          oldRunToolOnElements(context.tool, inside, context);
+          return true;
+        }));
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(init, indicator, processor)) {
+        throw new ProcessCanceledException();
+      }
     }
     return init;
   }
 
-  private void runToolOnElements(@NotNull LocalInspectionToolWrapper toolWrapper,
-                                 @NotNull InspectionManager iManager,
-                                 boolean isOnTheFly,
-                                 @NotNull ProgressIndicator indicator,
-                                 @NotNull List<? extends PsiElement> elements,
-                                 @NotNull LocalInspectionToolSession session,
-                                 @NotNull List<? super InspectionContext> init) {
+  private void oldRunToolOnElements(@NotNull LocalInspectionToolWrapper toolWrapper,
+                                    @NotNull List<? extends PsiElement> elements,
+                                    @NotNull InspectionContext context) {
     ProgressManager.checkCanceled();
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LocalInspectionTool tool = toolWrapper.getTool();
-    boolean[] applyIncrementally = {isOnTheFly};
-    ProblemsHolder holder = new ProblemsHolder(iManager, getFile(), isOnTheFly) {
-        @Override
-        public void registerProblem(@NotNull ProblemDescriptor descriptor) {
-          super.registerProblem(descriptor);
-          if (applyIncrementally[0]) {
-            addDescriptorIncrementally(descriptor, toolWrapper, indicator);
-          }
-        }
-    };
+    InspectionProblemsHolder holder = context.holder;
 
-    PsiElementVisitor visitor = InspectionEngine.createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
-    // if inspection returned empty visitor then it should be skipped
-    if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
-      synchronized (init) {
-        init.add(new InspectionContext(toolWrapper, holder, holder.getResultCount(), visitor));
-      }
-    }
+    InspectionEngine.acceptElements(elements, context.visitor);
     advanceProgress(1);
 
     if (holder.hasResults()) {
       appendDescriptors(getFile(), holder.getResults(), toolWrapper);
     }
-    applyIncrementally[0] = false; // do not apply incrementally outside visible range
+    holder.applyIncrementally = false; // do not apply incrementally outside visible range
+  }
+
+  /**
+   * for each tool in {@code init} (in this order) call its {@link InspectionContext#visitor} on every PsiElement in {@code inside} list (starting from this inspection's {@link InspectionContext#myFavoriteElement} if any),
+   * maintaining parallelism during this process (i.e., several visitors from {@code init} can be executed concurrently, but elements from the list head get higher priority than the list tail).
+   */
+  private void processInOrder(@NotNull List<? extends InspectionContext> init,
+                              @NotNull List<? extends PsiElement> elements,
+                              boolean inside,
+                              @NotNull TextRange finalPriorityRange,
+                              @NotNull PsiFile file,
+                              @NotNull InspectionContext TOMB_STONE,
+                              @NotNull ProgressIndicator indicator,
+                              @NotNull Consumer<? super InspectionContext> afterProcessCallback) {
+    BlockingQueue<InspectionContext> contexts = new ArrayBlockingQueue<>(init.size() + 1, false, init);
+    boolean added = contexts.offer(TOMB_STONE);
+    assert added;
+
+    boolean processed =
+      ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(contexts, new LinkedBlockingQueue<>(), new SensitiveProgressWrapper(indicator), TOMB_STONE, context ->
+        AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
+          ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+          application.executeByImpatientReader(() -> {
+            if (!application.tryRunReadAction(() -> {
+              InspectionProblemsHolder holder = context.holder;
+              int resultCount = holder.getResultCount();
+              PsiElement favoriteElement = context.myFavoriteElement;
+
+              // accept favoriteElement only if it belongs to the correct inside/outside list
+              if (favoriteElement != null && inside == favoriteElement.getTextRange().intersects(finalPriorityRange)) {
+                context.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
+                // run first for the element we know resulted in the diagnostics during previous run
+                favoriteElement.accept(context.visitor);
+                if (holder.getResultCount() != resultCount && resultCount != -1) {
+                  context.myFavoriteElement = favoriteElement;
+                  resultCount = -1; // mark as "new favorite element is stored"
+                }
+              }
+
+              //noinspection ForLoopReplaceableByForEach
+              for (int i = 0; i < elements.size(); i++) {
+                PsiElement element = elements.get(i);
+                ProgressManager.checkCanceled();
+                if (element == favoriteElement) continue; // already visited
+                element.accept(context.visitor);
+                if (holder.getResultCount() != resultCount && resultCount != -1) {
+                  context.myFavoriteElement = element;
+                  resultCount = -1; // mark as "new favorite element is stored"
+                }
+              }
+            })) {
+              throw new ProcessCanceledException();
+            }
+          });
+          advanceProgress(1);
+          afterProcessCallback.accept(context);
+          return true;
+        }))
+      );
+    if (!processed) {
+      throw new ProcessCanceledException();
+    }
+  }
+
+  private InspectionContext createContext(@NotNull LocalInspectionToolWrapper toolWrapper,
+                                          @NotNull InspectionManager iManager,
+                                          boolean isOnTheFly,
+                                          @NotNull ProgressIndicator indicator,
+                                          @NotNull LocalInspectionToolSession session) {
+    LocalInspectionTool tool = toolWrapper.getTool();
+    InspectionProblemsHolder holder = new InspectionProblemsHolder(toolWrapper, getFile(), iManager, isOnTheFly, indicator);
+
+    PsiElementVisitor visitor = InspectionEngine.createVisitor(tool, holder, isOnTheFly, session);
+    // if inspection returned empty visitor then it should be skipped
+    if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
+      tool.inspectionStarted(session, isOnTheFly);
+      return new InspectionContext(toolWrapper, holder, visitor);
+    }
+    return null;
   }
 
   private void visitRestElementsAndCleanup(@NotNull ProgressIndicator indicator,
-                                           @NotNull List<? extends PsiElement> elements,
+                                           @NotNull List<? extends PsiElement> outside,
+                                           @NotNull TextRange finalPriorityRange,
                                            @NotNull LocalInspectionToolSession session,
                                            @NotNull List<? extends InspectionContext> init,
-                                           boolean isOnTheFly) {
+                                           @NotNull InspectionContext TOMB_STONE) {
+    for (InspectionContext context : init) {
+      context.problemsSizeAfterInsideElementsProcessed = context.holder.getResultCount();
+    }
+    if (InspectionProfilerDataHolder.isInspectionSortByLatencyEnabled()) {
+      processInOrder(init, outside, false, finalPriorityRange, getFile(), TOMB_STONE, indicator, context -> {
+        InspectionProblemsHolder holder = context.holder;
+        holder.finishTimeStamp = System.nanoTime();
+        context.tool.getTool().inspectionFinished(session, holder);
 
-    Processor<InspectionContext> processor =
-      context -> {
-        ProgressManager.checkCanceled();
-        ApplicationManager.getApplication().assertReadAccessAllowed();
-        if (isOnTheFly) {
-          AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
-        }
-        else {
-          InspectionEventsKt.reportWhenInspectionFinished(
-            myInspectTopicPublisher,
-            context.tool,
-            InspectListener.InspectionKind.LOCAL,
-            () -> AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor)));
-        }
-        advanceProgress(1);
-        context.tool.getTool().inspectionFinished(session, context.holder);
-
-        if (context.holder.hasResults()) {
-          List<ProblemDescriptor> allProblems = context.holder.getResults();
-          List<ProblemDescriptor> restProblems = allProblems.subList(context.problemsSize, allProblems.size());
+        if (holder.hasResults()) {
+          List<ProblemDescriptor> allProblems = holder.getResults();
+          List<ProblemDescriptor> restProblems = allProblems.subList(context.problemsSizeAfterInsideElementsProcessed, allProblems.size());
           appendDescriptors(getFile(), restProblems, context.tool);
         }
-        return true;
-      };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(init, indicator, processor)) {
-      throw new ProcessCanceledException();
+      });
+    }
+    else {
+      Processor<InspectionContext> processor =
+        context -> {
+          ProgressManager.checkCanceled();
+          ApplicationManager.getApplication().assertReadAccessAllowed();
+          AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(outside, context.visitor));
+          advanceProgress(1);
+          InspectionProblemsHolder holder = context.holder;
+          holder.finishTimeStamp = System.nanoTime();
+          context.tool.getTool().inspectionFinished(session, holder);
+
+          if (holder.hasResults()) {
+            List<ProblemDescriptor> allProblems = holder.getResults();
+            List<ProblemDescriptor> restProblems = allProblems.subList(context.problemsSizeAfterInsideElementsProcessed, allProblems.size());
+            appendDescriptors(getFile(), restProblems, context.tool);
+          }
+          return true;
+        };
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(init, indicator, processor)) {
+        throw new ProcessCanceledException();
+      }
     }
   }
 
@@ -421,14 +528,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                 ? mySeverityRegistrar.getTextAttributesBySeverity(severity)
                                 : getColorsScheme().getAttributes(attributesKey);
     HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
-                              .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
-                              .description(message)
-                              .severity(severity)
-                              .inspectionToolId(toolID);
+      .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
+      .description(message)
+      .severity(severity)
+      .inspectionToolId(toolID);
     if (toolTip != null) b.escapedToolTip(toolTip);
     if (HighlightSeverity.INFORMATION.equals(severity) && attributes == null && toolTip == null && !quickFixes.isEmpty()) {
       // Hack to avoid filtering this info out in HighlightInfoFilterImpl even though its attributes are empty.
-      // But it has quick fixes so it needs to be created.
+      // But it has quick fixes, so it needs to be created.
       attributes = NONEMPTY_TEXT_ATTRIBUTES;
     }
     if (attributes != null) b.textAttributes(attributes);
@@ -466,7 +573,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement == null) return;
       PsiFile file = psiElement.getContainingFile();
-      Document thisDocument = documentManager.getDocument(file);
+      Document thisDocument = Objects.requireNonNull(documentManager.getDocument(file));
 
       HighlightSeverity severity = myProfileWrapper.getErrorLevel(tool.getDisplayKey(), file).getSeverity();
 
@@ -487,7 +594,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (ProblemDescriptor descriptor : descriptors) {
       if (descriptor == null) {
         LOG.error("null descriptor. all descriptors(" + descriptors.size() +"): " +
-                   descriptors + "; file: " + file + " (" + file.getVirtualFile() +"); tool: " + tool);
+                  descriptors + "; file: " + file + " (" + file.getVirtualFile() +"); tool: " + tool);
       }
     }
     InspectionResult result = new InspectionResult(tool, descriptors);
@@ -584,9 +691,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
     String plainMessage = message.startsWith("<html>")
-                                ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", ""))
-                                  .replaceAll("&nbsp;", " ")
-                                : message;
+                          ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", ""))
+                            .replaceAll("&nbsp;", " ")
+                          : message;
 
     @NlsSafe String tooltip = null;
     if (descriptor.showTooltip()) {
@@ -611,9 +718,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     boolean isOutsideInjected = !myInspectInjectedPsi || file == getFile();
     if (isOutsideInjected) {
       outInfos.add(info);
-      return;
     }
-    injectToHost(outInfos, ilManager, file, documentRange, element, fixes, info, shortName);
+    else {
+      injectToHost(outInfos, ilManager, file, documentRange, element, fixes, info, shortName);
+    }
   }
 
   private void registerSuppressedElements(@NotNull PsiElement element, @NotNull String id, @Nullable String alternativeID) {
@@ -684,7 +792,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                               @NotNull Set<? super Pair<TextRange, String>> emptyActionRegistered) {
     List<IntentionAction> result = new SmartList<>();
     boolean needEmptyAction = true;
-    QuickFix[] fixes = descriptor.getFixes();
+    QuickFix<?>[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length != 0) {
       for (int k = 0; k < fixes.length; k++) {
         QuickFix<?> fix = fixes[k];
@@ -847,21 +955,27 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private static final class InspectionContext {
+  static class InspectionContext {
     private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
-                              @NotNull ProblemsHolder holder,
-                              int problemsSize, // need this to diff between found problems in visible part and the rest
+                              @NotNull InspectionProblemsHolder holder,
                               @NotNull PsiElementVisitor visitor) {
       this.tool = tool;
       this.holder = holder;
-      this.problemsSize = problemsSize;
       this.visitor = visitor;
     }
 
-    private final @NotNull LocalInspectionToolWrapper tool;
-    private final @NotNull ProblemsHolder holder;
-    private final int problemsSize;
-    private final @NotNull PsiElementVisitor visitor;
+    final @NotNull LocalInspectionToolWrapper tool;
+    final @NotNull InspectionProblemsHolder holder;
+    volatile int problemsSizeAfterInsideElementsProcessed;
+    final @NotNull PsiElementVisitor visitor;
+    volatile PsiElement myFavoriteElement; // the element during visiting which some diagnostics were generated in previous run
+
+    @NotNull
+    static InspectionContext createTombStone(@NotNull LocalInspectionsPass pass) {
+      LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new LocalInspectionEP());
+      InspectionProblemsHolder holder = pass.new InspectionProblemsHolder(tool, pass.getFile(), InspectionManager.getInstance(pass.getFile().getProject()), false, new EmptyProgressIndicator());
+      return new InspectionContext(tool, holder, new PsiElementVisitor() {});
+    }
   }
 
   public static class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {
@@ -870,7 +984,48 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private static @Nls @NotNull String getPresentableNameText() {
-    return DaemonBundle.message("pass.inspection");
+  class InspectionProblemsHolder extends ProblemsHolder {
+    private @NotNull final LocalInspectionToolWrapper myToolWrapper;
+    private @NotNull final ProgressIndicator myIndicator;
+    private volatile boolean applyIncrementally = true;
+    long errorStamp; // nano-stamp of the first error created
+    long warningStamp; // nano-stamp of the first warning created
+    long otherStamp; // nano-stamp of the first info/weak warn/etc. created
+    final long initTimeStamp = System.nanoTime();
+    volatile long finishTimeStamp;
+
+    InspectionProblemsHolder(@NotNull LocalInspectionToolWrapper toolWrapper,
+                             @NotNull PsiFile file,
+                             @NotNull InspectionManager iManager,
+                             boolean isOnTheFly,
+                             @NotNull ProgressIndicator indicator) {
+      super(iManager, file, isOnTheFly);
+      myToolWrapper = toolWrapper;
+      myIndicator = indicator;
+    }
+
+    @Override
+    public void registerProblem(@NotNull ProblemDescriptor descriptor) {
+      super.registerProblem(descriptor);
+      if (applyIncrementally) {
+        addDescriptorIncrementally(descriptor, myToolWrapper, myIndicator);
+      }
+      HighlightSeverity severity = myProfileWrapper.getErrorLevel(myToolWrapper.getDisplayKey(), getFile()).getSeverity();
+      if (severity == HighlightSeverity.ERROR) {
+        if (errorStamp == 0) {
+          errorStamp = System.nanoTime();
+        }
+      }
+      else if (severity == HighlightSeverity.WARNING) {
+        if (warningStamp == 0) {
+          warningStamp = System.nanoTime();
+        }
+      }
+      else {
+        if (otherStamp == 0) {
+          otherStamp = System.nanoTime();
+        }
+      }
+    }
   }
 }

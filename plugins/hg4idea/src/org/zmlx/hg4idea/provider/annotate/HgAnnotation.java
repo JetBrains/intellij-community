@@ -132,9 +132,9 @@ public class HgAnnotation extends FileAnnotation {
   @Override
   @Nullable
   public Date getLineDate(int lineNumber) {
-    if (lineNumber >= myLines.size() || lineNumber < 0) {
-      return null;
-    }
+    //if (lineNumber >= myLines.size() || lineNumber < 0) {
+    //  return null;
+    //}
     //lines.get(lineNumber).get(HgAnnotation.FIELD.DATE)
     // todo : parse date
     return null;
