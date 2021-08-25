@@ -132,6 +132,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
+        analyseForUast(ktSimpleNameExpression) {
+            return ktSimpleNameExpression.resolveAccessorCall()?.let { toPsiMethod(it) }
+        }
+    }
+
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return false
