@@ -239,7 +239,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (arrayStore != null) {
       DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-      addInstruction(new ArrayStoreInstruction(arrayStore, rExpr, transfer));
+      var staticVariable = ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, arrayStore), DfaVariableValue.class);
+      addInstruction(new JavaArrayStoreInstruction(arrayStore, rExpr, transfer, staticVariable));
     } else {
       addInstruction(new AssignInstruction(rExpr, JavaDfaValueFactory.getExpressionDfaValue(myFactory, lExpr)));
     }
