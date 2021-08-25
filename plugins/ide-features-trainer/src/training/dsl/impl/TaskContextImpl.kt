@@ -278,6 +278,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                          highlightBorder: Boolean,
                                          highlightInside: Boolean,
                                          usePulsation: Boolean,
+                                         clearPreviousHighlights: Boolean,
                                          selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                          finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
     triggerByUiComponentAndHighlight l@{
@@ -285,7 +286,8 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         finderFunction(it)
       }
       if (component != null) {
-        val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+        val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside,
+          usePulsation, clearPreviousHighlights)
         taskInvokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightComponent(component, options)
         }
@@ -299,9 +301,10 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                                                   highlightBorder: Boolean,
                                                                   highlightInside: Boolean,
                                                                   usePulsation: Boolean,
+                                                                  clearPreviousHighlights: Boolean,
                                                                   selector: ((candidates: Collection<T>) -> T?)?,
                                                                   rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
-    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
     triggerByUiComponentAndHighlight l@{
       val whole = LearningUiUtil.findComponentOrNull(componentClass, selector) {
         rectangle(it) != null
