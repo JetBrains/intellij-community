@@ -68,7 +68,6 @@ import static com.intellij.util.ui.UIUtil.drawImage;
 public final class TipUIUtil {
   private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
   private static final String SHORTCUT_ENTITY = "&shortcut:";
-  private static final String MISC_PATH = "misc";
 
   private TipUIUtil() {
   }
