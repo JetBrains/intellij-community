@@ -175,22 +175,21 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
                 val lambdaParameterTypes = lambdaDescriptor.valueParameters.map { it.type }
                 val lambdaReturnType = lambdaDescriptor.returnType
                 val resolvedCall = call.getResolvedCall(context)
-                val types = resolvedCall?.typeArguments.orEmpty()
-                val typeParameters = resolvedCall?.candidateDescriptor?.typeParameters.orEmpty()
-                typeParameters.associate { typeParameter ->
+                val resolvedTypeArguments = resolvedCall?.typeArguments.orEmpty()
+                val typeParameters = resolvedCall?.candidateDescriptor?.typeParameters ?: declaredTypeParameters
+                typeParameters.mapNotNull { typeParameter ->
                     val typeConstructor = typeParameter.typeConstructor
-                    val type = types.getValue(typeParameter).let {
-                        if (it.isFlexible() ) {
-                            val typeConstructorName = typeConstructor.declarationDescriptor?.name
-                            typeConstructorName?.actualType(functionParameterTypes, lambdaParameterTypes)
-                                ?: typeConstructorName?.actualType(functionReturnType, lambdaReturnType)
-                                ?: it
-                        } else {
-                            it
-                        }
+                    val resolvedTypeArgument = resolvedTypeArguments[typeParameter]
+                    val actualType = if (resolvedTypeArgument != null && !resolvedTypeArgument.isFlexible()) {
+                        resolvedTypeArgument
+                    } else {
+                        val typeConstructorName = typeConstructor.declarationDescriptor?.name
+                        typeConstructorName?.actualType(functionParameterTypes, lambdaParameterTypes)
+                            ?: typeConstructorName?.actualType(functionReturnType, lambdaReturnType)
+                            ?: return@mapNotNull null
                     }
-                    typeConstructor to type
-                }
+                    typeConstructor to actualType
+                }.toMap()
             }
         }
 
