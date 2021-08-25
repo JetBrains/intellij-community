@@ -55,12 +55,12 @@ abstract class UnresolvedDependencyIssue(
 
 @ApiStatus.Experimental
 data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
-  val dependencyName: String,
-  val failureMessage: String?,
-  val projectPath: String,
-  val isOfflineMode: Boolean,
-  val dependencyOwner: String? = null,
-  ) : UnresolvedDependencyIssue(dependencyName, dependencyOwner) {
+  private val dependencyName: String,
+  private val failureMessage: String?,
+  private val projectPath: String,
+  private val isOfflineMode: Boolean,
+  private val dependencyOwner: String? = null,
+) : UnresolvedDependencyIssue(dependencyName, dependencyOwner) {
   override val quickFixes = if (isOfflineMode) listOf<BuildIssueQuickFix>(DisableOfflineAndReimport(projectPath)) else emptyList()
   override val description: String = buildDescription(failureMessage, isOfflineMode, "Disable offline mode and reload the project")
 
