@@ -1,7 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.psi.*
@@ -11,10 +15,25 @@ import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 import org.jetbrains.uast.visitor.UastVisitor
 
+var PsiElement.destructuringDeclarationInitializer: Boolean? by UserDataProperty(Key.create("kotlin.uast.destructuringDeclarationInitializer"))
+
 class KotlinUSimpleReferenceExpression(
     override val sourcePsi: KtSimpleNameExpression,
     givenParent: UElement?
-) : KotlinAbstractUSimpleReferenceExpression(sourcePsi, givenParent) {
+) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
+
+    private val resolvedDeclaration: PsiElement? by lz {
+        baseResolveProviderService.resolveToDeclaration(sourcePsi)
+    }
+
+    override val identifier get() = sourcePsi.getReferencedName()
+
+    override fun resolve() = resolvedDeclaration
+
+    override val resolvedName: String?
+        get() = (resolvedDeclaration as? PsiNamedElement)?.name
+
+    override val referenceNameElement: UElement? by lz { sourcePsi.getIdentifier()?.toUElement() }
 
     override fun accept(visitor: UastVisitor) {
         visitor.visitSimpleNameReferenceExpression(this)
