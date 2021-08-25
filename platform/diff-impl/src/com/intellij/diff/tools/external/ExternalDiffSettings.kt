@@ -5,7 +5,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.annotations.OptionTag
 
-@State(name = "ExternalDiffSettings", storages = [Storage(DiffUtil.DIFF_CONFIG)])
+@State(name = "ExternalDiffSettings", storages = [Storage(DiffUtil.DIFF_CONFIG)], category = ComponentCategory.TOOLS)
 class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffSettings> {
   override fun getState(): ExternalDiffSettings = this
   override fun loadState(state: ExternalDiffSettings) {

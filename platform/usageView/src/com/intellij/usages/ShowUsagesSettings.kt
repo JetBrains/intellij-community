@@ -2,11 +2,12 @@
 package com.intellij.usages
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentCategory
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 
-@State(name = "ShowUsagesSettings", storages = [(Storage("usageView.xml"))])
+@State(name = "ShowUsagesSettings", storages = [(Storage("usageView.xml"))], category = ComponentCategory.UI)
 class ShowUsagesSettings : PersistentStateComponent<ShowUsageViewSettings> {
   companion object {
     @JvmStatic
