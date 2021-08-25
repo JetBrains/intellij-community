@@ -79,8 +79,7 @@ class KotlinUSimpleReferenceExpression(
             get() = emptyList()
 
         override val receiverType by lz {
-            val type = (resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver)?.type ?: return@lz null
-            type.toPsiType(this, sourcePsi, boxed = true)
+            baseResolveProviderService.getAccessorReceiverType(sourcePsi, this)
         }
 
         override val methodIdentifier: UIdentifier? by lz {
