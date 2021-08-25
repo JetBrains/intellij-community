@@ -6,8 +6,6 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findAssignment
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
@@ -32,9 +30,7 @@ class KotlinUSimpleReferenceExpression(
     private fun visitAccessorCalls(visitor: UastVisitor) {
         // Visit Kotlin get-set synthetic Java property calls as function calls
         val resolvedMethod = baseResolveProviderService.resolveAccessorCall(sourcePsi) ?: return
-        val bindingContext = sourcePsi.analyze()
         val access = sourcePsi.readWriteAccess(useResolveForReadWrite = false)
-        val resolvedCall = sourcePsi.getResolvedCall(bindingContext) ?: return
         val setterValue = if (access.isWrite) {
             findAssignment(sourcePsi)?.right ?: run {
                 visitor.afterVisitSimpleNameReferenceExpression(this)
@@ -45,11 +41,11 @@ class KotlinUSimpleReferenceExpression(
         }
 
         if (access.isRead) {
-            KotlinAccessorCallExpression(sourcePsi, this, resolvedMethod, resolvedCall, null).accept(visitor)
+            KotlinAccessorCallExpression(sourcePsi, this, resolvedMethod, null).accept(visitor)
         }
 
         if (access.isWrite && setterValue != null) {
-            KotlinAccessorCallExpression(sourcePsi, this, resolvedMethod, resolvedCall, setterValue).accept(visitor)
+            KotlinAccessorCallExpression(sourcePsi, this, resolvedMethod, setterValue).accept(visitor)
         }
     }
 
@@ -57,7 +53,6 @@ class KotlinUSimpleReferenceExpression(
         override val sourcePsi: KtSimpleNameExpression,
         givenParent: KotlinUSimpleReferenceExpression,
         private val resolvedMethod: PsiMethod,
-        private val resolvedCall: ResolvedCall<*>,
         val setterValue: KtExpression?
     ) : KotlinAbstractUExpression(givenParent), UCallExpression, DelegatedMultiResolve {
         override val methodName: String
@@ -102,11 +97,10 @@ class KotlinUSimpleReferenceExpression(
         override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
         override val typeArgumentCount: Int
-            get() = resolvedCall.typeArguments.size
+            get() = 0
 
-        override val typeArguments by lz {
-            resolvedCall.typeArguments.values.map { it.toPsiType(this, sourcePsi, true) }
-        }
+        override val typeArguments: List<PsiType>
+            get() = emptyList()
 
         override val returnType: PsiType?
             get() = resolvedMethod.returnType
