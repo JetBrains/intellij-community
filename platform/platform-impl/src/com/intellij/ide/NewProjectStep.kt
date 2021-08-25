@@ -2,78 +2,65 @@
 package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Key
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
-import javax.swing.DefaultComboBoxModel
 
-class NewProjectStep(private val context: WizardContext) : NewModuleStep(context) {
-  private val settings = NewProjectStepSettings()
+class NewProjectStep(context: WizardContext) : NewModuleStep(context) {
 
-  override fun setupUI(builder: LayoutBuilder) {
-    super.setupUI(builder)
-    with(builder) {
-      val wizards = NewProjectWizard.EP_NAME.extensionList
-        .filter { it.enabled() }
-        .map { NewProjectWizardWithSettings(it) }
-      row(UIBundle.message("label.project.wizard.new.project.language")) {
-        if (languageSettings.size > 4) {
-          comboBox(DefaultComboBoxModel(wizards), settings.wizardProperty)
-        } else {
-          buttonSelector(wizards, settings.wizardProperty) { it.language }
+  override val steps = super.steps + Step(context)
+
+  class Step(private val context: WizardContext) : NewProjectWizardStep<Settings> {
+    override val settings = Settings(context)
+
+    override fun setupUI(builder: RowBuilder) {
+      with(builder) {
+        val steps = NewProjectWizard.EP_NAME.extensionList
+          .filter { it.enabled() }
+          .map { LanguageStep(it.language, it.createStep(context)) }
+
+        row(UIBundle.message("label.project.wizard.new.project.language")) {
+          buttonSelector(steps, settings.languageProperty) { it.name }
         }
-      }.largeGapAfter()
 
-      val rows = mutableMapOf<String, List<Row>>()
-      settings.wizardProperty.afterPropagation {
-        rows.values.forEach { it.forEach { it.visible = false } }
-        rows[settings.wizard.language]?.forEach { it.visible = true }
-      }
-
-      for (wizard in wizards) {
-        rows[wizard.language] = wizard.settingsList(context).map { lc ->
-          when (lc) {
-            is LabelAndComponent -> row(lc.label) {
-              component(lc.component)
-            }
-            is JustComponent -> row {
-              lc.component(CCFlags.growX)
-            }
-          }
-            .onGlobalApply { if (lc.component is DialogPanel) lc.component.apply() }
-            .apply { visible = false }
-            .apply { largeGapAfter() }
+        val stepsControllers = HashMap<String, DialogPanel>()
+        for (step in steps) {
+          stepsControllers[step.name] = nestedPanel {
+            step.setupUI(this)
+          }.component
         }
+        settings.languageProperty.afterChange {
+          stepsControllers.values.forEach { it.isVisible = false }
+          stepsControllers[settings.language.name]?.isVisible = true
+        }
+        settings.language = steps.first()
       }
+    }
 
-      settings.wizard = wizards.first()
+    override fun setupProject(project: Project) {
+      settings.language.setupProject(project)
     }
   }
 
-  override fun setupProject(project: Project) {
-    super.setupProject(project)
-    settings.wizard.setupProject(project, context)
+  class LanguageStep<S : NewProjectWizardStepSettings<S>>(
+    val name: String,
+    step: NewProjectWizardStep<S>
+  ) : NewProjectWizardStep<S> by step {
+    override fun toString() = name
   }
 
-  init {
-    NewProjectStepSettings.KEY.set(context, settings)
-  }
-}
+  class Settings(context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context) {
+    val languageProperty = propertyGraph.graphProperty<LanguageStep<*>> { throw UninitializedPropertyAccessException() }
 
-class NewProjectStepSettings {
-  val propertyGraph: PropertyGraph = PropertyGraph()
+    var language by languageProperty
 
-  val wizardProperty = propertyGraph.graphProperty<NewProjectWizardWithSettings<*>> {
-    throw UninitializedPropertyAccessException()
-  }
-
-  var wizard by wizardProperty
-
-  companion object {
-    val KEY = Key.create<NewProjectStepSettings>(NewProjectStepSettings::class.java.name)
+    companion object {
+      val KEY = Key.create<Settings>(Settings::class.java.name)
+    }
   }
 }

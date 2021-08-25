@@ -2,24 +2,34 @@
 package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
 
-class HTMLNewProjectWizard : NewProjectWizard<HTMLSettings> {
+class HTMLNewProjectWizard : NewProjectWizard {
   override val language: String = "HTML"
-
-  override val settingsKey = HTMLSettings.KEY
-  override fun createSettings() = HTMLSettings()
 
   override fun enabled() = PlatformUtils.isCommunityEdition()
 
-  override fun settingsList(settings: HTMLSettings, context: WizardContext) = emptyList<SettingsComponent>()
-  override fun setupProject(project: Project, settings: HTMLSettings, context: WizardContext) {}
-}
+  override fun createStep(context: WizardContext) = Step(context)
 
-class HTMLSettings {
-  companion object {
-    val KEY = Key.create<HTMLSettings>(HTMLSettings::class.java.name)
+  class Step(context: WizardContext) : NewProjectWizardStep<Settings> {
+    override val settings = Settings(context)
+
+    override fun setupUI(builder: RowBuilder) {
+    }
+
+    override fun setupProject(project: Project) {
+      TODO("Not yet implemented")
+    }
+  }
+
+  class Settings(context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context) {
+    companion object {
+      val KEY = Key.create<Settings>(Settings::class.java.name)
+    }
   }
 }

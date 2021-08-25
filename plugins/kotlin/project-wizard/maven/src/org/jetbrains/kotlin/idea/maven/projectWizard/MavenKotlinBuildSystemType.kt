@@ -2,65 +2,48 @@
 package org.jetbrains.kotlin.idea.maven.projectWizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Key
 import com.intellij.ui.layout.*
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType
 
-class MavenKotlinBuildSystemType : KotlinBuildSystemType<MavenKotlinBuildSystemSettings>("Maven") {
+class MavenKotlinBuildSystemType : KotlinBuildSystemType {
+    override val name = "Maven"
 
-    override val settingsKey = MavenKotlinBuildSystemSettings.KEY
+    override fun createStep(context: WizardContext) = Step(context)
 
-    override fun createSettings() = MavenKotlinBuildSystemSettings()
+    class Step(context: WizardContext) : NewProjectWizardStep<Settings> {
+        override val settings = Settings(context)
 
-    override fun setupProject(project: Project, settings: MavenKotlinBuildSystemSettings, context: WizardContext) {
-        TODO("Not yet implemented")
-    }
-
-    override fun advancedSettings(settings: MavenKotlinBuildSystemSettings, context: WizardContext): DialogPanel =
-        panel {
-            hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
-                row {
-                    cell { label(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) }
-                    cell {
+        override fun setupUI(builder: RowBuilder) {
+            with(builder) {
+                hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
+                    row(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) {
                         textField(settings::groupId)
                     }
-                }
-
-                row {
-                    cell { label(MavenWizardBundle.message("label.project.wizard.new.project.artifact.id")) }
-                    cell {
-                        textFieldWithBrowseButton(
-                            settings::artifactId, MavenWizardBundle.message("label.project.wizard.new.project.artifact.id"), null,
-                            FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                        )
+                    row(MavenWizardBundle.message("label.project.wizard.new.project.artifact.id")) {
+                        textField(settings::artifactId)
                     }
-                }
-
-                row {
-                    cell { label(MavenWizardBundle.message("label.project.wizard.new.project.version")) }
-                    cell {
-                        textFieldWithBrowseButton(
-                            settings::version,
-                            MavenWizardBundle.message("label.project.wizard.new.project.version"), null,
-                            FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                        )
-                    }
-                }
+                }.largeGapAfter()
             }
         }
-}
 
-class MavenKotlinBuildSystemSettings {
-    var groupId: String = ""
-    var artifactId: String = ""
-    var version: String = ""
+        override fun setupProject(project: Project) {
+            TODO("Not yet implemented")
+        }
+    }
 
-    companion object {
-        val KEY = Key.create<MavenKotlinBuildSystemSettings>(MavenKotlinBuildSystemSettings::class.java.name)
+    class Settings(context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context) {
+        var groupId: String = ""
+        var artifactId: String = ""
+        var version: String = ""
+
+        companion object {
+            val KEY = Key.create<Settings>(Settings::class.java.name)
+        }
     }
 }
 

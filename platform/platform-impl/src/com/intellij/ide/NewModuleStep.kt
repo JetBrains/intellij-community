@@ -5,16 +5,27 @@ import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.io.File
+import java.nio.file.Path
 import javax.swing.JLabel
 
-abstract class NewModuleStep(private val context: WizardContext) : ModuleWizardStep() {
-  private val settings = BaseNewProjectSettings(context)
+abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
+
+  protected open val steps = listOf<NewProjectWizardStep<*>>(Step(context))
 
   final override fun getPreferredFocusedComponent() = panel.preferredFocusedComponent
 
@@ -22,51 +33,95 @@ abstract class NewModuleStep(private val context: WizardContext) : ModuleWizardS
 
   final override fun updateDataModel() {
     panel.apply()
-
-    context.projectName = settings.name
-    context.setProjectFileDirectory(settings.projectPath, false)
   }
 
   private val panel by lazy {
     panel {
-      setupUI(this)
+      steps.forEach { it.setupUI(this) }
     }.also { panel ->
       panel.withBorder(JBUI.Borders.empty(10, 10))
 
-      val labels = UIUtil.uiChildren(panel).filterIsInstance<JLabel>()
+      val projectLabels = UIUtil.uiChildren(panel)
+        .filterIsInstance<JLabel>()
+      val languageLabels = UIUtil.uiChildren(panel)
+        .flatMap { UIUtil.uiChildren(it) }
+        .filterIsInstance<JLabel>()
+      val labels = projectLabels + languageLabels
       val width = labels.maxOf { it.preferredSize.width }
-      CommandLinePanel.setMinimumWidth(labels.first(), width)
+      labels.forEach { CommandLinePanel.setMinimumWidth(it, width) }
     }
   }
 
-  open fun setupUI(builder: LayoutBuilder) = with(builder) {
-    row(UIBundle.message("label.project.wizard.new.project.name")) {
-      textField(settings.nameProperty)
-        .constraints(pushX)
-        .focused()
-      installNameGenerators(getBuilderId(), settings.nameProperty)
-    }.largeGapAfter()
-    row(UIBundle.message("label.project.wizard.new.project.location")) {
-      textFieldWithBrowseButton(settings.pathProperty, UIBundle.message("dialog.title.project.name"), context.project,
-        FileChooserDescriptorFactory.createSingleFolderDescriptor())
-    }.largeGapAfter()
-    row {
-      checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), settings.gitProperty)
-    }.largeGapAfter()
+  fun setupProject(project: Project) {
+    steps.forEach { it.setupProject(project) }
   }
 
-  open fun setupProject(project: Project) {}
+  open class Step(private val context: WizardContext) : NewProjectWizardStep<Settings> {
+    override val settings = Settings(context)
 
-  protected fun getBuilderId(): String? {
-    val projectBuilder = context.projectBuilder
-    if (projectBuilder is NewWizardModuleBuilder) {
-      return projectBuilder.builderId
+    override fun setupUI(builder: RowBuilder) {
+      with(builder) {
+        row(UIBundle.message("label.project.wizard.new.project.name")) {
+          textField(settings.nameProperty)
+            .constraints(pushX)
+            .focused()
+          installNameGenerators(getBuilderId(), settings.nameProperty)
+        }.largeGapAfter()
+        row(UIBundle.message("label.project.wizard.new.project.location")) {
+          textFieldWithBrowseButton(settings.pathProperty,
+            UIBundle.message("dialog.title.project.name"), context.project,
+            FileChooserDescriptorFactory.createSingleFolderDescriptor())
+        }.largeGapAfter()
+        row {
+          checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), settings.gitProperty)
+        }.largeGapAfter()
+
+        onGlobalApply {
+          context.projectName = settings.name
+          context.setProjectFileDirectory(settings.projectPath, false)
+        }
+      }
     }
-    return null
+
+    private fun getBuilderId(): String? {
+      val projectBuilder = context.projectBuilder
+      if (projectBuilder is NewWizardModuleBuilder) {
+        return projectBuilder.builderId
+      }
+      return null
+    }
+
+    override fun setupProject(project: Project) {
+    }
   }
 
-  init {
-    BaseNewProjectSettings.KEY.set(context, settings)
+  class Settings(context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context, PropertyGraph("New Project Wizard")) {
+    val nameProperty = propertyGraph.graphProperty { suggestName(context) }
+    val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
+    val gitProperty = propertyGraph.graphProperty { false }
+
+    var name by nameProperty
+    var path by pathProperty
+    var git by gitProperty
+
+    val projectPath: Path get() = Path.of(path, name)
+
+    private fun suggestName(context: WizardContext): String {
+      val moduleNames = findAllModules(context).map { it.name }.toSet()
+      return FileUtil.createSequentFileName(File(path), "untitled", "") {
+        !it.exists() && it.name !in moduleNames
+      }
+    }
+
+    private fun findAllModules(context: WizardContext): List<Module> {
+      val project = context.project ?: return emptyList()
+      val moduleManager = ModuleManager.getInstance(project)
+      return moduleManager.modules.toList()
+    }
+
+    companion object {
+      val KEY = Key.create<Settings>(Settings::class.java.name)
+    }
   }
 
   companion object {
