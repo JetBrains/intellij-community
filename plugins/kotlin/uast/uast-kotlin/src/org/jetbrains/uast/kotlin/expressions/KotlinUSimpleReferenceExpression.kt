@@ -3,14 +3,11 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.findAssignment
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
@@ -34,50 +31,37 @@ class KotlinUSimpleReferenceExpression(
 
     private fun visitAccessorCalls(visitor: UastVisitor) {
         // Visit Kotlin get-set synthetic Java property calls as function calls
+        val resolvedMethod = baseResolveProviderService.resolveAccessorCall(sourcePsi) ?: return
         val bindingContext = sourcePsi.analyze()
         val access = sourcePsi.readWriteAccess(useResolveForReadWrite = false)
-        val resolvedCall = sourcePsi.getResolvedCall(bindingContext)
-        val resultingDescriptor = resolvedCall?.resultingDescriptor as? SyntheticJavaPropertyDescriptor
-        if (resultingDescriptor != null) {
-            val setterValue = if (access.isWrite) {
-                findAssignment(sourcePsi, sourcePsi.parent)?.right ?: run {
-                    visitor.afterVisitSimpleNameReferenceExpression(this)
-                    return
-                }
-            } else {
-                null
+        val resolvedCall = sourcePsi.getResolvedCall(bindingContext) ?: return
+        val setterValue = if (access.isWrite) {
+            findAssignment(sourcePsi)?.right ?: run {
+                visitor.afterVisitSimpleNameReferenceExpression(this)
+                return
             }
-
-            if (access.isRead) {
-                val getDescriptor = resultingDescriptor.getMethod
-                KotlinAccessorCallExpression(sourcePsi, this, resolvedCall, getDescriptor, null).accept(visitor)
-            }
-
-            if (access.isWrite && setterValue != null) {
-                val setDescriptor = resultingDescriptor.setMethod
-                if (setDescriptor != null) {
-                    KotlinAccessorCallExpression(sourcePsi, this, resolvedCall, setDescriptor, setterValue).accept(visitor)
-                }
-            }
+        } else {
+            null
         }
-    }
 
-    private tailrec fun findAssignment(prev: PsiElement?, element: PsiElement?): KtBinaryExpression? = when (element) {
-        is KtBinaryExpression -> if (element.left == prev && element.operationToken == KtTokens.EQ) element else null
-        is KtQualifiedExpression -> findAssignment(element, element.parent)
-        is KtSimpleNameExpression -> findAssignment(element, element.parent)
-        else -> null
+        if (access.isRead) {
+            KotlinAccessorCallExpression(sourcePsi, this, resolvedMethod, resolvedCall, null).accept(visitor)
+        }
+
+        if (access.isWrite && setterValue != null) {
+            KotlinAccessorCallExpression(sourcePsi, this, resolvedMethod, resolvedCall, setterValue).accept(visitor)
+        }
     }
 
     class KotlinAccessorCallExpression(
         override val sourcePsi: KtSimpleNameExpression,
         givenParent: KotlinUSimpleReferenceExpression,
+        private val resolvedMethod: PsiMethod,
         private val resolvedCall: ResolvedCall<*>,
-        private val accessorDescriptor: DeclarationDescriptor,
         val setterValue: KtExpression?
     ) : KotlinAbstractUExpression(givenParent), UCallExpression, DelegatedMultiResolve {
         override val methodName: String
-            get() = accessorDescriptor.name.asString()
+            get() = resolvedMethod.name
 
         override val receiver: UExpression?
             get() {
@@ -125,14 +109,13 @@ class KotlinUSimpleReferenceExpression(
             resolvedCall.typeArguments.values.map { it.toPsiType(this, sourcePsi, true) }
         }
 
-        override val returnType by lz {
-            (accessorDescriptor as? CallableDescriptor)?.returnType?.toPsiType(this, sourcePsi, boxed = false)
-        }
+        override val returnType: PsiType?
+            get() = resolvedMethod.returnType
 
         override val kind: UastCallKind
             get() = UastCallKind.METHOD_CALL
 
-        override fun resolve(): PsiMethod? = resolveToPsiMethod(sourcePsi, accessorDescriptor)
+        override fun resolve(): PsiMethod = resolvedMethod
 
         override fun equals(other: Any?): Boolean {
             if (other !is KotlinAccessorCallExpression) {
