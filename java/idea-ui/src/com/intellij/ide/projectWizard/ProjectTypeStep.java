@@ -840,5 +840,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
         protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) { }
       };
     }
+
+    @Override
+    protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+      super.setComponentIcon(icon, disabledIcon);
+      if (icon == null) {
+        myTextLabel.setIconTextGap(0);
+      }
+    }
   }
 }

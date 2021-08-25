@@ -3,7 +3,6 @@ package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.project.Project
-import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
 class NewWizardEmptyModuleBuilder : NewWizardModuleBuilder<EmptySettings>() {
@@ -11,7 +10,7 @@ class NewWizardEmptyModuleBuilder : NewWizardModuleBuilder<EmptySettings>() {
 
   override fun getModuleType() = NewWizardEmptyModuleType.INSTANCE
   override fun getGroupName() = DEFAULT_GROUP
-  override fun getNodeIcon(): Icon = EmptyIcon.ICON_16
+  override fun getNodeIcon(): Icon? = null
 
   override fun setupProject(project: Project, context: WizardContext) {
     step.settings
