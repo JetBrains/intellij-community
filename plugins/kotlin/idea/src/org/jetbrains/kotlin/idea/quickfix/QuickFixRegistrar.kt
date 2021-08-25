@@ -598,6 +598,10 @@ class QuickFixRegistrar : QuickFixContributor {
         EXPERIMENTAL_OVERRIDE.registerFactory(ExperimentalFixesFactory)
         EXPERIMENTAL_OVERRIDE_ERROR.registerFactory(ExperimentalFixesFactory)
         EXPERIMENTAL_IS_NOT_ENABLED.registerFactory(MakeModuleExperimentalFix)
+        EXPERIMENTAL_ANNOTATION_ON_WRONG_TARGET.registerFactory(ExperimentalAnnotationWrongTargetFixesFactory)
+        EXPERIMENTAL_ANNOTATION_WITH_WRONG_TARGET.registerFactory(RemoveWrongOptInAnnotationTargetFactory)
+        EXPERIMENTAL_ANNOTATION_ON_OVERRIDE.registerFactory(RemoveAnnotationFix)
+        EXPERIMENTAL_ANNOTATION_ON_OVERRIDE_WARNING.registerFactory(RemoveAnnotationFix)
 
         TYPE_VARIANCE_CONFLICT.registerFactory(RemoveTypeVarianceFix, AddAnnotationFix.TypeVarianceConflictFactory)
 

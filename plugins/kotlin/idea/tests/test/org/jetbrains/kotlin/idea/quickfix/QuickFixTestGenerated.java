@@ -7838,9 +7838,39 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/experimentalUnused2.kt");
         }
 
+        @TestMetadata("forbiddenTargetsExpression.kt")
+        public void testForbiddenTargetsExpression() throws Exception {
+            runTest("testData/quickfix/experimental/forbiddenTargetsExpression.kt");
+        }
+
+        @TestMetadata("forbiddenTargetsInAnnotation.kt")
+        public void testForbiddenTargetsInAnnotation() throws Exception {
+            runTest("testData/quickfix/experimental/forbiddenTargetsInAnnotation.kt");
+        }
+
         @TestMetadata("functionInLocalClass.kt")
         public void testFunctionInLocalClass() throws Exception {
             runTest("testData/quickfix/experimental/functionInLocalClass.kt");
+        }
+
+        @TestMetadata("getterUseSiteExplicit.kt")
+        public void testGetterUseSiteExplicit() throws Exception {
+            runTest("testData/quickfix/experimental/getterUseSiteExplicit.kt");
+        }
+
+        @TestMetadata("getterUseSiteExplicitRemove.kt")
+        public void testGetterUseSiteExplicitRemove() throws Exception {
+            runTest("testData/quickfix/experimental/getterUseSiteExplicitRemove.kt");
+        }
+
+        @TestMetadata("getterUseSiteImplicit.kt")
+        public void testGetterUseSiteImplicit() throws Exception {
+            runTest("testData/quickfix/experimental/getterUseSiteImplicit.kt");
+        }
+
+        @TestMetadata("getterUseSiteImplicitRemove.kt")
+        public void testGetterUseSiteImplicitRemove() throws Exception {
+            runTest("testData/quickfix/experimental/getterUseSiteImplicitRemove.kt");
         }
 
         @TestMetadata("hasOptInAnnotation.kt")
@@ -7863,6 +7893,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/localFunction.kt");
         }
 
+        @TestMetadata("localVariableAnnotationRemove.kt")
+        public void testLocalVariableAnnotationRemove() throws Exception {
+            runTest("testData/quickfix/experimental/localVariableAnnotationRemove.kt");
+        }
+
         @TestMetadata("nestedClasses.kt")
         public void testNestedClasses() throws Exception {
             runTest("testData/quickfix/experimental/nestedClasses.kt");
@@ -7876,6 +7911,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("override.kt")
         public void testOverride() throws Exception {
             runTest("testData/quickfix/experimental/override.kt");
+        }
+
+        @TestMetadata("overrideAnnotationRemove.kt")
+        public void testOverrideAnnotationRemove() throws Exception {
+            runTest("testData/quickfix/experimental/overrideAnnotationRemove.kt");
         }
 
         @TestMetadata("propertyInConstructor.kt")
@@ -7906,6 +7946,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("typeInTopLevelProperty.kt")
         public void testTypeInTopLevelProperty() throws Exception {
             runTest("testData/quickfix/experimental/typeInTopLevelProperty.kt");
+        }
+
+        @TestMetadata("valueParameterAnnotationAddExplicitUseSite.kt")
+        public void testValueParameterAnnotationAddExplicitUseSite() throws Exception {
+            runTest("testData/quickfix/experimental/valueParameterAnnotationAddExplicitUseSite.kt");
+        }
+
+        @TestMetadata("valueParameterAnnotationRemove.kt")
+        public void testValueParameterAnnotationRemove() throws Exception {
+            runTest("testData/quickfix/experimental/valueParameterAnnotationRemove.kt");
         }
     }
 
