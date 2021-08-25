@@ -109,7 +109,7 @@ internal class MavenWrapperSupport {
     indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.unpacking") }
     val unpackDir = zip.parentFile
     val destinationCanonicalPath = unpackDir.canonicalPath
-    var errorUnpacking = false
+    var errorUnpacking = true
     try {
       ZipFile(zip).use { zipFile ->
         val entries: Enumeration<*> = zipFile.entries()
@@ -174,8 +174,7 @@ internal class MavenWrapperSupport {
 
 
   companion object {
-    val DISTRIBUTION_URL_PROPERTY = "distributionUrl";
-
+    val DISTRIBUTION_URL_PROPERTY = "distributionUrl"
     @JvmStatic
     fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
       val wrapperProperties = getWrapperProperties(baseDir) ?: return null
