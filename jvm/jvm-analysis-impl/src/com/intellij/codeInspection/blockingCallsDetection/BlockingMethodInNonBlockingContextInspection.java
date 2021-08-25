@@ -34,10 +34,12 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
 
   public static final List<String> DEFAULT_BLOCKING_ANNOTATIONS = List.of(
     "org.jetbrains.annotations.Blocking",
+    "io.micronaut.core.annotation.Blocking",
     "io.smallrye.common.annotation.Blocking"
   );
   public static final List<String> DEFAULT_NONBLOCKING_ANNOTATIONS = List.of(
     "org.jetbrains.annotations.NonBlocking",
+    "io.micronaut.core.annotation.NonBlocking",
     "io.smallrye.common.annotation.NonBlocking"
   );
 
