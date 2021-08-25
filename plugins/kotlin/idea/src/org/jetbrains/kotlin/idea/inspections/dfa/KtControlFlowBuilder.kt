@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
@@ -47,7 +46,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 /*
 com.jetbrains.cidr.lang.hmap.OCHeaderMaps#writeToChannel (to investigate)
@@ -280,7 +278,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    private fun processArrayAccess(expr: KtArrayAccessExpression) {
+    private fun processArrayAccess(expr: KtArrayAccessExpression, storedValue: KtExpression? = null) {
         val arrayExpression = expr.arrayExpression
         processExpression(arrayExpression)
         val kotlinType = arrayExpression?.getKotlinType()
@@ -288,7 +286,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val indexes = expr.indexExpressions
         for (idx in indexes) {
             processExpression(idx)
-            val anchor = if (idx == indexes.last()) KotlinExpressionAnchor(expr) else null
+            val lastIndex = idx == indexes.last()
+            val anchor = if (lastIndex) KotlinExpressionAnchor(expr) else null
             val indexType = idx.getKotlinType()
             if (indexType == null || !indexType.fqNameEquals("kotlin.Int")) {
                 addInstruction(EvalUnknownInstruction(anchor, 2))
@@ -300,9 +299,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
                 val transfer = trapTracker.maybeTransferValue("java.lang.ArrayIndexOutOfBoundsException")
-                addInstruction(ArrayAccessInstruction(transfer, anchor, KotlinArrayIndexProblem(SpecialField.ARRAY_LENGTH, idx), null))
+                if (lastIndex && storedValue != null) {
+                    processExpression(storedValue)
+                    addInstruction(ArrayStoreInstruction(anchor, KotlinArrayIndexProblem(SpecialField.ARRAY_LENGTH, idx), transfer, null))
+                } else {
+                    addInstruction(ArrayAccessInstruction(anchor, KotlinArrayIndexProblem(SpecialField.ARRAY_LENGTH, idx), transfer, null))
+                }
                 curType = expr.builtIns.getArrayElementType(curType)
             } else {
+                if (lastIndex && storedValue != null) {
+                    processExpression(storedValue)
+                    addInstruction(PopInstruction())
+                }
                 if (KotlinBuiltIns.isString(kotlinType)) {
                     if (indexType.canBeNull()) {
                         addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
@@ -917,6 +925,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processAssignmentExpression(expr: KtBinaryExpression) {
         val left = expr.left
         val right = expr.right
+        if (left is KtArrayAccessExpression) {
+            processArrayAccess(left, right)
+            return
+        }
         val dfVar = KtVariableDescriptor.createFromQualified(factory, left)
         val leftType = left?.getKotlinType()
         val rightType = right?.getKotlinType()
@@ -926,7 +938,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(right)
             addImplicitConversion(right, leftType)
             // TODO: support safe-qualified assignments
-            // TODO: support array stores
             addInstruction(FlushFieldsInstruction())
             return
         }
