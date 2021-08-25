@@ -15,13 +15,6 @@ public final class VcsLogActionPlaces {
   public static final String HISTORY_POPUP_ACTION_GROUP = "Vcs.FileHistory.ContextMenu";
   public static final String CHANGES_BROWSER_POPUP_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Popup";
 
-  // action places
-  public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
-  public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
-  public static final String VCS_HISTORY_PLACE = "Vcs.FileHistory.ContextMenu";
-  public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
-  public static final String VCS_LOG_TOOLBAR_POPUP_PLACE = "popup@Vcs.Log.Toolbar.Popup";
-
   // action ids
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
   public static final String VCS_LOG_FOCUS_TEXT_FILTER = "Vcs.Log.FocusTextFilter";

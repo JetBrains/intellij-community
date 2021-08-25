@@ -161,6 +161,13 @@ public abstract class ActionPlaces {
 
   public static final String SETTINGS_HISTORY = "SettingsHistory";
 
+  // Vcs Log
+  public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
+  public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
+  public static final String VCS_HISTORY_PLACE = "Vcs.FileHistory.ContextMenu";
+  public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
+  public static final String VCS_LOG_TOOLBAR_POPUP_PLACE = "popup@Vcs.Log.Toolbar.Popup";
+
   /* Rider */
   public static final String RIDER_UNIT_TESTS_LEFT_TOOLBAR = "UnitTests.LeftToolbar";
   public static final String RIDER_UNIT_TESTS_TOP_TOOLBAR = "UnitTests.TopToolbar";
@@ -205,7 +212,8 @@ public abstract class ActionPlaces {
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP,
-    RUN_ANYTHING_POPUP, RUN_TOOLBAR
+    RUN_ANYTHING_POPUP, RUN_TOOLBAR,
+    VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE
   );
 
   private static final String POPUP_PREFIX = "popup@";
