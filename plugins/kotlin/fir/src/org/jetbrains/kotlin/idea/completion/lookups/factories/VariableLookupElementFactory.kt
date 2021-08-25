@@ -9,11 +9,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
-import org.jetbrains.kotlin.idea.completion.lookups.addCallableImportIfRequired
-import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
 import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.components.KtTypeRendererOptions
@@ -54,10 +51,11 @@ internal class VariableLookupElementFactory {
             }
             else -> {
                 val lookupObject = VariableLookupObject(symbol.name, options, rendered)
-                LookupElementBuilder.create(lookupObject, symbol.name.asString())
-                    .withTypeText(symbol.annotatedType.type.render(KtTypeRendererOptions.SHORT_NAMES))
-                    .withTailText(getTailText(symbol), true)
-                    .markIfSyntheticJavaProperty(symbol)
+                markIfSyntheticJavaProperty(
+                    LookupElementBuilder.create(lookupObject, symbol.name.asString())
+                        .withTypeText(symbol.annotatedType.type.render(KtTypeRendererOptions.SHORT_NAMES))
+                        .withTailText(getTailText(symbol), true), symbol
+                )
                     .withInsertHandler(VariableInsertionHandler)
             }
         }
@@ -65,14 +63,17 @@ internal class VariableLookupElementFactory {
         return withSymbolInfo(symbol, builder)
     }
 
-    private fun LookupElementBuilder.markIfSyntheticJavaProperty(symbol: KtVariableLikeSymbol): LookupElementBuilder = when (symbol) {
+    private fun KtAnalysisSession.markIfSyntheticJavaProperty(
+        lookupElementBuilder: LookupElementBuilder,
+        symbol: KtVariableLikeSymbol
+    ): LookupElementBuilder = when (symbol) {
         is KtSyntheticJavaPropertySymbol -> {
             val getterName = symbol.javaGetterName.asString()
             val setterName = symbol.javaSetterName?.asString()
-            this.withTailText((" (from ${buildSyntheticPropertyTailText(getterName, setterName)})"))
+            lookupElementBuilder.withTailText((" (from ${buildSyntheticPropertyTailText(getterName, setterName)})"))
                 .withLookupStrings(listOfNotNull(getterName, setterName))
         }
-        else -> this
+        else -> lookupElementBuilder
     }
 
     private fun buildSyntheticPropertyTailText(getterName: String, setterName: String?): String =
