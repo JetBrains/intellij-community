@@ -165,7 +165,8 @@ public final class TipUIUtil {
             //Here and onwards we'll use path properties from successful tip retriever to get images and css
             updateImages(text, retriever.myLoader, "", component);
             final InputStream cssResourceStream = ResourceUtil.getResourceAsStream(retriever.myLoader, retriever.myPath, cssFile);
-            cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
+            cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : ""
+            break;
           }
         }
         //All retrievers have failed, return error.
