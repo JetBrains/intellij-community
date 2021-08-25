@@ -104,8 +104,8 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
 
   @Nullable
   public Component getTopBalloonComponent() {
-    BalloonImpl balloon = (BalloonImpl)ContainerUtil.getLastItem(myBalloons);
-    return balloon == null ? null : balloon.getComponent();
+    Balloon balloon = ContainerUtil.getLastItem(myBalloons);
+    return balloon instanceof BalloonImpl ? ((BalloonImpl)balloon).getComponent() : null;
   }
 
   @Override
