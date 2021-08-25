@@ -32,8 +32,14 @@ import java.util.List;
 
 public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUastLocalInspectionTool {
 
-  public static final List<String> DEFAULT_BLOCKING_ANNOTATIONS = List.of("org.jetbrains.annotations.Blocking");
-  public static final List<String> DEFAULT_NONBLOCKING_ANNOTATIONS = List.of("org.jetbrains.annotations.NonBlocking");
+  public static final List<String> DEFAULT_BLOCKING_ANNOTATIONS = List.of(
+    "org.jetbrains.annotations.Blocking",
+    "io.smallrye.common.annotation.Blocking"
+  );
+  public static final List<String> DEFAULT_NONBLOCKING_ANNOTATIONS = List.of(
+    "org.jetbrains.annotations.NonBlocking",
+    "io.smallrye.common.annotation.NonBlocking"
+  );
 
   public List<String> myBlockingAnnotations = new ArrayList<>(DEFAULT_BLOCKING_ANNOTATIONS);
   public List<String> myNonBlockingAnnotations = new ArrayList<>(DEFAULT_NONBLOCKING_ANNOTATIONS);
