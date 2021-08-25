@@ -52,7 +52,8 @@ def send_rich_output(data):
     if client:
         client.sendRichOutput(data)
     else:
-        print("Client is None!")
+        sys.stderr.write("Client is None!\n")
+        sys.stderr.flush()
 
 
 def patch_stdout():
