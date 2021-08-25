@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.gridLayout
 import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.JComponent
-import kotlin.math.max
 import kotlin.math.min
 
 internal class JBGridImpl : JBGrid {
@@ -60,52 +59,51 @@ internal class JBGridImpl : JBGrid {
   }
 
   fun getPreferredSize(): Dimension {
-    calculateLayoutData()
-    return layoutData.preferredSize
+    calculateLayoutData(-1, -1)
+    return Dimension(layoutData.preferredWidth, layoutData.preferredHeight)
   }
 
   /**
    * Layouts components
    */
   fun layout(rect: Rectangle) {
-    val columnsCoord = layoutData.columnsSizeCalculator.calculateCoords(rect.width, resizableColumns)
-    val rowsCoord = layoutData.rowsSizeCalculator.calculateCoords(rect.height, resizableRows)
-
     layoutData.visibleCellsData.forEach { layoutCellData ->
       val cell = layoutCellData.cell
       val constraints = cell.constraints
-      var visualX = columnsCoord[constraints.x]
-      var visualY = rowsCoord[constraints.y]
-      val nextColumn = constraints.x + constraints.width
-      val nextRow = constraints.y + constraints.height
-      val visualWidth = columnsCoord[nextColumn] - visualX - layoutCellData.gapWidth
-      val visualHeight = rowsCoord[nextRow] - visualY - layoutCellData.gapHeight
-      visualX += rect.x + constraints.gaps.left + layoutCellData.columnGaps.left
-      visualY += rect.y + constraints.gaps.top + layoutCellData.rowGaps.top
+      val paddedX = rect.x + constraints.gaps.left + layoutCellData.columnGaps.left + layoutData.columnsCoord[constraints.x]
+      val paddedY = rect.y + constraints.gaps.top + layoutCellData.rowGaps.top + layoutData.rowsCoord[constraints.y]
+      val paddedWidth = layoutData.getPaddedWidth(layoutCellData)
+      val paddedHeight = layoutData.getPaddedHeight(layoutCellData)
 
       when (cell) {
         is JBComponentCell -> {
-          layoutComponent(cell.component, layoutCellData, visualX, visualY, visualWidth, visualHeight)
+          layoutComponent(cell.component, layoutCellData, paddedX, paddedY, paddedWidth, paddedHeight)
         }
         is JBGridCell -> {
-          cell.content.layout(Rectangle(visualX, visualY, visualWidth, visualHeight))
+          cell.content.layout(Rectangle(paddedX, paddedY, paddedWidth, paddedHeight))
         }
       }
     }
   }
 
   /**
-   * Calculates all data in [layoutData], measures all components etc
+   * Calculates [layoutData]
+   *
+   * @param width if negative - calculates layout for preferred size, otherwise uses [width]
+   * @param height if negative - calculates layout for preferred size, otherwise uses [height]
    */
-  fun calculateLayoutData() {
-    layoutData.columnsSizeCalculator.reset()
-    layoutData.rowsSizeCalculator.reset()
-
-    calculateLayoutDataStep()
+  fun calculateLayoutData(width: Int, height: Int) {
+    calculateLayoutDataStep1()
+    calculateLayoutDataStep2(width)
+    calculateLayoutDataStep3()
+    calculateLayoutDataStep4(height)
   }
 
-  private fun calculateLayoutDataStep() {
-    layoutData.dimension = getDimension()
+  /**
+   * Step 1 of [layoutData] calculations
+   */
+  fun calculateLayoutDataStep1() {
+    layoutData.columnsSizeCalculator.reset()
     val visibleCellsData = mutableListOf<LayoutCellData>()
 
     for (cell in cells) {
@@ -125,14 +123,15 @@ internal class JBGridImpl : JBGrid {
           if (!grid.visible) {
             continue
           }
-          grid.calculateLayoutData()
-          preferredSize = grid.layoutData.preferredSize
+          grid.calculateLayoutDataStep1()
+          preferredSize = Dimension(grid.layoutData.preferredWidth, 0)
         }
       }
 
       val layoutCellData: LayoutCellData
       with(cell.constraints) {
-        layoutCellData = LayoutCellData(cell = cell, preferredSize = preferredSize,
+        layoutCellData = LayoutCellData(cell = cell,
+          preferredSize = preferredSize,
           columnGaps = ColumnGaps(
             left = columnsGaps.getOrNull(x)?.left ?: 0,
             right = columnsGaps.getOrNull(x + width - 1)?.right ?: 0),
@@ -143,61 +142,103 @@ internal class JBGridImpl : JBGrid {
       }
 
       visibleCellsData.add(layoutCellData)
-      layoutData.columnsSizeCalculator.addConstraint(cell.constraints.x, cell.constraints.width, layoutCellData.cellWidth)
-      layoutData.rowsSizeCalculator.addConstraint(cell.constraints.y, cell.constraints.height, layoutCellData.cellHeight)
+      layoutData.columnsSizeCalculator.addConstraint(cell.constraints.x, cell.constraints.width, layoutCellData.cellPaddedWidth)
     }
 
     layoutData.visibleCellsData = visibleCellsData
+    layoutData.preferredWidth = layoutData.columnsSizeCalculator.calculatePreferredSize()
   }
 
   /**
-   * Layouts visual bounds of [component] (size minus visualPaddings) into provided rectangle
+   * Step 2 of [layoutData] calculations
+   *
+   * @param width see [calculateLayoutData]
+   */
+  fun calculateLayoutDataStep2(width: Int) {
+    val calcWidth = if (width < 0) layoutData.preferredWidth else width
+    layoutData.columnsCoord = layoutData.columnsSizeCalculator.calculateCoords(calcWidth, resizableColumns)
+
+    for (layoutCellData in layoutData.visibleCellsData) {
+      val cell = layoutCellData.cell
+      if (cell is JBGridCell) {
+        cell.content.calculateLayoutDataStep2(layoutData.getPaddedWidth(layoutCellData))
+      }
+    }
+  }
+
+  /**
+   * Step 3 of [layoutData] calculations
+   */
+  fun calculateLayoutDataStep3() {
+    layoutData.rowsSizeCalculator.reset()
+
+    for (layoutCellData in layoutData.visibleCellsData) {
+      val cell = layoutCellData.cell
+      if (cell is JBGridCell) {
+        val grid = cell.content
+        grid.calculateLayoutDataStep3()
+        layoutCellData.preferredSize.height = grid.layoutData.preferredHeight
+      }
+      layoutData.rowsSizeCalculator.addConstraint(cell.constraints.y, cell.constraints.height, layoutCellData.cellPaddedHeight)
+    }
+    layoutData.preferredHeight = layoutData.rowsSizeCalculator.calculatePreferredSize()
+  }
+
+  /**
+   * Step 4 of [layoutData] calculations
+   *
+   * @param height see [calculateLayoutData]
+   */
+  fun calculateLayoutDataStep4(height: Int) {
+    val calcHeight = if (height < 0) layoutData.preferredHeight else height
+    layoutData.rowsCoord = layoutData.rowsSizeCalculator.calculateCoords(calcHeight, resizableRows)
+
+    for (layoutCellData in layoutData.visibleCellsData) {
+      val cell = layoutCellData.cell
+      if (cell is JBGridCell) {
+        cell.content.calculateLayoutDataStep4(layoutData.getPaddedHeight(layoutCellData))
+      }
+    }
+  }
+
+  /**
+   * Layouts [component] in such way that its padded bounds (size of component  minus visualPaddings) equal provided rect
    */
   private fun layoutComponent(component: JComponent,
                               layoutCellData: LayoutCellData,
-                              visualX: Int,
-                              visualY: Int,
-                              visualWidth: Int,
-                              visualHeight: Int) {
+                              paddedX: Int,
+                              paddedY: Int,
+                              paddedWidth: Int,
+                              paddedHeight: Int) {
     val constraints = layoutCellData.cell.constraints
     val visualPaddings = constraints.visualPaddings
-    val resultVisualWidth = if (constraints.horizontalAlign == HorizontalAlign.FILL)
-      visualWidth
+    val resultPaddedWidth = if (constraints.horizontalAlign == HorizontalAlign.FILL)
+      paddedWidth
     else
-      min(visualWidth, layoutCellData.preferredSize.width - visualPaddings.width)
-    val resultVisualHeight = if (constraints.verticalAlign == VerticalAlign.FILL)
-      visualHeight
+      min(paddedWidth, layoutCellData.preferredSize.width - visualPaddings.width)
+    val resultPaddedHeight = if (constraints.verticalAlign == VerticalAlign.FILL)
+      paddedHeight
     else
-      min(visualHeight, layoutCellData.preferredSize.height - visualPaddings.height)
-    val resultVisualX = visualX +
+      min(paddedHeight, layoutCellData.preferredSize.height - visualPaddings.height)
+    val resultPaddedX = paddedX +
                         when (constraints.horizontalAlign) {
                           HorizontalAlign.LEFT -> 0
-                          HorizontalAlign.CENTER -> (visualWidth - resultVisualWidth) / 2
-                          HorizontalAlign.RIGHT -> visualWidth - resultVisualWidth
+                          HorizontalAlign.CENTER -> (paddedWidth - resultPaddedWidth) / 2
+                          HorizontalAlign.RIGHT -> paddedWidth - resultPaddedWidth
                           HorizontalAlign.FILL -> 0
                         }
-    val resultVisualY = visualY +
+    val resultPaddedY = paddedY +
                         when (constraints.verticalAlign) {
                           VerticalAlign.TOP -> 0
-                          VerticalAlign.CENTER -> (visualHeight - resultVisualHeight) / 2
-                          VerticalAlign.BOTTOM -> visualHeight - resultVisualHeight
+                          VerticalAlign.CENTER -> (paddedHeight - resultPaddedHeight) / 2
+                          VerticalAlign.BOTTOM -> paddedHeight - resultPaddedHeight
                           VerticalAlign.FILL -> 0
                         }
 
     component.setBounds(
-      resultVisualX - visualPaddings.left, resultVisualY - visualPaddings.top,
-      resultVisualWidth + visualPaddings.width, resultVisualHeight + visualPaddings.height
+      resultPaddedX - visualPaddings.left, resultPaddedY - visualPaddings.top,
+      resultPaddedWidth + visualPaddings.width, resultPaddedHeight + visualPaddings.height
     )
-  }
-
-  private fun getDimension(): Dimension {
-    var width = 0
-    var height = 0
-    cells.forEach { cell ->
-      width = max(width, cell.constraints.x + cell.constraints.width)
-      height = max(height, cell.constraints.y + cell.constraints.height)
-    }
-    return Dimension(width, height)
   }
 
   private fun isEmpty(constraints: JBConstraints): Boolean {
@@ -221,19 +262,44 @@ internal class JBGridImpl : JBGrid {
  */
 private class JBLayoutData {
 
-  /**
-   * Maximum indexes of occupied cells including hidden components
-   */
-  var dimension = Dimension()
+  //
+  // Step 1
+  //
+
   var visibleCellsData = emptyList<LayoutCellData>()
   val columnsSizeCalculator = JBColumnsSizeCalculator()
+  var preferredWidth = 0
+
+  //
+  // Step 2
+  //
+  var columnsCoord = emptyArray<Int>()
+
+  //
+  // Step 3
+  //
   val rowsSizeCalculator = JBColumnsSizeCalculator()
+  var preferredHeight = 0
 
-  val preferredSize: Dimension
-    get() = Dimension(columnsSizeCalculator.calculatePreferredSize(), rowsSizeCalculator.calculatePreferredSize())
+  //
+  // Step 4
+  //
+  var rowsCoord = emptyArray<Int>()
 
+  fun getPaddedWidth(layoutCellData: LayoutCellData): Int {
+    val constraints = layoutCellData.cell.constraints
+    return columnsCoord[constraints.x + constraints.width] - columnsCoord[constraints.x] - layoutCellData.gapWidth
+  }
+
+  fun getPaddedHeight(layoutCellData: LayoutCellData): Int {
+    val constraints = layoutCellData.cell.constraints
+    return rowsCoord[constraints.y + constraints.height] - rowsCoord[constraints.y] - layoutCellData.gapHeight
+  }
 }
 
+/**
+ * For sub-grids height of [preferredSize] calculated on late steps of [JBGridImpl.calculateLayoutData]
+ */
 private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension,
                                   val columnGaps: ColumnGaps, val rowGaps: RowGaps) {
 
@@ -243,10 +309,16 @@ private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension
   val gapHeight: Int
     get() = cell.constraints.gaps.height + rowGaps.height
 
-  val cellWidth: Int
+  /**
+   * Cell width including gaps and excluding visualPaddings
+   */
+  val cellPaddedWidth: Int
     get() = preferredSize.width + gapWidth - cell.constraints.visualPaddings.width
 
-  val cellHeight: Int
+  /**
+   * Cell height including gaps and excluding visualPaddings
+   */
+  val cellPaddedHeight: Int
     get() = preferredSize.height + gapHeight - cell.constraints.visualPaddings.height
 }
 

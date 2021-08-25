@@ -61,8 +61,6 @@ class JBGridLayout : LayoutManager2 {
     }
 
     synchronized(parent.treeLock) {
-      _rootGrid.calculateLayoutData()
-
       val insets = parent.insets
       val rect = Rectangle(
         insets.left, insets.top,
@@ -70,6 +68,7 @@ class JBGridLayout : LayoutManager2 {
         parent.height - insets.top - insets.bottom
       )
 
+      _rootGrid.calculateLayoutData(rect.width, rect.height)
       _rootGrid.layout(rect)
     }
   }
