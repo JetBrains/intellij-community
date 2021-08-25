@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
@@ -156,6 +158,14 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
         return resolveToPsiMethod(ktElement)
+    }
+
+    override fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
+        val resolvedCall = ktSimpleNameExpression.getResolvedCall(ktSimpleNameExpression.analyze()) ?: return null
+        val resultingDescriptor = resolvedCall.resultingDescriptor as? SyntheticJavaPropertyDescriptor ?: return null
+        val access = ktSimpleNameExpression.readWriteAccess(useResolveForReadWrite = false)
+        val descriptor = (if (access.isWrite) resultingDescriptor.setMethod else resultingDescriptor.getMethod) ?: return null
+        return resolveToPsiMethod(ktSimpleNameExpression, descriptor)
     }
 
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
