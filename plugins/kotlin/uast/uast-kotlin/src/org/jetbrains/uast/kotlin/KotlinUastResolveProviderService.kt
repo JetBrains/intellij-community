@@ -242,6 +242,13 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return receiver.type.toPsiType(source, ktCallElement, boxed = true)
     }
 
+    override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
+        val resolvedCall = ktSimpleNameExpression.getResolvedCall(ktSimpleNameExpression.analyze()) ?: return null
+        if (resolvedCall.resultingDescriptor !is SyntheticJavaPropertyDescriptor) return null
+        val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
+        return receiver.type.toPsiType(source, ktSimpleNameExpression, boxed = true)
+    }
+
     override fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType? {
         val ktType =
             ktDoubleColonExpression.analyze()[BindingContext.DOUBLE_COLON_LHS, ktDoubleColonExpression.receiverExpression]?.type
