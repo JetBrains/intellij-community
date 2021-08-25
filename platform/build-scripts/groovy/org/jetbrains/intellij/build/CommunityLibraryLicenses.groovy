@@ -709,6 +709,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-markdown"),
     jetbrainsLibrary("intellij-test-discovery"),
+    jetbrainsLibrary("io.ktor.network.jvm"),
     jetbrainsLibrary("jps-build-script-dependencies-bootstrap"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("kotlin-script-runtime"),
