@@ -98,6 +98,7 @@ Includes the following features:</p>
                          key="markdown.settings.name"
                          instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
 
+    <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
@@ -307,5 +308,8 @@ Includes the following features:</p>
       <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
               class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
+
+    <action id="org.intellij.plugins.markdown.settings.MarkdownFontSettingsAction"
+            class="org.intellij.plugins.markdown.settings.MarkdownFontSettingsAction"/>
   </actions>
 </idea-plugin>
