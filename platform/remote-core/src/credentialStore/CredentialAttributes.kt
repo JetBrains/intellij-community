@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
-import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
@@ -79,3 +78,7 @@ fun Credentials?.isEmpty() = this == null || (userName == null && password.isNul
 
 val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
 val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
+
+fun accessToKeyChainDenied(): Credentials = ACCESS_TO_KEY_CHAIN_DENIED
+
+fun cannotUnlockKeychain(): Credentials = CANNOT_UNLOCK_KEYCHAIN

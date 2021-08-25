@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
 import java.security.SecureRandom
-import java.util.*
 
 val LOG = logger<CredentialStore>()
 
@@ -88,3 +87,6 @@ internal fun SecureRandom.generateBytes(size: Int): ByteArray {
   nextBytes(result)
   return result
 }
+
+val ACCESS_TO_KEY_CHAIN_DENIED = accessToKeyChainDenied()
+val CANNOT_UNLOCK_KEYCHAIN = cannotUnlockKeychain()
