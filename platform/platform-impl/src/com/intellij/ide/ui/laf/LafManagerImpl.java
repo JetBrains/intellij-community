@@ -21,6 +21,7 @@ import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -1217,8 +1218,22 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       return popup;
     }
 
-    private static Point fixPopupLocation(final Component contents, final int x, final int y) {
-      if (!(contents instanceof JToolTip)) return new Point(x, y);
+    private static Point fixPopupLocation(final Component contents, final int x, int y) {
+      if (!(contents instanceof JToolTip)) {
+        if (IdeaPopupMenuUI.isUnderPopup(contents)) {
+          int topBorder = JBUI.insets("PopupMenu.borderInsets", JBUI.emptyInsets()).top;
+          Component invoker = ((JPopupMenu)contents).getInvoker();
+          if (invoker instanceof ActionMenu) {
+            y -= topBorder / 2;
+          }
+          else {
+            y -= topBorder;
+            y -= JBUI.scale(1);
+          }
+        }
+
+        return new Point(x, y);
+      }
 
       final PointerInfo info;
       try {
