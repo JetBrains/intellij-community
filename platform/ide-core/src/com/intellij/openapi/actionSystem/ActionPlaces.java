@@ -166,7 +166,7 @@ public abstract class ActionPlaces {
   public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
   public static final String VCS_HISTORY_PLACE = "Vcs.FileHistory.ContextMenu";
   public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
-  public static final String VCS_LOG_TOOLBAR_POPUP_PLACE = "popup@Vcs.Log.Toolbar.Popup";
+  public static final String VCS_LOG_TOOLBAR_POPUP_PLACE = "Vcs.Log.Toolbar.Popup";
 
   /* Rider */
   public static final String RIDER_UNIT_TESTS_LEFT_TOOLBAR = "UnitTests.LeftToolbar";
