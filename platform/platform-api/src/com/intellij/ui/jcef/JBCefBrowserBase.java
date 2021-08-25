@@ -682,13 +682,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
-  // temporary possibility for debug (browser creation with empty url theoretically still can cause side-effects)
-  // TODO: remove after testing
-  private static final boolean USE_ABOUT_BLANK = Boolean.getBoolean("jcef.browser.use.about.blank");
-
   private static @NotNull String validateUrl(@Nullable String url) {
-    if (url != null && !url.isEmpty())
-      return url;
-    return USE_ABOUT_BLANK ? BLANK_URI : "";
+    return url != null && !url.isEmpty() ? url : "";
   }
 }
