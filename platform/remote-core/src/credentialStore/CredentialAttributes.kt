@@ -60,6 +60,11 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 
   override fun toString() = "userName: $userName, password size: ${password?.length ?: 0}"
+
+  companion object {
+    val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
+    val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
+  }
 }
 
 /** @deprecated Use [CredentialAttributes] instead. */
@@ -75,10 +80,3 @@ fun Credentials?.isFulfilled() = this != null && userName != null && !password.i
 fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
-
-val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
-val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
-
-fun accessToKeyChainDenied(): Credentials = ACCESS_TO_KEY_CHAIN_DENIED
-
-fun cannotUnlockKeychain(): Credentials = CANNOT_UNLOCK_KEYCHAIN

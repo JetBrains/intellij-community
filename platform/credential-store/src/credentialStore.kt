@@ -88,5 +88,5 @@ internal fun SecureRandom.generateBytes(size: Int): ByteArray {
   return result
 }
 
-val ACCESS_TO_KEY_CHAIN_DENIED = accessToKeyChainDenied()
-val CANNOT_UNLOCK_KEYCHAIN = cannotUnlockKeychain()
+val ACCESS_TO_KEY_CHAIN_DENIED = Credentials.ACCESS_TO_KEY_CHAIN_DENIED
+val CANNOT_UNLOCK_KEYCHAIN = Credentials.CANNOT_UNLOCK_KEYCHAIN
