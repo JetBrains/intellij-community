@@ -43,6 +43,7 @@
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSlotManager"/>
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSettings"/>
+    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
   </extensions>
   <project-components>
     <component>

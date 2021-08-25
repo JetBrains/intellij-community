@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
-import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.impl.EditConfigurationsDialog
@@ -60,12 +59,8 @@ internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
 }
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
-  runToolbarData()?.configuration = value
-  this.project?.let {
-    if(value != null) {
-      RunManager.getInstance(it).selectedConfiguration = value
-    }
-  }
+  val runToolbarData = runToolbarData()
+  runToolbarData?.configuration = value
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
@@ -107,20 +102,20 @@ internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
 
 internal fun DataContext.editConfiguration() {
   getData(CommonDataKeys.PROJECT)?.let {
-    EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, this)).show()
+    EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, getConfiguration(this))).show()
   }
 }
 
-private fun createRunConfigurationConfigurable(project: Project, dataContext: DataContext): RunConfigurable {
+private fun createRunConfigurationConfigurable(project: Project, settings: RunnerAndConfigurationSettings?): RunConfigurable {
   return when {
     project.isDefault -> object : RunConfigurable(project) {
       override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
-        return getConfiguration(dataContext)
+        return settings
       }
     }
     else -> object : ProjectRunConfigurationConfigurable(project) {
       override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
-        return getConfiguration(dataContext)
+        return settings
       }
     }
   }

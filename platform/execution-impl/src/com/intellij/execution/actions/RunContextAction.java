@@ -56,7 +56,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
       runManager.setTemporaryConfiguration(configuration);
     }
-    if (Registry.is("select.run.configuration.from.context")) {
+    if (runManager.shouldSetRunConfigurationFromContext()) {
       runManager.setSelectedConfiguration(configuration);
     }
 

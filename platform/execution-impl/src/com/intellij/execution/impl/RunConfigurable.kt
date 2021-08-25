@@ -260,7 +260,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }, ModalityState.stateForComponent(wholePanel!!))
   }
 
-  open protected fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+  protected open fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
     return runManager.selectedConfiguration
   }
 

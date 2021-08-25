@@ -10,7 +10,6 @@ class RunToolbarEditConfigurationAction : DumbAwareAction() {
   }
 }
 
-
 class RunToolbarRemoveSlotAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
@@ -22,7 +21,8 @@ class RunToolbarRemoveSlotAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project?.let { project ->
-      e.runToolbarData() != RunToolbarSlotManager.getInstance(project).mainSlotData
+      val slotManager = RunToolbarSlotManager.getInstance(project)
+      e.runToolbarData() != slotManager.mainSlotData || (slotManager.slotsCount() != 0 && e.mainState() != RunToolbarMainSlotState.INFO)
     } ?: false
   }
 }

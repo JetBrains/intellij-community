@@ -90,7 +90,6 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
 
       override fun doShiftClick() {
         dataContext.editConfiguration()
-        doClick()
       }
 
       override fun isArrowVisible(presentation: Presentation): Boolean {

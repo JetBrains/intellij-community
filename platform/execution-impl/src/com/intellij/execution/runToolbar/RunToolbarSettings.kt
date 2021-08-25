@@ -22,9 +22,28 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
     state.installedItems.clear()
     state.installedItems.addAll(list.map { it.uniqueID }.toMutableList())
   }
+
+  fun getMoveNewOnTop(): Boolean {
+    return state.moveNewOnTop
+  }
+
+  fun setMoveNewOnTop(value: Boolean) {
+    state.moveNewOnTop = value
+  }
+
+  fun getUpdateMainBySelected(): Boolean {
+    return state.updateMainBySelected
+  }
+
+  fun setUpdateMainBySelected(value: Boolean) {
+    state.updateMainBySelected = value
+  }
 }
 
 class RunToolbarState : BaseState() {
   @get:XCollection
   val installedItems by list<String>()
+
+  var moveNewOnTop by property(defaultValue = true)
+  var updateMainBySelected by property(defaultValue = true)
 }

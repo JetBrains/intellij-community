@@ -32,7 +32,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
  }
 
   override fun addEditRunConfigurationItem(): Boolean {
-    return false
+    return true
   }
 
   override fun createFinalAction(configuration: RunnerAndConfigurationSettings, project: Project): AnAction {
@@ -88,7 +88,6 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
       override fun doShiftClick() {
         dataContext.editConfiguration()
-        doClick()
       }
     }
   }
@@ -114,7 +113,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     override fun actionPerformed(e: AnActionEvent) {
       e.project?.let {
         e.setConfiguration(configuration)
-        RunToolbarSlotManager.getInstance(it).saveData()
+        RunToolbarSlotManager.getInstance(it).saveSlotsConfiguration()
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
                            configuration,
                            project,

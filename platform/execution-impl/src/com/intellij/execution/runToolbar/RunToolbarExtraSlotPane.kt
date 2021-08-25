@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
@@ -84,7 +85,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
     border = JBUI.Borders.empty(3, 0, 0, 3)
     add(slotPane)
 
-    val bottomPane = JPanel(MigLayout("ins 0, novisualpadding, gap 0, wrap 2, hidemode 3")).apply {
+    val bottomPane = JPanel(MigLayout("fillx, ins 0, novisualpadding, gap 0, hidemode 3", "[][]push[]")).apply {
       isOpaque = false
       border = JBUI.Borders.empty(5, 0, 7, 5)
 
@@ -104,6 +105,14 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
           manager.addAndSaveSlot()
         }
         border = JBUI.Borders.empty()
+      })
+
+      add(JLabel(AllIcons.General.GearPlain).apply {
+        addMouseListener(object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, RunToolbarSettingsConfigurable::class.java)
+          }
+        })
       })
 
       //add(details, "skip")
