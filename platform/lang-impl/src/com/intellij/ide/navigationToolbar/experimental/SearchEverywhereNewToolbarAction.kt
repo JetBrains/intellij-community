@@ -32,6 +32,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   private val margin = JBUI.scale(4)
   private var hotKeyWasUsed = AdvancedSettings.getBoolean("ide.suppress.double.click.handler")
   private var subscribedForDoubleShift = false
+  private var firstOpened = false
 
   init {
     templatePresentation.icon = AllIcons.Actions.Search
@@ -55,7 +56,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
 
     return object : ActionButtonWithText(this, presentation, place,
-                                         ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       var seManager: SearchEverywhereManager? = null
 
       init {
@@ -88,9 +89,17 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
       override fun actionPerformed(e: AnActionEvent) {
         seManager = SearchEverywhereManager.getInstance(e.project)
-        super.actionPerformed(AnActionEvent(
-          e.inputEvent, e.dataContext, ActionPlaces.KEYBOARD_SHORTCUT, templatePresentation,
-          ActionManager.getInstance(), 0))
+        if (!firstOpened) {
+          super.actionPerformed(AnActionEvent(
+            e.inputEvent, e.dataContext, ActionPlaces.RUN_TOOLBAR, templatePresentation,
+            ActionManager.getInstance(), 0))
+          firstOpened = true
+        }
+        else {
+          super.actionPerformed(AnActionEvent(
+            e.inputEvent, e.dataContext, ActionPlaces.KEYBOARD_SHORTCUT, templatePresentation,
+            ActionManager.getInstance(), 0))
+        }
       }
 
       override fun paint(g: Graphics?) {
@@ -111,15 +120,15 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         val iconRect = Rectangle()
         val textRect = Rectangle()
         val text = SwingUtilities.layoutCompoundLabel(this, fm, presentation.getText(true), icon,
-                                                      SwingConstants.CENTER, horizontalTextAlignment(),
-                                                      SwingConstants.CENTER, horizontalTextPosition(),
-                                                      viewRect, iconRect, textRect, iconTextSpace())
+          SwingConstants.CENTER, horizontalTextAlignment(),
+          SwingConstants.CENTER, horizontalTextPosition(),
+          viewRect, iconRect, textRect, iconTextSpace())
 
         if (seManager != null && seManager!!.isShown) {
           this.isOpaque = false
           this.border = null
           drawStringUnderlineCharAt(g, ActionsBundle.message("action.SearchEverywhereToolbar.searching.text"), getMnemonicCharIndex(text),
-                                    textRect.x, textRect.y + fm.ascent)
+            textRect.x, textRect.y + fm.ascent)
 
           return
         }
@@ -135,7 +144,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         look.paintBorder(g, this)
         g.color = if (presentation.isEnabled) foreground else inactiveTextColor
         drawStringUnderlineCharAt(g, text, getMnemonicCharIndex(text),
-                                  textRect.x, textRect.y + fm.ascent)
+          textRect.x, textRect.y + fm.ascent)
       }
     }
   }
