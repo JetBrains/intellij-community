@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
-import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -13,14 +12,19 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
+import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import net.miginfocom.layout.BoundSize
+import net.miginfocom.layout.CC
 import java.io.File
 import java.nio.file.Path
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
@@ -36,20 +40,31 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
   }
 
   private val panel by lazy {
-    panel {
-      steps.forEach { it.setupUI(this) }
-    }.also { panel ->
-      panel.withBorder(JBUI.Borders.empty(10, 10))
+    panel { steps.forEach { it.setupUI(this) } }
+      .also { it.withBorder(JBUI.Borders.empty(10, 10)) }
+      .also { fixUiShiftingWhenChoosingMultiStep(it) }
+  }
 
-      val projectLabels = UIUtil.uiChildren(panel)
-        .filterIsInstance<JLabel>()
-      val languageLabels = UIUtil.uiChildren(panel)
-        .flatMap { UIUtil.uiChildren(it) }
-        .filterIsInstance<JLabel>()
-      val labels = projectLabels + languageLabels
-      val width = labels.maxOf { it.preferredSize.width }
-      labels.forEach { CommandLinePanel.setMinimumWidth(it, width) }
-    }
+  private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {
+    val labels = UIUtil.uiTraverser(panel)
+      .filterIsInstance<JLabel>()
+      .filter { it.parent is DialogPanel }
+      .filter { it.getGapBefore() == null }
+    val width = labels.maxOf { it.preferredSize.width }
+    labels.forEach { it.setMinimumWidth(width) }
+  }
+
+  private fun JComponent.getConstraints(): CC? {
+    val layout = parent.layout as? MigLayout ?: return null
+    return layout.getComponentConstraints()[this]
+  }
+
+  private fun JComponent.getGapBefore(): BoundSize? {
+    return getConstraints()?.horizontal?.gapBefore
+  }
+
+  private fun JComponent.setMinimumWidth(width: Int) {
+    minimumSize = minimumSize.apply { this.width = width }
   }
 
   fun setupProject(project: Project) {
