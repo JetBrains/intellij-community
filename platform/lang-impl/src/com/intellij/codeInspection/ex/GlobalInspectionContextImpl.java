@@ -377,7 +377,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
         InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
         ReadAction.run(() -> BatchModeDescriptorsUtil
-          .addProblemDescriptors(Arrays.asList(descriptors), false, this, null, CONVERT, toolPresentation));
+          .addProblemDescriptors(Arrays.asList(descriptors), false, this, null, toolPresentation, CONVERT));
       });
 
       return true;
@@ -504,7 +504,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               return holder.getResultCount();
             });
           InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
-          BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, CONVERT, toolPresentation);
+          BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, toolPresentation, CONVERT);
           return true;
         });
       VirtualFile virtualFile = file.getVirtualFile();

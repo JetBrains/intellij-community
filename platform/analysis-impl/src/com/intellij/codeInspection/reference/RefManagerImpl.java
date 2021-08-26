@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -38,6 +39,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import org.jdom.Element;
@@ -391,11 +393,9 @@ public class RefManagerImpl extends RefManager {
       if (!Objects.equals(v1, v2)) {
         return (v1==null?"":v1.getPath()).compareTo(v2==null?"":v2.getPath());
       }
-      SmartPsiElementPointer<?> p1 = o1.getPointer();
-      SmartPsiElementPointer<?> p2 = o2.getPointer();
-      Segment r1 = p1 == null ? null : p1.getRange();
-      Segment r2 = p2 == null ? null : p2.getRange();
-      return r1 == null || r2 == null ? 0 : Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(r1, r2);
+      Segment r1 = ObjectUtils.notNull(o1.getPointer().getRange(), TextRange.EMPTY_RANGE);
+      Segment r2 = ObjectUtils.notNull(o2.getPointer().getRange(), TextRange.EMPTY_RANGE);
+      return Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(r1, r2);
     }));
     myCachedSortedRefs = answer = Collections.unmodifiableList(answer);
     return answer;

@@ -67,8 +67,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 
-  protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor>
-    myProblemElements = createBidiMap();
+  protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
 
@@ -119,14 +118,14 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           writer.write('\n');
         }
 
-        exportResults(descriptions, refElement, p -> {
+        exportResults(descriptions, refElement, element -> {
           try {
-            JbXmlOutputter.collapseMacrosAndWrite(p, getContext().getProject(), writer);
+            JbXmlOutputter.collapseMacrosAndWrite(element, getContext().getProject(), writer);
           }
           catch (IOException e) {
             LOG.error(e);
           }
-        });
+        }, __ -> false);
 
         writer.write('\n');
       }
@@ -162,33 +161,33 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
   }
 
-  public void exportResults(CommonProblemDescriptor @NotNull [] descriptors,
-                            @NotNull RefEntity refEntity,
-                            @NotNull Consumer<? super Element> problemSink) {
-    exportResults(descriptors, refEntity, problemSink, __ -> false);
-  }
-
   protected void exportResults(CommonProblemDescriptor @NotNull [] descriptors,
                                @NotNull RefEntity refEntity,
                                @NotNull Consumer<? super Element> problemSink,
                                @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
-    CommonProblemDescriptor[] sorted = descriptors.clone();
-    Arrays.sort(sorted, (desc1, desc2)-> {
-      VirtualFile file1 = desc1 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc1).getContainingFile() : null;
-      VirtualFile file2 = desc2 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc2).getContainingFile() : null;
-      if (file1 != null && file1.equals(file2)) {
-        int diff = Integer.compare(((ProblemDescriptor)desc1).getLineNumber(), ((ProblemDescriptor)desc2).getLineNumber());
-        if (diff != 0) {
-          return diff;
+    CommonProblemDescriptor[] sorted;
+    if (descriptors.length == 1) {
+      sorted = descriptors;
+    }
+    else {
+      sorted = descriptors.clone();
+      Arrays.sort(sorted, (desc1, desc2)-> {
+        VirtualFile file1 = desc1 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc1).getContainingFile() : null;
+        VirtualFile file2 = desc2 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc2).getContainingFile() : null;
+        if (file1 != null && file1.equals(file2)) {
+          int diff = Integer.compare(((ProblemDescriptor)desc1).getLineNumber(), ((ProblemDescriptor)desc2).getLineNumber());
+          if (diff != 0) {
+            return diff;
+          }
+          diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)desc1).getPsiElement(), ((ProblemDescriptor)desc2).getPsiElement());
+          if (diff != 0) {
+            return diff;
+          }
+          return desc1.getDescriptionTemplate().compareTo(desc2.getDescriptionTemplate());
         }
-        diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)desc1).getPsiElement(), ((ProblemDescriptor)desc2).getPsiElement());
-        if (diff != 0) {
-          return diff;
-        }
-        return desc1.getDescriptionTemplate().compareTo(desc2.getDescriptionTemplate());
-      }
-      return file1 == null || file2 == null ? 0 : file1.getPath().compareTo(file2.getPath());
-    });
+        return file1 == null || file2 == null ? 0 : file1.getPath().compareTo(file2.getPath());
+      });
+    }
     for (CommonProblemDescriptor descriptor : sorted) {
       if (isDescriptorExcluded.test(descriptor)) continue;
       int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
