@@ -22,5 +22,5 @@ UFile (package = ) [public final class PropertyWithAnnotationKt {...]
             UBlockExpression [{...}] = Undetermined
                 UBinaryExpression (operator = =) [field = value] = Undetermined
                     USimpleNameReferenceExpression (identifier = field) [field] = external field()
-                    USimpleNameReferenceExpression (identifier = value) [value] = external value()
+                    USimpleNameReferenceExpression (identifier = value) [value] = Undetermined
     UClass (name = TestAnnotation) [public abstract annotation TestAnnotation {...}]
