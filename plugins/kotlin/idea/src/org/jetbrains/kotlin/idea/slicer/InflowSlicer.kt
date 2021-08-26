@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.findUsages.processAllUsages
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.references.KtPropertyDelegationMethodsReference
-import org.jetbrains.kotlin.idea.references.ReferenceAccess
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccessWithFullExpression
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTargetElementEvaluator
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -310,7 +310,10 @@ class InflowSlicer(
             val rhsValue = when {
                 refElement is KtExpression -> {
                     val (accessKind, accessExpression) = refElement.readWriteAccessWithFullExpression(true)
-                    if (accessKind == ReferenceAccess.WRITE && accessExpression is KtBinaryExpression && accessExpression.operationToken == KtTokens.EQ) {
+                    if (accessKind == ReferenceAccess.WRITE &&
+                        accessExpression is KtBinaryExpression &&
+                        accessExpression.operationToken == KtTokens.EQ
+                    ) {
                         accessExpression.right
                     } else {
                         accessExpression
