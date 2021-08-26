@@ -45,11 +45,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 
-/*
-org/jetbrains/idea/svn/status/CmdStatusClient.kt:51 (empty stack)
-com.intellij.database.model.gen.MetaProcessor#processEntityInheritance (false-negative, line 177)
-
- */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
@@ -433,6 +428,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun inlineLambda(lambda: KtLambdaExpression) {
+        // TODO: check/process 'it'
         /*
             We encode unknown call with inlineable lambda as
             unknownCode()
@@ -458,8 +454,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             flushParameter(parameter)
         }
         processExpression(lambda.bodyExpression)
-        addInstruction(PopInstruction())
         flow.finishElement(lambda.functionLiteral)
+        addInstruction(PopInstruction())
 
         trapTracker.popTrap(InsideInlinedBlockTrap::class.java)
         // Pop transfer value

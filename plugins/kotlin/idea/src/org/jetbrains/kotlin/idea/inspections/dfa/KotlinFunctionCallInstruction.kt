@@ -27,6 +27,7 @@ class KotlinFunctionCallInstruction(
             stateBefore.pop()
         }
         stateBefore.flushFields()
+        // TODO: process Nothing type
         pushResult(interpreter, stateBefore, getExpressionDfType(call))
         return nextStates(interpreter, stateBefore)
     }
