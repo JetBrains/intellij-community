@@ -3,8 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionInitializationContext.IDENTIFIER_END_OFFSET
+import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
+import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
@@ -17,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
@@ -51,6 +55,7 @@ class KotlinFunctionCompositeDeclarativeInsertHandler(
 fun createNormalFunctionInsertHandler(
     editor: Editor,
     callType: CallType<*>,
+    functionName: Name,
     inputTypeArguments: Boolean,
     inputValueArguments: Boolean,
     argumentText: String = "",
@@ -61,9 +66,8 @@ fun createNormalFunctionInsertHandler(
         assert(argumentText == "")
     }
 
-    val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler2>>()
-
     val chars = editor.document.charsSequence
+    val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler2>>()
 
     // \n - NormalCompletion
     lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler2.LazyBuilder { builder ->
