@@ -55,9 +55,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       // In case of Security Manager denies read of FS attributes
     }
 
-    for (gc in ManagementFactory.getGarbageCollectorMXBeans()) {
-      result.add(GC.metric(gc.name))
-    }
+    result.add(GC.metric(getGcName()))
 
     result.add(JVM.metric(
       Version(1, JavaVersion.current().feature, 0),
@@ -78,6 +76,19 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
     result.add(DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled()))
     return result
+  }
+
+  private fun getGcName(): String {
+    for (gc in ManagementFactory.getGarbageCollectorMXBeans()) {
+      if (gc.name == "MarkSweepCompact" || gc.name == "Copy") return "Serial"       // -XX:+UseSerialGC
+      if (gc.name == "PS MarkSweep" || gc.name == "PS Scavenge") return "Parallel"  // -XX:+UseParallelGC
+      if (gc.name == "ConcurrentMarkSweep" || gc.name == "ParNew") return "CMS"     // -XX:+UseConcMarkSweepGC
+      if (gc.name.startsWith("G1 ")) return "G1"                                    // -XX:+UseG1GC
+      if (gc.name == "ZGC") return "Z"                                              // -XX:+UseZGC
+      if (gc.name.startsWith("Shenandoah ")) return "Shenandoah"                    // -XX:+UseShenandoahGC
+      if (gc.name.startsWith("Epsilon ")) return "Epsilon"                          // -XX:+UseEpsilonGC
+    }
+    return "Other"
   }
 
   private fun collectJvmOptions(): HashMap<String, Long> {
@@ -111,7 +122,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "splash", "nosplash"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 13)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 14)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))
@@ -122,8 +133,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     private val GC: EventId1<String?> = GROUP.registerEvent("garbage.collector",
       EventFields.String(
         "name",
-        arrayListOf("Shenandoah", "G1_Young_Generation", "G1_Old_Generation", "Copy",
-                    "MarkSweepCompact", "PS_MarkSweep", "PS_Scavenge", "ParNew", "ConcurrentMarkSweep")
+        arrayListOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Unknown", "Other")
       )
     )
     private val JVM: EventId3<Version?, String?, String?> = GROUP.registerEvent("jvm",
