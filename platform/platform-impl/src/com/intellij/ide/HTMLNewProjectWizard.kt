@@ -10,9 +10,9 @@ import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
 
 class HTMLNewProjectWizard : NewProjectWizard {
-  override val language: String = "HTML"
+  override val name: String = "HTML"
 
-  override fun enabled() = PlatformUtils.isCommunityEdition()
+  override val isEnabled = PlatformUtils.isCommunityEdition()
 
   override fun createStep(context: WizardContext) = Step(context)
 

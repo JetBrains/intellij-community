@@ -44,7 +44,7 @@ import javax.swing.JTextField
 import javax.swing.SwingUtilities
 
 class GroovyNewProjectWizard : NewProjectWizard {
-  override val language: String = "Groovy"
+  override val name: String = "Groovy"
 
   override fun createStep(context: WizardContext) = Step(context)
 
