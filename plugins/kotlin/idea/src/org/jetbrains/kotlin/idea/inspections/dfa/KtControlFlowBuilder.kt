@@ -27,9 +27,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
@@ -42,7 +40,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
@@ -429,7 +426,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
 
-        addUnknownCall(expr, argCount)
+        addCall(expr, argCount)
         // TODO: support pure calls, some known methods, probably Java contracts, etc.
     }
 
@@ -449,6 +446,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         pushUnknown()
         val endOffset = DeferredOffset()
         addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
+
+        // Transfer value is pushed to avoid emptying stack beyond this point
+        trapTracker.pushTrap(InsideInlinedBlockTrap(lambda))
+        addInstruction(JvmPushInstruction(factory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null))
+
         flow.startElement(lambda.functionLiteral)
         for (parameter in lambda.valueParameters) {
             flushParameter(parameter)
@@ -456,39 +458,23 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(lambda.bodyExpression)
         addInstruction(PopInstruction())
         flow.finishElement(lambda.functionLiteral)
+
+        trapTracker.popTrap(InsideInlinedBlockTrap::class.java)
+        // Pop transfer value
+        addInstruction(PopInstruction())
+
         setOffset(endOffset)
         addInstruction(FlushFieldsInstruction())
         pushUnknown()
         addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
     }
 
-    private fun addUnknownCall(expr: KtExpression, args: Int) {
-        pop(args)
-        val dfType = getExpressionDfType(expr)
-        addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
-        addInstruction(FlushFieldsInstruction())
+    private fun addCall(expr: KtExpression, args: Int) {
+        addInstruction(KotlinFunctionCallInstruction(expr, args))
         val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
         if (transfer != null) {
             addInstruction(EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer))
         }
-    }
-
-    private fun pop(count: Int) {
-        if (count > 0) {
-            addInstruction(if (count > 1) SpliceInstruction(count) else PopInstruction())
-        }
-    }
-
-    private fun getExpressionDfType(expr: KtExpression): DfType {
-        val constructedClassName = (expr.resolveToCall()?.resultingDescriptor as? ConstructorDescriptor)?.constructedClass?.fqNameOrNull()
-        if (constructedClassName != null) {
-            // Set exact class type for constructor
-            val psiClass = JavaPsiFacade.getInstance(expr.project).findClass(constructedClassName.asString(), expr.resolveScope)
-            if (psiClass != null) {
-                return TypeConstraints.exactClass(psiClass).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
-            }
-        }
-        return expr.getKotlinType().toDfType(expr)
     }
 
     private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {
@@ -878,7 +864,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addImplicitConversion(expr, declaredType, exprType)
             return
         }
-        addUnknownCall(expr, 0)
+        addCall(expr, 0)
     }
 
     private fun processConstantExpression(expr: KtConstantExpression) {
@@ -937,7 +923,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         // TODO: support other operators
         processExpression(expr.left)
         processExpression(expr.right)
-        addUnknownCall(expr, 2)
+        addCall(expr, 2)
     }
 
     private fun processInCheck(kotlinType: KotlinType?, range: KtExpression?, anchor: KotlinAnchor, negated: Boolean) {
@@ -1115,7 +1101,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             // TODO: support >/>=/</<= for String and enum
             // Overloaded >/>=/</<=: do not evaluate
             processExpression(right)
-            addUnknownCall(expr, 2)
+            addCall(expr, 2)
         }
     }
 
