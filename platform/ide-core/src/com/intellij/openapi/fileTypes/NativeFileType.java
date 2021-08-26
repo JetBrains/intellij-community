@@ -83,7 +83,7 @@ public final class NativeFileType implements INativeFileType {
     else {
       return false;
     }
-    commands.add(file.getPath());
+    commands.add(file.getPresentableUrl());
 
     try {
       new GeneralCommandLine(commands).createProcess();
