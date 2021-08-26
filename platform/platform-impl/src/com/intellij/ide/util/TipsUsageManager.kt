@@ -34,7 +34,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     shownTips.putAll(state.shownTips)
   }
 
-  fun sortByUtility(tips: List<TipAndTrickBean>, experimentType: TipsUtilityExperiment): RecommendationDescription {
+  fun sortTips(tips: List<TipAndTrickBean>, experimentType: TipsUtilityExperiment): RecommendationDescription {
     val usedTips = mutableSetOf<TipAndTrickBean>()
     val unusedTips = mutableSetOf<TipAndTrickBean>()
     ProductivityFeaturesRegistry.getInstance()?.let { featuresRegistry ->
@@ -59,6 +59,9 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
       TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED -> {
         val sortedByUtility = utilityHolder.sampleTips(unusedTips)
         sortedByUtility + otherTips.shuffled() + usedTips.shuffled()
+      }
+      TipsUtilityExperiment.RANDOM_IGNORE_USED -> {
+        unusedTips.shuffled() + otherTips.shuffled() + usedTips.shuffled()
       }
     }
     return RecommendationDescription(experimentType.toString(), resultTips, utilityHolder.getMetadataVersion())

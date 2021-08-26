@@ -15,9 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 8);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 9);
 
   public enum DialogType {automatically, manually}
 
@@ -32,10 +34,10 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
 
   private static final StringEventField ALGORITHM_FIELD =
     EventFields.String("algorithm",
-                       Arrays.asList("TOP", "MATRIX_ALS", "MATRIX_BPR", "PROB", "WIDE", "CODIS", "RANDOM", "WEIGHTS_LIN_REG",
-                                     "default_shuffle", "unknown", "ONE_TIP_SUMMER2020", "RANDOM_SUMMER2020",
-                                     TipsUtilityExperiment.BY_TIP_UTILITY.toString(),
-                                     TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED.toString()));
+                       Stream.concat(Stream.of("TOP", "MATRIX_ALS", "MATRIX_BPR", "PROB", "WIDE", "CODIS", "RANDOM", "WEIGHTS_LIN_REG",
+                                                   "default_shuffle", "unknown", "ONE_TIP_SUMMER2020", "RANDOM_SUMMER2020"),
+                                     Arrays.stream(TipsUtilityExperiment.values()).map(v -> v.toString()))
+                         .collect(Collectors.toList()));
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
                         EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.RULE_ID),
