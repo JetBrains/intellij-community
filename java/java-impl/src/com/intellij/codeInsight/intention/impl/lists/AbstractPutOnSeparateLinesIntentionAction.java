@@ -4,11 +4,9 @@ package com.intellij.codeInsight.intention.impl.lists;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -16,11 +14,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class AbstractChopListAction<L extends PsiElement, E extends PsiElement> extends AbstractListIntentionAction<L, E> {
+import static com.intellij.util.ObjectUtils.tryCast;
+
+abstract class AbstractPutOnSeparateLinesIntentionAction<L extends PsiElement, E extends PsiElement> extends AbstractListIntentionAction<L, E> {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (!(element.getContainingFile() instanceof PsiJavaFile)) return false;
     Context<L, E> context = from(element);
     return context != null;
+  }
+
+  @Override
+  @Nullable
+  PsiElement prevBreak(@NotNull PsiElement element) {
+    return JavaListUtils.prevBreak(element);
+  }
+
+  @Override
+  @Nullable
+  PsiElement nextBreak(@NotNull PsiElement element) {
+    return JavaListUtils.nextBreak(element);
   }
 
   @Override
@@ -51,14 +64,18 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
     }
   }
 
-  abstract int findOffsetForBreakAfter(E element);
+  private int findOffsetForBreakAfter(E element) {
+    PsiJavaToken token = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(element), PsiJavaToken.class);
+    if (token != null && token.getTokenType() == JavaTokenType.COMMA) return token.getTextRange().getEndOffset();
+    return element.getTextRange().getEndOffset();
+  }
 
   protected int findOffsetOfBreakBeforeFirst(@NotNull E element) {
     return element.getTextRange().getStartOffset();
   }
 
-  protected boolean canChop(List<E> elements) {
-    return true;
+  protected boolean canChop(@NotNull List<? extends E> elements) {
+    return !JavaListUtils.containsEolComments(elements);
   }
 
   private static final class Context<L extends PsiElement, E extends PsiElement> {
@@ -72,7 +89,7 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
   }
 
   @Nullable
-  Context<L, E> from(@NotNull PsiElement element) {
+  private Context<L, E> from(@NotNull PsiElement element) {
     L list = extractList(element);
     if (list == null) return null;
     List<E> elements = getElements(list);
@@ -84,7 +101,7 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
   }
 
   @Contract(pure = true)
-  private boolean hasElementsNotOnSeparateLines(@NotNull List<E> elements) {
+  private boolean hasElementsNotOnSeparateLines(@NotNull List<? extends E> elements) {
     int size = elements.size();
     for (int i = 0; i < size; i++) {
       E current = elements.get(i);

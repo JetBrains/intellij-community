@@ -6,31 +6,31 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
-public class JavaChopParametersActionTest extends LightIntentionActionTestCase {
+public class PutArgumentsOnSeparateLinesIntentionActionTest extends LightIntentionActionTestCase {
 
   private boolean myBreakAfterLparen;
   private boolean myBreakBeforeRparen;
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/lists/chopParameters";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/lists/putArgumentsOnSeparateLines";
   }
 
   @Override
   protected void beforeActionStarted(final String testName, final String contents) {
     super.beforeActionStarted(testName, contents);
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
-    myBreakAfterLparen = settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE;
-    myBreakBeforeRparen = settings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE;
-    settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = contents.contains("break after lparen");
-    settings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = contents.contains("break before rparen");
+    myBreakAfterLparen = settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE;
+    myBreakBeforeRparen = settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE;
+    settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = contents.contains("break after lparen");
+    settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = contents.contains("break before rparen");
   }
 
   @Override
   protected void afterActionCompleted(final String testName, final String contents) {
     super.afterActionCompleted(testName, contents);
     CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
-    settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = myBreakAfterLparen;
-    settings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = myBreakBeforeRparen;
+    settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = myBreakAfterLparen;
+    settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = myBreakBeforeRparen;
   }
 }

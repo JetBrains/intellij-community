@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class JavaChopParametersAction extends AbstractJavaChopListAction<PsiParameterList, PsiParameter> {
+public class PutParametersOnSeparateLinesIntentionAction extends AbstractPutOnSeparateLinesIntentionAction<PsiParameterList, PsiParameter> {
   @Nullable("When failed")
   @Override
   PsiParameterList extractList(@NotNull PsiElement element) {

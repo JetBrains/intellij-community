@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class JavaChopRecordComponentsAction extends AbstractJavaChopListAction<PsiRecordHeader, PsiRecordComponent> {
+public class PutRecordComponentsOnSeparateLinesIntentionAction extends
+                                                               AbstractPutOnSeparateLinesIntentionAction<PsiRecordHeader, PsiRecordComponent> {
   @Override
   @Nullable("When failed") PsiRecordHeader extractList(@NotNull PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiRecordHeader.class, false, PsiCodeBlock.class, PsiExpression.class);

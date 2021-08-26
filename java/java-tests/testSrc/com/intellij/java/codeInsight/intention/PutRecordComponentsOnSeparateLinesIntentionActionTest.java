@@ -6,10 +6,10 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaChopRecordComponentsActionTest extends LightIntentionActionTestCase {
+public class PutRecordComponentsOnSeparateLinesIntentionActionTest extends LightIntentionActionTestCase {
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/lists/chopRecordComponents";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/lists/putRecordComponentsOnSeparateLines";
   }
 
   @Override

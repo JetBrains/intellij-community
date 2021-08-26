@@ -2153,12 +2153,12 @@
       <categoryKey>intention.category.collections</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopParametersAction</className>
+      <className>com.intellij.codeInsight.intention.impl.lists.PutParametersOnSeparateLinesIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopArgumentsAction</className>
+      <className>com.intellij.codeInsight.intention.impl.lists.PutArgumentsOnSeparateLinesIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
@@ -2173,7 +2173,7 @@
       <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopRecordComponentsAction</className>
+      <className>com.intellij.codeInsight.intention.impl.lists.PutRecordComponentsOnSeparateLinesIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>

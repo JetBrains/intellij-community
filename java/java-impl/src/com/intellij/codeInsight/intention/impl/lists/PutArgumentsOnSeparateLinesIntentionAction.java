@@ -16,7 +16,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.intention.impl.lists.JavaListUtils.getCallArgumentsList;
 
-public class JavaChopArgumentsAction extends AbstractJavaChopListAction<PsiExpressionList, PsiExpression> {
+public class PutArgumentsOnSeparateLinesIntentionAction extends AbstractPutOnSeparateLinesIntentionAction<PsiExpressionList, PsiExpression> {
   @Nullable("When failed")
   @Override
   PsiExpressionList extractList(@NotNull PsiElement element) {
