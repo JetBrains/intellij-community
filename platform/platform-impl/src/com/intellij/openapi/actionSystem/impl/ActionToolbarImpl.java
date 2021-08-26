@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -41,8 +42,11 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -1093,6 +1097,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myOrientation = orientation;
   }
 
+  // Current implementation does not support minimal mode.
+  @Override
+  public void setOutlined(boolean outlined) {
+    if (myMinimalMode) {
+      throw new UnsupportedOperationException("Outlined border is not supported in minimal mode");
+    }
+
+    getComponent().setBorder(outlined ? new OutlinedBorder() : JBUI.Borders.empty(2));
+  }
+
   @MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL})
   public int getOrientation() {
     return myOrientation;
@@ -1677,5 +1691,43 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public interface SecondaryGroupUpdater {
     void update(@NotNull AnActionEvent e);
+  }
+
+  private static class OutlinedBorder implements Border {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        Rectangle rect = new Rectangle(x, y, width, height);
+        JBInsets.removeFrom(rect, JBUI.insets(1));
+
+        g2.setColor(JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
+
+        float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+        float lw = DarculaUIUtil.LW.getFloat();
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(new RoundRectangle2D.Float(rect.x, rect.y, rect.width, rect.height, arc, arc), false);
+        border.append(new RoundRectangle2D.Float(rect.x + lw, rect.y + lw, rect.width - lw * 2, rect.height - lw * 2, arc - lw, arc - lw), false);
+
+        g2.fill(border);
+
+      }
+      finally {
+        g2.dispose();
+      }
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return JBUI.insets(2);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
+    }
   }
 }
