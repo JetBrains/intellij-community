@@ -6,8 +6,9 @@ import com.intellij.openapi.components.*
 import com.intellij.util.EventDispatcher
 import java.util.*
 
-@State(name="SettingsSyncSettings", storages=[Storage("settingsSync.xml")])
-internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(SettingsSyncSettingsState()) {
+@State(name = "SettingsSyncSettings", storages = [Storage("settingsSync.xml")])
+internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(
+  SettingsSyncSettingsState()) {
 
   companion object {
     fun getInstance() = ApplicationManager.getApplication().getService(SettingsSyncSettings::class.java)
@@ -22,9 +23,9 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
       evenDispatcher.multicaster.settingsChanged()
     }
 
-  fun isCategoryEnabled(category: ComponentCategory) = !state.disabledCategories.contains(category)
+  fun isCategoryEnabled(category: SettingsCategory) = !state.disabledCategories.contains(category)
 
-  fun setCategoryEnabled(category: ComponentCategory, isEnabled: Boolean) {
+  fun setCategoryEnabled(category: SettingsCategory, isEnabled: Boolean) {
     if (isEnabled) {
       state.disabledCategories.remove(category)
     }
@@ -36,12 +37,12 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
     }
   }
 
-  fun isSubcategoryEnabled(category: ComponentCategory, subcategoryId : String): Boolean {
+  fun isSubcategoryEnabled(category: SettingsCategory, subcategoryId: String): Boolean {
     val disabled = state.disabledSubcategories[category]
     return disabled == null || !disabled.contains(subcategoryId)
   }
 
-  fun setSubcategoryEnabled(category: ComponentCategory, subcategoryId: String, isEnabled : Boolean) {
+  fun setSubcategoryEnabled(category: SettingsCategory, subcategoryId: String, isEnabled: Boolean) {
     val disabledList = state.disabledSubcategories[category]
     if (isEnabled) {
       if (disabledList != null) {
@@ -69,8 +70,8 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
   class SettingsSyncSettingsState : BaseState() {
     var syncEnabled by property(false)
 
-    var disabledCategories by list<ComponentCategory>()
-    var disabledSubcategories by map<ComponentCategory,ArrayList<String>>()
+    var disabledCategories by list<SettingsCategory>()
+    var disabledSubcategories by map<SettingsCategory, ArrayList<String>>()
   }
 
   interface Listener : EventListener {

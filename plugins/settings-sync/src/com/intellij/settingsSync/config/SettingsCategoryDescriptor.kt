@@ -1,14 +1,14 @@
 package com.intellij.settingsSync.config
 
-import com.intellij.openapi.components.ComponentCategory
-import com.intellij.openapi.components.ComponentCategory.*
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.SettingsCategory.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import org.jetbrains.annotations.Nls
 import java.util.*
 
 internal class SettingsCategoryDescriptor(
-  private val category : ComponentCategory,
+  private val category : SettingsCategory,
   val secondaryGroup: SettingsSyncSubcategoryGroup? = null
 ) {
 
