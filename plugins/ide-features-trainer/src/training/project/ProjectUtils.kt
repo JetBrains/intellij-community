@@ -297,8 +297,8 @@ object ProjectUtils {
       modified = true
     }
 
-    val pathname = project.basePath ?: throw IllegalStateException("No Base Path in Learning project")
-    languageSupport.copyLearningProjectFiles(File(pathname), FileFilter {
+    val contentRoodDirectory = contentRootPath.toFile()
+    languageSupport.copyLearningProjectFiles(contentRoodDirectory, FileFilter {
       val path = it.toPath()
       val needCopy = needReplace.contains(path) || !validContent.contains(path)
       modified = needCopy || modified
