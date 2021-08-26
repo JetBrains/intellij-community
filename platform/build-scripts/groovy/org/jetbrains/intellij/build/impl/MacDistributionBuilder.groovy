@@ -103,17 +103,6 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     if (arch != null) {
       customizer.copyAdditionalFiles(buildContext, macDistPath.toString(), arch)
     }
-
-    if (!customizer.binariesToSign.empty) {
-      if (buildContext.proprietaryBuildTools.macHostProperties == null) {
-        buildContext.messages.info("A macOS build agent isn't configured, binary files won't be signed")
-      }
-      else {
-        buildContext.executeStep("Sign binaries for macOS distribution", BuildOptions.MAC_SIGN_STEP) {
-          MacDmgBuilder.signBinaryFiles(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macDistPath)
-        }
-      }
-    }
   }
 
   @Override
@@ -141,6 +130,11 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
             Files.createDirectories(additional)
             customizer.copyAdditionalFiles(buildContext, additional.toString(), arch)
 
+            if (!customizer.binariesToSign.empty) {
+              buildContext.executeStep("Sign binaries for macOS distribution", BuildOptions.MAC_SIGN_STEP) {
+                MacDmgBuilder.signBinaryFiles(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, additional)
+              }
+            }
             File jreArchive = jreManager.findJreArchive(OsFamily.MACOS, arch)
             if (jreArchive.file) {
               tasks.add(BuildTaskRunnable.task("dmg-" + archStr) { buildContext ->
