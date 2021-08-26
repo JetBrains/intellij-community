@@ -15,10 +15,17 @@ import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAn
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
-class KotlinFunctionCallInstruction(private val call: KtExpression, private val argCount: Int) :
+class KotlinFunctionCallInstruction(
+    private val call: KtExpression,
+    private val argCount: Int,
+    private val qualifierOnStack: Boolean = false
+) :
     ExpressionPushingInstruction(KotlinExpressionAnchor(call)) {
     override fun accept(interpreter: DataFlowInterpreter, stateBefore: DfaMemoryState): Array<DfaInstructionState> {
         repeat(argCount) { stateBefore.pop() }
+        if (qualifierOnStack) {
+            stateBefore.pop()
+        }
         stateBefore.flushFields()
         pushResult(interpreter, stateBefore, getExpressionDfType(call))
         return nextStates(interpreter, stateBefore)

@@ -47,6 +47,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 /*
 com.jetbrains.cidr.lang.hmap.OCHeaderMaps#writeToChannel (to investigate)
+org/jetbrains/idea/svn/status/CmdStatusClient.kt:51 (empty stack)
+com.intellij.database.model.gen.MetaProcessor#processEntityInheritance (false-negative, line 177)
+
  */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
@@ -404,7 +407,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         pushUnknown()
     }
 
-    private fun processCallExpression(expr: KtCallExpression) {
+    private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
         val args = expr.valueArgumentList?.arguments
         var argCount = 0
         if (args != null) {
@@ -426,7 +429,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
 
-        addCall(expr, argCount)
+        addCall(expr, argCount, qualifierOnStack)
         // TODO: support pure calls, some known methods, probably Java contracts, etc.
     }
 
@@ -469,8 +472,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
     }
 
-    private fun addCall(expr: KtExpression, args: Int) {
-        addInstruction(KotlinFunctionCallInstruction(expr, args))
+    private fun addCall(expr: KtExpression, args: Int, qualifierOnStack: Boolean = false) {
+        addInstruction(KotlinFunctionCallInstruction(expr, args, qualifierOnStack))
         val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
         if (transfer != null) {
             addInstruction(EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer))
@@ -494,8 +497,14 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     addInstruction(WrapDerivedVariableInstruction(expr.getKotlinType().toDfType(expr), SpecialField.UNBOX))
                 }
             } else {
-                addInstruction(PopInstruction())
-                processExpression(selector)
+                when (selector) {
+                    is KtCallExpression -> processCallExpression(selector, true)
+                    is KtSimpleNameExpression -> processReferenceExpression(selector, true)
+                    else -> {
+                        addInstruction(PopInstruction())
+                        processExpression(selector)
+                    }
+                }
             }
             addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
         }
@@ -848,11 +857,14 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         pushUnknown()
     }
 
-    private fun processReferenceExpression(expr: KtSimpleNameExpression) {
+    private fun processReferenceExpression(expr: KtSimpleNameExpression, qualifierOnStack: Boolean = false) {
         val dfVar = KtVariableDescriptor.createFromSimpleName(factory, expr)
         if (dfVar != null) {
+            if (qualifierOnStack) {
+                addInstruction(PopInstruction())
+            }
             addInstruction(JvmPushInstruction(dfVar, KotlinExpressionAnchor(expr)))
-            var realExpr : KtExpression = expr
+            var realExpr: KtExpression = expr
             while (true) {
                 val parent = realExpr.parent
                 if (parent is KtQualifiedExpression && parent.selectorExpression == realExpr) {
@@ -864,7 +876,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addImplicitConversion(expr, declaredType, exprType)
             return
         }
-        addCall(expr, 0)
+        addCall(expr, 0, qualifierOnStack)
     }
 
     private fun processConstantExpression(expr: KtConstantExpression) {
