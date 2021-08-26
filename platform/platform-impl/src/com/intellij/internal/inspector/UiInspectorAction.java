@@ -179,15 +179,11 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   }
 
   @Override
-  public List<AnAction> promote(@NotNull List<? extends AnAction> actions,
-                                @NotNull DataContext context) {
-
-    ArrayList<AnAction> sorted = new ArrayList<>(actions);
+  public @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     if (context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) instanceof EditorComponentImpl) {
-      sorted.remove(this);
-      sorted.add(this);
+      return List.of(this);
     }
-    return sorted;
+    return null;
   }
 
   private static void closeAllInspectorWindows() {
