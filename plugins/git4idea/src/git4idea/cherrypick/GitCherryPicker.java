@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitApplyChangesProcess;
@@ -134,6 +135,6 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Override
   public boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots) {
-    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRootQuick(r) != null);
+    return ContainerUtil.all(roots, r -> myRepositoryManager.getRepositoryForRootQuick(r) != null);
   }
 }
