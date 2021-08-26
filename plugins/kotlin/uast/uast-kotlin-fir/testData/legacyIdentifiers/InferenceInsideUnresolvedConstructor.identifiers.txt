@@ -1,6 +1,6 @@
-bar -> null
+bar -> UMethod (name = getBar)
 Any -> USimpleNameReferenceExpression (identifier = Any)
-get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
+get -> UMethod (name = getBar)
 Unresolved -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
 id -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
 T -> [!] UnknownKotlinExpression (TYPE_PARAMETER)
