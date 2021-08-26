@@ -65,6 +65,10 @@ public final class NativeFileType implements INativeFileType {
   }
 
   public static boolean openAssociatedApplication(@NotNull final VirtualFile file) {
+    if (!file.isInLocalFileSystem()) {
+      throw new IllegalArgumentException("Non-local file: " + file + "; FS=" + file.getFileSystem());
+    }
+
     final List<String> commands = new ArrayList<>();
     if (SystemInfo.isWindows) {
       commands.add("rundll32.exe");
