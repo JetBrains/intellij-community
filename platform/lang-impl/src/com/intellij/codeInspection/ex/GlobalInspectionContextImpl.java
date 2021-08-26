@@ -735,7 +735,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  private static @NotNull <T extends InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
+  public @NotNull <T extends InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
                                                                                                @NotNull PsiFile file,
                                                                                                boolean includeDoNotShow,
                                                                                                @NotNull Predicate<? super T> filter) {
