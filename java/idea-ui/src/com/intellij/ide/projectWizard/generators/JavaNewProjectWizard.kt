@@ -46,7 +46,7 @@ class JavaNewProjectWizard : NewProjectWizard {
               }
             }
           sdkCombo()
-        }
+        }.largeGapAfter()
       }
     }
 
@@ -68,6 +68,8 @@ class JavaNewProjectWizard : NewProjectWizard {
 
     companion object {
       val KEY = Key.create<Settings>(Settings::class.java.name)
+
+      fun getSdk(context: WizardContext) = KEY.get(context).sdk
     }
   }
 }

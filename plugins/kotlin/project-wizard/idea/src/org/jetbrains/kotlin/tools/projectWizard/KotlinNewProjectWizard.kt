@@ -45,7 +45,7 @@ class KotlinNewProjectWizard : NewProjectWizard {
                             }
                         }
                     sdkCombo()
-                }
+                }.largeGapAfter()
             }
         }
 

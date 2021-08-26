@@ -35,7 +35,7 @@ abstract class NewProjectWizardMultiStep<S : NewProjectWizardMultiStep.Settings<
         else {
           buttonSelector(steps.map { it.key }, settings.stepProperty) { it }
         }
-      }
+      }.largeGapAfter()
 
       setupChildUI(this)
 

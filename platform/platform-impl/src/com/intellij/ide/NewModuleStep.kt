@@ -136,6 +136,11 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
 
     companion object {
       val KEY = Key.create<Settings>(Settings::class.java.name)
+
+      fun getNameProperty(context: WizardContext) = KEY.get(context).nameProperty
+      fun getPathProperty(context: WizardContext) = KEY.get(context).pathProperty
+      fun getName(context: WizardContext) = KEY.get(context).name
+      fun getPath(context: WizardContext) = KEY.get(context).projectPath
     }
   }
 
