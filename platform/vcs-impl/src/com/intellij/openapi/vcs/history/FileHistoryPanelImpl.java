@@ -46,6 +46,7 @@ import com.intellij.util.TreeItem;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.JBDateFormat;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -684,7 +685,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
           setOpaque(selected);
           Date date = (Date)value;
           if (date != null) {
-            append(DateFormatUtil.formatDateTime(date), getDefaultAttributes());
+            append(JBDateFormat.getFormatter().formatPrettyDateTime(date), getDefaultAttributes());
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
         }
