@@ -1326,7 +1326,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
       else {
         result = myConflictingMappingTracker.warnAndResolveConflict(newMatcher, oldFtd, newFtd);
-        LOG.debug(newMatcher + " had a conflict between " + oldFtd + " and " + newFtd + " and the winner is ... ... ... " + result);
+        if (oldFtd != null) {
+          LOG.debug(newMatcher + " had a conflict between " + oldFtd + " and " + newFtd + " and the winner is ... ... ... " + result);
+        }
       }
       if (!result.approved) {
         notificationsShown.add(result);
