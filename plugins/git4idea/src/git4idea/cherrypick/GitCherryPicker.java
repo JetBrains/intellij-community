@@ -4,8 +4,12 @@ package git4idea.cherrypick;
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
@@ -46,12 +50,24 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Override
   public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.setIndeterminate(false);
+    }
+    Ref<Integer> cherryPickedCommitsCount = Ref.create(0);
     new GitApplyChangesProcess(myProject, commits, true,
                                GitBundle.message("cherry.pick.name"), GitBundle.message("cherry.pick.applied"),
-                               (repository, commit, autoCommit, listeners) ->
-                                 Git.getInstance()
-                                   .cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
-                                               listeners.toArray(new GitLineHandlerListener[0])),
+                               (repository, commit, autoCommit, listeners) -> {
+                                 if (indicator != null) {
+                                   indicator.setText(DvcsBundle.message("cherry.picking.process.commit", StringUtil.trimMiddle(commit.getSubject(), 30)));
+                                   indicator.setFraction((double) cherryPickedCommitsCount.get() / commits.size());
+                                 }
+                                 GitCommandResult result = Git.getInstance()
+                                   .cherryPick(repository, commit.getId().asString(), autoCommit, shouldAddSuffix(repository, commit.getId()),
+                                               listeners.toArray(new GitLineHandlerListener[0]));
+                                 cherryPickedCommitsCount.set(cherryPickedCommitsCount.get() + 1);
+                                 return result;
+                               },
                                new GitAbortOperationAction.CherryPick(),
                                result -> isNothingToCommitMessage(result),
                                (repository, commit) -> createCommitMessage(repository, commit),
