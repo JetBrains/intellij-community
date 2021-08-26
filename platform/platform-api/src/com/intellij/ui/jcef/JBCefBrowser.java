@@ -342,8 +342,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   // for binary compatibility
   protected class DefaultCefContextMenuHandler extends JBCefBrowserBase.DefaultCefContextMenuHandler {
-    public DefaultCefContextMenuHandler(boolean isInternal) {
-      super(isInternal);
+    public DefaultCefContextMenuHandler() {
+      super();
+    }
+    public DefaultCefContextMenuHandler(boolean isOpenDevToolsItemEnabled) {
+      super(isOpenDevToolsItemEnabled);
     }
   }
 

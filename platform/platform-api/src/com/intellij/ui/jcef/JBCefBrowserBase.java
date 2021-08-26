@@ -3,11 +3,11 @@ package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -598,15 +598,19 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   protected DefaultCefContextMenuHandler createDefaultContextMenuHandler() {
-    return new DefaultCefContextMenuHandler(ApplicationManager.getApplication().isInternal());
+    return new DefaultCefContextMenuHandler();
   }
 
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
     protected static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
-    private final boolean isInternal;
+    private final boolean isOpenDevToolsItemEnabled;
 
-    public DefaultCefContextMenuHandler(boolean isInternal) {
-      this.isInternal = isInternal;
+    public DefaultCefContextMenuHandler() {
+      this.isOpenDevToolsItemEnabled = Registry.is("ide.browser.jcef.contextMenu.devTools.enabled");
+    }
+
+    public DefaultCefContextMenuHandler(boolean isOpenDevToolsItemEnabled) {
+      this.isOpenDevToolsItemEnabled = isOpenDevToolsItemEnabled;
     }
 
     @Override
@@ -615,7 +619,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         model.clear();
         return;
       }
-      if (isInternal) {
+      if (isOpenDevToolsItemEnabled) {
         model.addItem(DEBUG_COMMAND_ID, "Open DevTools");
       }
     }
