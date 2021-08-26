@@ -232,6 +232,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       return;
     }
 
+    TextRange existingDirtyScope = myFileStatusMap.getFileDirtyScopeForAllPassesCombined(document);
     PsiElement element = whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document) ? child : child.getParent();
     while (true) {
       if (element == null || element instanceof PsiFile || element instanceof PsiDirectory) {
@@ -241,8 +242,16 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
 
       PsiElement scope = getChangeHighlightingScope(element);
       if (scope != null) {
-        myFileStatusMap.markFileScopeDirty(document, scope.getTextRange(), fileLength, "Scope: "+scope);
-        return;
+        TextRange scopeRange = scope.getTextRange();
+        // if some unrelated scope already marked dirty, we shouldn't just add another scope and return,
+        // because between these two dirty whitespaces might easily be some other non-whitespace PSI,
+        // and this PSI element is not expected to be highlighted alone, which could lead to unexpected highlighter disappearances
+        // see DaemonRespondToChangesTest.testPutArgumentsOnSeparateLinesIntentionMustNotRemoveErrorHighlighting
+        if (existingDirtyScope == null || scopeRange.contains(existingDirtyScope)) {
+          myFileStatusMap.markFileScopeDirty(document, scopeRange, fileLength, "Scope: " + scope);
+          return;
+        }
+        existingDirtyScope = existingDirtyScope.union(scopeRange);
       }
 
       element = element.getParent();
