@@ -1,3 +1,3 @@
 class Test {
-    private native String getResult();
+    private native String getResult();<caret>
 }
