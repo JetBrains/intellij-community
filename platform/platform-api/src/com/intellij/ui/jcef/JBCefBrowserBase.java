@@ -130,6 +130,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   protected final @NotNull JBCefClient myCefClient;
   protected final @NotNull CefBrowser myCefBrowser;
   private final boolean myIsOffScreenRendering;
+  private final boolean myEnableOpenDevToolsMenuItem;
   private final @Nullable CefLifeSpanHandler myLifeSpanHandler;
   private final @Nullable CefLoadHandler myLoadHandler;
   private final @Nullable CefRequestHandler myRequestHandler;
@@ -143,6 +144,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myCefClient = ObjectUtils.notNull(builder.myClient, () -> JBCefApp.getInstance().createClient(true));
 
     myIsOffScreenRendering = builder.myIsOffScreenRendering;
+    myEnableOpenDevToolsMenuItem = builder.myEnableOpenDevToolsMenuItem;
     boolean isDefaultBrowserCreated = false;
     CefBrowser cefBrowser = builder.myCefBrowser;
 
@@ -606,7 +608,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     private final boolean isOpenDevToolsItemEnabled;
 
     public DefaultCefContextMenuHandler() {
-      this.isOpenDevToolsItemEnabled = Registry.is("ide.browser.jcef.contextMenu.devTools.enabled");
+      this.isOpenDevToolsItemEnabled = myEnableOpenDevToolsMenuItem || Registry.is("ide.browser.jcef.contextMenu.devTools.enabled");
     }
 
     public DefaultCefContextMenuHandler(boolean isOpenDevToolsItemEnabled) {
