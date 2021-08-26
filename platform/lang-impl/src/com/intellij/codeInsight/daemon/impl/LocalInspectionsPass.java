@@ -137,12 +137,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers) {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     inspect(new ArrayList<>(toolWrappers), iManager, false, progress);
-    addDescriptorsFromInjectedResults(context);
+    addDescriptorsFromInjectedResultsInBatch(context);
     List<InspectionResult> resultList = result.get(getFile());
     if (resultList == null) return;
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
       String shortName = toolWrapper.getShortName();
+      List<ProblemDescriptor> toReport = new ArrayList<>(inspectionResult.foundProblems.size());
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
         ProblemHighlightType highlightType = descriptor.getHighlightType();
         if (highlightType == ProblemHighlightType.INFORMATION) {
@@ -164,34 +165,34 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         else if (highlightType == ProblemHighlightType.POSSIBLE_PROBLEM) {
           continue;
         }
-        addDescriptors(toolWrapper, descriptor, context);
+        toReport.add(descriptor);
       }
+      addDescriptors(toolWrapper, toReport, context);
     }
   }
 
   private void addDescriptors(@NotNull LocalInspectionToolWrapper toolWrapper,
-                              @NotNull ProblemDescriptor descriptor,
+                              @NotNull Collection<? extends ProblemDescriptor> descriptors,
                               @NotNull GlobalInspectionContextImpl context) {
     InspectionToolPresentation toolPresentation = context.getPresentation(toolWrapper);
-    BatchModeDescriptorsUtil.addProblemDescriptors(Collections.singletonList(descriptor), toolPresentation, myIgnoreSuppressed,
-                                                   context,
-                                                   toolWrapper.getTool());
+    BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, myIgnoreSuppressed, context, toolWrapper.getTool());
   }
 
-  private void addDescriptorsFromInjectedResults(@NotNull GlobalInspectionContextImpl context) {
+  private void addDescriptorsFromInjectedResultsInBatch(@NotNull GlobalInspectionContextImpl context) {
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
       PsiFile file = entry.getKey();
       if (file == getFile()) continue; // not injected
       List<InspectionResult> resultList = entry.getValue();
       for (InspectionResult inspectionResult : resultList) {
         LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
+        List<ProblemDescriptor> toReport = new ArrayList<>(inspectionResult.foundProblems.size());
         for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
           PsiElement psiElement = descriptor.getPsiElement();
           if (psiElement == null) continue;
           if (toolWrapper.getTool().isSuppressedFor(psiElement)) continue;
-
-          addDescriptors(toolWrapper, descriptor, context);
+          toReport.add(descriptor);
         }
+        addDescriptors(toolWrapper, toReport, context);
       }
     }
   }
