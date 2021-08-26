@@ -122,7 +122,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "splash", "nosplash"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 14)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 15)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))
@@ -131,10 +131,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
                                                                     EventFields.Int("index_partition_size"),
                                                                     EventFields.Int("index_partition_free"))
     private val GC: EventId1<String?> = GROUP.registerEvent("garbage.collector",
-      EventFields.String(
-        "name",
-        arrayListOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Unknown", "Other")
-      )
+      EventFields.String("name", arrayListOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other"))
     )
     private val JVM: EventId3<Version?, String?, String?> = GROUP.registerEvent("jvm",
       EventFields.VersionByObject,
