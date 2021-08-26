@@ -10,8 +10,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
   name = "FileTypeManager",
   storages = @Storage("filetypes.xml"),
   additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC,
-  category = ComponentCategory.CODE)
+  category = SettingsCategory.CODE)
 
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
   static final ExtensionPointName<FileTypeBean> EP_NAME = new ExtensionPointName<>("com.intellij.fileType");

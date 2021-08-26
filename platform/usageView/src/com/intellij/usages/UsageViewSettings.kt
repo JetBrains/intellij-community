@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.Transient
  * Passed params will be used as default values, so, do not use constructor if instance will be used as a state (unless you want to change defaults)
  */
 @Suppress("PropertyName")
-@State(name = "UsageViewSettings", storages = [Storage("usageView.xml")], reportStatistic = true, category = ComponentCategory.UI)
+@State(name = "UsageViewSettings", storages = [Storage("usageView.xml")], reportStatistic = true, category = SettingsCategory.UI)
 open class UsageViewSettings(
   isGroupByFileStructure: Boolean = true,
   isGroupByModule: Boolean = true,

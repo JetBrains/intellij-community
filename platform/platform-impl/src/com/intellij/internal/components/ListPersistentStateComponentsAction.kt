@@ -77,7 +77,7 @@ class ListPersistentStateComponentsAction : AnAction() {
       private fun getCategory(state: State?, descriptor: PluginDescriptor?, roamingType: String) =
         if (roamingType != RoamingType.DISABLED.toString()) {
           if (descriptor?.name == PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.idString) state?.category?.name ?: ""
-          else ComponentCategory.PLUGINS.name
+          else SettingsCategory.PLUGINS.name
         }
         else ""
 

@@ -3,7 +3,7 @@ package com.intellij.dupLocator;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -21,7 +21,7 @@ import java.util.TreeMap;
 @State(
   name = "MultiLanguageDuplocatorSettings",
   storages = @Storage("duplocatorSettings.xml"),
-  category = ComponentCategory.CODE
+  category = SettingsCategory.CODE
 )
 public class MultilanguageDuplocatorSettings implements PersistentStateComponent<Element> {
   private final Map<String, DefaultDuplocatorState> mySettingsMap = new TreeMap<>();

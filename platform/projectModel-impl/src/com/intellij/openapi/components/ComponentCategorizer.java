@@ -10,13 +10,13 @@ public class ComponentCategorizer {
   private ComponentCategorizer() {
   }
 
-  public static @Nullable ComponentCategory getCategory(@NotNull PersistentStateComponent<?> component) {
+  public static @Nullable SettingsCategory getCategory(@NotNull PersistentStateComponent<?> component) {
     PluginId pluginId = getPluginId(component);
     if (pluginId != null) {
-      return ComponentCategory.PLUGINS;
+      return SettingsCategory.PLUGINS;
     }
     State state = component.getClass().getAnnotation(State.class);
-    return state != null ? state.category() : ComponentCategory.OTHER;
+    return state != null ? state.category() : SettingsCategory.OTHER;
   }
 
   public static @Nullable PluginId getPluginId(@NotNull PersistentStateComponent<?> component) {

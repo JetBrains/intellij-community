@@ -456,7 +456,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   @State(
     name = "PlaybackDebugger",
     storages = @Storage(value = "playbackDebugger.xml", roamingType = RoamingType.PER_OS),
-    category = ComponentCategory.TOOLS
+    category = SettingsCategory.TOOLS
   )
   public static class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
     @Attribute

@@ -3,7 +3,7 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -27,7 +27,7 @@ import java.util.Map;
 @State(
     name = "TemplateDataLanguagePatterns",
     storages = @Storage("templateLanguages.xml"),
-    category = ComponentCategory.CODE )
+    category = SettingsCategory.CODE )
 public final class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
   private FileTypeAssocTable<Language> myAssocTable = new FileTypeAssocTable<>();
   @NonNls private static final String SEPARATOR = ";";

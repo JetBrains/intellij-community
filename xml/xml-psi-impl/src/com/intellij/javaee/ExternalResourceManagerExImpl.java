@@ -37,7 +37,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-@State(name = "ExternalResourceManagerImpl", storages = @Storage("javaeeExternalResources.xml"), category = ComponentCategory.CODE)
+@State(name = "ExternalResourceManagerImpl", storages = @Storage("javaeeExternalResources.xml"), category = SettingsCategory.CODE)
 public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
 

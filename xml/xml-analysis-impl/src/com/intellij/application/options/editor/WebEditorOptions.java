@@ -2,7 +2,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 @State(
   name = "XmlEditorOptions",
   storages = @Storage("editor.xml"),
-  category = ComponentCategory.CODE
+  category = SettingsCategory.CODE
 )
 public final class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
   private static final boolean myShowCssColorPreviewInGutter = true;

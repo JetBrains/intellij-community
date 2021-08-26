@@ -18,7 +18,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -64,7 +64,7 @@ import java.util.function.Function;
   name = "EditorColorsManagerImpl",
   storages = @Storage("colors.scheme.xml"),
   additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC,
-  category = ComponentCategory.UI
+  category = SettingsCategory.UI
 )
 @ApiStatus.Internal
 public final class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {

@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = ComponentCategory.CODE)
+@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
@@ -121,7 +121,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @State(
     name = "OsSpecificEditorSettings",
     storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS),
-    category = ComponentCategory.CODE)
+    category = SettingsCategory.CODE)
   public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 

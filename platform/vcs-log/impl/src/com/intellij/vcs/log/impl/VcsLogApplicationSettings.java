@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -19,7 +19,7 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
 
-@State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"), category = ComponentCategory.TOOLS)
+@State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"), category = SettingsCategory.TOOLS)
 public final class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
   @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
   private State myState = new State();
