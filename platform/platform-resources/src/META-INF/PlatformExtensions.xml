@@ -160,6 +160,9 @@
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionGroupExpander"
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionGroupExpanderImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
