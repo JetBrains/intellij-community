@@ -3686,6 +3686,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       composedText = strBuf.toString();
+      composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
     }
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {
@@ -3781,8 +3782,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             createComposedString(composedTextIndex, text);
 
             runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedText, false, false));
-
-            composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
           }
         }
       }
