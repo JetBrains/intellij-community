@@ -4641,6 +4641,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/arrayStore.kt");
         }
 
+        @TestMetadata("arrayStore2.kt")
+        public void testArrayStore2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/arrayStore2.kt");
+        }
+
+        @TestMetadata("arrayStore3.kt")
+        public void testArrayStore3() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/arrayStore3.kt");
+        }
+
+        @TestMetadata("arrayStore4.kt")
+        public void testArrayStore4() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/arrayStore4.kt");
+        }
+
         @TestMetadata("asNumber.kt")
         public void testAsNumber() throws Exception {
             runTest("testData/inspectionsLocal/dfa/asNumber.kt");

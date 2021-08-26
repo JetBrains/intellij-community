@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -288,8 +289,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(idx)
             val lastIndex = idx == indexes.last()
             val anchor = if (lastIndex) KotlinExpressionAnchor(expr) else null
-            val indexType = idx.getKotlinType()
+            var indexType = idx.getKotlinType()
+            val constructor = indexType?.constructor as? IntegerLiteralTypeConstructor
+            if (constructor != null) {
+                indexType = constructor.getApproximatedType()
+            }
             if (indexType == null || !indexType.fqNameEquals("kotlin.Int")) {
+                if (lastIndex && storedValue != null) {
+                    processExpression(storedValue)
+                    addInstruction(PopInstruction())
+                }
                 addInstruction(EvalUnknownInstruction(anchor, 2))
                 addInstruction(FlushFieldsInstruction())
                 continue
@@ -307,16 +316,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
                 curType = expr.builtIns.getArrayElementType(curType)
             } else {
-                if (lastIndex && storedValue != null) {
-                    processExpression(storedValue)
-                    addInstruction(PopInstruction())
-                }
                 if (KotlinBuiltIns.isString(kotlinType)) {
                     if (indexType.canBeNull()) {
                         addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                     }
                     val transfer = trapTracker.maybeTransferValue("java.lang.StringIndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
+                    if (lastIndex && storedValue != null) {
+                        processExpression(storedValue)
+                        addInstruction(PopInstruction())
+                    }
                     addInstruction(PushValueInstruction(DfTypes.typedObject(PsiType.CHAR, Nullability.UNKNOWN), anchor))
                 } else if (kotlinType != null && (KotlinBuiltIns.isListOrNullableList(kotlinType) ||
                     kotlinType.supertypes().any { type -> KotlinBuiltIns.isListOrNullableList(type) })) {
@@ -325,8 +334,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     }
                     val transfer = trapTracker.maybeTransferValue("java.lang.IndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
+                    if (lastIndex && storedValue != null) {
+                        processExpression(storedValue)
+                        addInstruction(PopInstruction())
+                    }
                     pushUnknown()
                 } else {
+                    if (lastIndex && storedValue != null) {
+                        processExpression(storedValue)
+                        addInstruction(PopInstruction())
+                    }
                     addInstruction(EvalUnknownInstruction(anchor, 2))
                     addInstruction(FlushFieldsInstruction())
                 }
@@ -976,7 +993,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processAssignmentExpression(expr: KtBinaryExpression) {
         val left = expr.left
         val right = expr.right
-        if (left is KtArrayAccessExpression) {
+        val token = expr.operationToken
+        if (left is KtArrayAccessExpression && token == KtTokens.EQ) {
             // TODO: compound-assignment for arrays
             processArrayAccess(left, right)
             return
@@ -993,7 +1011,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(FlushFieldsInstruction())
             return
         }
-        val token = expr.operationToken
         val mathOp = mathOpFromAssignmentToken(token)
         if (mathOp != null) {
             val resultType = balanceType(leftType, rightType)
