@@ -21,7 +21,8 @@ abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiers
         "uast-kotlin/testData/SimpleAnnotated.kt",
         "uast-kotlin/testData/ReifiedParameters.kt",
         "uast-kotlin/testData/ReceiverFun.kt",
-        // TODO: remaining property accessor conversion in KotlinUSimpleReferenceExpression
+        // TODO: incorrect parent chain for setter parameter
+        "uast-kotlin/testData/PropertyAccessors.kt",
         "uast-kotlin/testData/PropertyInitializer.kt",
     ).mapTo(mutableSetOf()) { KotlinRoot.DIR_PATH.resolve("uast").resolve(it).absolute().normalize().toString() }
 
