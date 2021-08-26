@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.download.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -32,7 +32,7 @@ class DownloadableFileServiceImpl extends DownloadableFileService {
 
       @Override
       protected DownloadableFileDescription createFileDescription(ArtifactItem item, String url, String prefix) {
-        return getInstance().createFileDescription(url, item.getName());
+        return DownloadableFileService.getInstance().createFileDescription(url, item.getName());
       }
     };
   }

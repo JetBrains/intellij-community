@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.download.impl;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.*;
@@ -20,7 +20,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +54,7 @@ class FileDownloaderImpl implements FileDownloader {
     myProject = project;
     myFileDescriptions = fileDescriptions;
     myParentComponent = parentComponent;
-    myDialogTitle = IdeBundle.message("progress.download.0.title", StringUtil.capitalize(presentableDownloadName));
+    myDialogTitle = IdeCoreBundle.message("progress.download.0.title", StringUtil.capitalize(presentableDownloadName));
   }
 
   @Nullable
@@ -137,7 +136,7 @@ class FileDownloaderImpl implements FileDownloader {
 
     Exception exception = exceptionRef.get();
     if (exception != null) {
-      final boolean tryAgain = IOExceptionDialog.showErrorDialog(myDialogTitle, exception.getMessage());
+      final boolean tryAgain = IdeUiService.getInstance().showErrorDialog(myDialogTitle, exception.getMessage());
       if (tryAgain) {
         return downloadWithProcess(targetDir, project, parentComponent);
       }
@@ -162,7 +161,7 @@ class FileDownloaderImpl implements FileDownloader {
           localFiles.set(download(targetDir));
         }
         catch (IOException exception) {
-          final boolean tryAgain = IOExceptionDialog.showErrorDialog(myDialogTitle, exception.getMessage());
+          final boolean tryAgain = IdeUiService.getInstance().showErrorDialog(myDialogTitle, exception.getMessage());
           if (tryAgain) {
             downloadWithBackgroundProcess(targetDir, project).thenAccept(pairs -> result.complete(pairs));
           }
@@ -199,7 +198,7 @@ class FileDownloaderImpl implements FileDownloader {
 
     try {
       final ConcurrentTasksProgressManager progressManager = new ConcurrentTasksProgressManager(parentIndicator, myFileDescriptions.size());
-      parentIndicator.setText(IdeBundle.message("progress.downloading.0.files.text", myFileDescriptions.size()));
+      parentIndicator.setText(IdeCoreBundle.message("progress.downloading.0.files.text", myFileDescriptions.size()));
       int maxParallelDownloads = Runtime.getRuntime().availableProcessors();
       LOG.debug("Downloading " + myFileDescriptions.size() + " files using " + maxParallelDownloads + " threads");
       long start = System.currentTimeMillis();
@@ -231,7 +230,7 @@ class FileDownloaderImpl implements FileDownloader {
               downloaded = downloadFile(description, existing, indicator);
             }
             catch (IOException e) {
-              throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(),
+              throw new IOException(IdeCoreBundle.message("error.file.download.failed", description.getDownloadUrl(),
                                                       e.getMessage()), e);
             }
             if (FileUtil.filesEqual(downloaded, existing)) {
@@ -281,10 +280,10 @@ class FileDownloaderImpl implements FileDownloader {
   @Nullable
   private static VirtualFile chooseDirectoryForFiles(Project project, JComponent parentComponent) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(IdeBundle.message("dialog.directory.for.downloaded.files.title"))
-      .withDescription(IdeBundle.message("dialog.directory.for.downloaded.files.description"));
+      .withTitle(IdeCoreBundle.message("dialog.directory.for.downloaded.files.title"))
+      .withDescription(IdeCoreBundle.message("dialog.directory.for.downloaded.files.description"));
     VirtualFile baseDir = project != null ? project.getBaseDir() : null;
-    return FileChooser.chooseFile(descriptor, parentComponent, project, baseDir);
+    return IdeUiService.getInstance().chooseFile(descriptor, parentComponent, project, baseDir);
   }
 
   private static List<Pair<File, DownloadableFileDescription>> moveToDir(List<Pair<File, DownloadableFileDescription>> downloadedFiles,
@@ -329,7 +328,7 @@ class FileDownloaderImpl implements FileDownloader {
                                    @NotNull final File existingFile,
                                    @NotNull final ProgressIndicator indicator) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
-    indicator.setText(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
+    indicator.setText(IdeCoreBundle.message("progress.connecting.to.download.file.text", presentableUrl));
 
     return HttpRequests.request(description.getDownloadUrl()).connect(new HttpRequests.RequestProcessor<>() {
       @Override
@@ -339,7 +338,7 @@ class FileDownloaderImpl implements FileDownloader {
           return existingFile;
         }
 
-        indicator.setText(IdeBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
+        indicator.setText(IdeCoreBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
         return request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
       }
     });

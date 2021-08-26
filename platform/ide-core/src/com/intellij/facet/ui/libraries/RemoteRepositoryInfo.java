@@ -16,10 +16,10 @@
 
 package com.intellij.facet.ui.libraries;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.diagnostic.Logger;
 
 public class RemoteRepositoryInfo {
   private static final Logger LOG = Logger.getInstance(RemoteRepositoryInfo.class);

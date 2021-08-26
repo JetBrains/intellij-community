@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
@@ -144,6 +145,14 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
+  public VirtualFile chooseFile(FileChooserDescriptor descriptor,
+                                JComponent component,
+                                Project project,
+                                VirtualFile dir) {
+    return FileChooser.chooseFile(descriptor, component, project, dir);
+  }
+
+  @Override
   public SSLContext getSslContext() {
     return CertificateManager.getInstance().getSslContext();
   }
@@ -166,5 +175,15 @@ public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public List<Proxy> getProxyList(URL url) {
     return CommonProxy.getInstance().select(url);
+  }
+
+  @Override
+  public void prepareURL(String url) throws IOException {
+    HttpConfigurable.getInstance().prepareURL(url);
+  }
+
+  @Override
+  public boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DetailedDescription String message) {
+    return IOExceptionDialog.showErrorDialog(title, message);
   }
 }

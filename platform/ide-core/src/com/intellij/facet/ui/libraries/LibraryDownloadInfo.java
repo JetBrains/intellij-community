@@ -3,10 +3,11 @@
 package com.intellij.facet.ui.libraries;
 
 import com.intellij.openapi.util.Comparing;
-import java.util.Objects;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class LibraryDownloadInfo {
   @Nullable private final RemoteRepositoryInfo myRemoteRepository;
