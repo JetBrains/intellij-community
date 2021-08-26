@@ -2,15 +2,15 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.types.JvmSubstitutor
-import com.intellij.psi.PsiElement
 
 class SimpleFieldRequest(
   private val fieldName: String,
   private val modifiers: Collection<JvmModifier>,
   private val fieldType: ExpectedTypes,
   private val targetSubstitutor: JvmSubstitutor,
-  private val initializer: PsiElement? = null,
+  private val initializer: JvmValue? = null,
   private val isConstant: Boolean,
 ) : CreateFieldRequest {
   override fun isValid(): Boolean = true
@@ -18,7 +18,7 @@ class SimpleFieldRequest(
   override fun getModifiers() = modifiers
   override fun getFieldType() = fieldType
   override fun getTargetSubstitutor() = targetSubstitutor
-  override fun getInitializer(): PsiElement? = initializer
+  override fun getInitializer(): JvmValue? = initializer
   override fun isConstant(): Boolean = isConstant
 }
 
@@ -27,6 +27,6 @@ fun fieldRequest(
   modifiers: Collection<JvmModifier>,
   fieldType: ExpectedTypes,
   targetSubstitutor: JvmSubstitutor,
-  initializer: PsiElement?,
+  initializer: JvmValue?,
   isConstant: Boolean,
 ) = SimpleFieldRequest(fieldName, modifiers, fieldType, targetSubstitutor, initializer, isConstant)

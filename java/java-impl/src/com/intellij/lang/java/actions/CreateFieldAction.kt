@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHel
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
+import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
@@ -89,9 +90,9 @@ internal class JavaFieldRenderer(
       PsiUtil.setModifierProperty(field, modifier, true)
     }
 
-    val initializer = request.initializer
-    if (initializer is PsiExpression) {
-      field.initializer = initializer
+    val requestInitializer = request.initializer
+    if (requestInitializer is JvmLong) {
+      field.initializer = PsiElementFactory.getInstance(project).createExpressionFromText("${requestInitializer.value}L", null)
     }
 
     return field

@@ -2,8 +2,8 @@
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmValue;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +31,11 @@ public interface CreateFieldRequest extends ActionRequest {
   JvmSubstitutor getTargetSubstitutor();
 
 
+  /**
+   * The field initializer. Currently, only value initializers are supported.
+   */
   @Nullable
-  PsiElement getInitializer();
+  JvmValue getInitializer();
 
   /**
    * Implementation are free to render any modifiers as long as they don't contradict with requested ones.
