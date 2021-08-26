@@ -59,14 +59,14 @@ fun UsageReplacementStrategy.replaceUsagesInWholeProject(
 
               ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) {
                   project.executeWriteCommand(commandName) {
-                      this@replaceUsagesInWholeProject.replaceUsages(usages)
+                      this@replaceUsagesInWholeProject.replaceUsages(usages, replaceDeprecatedUsages = true)
                   }
               }
             }
         })
 }
 
-fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpression>) {
+fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpression>, replaceDeprecatedUsages: Boolean = false) {
     val usagesByFile = usages.groupBy { it.containingFile }
 
     for ((file, usagesInFile) in usagesByFile) {
@@ -77,7 +77,7 @@ fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpress
 
         var usagesToProcess = usagesInFile
         while (usagesToProcess.isNotEmpty()) {
-            if (processUsages(usagesToProcess, importsToDelete)) break
+            if (processUsages(usagesToProcess, importsToDelete, replaceDeprecatedUsages)) break
 
             // some usages may get invalidated we need to find them in the tree
             usagesToProcess = file.collectDescendantsOfType { it.getCopyableUserData(UsageReplacementStrategy.KEY) != null }
@@ -95,6 +95,7 @@ fun UsageReplacementStrategy.replaceUsages(usages: Collection<KtReferenceExpress
 private fun UsageReplacementStrategy.processUsages(
     usages: List<KtReferenceExpression>,
     importsToDelete: MutableList<KtImportDirective>,
+    replaceDeprecatedUsages: Boolean
 ): Boolean {
     val sortedUsages = usages.sortedWith { element1, element2 ->
         if (element1.parent.textRange.intersects(element2.parent.textRange)) {
@@ -112,10 +113,12 @@ private fun UsageReplacementStrategy.processUsages(
                 continue
             }
 
-            val specialUsage = unwrapSpecialUsageOrNull(usage)
-            if (specialUsage != null) {
-                createReplacer(specialUsage)?.invoke()
-                continue
+            if (!replaceDeprecatedUsages) {
+                val specialUsage = unwrapSpecialUsageOrNull(usage)
+                if (specialUsage != null) {
+                    createReplacer(specialUsage)?.invoke()
+                    continue
+                }
             }
 
             //TODO: keep the import if we don't know how to replace some of the usages
