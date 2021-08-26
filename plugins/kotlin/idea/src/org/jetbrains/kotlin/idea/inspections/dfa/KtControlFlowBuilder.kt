@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 
 /*
-com.jetbrains.cidr.lang.hmap.OCHeaderMaps#writeToChannel (to investigate)
 org/jetbrains/idea/svn/status/CmdStatusClient.kt:51 (empty stack)
 com.intellij.database.model.gen.MetaProcessor#processEntityInheritance (false-negative, line 177)
 
@@ -1056,13 +1055,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(left)
         addImplicitConversion(left, resultType)
         processExpression(right)
+        if (!mathOp.isShift) {
+            addImplicitConversion(right, resultType)
+        }
         if (mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) {
             val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.ArithmeticException")
             val zero = if (resultType?.isLong() == true) DfTypes.longValue(0) else DfTypes.intValue(0)
             addInstruction(EnsureInstruction(null, RelationType.NE, zero, transfer, true))
-        }
-        if (!mathOp.isShift) {
-            addImplicitConversion(right, resultType)
         }
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
     }

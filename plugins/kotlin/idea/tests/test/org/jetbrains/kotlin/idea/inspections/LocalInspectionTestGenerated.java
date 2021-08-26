@@ -4996,6 +4996,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/orRange.kt");
         }
 
+        @TestMetadata("percLongInt.kt")
+        public void testPercLongInt() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/percLongInt.kt");
+        }
+
         @TestMetadata("plusRange.kt")
         public void testPlusRange() throws Exception {
             runTest("testData/inspectionsLocal/dfa/plusRange.kt");
