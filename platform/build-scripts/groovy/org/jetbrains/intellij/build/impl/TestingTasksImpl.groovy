@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -24,6 +25,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.Test
 
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
@@ -438,7 +440,7 @@ class TestingTasksImpl extends TestingTasks {
     if (isRunningInBatchMode()) {
       def mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
       def pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
-      def root = Paths.get(mainModuleTestsOutput);
+      def root = Paths.get(mainModuleTestsOutput)
       Files.walk(root)
         .filter({ it -> 
             pattern.matcher(root.relativize(it).toString()).matches() 
