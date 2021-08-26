@@ -10,5 +10,5 @@ UFile (package = ) [public final class TestPropertyInitializer {...]
             UBlockExpression [{...}] = Undetermined
                 UBinaryExpression (operator = =) [field = p] = Undetermined
                     USimpleNameReferenceExpression (identifier = field) [field] = external field()
-                    USimpleNameReferenceExpression (identifier = p) [p] = external p()
+                    USimpleNameReferenceExpression (identifier = p) [p] = Undetermined
         UMethod (name = TestPropertyInitializer) [public fun TestPropertyInitializer() = UastEmptyExpression]
