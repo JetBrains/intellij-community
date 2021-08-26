@@ -115,8 +115,7 @@ internal class SearchEverywhereMLStatisticsCollector {
                                  result: HashMap<String, Any>,
                                  actionManager: ActionManager) {
     val elementId = elementIdProvider.getId(elementInfo.element)
-    val itemInfo = state.getElementFeatures(elementId, elementInfo.element, elementInfo.contributor, state.queryLength,
-                                            elementInfo.priority)
+    val itemInfo = state.getElementFeatures(elementId, elementInfo.element, elementInfo.contributor, elementInfo.priority)
     if (itemInfo.features.isNotEmpty()) {
       result[FEATURES_DATA_KEY] = itemInfo.features
     }

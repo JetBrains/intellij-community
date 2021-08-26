@@ -11,7 +11,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 internal class SearchEverywhereMlSearchState(
   val sessionStartTime: Long, val searchStartTime: Long,
   val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
-  val keysTyped: Int, val backspacesTyped: Int, val queryLength: Int,
+  val keysTyped: Int, val backspacesTyped: Int, private val queryLength: Int,
   private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
 ) {
   private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
@@ -23,7 +23,6 @@ internal class SearchEverywhereMlSearchState(
   fun getElementFeatures(elementId: Int,
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
-                         queryLength: Int,
                          priority: Int): SearchEverywhereMLItemInfo {
     return cachedElementsInfo.computeIfAbsent(elementId) {
       val features = mutableMapOf<String, Any>()
@@ -50,7 +49,7 @@ internal class SearchEverywhereMlSearchState(
     return cachedMLWeight.computeIfAbsent(elementId) {
       val features = hashMapOf<String, Any>()
       features.putAll(context.features)
-      features.putAll(getElementFeatures(elementId, element, contributor, queryLength, priority).features)
+      features.putAll(getElementFeatures(elementId, element, contributor, priority).features)
       model.predict(features)
     }
   }
