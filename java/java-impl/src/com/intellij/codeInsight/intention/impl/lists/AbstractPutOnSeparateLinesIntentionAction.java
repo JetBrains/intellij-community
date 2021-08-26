@@ -8,6 +8,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,23 +42,28 @@ abstract class AbstractPutOnSeparateLinesIntentionAction<L extends PsiElement, E
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     Context<L, E> context = from(element);
     if (context == null) return;
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    SmartPsiElementPointer<L> pointer = SmartPointerManager.createPointer(context.list);
     Document document = editor.getDocument();
     List<E> elements = context.elements;
-    int size = elements.size();
+    IntList lfOffset = new IntArrayList();
     for (int i = elements.size() - 1; i >= 0; i--) {
       E el = elements.get(i);
       if (nextBreak(el) == null) {
         int offset = findOffsetForBreakAfter(el);
-        if (i == size - 1 && !needTailBreak(el)) continue;
-        document.insertString(offset, "\n");
+        if (i != elements.size() - 1 || needTailBreak(el)) {
+          lfOffset.add(offset);
+        }
       }
     }
     E first = elements.get(0);
     if (needHeadBreak(first)) {
-      document.insertString(findOffsetOfBreakBeforeFirst(first), "\n");
+      int beforeFirst = findOffsetOfBreakBeforeFirst(first);
+      lfOffset.add(beforeFirst);
     }
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    SmartPsiElementPointer<L> pointer = SmartPointerManager.createPointer(context.list);
+    for (int offset : lfOffset.toIntArray()) {
+      document.insertString(offset, "\n");
+    }
     documentManager.commitDocument(document);
     L list = pointer.getElement();
     if (list != null) {
