@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.util.ui.UIUtil
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
@@ -11,6 +13,7 @@ import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import java.awt.Component
 import java.awt.Container
+import java.awt.Rectangle
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -88,18 +91,29 @@ object LearningUiUtil {
     }
   }
 
+  private fun isReallyVisible(component: Component): Boolean {
+    val frame = UIUtil.getParentOfType(IdeFrameImpl::class.java, component) ?: return true
+    val locationOnScreen = component.locationOnScreen
+    val onScreenRect = Rectangle(locationOnScreen.x, locationOnScreen.y, component.width, component.height)
+    val bounds = frame.bounds
+    return bounds.intersects(onScreenRect)
+  }
+
   fun <ComponentType : Component> findShowingComponentWithTimeout(container: Container?,
                                                                   componentClass: Class<ComponentType>,
                                                                   timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
                                                                   selector: ((candidates: Collection<ComponentType>) -> ComponentType?)? = null,
                                                                   finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
     try {
+      val matcher = typeMatcher(componentClass) {
+        it.isShowing && finderFunction(it) && isReallyVisible(it)
+      }
       return if (selector != null) {
-        val result = waitUntilFoundAll(robot, container, typeMatcher(componentClass) { it.isShowing && finderFunction(it) }, timeout)
+        val result = waitUntilFoundAll(robot, container, matcher, timeout)
         selector(result) ?: throw ComponentLookupException("Cannot filter result component from: $result")
       }
       else {
-        waitUntilFound(robot, container, typeMatcher(componentClass) { it.isShowing && finderFunction(it) }, timeout)
+        waitUntilFound(robot, container, matcher, timeout)
       }
     }
     catch (e: WaitTimedOutError) {
@@ -113,7 +127,10 @@ object LearningUiUtil {
                                                                      timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
                                                                      finderFunction: (ComponentType) -> Boolean = { true }): Collection<ComponentType> {
     try {
-      return waitUntilFoundAll(robot, container, typeMatcher(componentClass) { it.isShowing && finderFunction(it) }, timeout)
+      val matcher = typeMatcher(componentClass) {
+        it.isShowing && finderFunction(it) && isReallyVisible(it)
+      }
+      return waitUntilFoundAll(robot, container, matcher, timeout)
     }
     catch (e: WaitTimedOutError) {
       throw ComponentLookupException(
