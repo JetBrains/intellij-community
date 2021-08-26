@@ -449,11 +449,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         pushUnknown()
         val endOffset = DeferredOffset()
         addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
+        flow.startElement(lambda.functionLiteral)
         for (parameter in lambda.valueParameters) {
             flushParameter(parameter)
         }
         processExpression(lambda.bodyExpression)
         addInstruction(PopInstruction())
+        flow.finishElement(lambda.functionLiteral)
         setOffset(endOffset)
         addInstruction(FlushFieldsInstruction())
         pushUnknown()
@@ -802,13 +804,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (expr.labeledExpression != null) {
             val targetFunction = expr.getTargetFunction(expr.analyze(BodyResolveMode.FULL))
             if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {
+                val transfer: InstructionTransfer
                 if (returnedExpression != null) {
                     val retVar = flow.createTempVariable(returnedExpression.getKotlinType().toDfType(expr))
                     addInstruction(SimpleAssignmentInstruction(null, retVar))
-                    createTransfer(targetFunction, targetFunction, retVar)
+                    transfer = createTransfer(targetFunction, targetFunction, retVar)
                 } else {
-                    createTransfer(targetFunction, targetFunction, factory.unknown)
+                    transfer = createTransfer(targetFunction, targetFunction, factory.unknown)
                 }
+                addInstruction(ControlTransferInstruction(factory.controlTransfer(transfer, trapTracker.trapStack())))
+                return
             }
         }
         addInstruction(ReturnInstruction(factory, trapTracker.trapStack(), expr))
