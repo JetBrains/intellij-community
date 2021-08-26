@@ -30,8 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
-  public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING =
-    "PSI/document/model changes are not allowed during highlighting";
+  public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = ContainerUtil.createWeakMap(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
@@ -115,6 +114,25 @@ public final class FileStatusMap implements Disposable {
         }
         return newScope;
       });
+    }
+
+    @NotNull
+    private static RangeMarker combineScopes(RangeMarker old, @NotNull TextRange scope, int textLength, @NotNull Document document) {
+      if (old == null) {
+        if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_DIRTY_MARKER;
+        return document.createRangeMarker(scope);
+      }
+      if (old == WHOLE_FILE_DIRTY_MARKER) return old;
+      TextRange oldRange = TextRange.create(old);
+      TextRange union = scope.union(oldRange);
+      if (old.isValid() && union.equals(oldRange)) {
+        return old;
+      }
+      if (union.getEndOffset() > textLength) {
+        union = union.intersection(new TextRange(0, textLength));
+      }
+      assert union != null;
+      return document.createRangeMarker(union);
     }
 
     @Override
@@ -221,25 +239,6 @@ public final class FileStatusMap implements Disposable {
       }
       status.combineScopesWith(scope, fileLength, document);
     }
-  }
-
-  @NotNull
-  private static RangeMarker combineScopes(RangeMarker old, @NotNull TextRange scope, int textLength, @NotNull Document document) {
-    if (old == null) {
-      if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_DIRTY_MARKER;
-      return document.createRangeMarker(scope);
-    }
-    if (old == WHOLE_FILE_DIRTY_MARKER) return old;
-    TextRange oldRange = TextRange.create(old);
-    TextRange union = scope.union(oldRange);
-    if (old.isValid() && union.equals(oldRange)) {
-      return old;
-    }
-    if (union.getEndOffset() > textLength) {
-      union = union.intersection(new TextRange(0, textLength));
-    }
-    assert union != null;
-    return document.createRangeMarker(union);
   }
 
   boolean allDirtyScopesAreNull(@NotNull Document document) {
