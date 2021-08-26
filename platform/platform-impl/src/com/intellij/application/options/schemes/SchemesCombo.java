@@ -114,6 +114,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   }
 
   private class MyListCellRenderer extends ColoredListCellRenderer<MySchemeListItem<T>> {
+    private final SeparatorWithText mySeparator = new SeparatorWithText();
 
     @Override
     public Component getListCellRendererComponent(JList<? extends MySchemeListItem<T>> list,
@@ -121,15 +122,11 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
                                                   int index,
                                                   boolean selected,
                                                   boolean hasFocus) {
-      Component c;
       if (value != null && value.isSeparator()) {
-        c = new SeparatorWithText();
-        ((SeparatorWithText)c).setCaption(IdeBundle.message("separator.scheme.stored.in", value.getPresentableText()));
+        mySeparator.setCaption(IdeBundle.message("separator.scheme.stored.in", value.getPresentableText()));
+        return mySeparator;
       }
-      else {
-        c = super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-      }
-      return c;
+      return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
     }
 
     @Override
