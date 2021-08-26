@@ -87,7 +87,15 @@ abstract class MacDistributionCustomizer {
   /**
    * Relative paths to files in macOS distribution which should be signed
    */
-  List<String> binariesToSign = []
+  List<String> getBinariesToSign(JvmArchitecture arch) {
+    def binary = RepairUtilityBuilder.BINARIES.find {
+      it.os == OsFamily.MACOS && it.arch == arch
+    }
+    if (binary == null) {
+      throw new IllegalArgumentException("No binary found for $OsFamily.MACOS and $arch")
+    }
+    return [binary.relativeTargetPath]
+  }
 
   /**
    * Path to a image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)

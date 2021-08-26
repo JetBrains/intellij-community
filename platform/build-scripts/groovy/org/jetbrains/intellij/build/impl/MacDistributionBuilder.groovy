@@ -130,9 +130,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
             Files.createDirectories(additional)
             customizer.copyAdditionalFiles(buildContext, additional.toString(), arch)
 
-            if (!customizer.binariesToSign.empty) {
+            if (!customizer.getBinariesToSign(arch).empty) {
               buildContext.executeStep("Sign binaries for macOS distribution", BuildOptions.MAC_SIGN_STEP) {
-                MacDmgBuilder.signBinaryFiles(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, additional)
+                MacDmgBuilder.signBinaryFiles(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, additional, arch)
               }
             }
             File jreArchive = jreManager.findJreArchive(OsFamily.MACOS, arch)

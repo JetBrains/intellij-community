@@ -9,6 +9,7 @@ import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
@@ -41,9 +42,11 @@ final class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, @NotNull Path macDistPath) {
+  static void signBinaryFiles(BuildContext buildContext,
+                              MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
+                              @NotNull Path macDistPath, @NotNull JvmArchitecture arch) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    dmgBuilder.doSignBinaryFiles(macDistPath)
+    dmgBuilder.doSignBinaryFiles(macDistPath, arch)
   }
 
   static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer,
@@ -65,7 +68,7 @@ final class MacDmgBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void doSignBinaryFiles(@NotNull Path macDistPath) {
+  private void doSignBinaryFiles(@NotNull Path macDistPath, @NotNull JvmArchitecture arch) {
     ftpAction("mkdir") {}
     ftpAction("put", false, "777") {
       ant.fileset(file: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts/signbin.sh")
@@ -75,9 +78,9 @@ final class MacDmgBuilder {
     Files.createDirectories(signedFilesDir)
 
     List<String> failedToSign = []
-    customizer.binariesToSign.each { relativePath ->
+    customizer.getBinariesToSign(arch).each { relativePath ->
       buildContext.messages.progress("Signing $relativePath")
-      Path fullPath = macDistPath.resolveSibling(relativePath)
+      Path fullPath = macDistPath.resolve(relativePath)
       ftpAction("put") {
         ant.fileset(file: fullPath.toString())
       }
