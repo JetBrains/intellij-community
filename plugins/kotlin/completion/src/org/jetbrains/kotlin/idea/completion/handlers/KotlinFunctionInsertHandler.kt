@@ -133,13 +133,60 @@ fun createNormalFunctionInsertHandler(
                 }
             }
         }
+
+        // surroundWithBracesIfInStringTemplate
+        if (!argumentsOnly) {
+            val typedFuzzyName = editor.document.text.subSequence(0, offset)
+                .reversed()
+                .takeWhile { it.isLetterOrDigit() || it == '_' }
+                .toString()
+            val functionStartOffset = offset - typedFuzzyName.length
+
+            if (functionStartOffset > 0) {
+                if (chars[functionStartOffset - 1] == '$') {
+                    // add paranoia check
+                    val dollarIsEscaped = (functionStartOffset - 2).let { predollarOffset ->
+                        if (predollarOffset >= 0) chars[predollarOffset] == '\\'
+                        else false
+                    }
+
+                    if (!dollarIsEscaped) {
+                        stringToInsert.append('}')
+
+                        /*
+                            Essentially `normalizedBeforeFunctionOffset' can be reduced to just
+                            val normalizedBeforeFunctionOffset = 0 - functionName.asString().length
+
+                            Though it is not obvious why. Operation offsets are relative to cursor position before insertion. In this
+                            case it will be offset of lookup element text end - which is functionStartOffset + `functionName.length`.
+
+                            Example:
+                            we have a function "fun fooBar(i: Int) {}" which we want to call.
+                            In editor we have: "$fb<caret>"
+                                                |  \
+                                                \   \-offset
+                                                \- functionStartOffset
+
+
+                            Insert handler will be applied at stage: "$fooBar<caret>"
+                            And this new caret position is calculated here as `lookupElementEndPosition`
+                            So all the offsets should be relative to the new caret position.
+                         */
+                        val lookupElementEndPosition = functionStartOffset + functionName.asString().length
+                        val normalizedBeforeFunctionOffset = functionStartOffset - lookupElementEndPosition
+                        builder.addOperation(normalizedBeforeFunctionOffset, "{")
+                    }
+                }
+            }
+        }
+
         builder.addOperation(0, stringToInsert.toString())
         builder.withPostInsertHandler(InsertHandler<LookupElement> { context, item ->
             var renderedText = item.lookupString
 
             if (!argumentsOnly) {
-                // TODO: maybe there is a way to perform all this at declarative stage
-                surroundWithBracesIfInStringTemplate(context)
+                 //TODO: maybe there is a way to perform all this at declarative stage
+                //surroundWithBracesIfInStringTemplate(context)
 
                 val name = (item.`object` as? DeclarationLookupObject)?.name
                 if (name != null && !name.isSpecial) {
