@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeRefinement
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.types.isError
-import org.jetbrains.kotlin.types.refinement.TypeRefinement
 
 open class RemovePartsFromPropertyFix(
     element: KtProperty,

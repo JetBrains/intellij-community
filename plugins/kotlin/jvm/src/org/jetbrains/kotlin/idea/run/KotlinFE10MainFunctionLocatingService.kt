@@ -22,6 +22,6 @@ internal class KotlinFE10MainFunctionLocatingService : KotlinMainFunctionLocatin
         val mainFunctionDetector =
           MainFunctionDetector(languageVersionSettings) { it.resolveToDescriptorIfAny(BodyResolveMode.FULL) }
 
-        return mainFunctionDetector.hasMain(declarations)
+        return declarations.any { it is KtNamedFunction && mainFunctionDetector.isMain(it) }
     }
 }
