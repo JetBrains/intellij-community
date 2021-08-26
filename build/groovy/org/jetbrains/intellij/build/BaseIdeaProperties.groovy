@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -88,6 +89,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.vcs.git.featuresTrainer",
     "intellij.lombok",
     "intellij.searchEverywhereMl",
+    KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   ]
 
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
@@ -160,17 +162,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",
-      "kotlin.plugin"
     ]
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
 
     isAntRequired = true
-  }
-
-  @Override
-  List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
-    return [context.kotlinBinaries.setUpPlugin(context)]
   }
 
   @Override

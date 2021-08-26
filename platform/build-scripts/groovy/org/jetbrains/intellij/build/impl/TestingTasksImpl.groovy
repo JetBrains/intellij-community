@@ -659,7 +659,6 @@ class TestingTasksImpl extends TestingTasks {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
       context.gradle.run('Setting up testing dependencies', 'setupBundledMaven')
-      context.kotlinBinaries.setUpPlugin(context, true)
     }
   }
 

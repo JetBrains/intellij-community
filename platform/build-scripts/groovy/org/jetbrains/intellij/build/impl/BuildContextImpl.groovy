@@ -161,11 +161,6 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  KotlinBinaries getKotlinBinaries() {
-    return compilationContext.kotlinBinaries
-  }
-
-  @Override
   File getProjectOutputDirectory() {
     return compilationContext.projectOutputDirectory
   }

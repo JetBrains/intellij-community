@@ -244,14 +244,6 @@ class BuildOptions {
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
 
-  /**
-   * Path to prebuilt Kotlin plugin (not zipped).
-   * Currently fully-fledged Kotlin plugin distribution is being on TeamCity only via kombo.gant script.
-   * If this path is not specified then distribution without LLDB debugger is going to be built locally (for tests only).
-   */
-  static final String PREBUILT_KOTLIN_PLUGIN_PATH = "intellij.build.kotlin.plugin.path"
-  String prebuiltKotlinPluginPath = System.getProperty(PREBUILT_KOTLIN_PLUGIN_PATH)
-
   static final String TARGET_OS = "intellij.build.target.os"
 
   BuildOptions() {

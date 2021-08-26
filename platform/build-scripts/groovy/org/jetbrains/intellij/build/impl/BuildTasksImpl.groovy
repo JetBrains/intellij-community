@@ -224,14 +224,6 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
-    //todo remove this when KTIJ-11539 is fixed; currently if we add kotlin.idea module to the classpath as a transitive dependency of some other module,
-    //     it'll cause conflicts with Kotlin plugin loaded from JAR
-    String pathToIgnore = new File(context.projectOutputDirectory, "production/kotlin.idea").absolutePath
-    if (ideClasspath.remove(pathToIgnore)) {
-      context.messages.debug(" remove $pathToIgnore from classpath to avoid conflicts")
-    }
-
-
     List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
       "idea.home.path"   : context.paths.projectHome,
       "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",

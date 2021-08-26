@@ -1,0 +1,12 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+import org.jetbrains.intellij.build.IdeaCommunityProperties
+import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
+import org.jetbrains.jps.idea.IdeaProjectLoader
+
+target("artifact": "Build Kotlin IDE Artifacts") {
+  String home = new File(IdeaProjectLoader.guessHome(this)).absolutePath
+  BuildUtils.addUltimateBuildScriptsToClassPath(home, ant)
+  new KotlinPluginBuilder(home, home, new IdeaCommunityProperties(home)).build()
+}
