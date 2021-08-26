@@ -89,7 +89,7 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
             UIBundle.message("dialog.title.project.name"), context.project,
             FileChooserDescriptorFactory.createSingleFolderDescriptor())
         }.largeGapAfter()
-        row {
+        row("") {
           checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), settings.gitProperty)
         }.largeGapAfter()
 
