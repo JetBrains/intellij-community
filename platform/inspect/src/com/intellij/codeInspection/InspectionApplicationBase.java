@@ -69,8 +69,6 @@ import org.jetbrains.concurrency.AsyncPromise;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -94,7 +92,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public boolean myRunWithEditorSettings;
   public boolean myRunGlobalToolsOnly;
   public boolean myAnalyzeChanges;
-  boolean myPathProfiling;
+  public boolean myPathProfiling;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
