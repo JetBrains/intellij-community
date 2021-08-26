@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import org.assertj.core.api.Assertions.assertThat
@@ -86,7 +86,10 @@ class GradleBuildScriptBuilderTest {
 
   @Test
   fun `test build script deduplication`() {
+    val versions = mutableMapOf<String, String>()
     assertThat(buildscript(GradleVersion.current()) {
+      versions["junit5"] = junit5Version
+      versions["junit4"] = junit4Version
       withJUnit()
       withJUnit()
       withGroovyPlugin()
@@ -103,8 +106,8 @@ class GradleBuildScriptBuilderTest {
       }
       
       dependencies {
-          testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-          testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+          testImplementation 'org.junit.jupiter:junit-jupiter-api:${versions["junit5"]}'
+          testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:${versions["junit5"]}'
           implementation 'org.codehaus.groovy:groovy-all:3.0.5'
       }
       
@@ -116,7 +119,10 @@ class GradleBuildScriptBuilderTest {
 
   @Test
   fun `test compile-implementation dependency scope`() {
-    val configureScript = fun GradleBuildScriptBuilder<*>.() {
+    val versions = mutableMapOf<String, String>()
+    val configureScript: org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.() -> Unit = {
+      versions["junit5"] = junit5Version
+      versions["junit4"] = junit4Version
       withJUnit()
       addImplementationDependency("my-dep")
       addRuntimeOnlyDependency(code("my-runtime-dep"))
@@ -130,8 +136,8 @@ class GradleBuildScriptBuilderTest {
         }
         
         dependencies {
-            testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+            testImplementation 'org.junit.jupiter:junit-jupiter-api:${versions["junit5"]}'
+            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:${versions["junit5"]}'
             implementation 'my-dep'
             runtimeOnly my-runtime-dep
         }
@@ -149,7 +155,7 @@ class GradleBuildScriptBuilderTest {
         }
         
         dependencies {
-            testCompile 'junit:junit:4.12'
+            testCompile 'junit:junit:${versions["junit4"]}'
             compile 'my-dep'
             runtime my-runtime-dep
         }
@@ -163,7 +169,7 @@ class GradleBuildScriptBuilderTest {
         }
         
         dependencies {
-            testImplementation 'junit:junit:4.12'
+            testImplementation 'junit:junit:${versions["junit4"]}'
             implementation 'my-dep'
             runtimeOnly my-runtime-dep
         }
@@ -212,7 +218,10 @@ class GradleBuildScriptBuilderTest {
 
   @Test
   fun `test child build script build`() {
+    val versions = mutableMapOf<String, String>()
     assertThat(buildscript(GradleVersion.current()) {
+      versions["junit5"] = junit5Version
+      versions["junit4"] = junit4Version
       withJUnit4()
       allprojects {
         withJavaPlugin()
@@ -229,8 +238,8 @@ class GradleBuildScriptBuilderTest {
             }
         
             dependencies {
-                testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+                testImplementation 'org.junit.jupiter:junit-jupiter-api:${versions["junit5"]}'
+                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:${versions["junit5"]}'
             }
         
             test {
@@ -245,7 +254,7 @@ class GradleBuildScriptBuilderTest {
         }
         
         dependencies {
-            testImplementation 'junit:junit:4.12'
+            testImplementation 'junit:junit:${versions["junit4"]}'
         }
       """.trimIndent())
   }
