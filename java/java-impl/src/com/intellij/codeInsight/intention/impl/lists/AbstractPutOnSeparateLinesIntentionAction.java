@@ -3,7 +3,9 @@ package com.intellij.codeInsight.intention.impl.lists;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,8 +45,9 @@ abstract class AbstractPutOnSeparateLinesIntentionAction<L extends PsiElement, E
     Context<L, E> context = from(element);
     if (context == null) return;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    SmartPsiElementPointer<L> pointer = SmartPointerManager.createPointer(context.list);
     Document document = editor.getDocument();
+    PsiFile file = element.getContainingFile();
+    RangeMarker marker = document.createRangeMarker(context.list.getParent().getTextRange());
     List<E> elements = context.elements;
     IntList lfOffset = new IntArrayList();
     for (int i = elements.size() - 1; i >= 0; i--) {
@@ -65,9 +68,8 @@ abstract class AbstractPutOnSeparateLinesIntentionAction<L extends PsiElement, E
       document.insertString(offset, "\n");
     }
     documentManager.commitDocument(document);
-    L list = pointer.getElement();
-    if (list != null) {
-      CodeStyleManager.getInstance(project).adjustLineIndent(list.getContainingFile(), list.getParent().getTextRange());
+    if (marker.isValid() && file.isValid()) {
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, TextRange.create(marker));
     }
   }
 
