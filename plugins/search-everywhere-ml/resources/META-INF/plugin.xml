@@ -40,4 +40,12 @@
     <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$EditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+  <actions>
+    <action id="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFile"
+            class="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFile">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
+    </action>
+  </actions>
+  <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 </idea-plugin>

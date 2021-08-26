@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicReference
 internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   companion object {
     internal const val RECORDER_CODE = "MLSE"
+
+    fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlSessionService::class.java)
   }
 
   private val sessionIdCounter = AtomicInteger()
@@ -27,7 +29,7 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     return session.getMLWeight(contributor, element)
   }
 
-  private fun getCurrentSession(): SearchEverywhereMLSearchSession? {
+  fun getCurrentSession(): SearchEverywhereMLSearchSession? {
     if (experiment.isAllowed) {
       return activeSession.get()
     }

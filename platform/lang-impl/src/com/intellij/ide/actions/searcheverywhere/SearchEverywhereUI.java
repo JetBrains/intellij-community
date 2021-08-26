@@ -321,6 +321,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       .orElse(null);
   }
 
+  public List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
+    return myListModel.getFoundElementsInfo();
+  }
+
   @Override
   public void registerHint(@NotNull JBPopup h) {
     if (myHint != null && myHint.isVisible() && myHint != h) {

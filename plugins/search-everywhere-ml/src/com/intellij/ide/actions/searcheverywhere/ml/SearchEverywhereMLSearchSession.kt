@@ -10,12 +10,12 @@ import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
-  private val itemIdProvider = SearchEverywhereMlItemIdProvider()
+  val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
   private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
 
   // context features are calculated once per Search Everywhere session
-  private val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
+  val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
 
   // search state is updated on each typing, tab or setting change
   // element features & ML score are also re-calculated on each typing because some of them might change, e.g. matching degree
@@ -52,7 +52,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   fun onItemSelected(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
                      indexes: IntArray, closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    val state = currentSearchState.get()
+    val state = getCurrentSearchState()
     if (state != null && isMLSupportedTab(state.tabId)) {
       val orderByMl = orderedByMl(experimentStrategy, state.tabId)
       logger.onItemSelected(
@@ -66,7 +66,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 
   fun onSearchFinished(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    val state = currentSearchState.get()
+    val state = getCurrentSearchState()
     if (state != null && isMLSupportedTab(state.tabId)) {
       val orderByMl = orderedByMl(experimentStrategy, state.tabId)
       logger.onSearchFinished(
@@ -79,7 +79,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   }
 
   fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {
-    val state = currentSearchState.get()
+    val state = getCurrentSearchState()
     if (state != null && isActionsTab(state.tabId)) {
       val id = itemIdProvider.getId(element)
       return state.getMLWeight(id, element, contributor, cachedContextInfo, element.matchingDegree)
@@ -91,9 +91,11 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     return isMLSupportedTab(tabId) && experimentStrategy.shouldOrderByMl()
   }
 
-  private fun isMLSupportedTab(tabId: String): Boolean {
+  fun isMLSupportedTab(tabId: String): Boolean {
     return isFilesTab(tabId) || isActionsTab(tabId)
   }
+
+  fun getCurrentSearchState() = currentSearchState.get()
 
   private fun isFilesTab(tabId: String) = FileSearchEverywhereContributor::class.java.simpleName == tabId
 
