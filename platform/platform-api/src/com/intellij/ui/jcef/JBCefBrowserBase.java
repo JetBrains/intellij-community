@@ -93,7 +93,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
     }
     catch (IOException | NullPointerException e) {
-      Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", e);
+      Logger.getInstance(JBCefBrowserBase.class).error("couldn't find load_error.html", e);
     }
     return "";
   });
@@ -107,7 +107,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
           return Base64.getEncoder().encodeToString(out.toByteArray());
         }
         catch (IOException ex) {
-          Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
+          Logger.getInstance(JBCefBrowserBase.class).error("couldn't write an error image", ex);
         }
         return "";
       });
