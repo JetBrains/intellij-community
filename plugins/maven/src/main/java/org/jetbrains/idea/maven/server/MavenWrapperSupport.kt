@@ -24,6 +24,7 @@ import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
@@ -34,7 +35,7 @@ internal class MavenWrapperMapping : PersistentStateComponent<MavenWrapperMappin
 
   class State {
     @JvmField
-    val mapping = HashMap<String, String>()
+    val mapping = ConcurrentHashMap<String, String>()
   }
 
   override fun getState() = myState
