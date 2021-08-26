@@ -50,13 +50,12 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoAfter
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.types.AbstractTypeCheckerContext
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
-import org.jetbrains.kotlin.types.checker.ClassicTypeCheckerContext
 import org.jetbrains.kotlin.types.checker.ClassicTypeSystemContext
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.checker.NewKotlinTypeChecker
+import org.jetbrains.kotlin.types.checker.createClassicTypeCheckerState
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -82,10 +81,10 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
         }
 
-        private inner class ContextImpl : ClassicTypeCheckerContext(false, typeSystemContext = TypeSystemContextImpl())
-
         override fun equalTypes(a: KotlinType, b: KotlinType): Boolean = with(NewKotlinTypeChecker.Default) {
-            ContextImpl().equalTypes(a.unwrap(), b.unwrap())
+            val state = createClassicTypeCheckerState(isErrorTypeEqualsToAnything = false, typeSystemContext = TypeSystemContextImpl())
+
+            state.equalTypes(a.unwrap(), b.unwrap())
         }
     }
 
