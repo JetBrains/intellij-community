@@ -45,6 +45,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
         result.addTab("Gaps", createGapsPanel())
         result.addTab("Col/row gaps", createColRowGapsPanel())
         result.addTab("VisualPaddings", createVisualPaddingsPanel())
+        result.addTab("Baseline", createBaselinePanel())
 
         return result
       }
@@ -64,6 +65,55 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       JLabel("<html>TODO list<br><br>&bull " + todo.joinToString("<br>&bull "))
     )
     return result
+  }
+
+  fun createBaselinePanel(): JPanel {
+    fun RowsGridBuilder.label(verticalAlign: VerticalAlign, size: Int): RowsGridBuilder {
+      val label = JLabel("${verticalAlign.name} $size")
+      label.font = label.font.deriveFont(size.toFloat())
+      cell(label, verticalAlign = verticalAlign)
+      return this
+    }
+
+    val panel = JPanel(JBGridLayout())
+    val builder = RowsGridBuilder(panel)
+    builder
+      .cell(JLabel("Vertical align: TOP").apply {
+        preferredSize = Dimension(100, 40)
+        verticalAlignment = SwingConstants.TOP
+      })
+      .label(VerticalAlign.TOP, 14)
+      .label(VerticalAlign.TOP, 10)
+      .label(VerticalAlign.TOP, 16)
+      .row()
+      .cell(JLabel("Vertical align: CENTER").apply {
+        preferredSize = Dimension(100, 40)
+        verticalAlignment = SwingConstants.TOP
+      })
+      .label(VerticalAlign.CENTER, 12)
+      .label(VerticalAlign.CENTER, 14)
+      .label(VerticalAlign.CENTER, 16)
+      .row()
+      .cell(JLabel("Vertical align: BOTTOM").apply {
+        preferredSize = Dimension(100, 40)
+        verticalAlignment = SwingConstants.TOP
+      })
+      .label(VerticalAlign.BOTTOM, 12)
+      .label(VerticalAlign.BOTTOM, 10)
+      .label(VerticalAlign.BOTTOM, 16)
+      .row()
+      .cell(JLabel("Vertical align: mixed").apply {
+        preferredSize = Dimension(100, 40)
+        verticalAlignment = SwingConstants.TOP
+      })
+      .label(VerticalAlign.TOP, 12)
+      .label(VerticalAlign.CENTER, 10)
+      .label(VerticalAlign.BOTTOM, 14)
+      .label(VerticalAlign.CENTER, 16)
+      .label(VerticalAlign.TOP, 14)
+      .label(VerticalAlign.BOTTOM, 10)
+
+    return createTabPanel("Labels are aligned by baseline", panel)
   }
 
   fun createVisualPaddingsPanel(): JPanel {
