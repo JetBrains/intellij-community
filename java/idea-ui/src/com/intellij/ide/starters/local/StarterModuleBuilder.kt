@@ -71,7 +71,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
 
     @JvmStatic
-    private fun sanitizePackage(input: String): String {
+    fun sanitizePackage(input: String): String {
       val fileName = FileUtil.sanitizeFileName(input, false)
       return fileName
         .replace("-", "")
