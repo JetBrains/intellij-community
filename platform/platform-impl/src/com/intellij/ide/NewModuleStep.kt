@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Key
@@ -83,7 +84,8 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
           installNameGenerators(getBuilderId(), settings.nameProperty)
         }.largeGapAfter()
         row(UIBundle.message("label.project.wizard.new.project.location")) {
-          textFieldWithBrowseButton(settings.pathProperty,
+          val uiPathProperty = settings.pathProperty.transform(::getUiPath, ::getModelPath)
+          textFieldWithBrowseButton(uiPathProperty,
             UIBundle.message("dialog.title.project.name"), context.project,
             FileChooserDescriptorFactory.createSingleFolderDescriptor())
         }.largeGapAfter()
@@ -96,6 +98,14 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
           context.setProjectFileDirectory(settings.projectPath, false)
         }
       }
+    }
+
+    private fun getUiPath(path: String): String {
+      return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
+    }
+
+    private fun getModelPath(path: String, removeLastSlash: Boolean = true): String {
+      return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
     }
 
     private fun getBuilderId(): String? {
