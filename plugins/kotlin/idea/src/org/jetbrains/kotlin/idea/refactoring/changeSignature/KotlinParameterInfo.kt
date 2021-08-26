@@ -26,10 +26,10 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.AbstractTypeChecker
-import org.jetbrains.kotlin.types.AbstractTypeCheckerContext
+import org.jetbrains.kotlin.types.TypeCheckerState
 import org.jetbrains.kotlin.types.TypeConstructor
-import org.jetbrains.kotlin.types.checker.ClassicTypeCheckerContext
 import org.jetbrains.kotlin.types.checker.ClassicTypeSystemContext
+import org.jetbrains.kotlin.types.checker.createClassicTypeCheckerState
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 
@@ -97,7 +97,7 @@ class KotlinParameterInfo(
         val originalType = inheritedCallable.originalCallableDescriptor.valueParameters.getOrNull(originalIndex)?.type
         val typeToRender = originalType?.takeIf {
             val checker = OverridingTypeCheckerContext.createChecker(inheritedCallable.originalCallableDescriptor, currentBaseFunction)
-            AbstractTypeChecker.equalTypes(checker as AbstractTypeCheckerContext, originalType.unwrap(), parameterType.unwrap())
+            AbstractTypeChecker.equalTypes(checker, originalType.unwrap(), parameterType.unwrap())
         } ?: parameterType
 
         return typeToRender.renderTypeWithSubstitution(typeSubstitutor, defaultRendering, true)
@@ -278,12 +278,12 @@ private class OverridingTypeCheckerContext(private val matchingTypeConstructors:
     }
 
     companion object {
-        fun createChecker(superDescriptor: CallableDescriptor, subDescriptor: CallableDescriptor): ClassicTypeCheckerContext {
+        fun createChecker(superDescriptor: CallableDescriptor, subDescriptor: CallableDescriptor): TypeCheckerState {
             val context = OverridingTypeCheckerContext(subDescriptor.typeParameters.zip(superDescriptor.typeParameters).associate {
                 it.first.typeConstructor to it.second.typeConstructor
             })
 
-            return ClassicTypeCheckerContext(errorTypeEqualsToAnything = false, typeSystemContext = context)
+            return createClassicTypeCheckerState(isErrorTypeEqualsToAnything = false, typeSystemContext = context)
         }
     }
 }
