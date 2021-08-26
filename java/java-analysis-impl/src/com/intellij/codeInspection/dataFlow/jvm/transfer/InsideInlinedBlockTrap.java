@@ -37,4 +37,9 @@ public class InsideInlinedBlockTrap implements DfaControlTransferValue.Trap {
   public @NotNull PsiElement getAnchor() {
     return myInlinedBlock;
   }
+
+  @Override
+  public String toString() {
+    return "InlinedBlock";
+  }
 }

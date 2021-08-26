@@ -798,7 +798,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 } else {
                     transfer = createTransfer(targetFunction, targetFunction, factory.unknown)
                 }
-                addInstruction(ControlTransferInstruction(factory.controlTransfer(transfer, trapTracker.trapStack())))
+                addInstruction(ControlTransferInstruction(factory.controlTransfer(transfer, trapTracker.getTrapsInsideElement(targetFunction))))
                 return
             }
         }
