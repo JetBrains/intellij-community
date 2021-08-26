@@ -35,10 +35,10 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.RESOLUTION_ANCHOR_PROVIDER_CAPABILITY
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
+import org.jetbrains.kotlin.types.TypeRefinement
 import org.jetbrains.kotlin.types.checker.REFINER_CAPABILITY
 import org.jetbrains.kotlin.types.checker.Ref
 import org.jetbrains.kotlin.types.checker.TypeRefinementSupport
-import org.jetbrains.kotlin.types.refinement.TypeRefinement
 
 class IdeaResolverForProject(
     debugName: String,
