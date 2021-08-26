@@ -164,7 +164,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
   }
 
   fun createCellAlignmentsPanel(): JPanel {
-    val panel = createPanelLabels(HorizontalAlign.values().size, HorizontalAlign.values().size) { grid, x, y ->
+    val panel = createPanelLabels(HorizontalAlign.values().size, VerticalAlign.values().size) { grid, x, y ->
       JBConstraints(
         grid,
         x,

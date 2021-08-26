@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.gridLayout
 import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.JComponent
+import kotlin.math.max
 import kotlin.math.min
 
 internal class JBGridImpl : JBGrid {
@@ -73,14 +74,16 @@ internal class JBGridImpl : JBGrid {
       val paddedX = rect.x + constraints.gaps.left + layoutCellData.columnGaps.left + layoutData.columnsCoord[constraints.x]
       val paddedY = rect.y + constraints.gaps.top + layoutCellData.rowGaps.top + layoutData.rowsCoord[constraints.y]
       val paddedWidth = layoutData.getPaddedWidth(layoutCellData)
-      val paddedHeight = layoutData.getPaddedHeight(layoutCellData)
+      val fullPaddedWidth = layoutData.getFullPaddedWidth(layoutCellData)
+      val paddedHeight = layoutData.getFullPaddedHeight(layoutCellData)
 
       when (cell) {
         is JBComponentCell -> {
-          layoutComponent(cell.component, layoutCellData, paddedX, paddedY, paddedWidth, paddedHeight)
+          layoutComponent(cell.component, layoutCellData, paddedX, paddedY, paddedWidth, fullPaddedWidth, paddedHeight)
         }
         is JBGridCell -> {
-          cell.content.layout(Rectangle(paddedX, paddedY, paddedWidth, paddedHeight))
+          // todo constraints are not used
+          cell.content.layout(Rectangle(paddedX, paddedY, fullPaddedWidth, paddedHeight))
         }
       }
     }
@@ -161,7 +164,7 @@ internal class JBGridImpl : JBGrid {
     for (layoutCellData in layoutData.visibleCellsData) {
       val cell = layoutCellData.cell
       if (cell is JBGridCell) {
-        cell.content.calculateLayoutDataStep2(layoutData.getPaddedWidth(layoutCellData))
+        cell.content.calculateLayoutDataStep2(layoutData.getFullPaddedWidth(layoutCellData))
       }
     }
   }
@@ -171,16 +174,57 @@ internal class JBGridImpl : JBGrid {
    */
   fun calculateLayoutDataStep3() {
     layoutData.rowsSizeCalculator.reset()
+    initBaselineData()
 
     for (layoutCellData in layoutData.visibleCellsData) {
-      val cell = layoutCellData.cell
-      if (cell is JBGridCell) {
-        val grid = cell.content
-        grid.calculateLayoutDataStep3()
-        layoutCellData.preferredSize.height = grid.layoutData.preferredHeight
+      when (val cell = layoutCellData.cell) {
+        is JBComponentCell -> {
+          val rowBaselineData = layoutCellData.rowBaselineData
+          if (rowBaselineData == null) {
+            continue
+          }
+
+          val constraints = layoutCellData.cell.constraints
+          val componentWidth = layoutData.getPaddedWidth(layoutCellData) + layoutCellData.cell.constraints.visualPaddings.width
+          val baseline: Int
+          if (componentWidth >= 0) {
+            baseline = cell.component.getBaseline(componentWidth, layoutCellData.preferredSize.height)
+            // getBaseline changes preferredSize, at least for JLabel
+            layoutCellData.preferredSize.height = cell.component.preferredSize.height
+          }
+          else {
+            baseline = -1
+          }
+
+          if (baseline < 0) {
+            layoutCellData.rowBaselineData = null
+          }
+          else {
+            layoutCellData.baseline = baseline
+            with(rowBaselineData) {
+              maxAboveBaseline = max(maxAboveBaseline,
+                baseline + layoutCellData.rowGaps.top + constraints.gaps.top - constraints.visualPaddings.top)
+              maxBelowBaseline = max(maxBelowBaseline,
+                layoutCellData.preferredSize.height - baseline + layoutCellData.rowGaps.bottom + constraints.gaps.bottom - constraints.visualPaddings.bottom)
+            }
+          }
+        }
+
+        is JBGridCell -> {
+          val grid = cell.content
+          grid.calculateLayoutDataStep3()
+          layoutCellData.preferredSize.height = grid.layoutData.preferredHeight
+          // todo use subgrid baseline
+          layoutCellData.rowBaselineData = null
+        }
       }
-      layoutData.rowsSizeCalculator.addConstraint(cell.constraints.y, cell.constraints.height, layoutCellData.cellPaddedHeight)
     }
+
+    for (layoutCellData in layoutData.visibleCellsData) {
+      val constraints = layoutCellData.cell.constraints
+      layoutData.rowsSizeCalculator.addConstraint(constraints.y, constraints.height, layoutCellData.cellPaddedHeight)
+    }
+
     layoutData.preferredHeight = layoutData.rowsSizeCalculator.calculatePreferredSize()
   }
 
@@ -196,9 +240,31 @@ internal class JBGridImpl : JBGrid {
     for (layoutCellData in layoutData.visibleCellsData) {
       val cell = layoutCellData.cell
       if (cell is JBGridCell) {
-        cell.content.calculateLayoutDataStep4(layoutData.getPaddedHeight(layoutCellData))
+        cell.content.calculateLayoutDataStep4(layoutData.getFullPaddedHeight(layoutCellData))
       }
     }
+  }
+
+  /**
+   * Assigns [LayoutCellData.rowBaselineData]
+   */
+  private fun initBaselineData() {
+    for (layoutCellData in layoutData.visibleCellsData) {
+      layoutCellData.baseline = null
+      layoutCellData.rowBaselineData = null
+    }
+
+    layoutData.visibleCellsData
+      .filter { it.cell.constraints.verticalAlign != VerticalAlign.FILL && it.cell.constraints.height == 1 }
+      .groupBy { it.cell.constraints.y }
+      .forEach { cellsByRow ->
+        cellsByRow.value.groupBy { it.cell.constraints.verticalAlign }.forEach { cellsByAlign ->
+          val rowBaselineData = RowBaselineData()
+          for (layoutCellData in cellsByAlign.value) {
+            layoutCellData.rowBaselineData = rowBaselineData
+          }
+        }
+      }
   }
 
   /**
@@ -209,13 +275,10 @@ internal class JBGridImpl : JBGrid {
                               paddedX: Int,
                               paddedY: Int,
                               paddedWidth: Int,
+                              fullPaddedWidth: Int,
                               paddedHeight: Int) {
     val constraints = layoutCellData.cell.constraints
     val visualPaddings = constraints.visualPaddings
-    val resultPaddedWidth = if (constraints.horizontalAlign == HorizontalAlign.FILL)
-      paddedWidth
-    else
-      min(paddedWidth, layoutCellData.preferredSize.width - visualPaddings.width)
     val resultPaddedHeight = if (constraints.verticalAlign == VerticalAlign.FILL)
       paddedHeight
     else
@@ -223,8 +286,8 @@ internal class JBGridImpl : JBGrid {
     val resultPaddedX = paddedX +
                         when (constraints.horizontalAlign) {
                           HorizontalAlign.LEFT -> 0
-                          HorizontalAlign.CENTER -> (paddedWidth - resultPaddedWidth) / 2
-                          HorizontalAlign.RIGHT -> paddedWidth - resultPaddedWidth
+                          HorizontalAlign.CENTER -> (fullPaddedWidth - paddedWidth) / 2
+                          HorizontalAlign.RIGHT -> fullPaddedWidth - paddedWidth
                           HorizontalAlign.FILL -> 0
                         }
     val resultPaddedY = paddedY +
@@ -237,7 +300,7 @@ internal class JBGridImpl : JBGrid {
 
     component.setBounds(
       resultPaddedX - visualPaddings.left, resultPaddedY - visualPaddings.top,
-      resultPaddedWidth + visualPaddings.width, resultPaddedHeight + visualPaddings.height
+      paddedWidth + visualPaddings.width, resultPaddedHeight + visualPaddings.height
     )
   }
 
@@ -287,11 +350,19 @@ private class JBLayoutData {
   var rowsCoord = emptyArray<Int>()
 
   fun getPaddedWidth(layoutCellData: LayoutCellData): Int {
+    val fullPaddedWidth = getFullPaddedWidth(layoutCellData)
+    return if (layoutCellData.cell.constraints.horizontalAlign == HorizontalAlign.FILL)
+      fullPaddedWidth
+    else
+      min(fullPaddedWidth, layoutCellData.preferredSize.width - layoutCellData.cell.constraints.visualPaddings.width)
+  }
+
+  fun getFullPaddedWidth(layoutCellData: LayoutCellData): Int {
     val constraints = layoutCellData.cell.constraints
     return columnsCoord[constraints.x + constraints.width] - columnsCoord[constraints.x] - layoutCellData.gapWidth
   }
 
-  fun getPaddedHeight(layoutCellData: LayoutCellData): Int {
+  fun getFullPaddedHeight(layoutCellData: LayoutCellData): Int {
     val constraints = layoutCellData.cell.constraints
     return rowsCoord[constraints.y + constraints.height] - rowsCoord[constraints.y] - layoutCellData.gapHeight
   }
@@ -302,6 +373,15 @@ private class JBLayoutData {
  */
 private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension,
                                   val columnGaps: ColumnGaps, val rowGaps: RowGaps) {
+  /**
+   * Calculated on late steps of [JBGridImpl.calculateLayoutData]
+   */
+  var baseline: Int? = null
+
+  /**
+   * Calculated on late steps of [JBGridImpl.calculateLayoutData]. null for cells without baseline,  height > 1 or vertical align FILL
+   */
+  var rowBaselineData: RowBaselineData? = null
 
   val gapWidth: Int
     get() = cell.constraints.gaps.width + columnGaps.width
@@ -319,8 +399,20 @@ private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension
    * Cell height including gaps and excluding visualPaddings
    */
   val cellPaddedHeight: Int
-    get() = preferredSize.height + gapHeight - cell.constraints.visualPaddings.height
+    get() {
+      val baselineData = rowBaselineData
+      if (baselineData == null) {
+        return preferredSize.height + gapHeight - cell.constraints.visualPaddings.height
+      }
+
+      return baselineData.maxAboveBaseline + baselineData.maxBelowBaseline
+    }
 }
+
+/**
+ * Max sizes for a row which include gaps and exclude paddings
+ */
+private data class RowBaselineData(var maxAboveBaseline: Int = 0, var maxBelowBaseline: Int = 0)
 
 private sealed class JBCell(val constraints: JBConstraints) {
   abstract val visible: Boolean
