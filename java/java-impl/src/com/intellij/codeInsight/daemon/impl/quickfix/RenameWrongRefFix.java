@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,6 +80,9 @@ public class RenameWrongRefFix implements HintAction {
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
+      if (onTheFly && StringUtil.isCapitalized(myRefExpr.getText())) {
+        return LookupElement.EMPTY_ARRAY;
+      }
       PsiVariable[] vars = CreateFromUsageUtils.guessMatchingVariables(myRefExpr);
       for (PsiVariable var : vars) {
         items.add(createLookupElement(var, v-> v.getName()));
