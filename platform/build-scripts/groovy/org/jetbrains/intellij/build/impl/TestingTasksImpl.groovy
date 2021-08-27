@@ -500,8 +500,9 @@ class TestingTasksImpl extends TestingTasks {
       args.add(methodName)
     }
     File argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
-    def builder = new ProcessBuilder((options.customJrePath != null ? "$options.customJrePath" : context.paths.jdkHome) + "/bin/java", 
-                                     '@' + argFile.getAbsolutePath())
+    def javaPath = (options.customJrePath != null ? "$options.customJrePath" : System.getProperty("java.home")) + "/bin/java"
+    context.messages.info("Starting tests on java from $javaPath")
+    def builder = new ProcessBuilder(javaPath, '@' + argFile.getAbsolutePath())
     builder.environment().putAll(envVariables)
     final Process exec = builder.start()
     new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start()
@@ -509,7 +510,7 @@ class TestingTasksImpl extends TestingTasks {
     exec.waitFor()
   }
 
-  private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
+  private Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
     return new Runnable() {
       @Override
       void run() {
@@ -528,7 +529,7 @@ class TestingTasksImpl extends TestingTasks {
         }
         catch (UnsupportedEncodingException ignored) { }
         catch (IOException e) {
-          e.printStackTrace()
+          context.messages.error(e.getMessage(), e)
         }
       }
     }
