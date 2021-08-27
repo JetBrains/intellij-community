@@ -111,12 +111,17 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
     }
 
     if (fieldName == "items") {
-      val itemName = item.name
-      if (itemName == "splash initialization") {
-        publicStatMetrics["splash"] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
-      }
-      else if (itemName == "bootstrap" || itemName == "app initialization") {
-        publicStatMetrics[itemName] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
+      when (val itemName = item.name) {
+        "splash initialization" -> {
+          publicStatMetrics["splash"] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
+          publicStatMetrics["splashShown"] = TimeUnit.NANOSECONDS.toMillis(item.end - StartUpMeasurer.getStartTime()).toInt()
+        }
+        "bootstrap", "app initialization" -> {
+          publicStatMetrics[itemName] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
+        }
+        "project frame initialization" -> {
+          publicStatMetrics["projectFrameVisible"] = TimeUnit.NANOSECONDS.toMillis(item.start - StartUpMeasurer.getStartTime()).toInt()
+        }
       }
     }
   }
