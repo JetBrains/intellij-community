@@ -5131,6 +5131,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/suppressByCompilerWarning.kt");
         }
 
+        @TestMetadata("tryAsArgument.kt")
+        public void testTryAsArgument() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/tryAsArgument.kt");
+        }
+
         @TestMetadata("unaryMinus.kt")
         public void testUnaryMinus() throws Exception {
             runTest("testData/inspectionsLocal/dfa/unaryMinus.kt");

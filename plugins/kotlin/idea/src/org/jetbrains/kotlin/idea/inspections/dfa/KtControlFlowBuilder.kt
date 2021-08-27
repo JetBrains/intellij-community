@@ -45,10 +45,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 
-/*
-com.intellij.ssh.ProxyCommandImplTest#testProxyCommandStderrIsLogged -- empty stack
-org/jetbrains/idea/svn/status/CmdStatusClient.kt:51 -- empty stack
- */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
@@ -144,55 +140,56 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processTryExpression(statement: KtTryExpression) {
-        val tryBlock = statement.tryBlock
-        val finallyBlock = statement.finallyBlock
+        inlinedBlock(statement) {
+            val tryBlock = statement.tryBlock
+            val finallyBlock = statement.finallyBlock
+            val finallyStart = DeferredOffset()
+            val finallyDescriptor = if (finallyBlock != null) EnterFinallyTrap(finallyBlock, finallyStart) else null
+            finallyDescriptor?.let { trapTracker.pushTrap(it) }
 
-        val finallyStart = DeferredOffset()
-        val finallyDescriptor = if (finallyBlock != null) EnterFinallyTrap(finallyBlock, finallyStart) else null
-        finallyDescriptor?.let { trapTracker.pushTrap(it) }
-
-        val tempVar = flow.createTempVariable(DfType.TOP)
-        val sections = statement.catchClauses
-        val clauses = LinkedHashMap<CatchClauseDescriptor, DeferredOffset>()
-        if (sections.isNotEmpty()) {
-            for (section in sections) {
-                val catchBlock = section.catchBody
-                if (catchBlock != null) {
-                    clauses[KotlinCatchClauseDescriptor(section)] = DeferredOffset()
+            val tempVar = flow.createTempVariable(DfType.TOP)
+            val sections = statement.catchClauses
+            val clauses = LinkedHashMap<CatchClauseDescriptor, DeferredOffset>()
+            if (sections.isNotEmpty()) {
+                for (section in sections) {
+                    val catchBlock = section.catchBody
+                    if (catchBlock != null) {
+                        clauses[KotlinCatchClauseDescriptor(section)] = DeferredOffset()
+                    }
                 }
+                trapTracker.pushTrap(TryCatchTrap(statement, clauses))
             }
-            trapTracker.pushTrap(TryCatchTrap(statement, clauses))
-        }
 
-        processExpression(tryBlock)
-        addInstruction(SimpleAssignmentInstruction(null, tempVar))
-
-        val gotoEnd = createTransfer(statement, tryBlock, tempVar)
-        val singleFinally = FList.createFromReversed<Trap>(ContainerUtil.createMaybeSingletonList(finallyDescriptor))
-        controlTransfer(gotoEnd, singleFinally)
-
-        if (sections.isNotEmpty()) {
-            trapTracker.popTrap(TryCatchTrap::class.java)
-        }
-
-        for (section in sections) {
-            val offset = clauses[KotlinCatchClauseDescriptor(section)]
-            if (offset == null) continue
-            setOffset(offset)
-            val catchBlock = section.catchBody
-            processExpression(catchBlock)
+            processExpression(tryBlock)
             addInstruction(SimpleAssignmentInstruction(null, tempVar))
-            controlTransfer(gotoEnd, singleFinally)
-        }
 
-        if (finallyBlock != null) {
-            setOffset(finallyStart)
-            trapTracker.popTrap(EnterFinallyTrap::class.java)
-            trapTracker.pushTrap(InsideFinallyTrap(finallyBlock))
-            processExpression(finallyBlock.finalExpression)
-            addInstruction(PopInstruction())
-            controlTransfer(ExitFinallyTransfer(finallyDescriptor!!), FList.emptyList())
-            trapTracker.popTrap(InsideFinallyTrap::class.java)
+            val gotoEnd = createTransfer(statement, tryBlock, tempVar)
+            val singleFinally = FList.createFromReversed<Trap>(ContainerUtil.createMaybeSingletonList(finallyDescriptor))
+            controlTransfer(gotoEnd, singleFinally)
+
+            if (sections.isNotEmpty()) {
+                trapTracker.popTrap(TryCatchTrap::class.java)
+            }
+
+            for (section in sections) {
+                val offset = clauses[KotlinCatchClauseDescriptor(section)]
+                if (offset == null) continue
+                setOffset(offset)
+                val catchBlock = section.catchBody
+                processExpression(catchBlock)
+                addInstruction(SimpleAssignmentInstruction(null, tempVar))
+                controlTransfer(gotoEnd, singleFinally)
+            }
+
+            if (finallyBlock != null) {
+                setOffset(finallyStart)
+                trapTracker.popTrap(EnterFinallyTrap::class.java)
+                trapTracker.pushTrap(InsideFinallyTrap(finallyBlock))
+                processExpression(finallyBlock.finalExpression)
+                addInstruction(PopInstruction())
+                controlTransfer(ExitFinallyTransfer(finallyDescriptor!!), FList.emptyList())
+                trapTracker.popTrap(InsideFinallyTrap::class.java)
+            }
         }
     }
 
@@ -390,7 +387,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             first = false
         }
-        if (entries.size == 1) {
+        if (entries.size == 1 && entries[0] !is KtLiteralStringTemplateEntry) {
             // Implicit toString conversion for "$myVar" string
             addInstruction(PushValueInstruction(DfTypes.constant("", stringType)))
             addInstruction(StringConcatInstruction(KotlinExpressionAnchor(expr), stringType))
@@ -449,26 +446,32 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val endOffset = DeferredOffset()
         addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
 
-        // Transfer value is pushed to avoid emptying stack beyond this point
-        trapTracker.pushTrap(InsideInlinedBlockTrap(lambda))
-        addInstruction(JvmPushInstruction(factory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null))
-
-        flow.startElement(lambda.functionLiteral)
-        for (parameter in lambda.valueParameters) {
-            flushParameter(parameter)
+        inlinedBlock(lambda) {
+            flow.startElement(lambda.functionLiteral)
+            for (parameter in lambda.valueParameters) {
+                flushParameter(parameter)
+            }
+            processExpression(lambda.bodyExpression)
+            flow.finishElement(lambda.functionLiteral)
+            addInstruction(PopInstruction())
         }
-        processExpression(lambda.bodyExpression)
-        flow.finishElement(lambda.functionLiteral)
-        addInstruction(PopInstruction())
-
-        trapTracker.popTrap(InsideInlinedBlockTrap::class.java)
-        // Pop transfer value
-        addInstruction(PopInstruction())
 
         setOffset(endOffset)
         addInstruction(FlushFieldsInstruction())
         pushUnknown()
         addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+    }
+
+    private inline fun inlinedBlock(element: KtElement, fn : () -> Unit) {
+        // Transfer value is pushed to avoid emptying stack beyond this point
+        trapTracker.pushTrap(InsideInlinedBlockTrap(element))
+        addInstruction(JvmPushInstruction(factory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null))
+
+        fn()
+
+        trapTracker.popTrap(InsideInlinedBlockTrap::class.java)
+        // Pop transfer value
+        addInstruction(PopInstruction())
     }
 
     private fun addCall(expr: KtExpression, args: Int, qualifierOnStack: Boolean = false) {
@@ -824,6 +827,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 state.push(resultValue)
                 return super.dispatch(state, interpreter)
             }
+
+            override fun toString(): String {
+                return super.toString() + "; result = " + resultValue
+            }
         }
     }
 
@@ -870,6 +877,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val exprType = realExpr.getKotlinType()
             val declaredType = (dfVar.descriptor as? KtVariableDescriptor)?.variable?.type()
             addImplicitConversion(expr, declaredType, exprType)
+            return
+        }
+        val target = expr.mainReference.resolve()
+        if (target is KtObjectDeclaration) {
+            pushUnknown()
             return
         }
         addCall(expr, 0, qualifierOnStack)
