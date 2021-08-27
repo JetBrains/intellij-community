@@ -7650,9 +7650,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/localFunction.kt");
         }
 
+        @TestMetadata("localVariableAnnotationNoInitRemove.kt")
+        public void testLocalVariableAnnotationNoInitRemove() throws Exception {
+            runTest("testData/quickfix/experimental/localVariableAnnotationNoInitRemove.kt");
+        }
+
         @TestMetadata("localVariableAnnotationRemove.kt")
         public void testLocalVariableAnnotationRemove() throws Exception {
             runTest("testData/quickfix/experimental/localVariableAnnotationRemove.kt");
+        }
+
+        @TestMetadata("localVariableNoGetterAction.kt")
+        public void testLocalVariableNoGetterAction() throws Exception {
+            runTest("testData/quickfix/experimental/localVariableNoGetterAction.kt");
         }
 
         @TestMetadata("nestedClasses.kt")

@@ -10,11 +10,9 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtAnnotationEntry
-import org.jetbrains.kotlin.psi.KtModifierListOwner
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.renderer.render
@@ -55,7 +53,8 @@ object ExperimentalAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFac
                             useSiteTarget = AnnotationUseSiteTarget.PROPERTY
                         )
                     )
-                annotatedElement is KtProperty ->
+                annotatedElement is KtProperty
+                        && (annotatedElement.hasCustomGetter() || annotationUseSiteTarget == AnnotationUseSiteTarget.PROPERTY_GETTER) ->
                     result.add(
                         HighPriorityMoveGetterAnnotationToPropertyFix(
                             annotationEntry,
