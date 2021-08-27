@@ -68,7 +68,7 @@ UFile (package = ) [import java.lang.Runnable...]
                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:Runnable
                             USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Object
                             ULiteralExpression (value = true) [true] : PsiType:boolean
-                        UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : PsiType:NonExistentClass
+                        UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : PsiType:<ErrorType>
                             UastEmptyExpression [UastEmptyExpression]
                             UastEmptyExpression [UastEmptyExpression]
                     UReturnExpression [return "Fail: " + r] : PsiType:Void
@@ -82,7 +82,7 @@ UFile (package = ) [import java.lang.Runnable...]
                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:Runnable
                             USimpleNameReferenceExpression (identifier = r) [r] : PsiType:Object
                             ULiteralExpression (value = false) [false] : PsiType:boolean
-                        UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : PsiType:NonExistentClass
+                        UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : PsiType:<ErrorType>
                             UastEmptyExpression [UastEmptyExpression]
                             UastEmptyExpression [UastEmptyExpression]
                     UReturnExpression [return "Fail: " + r] : PsiType:Void

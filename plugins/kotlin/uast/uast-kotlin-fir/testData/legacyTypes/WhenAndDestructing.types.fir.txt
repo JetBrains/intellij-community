@@ -31,18 +31,18 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                                         USimpleNameReferenceExpression (identifier = arr) [arr] : PsiType:List<? extends String>
                                     ULocalVariable (name = bindingContext) [@null var bindingContext: java.lang.String = var837f2350.<anonymous class>()]
                                         UAnnotation (fqName = null) [@null]
-                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : PsiType:NonExistentClass
-                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : PsiType:NonExistentClass
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : PsiType:<ErrorType>
+                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : PsiType:<ErrorType>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
-                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                                     ULocalVariable (name = statementFilter) [@null var statementFilter: java.lang.String = var837f2350.<anonymous class>()]
                                         UAnnotation (fqName = null) [@null]
-                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : PsiType:NonExistentClass
-                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : PsiType:NonExistentClass
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : PsiType:<ErrorType>
+                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : PsiType:<ErrorType>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
-                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                                 UYieldExpression [yield return bindingContext]
                                     UReturnExpression [return bindingContext] : PsiType:Void
                                         USimpleNameReferenceExpression (identifier = bindingContext) [bindingContext] : PsiType:String
