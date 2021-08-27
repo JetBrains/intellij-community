@@ -65,6 +65,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   }
 
   fun update(lines: IntRange) {
+    // TODO Hypothetically, there can be a race between cell addition/deletion and updating of old cells.
     updateQueue.queue(UpdateInlaysTask(this, lines))
   }
 
