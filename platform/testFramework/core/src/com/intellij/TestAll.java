@@ -389,7 +389,14 @@ public class TestAll implements Test {
   private static JUnit4TestAdapterCache getJUnit4TestAdapterCache() {
     if (ourUnit4TestAdapterCache == null) {
       if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
-        ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+        try {
+          ourUnit4TestAdapterCache= (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5SuiteRunner")
+                .getMethod("createJUnit4TestAdapterCache")
+                .invoke(null);
+        }
+        catch (Throwable e) {
+          ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+        }
       }
       else {
         try {

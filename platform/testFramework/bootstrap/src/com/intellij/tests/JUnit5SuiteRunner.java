@@ -4,6 +4,9 @@ package com.intellij.tests;
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
+import junit.framework.JUnit4TestAdapter;
+import junit.framework.JUnit4TestAdapterCache;
+import junit.framework.TestResult;
 import junit.framework.TestSuite;
 import org.junit.AssumptionViolatedException;
 import org.junit.platform.engine.DiscoverySelector;
@@ -18,6 +21,10 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.runner.Description;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunListener;
+import org.junit.runner.notification.RunNotifier;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -39,6 +46,47 @@ public class JUnit5SuiteRunner {
     System.exit(0);
   }
 
+  public static JUnit4TestAdapterCache createJUnit4TestAdapterCache() {
+    return new JUnit4TestAdapterCache() {
+      @Override
+      public RunNotifier getNotifier(final TestResult result, final JUnit4TestAdapter adapter) {
+        RunNotifier notifier = new RunNotifier();
+        notifier.addListener(new RunListener() {
+          @Override
+          public void testFailure(Failure failure) {
+            result.addError(asTest(failure.getDescription()), failure.getException());
+          }
+
+          @Override
+          public void testFinished(Description description) {
+            result.endTest(asTest(description));
+          }
+
+          @Override
+          public void testStarted(Description description) {
+            result.startTest(asTest(description));
+          }
+
+          @Override
+          public void testIgnored(Description description) {
+            result.addError(asTest(description), IgnoreException.INSTANCE);
+          }
+
+          @Override
+          public void testAssumptionFailure(Failure failure) {
+            testFailure(failure);
+          }
+        });
+        return notifier;
+      }
+    };
+  }
+
+  private static class IgnoreException extends Exception {
+    public static final IgnoreException INSTANCE = new IgnoreException();
+    private IgnoreException() { }
+  }
+  
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static class TCTestExecutionListener implements TestExecutionListener {
     private final PrintStream myPrintStream;
@@ -89,12 +137,16 @@ public class JUnit5SuiteRunner {
   
     @Override
     public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-      TestExecutionResult.Status status = testExecutionResult.getStatus();
       final Throwable throwable = testExecutionResult.getThrowable().orElse(null);
       if (throwable instanceof AssumptionViolatedException) {
-        status = TestExecutionResult.Status.ABORTED;
+        executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, throwable.getMessage());
       }
-      executionFinished(testIdentifier, status, throwable, null);
+      else if (throwable instanceof IgnoreException) {
+        executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, "");
+      }
+      else {
+        executionFinished(testIdentifier, testExecutionResult.getStatus(), throwable, null);
+      }
     }
   
     private void executionFinished(TestIdentifier testIdentifier,
@@ -205,7 +257,9 @@ public class JUnit5SuiteRunner {
         if (reason != null) {
           attrs.put("message", reason);
         }
-        attrs.put("details", getTrace(ex));
+        if (ex != null) {
+          attrs.put("details", getTrace(ex));
+        }
       }
       finally {
         myPrintStream.println(ServiceMessage.asString(messageName, attrs));
