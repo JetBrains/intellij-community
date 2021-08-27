@@ -28,6 +28,8 @@ class KotlinGradleProjectData : AbstractExternalEntityData(GradleConstants.SYSTE
     var platformPluginId: String? = null
     lateinit var kotlinNativeHome: String
     override var implementedModuleNames: List<String> = emptyList()
+
+    @Transient
     val dependenciesCache: MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>> = mutableMapOf()
     val pureKotlinSourceFolders: MutableCollection<String> = hashSetOf()
 

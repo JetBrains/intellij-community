@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
+import java.io.Serializable
 import com.intellij.openapi.externalSystem.model.Key as ExternalKey
 
 @Deprecated(
@@ -34,8 +35,7 @@ val DataNode<out ModuleData>.kotlinSourceSetData: KotlinSourceSetData?
 val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
     get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
 
-class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinModule: KotlinModule) :
-    AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {
+class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinModule: KotlinModule) : Serializable {
     var moduleId: String? = null
     var gradleModuleId: String = ""
 
