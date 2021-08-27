@@ -3,9 +3,9 @@ UFile (package = ) [public final class InferenceInsideUnresolvedConstructorKt {.
         UMethod (name = getBar) [public static final fun getBar() : java.lang.Object {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return <anonymous class>(id(42))]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(id(42))] : PsiType:NonExistentClass
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(id(42))] : PsiType:<ErrorType>
                         UIdentifier (Identifier (Unresolved)) [UIdentifier (Identifier (Unresolved))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [id(42)] : PsiType:int
                             UIdentifier (Identifier (id)) [UIdentifier (Identifier (id))]
                             USimpleNameReferenceExpression (identifier = id, resolvesTo = null) [id] : PsiType:int

@@ -3,10 +3,10 @@ UFile (package = ) [public final class UnresolvedKt {...]
         UMethod (name = foo) [public static final fun foo(@null x: error.NonExistentClass) : void {...}]
             UParameter (name = x) [@null var x: error.NonExistentClass]
                 UAnnotation (fqName = null) [@null]
-            UBlockExpression [{...}] : PsiType:NonExistentClass
-                UQualifiedReferenceExpression [x?.prop] : PsiType:NonExistentClass
-                    USimpleNameReferenceExpression (identifier = x) [x] : PsiType:NonExistentClass
-                    USimpleNameReferenceExpression (identifier = prop) [prop] : PsiType:NonExistentClass
+            UBlockExpression [{...}] : PsiType:<ErrorType>
+                UQualifiedReferenceExpression [x?.prop] : PsiType:<ErrorType>
+                    USimpleNameReferenceExpression (identifier = x) [x] : PsiType:<ErrorType>
+                    USimpleNameReferenceExpression (identifier = prop) [prop] : PsiType:<ErrorType>
     UClass (name = A) [public final class A : <ErrorType> {...}]
         UField (name = prop) [@null private final var prop: error.NonExistentClass]
             UAnnotation (fqName = null) [@null]
@@ -20,4 +20,4 @@ UFile (package = ) [public final class UnresolvedKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(prop)]
                     UIdentifier (Identifier (UnresolvedBase)) [UIdentifier (Identifier (UnresolvedBase))]
                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
-                    USimpleNameReferenceExpression (identifier = prop) [prop] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = prop) [prop] : PsiType:<ErrorType>

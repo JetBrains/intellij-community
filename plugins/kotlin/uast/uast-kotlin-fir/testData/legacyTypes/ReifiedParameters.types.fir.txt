@@ -54,4 +54,4 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                         ULiteralExpression (value = "s") ["s"] : PsiType:String
             UBlockExpression [{...}]
                 UReturnExpression [return t]
-                    USimpleNameReferenceExpression (identifier = t) [t] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = t) [t] : PsiType:<ErrorType>
