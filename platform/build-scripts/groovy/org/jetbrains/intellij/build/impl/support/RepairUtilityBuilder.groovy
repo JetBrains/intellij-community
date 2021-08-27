@@ -12,8 +12,17 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
+ * Builds 'repair' command line utility which is a simple and automated way to fix the IDE when it cannot start:
+ * <ul>
+ * <li>generates or checks IDE installation integrity</li>
+ * <li>checks the idea.log file for errors</li>
+ * <li>checks if broken, or old plugins are installed</li>
+ * <li>checks the runtime that starts IDE</li>
+ * <li>checks for problems in .vmoptions file used to start the IDE</li>
+ * </ul>
+ *
  * <p>
- * Note: Requires installed Bash and Docker.
+ * Note: Bash and Docker are required to build the utility.
  * </p>
  */
 @CompileStatic
