@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
+import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.QuickChangeLookAndFeel
@@ -21,6 +22,7 @@ import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -30,6 +32,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Cell
@@ -41,6 +44,8 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import java.awt.RenderingHints
 import java.awt.Window
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -114,6 +119,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         cell(lafManager.settingsToolbar)
           .visibleIf(syncCheckBox.selected)
       }.layout(RowLayout.INDEPENDENT)
+
+      row {
+        cell(ActionLink(message("link.get.more.themes"), ActionListener { e: ActionEvent ->
+            val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(e.source as ActionLink))
+            settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+          })
+        )
+      }
 
       row {
         val overrideLaF = checkBox(cdOverrideLaFFont)
