@@ -75,43 +75,49 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       return this
     }
 
+    fun RowsGridBuilder.title(text: String): RowsGridBuilder {
+      val label = JLabel(text)
+      label.preferredSize = Dimension(150, 40)
+      label.verticalAlignment = SwingConstants.TOP
+      cell(label)
+      return this
+    }
+
     val panel = JPanel(JBGridLayout())
     val builder = RowsGridBuilder(panel)
     builder
-      .cell(JLabel("Vertical align: TOP").apply {
-        preferredSize = Dimension(100, 40)
-        verticalAlignment = SwingConstants.TOP
-      })
+      .title("Vertical align: TOP")
       .label(VerticalAlign.TOP, 14)
       .label(VerticalAlign.TOP, 10)
       .label(VerticalAlign.TOP, 16)
       .row()
-      .cell(JLabel("Vertical align: CENTER").apply {
-        preferredSize = Dimension(100, 40)
-        verticalAlignment = SwingConstants.TOP
-      })
+      .title("Vertical align: CENTER")
       .label(VerticalAlign.CENTER, 12)
       .label(VerticalAlign.CENTER, 14)
       .label(VerticalAlign.CENTER, 16)
       .row()
-      .cell(JLabel("Vertical align: BOTTOM").apply {
-        preferredSize = Dimension(100, 40)
-        verticalAlignment = SwingConstants.TOP
-      })
+      .title("Vertical align: BOTTOM")
       .label(VerticalAlign.BOTTOM, 12)
       .label(VerticalAlign.BOTTOM, 10)
       .label(VerticalAlign.BOTTOM, 16)
       .row()
-      .cell(JLabel("Vertical align: mixed").apply {
-        preferredSize = Dimension(100, 40)
-        verticalAlignment = SwingConstants.TOP
-      })
+      .title("Vertical align: mixed")
       .label(VerticalAlign.TOP, 12)
       .label(VerticalAlign.CENTER, 10)
       .label(VerticalAlign.BOTTOM, 14)
       .label(VerticalAlign.CENTER, 16)
       .label(VerticalAlign.TOP, 14)
       .label(VerticalAlign.BOTTOM, 10)
+      .row()
+
+    builder
+      .title("sub-panels")
+      .label(VerticalAlign.CENTER, 14)
+      .subGridBuilder(verticalAlign = VerticalAlign.CENTER)
+      .label(VerticalAlign.CENTER, 12)
+      .subGridBuilder(verticalAlign = VerticalAlign.CENTER)
+      .label(VerticalAlign.CENTER, 16)
+      .label(VerticalAlign.CENTER, 10)
 
     return createTabPanel("Labels are aligned by baseline", panel)
   }
