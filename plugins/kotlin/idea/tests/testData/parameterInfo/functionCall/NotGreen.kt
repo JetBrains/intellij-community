@@ -1,3 +1,5 @@
+// IGNORE_FIR
+// TODO: Fails because no argument mapping is available when there are multiple ambiguous candidates
 open class A(x: Int) {
     fun m(x: Int, y: Boolean) = 2
     fun m(x: Int) = 1

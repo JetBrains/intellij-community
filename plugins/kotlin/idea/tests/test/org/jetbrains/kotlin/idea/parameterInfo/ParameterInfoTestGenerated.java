@@ -402,6 +402,36 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/TypeInference.kt");
         }
 
+        @TestMetadata("UnmappedAfterCurrent.kt")
+        public void testUnmappedAfterCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnmappedAfterCurrent.kt");
+        }
+
+        @TestMetadata("UnmappedBeforeCurrent.kt")
+        public void testUnmappedBeforeCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnmappedBeforeCurrent.kt");
+        }
+
+        @TestMetadata("UnmappedCurrent.kt")
+        public void testUnmappedCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnmappedCurrent.kt");
+        }
+
+        @TestMetadata("UnresolvedAfterCurrent.kt")
+        public void testUnresolvedAfterCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnresolvedAfterCurrent.kt");
+        }
+
+        @TestMetadata("UnresolvedBeforeCurrent.kt")
+        public void testUnresolvedBeforeCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnresolvedBeforeCurrent.kt");
+        }
+
+        @TestMetadata("UnresolvedCurrent.kt")
+        public void testUnresolvedCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnresolvedCurrent.kt");
+        }
+
         @TestMetadata("UpdateOnTyping.kt")
         public void testUpdateOnTyping() throws Exception {
             runTest("testData/parameterInfo/functionCall/UpdateOnTyping.kt");
