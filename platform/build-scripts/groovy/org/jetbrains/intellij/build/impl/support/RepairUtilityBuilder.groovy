@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.support
 
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.system.CpuArch
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -10,6 +12,7 @@ import org.jetbrains.intellij.build.impl.BuildHelper
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 
 /**
  * Builds 'repair' command line utility which is a simple and automated way to fix the IDE when it cannot start:
@@ -49,45 +52,82 @@ class RepairUtilityBuilder {
     }
   }
 
-  static void bundle(BuildContext buildContext, OsFamily os, JvmArchitecture arch, Path distributionDir) {
-    synchronized (RepairUtilityBuilder) {
-      buildContext.executeStep("Bundling repair-utility for $os", BuildOptions.REPAIR_UTILITY_BUNDLE_STEP) {
-        if (BINARIES_CACHE == null) {
-          buildContext.messages.block("Building repair-utility") {
-            BINARIES_CACHE = buildBinaries(buildContext)
-          }
-        }
-        if (BINARIES_CACHE.isEmpty()) return
-        Binary binary = BINARIES.find { it.os == os && it.arch == arch }
-        if (binary == null) buildContext.messages.error("Unsupported binary: $os $arch")
-        Path path = BINARIES_CACHE[binary]
-        if (path == null) buildContext.messages.error("No binary was built for $os and $arch")
-        Path repairUtilityTarget = distributionDir.resolve(binary.relativeTargetPath)
-        buildContext.messages.info("Copying $path to $repairUtilityTarget")
-        Files.createDirectories(repairUtilityTarget.parent)
-        Files.copy(path, repairUtilityTarget)
+  static synchronized void bundle(BuildContext buildContext, OsFamily os, JvmArchitecture arch, Path distributionDir) {
+    buildContext.executeStep("Bundling repair-utility for $os", BuildOptions.REPAIR_UTILITY_BUNDLE_STEP) {
+      if (BINARIES_CACHE == null) {
+        BINARIES_CACHE = buildBinaries(buildContext)
       }
+      if (BINARIES_CACHE.isEmpty()) return
+      Binary binary = binaryFor(buildContext, os, arch)
+      Path path = BINARIES_CACHE[binary]
+      if (path == null) buildContext.messages.error("No binary was built for $os and $arch")
+      Path repairUtilityTarget = distributionDir.resolve(binary.relativeTargetPath)
+      buildContext.messages.info("Copying $path to $repairUtilityTarget")
+      Files.createDirectories(repairUtilityTarget.parent)
+      Files.copy(path, repairUtilityTarget)
     }
   }
 
-  private static Map<Binary, Path> buildBinaries(BuildContext buildContext) {
-    def projectHome = buildContext.paths.projectHomeDir.resolve('build/support/repair-utility')
+  static synchronized void generateManifest(BuildContext buildContext, String unpackedDistributionPath, String manifestFileNamePrefix) {
+    buildContext.executeStep("Generating installation integrity manifest file for $unpackedDistributionPath",
+                             BuildOptions.REPAIR_UTILITY_BUNDLE_STEP) {
+      if (BINARIES_CACHE == null) {
+        BINARIES_CACHE = buildBinaries(buildContext)
+      }
+      if (BINARIES_CACHE.isEmpty()) return
+      OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
+                           SystemInfoRt.isMac ? OsFamily.MACOS :
+                           SystemInfoRt.isLinux ? OsFamily.LINUX : null
+      Binary binary = binaryFor(buildContext, currentOs, CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64)
+      def binaryPath = repairUtilityProjectHome(buildContext).resolve(binary.relativeSourcePath)
+      def tmpDir = buildContext.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
+      Files.createDirectories(tmpDir)
+      BuildHelper.runProcess(buildContext, [binaryPath.toString(), 'hashes', '-g', '--path', unpackedDistributionPath], tmpDir)
+      def manifest = tmpDir.resolve('manifest.json')
+      if (!Files.exists(manifest)) {
+        def repairLog = tmpDir.resolve('repair.log')
+        buildContext.messages.error("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
+      }
+      def artifact = tmpDir.resolve("${manifestFileNamePrefix}.manifest")
+      Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
+      buildContext.notifyArtifactBuilt(artifact)
+    }
+  }
+
+  private static Binary binaryFor(BuildContext buildContext, OsFamily os, JvmArchitecture arch) {
+    def binary = BINARIES.find { it.os == os && it.arch == arch }
+    if (binary == null) buildContext.messages.error("Unsupported binary: $os $arch")
+    return binary
+  }
+
+  private static Path repairUtilityProjectHome(BuildContext buildContext) {
+    Path projectHome = buildContext.paths.projectHomeDir.resolve('build/support/repair-utility')
     if (!Files.exists(projectHome)) {
       buildContext.messages.warning("$projectHome doesn't exist")
-      return [:]
+      projectHome = null
     }
-    else {
-      BuildHelper.runProcess(buildContext, ['docker', '--version'])
-      BuildHelper.runProcess(buildContext, ['bash', 'build.sh'], projectHome)
-      Map<Binary, Path> binaries = BINARIES.collectEntries {
-        [(it): projectHome.resolve(it.relativeSourcePath)]
+    return projectHome
+  }
+
+  private static Map<Binary, Path> buildBinaries(BuildContext buildContext) {
+    buildContext.messages.block("Building repair-utility") {
+      Path projectHome = repairUtilityProjectHome(buildContext)
+      if (projectHome == null) {
+        return [:] as Map<Binary, Path>
       }
-      binaries.values().each {
-        if (!Files.exists(it)) {
-          buildContext.messages.error("$it doesn't exist")
+      else {
+        BuildHelper.runProcess(buildContext, ['docker', '--version'])
+        BuildHelper.runProcess(buildContext, ['bash', 'build.sh'], projectHome)
+        Map<Binary, Path> binaries = BINARIES.collectEntries {
+          [(it): projectHome.resolve(it.relativeSourcePath)]
         }
+        binaries.values().each {
+          if (!Files.exists(it)) {
+            buildContext.messages.error("$it doesn't exist")
+          }
+        }
+        return binaries
       }
-      return binaries
     }
   }
 }
