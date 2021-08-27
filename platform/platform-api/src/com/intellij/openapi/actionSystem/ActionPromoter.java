@@ -32,6 +32,7 @@ import java.util.List;
  * Current key allows specifying custom actions sorter to use if any. I.e., every component can define its custom
  * sorting rule to define priorities for target actions (classes of actions).
  *
+ * If {@link AnAction} implements {@link ActionPromoter}, promoter would be used to rearrange this action (no need to register additionally as extension point)
  * @author Konstantin Bulenkov
  */
 public interface ActionPromoter {
