@@ -3,12 +3,12 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.util.SmartList;
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId.GlobalLibraryTableId;
@@ -19,44 +19,48 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider {
+public class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider<ModuleEntity> {
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull WorkspaceEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project)
-    throws IndexableEntityResolvingException {
-    if (entity instanceof ModuleEntity) {
-      List<IndexableFilesIterator> iterators = new SmartList<>();
-      iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators((ModuleEntity)entity, project));
-      for (ModuleDependencyItem dependency : ((ModuleEntity)entity).getDependencies()) {
-        iterators.addAll(createIteratorsForDependency(project, dependency, storage));
-      }
-      return iterators;
-    }
+  public @NotNull Class<ModuleEntity> getEntityClass() {
+    return ModuleEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull ModuleEntity entity,
+                                                                                                  @NotNull ModuleEntity moduleEntity,
+                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                                  @NotNull Project project) {
     return Collections.emptyList();
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull WorkspaceEntity oldEntity,
-                                                                                         @NotNull WorkspaceEntity newEntity,
+  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull ModuleEntity entity,
+                                                                                      @NotNull WorkspaceEntityStorage storage,
+                                                                                      @NotNull Project project) {
+    List<IndexableFilesIterator> iterators = new SmartList<>();
+    iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(entity, project));
+    for (ModuleDependencyItem dependency : entity.getDependencies()) {
+      iterators.addAll(createIteratorsForDependency(project, dependency, storage));
+    }
+    return iterators;
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull ModuleEntity oldEntity,
+                                                                                         @NotNull ModuleEntity newEntity,
                                                                                          @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project)
-    throws IndexableEntityResolvingException {
-    if (newEntity instanceof ModuleEntity) {
-      ModuleEntity oldModuleEntity = (ModuleEntity)oldEntity;
-      ModuleEntity newModuleEntity = (ModuleEntity)newEntity;
-      List<IndexableFilesIterator> iterators = new SmartList<>();
-      List<ModuleDependencyItem> newDependencies = newModuleEntity.getDependencies();
-      Collection<ModuleDependencyItem> oldDependencies = new HashSet<>(oldModuleEntity.getDependencies());
-      for (ModuleDependencyItem dependency : newDependencies) {
-        if (!oldDependencies.contains(dependency)) {
-          iterators.addAll(createIteratorsForDependency(project, dependency, storage));
-        }
+                                                                                         @NotNull Project project) {
+    List<IndexableFilesIterator> iterators = new SmartList<>();
+    List<ModuleDependencyItem> newDependencies = newEntity.getDependencies();
+    Collection<ModuleDependencyItem> oldDependencies = new HashSet<>(oldEntity.getDependencies());
+    for (ModuleDependencyItem dependency : newDependencies) {
+      if (!oldDependencies.contains(dependency)) {
+        iterators.addAll(createIteratorsForDependency(project, dependency, storage));
       }
-      if (!iterators.isEmpty()) {
-        return iterators;
-      }
+    }
+    if (!iterators.isEmpty()) {
+      return iterators;
     }
     return Collections.emptyList();
   }
@@ -64,19 +68,12 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
   @NotNull
   private static Collection<? extends IndexableFilesIterator> createIteratorsForDependency(@NotNull Project project,
                                                                                            @NotNull ModuleDependencyItem dependency,
-                                                                                           @NotNull WorkspaceEntityStorage storageAfter)
-    throws IndexableEntityResolvingException {
+                                                                                           @NotNull WorkspaceEntityStorage storageAfter) {
     if (dependency instanceof ModuleDependencyItem.SdkDependency) {
       Sdk sdk = ModifiableRootModelBridge.findSdk(((ModuleDependencyItem.SdkDependency)dependency).getSdkName(),
                                                   ((ModuleDependencyItem.SdkDependency)dependency).getSdkType());
       if (sdk != null) {
         return IndexableEntityProviderMethods.INSTANCE.createIterators(sdk);
-      }
-      else {
-        throw new IndexableEntityResolvingException("Failed to find sdk " +
-                                                    ((ModuleDependencyItem.SdkDependency)dependency).getSdkName() +
-                                                    " " +
-                                                    ((ModuleDependencyItem.SdkDependency)dependency).getSdkType());
       }
     }
     else if (dependency instanceof ModuleDependencyItem.Exportable.LibraryDependency) {
@@ -87,10 +84,15 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
       }
       else {
         LibraryEntity libraryEntity = storageAfter.resolve(libraryId);
-        if (libraryEntity == null) {
-          throw new IndexableEntityResolvingException("Failed to find library " + libraryId);
+        if (libraryEntity != null) {
+          return LibraryIndexableEntityProvider.createIterators(libraryEntity, project);
         }
-        return LibraryIndexableEntityProvider.createIterators(libraryEntity, project);
+      }
+    }
+    else if (dependency instanceof ModuleDependencyItem.InheritedSdkDependency) {
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null) {
+        return IndexableEntityProviderMethods.INSTANCE.createIterators(sdk);
       }
     }
     return Collections.emptyList();
@@ -98,8 +100,7 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
 
   private static Collection<IndexableFilesIterator> findGlobalLibraryIterators(Project project,
                                                                                GlobalLibraryTableId tableId,
-                                                                               LibraryId libraryId)
-    throws IndexableEntityResolvingException {
+                                                                               LibraryId libraryId) {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(tableId.getLevel(), project);
     if (table != null) {
       Library library = table.getLibraryByName(libraryId.getName());
@@ -107,6 +108,6 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
         return IndexableEntityProviderMethods.INSTANCE.createIterators(library);
       }
     }
-    throw new IndexableEntityResolvingException("Failed to find global library " + libraryId);
+    return Collections.emptyList();
   }
 }

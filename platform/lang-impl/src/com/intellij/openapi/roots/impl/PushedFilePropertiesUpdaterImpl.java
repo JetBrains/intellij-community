@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,7 +39,10 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.roots.*;
-import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,8 +294,8 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   }
 
   private void doPushAll(@NotNull List<? extends FilePropertyPusher<?>> pushers) {
-    scanProject(myProject, moduleFileSet -> {
-      final Object[] moduleValues = getModuleImmediateValues(pushers, moduleFileSet.getOrigin());
+    scanProject(myProject, module -> {
+      final Object[] moduleValues = getModuleImmediateValues(pushers, module);
       return fileOrDir -> {
         applyPushersToFile(fileOrDir, pushers, moduleValues);
         return ContentIteratorEx.Status.CONTINUE;
@@ -302,31 +304,35 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   }
 
   public static Object @NotNull [] getModuleImmediateValues(@NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                                            @NotNull ModuleRootOrigin origin) {
+                                                            @NotNull Module module) {
     final Object[] moduleValues;
     moduleValues = new Object[pushers.size()];
     for (int i = 0; i < moduleValues.length; i++) {
-      moduleValues[i] = pushers.get(i).getImmediateValue(origin.getModule());
+      moduleValues[i] = pushers.get(i).getImmediateValue(module);
     }
     return moduleValues;
   }
 
-  public static void scanProject(@NotNull Project project, @NotNull Function<? super ModuleIndexableFilesIterator, ? extends ContentIteratorEx> iteratorProducer) {
-    Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
+  public static void scanProject(@NotNull Project project, @NotNull Function<Module, ? extends ContentIteratorEx> iteratorProducer) {
+    Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
+                                                                  WorkspaceModel.Companion.getInstance(project).getEntityStorage().
+                                                                    getCurrent().entities(ModuleEntity.class));
+    List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
-    List<Runnable> tasks = Arrays.stream(modules)
-      .flatMap(module -> {
+    List<Runnable> tasks = moduleEntities.stream()
+      .flatMap(moduleEntity -> {
         return ReadAction.compute(() -> {
-          if (module.isDisposed()) return Stream.empty();
+          Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, project);
+          if (module == null) return Stream.empty();
           ProgressManager.checkCanceled();
-          return ContainerUtil.map(ModuleIndexableFilesIteratorImpl.getModuleIterators(module), it -> new Object() {
-            final IndexableFilesIterator files = it;
-            final ContentIteratorEx iterator = iteratorProducer.apply(it);
-          })
+          return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, project), it -> new Object() {
+              final IndexableFilesIterator files = it;
+              final ContentIteratorEx iterator = iteratorProducer.apply(module);
+            })
             .stream()
             .map(pair -> (Runnable)() -> {
-            pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
-          });
+              pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
+            });
         });
       })
       .collect(Collectors.toList());
