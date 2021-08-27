@@ -29,20 +29,22 @@ import java.nio.file.Path
 class RepairUtilityBuilder {
   private static Map<Binary, Path> BINARIES_CACHE
   static final Collection<Binary> BINARIES = Collections.unmodifiableList([
-    new Binary(OsFamily.LINUX, JvmArchitecture.x64, 'bin/repair-linux-amd64'),
-    new Binary(OsFamily.WINDOWS, JvmArchitecture.x64, 'bin/repair.exe'),
-    new Binary(OsFamily.MACOS, JvmArchitecture.x64, 'bin/repair-darwin-amd64'),
-    new Binary(OsFamily.MACOS, JvmArchitecture.aarch64, 'bin/repair-darwin-arm64')
+    new Binary(OsFamily.LINUX, JvmArchitecture.x64, 'bin/repair-linux-amd64', 'bin/repair'),
+    new Binary(OsFamily.WINDOWS, JvmArchitecture.x64, 'bin/repair.exe', 'bin/repair.exe'),
+    new Binary(OsFamily.MACOS, JvmArchitecture.x64, 'bin/repair-darwin-amd64', 'bin/repair'),
+    new Binary(OsFamily.MACOS, JvmArchitecture.aarch64, 'bin/repair-darwin-arm64', 'bin/repair')
   ])
 
   static class Binary {
     final OsFamily os
     final JvmArchitecture arch
     final String relativeTargetPath
+    private final String relativeSourcePath
 
-    private Binary(OsFamily os, JvmArchitecture arch, String relativeTargetPath) {
+    private Binary(OsFamily os, JvmArchitecture arch, String relativeSourcePath, String relativeTargetPath) {
       this.os = os
       this.arch = arch
+      this.relativeSourcePath = relativeSourcePath
       this.relativeTargetPath = relativeTargetPath
     }
   }
@@ -78,7 +80,7 @@ class RepairUtilityBuilder {
       BuildHelper.runProcess(buildContext, ['docker', '--version'])
       BuildHelper.runProcess(buildContext, ['bash', 'build.sh'], projectHome)
       Map<Binary, Path> binaries = BINARIES.collectEntries {
-        [(it): projectHome.resolve(it.relativeTargetPath)]
+        [(it): projectHome.resolve(it.relativeSourcePath)]
       }
       binaries.values().each {
         if (!Files.exists(it)) {
