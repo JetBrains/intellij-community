@@ -57,7 +57,7 @@ public class JavaArrayStoreInstruction extends ArrayStoreInstruction {
   }
 
   @Override
-  protected void checkArrayElementAssignability(@NotNull DataFlowInterpreter runner,
+  protected void checkArrayElementAssignability(@NotNull DataFlowInterpreter interpreter,
                                                 @NotNull DfaMemoryState memState,
                                                 @NotNull DfaValue dfaSource,
                                                 @NotNull DfaValue qualifier) {
@@ -70,12 +70,12 @@ public class JavaArrayStoreInstruction extends ArrayStoreInstruction {
     if (toType == DfType.BOTTOM) return;
     DfType fromType = memState.getDfType(dfaSource);
     DfType meet = fromType.meet(toType);
-    Project project = runner.getFactory().getProject();
+    Project project = interpreter.getFactory().getProject();
     PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(myValueExpression, PsiAssignmentExpression.class);
     PsiType psiFromType = TypeConstraint.fromDfType(fromType).getPsiType(project);
     PsiType psiToType = TypeConstraint.fromDfType(toType).getPsiType(project);
     if (assignmentExpression == null || psiFromType == null || psiToType == null) return;
-    runner.getListener().onCondition(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource,
+    interpreter.getListener().onCondition(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource,
                                      meet == DfType.BOTTOM ? ThreeState.YES : ThreeState.UNSURE, memState);
   }
 }

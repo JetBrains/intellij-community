@@ -74,7 +74,7 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
     return nextStates(interpreter, stateBefore);
   }
 
-  protected void checkArrayElementAssignability(@NotNull DataFlowInterpreter runner,
+  protected void checkArrayElementAssignability(@NotNull DataFlowInterpreter interpreter,
                                                 @NotNull DfaMemoryState memState,
                                                 @NotNull DfaValue dfaSource,
                                                 @NotNull DfaValue qualifier) {
