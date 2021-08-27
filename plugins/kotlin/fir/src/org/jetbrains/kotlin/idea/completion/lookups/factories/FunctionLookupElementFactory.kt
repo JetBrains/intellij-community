@@ -9,38 +9,33 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
-import org.jetbrains.kotlin.idea.completion.lookups.QuotedNamesAwareInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.addCallableImportIfRequired
-import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
+import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
+import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS
-import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
-import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 
 internal class FunctionLookupElementFactory {
     fun KtAnalysisSession.createLookup(
         symbol: KtFunctionSymbol,
         options: CallableInsertionOptions,
+        substitutor: KtSubstitutor,
     ): LookupElementBuilder {
         val lookupObject = FunctionCallLookupObject(
             symbol.name,
             options,
-            renderFunctionParameters(symbol),
+            renderFunctionParameters(symbol, substitutor),
             inputValueArguments = symbol.valueParameters.isNotEmpty(),
             insertEmptyLambda = insertLambdaBraces(symbol),
         )
@@ -67,12 +62,12 @@ internal class FunctionLookupElementFactory {
         }
 
         return LookupElementBuilder.create(lookupObject, symbol.name.asString())
-            .withTypeText(symbol.annotatedType.type.render(TYPE_RENDERING_OPTIONS))
+            .withTypeText(substitutor.substituteOrSelf(symbol.annotatedType.type).render(TYPE_RENDERING_OPTIONS))
             .withInsertHandler(insertionHandler)
             .let { withSymbolInfo(symbol, it) }
             .let {
                 if (argString != null) it.withTailText(argString, false)
-                else it.withTailText(getTailText(symbol), true)
+                else it.withTailText(getTailText(symbol, substitutor), true)
             }
     }
 }

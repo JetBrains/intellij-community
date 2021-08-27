@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
@@ -26,11 +27,13 @@ internal class VariableLookupElementFactory {
     fun KtAnalysisSession.createLookup(
         symbol: KtVariableLikeSymbol,
         options: CallableInsertionOptions,
+        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
     ): LookupElementBuilder {
-        val rendered = renderVariable(symbol)
+        val rendered = renderVariable(symbol, substitutor)
+        val symbolType = substitutor.substituteOrSelf(symbol.annotatedType.type)
         var builder = when (options.insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
-                val functionalType = symbol.annotatedType.type as KtFunctionalType
+                val functionalType = symbolType as KtFunctionalType
                 val lookupObject = FunctionCallLookupObject(
                     symbol.name,
                     options,
@@ -40,10 +43,12 @@ internal class VariableLookupElementFactory {
                 )
 
                 val tailText = functionalType.parameterTypes.joinToString(prefix = "(", postfix = ")") {
-                    it.render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                    substitutor.substituteOrSelf(it).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
                 }
 
-                val typeText = functionalType.returnType.render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                val typeText = substitutor
+                    .substituteOrSelf(functionalType.returnType)
+                    .render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
 
                 LookupElementBuilder.create(lookupObject, symbol.name.asString())
                     .withTailText(tailText, true)
@@ -54,8 +59,8 @@ internal class VariableLookupElementFactory {
                 val lookupObject = VariableLookupObject(symbol.name, options, rendered)
                 markIfSyntheticJavaProperty(
                     LookupElementBuilder.create(lookupObject, symbol.name.asString())
-                        .withTypeText(symbol.annotatedType.type.render(KtTypeRendererOptions.SHORT_NAMES))
-                        .withTailText(getTailText(symbol), true), symbol
+                        .withTypeText(symbolType.render(KtTypeRendererOptions.SHORT_NAMES))
+                        .withTailText(getTailText(symbol, substitutor), true), symbol
                 )
                     .withInsertHandler(VariableInsertionHandler)
             }
