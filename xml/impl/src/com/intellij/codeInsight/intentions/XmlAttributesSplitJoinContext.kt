@@ -1,0 +1,25 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.intentions
+
+import com.intellij.openapi.editor.actions.lists.ListWithElements
+import com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContext
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.xml.XmlAttribute
+import com.intellij.psi.xml.XmlTag
+import com.intellij.xml.XmlBundle
+
+class XmlAttributesSplitJoinContext : DefaultListSplitJoinContext() {
+
+  override fun extractData(context: PsiElement): ListWithElements? {
+    val attr = PsiTreeUtil.getParentOfType(context, XmlAttribute::class.java) ?: return null
+    val tag = PsiTreeUtil.getParentOfType(attr, XmlTag::class.java) ?: return null
+
+    return ListWithElements(tag, tag.attributes.toList())
+  }
+
+  override fun isSeparator(element: PsiElement): Boolean = false
+  override fun getHeadBreakJoinReplacement(): String = " "
+  override fun getSplitText(data: ListWithElements): String = XmlBundle.message("intention.name.split.attributes")
+  override fun getJoinText(data: ListWithElements): String = XmlBundle.message("intention.name.join.attributes")
+}

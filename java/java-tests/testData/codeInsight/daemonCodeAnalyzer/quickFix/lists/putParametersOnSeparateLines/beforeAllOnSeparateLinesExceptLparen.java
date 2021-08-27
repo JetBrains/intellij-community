@@ -1,4 +1,4 @@
-// "Put parameters on separate lines" "true"
+// "Put parameters on separate lines" "false"
 // break after lparen
 
 class A {

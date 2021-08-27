@@ -1196,6 +1196,9 @@
     <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
     <flipCommaIntention.flipper language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaFlipper"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinArgumentsContext"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinParametersContext"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinRecordComponentsContext"/>
     <moveLeftRightHandler language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.JavaMoveLeftRightHandler"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration" order="before xml"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement" order="before declaration"/>
@@ -2151,36 +2154,6 @@
       <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.collections</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.PutParametersOnSeparateLinesIntentionAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.PutArgumentsOnSeparateLinesIntentionAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinParametersAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinArgumentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.PutRecordComponentsOnSeparateLinesIntentionAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinRecordComponentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction</className>
