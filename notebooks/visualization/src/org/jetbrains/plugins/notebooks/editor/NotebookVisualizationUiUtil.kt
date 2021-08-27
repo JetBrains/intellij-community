@@ -134,6 +134,11 @@ fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }
 
+val NotebookCellLines.Interval.firstContentLine: Int
+  get() =
+    if (markers.hasTopLine) lines.first + 1
+    else lines.first
+
 fun groupNeighborCells(cells: List<NotebookCellLines.Interval>): List<List<NotebookCellLines.Interval>> {
   val groups = SmartList<SmartList<NotebookCellLines.Interval>>()
   for (cell in cells) {

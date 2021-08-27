@@ -44,4 +44,4 @@ private fun Document.getSelectionLines(caret: Caret): IntRange =
   IntRange(getLineNumber(caret.selectionStart), getLineNumber(caret.selectionEnd))
 
 private val NotebookCellLines.Interval.startLogicalPosition: LogicalPosition
-  get() = LogicalPosition(min(lines.first + 1, lines.last), 0)
+  get() = LogicalPosition(min(firstContentLine, lines.last), 0)
