@@ -45,7 +45,7 @@ class NotebookCellLinesImpl private constructor(private val document: Document,
     var fromIndex =
       if (intervalCache.size < BINARY_SEARCH_THRESHOLD) 0
       else Collections
-        .binarySearch(intervalCache, Interval(-1, CellType.RAW, startLine..startLine))
+        .binarySearch(intervalCache, Interval(-1, CellType.RAW, startLine..startLine, MarkerLines.NO))
         .let { if (it < 0) -it - 2 else it - 1 }
         .coerceAtLeast(0)
     while (fromIndex < intervalCache.size && intervalCache[fromIndex].lines.last < startLine) {
@@ -439,5 +439,5 @@ private fun adjustedMarkers(markers: List<Marker>,
 }
 
 private fun markersToInterval(document: Document) = { a: Marker, b: Marker ->
-  Interval(a.ordinal, a.type, document.getLineNumber(a.offset)..document.getLineNumber(max(0, b.offset - 1)))
+  Interval(a.ordinal, a.type, document.getLineNumber(a.offset)..document.getLineNumber(max(0, b.offset - 1)), MarkerLines.TOP)
 }

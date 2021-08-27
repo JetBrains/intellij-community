@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.editor
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.plugins.notebooks.editor.NotebookCellLines.MarkerLines
 import kotlin.math.max
 
 interface NotebookCellLinesLexer {
@@ -36,11 +37,17 @@ interface NotebookCellLinesLexer {
 
     fun defaultIntervals(document: Document, markers: List<NotebookCellLines.Marker>): List<NotebookCellLines.Interval> {
       val lineMarkers = toLineMarkers(document, markers)
+      val isFirstMarkerAtStart = markers.firstOrNull()?.offset == 0
 
       val result = mutableListOf<NotebookCellLines.Interval>()
       for (i in 0 until (lineMarkers.size - 1)) {
-        result += NotebookCellLines.Interval(ordinal = i, type = lineMarkers[i].type,
-          lines = lineMarkers[i].startLine until lineMarkers[i + 1].startLine)
+        val markerLines = if (i == 0 && !isFirstMarkerAtStart) MarkerLines.NO else MarkerLines.TOP
+        result += NotebookCellLines.Interval(
+          ordinal = i,
+          type = lineMarkers[i].type,
+          lines = lineMarkers[i].startLine until lineMarkers[i + 1].startLine,
+          markers = markerLines
+        )
       }
       return result
     }

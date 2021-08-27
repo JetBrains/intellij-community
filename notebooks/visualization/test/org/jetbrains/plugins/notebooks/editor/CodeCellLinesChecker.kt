@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import org.assertj.core.api.Assertions.assertThat
 
 class CodeCellLinesChecker(private val description: String,
+                           private val doIncrementalCheck: Boolean = true,
                            private val editorGetter: () -> EditorImpl) : (CodeCellLinesChecker.() -> Unit) -> Unit {
   private var markers: MutableList<NotebookCellLines.Marker>? = null
   private var intervals: MutableList<NotebookCellLines.Interval>? = null
@@ -31,8 +32,8 @@ class CodeCellLinesChecker(private val description: String,
   }
 
   class IntervalsSetter(private val list: MutableList<NotebookCellLines.Interval>, private val startOrdinal: Int) {
-    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange) {
-      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines)
+    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, markers: NotebookCellLines.MarkerLines) {
+      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers)
     }
   }
 
@@ -114,7 +115,10 @@ class CodeCellLinesChecker(private val description: String,
       }
 
       assertThat(codeCellLines.intervalsCount).isEqualTo(codeCellLines.intervalsIterator().asSequence().toList().size)
-      notebookCellLinesChecker.check(editorGetter().document, codeCellLines)
+
+      if (doIncrementalCheck) {
+        notebookCellLinesChecker.check(editorGetter().document, codeCellLines)
+      }
     }
 
     fun List<Pair<List<NotebookCellLines.Interval>, List<NotebookCellLines.Interval>>>.prettyListeners() =

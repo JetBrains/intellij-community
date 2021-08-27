@@ -32,10 +32,18 @@ interface NotebookCellLines {
     override fun compareTo(other: Marker): Int = offset - other.offset
   }
 
+  enum class MarkerLines(val hasTopLine: Boolean, val hasBottomLine: Boolean) {
+    NO(false, false),
+    TOP(true, false),
+    BOTTOM(false, true),
+    BOTH(true, true)
+  }
+
   data class Interval(
     val ordinal: Int,
     val type: CellType,
-    val lines: IntRange
+    val lines: IntRange,
+    val markers: MarkerLines,
   ) : Comparable<Interval> {
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
   }
