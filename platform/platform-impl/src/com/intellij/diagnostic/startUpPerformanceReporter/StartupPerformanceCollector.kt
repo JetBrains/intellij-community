@@ -10,7 +10,7 @@ class StartupPerformanceCollector : CounterUsagesCollector() {
   companion object {
     private val LOG: Logger = Logger.getInstance(StartupPerformanceCollector::class.java)
 
-    private val GROUP = EventLogGroup("startup", 1)
+    private val GROUP = EventLogGroup("startup", 2)
 
     private val DURATION = EventFields.Int("duration")
 
