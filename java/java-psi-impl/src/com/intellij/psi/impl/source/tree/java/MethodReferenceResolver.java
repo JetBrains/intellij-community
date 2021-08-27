@@ -235,46 +235,49 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
       List<CandidateInfo> firstCandidates = new ArrayList<>();
       List<CandidateInfo> secondCandidates = new ArrayList<>();
-      boolean thereIsStaticInTheFirst = false;
-      boolean thereIsNonStaticInTheSecond = false;
 
       for (CandidateInfo conflict : conflicts) {
         if (!(conflict instanceof MethodCandidateInfo)) continue;
         Boolean applicableByFirstSearch = isApplicableByFirstSearch(conflict, argTypes, hasReceiver, myReferenceExpression, myFunctionalMethodVarArgs, myInterfaceMethod);
         if (applicableByFirstSearch != null) {
           (applicableByFirstSearch ? firstCandidates : secondCandidates).add(conflict);
-          boolean isStatic = isStaticMethod(conflict);
-          if (isStatic && applicableByFirstSearch) {
-            thereIsStaticInTheFirst = true;
-          }
-          if (!isStatic && !applicableByFirstSearch) {
-            thereIsNonStaticInTheSecond = true;
-          }
         }
       }
 
       if (myQualifierResolveResult.isReferenceTypeQualified() && myReferenceExpression.getReferenceNameElement() instanceof PsiIdentifier) {
+        int firstApplicability = checkApplicability(firstCandidates);
+        ArrayList<CandidateInfo> firstResults = new ArrayList<>(firstCandidates);
+        checkSpecifics(firstResults, firstApplicability, map, 0);
+
+        int secondApplicability = checkApplicability(secondCandidates);
+        ArrayList<CandidateInfo> secondResults = new ArrayList<>(secondCandidates);
+        checkSpecifics(secondResults, secondApplicability, map, 1);
+
         //If the first search produces a static method, and no non-static method is applicable for the second search, then the result of the first search is the compile-time declaration.
-        CandidateInfo candidateInfo = filterStaticCorrectCandidates(firstCandidates, secondCandidates, true);
+        CandidateInfo candidateInfo = filterStaticCorrectCandidates(firstResults, secondCandidates, true);
         if (candidateInfo != null) {
           return candidateInfo;
         }
 
         //If the second search produces a non-static method, and no static method is applicable for the first search, then the result of the second search is the compile-time declaration.
-        candidateInfo = filterStaticCorrectCandidates(secondCandidates, firstCandidates, false);
+        candidateInfo = filterStaticCorrectCandidates(secondResults, firstCandidates, false);
         if (candidateInfo != null) {
           return candidateInfo;
         }
+
+        conflicts.clear();
+        conflicts.addAll(firstResults);
+        conflicts.addAll(secondResults);
+
+        return null;
       }
 
       CandidateInfo candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
-      candidateInfo = checkStaticNonStaticConflict(candidateInfo, firstCandidates, secondCandidates, thereIsStaticInTheFirst, thereIsNonStaticInTheSecond);
       if (candidateInfo != null) {
         return candidateInfo;
       }
 
       candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.VARARGS);
-      candidateInfo = checkStaticNonStaticConflict(candidateInfo, firstCandidates, secondCandidates, thereIsStaticInTheFirst, thereIsNonStaticInTheSecond);
       if (candidateInfo != null) {
         return candidateInfo;
       }
@@ -287,28 +290,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       firstCandidates.addAll(secondCandidates);
       conflicts.addAll(firstCandidates);
       return null;
-    }
-
-    private CandidateInfo checkStaticNonStaticConflict(CandidateInfo candidateInfo,
-                                                       @NotNull List<CandidateInfo> firstCandidates,
-                                                       @NotNull List<CandidateInfo> secondCandidates,
-                                                       boolean thereIsStaticInTheFirst,
-                                                       boolean thereIsNonStaticInTheSecond) {
-      if (candidateInfo == null ||
-          !myQualifierResolveResult.isReferenceTypeQualified() ||
-          !(myReferenceExpression.getReferenceNameElement() instanceof PsiIdentifier)) {
-        return candidateInfo;
-      }
-      boolean isStatic = isStaticMethod(candidateInfo);
-      if (isStatic && !thereIsNonStaticInTheSecond && firstCandidates.contains(candidateInfo) ||
-          !isStatic && !thereIsStaticInTheFirst && secondCandidates.contains(candidateInfo)) {
-        return candidateInfo;
-      }
-      return null;
-    }
-
-    private static boolean isStaticMethod(@NotNull CandidateInfo candidateInfo) {
-      return ((MethodCandidateInfo) candidateInfo).getElement().hasModifierProperty(PsiModifier.STATIC);
     }
 
     private static Boolean isApplicableByFirstSearch(@NotNull CandidateInfo conflict,
@@ -328,6 +309,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       if (varargs && (!psiMethod.isVarArgs() || functionalMethodVarArgs)) {
         return null;
       }
+      
+      //prefer statically correct search variant when a vararg method is applicable both as first and second search
+      if (hasReceiver &&
+          varargs &&
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 0) &&
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 1)) {
+        return psiMethod.hasModifierProperty(PsiModifier.STATIC);
+      }
 
       if ((varargs || functionalInterfaceParamTypes.length == parameterTypes.length) &&
           isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, varargs, conflict, 0)) {
@@ -340,9 +329,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
               return null;
             }
           }
-        } else if (hasReceiver && varargs &&
-                   isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 1)) {
-          return false;
         }
         return true;
       }
