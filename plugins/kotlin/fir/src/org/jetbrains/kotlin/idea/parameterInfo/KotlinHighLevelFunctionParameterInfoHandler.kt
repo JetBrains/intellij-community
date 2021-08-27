@@ -49,7 +49,7 @@ class KotlinHighLevelLambdaParameterInfoHandler :
 
     override fun getArgumentListAllowedParentClasses() = setOf(KtLambdaArgument::class.java)
 
-    override fun getParameterIndex(context: UpdateParameterInfoContext, argumentList: KtLambdaArgument): Int {
+    override fun getCurrentArgumentIndex(context: UpdateParameterInfoContext, argumentList: KtLambdaArgument): Int {
         val size = (argumentList.parent as? KtCallElement)?.valueArguments?.size ?: 1
         return size - 1
     }
@@ -131,8 +131,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         if (context.parameterOwner !== argumentList) {
             context.removeHint()
         }
-        val parameterIndex = getParameterIndex(context, argumentList)
-        context.setCurrentParameter(parameterIndex)
+        val currentArgumentIndex = getCurrentArgumentIndex(context, argumentList)
+        context.setCurrentParameter(currentArgumentIndex)
 
         val callElement = argumentList.parent as? KtElement ?: return
         analyse(callElement) {
@@ -191,6 +191,20 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     }
                 }
 
+                var hasTypeMismatchBeforeCurrent = false
+                for ((index, argument) in arguments.withIndex()) {
+                    if (index >= currentArgumentIndex) break
+                    val parameterForArgument = argumentMapping[argument] ?: continue
+                    if (parameterForArgument == setValueParameter) continue
+
+                    val argumentType = argument.getKtType() ?: error("Argument should have a KtType")
+                    val parameterType = parameterForArgument.annotatedType.type
+                    if (argumentType.isNotSubTypeOf(parameterType)) {
+                        hasTypeMismatchBeforeCurrent = true
+                        break
+                    }
+                }
+
                 // TODO: This should be changed when there are multiple candidates available; need to know which one the call is resolved to
                 val isCallResolvedToCandidate = candidates.size == 1
 
@@ -201,13 +215,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     argumentToParameterIndex,
                     valueParameters.size,
                     parameterIndexToText,
-                    isCallResolvedToCandidate
+                    isCallResolvedToCandidate,
+                    hasTypeMismatchBeforeCurrent
                 )
             }
         }
     }
 
-    protected open fun getParameterIndex(context: UpdateParameterInfoContext, argumentList: TArgumentList): Int {
+    protected open fun getCurrentArgumentIndex(context: UpdateParameterInfoContext, argumentList: TArgumentList): Int {
         val offset = context.offset
         return argumentList.allChildren
             .takeWhile { it.startOffset < offset }
@@ -280,7 +295,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
      *
      * `setupUIComponentPresentation()` is called with `disabled = true` when any of the following are true:
      * 1. If the argument on the cursor does NOT map to a parameter (e.g., on N-th argument but there are < N parameters),
-     * 2. If any of the arguments before the cursor do NOT match the type of the corresponding parameter.
+     * 2. If any of the arguments before the cursor do NOT match the type of the corresponding parameter (ignoring arguments with type
+     *    errors, e.g., unresolved) or do NOT map to a parameter (e.g., named argument with an unknown name).
      * 3. If the cursor is after a trailing comma with no argument, AND LanguageFeature.TrailingCommas is DISABLED, AND there are
      *    already enough arguments in the call. (We assume the user is about to enter an argument in that position.)
      *
@@ -298,7 +314,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         if (currentArgumentIndex < 0) return false
 
         val callInfo = itemToShow.callInfo ?: return false
-        val (callElement, valueArguments, arguments, argumentMapping, valueParameterCount, parameterIndexToText, isCallResolvedToCandidate) = callInfo
+        val (callElement, valueArguments, arguments, argumentToParameterIndex, valueParameterCount, parameterIndexToText,
+            isCallResolvedToCandidate, hasTypeMismatchBeforeCurrent) = callInfo
 
         val supportsMixedNamedArgumentsInTheirOwnPosition =
             callElement.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
@@ -316,6 +333,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         var highlightStartOffset = -1
         var highlightEndOffset = -1
         var isDisabledBeforeHighlight = false
+        var hasUnmappedArgumentBeforeCurrent = false
         val usedParameterIndices = HashSet<Int>()
         val text = buildString {
             var namedMode = false
@@ -363,7 +381,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
             if (valueArguments != null) {
                 for (valueArgument in valueArguments) {
-                    val parameterIndex = argumentMapping[valueArgument.getArgumentExpression()] ?: continue
+                    val parameterIndex = argumentToParameterIndex[valueArgument.getArgumentExpression()]
+                    if (parameterIndex == null) {
+                        if (argumentIndex < currentArgumentIndex) {
+                            hasUnmappedArgumentBeforeCurrent = true
+                        }
+                        argumentIndex++
+                        continue
+                    }
                     if (!usedParameterIndices.add(parameterIndex)) continue
 
                     if (valueArgument.isNamed() &&
@@ -380,7 +405,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             } else {
                 // This is for array get/set calls which don't have KtValueArguments.
                 for (argument in arguments) {
-                    val parameterIndex = argumentMapping[argument] ?: continue
+                    val parameterIndex = argumentToParameterIndex[argument]
+                    if (parameterIndex == null) {
+                        if (argumentIndex <= currentArgumentIndex) {
+                            hasUnmappedArgumentBeforeCurrent = true
+                        }
+                        argumentIndex++
+                        continue
+                    }
                     if (!usedParameterIndices.add(parameterIndex)) continue
 
                     val shouldHighlight = argumentIndex == currentArgumentIndex
@@ -417,11 +449,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
         val tooManyArgs = allParametersUsed && ((!supportsTrailingCommas && afterTrailingComma) || arguments.size > valueParameterCount)
 
-        // TODO: Also disable if not all arguments before the current are matched. Need to check this in updateParameterInfo()
-        // See UpdateInTyping.kt tests
-        val hasMismatchBeforeCurrent = false
-
-        val isDisabled = tooManyArgs || hasMismatchBeforeCurrent
+        val isDisabled = tooManyArgs || hasTypeMismatchBeforeCurrent || hasUnmappedArgumentBeforeCurrent
 
         context.setupUIComponentPresentation(
             text,
@@ -443,7 +471,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val argumentToParameterIndex: LinkedHashMap<KtExpression, Int>,
         val valueParameterCount: Int,
         val parameterIndexToText: Map<Int, String>,
-        val isCallResolvedToCandidate: Boolean
+        val isCallResolvedToCandidate: Boolean,
+        val hasTypeMismatchBeforeCurrent: Boolean,
     )
 
     data class CandidateInfo(
