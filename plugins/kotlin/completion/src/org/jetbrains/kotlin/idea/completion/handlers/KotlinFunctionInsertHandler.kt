@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionInitializationContext.IDENTIFIER_END_OFFSET
+import com.intellij.codeInsight.completion.CompletionInitializationContext.START_OFFSET
 import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
 import com.intellij.codeInsight.completion.InsertHandler
@@ -16,7 +17,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -137,9 +137,10 @@ fun createNormalFunctionInsertHandler(
         var prefixModificationOperation: DeclarativeInsertHandler2.RelativeTextEdit? = null
         var alreadyHasBackTickInTheEnd = false
         if (!argumentsOnly) {
+            val specialSymbols = charArrayOf('_', '`', '~')
             val typedFuzzyName = editor.document.text.subSequence(0, offset)
                 .reversed()
-                .takeWhile { it.isLetterOrDigit() || it == '_' || it == '`' }
+                .takeWhile { it.isLetterOrDigit() || specialSymbols.contains(it) }
                 .toString()
             val functionStartOffset = offset - typedFuzzyName.length
 
@@ -193,9 +194,10 @@ fun createNormalFunctionInsertHandler(
                 if (!functionName.isSpecial) {
                     val renderedName = functionName.render()
                     val alreadyHasTickAtFront = chars[functionStartOffset] == '`'
-                    alreadyHasBackTickInTheEnd = chars[offset] == '`'
 
                     if (renderedName.firstOrNull() == '`') {
+                        alreadyHasBackTickInTheEnd = chars[offset] == '`'
+
                         // requires backticks
                         if (!alreadyHasTickAtFront) {
                             // backtick is not present already, so need to add it manually
@@ -220,7 +222,6 @@ fun createNormalFunctionInsertHandler(
                     }
                 }
             }
-
         }
 
         prefixModificationOperation?.also { builder.addOperation(it) }
@@ -233,47 +234,38 @@ fun createNormalFunctionInsertHandler(
         }
 
         builder.withPostInsertHandler(InsertHandler<LookupElement> { context, item ->
-            var renderedText = item.lookupString
-
-            if (!argumentsOnly) {
-                 //TODO: maybe there is a way to perform all this at declarative stage
-                //surroundWithBracesIfInStringTemplate(context)
-
-                val name = (item.`object` as? DeclarationLookupObject)?.name
-                if (name != null && !name.isSpecial) {
-                //    val startOffset = context.startOffset
-                //    if (startOffset > 0 && context.document.isTextAt(startOffset - 1, "`")) {
-                //        context.document.deleteString(startOffset - 1, startOffset)
-                //    }
-                    renderedText = name.render()
-                //    context.document.replaceString(context.startOffset, context.startOffset + item.lookupString.length, renderedText)
-                }
-            }
-
             // The following code looks hacky:
-            // brackets with arguments are already present, and they should be kept, that's why we provide fake context
-            // which only includes the rendered text.
+            // brackets with arguments are already present, so are braces and backticks, and they should be kept.
+            // that's why we provide fake context which is adjusted
             // NB: it is important to fork context here and keep the original one intact
-            context.forkByOffsetMap().let { forkedContext ->
-                val tailOffset = forkedContext.startOffset + renderedText.length
-                forkedContext.tailOffset = tailOffset
-                forkedContext.offsetMap.addOffset(IDENTIFIER_END_OFFSET, tailOffset)
+            context.forkByOffsetMap().also { forkedContext ->
+                val newStartOffset = if (editor.document.isTextAt(forkedContext.startOffset, "{")) {
+                    forkedContext.startOffset + 1
+                } else if (forkedContext.startOffset > 0 && editor.document.isTextAt(forkedContext.startOffset - 1, "`")) {
+                    forkedContext.startOffset - 1
+                } else forkedContext.startOffset
+
+                val newTailOffset = newStartOffset + functionName.render().length
+
+                forkedContext.offsetMap.addOffset(START_OFFSET, newStartOffset)
+                forkedContext.offsetMap.addOffset(IDENTIFIER_END_OFFSET, newTailOffset)
+                forkedContext.tailOffset = newTailOffset
 
                 KotlinCallableInsertHandler.addImport(forkedContext, item, callType)
-            }
 
-            // hack for KT-31902
-            if (callType == CallType.DEFAULT) {
-                val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+                // hack for KT-31902
+                if (callType == CallType.DEFAULT) {
+                    val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
 
-                context.file
-                    .findElementAt(context.startOffset)
-                    ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
-                    ?.createSmartPointer()?.let {
-                        psiDocumentManager.commitDocument(context.document)
-                        val dotQualifiedExpression = it.element ?: return@let
-                        KotlinCallableInsertHandler.SHORTEN_REFERENCES.process(dotQualifiedExpression)
-                    }
+                    context.file
+                        .findElementAt(forkedContext.startOffset)
+                        ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
+                        ?.createSmartPointer()?.let {
+                            psiDocumentManager.commitDocument(forkedContext.document)
+                            val dotQualifiedExpression = it.element ?: return@let
+                            KotlinCallableInsertHandler.SHORTEN_REFERENCES.process(dotQualifiedExpression)
+                        }
+                }
             }
         })
     }
