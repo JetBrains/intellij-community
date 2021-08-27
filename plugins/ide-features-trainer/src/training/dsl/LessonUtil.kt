@@ -392,7 +392,7 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
     }
     ApplicationManager.getApplication().executeOnPooledThread {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, ActionButton::class.java, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
           ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
         }
       taskInvokeLater {
@@ -430,7 +430,7 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
     if (clearPreviousHighlights) LearningUiHighlightingManager.clearHighlights()
     invokeInBackground {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, componentClass, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(project, componentClass, seconds01) { ui ->
           finderFunction(ui)
         }
 

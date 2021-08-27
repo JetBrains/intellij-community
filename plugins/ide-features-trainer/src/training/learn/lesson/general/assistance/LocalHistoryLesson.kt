@@ -265,7 +265,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
     if (!lessonPassed) return
-    val editorComponent = LearningUiUtil.findComponentOrNull(EditorComponentImpl::class.java) ?: error("Failed to find editor component")
+    val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java)
+                          ?: error("Failed to find editor component")
     val lines = textToDelete.lines()
     val rightColumn = lines.maxOf { it.length }
     LearningUiHighlightingManager.highlightPartOfComponent(editorComponent, HighlightingOptions(highlightInside = false)) {

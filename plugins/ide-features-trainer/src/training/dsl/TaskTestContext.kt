@@ -5,7 +5,9 @@ import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.MultilineTreeCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -56,16 +58,16 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
   }
 
   fun ideFrame(action: ContainerFixture<IdeFrameImpl>.() -> Unit) {
-    with(findIdeFrame(robot, defaultTimeout)) {
+    with(findIdeFrame(project, robot, defaultTimeout)) {
       action()
     }
   }
 
   fun <ComponentType : Component> waitComponent(componentClass: Class<ComponentType>, partOfName: String? = null) {
-    LearningUiUtil.waitUntilFound(robot, null, typeMatcher(componentClass) {
+    LearningUiUtil.waitUntilFound(robot, typeMatcher(componentClass) {
       (if (partOfName != null) it.javaClass.name.contains(partOfName)
       else true) && it.isShowing
-    }, defaultTimeout)
+    }, defaultTimeout) { LearningUiUtil.getUiRootsForProject(project) }
   }
 
   /**
@@ -116,7 +118,9 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
              func: ContainerFixture<JDialog>.() -> Unit = {})
     : AbstractComponentFixture<*, JDialog, ComponentDriver<*>> {
     val jDialogFixture = if (title == null) {
-      val jDialog = LearningUiUtil.waitUntilFound(robot, null, typeMatcher(JDialog::class.java) { true }, timeout)
+      val jDialog = LearningUiUtil.waitUntilFound(robot, typeMatcher(JDialog::class.java) { true }, timeout) {
+        LearningUiUtil.getUiRootsForProject(project)
+      }
       JDialogFixture(robot, jDialog)
     }
     else {
@@ -313,11 +317,11 @@ private class IdeFrameFixture(robot: Robot, target: IdeFrameImpl)
 private class JDialogFixture(robot: Robot, jDialog: JDialog) :
   ComponentFixture<JDialogFixture, JDialog>(JDialogFixture::class.java, robot, jDialog), ContainerFixture<JDialog>
 
-private fun findIdeFrame(robot: Robot, timeout: Timeout): IdeFrameFixture {
+private fun findIdeFrame(project: Project, robot: Robot, timeout: Timeout): IdeFrameFixture {
   val matcher: GenericTypeMatcher<IdeFrameImpl> = object : GenericTypeMatcher<IdeFrameImpl>(
     IdeFrameImpl::class.java) {
     override fun isMatching(frame: IdeFrameImpl): Boolean {
-      return frame.isShowing
+      return frame.isShowing && ProjectFrameHelper.getFrameHelper(frame)?.project == project
     }
   }
   return try {

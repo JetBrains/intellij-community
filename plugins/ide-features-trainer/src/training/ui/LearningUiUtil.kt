@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.util.ui.UIUtil
 import org.fest.swing.core.GenericTypeMatcher
@@ -51,14 +53,14 @@ object LearningUiUtil {
    * Waits for a first component which passes the given matcher under the given root to become visible.
    */
   private fun <T : Component> waitUntilFoundAll(robot: Robot,
-                                                root: Container?,
                                                 matcher: GenericTypeMatcher<T>,
-                                                timeout: Timeout): Collection<T> {
+                                                timeout: Timeout,
+                                                getRoots: () -> Collection<Container>): Collection<T> {
     val reference = AtomicReference<Collection<T>>()
     Pause.pause(object : Condition("Find component using $matcher") {
       override fun test(): Boolean {
         val finder = robot.finder()
-        val allFound = if (root != null) finder.findAll(root, matcher) else finder.findAll(matcher)
+        val allFound = getRoots().flatMap { finder.findAll(it, matcher) }
         if (allFound.isNotEmpty()) {
           reference.set(allFound)
           return true
@@ -71,10 +73,10 @@ object LearningUiUtil {
   }
 
   fun <T : Component> waitUntilFound(robot: Robot,
-                                     root: Container?,
                                      matcher: GenericTypeMatcher<T>,
-                                     timeout: Timeout): T {
-    val allFound = waitUntilFoundAll(robot, root, matcher, timeout)
+                                     timeout: Timeout,
+                                     getRoots: () -> Collection<Container>): T {
+    val allFound = waitUntilFoundAll(robot, matcher, timeout, getRoots)
     if (allFound.size > 1) {
       // Only allow a single component to be found, otherwise you can get some really confusing
       // test failures; the matcher should pick a specific enough instance
@@ -91,6 +93,10 @@ object LearningUiUtil {
     }
   }
 
+  fun getUiRootsForProject(project: Project): List<Container> {
+    return robot.hierarchy().roots().filter { it is IdeFrame && it.isShowing && it.project == project }
+  }
+
   private fun isReallyVisible(component: Component): Boolean {
     val frame = UIUtil.getParentOfType(IdeFrameImpl::class.java, component) ?: return true
     val locationOnScreen = component.locationOnScreen
@@ -99,7 +105,7 @@ object LearningUiUtil {
     return bounds.intersects(onScreenRect)
   }
 
-  fun <ComponentType : Component> findShowingComponentWithTimeout(container: Container?,
+  fun <ComponentType : Component> findShowingComponentWithTimeout(project: Project,
                                                                   componentClass: Class<ComponentType>,
                                                                   timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
                                                                   selector: ((candidates: Collection<ComponentType>) -> ComponentType?)? = null,
@@ -109,20 +115,20 @@ object LearningUiUtil {
         it.isShowing && finderFunction(it) && isReallyVisible(it)
       }
       return if (selector != null) {
-        val result = waitUntilFoundAll(robot, container, matcher, timeout)
+        val result = waitUntilFoundAll(robot, matcher, timeout) { getUiRootsForProject(project) }
         selector(result) ?: throw ComponentLookupException("Cannot filter result component from: $result")
       }
       else {
-        waitUntilFound(robot, container, matcher, timeout)
+        waitUntilFound(robot, matcher, timeout) { getUiRootsForProject(project) }
       }
     }
     catch (e: WaitTimedOutError) {
       throw ComponentLookupException(
-        "Unable to find ${componentClass.simpleName} ${if (container != null) "in container $container" else ""} in ${timeout.duration()}(ms)")
+        "Unable to find ${componentClass.simpleName} in containers ${getUiRootsForProject(project)} in ${timeout.duration()}(ms)")
     }
   }
 
-  fun <ComponentType : Component> findAllShowingComponentWithTimeout(container: Container?,
+  fun <ComponentType : Component> findAllShowingComponentWithTimeout(project: Project,
                                                                      componentClass: Class<ComponentType>,
                                                                      timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
                                                                      finderFunction: (ComponentType) -> Boolean = { true }): Collection<ComponentType> {
@@ -130,11 +136,11 @@ object LearningUiUtil {
       val matcher = typeMatcher(componentClass) {
         it.isShowing && finderFunction(it) && isReallyVisible(it)
       }
-      return waitUntilFoundAll(robot, container, matcher, timeout)
+      return waitUntilFoundAll(robot, matcher, timeout) { getUiRootsForProject(project) }
     }
     catch (e: WaitTimedOutError) {
       throw ComponentLookupException(
-        "Unable to find ${componentClass.simpleName} ${if (container != null) "in container $container" else ""} in ${timeout.duration()}(ms)")
+        "Unable to find ${componentClass.simpleName} in containers ${getUiRootsForProject(project)} in ${timeout.duration()}(ms)")
     }
   }
 
@@ -143,27 +149,27 @@ object LearningUiUtil {
    *
    * @throws ComponentLookupException if desired component haven't been found under the container (gets from receiver) in specified timeout
    */
-  inline fun <reified ComponentType : Component, ContainerComponentType : Container> ContainerFixture<ContainerComponentType>?.findComponentWithTimeout(
+  inline fun <reified ComponentType : Component, ContainerComponentType : Container> ContainerFixture<ContainerComponentType>.findComponentWithTimeout(
     timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
     crossinline finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
     try {
       return waitUntilFound(robot,
-                            this?.target() as Container?,
-                            typeMatcher(ComponentType::class.java) { finderFunction(it) },
-                            timeout)
+        typeMatcher(ComponentType::class.java) { finderFunction(it) },
+        timeout) { listOf(this.target() as Container) }
     }
     catch (e: WaitTimedOutError) {
       throw ComponentLookupException(
-        "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in ${timeout.duration()}")
+        "Unable to find ${ComponentType::class.java.name} in container ${this.target()} in ${timeout.duration()}")
     }
   }
 
-  fun <ComponentType : Component> findComponentOrNull(componentClass: Class<ComponentType>,
+  fun <ComponentType : Component> findComponentOrNull(project: Project,
+                                                      componentClass: Class<ComponentType>,
                                                       selector: ((candidates: Collection<ComponentType>) -> ComponentType?)? = null,
                                                       finderFunction: (ComponentType) -> Boolean = { true }): ComponentType? {
     val delay = Timeout.timeout(500, TimeUnit.MILLISECONDS)
     return try {
-      findShowingComponentWithTimeout(null, componentClass, delay, selector, finderFunction)
+      findShowingComponentWithTimeout(project, componentClass, delay, selector, finderFunction)
     }
     catch (e: WaitTimedOutError) {
       null
