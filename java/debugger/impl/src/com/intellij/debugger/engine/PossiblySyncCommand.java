@@ -4,6 +4,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.jetbrains.jdi.VirtualMachineImpl;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
-  public static final int DELAY = ApplicationManager.getApplication().isUnitTestMode() ? -1 : 50;
-
   protected PossiblySyncCommand(@Nullable SuspendContextImpl suspendContext) {
     super(suspendContext);
   }
@@ -28,7 +27,8 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
   public abstract void syncAction(@NotNull SuspendContextImpl suspendContext);
 
   private boolean rescheduleIfNotIdle(@NotNull SuspendContextImpl suspendContext) {
-    if (DELAY < 0) {
+    int delay = ApplicationManager.getApplication().isUnitTestMode() ? -1 : Registry.intValue("debugger.sync.commands.reschedule.delay");
+    if (delay < 0) {
       return false;
     }
     DebugProcess process = suspendContext.getDebugProcess();
@@ -40,7 +40,7 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
     else {
       // reschedule with a small delay
       hold();
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> managerThread.schedule(this), DELAY, TimeUnit.MILLISECONDS);
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> managerThread.schedule(this), delay, TimeUnit.MILLISECONDS);
       return true;
     }
   }
