@@ -244,13 +244,6 @@ class JBGridLayoutTest {
 
   @Test
   fun testBaseline() {
-    fun RowsGridBuilder.label(verticalAlign: VerticalAlign, size: Int): RowsGridBuilder {
-      val label = JLabel("${verticalAlign.name} $size")
-      label.font = label.font.deriveFont(size.toFloat())
-      cell(label, verticalAlign = verticalAlign)
-      return this
-    }
-
     for (verticalAlign in VerticalAlign.values()) {
       if (verticalAlign == VerticalAlign.FILL) {
         continue
@@ -278,6 +271,39 @@ class JBGridLayoutTest {
     }
   }
 
+  @Test
+  fun testBaselineWithSubPanels() {
+    for (verticalAlign in VerticalAlign.values()) {
+      if (verticalAlign == VerticalAlign.FILL) {
+        continue
+      }
+
+      val panel = JPanel(JBGridLayout())
+      val builder = RowsGridBuilder(panel)
+
+      builder
+        .label(verticalAlign, 14)
+        .subGridBuilder(verticalAlign = verticalAlign)
+        .label(verticalAlign, 12)
+        .subGridBuilder(verticalAlign = verticalAlign)
+        .label(verticalAlign, 16)
+        .label(verticalAlign, 10)
+
+      doLayout(panel, 1600, 800)
+      var baseline: Int? = null
+      for (component in panel.components) {
+        val size = component.size
+        val componentBaseline = component.getBaseline(size.width, size.height)
+        if (baseline == null) {
+          baseline = component.y + componentBaseline
+        }
+        else {
+          assertEquals(baseline, component.y + componentBaseline)
+        }
+      }
+    }
+  }
+
   private fun doLayout(panel: JPanel, width: Int, height: Int) {
     panel.setSize(width, height)
     (panel.layout as JBGridLayout).layoutContainer(panel)
@@ -287,5 +313,12 @@ class JBGridLayoutTest {
     val result = JLabel("Label")
     result.preferredSize = Dimension(preferredWidth, preferredHeight)
     return result
+  }
+
+  fun RowsGridBuilder.label(verticalAlign: VerticalAlign, size: Int): RowsGridBuilder {
+    val label = JLabel("${verticalAlign.name} $size")
+    label.font = label.font.deriveFont(size.toFloat())
+    cell(label, verticalAlign = verticalAlign)
+    return this
   }
 }

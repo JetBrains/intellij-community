@@ -13,9 +13,21 @@ enum class HorizontalAlign {
 
 @ApiStatus.Experimental
 enum class VerticalAlign {
+  /**
+   * Aligning by baseline on top
+   */
   TOP,
+
+  /**
+   * Aligning by baseline on center
+   */
   CENTER,
+
+  /**
+   * Aligning by baseline on bottom
+   */
   BOTTOM,
+
   FILL
 }
 
