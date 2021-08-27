@@ -117,7 +117,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private JTabbedPane   pane;
     private final Project project;
-    private int counter = 5;
 
     private JButton abracadabraButton;
 
@@ -152,9 +151,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(pane);
 
-      ActionToolbar toolbar = createToolbar();
-      toolbar.setTargetComponent(pane);
-      panel.addToTop(toolbar.getComponent());
+      panel.addToTop(createToolbar());
 
       JPanel southPanel = new JPanel();
       southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.X_AXIS));
@@ -796,7 +793,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
-    private ActionToolbar createToolbar() {
+    private int counter = 5;
+    private JComponent createToolbar() {
       AnAction[] actionsArray = new AnAction[3];
       actionsArray[0] = new MyAction("Play", AllIcons.Actions.Execute) {
         @Override
@@ -860,8 +858,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3).withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
-      toolbar.setOutlined(true);
-      return toolbar;
+      JComponent toolbarComponent = toolbar.getComponent();
+      toolbarComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+      return toolbarComponent;
     }
 
     private JComponent createJSliderTab() {

@@ -120,12 +120,6 @@ public interface ActionToolbar {
   int getMaxButtonHeight();
 
   /**
-   * Sets outlined border mode for the toolbar. When set to {@code false} the border is reset to the default empty one.
-   * Default is {@code false}.
-   */
-  void setOutlined(boolean outlined);
-
-  /**
    * Forces update of the all actions in the toolbars. Actions, however, normally updated automatically every 500 ms.
    */
   void updateActionsImmediately();
