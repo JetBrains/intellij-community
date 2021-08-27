@@ -6,15 +6,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
  * @author ven
  */
-public class RenameFileAction extends AnAction {
+public class RenameFileAction extends AnAction implements ActionPromoter {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
@@ -31,17 +34,19 @@ public class RenameFileAction extends AnAction {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
     String place = e.getPlace();
-    ActionManager actionManager = ActionManager.getInstance();
     boolean enabled =
       file != null && file.isWritable()
       && Objects.nonNull(file.getVirtualFile()) && !(file.getVirtualFile().getFileSystem().isReadOnly())
       && (enabledInProjectView(file) || !ActionPlaces.PROJECT_VIEW_POPUP.equals(place))
-      && place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null
-      && !(ActionPlaces.isShortcutPlace(place) &&
-           e.getData(CommonDataKeys.EDITOR) != null &&
-           Arrays.equals(Objects.requireNonNull(actionManager.getAction(IdeActions.ACTION_RENAME)).getShortcutSet().getShortcuts(),
-                         getShortcutSet().getShortcuts()));
+      && place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
     presentation.setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions,
+                                           @NotNull DataContext context) {
+    return CommonDataKeys.EDITOR.getData(context) != null && ContainerUtil.findInstance(actions, RenameElementAction.class) != null 
+           ? Collections.singletonList(this) : null;
   }
 
   protected boolean enabledInProjectView(@NotNull PsiFile file) {
