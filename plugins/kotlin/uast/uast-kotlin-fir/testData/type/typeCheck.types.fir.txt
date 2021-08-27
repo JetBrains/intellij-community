@@ -7,11 +7,11 @@ UFile (package = ) [public final class TypeCheckKt {...]
                 UReturnExpression [return if (x !is java.lang.String) x.toString() else x] : PsiType:Void
                     UIfExpression [if (x !is java.lang.String) x.toString() else x] : PsiType:String
                         UBinaryExpressionWithType [x !is java.lang.String] : PsiType:boolean
-                            USimpleNameReferenceExpression (identifier = x) [x] : PsiType:NonExistentClass
+                            USimpleNameReferenceExpression (identifier = x) [x] : PsiType:<ErrorType>
                             UTypeReferenceExpression (name = java.lang.String) [java.lang.String]
                         UQualifiedReferenceExpression [x.toString()] : PsiType:String
-                            USimpleNameReferenceExpression (identifier = x) [x] : PsiType:NonExistentClass
+                            USimpleNameReferenceExpression (identifier = x) [x] : PsiType:<ErrorType>
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
                                 UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
                                 USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String
-                        USimpleNameReferenceExpression (identifier = x) [x] : PsiType:NonExistentClass
+                        USimpleNameReferenceExpression (identifier = x) [x] : PsiType:<ErrorType>

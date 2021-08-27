@@ -11,16 +11,12 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.*
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
-import org.jetbrains.uast.kotlin.internal.nullability
-import org.jetbrains.uast.kotlin.internal.toPsiClass
-import org.jetbrains.uast.kotlin.internal.toPsiMethod
+import org.jetbrains.uast.kotlin.internal.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
@@ -238,7 +234,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
             if (ktType is KtClassErrorType) return null
-            return ktType.asPsiType(ktTypeReference, TypeMappingMode.DEFAULT_UAST)
+            return toPsiType(ktType, ktTypeReference)
         }
     }
 
@@ -246,7 +242,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktCallElement) {
             val ktType = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull()?.receiverType?.type ?: return null
             if (ktType is KtClassErrorType) return null
-            return ktType.asPsiType(ktCallElement, TypeMappingMode.DEFAULT_UAST)
+            return toPsiType(ktType, ktCallElement)
         }
     }
 
@@ -255,13 +251,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val ktType =
                 ktSimpleNameExpression.resolveAccessorCall()?.targetFunction?.candidates?.singleOrNull()?.receiverType?.type ?: return null
             if (ktType is KtClassErrorType) return null
-            return ktType.asPsiType(ktSimpleNameExpression, TypeMappingMode.DEFAULT_UAST)
+            return toPsiType(ktType, ktSimpleNameExpression)
         }
     }
 
     override fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType? {
         analyseForUast(ktDoubleColonExpression) {
-            return ktDoubleColonExpression.getReceiverKtType()?.asPsiType(ktDoubleColonExpression, TypeMappingMode.DEFAULT_UAST)
+            val receiverKtType = ktDoubleColonExpression.getReceiverKtType() ?: return null
+            return toPsiType(receiverKtType, ktDoubleColonExpression)
         }
     }
 
@@ -270,13 +267,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktElement) {
             val leftType = left.getKtType() ?: return null
             val rightType = right.getKtType()  ?: return null
-            return commonSuperType(listOf(leftType, rightType))?.asPsiType(ktElement, TypeMappingMode.DEFAULT_UAST)
+            val commonSuperType = commonSuperType(listOf(leftType, rightType)) ?: return null
+            return toPsiType(commonSuperType, ktElement)
         }
     }
 
     override fun getType(ktExpression: KtExpression, source: UElement): PsiType? {
         analyseForUast(ktExpression) {
-            return ktExpression.getKtType()?.asPsiType(ktExpression, TypeMappingMode.DEFAULT_UAST)
+            val ktType = ktExpression.getKtType() ?: return null
+            return toPsiType(ktType, ktExpression)
         }
     }
 
@@ -288,25 +287,26 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         return getType(ktDeclaration)
     }
 
-    private fun getType(ktDeclaration: KtDeclaration): PsiType? {
+    private fun getType(ktDeclaration: KtDeclaration): PsiType {
         analyseForUast(ktDeclaration) {
-            return ktDeclaration.getReturnKtType().asPsiType(ktDeclaration, TypeMappingMode.DEFAULT_UAST)
+            return toPsiType(ktDeclaration.getReturnKtType(), ktDeclaration)
         }
     }
 
     override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
         analyseForUast(ktFunction) {
-            return ktFunction.getFunctionalType().asPsiType(ktFunction, TypeMappingMode.DEFAULT_UAST)
+            return toPsiType(ktFunction.getFunctionalType(), ktFunction)
         }
     }
 
     override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
         val sourcePsi = uLambdaExpression.sourcePsi
         analyseForUast(sourcePsi) {
-            return sourcePsi.getExpectedType()
+            val samType = sourcePsi.getExpectedType()
                 ?.takeIf { it !is KtClassErrorType && it.isFunctionalInterfaceType }
                 ?.lowerBoundIfFlexible()
-                ?.asPsiType(sourcePsi, TypeMappingMode.DEFAULT_UAST)
+                ?: return null
+            return toPsiType(samType, sourcePsi)
         }
     }
 
