@@ -137,7 +137,7 @@ public final class Utils extends DataContextUtils {
                                                                @NotNull String place,
                                                                boolean isContextMenu,
                                                                @Nullable Runnable onProcessed,
-                                                               @Nullable JComponent sourceComponent) {
+                                                               @Nullable JComponent menuItem) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
@@ -154,7 +154,7 @@ public final class Utils extends DataContextUtils {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      try (AccessToken ignore = cancelOnUserActivityInside(promise, sourceComponent)) {
+      try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -189,13 +189,16 @@ public final class Utils extends DataContextUtils {
   }
 
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
-                                                                 @Nullable JComponent sourceComponent) {
+                                                                 @Nullable Component contextComponent,
+                                                                 @Nullable Component menuItem) {
+    Window window = contextComponent == null ? null : SwingUtilities.getWindowAncestor(contextComponent);
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
       if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
-          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION ||
+          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION &&
+           window != null && window == SwingUtilities.getWindowAncestor(((FocusEvent)event).getComponent()) ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED && UIUtil.getDeepestComponentAt(
-            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != sourceComponent ) {
+            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != menuItem ) {
         ActionUpdater.cancelPromise(promise, event);
       }
       return null;
