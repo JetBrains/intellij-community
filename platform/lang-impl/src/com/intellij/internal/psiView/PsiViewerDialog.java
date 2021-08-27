@@ -49,7 +49,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
@@ -65,6 +65,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -93,7 +94,6 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
  * @author Konstantin Bulenkov
  */
 public class PsiViewerDialog extends DialogWrapper implements DataProvider {
-  private static final String REFS_CACHE = "References Resolve Cache";
   public static final Color BOX_COLOR = new JBColor(new Color(0xFC6C00), new Color(0xDE6C01));
   public static final Logger LOG = Logger.getInstance(PsiViewerDialog.class);
   private final Project myProject;
@@ -133,6 +133,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private int myNewDocumentHashCode = 11;
 
   private final boolean myExternalDocument;
+
+  private final Map<PsiElement, PsiElement[]> myRefsResolvedCache = new HashMap<>();
 
   private final PsiFile myOriginalPsiFile;
 
@@ -313,7 +315,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
                                                     boolean cellHasFocus) {
         final Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         try {
-          if (resolve(index) == null) {
+          final PsiElement[] elements = myRefsResolvedCache.get(getPsiElement());
+          if (elements == null || elements.length <= index || elements[index] == null) {
             comp.setForeground(JBColor.RED);
           }
         }
@@ -426,7 +429,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
     final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject);
     if (size == null) {
-      DimensionService.getInstance().setSize(getDimensionServiceKey(), JBUI.size(800, 600));
+      DimensionService.getInstance().setSize(getDimensionServiceKey(), JBUI.size(800, 600), myProject);
     }
     myTextSplit.setDividerLocation(settings.textDividerLocation);
     myTreeSplit.setDividerLocation(settings.treeDividerLocation);
@@ -679,6 +682,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
     myBlockTree.reloadTree(rootElement, text);
     myStubTree.reloadTree(rootElement, text);
+
+    myRefsResolvedCache.clear();
   }
 
 
@@ -809,26 +814,48 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   public void updateReferences(PsiElement element) {
     final DefaultListModel<String> model = (DefaultListModel<String>)myRefs.getModel();
     model.clear();
-    final Object cache = myRefs.getClientProperty(REFS_CACHE);
-    if (cache instanceof Map) {
-      ((Map<?, ?>)cache).clear();
-    }
-    else {
-      myRefs.putClientProperty(REFS_CACHE, new HashMap<>());
-    }
+    myRefsResolvedCache.clear();
     if (element == null) return;
 
+    final PsiReferenceService referenceService = PsiReferenceService.getService();
+    final Callable<List<PsiReference>> getReferences = () -> referenceService.getReferences(element, PsiReferenceService.Hints.NO_HINTS);
+
     final String progressTitle = LangBundle.message("psi.viewer.progress.dialog.get.references");
-    final PsiReference[] psiReferences = ProgressManager.getInstance().run(new Task.WithResult<>(myProject, progressTitle, true) {
+    final List<PsiReference> psiReferences = ProgressManager.getInstance().run(new Task.WithResult<>(myProject, progressTitle, true) {
       @Override
-      protected PsiReference[] compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
-        return ReadAction.nonBlocking(element::getReferences).executeSynchronously();
+      protected List<PsiReference> compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
+        return ReadAction.nonBlocking(getReferences).executeSynchronously();
       }
     });
+
+    fillReferencesCache(element, psiReferences);
 
     for (PsiReference reference : psiReferences) {
       model.addElement(reference.getClass().getName());
     }
+  }
+
+  private void fillReferencesCache(@NotNull PsiElement element, List<PsiReference> references) {
+    if (myRefsResolvedCache.containsKey(element)) return;
+
+    final Project project = element.getProject();
+
+    final PsiElement[] cache = new PsiElement[references.size()];
+
+    for (int i = 0; i < references.size(); i++) {
+      final PsiReference reference = references.get(i);
+
+      final PsiElement resolveResult;
+      if (reference instanceof PsiPolyVariantReference) {
+        resolveResult = multiResolveInBgThread(project, (PsiPolyVariantReference)reference);
+      }
+      else {
+        resolveResult = resolveInBgThread(project, reference);
+      }
+
+      cache[i] = resolveResult;
+    }
+    myRefsResolvedCache.put(element, cache);
   }
 
   private void clearSelection() {
@@ -863,46 +890,16 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     super.dispose();
   }
 
-  @Nullable
-  private PsiElement resolve(int index) {
-    final PsiElement element = getPsiElement();
-    if (element == null) return null;
-    @SuppressWarnings("unchecked")
-    Map<PsiElement, PsiElement[]> map = (Map<PsiElement, PsiElement[]>)myRefs.getClientProperty(REFS_CACHE);
-    if (map == null) {
-      myRefs.putClientProperty(REFS_CACHE, map = new HashMap<>());
-    }
-    PsiElement[] cache = map.get(element);
-    if (cache == null) {
-      final PsiReference[] references = element.getReferences();
-      cache = new PsiElement[references.length];
-      final Project project = element.getProject();
-      for (int i = 0; i < references.length; i++) {
-        final PsiReference reference = references[i];
-
-        final PsiElement resolveResult;
-        if (reference instanceof PsiPolyVariantReference) {
-          resolveResult = multiResolveInBgThread(project, (PsiPolyVariantReference)reference);
-        }
-        else {
-          resolveResult = resolveInBgThread(project, reference);
-        }
-
-        cache[i] = resolveResult;
-      }
-      map.put(element, cache);
-    }
-    return index >= cache.length ? null : cache[index];
-  }
-
   @Contract(pure = true)
   private static PsiElement resolveInBgThread(@NotNull final Project project,
                                               @NotNull final PsiReference reference) {
     final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.resolving.reference.text", reference.getElement().getText());
+    final Callable<PsiElement> resolver = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> reference::resolve);
+
     return ProgressManager.getInstance().run(new Task.WithResult<>(project, progressDialogTitle, true) {
       @Override
       protected PsiElement compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
-        return ReadAction.nonBlocking(reference::resolve).executeSynchronously();
+        return ReadAction.nonBlocking(resolver).executeSynchronously();
       }
     });
   }
@@ -910,7 +907,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   @Contract(pure = true)
   private static @Nullable PsiElement multiResolveInBgThread(@NotNull final Project project,
                                                              @NotNull final PsiPolyVariantReference reference) {
-    final Callable<ResolveResult[]> resolver = () -> reference.multiResolve(true);
+    final Callable<ResolveResult[]> resolver = () ->
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+        () -> reference.multiResolve(true)
+      );
 
     final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.resolving.reference.text", reference.getElement().getText());
     return ProgressManager.getInstance().run(new Task.WithResult<>(project, progressDialogTitle, true) {
@@ -1073,7 +1073,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       final PsiElement rootElement = (getTreeStructure()).getRootPsiElement();
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;
-      final PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), offset);
+      final PsiElement element = InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), offset);
       myBlockTree.selectNodeFromEditor(element);
       myStubTree.selectNodeFromEditor(element);
       myPsiTreeBuilder.select(element);
@@ -1091,8 +1091,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       final int start = selection.getSelectionStart() + baseOffset;
       final int end = selection.getSelectionEnd() + baseOffset - 1;
       final PsiElement element =
-        findCommonParent(InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), start),
-                         InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), end));
+        findCommonParent(InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), start),
+                         InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), end));
       if (element != null) {
         if (myEditor.getContentComponent().hasFocus()) {
           myBlockTree.selectNodeFromEditor(element);
