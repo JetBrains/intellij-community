@@ -102,8 +102,12 @@ internal open class FirCallableCompletionContributor(
         val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
         availableNonExtensions.forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
+        // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
+        // equal to the same symbols from top level without substitution.
+        val extensionMembers = mutableSetOf<KtCallableSymbol>()
         extensionsWhichCanBeCalled.forEach { (symbol, applicabilityResult) ->
             getExtensionOptions(symbol, applicabilityResult)?.let {
+                extensionMembers += symbol
                 addCallableSymbolToCompletion(context, symbol, it, applicabilityResult.substitutor)
             }
         }
@@ -112,12 +116,15 @@ internal open class FirCallableCompletionContributor(
             val topLevelCallables = indexHelper.getTopLevelCallables(scopeNameFilter)
             topLevelCallables.asSequence()
                 .map { it.getSymbol() as KtCallableSymbol }
-                .filter { with(visibilityChecker) { isVisible(it) } }
+                .filter { it !in extensionMembers && with(visibilityChecker) { isVisible(it) } }
                 .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
         }
 
         collectTopLevelExtensionsFromIndices(implicitReceiversTypes, extensionChecker, visibilityChecker)
-            .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
+            .filter { it !in extensionMembers }
+            .forEach {
+                addCallableSymbolToCompletion(context, it, getOptions(it))
+            }
     }
 
     protected open fun KtAnalysisSession.collectDotCompletion(
@@ -191,14 +198,18 @@ internal open class FirCallableCompletionContributor(
                 }
             }
 
+        // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
+        // equal to the same symbols from top level without substitution.
+        val extensionMembers = mutableSetOf<KtCallableSymbol>()
         extensionNonMembers.forEach { (symbol, applicabilityResult) ->
             getExtensionOptions(symbol, applicabilityResult)?.let {
+                extensionMembers += symbol
                 addCallableSymbolToCompletion(context, symbol, it, applicabilityResult.substitutor)
             }
         }
 
         collectTopLevelExtensionsFromIndices(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
-            .filter { filter(it) }
+            .filter { it !in extensionMembers && filter(it) }
             .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
     }
 
