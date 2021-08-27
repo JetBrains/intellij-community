@@ -138,7 +138,7 @@ internal fun allRules(state: GrazieConfig.State = GrazieConfig.get()): Map<Lang,
   state.enabledLanguages.forEach { lang ->
     val jLanguage = lang.jLanguage
     if (jLanguage != null) {
-      val rules = TextChecker.allCheckers().flatMap { it.getRules(jLanguage.locale) }
+      val rules = TextChecker.allCheckers().flatMap { it.getRules(jLanguage.localeWithCountryAndVariant) }
       if (rules.isNotEmpty()) {
         result[lang] = rules
       }
