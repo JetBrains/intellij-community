@@ -73,6 +73,7 @@ import java.util.function.Function;
  */
 public final class IdeKeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
+  private static final KeyStroke F10 = KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -451,7 +452,11 @@ public final class IdeKeyEventDispatcher {
       return true;
     }
 
-    return processActionOrWaitSecondStroke(keyStroke);
+    return processActionOrWaitSecondStroke(keyStroke) ||
+           // We mute standard L&F behaviour on F10 (focusing menu) if some IDE action is bound to F10,
+           // even if that action is currently disabled. Opposite behaviour turns out to be inconvenient,
+           // at least for 'Visual Studio' keymap, where F10 is bound to 'Step Over' (see IDEA-138429).
+           F10.equals(keyStroke);
   }
 
   private boolean processActionOrWaitSecondStroke(KeyStroke keyStroke) {
