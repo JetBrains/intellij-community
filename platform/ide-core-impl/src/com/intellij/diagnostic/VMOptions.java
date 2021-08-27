@@ -21,7 +21,6 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -38,13 +37,11 @@ public final class VMOptions {
 
     public final @NlsSafe String optionName;
     public final String option;
-    private final Pattern pattern;
     private final String labelKey;
 
     MemoryKind(String name, String separator, @PropertyKey(resourceBundle = "messages.IdeCoreBundle") String key) {
       optionName = name;
-      option = "-" + name + separator;
-      pattern = Pattern.compile(option + "(\\d*)([a-zA-Z]*)");
+      option = '-' + name + separator;
       labelKey = key;
     }
 
@@ -65,8 +62,7 @@ public final class VMOptions {
       }
 
       try {
-        String content = FileUtil.loadFile(file.toFile());
-        arguments = Collections.singletonList(content);
+        arguments = FileUtil.loadLines(file.toFile());
       }
       catch (IOException e) {
         LOG.warn(e);
@@ -75,14 +71,11 @@ public final class VMOptions {
     }
 
     for (String argument : arguments) {
-      Matcher m = kind.pattern.matcher(argument);
-      if (m.find()) {
+      if (argument.startsWith(kind.option)) {
         try {
-          int value = Integer.parseInt(m.group(1));
-          double multiplier = parseUnit(m.group(2));
-          return (int)(value * multiplier);
+          return (int)(parseMemoryOption(argument.substring(kind.option.length())) >> 20);
         }
-        catch (NumberFormatException e) {
+        catch (IllegalArgumentException e) {
           LOG.info(e);
           break;
         }
@@ -92,15 +85,30 @@ public final class VMOptions {
     return -1;
   }
 
-  private static double parseUnit(String unitString) {
-    if (StringUtil.startsWithIgnoreCase(unitString, "k")) return (double)1 / 1024;
-    if (StringUtil.startsWithIgnoreCase(unitString, "g")) return 1024;
-    return 1;
+  /**
+   * Parses a Java VM memory option string (such as "-Xmx") and returns its numeric value, in bytes.
+   * See <a href="https://docs.oracle.com/en/java/javase/16/docs/specs/man/java.html#extra-options-for-java">'java' command manual</a>
+   * for the syntax.
+   *
+   * @throws IllegalArgumentException when either a number or a unit is invalid
+   */
+  public static long parseMemoryOption(@NotNull String strValue) throws IllegalArgumentException {
+    int p = 0;
+    while (p < strValue.length() && StringUtil.isDecimalDigit(strValue.charAt(p))) p++;
+    long numValue = Long.parseLong(strValue.substring(0, p));
+    if (p < strValue.length()) {
+      String unit = strValue.substring(p);
+      if ("k".equalsIgnoreCase(unit)) numValue <<= 10;
+      else if ("m".equalsIgnoreCase(unit)) numValue <<= 20;
+      else if ("g".equalsIgnoreCase(unit)) numValue <<= 30;
+      else throw new IllegalArgumentException("Invalid unit: " + unit);
+    }
+    return numValue;
   }
 
   public static void writeOption(@NotNull MemoryKind option, int value) {
     String optionValue = option.option + value + "m";
-    writeGeneralOption(option.pattern, optionValue);
+    writeGeneralOption(Pattern.compile(option.option + "(\\d*)([a-zA-Z]*)"), optionValue);
   }
 
   public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
