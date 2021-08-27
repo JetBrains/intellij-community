@@ -10,11 +10,14 @@ class StartupPerformanceCollector : CounterUsagesCollector() {
   companion object {
     private val LOG: Logger = Logger.getInstance(StartupPerformanceCollector::class.java)
 
-    private val GROUP = EventLogGroup("startup", 2)
+    private val GROUP = EventLogGroup("startup", 3)
 
     private val DURATION = EventFields.Int("duration")
 
+    private val SPLASH_SHOWN = GROUP.registerEvent("splashShown", DURATION)
+    private val PROJECT_FRAME_VISIBLE = GROUP.registerEvent("projectFrameVisible", DURATION)
     private val TOTAL_DURATION = GROUP.registerEvent("totalDuration", DURATION)
+
     private val BOOTSTRAP = GROUP.registerEvent("bootstrap", DURATION)
     private val SPLASH = GROUP.registerEvent("splash", DURATION)
     private val APP_INIT = GROUP.registerEvent("appInit", DURATION)
@@ -24,6 +27,8 @@ class StartupPerformanceCollector : CounterUsagesCollector() {
         "bootstrap" -> BOOTSTRAP.log(duration)
         "splash" -> SPLASH.log(duration)
         "app initialization" -> APP_INIT.log(duration)
+        "splashShown" -> SPLASH_SHOWN.log(duration)
+        "projectFrameVisible" -> PROJECT_FRAME_VISIBLE.log(duration)
         "totalDuration" -> TOTAL_DURATION.log(duration)
         else -> LOG.error("Trying to log unknown startup performance metric ('$eventId'). To record it, register a corresponding event and increment group version.")
       }
