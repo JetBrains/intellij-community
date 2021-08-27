@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
@@ -110,6 +111,11 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
           setOKButtonText(executor.getActionName());
           //setOKButtonIcon(executor.getIcon());
         }
+      }
+
+      @Override
+      public Dimension getInitialSize() {
+        return new Dimension(650, 500);
       }
     };
 
