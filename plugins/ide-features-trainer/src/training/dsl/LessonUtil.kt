@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.content.Content
@@ -35,6 +36,7 @@ import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
@@ -391,8 +393,10 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
       LearningUiHighlightingManager.clearHighlights()
     }
     ApplicationManager.getApplication().executeOnPooledThread {
+      val ideFrame = WindowManagerEx.getInstanceEx().getFrame(project)
+                     ?: throw ComponentLookupException("Failed to find IDE frame for project: $project")
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, ActionButton::class.java, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(ideFrame, ActionButton::class.java, seconds01) { ui ->
           ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
         }
       taskInvokeLater {
@@ -429,8 +433,10 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
   prepareRuntimeTask {
     if (clearPreviousHighlights) LearningUiHighlightingManager.clearHighlights()
     invokeInBackground {
+      val ideFrame = WindowManagerEx.getInstanceEx().getFrame(project)
+                     ?: throw ComponentLookupException("Failed to find IDE frame for project: $project")
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, componentClass, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(ideFrame, componentClass, seconds01) { ui ->
           finderFunction(ui)
         }
 

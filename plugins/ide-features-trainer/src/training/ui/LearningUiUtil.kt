@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.util.ui.UIUtil
 import org.fest.swing.core.GenericTypeMatcher
@@ -158,12 +160,15 @@ object LearningUiUtil {
     }
   }
 
-  fun <ComponentType : Component> findComponentOrNull(componentClass: Class<ComponentType>,
+  fun <ComponentType : Component> findComponentOrNull(project: Project,
+                                                      componentClass: Class<ComponentType>,
                                                       selector: ((candidates: Collection<ComponentType>) -> ComponentType?)? = null,
                                                       finderFunction: (ComponentType) -> Boolean = { true }): ComponentType? {
     val delay = Timeout.timeout(500, TimeUnit.MILLISECONDS)
     return try {
-      findShowingComponentWithTimeout(null, componentClass, delay, selector, finderFunction)
+      val ideFrame = WindowManagerEx.getInstanceEx().getFrame(project)
+                     ?: throw ComponentLookupException("Failed to find IDE frame for project: $project")
+      findShowingComponentWithTimeout(ideFrame, componentClass, delay, selector, finderFunction)
     }
     catch (e: WaitTimedOutError) {
       null
