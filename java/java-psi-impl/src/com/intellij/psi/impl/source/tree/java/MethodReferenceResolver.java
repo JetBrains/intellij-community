@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -235,12 +235,21 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
       List<CandidateInfo> firstCandidates = new ArrayList<>();
       List<CandidateInfo> secondCandidates = new ArrayList<>();
+      boolean thereIsStaticInTheFirst = false;
+      boolean thereIsNonStaticInTheSecond = false;
 
       for (CandidateInfo conflict : conflicts) {
         if (!(conflict instanceof MethodCandidateInfo)) continue;
         Boolean applicableByFirstSearch = isApplicableByFirstSearch(conflict, argTypes, hasReceiver, myReferenceExpression, myFunctionalMethodVarArgs, myInterfaceMethod);
         if (applicableByFirstSearch != null) {
           (applicableByFirstSearch ? firstCandidates : secondCandidates).add(conflict);
+          boolean isStatic = isStaticMethod(conflict);
+          if (isStatic && applicableByFirstSearch) {
+            thereIsStaticInTheFirst = true;
+          }
+          if (!isStatic && !applicableByFirstSearch) {
+            thereIsNonStaticInTheSecond = true;
+          }
         }
       }
 
@@ -259,11 +268,13 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
 
       CandidateInfo candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
+      candidateInfo = checkStaticNonStaticConflict(candidateInfo, firstCandidates, secondCandidates, thereIsStaticInTheFirst, thereIsNonStaticInTheSecond);
       if (candidateInfo != null) {
         return candidateInfo;
       }
 
       candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.VARARGS);
+      candidateInfo = checkStaticNonStaticConflict(candidateInfo, firstCandidates, secondCandidates, thereIsStaticInTheFirst, thereIsNonStaticInTheSecond);
       if (candidateInfo != null) {
         return candidateInfo;
       }
@@ -276,6 +287,28 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       firstCandidates.addAll(secondCandidates);
       conflicts.addAll(firstCandidates);
       return null;
+    }
+
+    private CandidateInfo checkStaticNonStaticConflict(CandidateInfo candidateInfo,
+                                                       @NotNull List<CandidateInfo> firstCandidates,
+                                                       @NotNull List<CandidateInfo> secondCandidates,
+                                                       boolean thereIsStaticInTheFirst,
+                                                       boolean thereIsNonStaticInTheSecond) {
+      if (candidateInfo == null ||
+          !myQualifierResolveResult.isReferenceTypeQualified() ||
+          !(myReferenceExpression.getReferenceNameElement() instanceof PsiIdentifier)) {
+        return candidateInfo;
+      }
+      boolean isStatic = isStaticMethod(candidateInfo);
+      if (isStatic && !thereIsNonStaticInTheSecond && firstCandidates.contains(candidateInfo) ||
+          !isStatic && !thereIsStaticInTheFirst && secondCandidates.contains(candidateInfo)) {
+        return candidateInfo;
+      }
+      return null;
+    }
+
+    private static boolean isStaticMethod(@NotNull CandidateInfo candidateInfo) {
+      return ((MethodCandidateInfo) candidateInfo).getElement().hasModifierProperty(PsiModifier.STATIC);
     }
 
     private static Boolean isApplicableByFirstSearch(@NotNull CandidateInfo conflict,
@@ -307,6 +340,9 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
               return null;
             }
           }
+        } else if (hasReceiver && varargs &&
+                   isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 1)) {
+          return false;
         }
         return true;
       }
