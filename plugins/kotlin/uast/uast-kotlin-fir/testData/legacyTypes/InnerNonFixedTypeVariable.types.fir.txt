@@ -5,18 +5,18 @@ UFile (package = ) [public final class InnerNonFixedTypeVariableKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Set<Unit>
                 UQualifiedReferenceExpression [list.filterIsInstance().mapTo(mutableSetOf(), { var it: <ErrorType> ->...})] : PsiType:Set<Unit>
-                    UQualifiedReferenceExpression [list.filterIsInstance()] : PsiType:NonExistentClass
+                    UQualifiedReferenceExpression [list.filterIsInstance()] : PsiType:<ErrorType>
                         USimpleNameReferenceExpression (identifier = list) [list] : PsiType:List<? extends Object>
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : PsiType:NonExistentClass
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : PsiType:<ErrorType>
                             UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
-                            USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : PsiType:NonExistentClass
+                            USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : PsiType:<ErrorType>
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [mapTo(mutableSetOf(), { var it: <ErrorType> ->...})] : PsiType:Set<Unit>
                         UIdentifier (Identifier (mapTo)) [UIdentifier (Identifier (mapTo))]
                         USimpleNameReferenceExpression (identifier = mapTo, resolvesTo = null) [mapTo] : PsiType:Set<Unit>
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [mutableSetOf()] : PsiType:Set<Unit>
                             UIdentifier (Identifier (mutableSetOf)) [UIdentifier (Identifier (mutableSetOf))]
                             USimpleNameReferenceExpression (identifier = mutableSetOf, resolvesTo = null) [mutableSetOf] : PsiType:Set<Unit>
-                        ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:NonExistentClass
+                        ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:<ErrorType>
                             UParameter (name = it) [var it: <ErrorType>]
                             UBlockExpression [{...}] : PsiType:Unit
     UClass (name = Some) [public final class Some {...}]

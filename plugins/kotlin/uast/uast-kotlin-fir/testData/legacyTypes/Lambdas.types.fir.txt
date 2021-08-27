@@ -31,10 +31,10 @@ UFile (package = ) [import java.util.stream.Stream...]
                 UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                     ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}]
-                            UBlockExpression [{...}] : PsiType:NonExistentClass
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                            UBlockExpression [{...}] : PsiType:<ErrorType>
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                     UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
-                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
                     UIdentifier (Identifier (baz)) [UIdentifier (Identifier (baz))]
                     USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
