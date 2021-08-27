@@ -71,7 +71,7 @@ fun createNormalFunctionInsertHandler(
 
     // \n - NormalCompletion
     lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler2.LazyBuilder { builder ->
-        val stringToInsert = StringBuilder()
+        val argumentsStringToInsert = StringBuilder()
 
         val offset = editor.caretModel.offset
         val insertLambda = lambdaInfo != null
@@ -80,7 +80,7 @@ fun createNormalFunctionInsertHandler(
 
         val insertTypeArguments = inputTypeArguments && !(insertLambda && lambdaInfo!!.explicitParameters)
         if (insertTypeArguments) {
-            stringToInsert.append("<>")
+            argumentsStringToInsert.append("<>")
             builder.offsetToPutCaret += 1
         }
 
@@ -96,14 +96,14 @@ fun createNormalFunctionInsertHandler(
             if (insertLambda) {
                 val file = PsiDocumentManager.getInstance(editor.project!!).getPsiFile(editor.document)!!
                 if (file.kotlinCustomSettings.INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD) {
-                    stringToInsert.append(" {  }")
+                    argumentsStringToInsert.append(" {  }")
                     lambdaCaseInsideBracketOffset = 3
                 } else {
-                    stringToInsert.append(" {}")
+                    argumentsStringToInsert.append(" {}")
                     lambdaCaseInsideBracketOffset = 2
                 }
             } else {
-                stringToInsert.append("($argumentText)")
+                argumentsStringToInsert.append("($argumentText)")
                 noLambdaCaseInsideBracketOffset = 1
             }
             val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
@@ -113,7 +113,7 @@ fun createNormalFunctionInsertHandler(
                     builder.offsetToPutCaret += noLambdaCaseInsideBracketOffset + lambdaCaseInsideBracketOffset
                     builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
                 } else {
-                    builder.offsetToPutCaret += stringToInsert.toString().length
+                    builder.offsetToPutCaret += argumentsStringToInsert.toString().length
                 }
             } else {
                 // we would love to put caret inside value params, but we can't, cause we have to stay on typeParams first
@@ -134,53 +134,104 @@ fun createNormalFunctionInsertHandler(
             }
         }
 
-        // surroundWithBracesIfInStringTemplate
+        var prefixModificationOperation: DeclarativeInsertHandler2.RelativeTextEdit? = null
+        var alreadyHasBackTickInTheEnd = false
         if (!argumentsOnly) {
             val typedFuzzyName = editor.document.text.subSequence(0, offset)
                 .reversed()
-                .takeWhile { it.isLetterOrDigit() || it == '_' }
+                .takeWhile { it.isLetterOrDigit() || it == '_' || it == '`' }
                 .toString()
             val functionStartOffset = offset - typedFuzzyName.length
 
-            if (functionStartOffset > 0) {
-                if (chars[functionStartOffset - 1] == '$') {
-                    // add paranoia check
-                    val dollarIsEscaped = (functionStartOffset - 2).let { predollarOffset ->
-                        if (predollarOffset >= 0) chars[predollarOffset] == '\\'
-                        else false
-                    }
+            /*
+                Essentially `normalizedBeforeFunctionOffset' can be reduced to just
+                val normalizedBeforeFunctionOffset = 0 - functionName.asString().length
 
-                    if (!dollarIsEscaped) {
-                        stringToInsert.append('}')
+                Though it is not obvious why. Operation offsets are relative to cursor position before insertion. In this
+                case it will be offset of lookup element text end - which is functionStartOffset + `functionName.asString().length`.
+                NB! asString() and not render(), we rely on knowledge that backticks are not elevated into LookupElement.
 
-                        /*
-                            Essentially `normalizedBeforeFunctionOffset' can be reduced to just
-                            val normalizedBeforeFunctionOffset = 0 - functionName.asString().length
-
-                            Though it is not obvious why. Operation offsets are relative to cursor position before insertion. In this
-                            case it will be offset of lookup element text end - which is functionStartOffset + `functionName.length`.
-
-                            Example:
-                            we have a function "fun fooBar(i: Int) {}" which we want to call.
-                            In editor we have: "$fb<caret>"
-                                                |  \
-                                                \   \-offset
-                                                \- functionStartOffset
+                Example:
+                we have a function "fun fooBar(i: Int) {}" which we want to call from a string template.
+                In editor we have: "$fb<caret>"
+                                    |  \
+                                    \   \-offset
+                                    \- functionStartOffset
 
 
-                            Insert handler will be applied at stage: "$fooBar<caret>"
-                            And this new caret position is calculated here as `lookupElementEndPosition`
-                            So all the offsets should be relative to the new caret position.
-                         */
-                        val lookupElementEndPosition = functionStartOffset + functionName.asString().length
-                        val normalizedBeforeFunctionOffset = functionStartOffset - lookupElementEndPosition
-                        builder.addOperation(normalizedBeforeFunctionOffset, "{")
+                Insert handler will be applied at stage: "$fooBar<caret>", (result of handler application should be "${fooBar(<caret>)}")
+                And this new caret position is calculated here as `lookupElementEndPosition`
+                So all the offsets should be relative to the new caret position.
+
+                "$fooBar<caret>"
+                  \- normalizedBeforeFunctionOffset
+             */
+            val lookupElementEndPosition = functionStartOffset + functionName.asString().length // NB! It's `asString()` on purpose, do not change to `render()`
+            val normalizedBeforeFunctionOffset = functionStartOffset - lookupElementEndPosition
+
+            // surroundWithBracesIfInStringTemplate
+            run {
+                if (functionStartOffset > 0) {
+                    if (chars[functionStartOffset - 1] == '$') {
+                        // add paranoia check
+                        val dollarIsEscaped = (functionStartOffset - 2).let { predollarOffset ->
+                            if (predollarOffset >= 0) chars[predollarOffset] == '\\'
+                            else false
+                        }
+
+                        if (!dollarIsEscaped) {
+                            argumentsStringToInsert.append('}')
+
+                            prefixModificationOperation = DeclarativeInsertHandler2.RelativeTextEdit(normalizedBeforeFunctionOffset, normalizedBeforeFunctionOffset, "{")
+                        }
                     }
                 }
             }
+
+            // enclosing with backticks
+            run {
+                if (!functionName.isSpecial) {
+                    val renderedName = functionName.render()
+                    val alreadyHasTickAtFront = chars[functionStartOffset] == '`'
+                    alreadyHasBackTickInTheEnd = chars[offset] == '`'
+
+                    if (renderedName.firstOrNull() == '`') {
+                        // requires backticks
+                        if (!alreadyHasTickAtFront) {
+                            // backtick is not present already, so need to add it manually
+                            prefixModificationOperation = when (val operation = prefixModificationOperation) {
+                                null -> DeclarativeInsertHandler2.RelativeTextEdit(normalizedBeforeFunctionOffset, normalizedBeforeFunctionOffset, "`")
+                                else -> operation.copy(newText = operation.newText + '`')
+                            }
+                        }
+                        if (!alreadyHasBackTickInTheEnd) {
+                            argumentsStringToInsert.insert(0, "`")
+                            builder.offsetToPutCaret += 1
+                        }
+                    }
+                    else {
+                        // no backticks required
+                        if (alreadyHasTickAtFront) {
+                            prefixModificationOperation = when (val operation = prefixModificationOperation) {
+                                null -> DeclarativeInsertHandler2.RelativeTextEdit(normalizedBeforeFunctionOffset, normalizedBeforeFunctionOffset + 1, "")
+                                else -> operation.copy(rangeTo = operation.rangeTo + 1) // already insert brace in front, now need to turn insertion into replacement
+                            }
+                        }
+                    }
+                }
+            }
+
         }
 
-        builder.addOperation(0, stringToInsert.toString())
+        prefixModificationOperation?.also { builder.addOperation(it) }
+        if (alreadyHasBackTickInTheEnd) {
+            builder.addOperation(1, argumentsStringToInsert.toString())
+            builder.offsetToPutCaret += 1
+        }
+        else {
+            builder.addOperation(0, argumentsStringToInsert.toString())
+        }
+
         builder.withPostInsertHandler(InsertHandler<LookupElement> { context, item ->
             var renderedText = item.lookupString
 
@@ -190,12 +241,12 @@ fun createNormalFunctionInsertHandler(
 
                 val name = (item.`object` as? DeclarationLookupObject)?.name
                 if (name != null && !name.isSpecial) {
-                    val startOffset = context.startOffset
-                    if (startOffset > 0 && context.document.isTextAt(startOffset - 1, "`")) {
-                        context.document.deleteString(startOffset - 1, startOffset)
-                    }
+                //    val startOffset = context.startOffset
+                //    if (startOffset > 0 && context.document.isTextAt(startOffset - 1, "`")) {
+                //        context.document.deleteString(startOffset - 1, startOffset)
+                //    }
                     renderedText = name.render()
-                    context.document.replaceString(context.startOffset, context.startOffset + item.lookupString.length, renderedText)
+                //    context.document.replaceString(context.startOffset, context.startOffset + item.lookupString.length, renderedText)
                 }
             }
 
