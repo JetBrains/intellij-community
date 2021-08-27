@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.name.FqName
 
 internal class KotlinFirLookupElementFactory {
@@ -20,11 +21,12 @@ internal class KotlinFirLookupElementFactory {
     private val typeParameterLookupElementFactory = TypeParameterLookupElementFactory()
     private val packagePartLookupElementFactory = PackagePartLookupElementFactory()
 
-    fun KtAnalysisSession.createLookupElement(symbol: KtNamedSymbol): LookupElement {
+    fun KtAnalysisSession.createLookupElement(symbol: KtNamedSymbol, substitutor: KtSubstitutor = KtSubstitutor.Empty(token)): LookupElement {
         return when (symbol) {
             is KtCallableSymbol -> createCallableLookupElement(
                 symbol,
                 detectCallableOptions(symbol),
+                substitutor,
             )
             is KtClassLikeSymbol -> with(classLookupElementFactory) { createLookup(symbol) }
             is KtTypeParameterSymbol -> with(typeParameterLookupElementFactory) { createLookup(symbol) }
@@ -35,10 +37,11 @@ internal class KotlinFirLookupElementFactory {
     fun KtAnalysisSession.createCallableLookupElement(
         symbol: KtCallableSymbol,
         options: CallableInsertionOptions,
+        substitutor: KtSubstitutor,
     ): LookupElementBuilder {
         return when (symbol) {
-            is KtFunctionSymbol -> with(functionLookupElementFactory) { createLookup(symbol, options) }
-            is KtVariableLikeSymbol -> with(variableLookupElementFactory) { createLookup(symbol, options) }
+            is KtFunctionSymbol -> with(functionLookupElementFactory) { createLookup(symbol, options, substitutor) }
+            is KtVariableLikeSymbol -> with(variableLookupElementFactory) { createLookup(symbol, options, substitutor) }
             else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
         }
     }
