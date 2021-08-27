@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBLoadingPanelListener
 import com.intellij.ui.components.JBScrollPane
@@ -301,7 +302,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
   private fun TaskRuntimeContext.checkInsideLocalHistoryFrame(component: Component): Boolean {
     val frame = UIUtil.getParentOfType(JFrame::class.java, component)
-    return frame?.title == virtualFile.path
+    return frame?.title == FileUtil.toSystemDependentName(virtualFile.path)
   }
 
   // If message is null it will remove the existing hint and allow file modification
