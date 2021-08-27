@@ -111,6 +111,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       .row()
 
     builder
+      .subGridBuilder(width = 10)
       .title("sub-panels")
       .label(VerticalAlign.CENTER, 14)
       .subGridBuilder(verticalAlign = VerticalAlign.CENTER)

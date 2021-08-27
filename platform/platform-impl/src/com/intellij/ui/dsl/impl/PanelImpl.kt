@@ -11,7 +11,7 @@ import com.intellij.ui.dsl.Row
 import com.intellij.ui.dsl.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.UiDslException
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus

@@ -23,7 +23,7 @@ import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.Row
 import com.intellij.ui.dsl.gridLayout.RowGaps
-import com.intellij.ui.dsl.gridLayout.UiDslException
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.UIUtil
