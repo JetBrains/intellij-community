@@ -480,6 +480,12 @@ class TestingTasksImpl extends TestingTasks {
     List<String> args = new ArrayList<>()
     args.add("-classpath")
     List<String> classpath = new ArrayList<>(bootstrapClasspath)
+
+    ["JUnit5", "JUnit5Launcher", "JUnit5Vintage"].forEach { libName ->
+      context.projectModel.project.libraryCollection.findLibrary(libName)
+        .getFiles(JpsOrderRootType.COMPILED).forEach { it -> classpath.add(it.getAbsolutePath()) }
+    }
+
     if (!isBootstrapSuiteDefault() || isRunningInBatchMode()) {
       classpath.addAll(testClasspath)
     }
