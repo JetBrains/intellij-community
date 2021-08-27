@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
 import com.intellij.psi.JavaPsiFacade
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -18,7 +19,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 class KotlinFunctionCallInstruction(
     private val call: KtExpression,
     private val argCount: Int,
-    private val qualifierOnStack: Boolean = false
+    private val qualifierOnStack: Boolean = false,
+    private val exceptionTransfer: DfaControlTransferValue?
 ) :
     ExpressionPushingInstruction(KotlinExpressionAnchor(call)) {
     override fun accept(interpreter: DataFlowInterpreter, stateBefore: DfaMemoryState): Array<DfaInstructionState> {
@@ -27,9 +29,17 @@ class KotlinFunctionCallInstruction(
             stateBefore.pop()
         }
         stateBefore.flushFields()
-        // TODO: process Nothing type
-        pushResult(interpreter, stateBefore, getExpressionDfType(call))
-        return nextStates(interpreter, stateBefore)
+        val result = mutableListOf<DfaInstructionState>()
+        val type = getExpressionDfType(call)
+        if (exceptionTransfer != null) {
+            val exceptional = stateBefore.createCopy()
+            result += exceptionTransfer.dispatch(exceptional, interpreter)
+        }
+        if (type != DfType.BOTTOM) {
+            pushResult(interpreter, stateBefore, type)
+            result += nextState(interpreter, stateBefore)
+        }
+        return result.toTypedArray()
     }
 
     private fun getExpressionDfType(expr: KtExpression): DfType {

@@ -4986,6 +4986,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/noWarningForConstant.kt");
         }
 
+        @TestMetadata("nothingType.kt")
+        public void testNothingType() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/nothingType.kt");
+        }
+
         @TestMetadata("nullAsNullable.kt")
         public void testNullAsNullable() throws Exception {
             runTest("testData/inspectionsLocal/dfa/nullAsNullable.kt");

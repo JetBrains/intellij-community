@@ -130,6 +130,7 @@ private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNa
     "kotlin.Comparable" -> CommonClassNames.JAVA_LANG_COMPARABLE
     "kotlin.Enum" -> CommonClassNames.JAVA_LANG_ENUM
     "kotlin.Annotation" -> CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION
+    "kotlin.Nothing" -> CommonClassNames.JAVA_LANG_VOID
     "kotlin.collections.Iterable", "kotlin.collections.MutableIterable" -> CommonClassNames.JAVA_LANG_ITERABLE
     "kotlin.collections.Iterator", "kotlin.collections.MutableIterator" -> CommonClassNames.JAVA_UTIL_ITERATOR
     "kotlin.collections.Collection", "kotlin.collections.MutableCollection" -> CommonClassNames.JAVA_UTIL_COLLECTION
