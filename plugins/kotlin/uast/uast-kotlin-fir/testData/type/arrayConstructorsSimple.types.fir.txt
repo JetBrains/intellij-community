@@ -54,23 +54,23 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleIntArray()] : PsiType:Integer[]
                             UIdentifier (Identifier (simpleIntArray)) [UIdentifier (Identifier (simpleIntArray))]
                             USimpleNameReferenceExpression (identifier = simpleIntArray, resolvesTo = null) [simpleIntArray] : PsiType:Integer[]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(0, ia[0])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(0, ia[0])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = 0) [0] : PsiType:int
                     UArrayAccessExpression [ia[0]] : PsiType:int
                         USimpleNameReferenceExpression (identifier = ia) [ia] : PsiType:Integer[]
                         ULiteralExpression (value = 0) [0] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(1, ia[1])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(1, ia[1])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = 1) [1] : PsiType:int
                     UArrayAccessExpression [ia[1]] : PsiType:int
                         USimpleNameReferenceExpression (identifier = ia) [ia] : PsiType:Integer[]
                         ULiteralExpression (value = 1) [1] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(2, ia[2])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(2, ia[2])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = 2) [2] : PsiType:int
                     UArrayAccessExpression [ia[2]] : PsiType:int
                         USimpleNameReferenceExpression (identifier = ia) [ia] : PsiType:Integer[]
@@ -80,23 +80,23 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleDoubleArray()] : PsiType:Double[]
                             UIdentifier (Identifier (simpleDoubleArray)) [UIdentifier (Identifier (simpleDoubleArray))]
                             USimpleNameReferenceExpression (identifier = simpleDoubleArray, resolvesTo = null) [simpleDoubleArray] : PsiType:Double[]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(0.1, da[0])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(0.1, da[0])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = 0.1) [0.1] : PsiType:double
                     UArrayAccessExpression [da[0]] : PsiType:double
                         USimpleNameReferenceExpression (identifier = da) [da] : PsiType:Double[]
                         ULiteralExpression (value = 0) [0] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(1.1, da[1])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(1.1, da[1])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = 1.1) [1.1] : PsiType:double
                     UArrayAccessExpression [da[1]] : PsiType:double
                         USimpleNameReferenceExpression (identifier = da) [da] : PsiType:Double[]
                         ULiteralExpression (value = 1) [1] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(2.1, da[2])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(2.1, da[2])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = 2.1) [2.1] : PsiType:double
                     UArrayAccessExpression [da[2]] : PsiType:double
                         USimpleNameReferenceExpression (identifier = da) [da] : PsiType:Double[]
@@ -106,23 +106,23 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleStringArray()] : PsiType:String[]
                             UIdentifier (Identifier (simpleStringArray)) [UIdentifier (Identifier (simpleStringArray))]
                             USimpleNameReferenceExpression (identifier = simpleStringArray, resolvesTo = null) [simpleStringArray] : PsiType:String[]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("0", sa[0])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("0", sa[0])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = "0") ["0"] : PsiType:String
                     UArrayAccessExpression [sa[0]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = sa) [sa] : PsiType:String[]
                         ULiteralExpression (value = 0) [0] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("1", sa[1])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("1", sa[1])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = "1") ["1"] : PsiType:String
                     UArrayAccessExpression [sa[1]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = sa) [sa] : PsiType:String[]
                         ULiteralExpression (value = 1) [1] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("2", sa[2])] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("2", sa[2])] : PsiType:<ErrorType>
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                     ULiteralExpression (value = "2") ["2"] : PsiType:String
                     UArrayAccessExpression [sa[2]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = sa) [sa] : PsiType:String[]
