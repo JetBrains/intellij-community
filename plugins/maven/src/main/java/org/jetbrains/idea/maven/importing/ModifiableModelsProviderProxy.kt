@@ -193,7 +193,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
     return ReadAction.compute<ModifiableRootModel, RuntimeException> {
       val rootManager = ModuleRootManagerEx.getInstanceEx(module)
       val initialStorage = getInstance(project).entityStorage.current
-      (rootManager as ModuleRootComponentBridge).getModifiableModel(diff!!, initialStorage, rootConfigurationAccessor)
+      (rootManager as ModuleRootComponentBridge).getModifiableModel(diff!!, rootConfigurationAccessor)
     }
   }
 
