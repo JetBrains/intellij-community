@@ -57,6 +57,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected val indexHelper: HLIndexHelper get() = basicContext.indexHelper
     protected val lookupElementFactory: KotlinFirLookupElementFactory get() = basicContext.lookupElementFactory
     protected val visibleScope = basicContext.visibleScope
+    private val emptyCtx = WeighingContext.empty(project)
 
 
     protected val scopeNameFilter: KtScopeNameFilter =
@@ -87,6 +88,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                 is KtTypeParameterSymbol -> createLookupElement(symbol)
             }
         } ?: return
+        applyWeighers(emptyCtx, lookup, symbol, KtSubstitutor.Empty(token))
         sink.addElement(lookup)
     }
 
@@ -101,7 +103,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         // Don't offer any deprecated items that could leads to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
-            createCallableLookupElement(symbol, options)
+            createCallableLookupElement(symbol, options, substitutor)
         }
         priority?.let { lookup.priority = it }
         applyWeighers(context, lookup, symbol, substitutor)
