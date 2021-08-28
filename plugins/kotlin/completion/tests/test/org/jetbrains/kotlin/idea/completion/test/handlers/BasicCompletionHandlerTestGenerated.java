@@ -1115,6 +1115,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("testData/handlers/basic/SuperMethod2.kt");
         }
 
+        @TestMetadata("SuperMethodWithDifferentParameterNames.kt")
+        public void testSuperMethodWithDifferentParameterNames() throws Exception {
+            runTest("testData/handlers/basic/SuperMethodWithDifferentParameterNames.kt");
+        }
+
         @TestMetadata("SuperTypeArg.kt")
         public void testSuperTypeArg() throws Exception {
             runTest("testData/handlers/basic/SuperTypeArg.kt");

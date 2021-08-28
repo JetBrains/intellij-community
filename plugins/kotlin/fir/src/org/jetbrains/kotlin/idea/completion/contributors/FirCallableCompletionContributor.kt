@@ -2,27 +2,25 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
+import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
+import org.jetbrains.kotlin.analysis.api.scopes.KtCompositeScope
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.checkers.ExtensionApplicabilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensions
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbolAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
-import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
-import org.jetbrains.kotlin.analysis.api.scopes.KtCompositeScope
-import org.jetbrains.kotlin.analysis.api.scopes.KtScope
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -96,7 +94,7 @@ internal open class FirCallableCompletionContributor(
         val (implicitScopes, implicitReceivers) = implicitScopesContext
         val implicitReceiversTypes = implicitReceivers.map { it.type }
 
-        val availableNonExtensions = collectNonExtensions(implicitScopes, visibilityChecker)
+        val availableNonExtensions = collectNonExtensions(implicitScopes, visibilityChecker, scopeNameFilter) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
         availableNonExtensions.forEach { addCallableSymbolToCompletion(expectedType, it, getOptions(it)) }
@@ -127,7 +125,7 @@ internal open class FirCallableCompletionContributor(
         when {
             symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, expectedType, visibilityChecker)
             symbol is KtNamedClassOrObjectSymbol && symbol.classKind == KtClassKind.ENUM_CLASS -> {
-                collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker).forEach { memberSymbol ->
+                collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker, scopeNameFilter).forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
                         expectedType,
                         memberSymbol,
@@ -169,7 +167,7 @@ internal open class FirCallableCompletionContributor(
         val typeOfPossibleReceiver = explicitReceiver.getKtType() ?: return
         val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope() ?: return
 
-        val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker)
+        val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
         val syntheticPropertyOrigins = mutableSetOf<KtFunctionSymbol>()
@@ -210,21 +208,6 @@ internal open class FirCallableCompletionContributor(
             .filter { with(visibilityChecker) { isVisible(it) } }
             .filter { with(extensionChecker) { isApplicable(it).isApplicable } }
     }
-
-    private fun KtAnalysisSession.collectNonExtensions(
-        scope: KtScope,
-        visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtCallableSymbol> {
-        return scope.getCallableSymbols { name ->
-            listOfNotNull(name, name.toJavaGetterName(), name.toJavaSetterName()).any(scopeNameFilter)
-        }
-            .filterNot { it.isExtension }
-            .filter { filter(it) }
-            .filter { with(visibilityChecker) { isVisible(it) } }
-    }
-
-    private fun Name.toJavaGetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.getterName(it)) }
-    private fun Name.toJavaSetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.setterName(it)) }
 
     private fun KtAnalysisSession.collectSuitableExtensions(
         scope: KtCompositeScope,
