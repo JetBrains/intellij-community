@@ -5,6 +5,7 @@ import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -24,6 +25,8 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
     private const val GROUP_LENGTH_KEY = "groupLength"
     private const val HAS_ICON_KEY = "withIcon"
     private const val WEIGHT_KEY = "weight"
+    private const val PLUGIN_TYPE = "pluginType"
+    private const val PLUGIN_ID = "pluginId"
 
     private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
     private const val GLOBAL_USAGE_TO_MAX_KEY = "globalUsageToMax"
@@ -46,8 +49,8 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
 
     data[MATCH_MODE_KEY] = actionWrapper.mode
     data[IS_GROUP_KEY] = actionWrapper.isGroupAction
-    val action = actionWrapper.action
 
+    val action = actionWrapper.action
     addIfTrue(data, IS_EDITOR_ACTION, action is EditorAction)
     addIfTrue(data, IS_SEARCH_ACTION, action is SearchEverywhereBaseAction)
     addIfTrue(data, IS_TOGGLE_ACTION_DATA_KEY, action is ToggleAction)
@@ -76,6 +79,12 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
       }
       data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)
       data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
+    }
+
+    val pluginInfo = getPluginInfo(action.javaClass)
+    if (pluginInfo.isSafeToReport()) {
+      data[PLUGIN_TYPE] = pluginInfo.type
+      pluginInfo.id?.let { data[PLUGIN_ID] = it }
     }
     return data
   }
