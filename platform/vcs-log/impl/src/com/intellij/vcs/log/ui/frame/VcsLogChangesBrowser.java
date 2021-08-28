@@ -28,6 +28,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 import java.util.function.Consumer;
@@ -424,6 +426,19 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @Override
   protected @Nullable DiffPreview getShowDiffActionPreview() {
     return myEditorDiffPreview;
+  }
+
+  public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
+    DefaultMutableTreeNode root = myViewer.getRoot();
+    if (tag != null) {
+      DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag.toString());
+      if (tagNode != null) {
+        root = tagNode;
+      }
+    }
+    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
+    if (node == null) return;
+    TreeUtil.selectPath(myViewer, TreeUtil.getPathFromRoot(node), false);
   }
 
   private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {

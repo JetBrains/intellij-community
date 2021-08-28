@@ -119,13 +119,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @Override
   protected void selectChange(@NotNull Wrapper change) {
-    ChangesTree tree = myBrowser.getViewer();
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
-    DefaultMutableTreeNode objectNode = TreeUtil.findNodeWithObject(root, change.getUserObject());
-    TreePath path = objectNode != null ? TreeUtil.getPathFromRoot(objectNode) : null;
-    if (path != null) {
-      TreeUtil.selectPath(tree, path, false);
-    }
+    myBrowser.selectChange(change.getUserObject(), change.getTag());
   }
 
   private void selectChange(@NotNull PresentableChange change) {
