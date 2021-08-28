@@ -33,6 +33,10 @@ internal class SearchEverywhereContextFeaturesProvider {
     data[GLOBAL_MIN_USAGE_COUNT_KEY] = globalTotalStats.minUsageCount
 
     project?.let {
+      if (project.isDisposed) {
+        return@let
+      }
+
       // report tool windows' ids
       val twm = ToolWindowManager.getInstance(project)
       var id: String? = null
@@ -45,6 +49,10 @@ internal class SearchEverywhereContextFeaturesProvider {
       }
 
       // report types of open files in editor: fileType -> amount
+      if (project.isDisposed) {
+        return@let
+      }
+
       val fem = FileEditorManager.getInstance(it)
       data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
     }
