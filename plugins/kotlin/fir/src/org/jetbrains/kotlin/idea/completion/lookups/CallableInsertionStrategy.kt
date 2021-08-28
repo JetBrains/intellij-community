@@ -8,4 +8,5 @@ internal sealed class CallableInsertionStrategy {
     object AsCall : CallableInsertionStrategy()
     object AsIdentifier : CallableInsertionStrategy()
     class AsIdentifierCustom(val insertionHandlerAction: InsertionContext.() -> Unit) : CallableInsertionStrategy()
+    class WithCallArgs(val args: List<String>): CallableInsertionStrategy()
 }
