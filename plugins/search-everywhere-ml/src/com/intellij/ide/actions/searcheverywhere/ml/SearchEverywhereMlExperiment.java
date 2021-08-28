@@ -6,8 +6,6 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 
-import static com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.RECORDER_CODE;
-
 public class SearchEverywhereMlExperiment {
   private static final int NUMBER_OF_GROUPS = 8;
   private static final int EXPERIMENT_GROUP = 6;
@@ -19,7 +17,7 @@ public class SearchEverywhereMlExperiment {
 
   public SearchEverywhereMlExperiment() {
     myIsExperimentalMode = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
-    myExperimentGroup = myIsExperimentalMode ? EventLogConfiguration.getInstance().getOrCreate(RECORDER_CODE).getBucket() % NUMBER_OF_GROUPS : -1;
+    myExperimentGroup = myIsExperimentalMode ? EventLogConfiguration.getInstance().getBucket() % NUMBER_OF_GROUPS : -1;
     myPerformExperiment = myExperimentGroup == EXPERIMENT_GROUP;
   }
 
