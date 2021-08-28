@@ -659,21 +659,35 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
                                : JUnitBundle.message("module.does.not.exists", moduleName, project.getName()),
           JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
-      final JUnitConfiguration configurationCopy = new JUnitConfiguration(JUnitBundle.message("default.junit.configuration.name"), getProject());
-      myModuleSelector.applyTo(configurationCopy);
-      SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
-      GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
-      return new ClassFilter.ClassFilterWithScope() {
-        @Override
-        public GlobalSearchScope getScope() {
-          return globalSearchScope;
-        }
+      final ClassFilter.ClassFilterWithScope classFilter;
+      try {
+        final JUnitConfiguration configurationCopy = new JUnitConfiguration(JUnitBundle.message("default.junit.configuration.name"), getProject());
+        myModuleSelector.applyTo(configurationCopy);
+        SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
+        GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
+        if (JUnitUtil.isJUnit5(globalSearchScope, getProject())) {
+          return new ClassFilter.ClassFilterWithScope() {
+            @Override
+            public GlobalSearchScope getScope() {
+              return globalSearchScope;
+            }
 
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return JUnitUtil.isTestClass(aClass);
+            @Override
+            public boolean isAccepted(PsiClass aClass) {
+              return JUnitUtil.isTestClass(aClass,true, true);
+            }
+          };
         }
-      };
+        classFilter = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+          () -> TestClassFilter.create(sourceScope, configurationCopy.getConfigurationModule().getModule()));
+      }
+      catch (JUnitUtil.NoJUnitException e) {
+        throw new NoFilterException(new MessagesEx.MessageInfo(
+          module.getProject(),
+          JUnitBundle.message("junit.not.found.in.module.error.message", module.getName()),
+          JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
+      }
+      return classFilter;
     }
   }
 
