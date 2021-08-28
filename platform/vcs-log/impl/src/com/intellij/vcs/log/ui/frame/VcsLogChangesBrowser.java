@@ -441,7 +441,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     TreeUtil.selectPath(myViewer, TreeUtil.getPathFromRoot(node), false);
   }
 
-  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
+  public @Nullable ChangesBrowserNode.Tag getTag(@NotNull Change change) {
     CommitId parentId = null;
     for (CommitId commitId : myChangesToParents.keySet()) {
       if (myChangesToParents.get(commitId).contains(change)) {
@@ -450,8 +450,13 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       }
     }
 
-    if (parentId != null) {
-      RootTag tag = new RootTag(parentId.getHash(), getText(parentId));
+    if (parentId == null) return null;
+    return new RootTag(parentId.getHash(), getText(parentId));
+  }
+
+  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
+    ChangesBrowserNode.Tag tag = getTag(change);
+    if (tag != null) {
       context.put(ChangeDiffRequestProducer.TAG_KEY, tag);
     }
   }
@@ -468,21 +473,14 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
   }
 
-  class ChangesBrowserParentNode extends ChangesBrowserStringNode {
-    @NotNull private final CommitId myCommitId;
-
+  private class ChangesBrowserParentNode extends ChangesBrowserStringNode {
     protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
       super(getText(commitId));
-      myCommitId = commitId;
     }
 
     @Override
     public boolean shouldExpandByDefault() {
       return false;
-    }
-
-    RootTag wrap() {
-      return new RootTag(myCommitId.getHash(), getUserObject());
     }
   }
 
