@@ -2763,6 +2763,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             public void testQualifierTypeGeneric() throws Exception {
                 runTest("testData/basic/common/super/QualifierTypeGeneric.kt");
             }
+
+            @TestMetadata("SuperMethod.kt")
+            public void testSuperMethod() throws Exception {
+                runTest("testData/basic/common/super/SuperMethod.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
