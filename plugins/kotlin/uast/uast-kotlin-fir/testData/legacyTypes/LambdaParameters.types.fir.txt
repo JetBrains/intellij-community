@@ -6,7 +6,7 @@ UFile (package = ) [public final class LambdaParametersKt {...]
                     UIdentifier (Identifier (buildString)) [UIdentifier (Identifier (buildString))]
                     USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null) [buildString] : PsiType:String
                     ULambdaExpression [{ ...}] : PsiType:Function1<? super StringBuilder, ? extends Unit>
-                        UBlockExpression [{...}] : PsiType:Unit
+                        UBlockExpression [{...}] : PsiType:void
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : PsiType:StringBuilder
                                 UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
                                 USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] : PsiType:StringBuilder

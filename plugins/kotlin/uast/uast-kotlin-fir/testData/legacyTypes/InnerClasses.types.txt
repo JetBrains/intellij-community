@@ -23,5 +23,5 @@ UFile (package = ) [public final class Foo {...]
                 UMethod (name = doNothing) [public final fun doNothing() : void {...}]
                     UBlockExpression [{...}]
                         UReturnExpression [return Unit]
-                            USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:Unit
+                            USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:void
                 UMethod (name = Baz) [public fun Baz() = UastEmptyExpression]

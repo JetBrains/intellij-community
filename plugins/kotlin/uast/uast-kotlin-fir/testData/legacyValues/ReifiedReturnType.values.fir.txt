@@ -10,7 +10,7 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return threshold2] = Nothing
                     USimpleNameReferenceExpression (identifier = threshold2) [threshold2] = Undetermined
-        UMethod (name = function1) [static fun function1(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : kotlin.Unit {...}]
+        UMethod (name = function1) [static fun function1(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {...}]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
@@ -38,7 +38,7 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return t] = Nothing
                     USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
-        UMethod (name = function3) [static fun function3(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : kotlin.Unit {...}]
+        UMethod (name = function3) [static fun function3(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {...}]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]

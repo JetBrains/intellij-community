@@ -26,13 +26,13 @@ UFile (package = ) [public final class ClassLiteralKt {...]
             UParameter (name = other) [@org.jetbrains.annotations.Nullable var other: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] : PsiType:Void
-                UIfExpression [if (other == null) return false] : PsiType:Unit
+                UIfExpression [if (other == null) return false] : PsiType:void
                     UBinaryExpression (operator = ==) [other == null] : PsiType:boolean
                         USimpleNameReferenceExpression (identifier = other) [other] : PsiType:Object
                         ULiteralExpression (value = null) [null] : PsiType:Void
                     UReturnExpression [return false] : PsiType:Void
                         ULiteralExpression (value = false) [false] : PsiType:boolean
-                UIfExpression [if (java.lang.Object != Foo) return false] : PsiType:Unit
+                UIfExpression [if (java.lang.Object != Foo) return false] : PsiType:void
                     UBinaryExpression (operator = !=) [java.lang.Object != Foo] : PsiType:boolean
                         UClassLiteralExpression [java.lang.Object] : PsiType:KClass<? extends Object>
                         UClassLiteralExpression [Foo] : PsiType:KClass<? extends Foo>
