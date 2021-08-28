@@ -11379,6 +11379,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/equalsWithEOLComment.kt");
             }
 
+            @TestMetadata("equalsWithIndex.kt")
+            public void testEqualsWithIndex() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/equalsWithIndex.kt");
+            }
+
             @TestMetadata("equalsWithNullOther.kt")
             public void testEqualsWithNullOther() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/equalsWithNullOther.kt");
