@@ -9,7 +9,8 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEvery
     internal const val IS_ENABLED = "isEnabled"
 
     private const val ITEM_TYPE = "type"
-    private const val PRIORITY_DATA_KEY = "priority"
+    private const val PRIORITY = "priority"
+    private const val IS_HIGH_PRIORITY = "isHighPriority"
 
     private const val USAGE = "usage"
     private const val USAGE_TO_MAX = "usageToMax"
@@ -31,13 +32,17 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEvery
       return emptyMap()
     }
 
+    val priority = element.matchingDegree
     val data: MutableMap<String, Any> = hashMapOf(
       SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
       ITEM_TYPE to element.type,
-      PRIORITY_DATA_KEY to element.matchingDegree
+      PRIORITY to priority
     )
+    addIfTrue(data, IS_HIGH_PRIORITY, isHighPriority(priority))
     return getFeatures(data, currentTime, element)
   }
+
+  private fun isHighPriority(priority: Int): Boolean = priority >= 11001
 
   abstract fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any>
 
