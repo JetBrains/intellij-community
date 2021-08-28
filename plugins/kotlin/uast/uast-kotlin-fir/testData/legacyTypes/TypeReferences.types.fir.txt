@@ -20,7 +20,7 @@ UFile (package = ) [public final class TypeReferencesKt {...]
         UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(@org.jetbrains.annotations.Nullable arg: T) : void {...}]
             UParameter (name = arg) [@org.jetbrains.annotations.Nullable var arg: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UDeclarationsExpression [var a: T = arg]
                     ULocalVariable (name = a) [var a: T = arg]
                         USimpleNameReferenceExpression (identifier = arg) [arg] : PsiType:T
@@ -64,9 +64,9 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                     ULocalVariable (name = llsAliased) [var llsAliased: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                 UDeclarationsExpression [var llt: java.util.List<? extends java.util.List<? extends T>>]
                     ULocalVariable (name = llt) [var llt: java.util.List<? extends java.util.List<? extends T>>]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parameterizedFoo(emptyList())] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parameterizedFoo(emptyList())] : PsiType:void
                     UIdentifier (Identifier (parameterizedFoo)) [UIdentifier (Identifier (parameterizedFoo))]
-                    USimpleNameReferenceExpression (identifier = parameterizedFoo, resolvesTo = null) [parameterizedFoo] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = parameterizedFoo, resolvesTo = null) [parameterizedFoo] : PsiType:void
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [emptyList()] : PsiType:List<? extends String>
                         UIdentifier (Identifier (emptyList)) [UIdentifier (Identifier (emptyList))]
                         USimpleNameReferenceExpression (identifier = emptyList, resolvesTo = null) [emptyList] : PsiType:List<? extends String>

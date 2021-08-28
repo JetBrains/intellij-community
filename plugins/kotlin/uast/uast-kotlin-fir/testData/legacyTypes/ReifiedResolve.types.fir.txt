@@ -1,7 +1,7 @@
 UFile (package = ) [public final class ReifiedResolveKt {...]
     UClass (name = ReifiedResolveKt) [public final class ReifiedResolveKt {...}]
         UMethod (name = resolve) [public static final fun resolve() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:String
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                     USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:String
@@ -32,7 +32,7 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit> = { ...}]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 ULambdaExpression [{ ...}] : PsiType:Function1<? super T, ? extends Unit>
-                    UBlockExpression [{...}] : PsiType:Unit
+                    UBlockExpression [{...}] : PsiType:void
             UBlockExpression [{...}] : PsiType:Void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : PsiType:Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
@@ -42,7 +42,7 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit> = { ...}]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 ULambdaExpression [{ ...}] : PsiType:Function1<? super T, ? extends Unit>
-                    UBlockExpression [{...}] : PsiType:Unit
+                    UBlockExpression [{...}] : PsiType:void
             UBlockExpression [{...}] : PsiType:Void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] : PsiType:Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]

@@ -32,6 +32,6 @@ public class A {
     public final fun foo() : void {
     }
     public fun A() = UastEmptyExpression
-    fun inlineFoo() : kotlin.Unit {
+    fun inlineFoo() : void {
     }
 }
