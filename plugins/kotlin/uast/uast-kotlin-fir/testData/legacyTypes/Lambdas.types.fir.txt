@@ -5,7 +5,7 @@ UFile (package = ) [import java.util.stream.Stream...]
             UBlockExpression [{...}] : PsiType:Stream<String>
                 UQualifiedReferenceExpression [Stream.empty().filter({ var it: <ErrorType> ->...})] : PsiType:Stream<String>
                     UQualifiedReferenceExpression [Stream.empty()] : PsiType:Stream<String>
-                        USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:Unit
+                        USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:void
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [empty()] : PsiType:Stream<String>
                             UIdentifier (Identifier (empty)) [UIdentifier (Identifier (empty))]
                             USimpleNameReferenceExpression (identifier = empty, resolvesTo = null) [empty] : PsiType:Stream<String>
@@ -24,10 +24,10 @@ UFile (package = ) [import java.util.stream.Stream...]
         UMethod (name = doSelectItem) [public static final fun doSelectItem(@org.jetbrains.annotations.NotNull selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
             UParameter (name = selectItemFunction) [@org.jetbrains.annotations.NotNull var selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:void
                     UIdentifier (Identifier (selectItemFunction)) [UIdentifier (Identifier (selectItemFunction))]
-                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:void
                 UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                     ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}]
@@ -35,13 +35,13 @@ UFile (package = ) [import java.util.stream.Stream...]
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                     UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
                                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:void
                     UIdentifier (Identifier (baz)) [UIdentifier (Identifier (baz))]
-                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:void
         UMethod (name = lambdaInPlaceCall) [public static final fun lambdaInPlaceCall() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UWhileExpression [while (invoke()) {...}]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:boolean
                         UIdentifier (Identifier ({)) [UIdentifier (Identifier ({))]
                         USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:boolean
-                    UBlockExpression [{...}] : PsiType:Unit
+                    UBlockExpression [{...}] : PsiType:void

@@ -39,7 +39,7 @@ public final class LambdaReturnKt {
             return listOf(1)
         }
     }
-    static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : kotlin.Unit {
+    static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : void {
         invoke(1)
     }
 }
