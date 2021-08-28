@@ -15,10 +15,10 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
         UField (name = x) [@org.jetbrains.annotations.NotNull private final var x: int]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = print) [public fun print() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [print(x)] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [print(x)] : PsiType:void
                     UIdentifier (Identifier (print)) [UIdentifier (Identifier (print))]
-                    USimpleNameReferenceExpression (identifier = print, resolvesTo = null) [print] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = print, resolvesTo = null) [print] : PsiType:void
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
         UMethod (name = getX) [public final fun getX() : int = UastEmptyExpression]
         UMethod (name = BaseImpl) [public fun BaseImpl(@org.jetbrains.annotations.NotNull x: int) = UastEmptyExpression]

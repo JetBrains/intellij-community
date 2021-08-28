@@ -142,7 +142,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(1)((long)1)
                                         ULiteralExpression (value = 1) [1] = (long)1
-        UMethod (name = bar) [static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : kotlin.Unit {...}]
+        UMethod (name = bar) [static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : void {...}]
             UParameter (name = lmbd) [@org.jetbrains.annotations.NotNull var lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = external invoke(1)((long)1)
