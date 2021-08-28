@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtCall
 import org.jetbrains.kotlin.idea.frontend.api.types.KtClassErrorType
+import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
@@ -43,6 +44,23 @@ internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
 }
 
 internal fun KtAnalysisSession.toPsiType(ktType: KtType, context: KtElement): PsiType {
+    if (ktType is KtNonErrorClassType && ktType.typeArguments.isEmpty()) {
+        // TODO: unclear when we need boxed type.
+        val psiType = when (ktType.classId.asFqNameString()) {
+            "kotlin.Int" -> PsiType.INT
+            "kotlin.Long" -> PsiType.LONG
+            "kotlin.Short" -> PsiType.SHORT
+            "kotlin.Boolean" -> PsiType.BOOLEAN
+            "kotlin.Byte" -> PsiType.BYTE
+            "kotlin.Char" -> PsiType.CHAR
+            "kotlin.Double" -> PsiType.DOUBLE
+            "kotlin.Float" -> PsiType.FLOAT
+            "kotlin.Unit" -> PsiType.VOID
+            "kotlin.String" -> PsiType.getJavaLangString(context.manager, context.resolveScope)
+            else -> null
+        }
+        if (psiType != null) return psiType
+    }
     return ktType.asPsiType(context, TypeMappingMode.DEFAULT_UAST) ?: UastErrorType
 }
 

@@ -18,6 +18,6 @@ UFile (package = ) [public final class InnerNonFixedTypeVariableKt {...]
                             USimpleNameReferenceExpression (identifier = mutableSetOf, resolvesTo = null) [mutableSetOf] : PsiType:Set<Unit>
                         ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:<ErrorType>
                             UParameter (name = it) [var it: <ErrorType>]
-                            UBlockExpression [{...}] : PsiType:Unit
+                            UBlockExpression [{...}] : PsiType:void
     UClass (name = Some) [public final class Some {...}]
         UMethod (name = Some) [public fun Some() = UastEmptyExpression]
