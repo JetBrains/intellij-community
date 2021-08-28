@@ -32,7 +32,9 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
     private const val WAS_USED_IN_LAST_MONTH_DATA_KEY = "wasUsedInLastMonth"
 
     private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
+    private const val LOCAL_USAGE_TO_MAX_DATA_KEY = "usageToMax"
     private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
+    private const val GLOBAL_USAGE_TO_MAX_KEY = "globalUsageToMax"
     private const val USERS_RATIO_DATA_KEY = "usersRatio"
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
   }
@@ -91,8 +93,12 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
 
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
     val globalSummary = service<ActionsGlobalSummaryManager>()
+    val maxUsageCount = globalSummary.totalSummary.maxUsageCount
     globalSummary.getActionStatistics(actionId)?.let {
       data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
+      if (maxUsageCount != 0L) {
+        data[GLOBAL_USAGE_TO_MAX_KEY] = roundDouble(it.usagesCount.toDouble() / maxUsageCount)
+      }
       data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)
       data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
     }
@@ -104,16 +110,27 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
     val localSummary = service<ActionsLocalSummary>()
     val summary = localSummary.getActionStatsById(actionId) ?: return emptyMap()
+    val totalStats = localSummary.getTotalStats()
 
     val result = hashMapOf<String, Any>()
-    addUsageStatistics(result, summary.usageCount, currentTime, summary.lastUsedTimestamp, "")
-    addUsageStatistics(result, summary.usageFromSearchEverywhere, currentTime, summary.lastUsedFromSearchEverywhere, "Se")
+    addUsageStatistics(result, summary.usageCount, totalStats.maxUsageCount, "")
+    addLastTimeUsedStatistics(result, currentTime, summary.lastUsedTimestamp, "")
+
+    addUsageStatistics(result, summary.usageFromSearchEverywhere, totalStats.maxUsageFromSearchEverywhere, "Se")
+    addLastTimeUsedStatistics(result, currentTime, summary.lastUsedFromSearchEverywhere, "Se")
     return result
   }
 
-  private fun addUsageStatistics(result: MutableMap<String, Any>, usage: Int, currentTime: Long, lastUsedTime: Long, keySuffix: String) {
-    result[LOCAL_USAGE_COUNT_DATA_KEY + keySuffix] = usage
+  private fun addUsageStatistics(result: MutableMap<String, Any>, usage: Int, maxUsage: Int, keySuffix: String) {
+    if (usage > 0) {
+      result[LOCAL_USAGE_COUNT_DATA_KEY + keySuffix] = usage
+      if (maxUsage != 0) {
+        result[LOCAL_USAGE_TO_MAX_DATA_KEY + keySuffix] = roundDouble(usage.toDouble() / maxUsage)
+      }
+    }
+  }
 
+  private fun addLastTimeUsedStatistics(result: MutableMap<String, Any>, currentTime: Long, lastUsedTime: Long, keySuffix: String) {
     if (lastUsedTime > 0) {
       val timeSinceLastUsage = currentTime - lastUsedTime
       result[TIME_SINCE_LAST_USAGE_DATA_KEY + keySuffix] = timeSinceLastUsage
