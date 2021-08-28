@@ -1,6 +1,6 @@
 public final class InnerNonFixedTypeVariableKt {
     public static final fun test(@org.jetbrains.annotations.NotNull list: java.util.List<? extends java.lang.Object>) : void {
-        list.filterIsInstance().<anonymous class>(mutableSetOf(), { var it: <ErrorType> ->
+        list.filterIsInstance().mapTo(mutableSetOf(), { var it: <ErrorType> ->
 
 
         })
