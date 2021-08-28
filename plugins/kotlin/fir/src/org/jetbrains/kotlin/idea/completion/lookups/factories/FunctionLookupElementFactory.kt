@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -44,6 +45,7 @@ internal class FunctionLookupElementFactory {
             insertEmptyLambda = insertLambdaBraces(symbol),
         )
 
+        var argString: String? = null
         val insertionHandler = when (val insertionStrategy = options.insertionStrategy) {
             CallableInsertionStrategy.AsCall -> FunctionInsertionHandler
             CallableInsertionStrategy.AsIdentifier -> QuotedNamesAwareInsertionHandler()
@@ -53,13 +55,25 @@ internal class FunctionLookupElementFactory {
                     insertionStrategy.insertionHandlerAction(context)
                 }
             }
+            is CallableInsertionStrategy.WithCallArgs -> {
+                argString = insertionStrategy.args.joinToString(", ", prefix = "(", postfix = ")")
+                object : QuotedNamesAwareInsertionHandler() {
+                    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+                        super.handleInsert(context, item)
+                        context.insertSymbol(argString)
+                    }
+                }
+            }
         }
 
         return LookupElementBuilder.create(lookupObject, symbol.name.asString())
-            .withTailText(getTailText(symbol), true)
             .withTypeText(symbol.annotatedType.type.render(TYPE_RENDERING_OPTIONS))
             .withInsertHandler(insertionHandler)
             .let { withSymbolInfo(symbol, it) }
+            .let {
+                if (argString != null) it.withTailText(argString, false)
+                else it.withTailText(getTailText(symbol), true)
+            }
     }
 }
 

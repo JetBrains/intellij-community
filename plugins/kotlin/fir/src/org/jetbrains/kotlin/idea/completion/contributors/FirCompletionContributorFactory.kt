@@ -14,6 +14,9 @@ internal class FirCompletionContributorFactory(private val basicContext: FirBasi
     fun callableContributor(priority: Int = 0) =
         FirCallableCompletionContributor(basicContext, priority)
 
+    fun superMemberContributor(priority: Int) =
+        FirSuperMemberCompletionContributor(basicContext, priority)
+
     fun infixCallableContributor(priority: Int = 0) =
         FirInfixCallableCompletionContributor(basicContext, priority)
 
