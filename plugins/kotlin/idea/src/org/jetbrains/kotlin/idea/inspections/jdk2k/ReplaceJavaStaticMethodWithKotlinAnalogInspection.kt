@@ -156,7 +156,9 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
                 it.valueArguments.size == 2
             },
             Replacement("java.util.Arrays.copyOfRange", "kotlin.collections.copyOfRange", ToExtensionFunctionWithNonNullableReceiver),
-            Replacement("java.util.Arrays.equals", "kotlin.collections.contentEquals", ToExtensionFunctionWithNonNullableArguments),
+            Replacement("java.util.Arrays.equals", "kotlin.collections.contentEquals", ToExtensionFunctionWithNonNullableArguments) {
+                it.valueArguments.size == 2
+            },
             Replacement("java.util.Arrays.deepEquals", "kotlin.collections.contentDeepEquals", ToExtensionFunctionWithNonNullableArguments),
             Replacement(
                 "java.util.Arrays.deepHashCode",
