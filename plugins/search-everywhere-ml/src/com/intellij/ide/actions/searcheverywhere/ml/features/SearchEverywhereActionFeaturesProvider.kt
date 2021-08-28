@@ -103,18 +103,31 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
                                       currentTime: Long): Map<String, Any> {
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
     val localSummary = service<ActionsLocalSummary>()
-    val actionSummary = localSummary.getActionStatsById(actionId) ?: return emptyMap()
+    val summary = localSummary.getActionStatsById(actionId) ?: return emptyMap()
 
-    val timeSinceLastUsage = currentTime - actionSummary.lastUsedTimestamp
+    val result = hashMapOf<String, Any>()
+    addUsageStatistics(result, summary.usageCount, currentTime, summary.lastUsedTimestamp, "")
+    addUsageStatistics(result, summary.usageFromSearchEverywhere, currentTime, summary.lastUsedFromSearchEverywhere, "Se")
+    return result
+  }
 
-    return hashMapOf(
-      LOCAL_USAGE_COUNT_DATA_KEY to actionSummary.usageCount,
+  private fun addUsageStatistics(result: MutableMap<String, Any>, usage: Int, currentTime: Long, lastUsedTime: Long, keySuffix: String) {
+    result[LOCAL_USAGE_COUNT_DATA_KEY + keySuffix] = usage
 
-      TIME_SINCE_LAST_USAGE_DATA_KEY to timeSinceLastUsage,
-      WAS_USED_IN_LAST_MINUTE_DATA_KEY to (timeSinceLastUsage <= MINUTE),
-      WAS_USED_IN_LAST_HOUR_DATA_KEY to (timeSinceLastUsage <= HOUR),
-      WAS_USED_IN_LAST_DAY_DATA_KEY to (timeSinceLastUsage <= DAY),
-      WAS_USED_IN_LAST_MONTH_DATA_KEY to (timeSinceLastUsage <= (4 * WEEK.toLong()))
-    )
+    if (lastUsedTime > 0) {
+      val timeSinceLastUsage = currentTime - lastUsedTime
+      result[TIME_SINCE_LAST_USAGE_DATA_KEY + keySuffix] = timeSinceLastUsage
+
+      addIfTrue(result, WAS_USED_IN_LAST_MINUTE_DATA_KEY + keySuffix, timeSinceLastUsage <= MINUTE)
+      addIfTrue(result, WAS_USED_IN_LAST_HOUR_DATA_KEY + keySuffix, timeSinceLastUsage <= HOUR)
+      addIfTrue(result, WAS_USED_IN_LAST_DAY_DATA_KEY + keySuffix, timeSinceLastUsage <= DAY)
+      addIfTrue(result, WAS_USED_IN_LAST_MONTH_DATA_KEY + keySuffix, timeSinceLastUsage <= (4 * WEEK.toLong()))
+    }
+  }
+
+  private fun addIfTrue(result: MutableMap<String, Any>, key: String, value: Boolean) {
+    if (value) {
+      result[key] = true
+    }
   }
 }

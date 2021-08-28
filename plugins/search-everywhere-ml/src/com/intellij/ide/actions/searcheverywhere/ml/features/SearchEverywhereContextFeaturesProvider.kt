@@ -12,6 +12,8 @@ internal class SearchEverywhereContextFeaturesProvider {
   companion object {
     private const val LOCAL_MAX_USAGE_COUNT_KEY = "maxUsage"
     private const val LOCAL_MIN_USAGE_COUNT_KEY = "minUsage"
+    private const val LOCAL_MAX_USAGE_SE_COUNT_KEY = "maxUsageSE"
+    private const val LOCAL_MIN_USAGE_SE_COUNT_KEY = "minUsageSE"
     private const val GLOBAL_MAX_USAGE_COUNT_KEY = "globalMaxUsage"
     private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
 
@@ -25,6 +27,8 @@ internal class SearchEverywhereContextFeaturesProvider {
     val globalTotalStats = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java).totalSummary
     data[LOCAL_MAX_USAGE_COUNT_KEY] = localTotalStats.maxUsageCount
     data[LOCAL_MIN_USAGE_COUNT_KEY] = localTotalStats.minUsageCount
+    data[LOCAL_MAX_USAGE_SE_COUNT_KEY] = localTotalStats.maxUsageFromSearchEverywhere
+    data[LOCAL_MIN_USAGE_SE_COUNT_KEY] = localTotalStats.minUsageFromSearchEverywhere
     data[GLOBAL_MAX_USAGE_COUNT_KEY] = globalTotalStats.maxUsageCount
     data[GLOBAL_MIN_USAGE_COUNT_KEY] = globalTotalStats.minUsageCount
 
