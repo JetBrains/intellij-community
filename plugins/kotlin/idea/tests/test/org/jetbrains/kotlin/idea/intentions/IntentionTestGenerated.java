@@ -1610,6 +1610,54 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/addNamesInCommentToJavaCallArguments")
+    public static class AddNamesInCommentToJavaCallArguments extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constructorCall.kt")
+        public void testConstructorCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/constructorCall.kt");
+        }
+
+        @TestMetadata("kotlinFunctionCall.kt")
+        public void testKotlinFunctionCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/kotlinFunctionCall.kt");
+        }
+
+        @TestMetadata("methodCall.kt")
+        public void testMethodCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCall.kt");
+        }
+
+        @TestMetadata("methodCallWithComments.kt")
+        public void testMethodCallWithComments() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments.kt");
+        }
+
+        @TestMetadata("methodCallWithLambdaArgument.kt")
+        public void testMethodCallWithLambdaArgument() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgument.kt");
+        }
+
+        @TestMetadata("methodCallWithLambdaArgumentOnly.kt")
+        public void testMethodCallWithLambdaArgumentOnly() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgumentOnly.kt");
+        }
+
+        @TestMetadata("methodCallWithNoArguments.kt")
+        public void testMethodCallWithNoArguments() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithNoArguments.kt");
+        }
+
+        @TestMetadata("methodCallWithVararg.kt")
+        public void testMethodCallWithVararg() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addNamesToCallArguments")
     public static class AddNamesToCallArguments extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
