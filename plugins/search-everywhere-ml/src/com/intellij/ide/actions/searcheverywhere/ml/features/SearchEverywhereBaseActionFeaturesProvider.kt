@@ -9,6 +9,7 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEvery
     internal const val IS_ENABLED = "isEnabled"
 
     private const val ITEM_TYPE = "type"
+    private const val TYPE_WEIGHT = "typeWeight"
     private const val PRIORITY = "priority"
     private const val IS_HIGH_PRIORITY = "isHighPriority"
 
@@ -36,6 +37,7 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEvery
     val data: MutableMap<String, Any> = hashMapOf(
       SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
       ITEM_TYPE to element.type,
+      TYPE_WEIGHT to element.valueTypeWeight,
       PRIORITY to priority
     )
     addIfTrue(data, IS_HIGH_PRIORITY, isHighPriority(priority))

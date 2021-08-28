@@ -215,6 +215,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return type;
     }
 
+    public int getValueTypeWeight() {
+      return getTypeWeight(value);
+    }
+
     private int calcMatchingDegree() {
       String text = getValueText();
       if (text != null) {
