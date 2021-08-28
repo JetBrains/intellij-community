@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -90,6 +92,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         expectedType: KtType?,
         symbol: KtCallableSymbol,
         options: CallableInsertionOptions,
+        priority: ItemPriority? = null
     ) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any deprecated items that could leads to compile errors.
@@ -97,6 +100,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         val lookup = with(lookupElementFactory) {
             createCallableLookupElement(symbol, options)
         }
+        priority?.let { lookup.priority = it }
         applyWeighers(lookup, symbol, expectedType)
         sink.addElement(lookup)
     }
