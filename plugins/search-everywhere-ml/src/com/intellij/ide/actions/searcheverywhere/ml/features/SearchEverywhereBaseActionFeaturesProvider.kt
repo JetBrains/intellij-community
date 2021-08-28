@@ -6,6 +6,8 @@ import com.intellij.util.Time.*
 
 internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
+    internal const val IS_ENABLED = "isEnabled"
+
     private const val ITEM_TYPE = "type"
     private const val PRIORITY_DATA_KEY = "priority"
 

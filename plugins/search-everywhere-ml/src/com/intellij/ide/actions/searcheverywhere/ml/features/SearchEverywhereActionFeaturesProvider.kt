@@ -23,7 +23,6 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
     private const val IS_GROUP_KEY = "isGroup"
     private const val GROUP_LENGTH_KEY = "groupLength"
     private const val HAS_ICON_KEY = "withIcon"
-    private const val IS_ENABLED_KEY = "isEnabled"
     private const val WEIGHT_KEY = "weight"
 
     private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
@@ -62,7 +61,7 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
 
     val presentation = if (actionWrapper.hasPresentation()) actionWrapper.presentation else action.templatePresentation
     data[HAS_ICON_KEY] = presentation.icon != null
-    data[IS_ENABLED_KEY] = presentation.isEnabled
+    data[IS_ENABLED] = presentation.isEnabled
     data[WEIGHT_KEY] = presentation.weight
 
     data.putAll(getLocalUsageStatistics(action, currentTime))
