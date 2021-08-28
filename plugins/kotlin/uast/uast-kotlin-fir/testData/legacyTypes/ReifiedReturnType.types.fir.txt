@@ -10,14 +10,14 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] : PsiType:Void
                 UReturnExpression [return threshold2] : PsiType:Void
                     USimpleNameReferenceExpression (identifier = threshold2) [threshold2] : PsiType:B
-        UMethod (name = function1) [static fun function1(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : kotlin.Unit {...}]
+        UMethod (name = function1) [static fun function1(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {...}]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = function2) [static fun function2(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
@@ -38,14 +38,14 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}]
                 UReturnExpression [return t]
                     USimpleNameReferenceExpression (identifier = t) [t] : PsiType:T
-        UMethod (name = function3) [static fun function3(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : kotlin.Unit {...}]
+        UMethod (name = function3) [static fun function3(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {...}]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = function4) [static fun function4(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
