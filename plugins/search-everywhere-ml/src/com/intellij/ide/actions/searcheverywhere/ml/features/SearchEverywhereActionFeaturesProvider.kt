@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
@@ -9,14 +8,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
-import com.intellij.util.Time.*
 
-internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
+internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActionFeaturesProvider() {
   companion object {
-    private const val ITEM_TYPE = "type"
     private const val IS_ACTION_DATA_KEY = "isAction"
     private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
-    private const val PRIORITY_DATA_KEY = "priority"
     private const val MATCH_MODE_KEY = "matchMode"
     private const val TEXT_LENGTH_KEY = "textLength"
     private const val IS_GROUP_KEY = "isGroup"
@@ -25,14 +21,6 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
     private const val IS_ENABLED_KEY = "isEnabled"
     private const val WEIGHT_KEY = "weight"
 
-    private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
-    private const val WAS_USED_IN_LAST_MINUTE_DATA_KEY = "wasUsedInLastMinute"
-    private const val WAS_USED_IN_LAST_HOUR_DATA_KEY = "wasUsedInLastHour"
-    private const val WAS_USED_IN_LAST_DAY_DATA_KEY = "wasUsedInLastDay"
-    private const val WAS_USED_IN_LAST_MONTH_DATA_KEY = "wasUsedInLastMonth"
-
-    private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
-    private const val LOCAL_USAGE_TO_MAX_DATA_KEY = "usageToMax"
     private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
     private const val GLOBAL_USAGE_TO_MAX_KEY = "globalUsageToMax"
     private const val USERS_RATIO_DATA_KEY = "usersRatio"
@@ -40,51 +28,31 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
   }
 
   override fun isElementSupported(element: Any): Boolean {
-    return element is GotoActionModel.MatchedValue
+    return element is GotoActionModel.MatchedValue && element.value is GotoActionModel.ActionWrapper
   }
 
-  override fun getElementFeatures(element: Any,
-                                  currentTime: Long,
-                                  queryLength: Int,
-                                  elementPriority: Int,
-                                  cache: Any?): Map<String, Any> {
-    if (element !is GotoActionModel.MatchedValue) {
-      // not an action/option
-      return emptyMap()
-    }
-    return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, queryLength)
-  }
+  override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any> {
+    val actionWrapper = matchedValue.value as? GotoActionModel.ActionWrapper
+    data[IS_ACTION_DATA_KEY] = actionWrapper != null
 
-  private fun getActionsOrOptionsFeatures(priority: Int,
-                                          currentTime: Long,
-                                          matchedValue: GotoActionModel.MatchedValue,
-                                          queryLength: Int): Map<String, Any> {
-    val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
-    val data = hashMapOf<String, Any>(
-      TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
-      ITEM_TYPE to matchedValue.type,
-      IS_ACTION_DATA_KEY to (wrapper != null),
-      PRIORITY_DATA_KEY to priority
-    )
-
-    if (wrapper == null) {
+    if (actionWrapper == null) {
       // item is an option (OptionDescriptor)
       return data
     }
 
-    data[MATCH_MODE_KEY] = wrapper.mode
-    data[IS_GROUP_KEY] = wrapper.isGroupAction
-    val action = wrapper.action
+    data[MATCH_MODE_KEY] = actionWrapper.mode
+    data[IS_GROUP_KEY] = actionWrapper.isGroupAction
+    val action = actionWrapper.action
     data[IS_TOGGLE_ACTION_DATA_KEY] = action is ToggleAction
-    wrapper.actionText?.let {
+    actionWrapper.actionText?.let {
       data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
     }
 
-    wrapper.groupName?.let {
+    actionWrapper.groupName?.let {
       data[GROUP_LENGTH_KEY] = withUpperBound(it.length)
     }
 
-    val presentation = if (wrapper.hasPresentation()) wrapper.presentation else action.templatePresentation
+    val presentation = if (actionWrapper.hasPresentation()) actionWrapper.presentation else action.templatePresentation
     data[HAS_ICON_KEY] = presentation.icon != null
     data[IS_ENABLED_KEY] = presentation.isEnabled
     data[WEIGHT_KEY] = presentation.weight
@@ -113,38 +81,12 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
     val totalStats = localSummary.getTotalStats()
 
     val result = hashMapOf<String, Any>()
-    addUsageStatistics(result, summary.usageCount, totalStats.maxUsageCount, "")
-    addLastTimeUsedStatistics(result, currentTime, summary.lastUsedTimestamp, "")
-
-    addUsageStatistics(result, summary.usageFromSearchEverywhere, totalStats.maxUsageFromSearchEverywhere, "Se")
-    addLastTimeUsedStatistics(result, currentTime, summary.lastUsedFromSearchEverywhere, "Se")
+    addTimeAndUsageStatistics(result, summary.usageCount, totalStats.maxUsageCount, currentTime, summary.lastUsedTimestamp, "")
+    addTimeAndUsageStatistics(result,
+      summary.usageFromSearchEverywhere, totalStats.maxUsageFromSearchEverywhere,
+      currentTime, summary.lastUsedFromSearchEverywhere,
+      "Se"
+    )
     return result
-  }
-
-  private fun addUsageStatistics(result: MutableMap<String, Any>, usage: Int, maxUsage: Int, keySuffix: String) {
-    if (usage > 0) {
-      result[LOCAL_USAGE_COUNT_DATA_KEY + keySuffix] = usage
-      if (maxUsage != 0) {
-        result[LOCAL_USAGE_TO_MAX_DATA_KEY + keySuffix] = roundDouble(usage.toDouble() / maxUsage)
-      }
-    }
-  }
-
-  private fun addLastTimeUsedStatistics(result: MutableMap<String, Any>, currentTime: Long, lastUsedTime: Long, keySuffix: String) {
-    if (lastUsedTime > 0) {
-      val timeSinceLastUsage = currentTime - lastUsedTime
-      result[TIME_SINCE_LAST_USAGE_DATA_KEY + keySuffix] = timeSinceLastUsage
-
-      addIfTrue(result, WAS_USED_IN_LAST_MINUTE_DATA_KEY + keySuffix, timeSinceLastUsage <= MINUTE)
-      addIfTrue(result, WAS_USED_IN_LAST_HOUR_DATA_KEY + keySuffix, timeSinceLastUsage <= HOUR)
-      addIfTrue(result, WAS_USED_IN_LAST_DAY_DATA_KEY + keySuffix, timeSinceLastUsage <= DAY)
-      addIfTrue(result, WAS_USED_IN_LAST_MONTH_DATA_KEY + keySuffix, timeSinceLastUsage <= (4 * WEEK.toLong()))
-    }
-  }
-
-  private fun addIfTrue(result: MutableMap<String, Any>, key: String, value: Boolean) {
-    if (value) {
-      result[key] = true
-    }
   }
 }
