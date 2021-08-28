@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
+import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
@@ -8,11 +9,15 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.actionSystem.EditorAction
 
 internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActionFeaturesProvider() {
   companion object {
     private const val IS_ACTION_DATA_KEY = "isAction"
     private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
+    private const val IS_EDITOR_ACTION = "isEditorAction"
+    private const val IS_SEARCH_ACTION = "isSearchAction"
+
     private const val MATCH_MODE_KEY = "matchMode"
     private const val TEXT_LENGTH_KEY = "textLength"
     private const val IS_GROUP_KEY = "isGroup"
@@ -43,7 +48,10 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
     data[MATCH_MODE_KEY] = actionWrapper.mode
     data[IS_GROUP_KEY] = actionWrapper.isGroupAction
     val action = actionWrapper.action
-    data[IS_TOGGLE_ACTION_DATA_KEY] = action is ToggleAction
+
+    addIfTrue(data, IS_EDITOR_ACTION, action is EditorAction)
+    addIfTrue(data, IS_SEARCH_ACTION, action is SearchEverywhereBaseAction)
+    addIfTrue(data, IS_TOGGLE_ACTION_DATA_KEY, action is ToggleAction)
     actionWrapper.actionText?.let {
       data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
     }

@@ -68,7 +68,7 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEvery
     }
   }
 
-  private fun addIfTrue(result: MutableMap<String, Any>, key: String, value: Boolean) {
+  internal fun addIfTrue(result: MutableMap<String, Any>, key: String, value: Boolean) {
     if (value) {
       result[key] = true
     }
