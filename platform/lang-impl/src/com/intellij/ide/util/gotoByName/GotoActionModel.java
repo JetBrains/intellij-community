@@ -170,34 +170,28 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     myUpdateSession = newUpdateSession();
   }
 
+  public enum MatchedValueType { ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION }
+
   public static class MatchedValue {
     @NotNull public final Object value;
+    @NotNull final MatchedValueType type;
     @NotNull final String pattern;
     final int matchingDegree;
-    final boolean isAbbreviation;
 
-    MatchedValue(@NotNull Object value, @NotNull String pattern) {
+    MatchedValue(@NotNull Object value, @NotNull String pattern, @NotNull MatchedValueType type) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
       matchingDegree = calcMatchingDegree();
-      this.isAbbreviation = false;
+      this.type = type;
     }
 
-    MatchedValue(@NotNull Object value, @NotNull String pattern, int degree) {
+    MatchedValue(@NotNull Object value, @NotNull String pattern, int degree, @NotNull MatchedValueType type) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
       matchingDegree = degree;
-      this.isAbbreviation = false;
-    }
-
-    MatchedValue(@NotNull Object value, @NotNull String pattern, int degree, boolean isAbbreviation) {
-      assert value instanceof OptionDescription || value instanceof ActionWrapper;
-      this.value = value;
-      this.pattern = pattern;
-      matchingDegree = degree;
-      this.isAbbreviation = isAbbreviation;
+      this.type = type;
     }
 
     @Nullable
@@ -216,8 +210,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return matchingDegree;
     }
 
-    public boolean isAbbreviation() {
-      return isAbbreviation;
+    @NotNull
+    public MatchedValueType getType() {
+      return type;
     }
 
     private int calcMatchingDegree() {

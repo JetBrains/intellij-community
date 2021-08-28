@@ -232,7 +232,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
   private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull SearchEverywhereMlService service,
                                                                                         @NotNull GotoActionModel.MatchedValue element) {
-    if (element.isAbbreviation()) {
+    if (element.getType() == GotoActionModel.MatchedValueType.ABBREVIATION) {
       return new FoundItemDescriptor<>(element, element.getMatchingDegree(), 1.0);
     }
 

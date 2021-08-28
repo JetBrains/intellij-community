@@ -13,7 +13,7 @@ import com.intellij.util.Time.*
 
 internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
-    private const val IS_ABBREVIATION_DATA_KEY = "isAbbreviation"
+    private const val ITEM_TYPE = "type"
     private const val IS_ACTION_DATA_KEY = "isAction"
     private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
     private const val PRIORITY_DATA_KEY = "priority"
@@ -60,7 +60,7 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
     val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
     val data = hashMapOf<String, Any>(
       TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
-      IS_ABBREVIATION_DATA_KEY to matchedValue.isAbbreviation,
+      ITEM_TYPE to matchedValue.type,
       IS_ACTION_DATA_KEY to (wrapper != null),
       PRIORITY_DATA_KEY to priority
     )
