@@ -277,7 +277,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       for (CommitId commitId : changesToParents.keySet()) {
         Collection<Change> changesFromParent = changesToParents.get(commitId);
         if (!changesFromParent.isEmpty()) {
-          ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new RootTag(commitId.getHash(), getText(commitId)),
+          ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new ParentTag(commitId.getHash(), getText(commitId)),
                                                                        SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
           parentNode.markAsHelperNode();
 
@@ -452,7 +452,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
 
     if (parentId == null) return null;
-    return new RootTag(parentId.getHash(), getText(parentId));
+    return new ParentTag(parentId.getHash(), getText(parentId));
   }
 
   private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
@@ -489,11 +489,11 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     void onModelUpdated();
   }
 
-  private static class RootTag implements ChangesBrowserNode.Tag {
+  private static class ParentTag implements ChangesBrowserNode.Tag {
     private final @NotNull Hash myCommit;
     private final @NotNull @Nls String myText;
 
-    RootTag(@NotNull Hash commit, @NotNull @Nls String text) {
+    ParentTag(@NotNull Hash commit, @NotNull @Nls String text) {
       myCommit = commit;
       myText = text;
     }
@@ -507,7 +507,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      RootTag tag = (RootTag)o;
+      ParentTag tag = (ParentTag)o;
       return Objects.equals(myCommit, tag.myCommit);
     }
 
