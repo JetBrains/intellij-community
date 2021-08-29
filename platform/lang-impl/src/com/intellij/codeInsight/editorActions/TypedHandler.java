@@ -96,7 +96,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   @NotNull
-  static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
+  private static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
     FileType fileType = file.getFileType();
     Language language = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
     if (language != null && language != PlainTextLanguage.INSTANCE) {
@@ -185,7 +185,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
         return;
       }
 
-      EditorModificationUtil.deleteSelectedText(editor);
+      EditorModificationUtilEx.deleteSelectedText(editor);
 
       FileType fileType = getFileType(file, editor);
 
@@ -199,7 +199,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
         }
       }
       else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped/* || '/' == charTyped*/) {
-        if (handleQuote(editor, project, charTyped, file)) return;
+        if (handleQuote(editor, charTyped, file)) return;
       }
 
       long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
@@ -249,9 +249,9 @@ public final class TypedHandler extends TypedActionHandlerBase {
     return false;
   }
 
-  private static void type(Editor editor, Project project, char charTyped) {
+  private static void type(@NotNull Editor editor, @NotNull Project project, char charTyped) {
     CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
-    EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped), true, true);
+    EditorModificationUtilEx.insertStringAtCaret(editor, String.valueOf(charTyped), true, true);
     ((UndoManagerImpl)UndoManager.getInstance(project)).addDocumentAsAffected(editor.getDocument());
   }
 
@@ -322,9 +322,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
       PsiElement parent = element.getParent();
       if (parent != null) {
         ASTNode parentNode = parent.getNode();
-        if (parentNode != null && stringLiteralElements.contains(parentNode.getElementType())) {
-          return true;
-        }
+        return parentNode != null && stringLiteralElements.contains(parentNode.getElementType());
       }
     }
     return false;
@@ -438,12 +436,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     iterator.retreat();
 
     IElementType lparenTokenType = braceMatcher.getOppositeBraceTokenType(tokenType);
-    int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(
-      iterator,
-      lparenTokenType,
-      text,
-      fileType
-    );
+    int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(iterator, lparenTokenType, text, fileType);
 
     if (lparenthOffset < 0) {
       if (braceMatcher instanceof NontrivialBraceMatcher) {
@@ -470,10 +463,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   @ApiStatus.Internal
-  public static boolean handleQuote(@NotNull Editor editor,
-                                    Project project,
-                                    char quote,
-                                    @NotNull PsiFile file) {
+  public static boolean handleQuote(@NotNull Editor editor, char quote, @NotNull PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return false;
     final QuoteHandler quoteHandler = getQuoteHandler(file, editor);
     if (quoteHandler == null) return false;
@@ -506,7 +496,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
       }
     }
 
-    type(editor, project, quote);
+    type(editor, file.getProject(), quote);
     offset = editor.getCaretModel().getOffset();
 
     if (quoteHandler instanceof MultiCharQuoteHandler) {
@@ -534,7 +524,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   private static boolean isClosingQuote(@NotNull Editor editor, @NotNull QuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()){
-      LOG.assertTrue(false);
+      LOG.error(iterator);
       return false;
     }
 
@@ -545,7 +535,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   private static CharSequence getClosingQuote(@NotNull Editor editor, @NotNull MultiCharQuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) {
-      LOG.assertTrue(false);
+      LOG.error(iterator);
       return null;
     }
 
@@ -555,7 +545,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   private static boolean isOpeningQuote(@NotNull Editor editor, @NotNull QuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) {
-      LOG.assertTrue(false);
+      LOG.error(iterator);
       return false;
     }
 
@@ -565,7 +555,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   private static boolean hasNonClosedLiterals(@NotNull Editor editor, @NotNull QuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) {
-      LOG.assertTrue(false);
+      LOG.error(iterator);
       return false;
     }
 
@@ -585,7 +575,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
     if (iterator.atEnd()){
-      LOG.assertTrue(false);
+      LOG.error(iterator);
       return false;
     }
 
