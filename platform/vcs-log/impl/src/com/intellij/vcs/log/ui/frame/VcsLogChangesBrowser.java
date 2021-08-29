@@ -277,7 +277,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       for (CommitId commitId : changesToParents.keySet()) {
         Collection<Change> changesFromParent = changesToParents.get(commitId);
         if (!changesFromParent.isEmpty()) {
-          ChangesBrowserNode<?> parentNode = new ChangesBrowserParentNode(commitId);
+          ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new RootTag(commitId.getHash(), getText(commitId)),
+                                                                       SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
           parentNode.markAsHelperNode();
 
           builder.insertSubtreeRoot(parentNode);
@@ -431,7 +432,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
     DefaultMutableTreeNode root = myViewer.getRoot();
     if (tag != null) {
-      DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag.toString());
+      DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag);
       if (tagNode != null) {
         root = tagNode;
       }
@@ -471,17 +472,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_CENTER_CONTENT_TITLE, getRevisionTitle(centerRevision, centerFile, null));
     context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(rightRevision, rightFile, centerFile));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
-  }
-
-  private class ChangesBrowserParentNode extends ChangesBrowserStringNode {
-    protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
-      super(getText(commitId));
-    }
-
-    @Override
-    public boolean shouldExpandByDefault() {
-      return false;
-    }
   }
 
   @NotNull
