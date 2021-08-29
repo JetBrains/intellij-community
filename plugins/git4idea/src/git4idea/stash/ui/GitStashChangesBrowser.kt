@@ -1,12 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.DiffPreview
+import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
@@ -22,7 +26,7 @@ import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
-class GitStashChangesBrowser(project: Project) : ChangesBrowserBase(project, false, false) {
+class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : ChangesBrowserBase(project, false, false), Disposable {
   private val stashCache: GitStashCache get() = myProject.service()
 
   private var stashedChanges: Collection<Change> = emptyList()
@@ -33,9 +37,16 @@ class GitStashChangesBrowser(project: Project) : ChangesBrowserBase(project, fal
   private var currentStash: StashInfo? = null
   private var currentChangesFuture: CompletableFuture<GitStashCache.StashData>? = null
 
+  var diffPreviewProcessor: GitStashDiffPreview? = null
+    private set
+  var editorTabPreview: EditorTabPreview? = null
+    private set
+
   init {
     init()
     viewer.emptyText.text = GitBundle.message("stash.changes.empty")
+
+    Disposer.register(parentDisposable, this)
   }
 
   fun selectStash(stash: StashInfo?) {
@@ -96,6 +107,28 @@ class GitStashChangesBrowser(project: Project) : ChangesBrowserBase(project, fal
     }
     updateEmptyText(viewer.emptyText)
     viewer.rebuildTree()
+  }
+
+  override fun getShowDiffActionPreview(): DiffPreview? {
+    return editorTabPreview
+  }
+
+  fun setDiffPreviewInEditor(isInEditor: Boolean): GitStashDiffPreview {
+    if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
+    val newProcessor = GitStashDiffPreview(myProject, viewer, isInEditor, this)
+    diffPreviewProcessor = newProcessor
+
+    if (isInEditor) {
+      editorTabPreview = GitStashEditorDiffPreview(newProcessor, viewer, this)
+    }
+    else {
+      editorTabPreview = null
+    }
+
+    return newProcessor
+  }
+
+  override fun dispose() {
   }
 
   private data class MyTag(@Nls private val text: String, private val hash: Hash): ChangesBrowserNode.Tag {
