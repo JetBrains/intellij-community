@@ -8,6 +8,7 @@ import com.intellij.build.events.impl.OutputBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +26,8 @@ import java.util.function.Function;
 
 @ApiStatus.Experimental
 public class MavenLogOutputParser implements BuildOutputParser {
+
+  private static final String QUIET_BUILD_SUCCESS_MESSAGE = IdeCoreBundle.message("finished.with.exit.code.text.message", 0);
 
   private boolean myCompleted = false;
   private final List<MavenLoggedEventParser> myRegisteredEvents;
@@ -139,7 +142,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
       myCompleted = true;
       return true;
     }
-    if (logLine.myLine.equals("BUILD SUCCESS")) {
+    if (logLine.myLine.equals("BUILD SUCCESS") || logLine.myLine.equals(QUIET_BUILD_SUCCESS_MESSAGE)) {
       completeParsers(messageConsumer);
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new SuccessResultImpl()));
