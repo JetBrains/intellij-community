@@ -1012,12 +1012,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         addDescriptorIncrementally(descriptor, myToolWrapper, myIndicator);
       }
       HighlightSeverity severity = myProfileWrapper.getErrorLevel(myToolWrapper.getDisplayKey(), getFile()).getSeverity();
-      if (severity == HighlightSeverity.ERROR) {
+      if (severity.compareTo(HighlightSeverity.ERROR) >= 0) {
         if (errorStamp == 0) {
           errorStamp = System.nanoTime();
         }
       }
-      else if (severity == HighlightSeverity.WARNING) {
+      else if (severity.compareTo(HighlightSeverity.WARNING) >= 0) {
         if (warningStamp == 0) {
           warningStamp = System.nanoTime();
         }
