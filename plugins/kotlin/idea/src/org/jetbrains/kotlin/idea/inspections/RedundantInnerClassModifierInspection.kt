@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.receiverType
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.getThisReceiverOwner
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
@@ -41,10 +42,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
             innerModifier,
             KotlinBundle.message("inspection.redundant.inner.class.modifier.descriptor"),
             ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-            IntentionWrapper(
-                RemoveModifierFix(targetClass, KtTokens.INNER_KEYWORD, isRedundant = true),
-                targetClass.containingFile
-            )
+            RemoveInnerModifierFix()
         )
     })
 
@@ -114,5 +112,44 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
 
     private fun PsiElement.receiverTypeReference(): KtTypeReference? {
         return safeAs<KtNamedFunction>()?.receiverTypeReference ?: safeAs<KtProperty>()?.receiverTypeReference
+    }
+
+    private class RemoveInnerModifierFix : LocalQuickFix {
+        override fun getName() = KotlinBundle.message("remove.modifier")
+
+        override fun getFamilyName() = name
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val targetClass = descriptor.psiElement.parent.parent as? KtClass ?: return
+            val fixedElements = fixReceiverOnCallSite(targetClass)
+            targetClass.removeModifier(KtTokens.INNER_KEYWORD)
+            fixedElements.filterIsInstance<KtQualifiedExpression>().forEach { ShortenReferences.DEFAULT.process(it) }
+        }
+
+        private fun fixReceiverOnCallSite(targetClass: KtClass): List<PsiElement> {
+            val containingClass = targetClass.getStrictParentOfType<KtClass>() ?: return emptyList()
+            val bindingContext = containingClass.analyze(BodyResolveMode.PARTIAL)
+            val fqName =
+                bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, containingClass]?.fqNameOrNull()?.asString() ?: return emptyList()
+            val psiFactory = KtPsiFactory(targetClass)
+            val newReceiver = psiFactory.createExpression(fqName)
+            return ReferencesSearch.search(targetClass, targetClass.useScope).mapNotNull {
+                val callExpression = it.element.parent as? KtCallExpression ?: return@mapNotNull null
+                val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
+                val parentClass = callExpression.getStrictParentOfType<KtClass>()
+                when {
+                    qualifiedExpression != null ->
+                        if (parentClass == containingClass) {
+                            qualifiedExpression.replace(callExpression)
+                        } else {
+                            qualifiedExpression.receiverExpression.replace(newReceiver)
+                        }
+                    parentClass != containingClass ->
+                        callExpression.replace(psiFactory.createExpressionByPattern("$0.$1", newReceiver, callExpression))
+                    else ->
+                        null
+                }
+            }
+        }
     }
 }

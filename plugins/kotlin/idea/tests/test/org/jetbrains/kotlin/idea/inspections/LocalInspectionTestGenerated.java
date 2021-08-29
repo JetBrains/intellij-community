@@ -8791,6 +8791,36 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/inLocalClass.kt");
         }
 
+        @TestMetadata("innerClassConstructorCall.kt")
+        public void testInnerClassConstructorCall() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall2.kt")
+        public void testInnerClassConstructorCall2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall2.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall3.kt")
+        public void testInnerClassConstructorCall3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall3.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall4.kt")
+        public void testInnerClassConstructorCall4() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall4.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall5.kt")
+        public void testInnerClassConstructorCall5() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall5.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall6.kt")
+        public void testInnerClassConstructorCall6() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall6.kt");
+        }
+
         @TestMetadata("noOuterClassMemberReference.kt")
         public void testNoOuterClassMemberReference() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassMemberReference.kt");
