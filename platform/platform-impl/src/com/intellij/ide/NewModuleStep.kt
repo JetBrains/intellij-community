@@ -42,7 +42,7 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
 
   private val panel by lazy {
     panel { steps.forEach { it.setupUI(this) } }
-      .also { it.withBorder(JBUI.Borders.empty(10, 10)) }
+      .also { it.withBorder(JBUI.Borders.empty(20, 20)) }
       .also { fixUiShiftingWhenChoosingMultiStep(it) }
   }
 
