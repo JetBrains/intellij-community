@@ -88,7 +88,7 @@ public final class FUCounterUsageLogger {
   public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors(String pluginId) {
     List<FeatureUsagesCollector> result = new ArrayList<>(EP_NAME.getPoint().size());
     EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
-      if (pluginId == null || pluginId == pluginDescriptor.getPluginId().getIdString()) {
+      if (pluginId == null || pluginId.equals(pluginDescriptor.getPluginId().getIdString())) {
         if (ep.implementationClass != null) {
           result.add(ApplicationManager.getApplication().instantiateClass(ep.implementationClass, pluginDescriptor));
         }
