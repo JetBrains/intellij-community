@@ -404,7 +404,7 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
   val pathResolver = ClassPathXmlPathResolver(
     classLoader = classLoader,
-    isRunningFromSources = (isRunningFromSources && !isInDevServerMode) || platformPrefix == "CodeServer",
+    isRunningFromSources = (isRunningFromSources && !isInDevServerMode) || platformPrefix.startsWith("CodeServer"),
   )
   if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
       (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
