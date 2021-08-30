@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.settings.pandoc
 
 import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
@@ -67,31 +68,35 @@ internal class PandocSettingsPanel(private val project: Project): JPanel(GridBag
       }
       infoPanel.add(JBLabel(labelText).apply { border = IdeBorderFactory.createEmptyBorder(JBUI.insetsBottom(4)) })
     }
-    setupImagesPathFileChooser()
+    setupFileChooser(
+      browser = executablePathSelector,
+      descriptor = FileChooserDescriptor(true, false, true, true, false, false),
+      defaultValue = { settings.pathToPandoc }
+    )
+    setupFileChooser(
+      browser = imagesPathSelector,
+      descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+      defaultValue = { settings.pathToImages }
+    )
     reset()
   }
 
-  private fun setupImagesPathFileChooser() {
-    val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-    settings.pathToImages?.takeIf { it.isNotEmpty() }?.let {
+  private fun setupFileChooser(browser: TextFieldWithBrowseButton, descriptor: FileChooserDescriptor, defaultValue: () -> String?) {
+    defaultValue()?.takeIf { it.isNotEmpty() }?.let {
       imagesPathSelector.text = it
     }
-    imagesPathSelector.addActionListener {
-      val lastPath = imagesPath
-      val file = when {
-        lastPath != null && lastPath.isNotEmpty() -> VfsUtil.findFileByIoFile(File(lastPath), false)
-        else -> null
-      }
-      val files = FileChooser.chooseFiles(descriptor, project, file)
+    browser.addActionListener {
+      val lastFile = browser.text.takeIf { it.isNotEmpty() }?.let { VfsUtil.findFileByIoFile(File(it), false) }
+      val files = FileChooser.chooseFiles(descriptor, project, lastFile)
       if (files.size == 1) {
-        imagesPathSelector.text = files.first().presentableUrl
+        browser.text = files.first().presentableUrl
       }
     }
     FileChooserFactory.getInstance().installFileCompletion(
-      imagesPathSelector.textField,
+      browser.textField,
       descriptor,
       true,
-      imagesPathSelector
+      browser
     )
   }
 
