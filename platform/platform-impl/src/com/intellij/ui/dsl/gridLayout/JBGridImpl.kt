@@ -182,7 +182,7 @@ internal class JBGridImpl : JBGrid {
       layoutCellData.baseline = null
       when (val cell = layoutCellData.cell) {
         is JBComponentCell -> {
-          if (!layoutData.baselineData.isSupportedBaseline(layoutCellData)) {
+          if (!isSupportedBaseline(constraints)) {
             continue
           }
 
@@ -207,7 +207,7 @@ internal class JBGridImpl : JBGrid {
           val grid = cell.content
           grid.calculateLayoutDataStep3()
           layoutCellData.preferredSize.height = grid.layoutData.preferredHeight
-          if (grid.layoutData.dimension.height == 1) {
+          if (grid.layoutData.dimension.height == 1 && isSupportedBaseline(constraints)) {
             val gridRowBaselineData = grid.layoutData.baselineData.get(constraints.verticalAlign)
             if (gridRowBaselineData != null) {
               layoutCellData.baseline = gridRowBaselineData.maxAboveBaseline
@@ -413,8 +413,7 @@ private class JBGridCell(constraints: JBConstraints, val content: JBGridImpl) : 
 }
 
 /**
- * Contains baseline data for rows. Every vertical align is calculated separately, constraints with [VerticalAlign.FILL]
- * and height more than 1 are not supported (see [isSupportedBaseline])
+ * Contains baseline data for rows, see [JBConstraints.baselineAlign]
  */
 private class BaselineData {
 
@@ -424,14 +423,9 @@ private class BaselineData {
     rowBaselineData.clear()
   }
 
-  fun isSupportedBaseline(layoutCellData: LayoutCellData): Boolean {
-    val constraints = layoutCellData.cell.constraints
-    return constraints.verticalAlign != VerticalAlign.FILL && constraints.height == 1
-  }
-
   fun registerBaseline(layoutCellData: LayoutCellData, baseline: Int) {
-    checkTrue(isSupportedBaseline(layoutCellData))
     val constraints = layoutCellData.cell.constraints
+    checkTrue(isSupportedBaseline(constraints))
     val rowBaselineData = getOrCreate(layoutCellData)
 
     rowBaselineData.maxAboveBaseline = max(rowBaselineData.maxAboveBaseline,
@@ -466,4 +460,8 @@ private class BaselineData {
 private data class RowBaselineData(var maxAboveBaseline: Int = 0, var maxBelowBaseline: Int = 0) {
   val height: Int
     get() = maxAboveBaseline + maxBelowBaseline
+}
+
+private fun isSupportedBaseline(constraints: JBConstraints): Boolean {
+  return constraints.baselineAlign && constraints.verticalAlign != VerticalAlign.FILL && constraints.height == 1
 }

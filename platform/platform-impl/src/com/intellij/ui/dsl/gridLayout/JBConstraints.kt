@@ -72,6 +72,17 @@ data class JBConstraints(
   val verticalAlign: VerticalAlign = VerticalAlign.TOP,
 
   /**
+   * If true then vertical align is done by baseline:
+   *
+   * 1. All components that have baselineAlign = true in the same row and with the same [verticalAlign] are aligned by baseline together
+   * 2. Components are aligned even if they are placed in different sub grids (see [JBGridImpl.registerSubGrid])
+   * 3. [VerticalAlign.FILL] alignment does not support [baselineAlign]
+   * 4. Cells with [height] more than 1 do not support [baselineAlign]
+   * 5. Only sub grids with one row can be aligned by baseline in parent grid
+   */
+  val baselineAlign: Boolean = false,
+
+  /**
    * Gaps between grid cell bounds and components visual bounds (component bounds minus [visualPaddings])
    */
   val gaps: Gaps = Gaps.EMPTY,

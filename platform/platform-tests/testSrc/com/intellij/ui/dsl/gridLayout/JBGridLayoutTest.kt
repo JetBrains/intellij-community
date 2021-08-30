@@ -251,6 +251,7 @@ class JBGridLayoutTest {
 
       val panel = JPanel(JBGridLayout())
       val builder = RowsGridBuilder(panel)
+        .defaultBaselineAlign(true)
 
       for (i in 10..16) {
         builder.label(verticalAlign, i)
@@ -280,6 +281,7 @@ class JBGridLayoutTest {
 
       val panel = JPanel(JBGridLayout())
       val builder = RowsGridBuilder(panel)
+        .defaultBaselineAlign(true)
 
       builder
         .label(verticalAlign, 14)

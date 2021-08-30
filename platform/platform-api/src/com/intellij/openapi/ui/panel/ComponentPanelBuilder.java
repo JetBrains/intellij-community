@@ -357,9 +357,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     public void setUI(LabelUI ui) {
       super.setUI(ui);
 
-      if (SystemInfo.isMac) {
-        setFont(new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(getFont())));
-      }
+      setFont(new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(getFont())));
     }
   }
 

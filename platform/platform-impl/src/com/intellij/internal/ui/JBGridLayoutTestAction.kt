@@ -85,6 +85,8 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
 
     val panel = JPanel(JBGridLayout())
     val builder = RowsGridBuilder(panel)
+      .defaultBaselineAlign(true)
+
     builder
       .title("Vertical align: TOP")
       .label(VerticalAlign.TOP, 14)

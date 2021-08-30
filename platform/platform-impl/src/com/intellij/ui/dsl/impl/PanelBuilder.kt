@@ -42,6 +42,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
     val maxColumnsCount = getMaxColumnsCount()
     val rowsGridBuilder = RowsGridBuilder(panel, grid = grid)
+      .defaultVerticalAlign(VerticalAlign.CENTER)
+      .defaultBaselineAlign(true)
 
     for (row in rows) {
       if (!checkRow(row)) {
@@ -53,7 +55,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
           val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount, horizontalAlign = HorizontalAlign.FILL,
-            verticalAlign = VerticalAlign.CENTER, gaps = Gaps(left = row.getIndent()))
+            gaps = Gaps(left = row.getIndent()))
           val cells = row.cells
           buildRow(cells, row.label != null, 0, cells.size, panel, subGridBuilder)
           subGridBuilder.row()
@@ -67,8 +69,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           buildCell(row.cells[0], true, row.getIndent(), row.cells.size == 1, 1, panel, rowsGridBuilder)
 
           if (row.cells.size > 1) {
-            val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1, horizontalAlign = HorizontalAlign.FILL,
-              verticalAlign = VerticalAlign.CENTER)
+            val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1, horizontalAlign = HorizontalAlign.FILL)
             val cells = row.cells.subList(1, row.cells.size)
             buildRow(cells, false, 0, cells.size, panel, subGridBuilder)
             setLastColumnResizable(subGridBuilder)
