@@ -14,10 +14,11 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.ui.LightweightHint
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.KeyAdapter
@@ -26,10 +27,6 @@ import kotlin.properties.Delegates
 
 @ApiStatus.Internal
 class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : Disposable {
-  companion object {
-    private const val verticalGap = 2
-  }
-
   private val mouseListener = MouseListener()
   private val keyboardListener = KeyboardListener()
   private val mouseMotionListener = MouseMotionListener()
@@ -103,11 +100,14 @@ class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : D
     val selectionModel = editor.selectionModel
     val elementAtStart = file.findElementAt(selectionModel.selectionStart)
     val elementAtEnd = file.findElementAt(selectionModel.selectionEnd)
-    return elementAtStart?.let(::hasFenceParent) == false && elementAtEnd?.let(::hasFenceParent) == false
+    return elementAtStart?.let(::hasIgnoredParent) == false && elementAtEnd?.let(::hasIgnoredParent) == false
   }
 
-  private fun hasFenceParent(element: PsiElement): Boolean {
-    return element.parents(withSelf = true).any { it.hasType(MarkdownElementTypes.CODE_FENCE) }
+  private fun hasIgnoredParent(element: PsiElement): Boolean {
+    if (element.containingFile !is MarkdownFile) {
+      return true
+    }
+    return element.parents(withSelf = true).any { it.elementType in elementsToIgnore }
   }
 
   private fun getHintPosition(hint: LightweightHint): Point {
@@ -174,5 +174,16 @@ class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : D
         showIfHidden()
       }
     }
+  }
+
+  companion object {
+    private const val verticalGap = 2
+
+    private val elementsToIgnore = listOf(
+      MarkdownElementTypes.CODE_FENCE,
+      MarkdownElementTypes.CODE_BLOCK,
+      MarkdownElementTypes.CODE_SPAN,
+      MarkdownElementTypes.HTML_BLOCK
+    )
   }
 }
