@@ -1,6 +1,6 @@
 package com.intellij.jps.cache.client;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -46,7 +46,7 @@ class JpsCachesDownloader {
     List<Pair<File, DownloadableFileDescription>> existingFiles = new CopyOnWriteArrayList<>();
 
     try {
-      myProgressIndicatorManager.setText(this, IdeBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
+      myProgressIndicatorManager.setText(this, IdeCoreBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
       long start = System.currentTimeMillis();
       List<Future<Void>> results = new ArrayList<>();
       final AtomicLong totalSize = new AtomicLong();
@@ -80,7 +80,7 @@ class JpsCachesDownloader {
                   LOG.info("Failed to download " + description.getDownloadUrl() + ". Attempt " + attempt + " to download file again");
                 }
               } else {
-                throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
+                throw new IOException(IdeCoreBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
               }
             }
           }
@@ -138,7 +138,7 @@ class JpsCachesDownloader {
   private File downloadFile(@NotNull final DownloadableFileDescription description, @NotNull final File existingFile,
                                    @NotNull Map<String, String> headers, @NotNull final ProgressIndicator indicator) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
-    indicator.setText2(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
+    indicator.setText2(IdeCoreBundle.message("progress.connecting.to.download.file.text", presentableUrl));
     indicator.setIndeterminate(false);
 
     return HttpRequests.request(description.getDownloadUrl())
@@ -154,7 +154,7 @@ class JpsCachesDownloader {
 
           String header = connection.getHeaderField(CDN_CACHE_HEADER);
           if (header != null && header.startsWith("Hit")) hitsCount++;
-          indicator.setText2(IdeBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
+          indicator.setText2(IdeCoreBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
           return request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
         }
       });
