@@ -40,6 +40,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   @NlsSafe public static final String GROOVY2_4 = "2.4";
   @NlsSafe public static final String GROOVY2_5 = "2.5";
   @NlsSafe public static final String GROOVY3_0 = "3.0";
+  @NlsSafe public static final String GROOVY4_0 = "4.0";
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
   @NonNls private static final String LIB = "/lib";
@@ -66,6 +67,11 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   public static boolean isAtLeastGroovy25(@NotNull PsiElement element) {
     return getInstance().isVersionAtLeast(element, GROOVY2_5);
+  }
+
+  public static boolean isAtLeastGroovy40(@NotNull PsiElement element) {
+    //return getInstance().isVersionAtLeast(element, GROOVY4_0);
+    return true;
   }
 
   @Override

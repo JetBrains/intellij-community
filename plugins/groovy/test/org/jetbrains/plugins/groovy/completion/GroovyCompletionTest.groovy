@@ -1150,6 +1150,10 @@ public class KeyVO {
     checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements <caret> {}'
   }
 
+  void testSpaceTail4() {
+    checkSingleItemCompletion 'class Foo perm<caret> {}', 'class Foo permits <caret> {}'
+  }
+
   void testAmbiguousClassQualifier() {
     myFixture.addFileToProject("Util-invalid.groovy", "println 42")
     myFixture.addClass("package foo; public class Util { public static void foo() {} }")
