@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 fun usage() {
     val a = "10".toIntOrNull()

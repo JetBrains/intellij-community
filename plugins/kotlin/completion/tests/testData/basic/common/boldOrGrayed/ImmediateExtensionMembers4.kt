@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 fun C.extFunForC(){}
 fun T.extFunForT(){}

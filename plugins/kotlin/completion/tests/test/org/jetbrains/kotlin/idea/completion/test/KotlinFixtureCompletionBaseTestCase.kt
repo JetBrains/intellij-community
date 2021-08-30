@@ -21,13 +21,13 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
     protected abstract fun defaultCompletionType(): CompletionType
     protected open fun defaultInvocationCount(): Int = 0
 
-    protected open fun handleTestPath(path: String) = path
+    protected open fun handleTestPath(path: String): File = File(path)
     
     open fun doTest(testPath: String) {
-        val actualTestPath = handleTestPath(testPath())
-        configureFixture(actualTestPath)
+        val actualTestFile = handleTestPath(testPath())
+        configureFixture(actualTestFile.path)
 
-        val fileText = FileUtil.loadFile(File(actualTestPath), true)
+        val fileText = FileUtil.loadFile(actualTestFile, true)
 
         withCustomCompilerOptions(fileText, project, module) {
             assertTrue("\"<caret>\" is missing in file \"$testPath\"", fileText.contains("<caret>"))

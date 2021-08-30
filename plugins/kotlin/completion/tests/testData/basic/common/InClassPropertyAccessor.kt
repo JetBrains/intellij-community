@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 class Test(val testParam : Int) {
   val x : Int get() {
