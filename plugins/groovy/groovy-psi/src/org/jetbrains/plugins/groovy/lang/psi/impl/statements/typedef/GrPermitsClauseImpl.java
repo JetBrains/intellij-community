@@ -23,7 +23,7 @@ public class GrPermitsClauseImpl extends GrReferenceListImpl implements GrPermit
 
   @Override
   protected IElementType getKeywordType() {
-    return GroovyTokenTypes.kIMPLEMENTS;
+    return GroovyTokenTypes.kPERMITS;
   }
 
   public GrPermitsClauseImpl(final GrReferenceListStub stub) {

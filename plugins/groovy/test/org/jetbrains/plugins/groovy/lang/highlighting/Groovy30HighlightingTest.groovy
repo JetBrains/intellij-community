@@ -174,4 +174,12 @@ class Bar extends Foo {
 <error>non-sealed</error> trait Bar {}
 '''
   }
+
+  void 'test permits'() {
+    highlightingTest '''
+<error>sealed</error> class Foo <error>permits</error> Bar {}
+
+class Bar extends Foo {}
+'''
+  }
 }

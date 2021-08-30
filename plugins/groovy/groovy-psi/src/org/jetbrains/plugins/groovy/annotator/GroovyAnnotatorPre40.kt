@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsClause
 
 class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
   fun registerModifierProblem(modifier : PsiElement, inspectionMessage : @Nls String, fixMessage : @Nls String) {
@@ -29,5 +30,10 @@ class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElement
     if (nonSealed != null) {
       registerModifierProblem(nonSealed, GroovyBundle.message("inspection.message.modifier.nonsealed.available.with.groovy.or.later"), GroovyBundle.message("illegal.nonsealed.modifier.fix"))
     }
+  }
+
+  override fun visitPermitsClause(permitsClause: GrPermitsClause) {
+    permitsClause.keyword?.let {holder.newAnnotation(HighlightSeverity.ERROR,
+                                                     GroovyBundle.message("inspection.message.permits.available.with.groovy.4.or.later")).range(it).create() }
   }
 }
