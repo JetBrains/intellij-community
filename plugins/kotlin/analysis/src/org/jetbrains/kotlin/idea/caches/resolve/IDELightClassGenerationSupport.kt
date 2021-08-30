@@ -52,9 +52,6 @@ class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSup
         override val languageVersionSettings: LanguageVersionSettings
             get() = module?.languageVersionSettings ?: KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT
 
-        override val isReleasedCoroutine
-            get() = languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines) ?: true
-
         private val resolutionFacade get() = element.getResolutionFacade()
 
         override val moduleDescriptor get() = resolutionFacade.moduleDescriptor
