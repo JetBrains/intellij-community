@@ -5,9 +5,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.EdtExecutorService
+import com.intellij.util.ui.StatusText
 import git4idea.i18n.GitBundle
 import git4idea.stash.GitStashCache
 import git4idea.ui.StashInfo
@@ -30,13 +32,11 @@ class GitStashChangesBrowser(project: Project) : SimpleChangesBrowser(project, f
     currentChangesFuture = null
 
     if (stash == null) {
-      setChangesToDisplay(emptyList())
-      viewer.emptyText.text = GitBundle.message("stash.changes.empty")
+      setEmpty { statusText -> statusText.text = GitBundle.message("stash.changes.empty") }
       return
     }
 
-    setChangesToDisplay(emptyList())
-    viewer.emptyText.text = GitBundle.message("stash.changes.loading")
+    setEmpty { statusText -> statusText.text = GitBundle.message("stash.changes.loading") }
 
     val futureChanges = stashCache.loadStashData(stash) ?: return
     currentChangesFuture = futureChanges
@@ -45,12 +45,10 @@ class GitStashChangesBrowser(project: Project) : SimpleChangesBrowser(project, f
 
       when (val stashData = currentChangesFuture?.get()) {
         is GitStashCache.StashData.ChangeList -> {
-          setChangesToDisplay(stashData.changeList.changes)
-          viewer.emptyText.text = ""
+          setData(stashData.changeList.changes)
         }
         is GitStashCache.StashData.Error -> {
-          setChangesToDisplay(emptyList())
-          viewer.emptyText.setText(stashData.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)
+          setEmpty { statusText -> statusText.setText(stashData.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES) }
         }
       }
       currentChangesFuture = null
@@ -59,5 +57,16 @@ class GitStashChangesBrowser(project: Project) : SimpleChangesBrowser(project, f
 
   override fun createPopupMenuActions(): List<AnAction> {
     return super.createPopupMenuActions() + ActionManager.getInstance().getAction("Git.Stash.ChangesBrowser.ContextMenu")
+  }
+
+  private fun setEmpty(updateEmptyText: (StatusText) -> Unit) = setData(emptyList(), updateEmptyText)
+
+  private fun setData(changes: Collection<Change>) {
+    setData(changes) { statusText -> statusText.text = "" }
+  }
+
+  private fun setData(changes: Collection<Change>, updateEmptyText: (StatusText) -> Unit) {
+    setChangesToDisplay(changes)
+    updateEmptyText(viewer.emptyText)
   }
 }
