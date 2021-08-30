@@ -3,8 +3,8 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.quickfix.unambiguousImports"
-            interface="org.jetbrains.kotlin.idea.quickfix.KotlinAutoImportsFilter"
+            qualifiedName="org.jetbrains.kotlin.idea.codeInsight.unambiguousImports"
+            interface="org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.updater"

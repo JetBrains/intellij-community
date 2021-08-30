@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.imports
 
 import com.intellij.codeInsight.daemon.ReferenceImporter
-import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.kotlin.idea.codeInsight.AbstractKotlinReferenceImporter
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
-import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter
-import org.jetbrains.kotlin.idea.quickfix.KotlinAutoImportsFilter
+import org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -14,13 +12,12 @@ private class KotlinAutoImportsFilterImpl(val isEnabled: Boolean) : KotlinAutoIm
     override fun forceAutoImportForFile(file: KtFile): Boolean = isEnabled
 
     override fun filterSuggestions(suggestions: Collection<FqName>): Collection<FqName> =
-        suggestions
-            .filter { it.asString() == "a.b.AmbiguousClazzForFilter" }
-            .ifEmpty { suggestions }
+        suggestions.filter { it.asString() == "a.b.AmbiguousClazzForFilter" }.ifEmpty { suggestions }
 }
 
 private class TestReferenceImporterImpl(val isEnabled: Boolean) : AbstractKotlinReferenceImporter() {
     override fun isEnabledFor(file: KtFile): Boolean = isEnabled
+    override val enableAutoImportFilter: Boolean = true
 }
 
 abstract class AbstractFilteringAutoImportTest : AbstractAutoImportTest() {

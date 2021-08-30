@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
@@ -124,18 +125,10 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     }
 
     fun createActionWithAutoImportsFilter(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
-        val filteredSuggestions = filterSuggestions(element)
+        val filteredSuggestions = KotlinAutoImportsFilter.filterSuggestionsIfApplicable(element.containingKtFile, suggestions)
+            ?: suggestions
 
         return createSingleImportAction(project, editor, element, filteredSuggestions)
-    }
-
-    private fun filterSuggestions(
-        element: KtExpression
-    ): Collection<FqName> {
-        return KotlinAutoImportsFilter
-            .findRelevantExtension(element.containingKtFile)
-            ?.filterSuggestions(suggestions)
-            ?: suggestions
     }
 
     fun collectSuggestions(): Collection<FqName> {
@@ -723,16 +716,16 @@ internal object ImportForMissingOperatorFactory : ImportFixBase.Factory() {
 }
 
 
-private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpression, name: String): Collection<ClassDescriptor> {
-    val platform = TargetPlatformDetector.getPlatform(expressionForPlatform.containingKtFile)
-    return when {
-        platform.isJvm() -> getJvmClassesByName(name)
-        else -> getKotlinClasses({ it == name },
-            // Enum entries should be contributes with members import fix
-                                 psiFilter = { ktDeclaration -> ktDeclaration !is KtEnumEntry },
-                                 kindFilter = { kind -> kind != ClassKind.ENUM_ENTRY })
-    }
-}
+private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpression, name: String): Collection<ClassDescriptor> =
+    if (TargetPlatformDetector.getPlatform(expressionForPlatform.containingKtFile).isJvm())
+        getJvmClassesByName(name)
+    else
+        getKotlinClasses(
+            nameFilter = { it == name },
+            // Enum entries should be contributed with members import fix
+            psiFilter = { ktDeclaration -> ktDeclaration !is KtEnumEntry },
+            kindFilter = { kind -> kind != ClassKind.ENUM_ENTRY },
+        )
 
 private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDescriptor ->
     callType.descriptorKindFilter.accepts(descriptor)
