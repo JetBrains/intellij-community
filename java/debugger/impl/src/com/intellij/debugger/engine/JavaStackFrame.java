@@ -416,9 +416,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {
-    for (LocalVariableProxyImpl local : getVisibleVariables()) {
-      children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, local), evaluationContext, myNodeManager));
-    }
+    buildLocalVariables(evaluationContext, children, getVisibleVariables());
   }
 
   @NotNull
