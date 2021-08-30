@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 class ResolvedCall<out D>(val candidateDescriptor: D)
 

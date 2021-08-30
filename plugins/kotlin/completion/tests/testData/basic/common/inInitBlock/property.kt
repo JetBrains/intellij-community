@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 class X {
     val x: Int = 10
 
