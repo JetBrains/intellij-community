@@ -62,6 +62,7 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" exported="" />
     <orderEntry type="module" module-name="kotlin.refIndex" exported="" />
     <orderEntry type="module" module-name="kotlin.coverage" exported="" />
+    <orderEntry type="module" module-name="kotlin.git" exported="" />
     <orderEntry type="module" module-name="kotlin.testng" exported="" />
     <orderEntry type="module" module-name="kotlin.junit" exported="" />
     <orderEntry type="module" module-name="kotlin.grazie" exported="" />
