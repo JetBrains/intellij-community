@@ -12,6 +12,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
@@ -35,14 +36,16 @@ class JavaNewProjectWizard : NewProjectWizard {
         row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
           val sdkModel = ProjectSdksModel()
             .also { it.syncSdks() }
-          val sdkCombo = JdkComboBox(null, sdkModel, { it is JavaSdkType }, null, null, null)
+          val sdkCombo = JdkComboBox(null, sdkModel, this@Step::sdkTypeFilter, null, null, null)
             .apply { minimumSize = Dimension(0, 0) }
             .also { combo -> combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk }) }
             .also { combo ->
               val defaultProject = ProjectManager.getInstance().defaultProject
               val defaultProjectSdk = ProjectRootManager.getInstance(defaultProject).projectSdk
-              if (defaultProjectSdk != null && defaultProjectSdk.sdkType is JavaSdkType) {
+              if (defaultProjectSdk != null && sdkTypeFilter(defaultProjectSdk.sdkType)) {
                 combo.selectedJdk = defaultProjectSdk
+              } else {
+                combo.selectedJdk = getSuitableSdkWithFilter(this@Step::sdkTypeFilter)
               }
             }
           sdkCombo()
@@ -60,6 +63,14 @@ class JavaNewProjectWizard : NewProjectWizard {
           }
         }
       }
+    }
+
+    fun sdkTypeFilter(sdkType: SdkTypeId?): Boolean = sdkType is JavaSdkType
+
+    private fun getSuitableSdkWithFilter(filter: (SdkTypeId?) -> Boolean): Sdk? {
+        val jdks = ProjectJdkTable.getInstance().allJdks.filter { filter(it.sdkType) }
+        if (jdks.isEmpty()) return null
+        return jdks.maxWithOrNull(jdks.first().sdkType.versionComparator())
     }
   }
 
