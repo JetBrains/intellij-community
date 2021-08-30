@@ -3,22 +3,23 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import javax.swing.JComponent
 
-class KotlinRangesHintsProvider : KotlinAbstractHintsProvider<KotlinRangesHintsProvider.Settings>() {
+class KotlinRangesHintsProvider : KotlinAbstractHintsProvider<NoSettings>() {
 
     object Settings
 
-    override val key: SettingsKey<Settings> = SettingsKey("kotlin.ranges.hints")
+    override val key: SettingsKey<NoSettings> = SettingsKey("kotlin.ranges.hints")
     override val name: String = KotlinBundle.message("hints.settings.ranges")
 
-    override fun createSettings(): Settings = Settings
+    override fun createSettings(): NoSettings = NoSettings()
 
-    override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
+    override fun createConfigurable(settings: NoSettings): ImmediateConfigurable = object : ImmediateConfigurable {
         override fun createComponent(listener: ChangeListener): JComponent = panel {}
 
         override val cases: List<ImmediateConfigurable.Case>
@@ -26,7 +27,7 @@ class KotlinRangesHintsProvider : KotlinAbstractHintsProvider<KotlinRangesHintsP
 
     }
 
-    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean {
+    override fun isElementSupported(resolved: HintType?, settings: NoSettings): Boolean {
         return when (resolved) {
             HintType.RANGES -> true
             else -> false
