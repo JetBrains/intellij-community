@@ -42,6 +42,8 @@ class GroovyVersionAnnotator : Annotator {
     }
     if (version < GROOVY4_0) {
       element.accept(GroovyAnnotatorPre40(holder))
+    } else {
+      element.accept(GroovyAnnotator40(holder))
     }
   }
 }

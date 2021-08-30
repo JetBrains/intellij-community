@@ -14,21 +14,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsClause
 
 class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
-  fun registerModifierProblem(modifier : PsiElement, inspectionMessage : @Nls String, fixMessage : @Nls String) {
-    val builder = holder.newAnnotation(HighlightSeverity.ERROR,
-                                       inspectionMessage).range(modifier)
-    registerLocalFix(builder, GrRemoveModifierFix(modifier.text, fixMessage), modifier, inspectionMessage, ProblemHighlightType.ERROR, modifier.textRange)
-    builder.create()
+  companion object {
+    fun AnnotationHolder.registerModifierProblem(modifier : PsiElement, inspectionMessage : @Nls String, fixMessage : @Nls String) {
+      val builder = newAnnotation(HighlightSeverity.ERROR,
+                                  inspectionMessage).range(modifier)
+      registerLocalFix(builder, GrRemoveModifierFix(modifier.text, fixMessage), modifier, inspectionMessage, ProblemHighlightType.ERROR,
+                       modifier.textRange)
+      builder.create()
+    }
   }
 
   override fun visitModifierList(modifierList: GrModifierList) {
     val sealed = modifierList.getModifier(GrModifier.SEALED)
     if (sealed != null) {
-      registerModifierProblem(sealed, GroovyBundle.message("inspection.message.modifier.sealed.available.with.groovy.or.later"), GroovyBundle.message("illegal.sealed.modifier.fix"))
+      holder.registerModifierProblem(sealed, GroovyBundle.message("inspection.message.modifier.sealed.available.with.groovy.or.later"), GroovyBundle.message("illegal.sealed.modifier.fix"))
     }
     val nonSealed = modifierList.getModifier(GrModifier.NON_SEALED)
     if (nonSealed != null) {
-      registerModifierProblem(nonSealed, GroovyBundle.message("inspection.message.modifier.nonsealed.available.with.groovy.or.later"), GroovyBundle.message("illegal.nonsealed.modifier.fix"))
+      holder.registerModifierProblem(nonSealed, GroovyBundle.message("inspection.message.modifier.nonsealed.available.with.groovy.or.later"), GroovyBundle.message("illegal.nonsealed.modifier.fix"))
     }
   }
 
