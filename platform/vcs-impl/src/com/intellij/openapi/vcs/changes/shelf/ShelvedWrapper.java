@@ -53,7 +53,7 @@ class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper {
   @Nullable
   @Override
   public ChangesBrowserNode.Tag getTag() {
-    return new ShelvedTag(myChangeList);
+    return new ShelvedListTag(myChangeList);
   }
 
   @Nullable
@@ -125,30 +125,15 @@ class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper {
     return new ShelvedWrapperDiffRequestProducer(project, this);
   }
 
-  public static class ShelvedTag implements ChangesBrowserNode.Tag {
-    private final ShelvedChangeList myChangeList;
-
-    public ShelvedTag(@NotNull ShelvedChangeList changeList) {
-      myChangeList = changeList;
+  public static class ShelvedListTag extends ChangesBrowserNode.ValueTag<ShelvedChangeList> {
+    public ShelvedListTag(@NotNull ShelvedChangeList value) {
+      super(value);
     }
 
     @Nls
     @Override
     public String toString() {
-      return myChangeList.DESCRIPTION;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ShelvedTag tag = (ShelvedTag)o;
-      return Objects.equals(myChangeList, tag.myChangeList);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myChangeList);
+      return value.DESCRIPTION;
     }
   }
 }

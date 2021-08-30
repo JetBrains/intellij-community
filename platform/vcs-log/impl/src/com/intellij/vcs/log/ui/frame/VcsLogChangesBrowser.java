@@ -495,31 +495,17 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     void onModelUpdated();
   }
 
-  private static class ParentTag implements ChangesBrowserNode.Tag {
-    private final @NotNull Hash myCommit;
+  private static class ParentTag extends ChangesBrowserNode.ValueTag<Hash> {
     private final @NotNull @Nls String myText;
 
     ParentTag(@NotNull Hash commit, @NotNull @Nls String text) {
-      myCommit = commit;
+      super(commit);
       myText = text;
     }
 
     @Override
     public String toString() {
       return myText;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ParentTag tag = (ParentTag)o;
-      return Objects.equals(myCommit, tag.myCommit);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myCommit);
     }
   }
 }

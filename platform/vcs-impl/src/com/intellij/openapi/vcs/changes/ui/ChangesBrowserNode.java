@@ -32,6 +32,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -427,6 +428,32 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     @Override
     public String toString() {
       return VcsBundle.message(myKey);
+    }
+  }
+
+  public static abstract class ValueTag<T> implements ChangesBrowserNode.Tag {
+    public final T value;
+
+    public ValueTag(@NotNull T value) {
+      this.value = value;
+    }
+
+    @NotNull
+    protected T getValue() {
+      return value;
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ValueTag<?> tag = (ValueTag<?>)o;
+      return Objects.equals(value, tag.value);
+    }
+
+    @Override
+    public final int hashCode() {
+      return Objects.hash(value);
     }
   }
 }
