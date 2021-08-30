@@ -220,9 +220,12 @@ internal class JBGridImpl : JBGrid {
 
     for (layoutCellData in layoutData.visibleCellsData) {
       val constraints = layoutCellData.cell.constraints
-      val rowBaselineData = layoutData.baselineData.get(layoutCellData)
-      val height = rowBaselineData?.height
-                   ?: (layoutCellData.gapHeight - layoutCellData.cell.constraints.visualPaddings.height + layoutCellData.preferredSize.height)
+      val height = if (layoutCellData.baseline == null)
+        layoutCellData.gapHeight - layoutCellData.cell.constraints.visualPaddings.height + layoutCellData.preferredSize.height
+      else {
+        val rowBaselineData = layoutData.baselineData.get(layoutCellData)
+        rowBaselineData!!.height
+      }
 
       // Cell height including gaps and excluding visualPaddings
       layoutData.rowsSizeCalculator.addConstraint(constraints.y, constraints.height, height)
@@ -283,8 +286,8 @@ internal class JBGridImpl : JBGrid {
     }
     else {
       val rowBaselineData = layoutData.baselineData.get(layoutCellData)!!
-      val rowHeight = layoutData.getInsideHeight(layoutCellData)
-      y = layoutData.rowsCoord[constraints.y] + layoutCellData.rowGaps.top + rowBaselineData.maxAboveBaseline - baseline +
+      val rowHeight = layoutData.getHeight(layoutCellData)
+      y = layoutData.rowsCoord[constraints.y] + rowBaselineData.maxAboveBaseline - baseline +
           when (constraints.verticalAlign) {
             VerticalAlign.TOP -> 0
             VerticalAlign.CENTER -> (rowHeight - rowBaselineData.height) / 2
@@ -361,14 +364,13 @@ private class JBLayoutData {
     return columnsCoord[constraints.x + constraints.width] - columnsCoord[constraints.x] - layoutCellData.gapWidth
   }
 
-  fun getInsideHeight(layoutCellData: LayoutCellData): Int {
+  fun getHeight(layoutCellData: LayoutCellData): Int {
     val constraints = layoutCellData.cell.constraints
-    return rowsCoord[constraints.y + constraints.height] - rowsCoord[constraints.y] - layoutCellData.rowGaps.height
+    return rowsCoord[constraints.y + constraints.height] - rowsCoord[constraints.y]
   }
 
   fun getFullPaddedHeight(layoutCellData: LayoutCellData): Int {
-    val constraints = layoutCellData.cell.constraints
-    return rowsCoord[constraints.y + constraints.height] - rowsCoord[constraints.y] - layoutCellData.gapHeight
+    return getHeight(layoutCellData) - layoutCellData.gapHeight
   }
 }
 
@@ -459,7 +461,7 @@ private class BaselineData {
 }
 
 /**
- * Max sizes for a row which include gaps and exclude paddings
+ * Max sizes for a row which include all gaps and exclude paddings
  */
 private data class RowBaselineData(var maxAboveBaseline: Int = 0, var maxBelowBaseline: Int = 0) {
   val height: Int
