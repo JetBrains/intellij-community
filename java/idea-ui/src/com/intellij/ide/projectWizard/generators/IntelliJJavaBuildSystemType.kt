@@ -43,15 +43,13 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
     }
 
     override fun setupProject(project: Project) {
-      val languageSettings = JavaNewProjectWizard.Settings.KEY.get(context)
-
       val builder = JavaModuleBuilder()
       val moduleFile = Paths.get(settings.moduleFileLocation, settings.moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
 
       builder.name = settings.moduleName
       builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
       builder.contentEntryPath = FileUtil.toSystemDependentName(settings.contentRoot)
-      builder.moduleJdk = languageSettings.sdk
+      builder.moduleJdk = JavaNewProjectWizard.SdkSettings.getSdk(context)
 
       builder.commit(project)
     }

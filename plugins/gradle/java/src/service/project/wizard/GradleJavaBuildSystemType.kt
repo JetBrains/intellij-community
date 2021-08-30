@@ -19,6 +19,7 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -47,6 +48,8 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {
+        JavaNewProjectWizard.SdkStep.getSdkComboBox(context)
+          .withValidationOnApply { validateGradleVersion() }
         if (!context.isCreatingNewProject) {
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
             val presentationName = Function<DataView<ProjectData>, String> { it.presentationName }
@@ -83,6 +86,49 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
       return null
     }
 
+    private fun ValidationInfoBuilder.validateGradleVersion(): ValidationInfo? {
+      val javaVersion = getJavaVersion() ?: return null
+      if (getGradleVersion() == null) {
+        val preferredGradleVersion = getPreferredGradleVersion()
+        val errorTitle = GradleBundle.message("gradle.settings.wizard.unsupported.jdk.title", if (context.isCreatingNewProject) 0 else 1)
+        val errorMessage = GradleBundle.message(
+          "gradle.settings.wizard.unsupported.jdk.message",
+          javaVersion.toFeatureString(),
+          MINIMUM_SUPPORTED_JAVA,
+          MAXIMUM_SUPPORTED_JAVA,
+          preferredGradleVersion.version)
+        val dialog = MessageDialogBuilder.yesNo(errorTitle, errorMessage).asWarning()
+        if (!dialog.ask(component)) {
+          return error(errorTitle)
+        }
+      }
+      return null
+    }
+
+    private fun getJavaVersion(): JavaVersion? {
+      val jdk = JavaNewProjectWizard.SdkSettings.getSdk(context) ?: return null
+      val versionString = jdk.versionString ?: return null
+      return JavaVersion.tryParse(versionString)
+    }
+
+    private fun getPreferredGradleVersion(): GradleVersion {
+      val project = context.project ?: return GradleVersion.current()
+      return findGradleVersion(project) ?: GradleVersion.current()
+    }
+
+    private fun getGradleVersion(): GradleVersion? {
+      val preferredGradleVersion = getPreferredGradleVersion()
+      val javaVersion = getJavaVersion() ?: return preferredGradleVersion
+      return when (isSupported(preferredGradleVersion, javaVersion)) {
+        true -> preferredGradleVersion
+        else -> suggestGradleVersion(javaVersion)
+      }
+    }
+
+    private fun suggestGradleVersion(): GradleVersion {
+      return getGradleVersion() ?: getPreferredGradleVersion()
+    }
+
     private fun getParentRenderer(): ListCellRenderer<DataView<ProjectData>?> {
       return object : SimpleListCellRenderer<DataView<ProjectData>?>() {
         override fun customize(list: JList<out DataView<ProjectData>?>,
@@ -100,7 +146,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     override fun setupProject(project: Project) {
       val builder = InternalGradleModuleBuilder().apply {
         isCreatingNewProject = true
-        moduleJdk = JavaNewProjectWizard.Settings.getSdk(context)
+        moduleJdk = JavaNewProjectWizard.SdkSettings.getSdk(context)
 
         parentProject = settings.parentData
         projectId = ProjectId(settings.groupId, settings.artifactId, settings.version)
@@ -109,7 +155,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
 
         isUseKotlinDsl = false
 
-        gradleVersion = suggestGradleVersion(context) ?: GradleVersion.current()
+        gradleVersion = suggestGradleVersion()
       }
 
       builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
@@ -122,13 +168,6 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
-    }
-
-    private fun suggestGradleVersion(context: WizardContext): GradleVersion? {
-      val jdk = JavaNewProjectWizard.Settings.getSdk(context) ?: return null
-      val versionString = jdk.versionString ?: return null
-      val javaVersion = JavaVersion.tryParse(versionString) ?: return null
-      return suggestGradleVersion(javaVersion)
     }
   }
 
@@ -143,8 +182,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     var artifactId by artifactIdProperty.map { it.trim() }
     var version by versionProperty.map { it.trim() }
 
-    val parents by lazy { parentsData.map(::GradleDataView) }
-    val parentsData by lazy { findAllParents() }
+    val parents by lazy { findAllParents().map(::GradleDataView) }
     var parentData: ProjectData?
       get() = DataView.getData(parent)
       set(value) {

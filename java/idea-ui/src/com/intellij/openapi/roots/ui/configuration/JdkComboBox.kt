@@ -16,18 +16,27 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.ui.layout.*
+
 
 fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>,
                     project: Project?, moduleBuilder: ModuleBuilder): CellBuilder<JdkComboBox> {
+  return sdkComboBox(sdkModel, sdkProperty, project, moduleBuilder::isSuitableSdkType)
+}
+
+fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>,
+                    project: Project?, sdkTypeFilter: (SdkTypeId) -> Boolean
+): CellBuilder<JdkComboBox> {
   sdkModel.reset(project)
 
-  val sdkFilter = moduleBuilder::isSuitableSdkType
-  val sdkComboBox = JdkComboBox(project, sdkModel, sdkFilter, JdkComboBox.getSdkFilter(sdkFilter), sdkFilter, null)
+  val sdkComboBox = JdkComboBox(project, sdkModel, sdkTypeFilter, JdkComboBox.getSdkFilter(sdkTypeFilter), sdkTypeFilter, null)
   val moduleType: ModuleType<*> = StdModuleTypes.JAVA
 
   val selectedJdkProperty = "jdk.selected." + moduleType.id
@@ -42,7 +51,7 @@ fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>
   }
 
   val lastUsedSdk = stateComponent.getValue(selectedJdkProperty)
-  ProjectWizardUtil.preselectJdkForNewModule(project, lastUsedSdk, sdkComboBox, moduleBuilder, sdkFilter)
+  ProjectWizardUtil.preselectJdkForNewModule(project, lastUsedSdk, sdkComboBox, sdkTypeFilter)
 
   return this.component(sdkComboBox)
 }
@@ -58,13 +67,21 @@ private fun getTargetJdk(sdkComboBox: JdkComboBox, project: Project?): Sdk? {
   return null
 }
 
+fun ValidationInfoBuilder.validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): ValidationInfo? {
+  return validateAndGetSdkValidationMessage(sdkProperty, sdkModel)?.let { error(it) }
+}
+
 fun validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): Boolean {
+  return validateAndGetSdkValidationMessage(sdkProperty, sdkModel) != null
+}
+
+private fun validateAndGetSdkValidationMessage(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): @DialogMessage String? {
   if (sdkProperty.get() == null) {
     if (Messages.showDialog(JavaUiBundle.message("prompt.confirm.project.no.jdk"),
                             JavaUiBundle.message("title.no.jdk.specified"),
                             arrayOf(CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()), 1,
                             Messages.getWarningIcon()) != Messages.YES) {
-      return false
+      return JavaUiBundle.message("title.no.jdk.specified")
     }
   }
 
@@ -76,11 +93,10 @@ fun validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): B
     if (Messages.showDialog(JavaUiBundle.message("dialog.message.0.do.you.want.to.proceed", e.message),
                             e.title, arrayOf(CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()), 1,
                             Messages.getWarningIcon()) != Messages.YES) {
-      return false
+      return e.message ?: e.title
     }
   }
-
-  return true
+  return null
 }
 
 fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?): Boolean {

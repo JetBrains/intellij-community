@@ -16,11 +16,9 @@ abstract class NewProjectWizardMultiStep<S : NewProjectWizardMultiStep.Settings<
   epName: ExtensionPointName<out NewProjectWizardMultiStepFactory>
 ) : NewProjectWizardStep<S> {
 
-  abstract val label: @NlsContexts.Label String
+  protected abstract val label: @NlsContexts.Label String
 
-  protected open fun setupChildUI(builder: RowBuilder) {}
-
-  protected open fun setupChildProjectData(project: Project) {}
+  protected open val commonSteps = emptyList<NewProjectWizardStep<*>>()
 
   private val steps = epName.extensionList
     .filter { it.isEnabled }
@@ -37,7 +35,7 @@ abstract class NewProjectWizardMultiStep<S : NewProjectWizardMultiStep.Settings<
         }
       }.largeGapAfter()
 
-      setupChildUI(this)
+      commonSteps.forEach { it.setupUI(this) }
 
       val stepsControllers = HashMap<String, DialogPanel>()
       for ((name, step) in steps) {
@@ -54,7 +52,7 @@ abstract class NewProjectWizardMultiStep<S : NewProjectWizardMultiStep.Settings<
   }
 
   final override fun setupProject(project: Project) {
-    setupChildProjectData(project)
+    commonSteps.forEach { it.setupProject(project) }
     steps[settings.step]?.setupProject(project)
   }
 
