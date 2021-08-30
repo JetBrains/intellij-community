@@ -44,7 +44,9 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
-
+/*
+com.intellij.database.dialects.oracle.introspector.OraIntrospector.OraSchemaRetriever#retrieveDbLinks
+ */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
@@ -163,7 +165,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(tryBlock)
             addInstruction(SimpleAssignmentInstruction(null, tempVar))
 
-            val gotoEnd = createTransfer(statement, tryBlock, tempVar)
+            val gotoEnd = createTransfer(statement, tryBlock, tempVar, true)
             val singleFinally = FList.createFromReversed<Trap>(ContainerUtil.createMaybeSingletonList(finallyDescriptor))
             controlTransfer(gotoEnd, singleFinally)
 
@@ -447,7 +449,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
 
         inlinedBlock(lambda) {
-            flow.startElement(lambda.functionLiteral)
             for (parameter in lambda.valueParameters) {
                 flushParameter(parameter)
             }
@@ -817,13 +818,20 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ControlTransferInstruction(factory.controlTransfer(target, traps)))
     }
 
-    private fun createTransfer(exitedStatement: PsiElement, blockToFlush: PsiElement, resultValue: DfaValue): InstructionTransfer {
+    private fun createTransfer(exitedStatement: PsiElement, blockToFlush: PsiElement, resultValue: DfaValue,
+                                exitBlock: Boolean = false): InstructionTransfer {
         val varsToFlush = PsiTreeUtil.findChildrenOfType(
             blockToFlush,
             KtProperty::class.java
         ).map { property -> KtVariableDescriptor(property) }
         return object : InstructionTransfer(flow.getEndOffset(exitedStatement), varsToFlush) {
             override fun dispatch(state: DfaMemoryState, interpreter: DataFlowInterpreter): MutableList<DfaInstructionState> {
+                if (exitBlock) {
+                    val value = state.pop()
+                    check(!(value !is DfaControlTransferValue || value.target !== DfaControlTransferValue.RETURN_TRANSFER)) {
+                        "Expected control transfer on stack; got $value"
+                    }
+                }
                 state.push(resultValue)
                 return super.dispatch(state, interpreter)
             }

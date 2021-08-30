@@ -5141,6 +5141,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/tryAsArgument.kt");
         }
 
+        @TestMetadata("tryCatchInsideFinally.kt")
+        public void testTryCatchInsideFinally() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/tryCatchInsideFinally.kt");
+        }
+
         @TestMetadata("unaryMinus.kt")
         public void testUnaryMinus() throws Exception {
             runTest("testData/inspectionsLocal/dfa/unaryMinus.kt");
