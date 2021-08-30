@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.messages.Topic;
@@ -20,7 +21,7 @@ import java.util.Map;
  * @deprecated Use {@link MarkdownSettings} instead.
  */
 @Deprecated
-@State(name = "MarkdownApplicationSettings", storages = @Storage("markdown.xml"))
+@State(name = "MarkdownApplicationSettings", storages = @Storage("markdown.xml"), category = SettingsCategory.CODE)
 public final class MarkdownApplicationSettings implements PersistentStateComponent<MarkdownApplicationSettings.State>,
                                                           MarkdownCssSettings.Holder,
                                                           MarkdownPreviewSettings.Holder {
