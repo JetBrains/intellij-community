@@ -6,18 +6,11 @@ import com.intellij.psi.PsiDocumentManager
 import org.assertj.core.api.Assertions.assertThat
 
 class NotebookCellLinesChecker(private val lexer: NotebookCellLinesLexer) {
-  private fun extractState(notebookCellLines: NotebookCellLines): Pair<List<NotebookCellLines.Marker>, List<NotebookCellLines.Interval>> {
-    val markers = notebookCellLines.markersIterator(0).asSequence().toList()
-    val intervals = notebookCellLines.intervalsIterator(0).asSequence().toList()
-    return Pair(markers, intervals)
-  }
-
   fun check(document: Document, cellLines: NotebookCellLines) {
     val singleUseImpl = NotebookCellLinesImpl.getForSingleUsage(document, lexer)
-    val (expectedMarkers, expectedIntervals) = extractState(singleUseImpl)
-    val (cachedMarkers, cachedIntervals) = extractState(cellLines)
+    val expectedIntervals = singleUseImpl.intervalsIterator(0).asSequence().toList()
+    val cachedIntervals = cellLines.intervalsIterator(0).asSequence().toList()
 
-    assertThat(cachedMarkers).containsExactly(*expectedMarkers.toTypedArray())
     assertThat(cachedIntervals).containsExactly(*expectedIntervals.toTypedArray())
   }
 

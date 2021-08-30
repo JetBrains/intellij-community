@@ -35,11 +35,6 @@ class NotebookCellLinesImpl private constructor(private val document: Document,
   override var modificationStamp: Long = 0
     private set
 
-  override fun markersIterator(startOffset: Int): ListIterator<Marker> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    return markerCache.listIterator(getMarkerUpperBound(startOffset))
-  }
-
   override fun intervalsIterator(startLine: Int): ListIterator<Interval> {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     var fromIndex =

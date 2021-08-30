@@ -42,14 +42,15 @@ interface NotebookCellLinesLexer {
       val result = mutableListOf<NotebookCellLines.Interval>()
       for (i in 0 until (lineMarkers.size - 1)) {
         val markerLines = if (i == 0 && !isFirstMarkerAtStart) MarkerLines.NO else MarkerLines.TOP
-        result += NotebookCellLines.Interval(
-          ordinal = i,
-          type = lineMarkers[i].type,
-          lines = lineMarkers[i].startLine until lineMarkers[i + 1].startLine,
-          markers = markerLines
-        )
+        result += NotebookCellLines.Interval(ordinal = i, type = lineMarkers[i].type,
+          lines = lineMarkers[i].startLine until lineMarkers[i + 1].startLine, markers = markerLines)
       }
       return result
+    }
+
+    fun intervalsGeneratorFromLexer(lexer: NotebookCellLinesLexer): (Document) -> List<NotebookCellLines.Interval> = { document ->
+      val markers = lexer.markerSequence(document.charsSequence, 0, 0).toList()
+      defaultIntervals(document, markers)
     }
   }
 }

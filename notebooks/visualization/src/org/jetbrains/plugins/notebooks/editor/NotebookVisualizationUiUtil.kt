@@ -139,6 +139,30 @@ val NotebookCellLines.Interval.firstContentLine: Int
     if (markers.hasTopLine) lines.first + 1
     else lines.first
 
+fun makeMarkersFromIntervals(document: Document, intervals: Iterator<NotebookCellLines.Interval>): List<NotebookCellLines.Marker> {
+  val markers = ArrayList<NotebookCellLines.Marker>()
+
+  fun addMarker(line: Int, type: NotebookCellLines.CellType) {
+    val startOffset = document.getLineStartOffset(line)
+    val endOffset =
+      if (line + 1 < document.lineCount) document.getLineStartOffset(line + 1)
+      else document.getLineEndOffset(line)
+    val length = endOffset - startOffset
+    markers.add(NotebookCellLines.Marker(markers.size, type, startOffset, length))
+  }
+
+  for (interval in intervals) {
+    if (interval.markers.hasTopLine) {
+      addMarker(interval.lines.first, interval.type)
+    }
+    if (interval.markers.hasBottomLine) {
+      addMarker(interval.lines.last, interval.type)
+    }
+  }
+
+  return markers
+}
+
 fun groupNeighborCells(cells: List<NotebookCellLines.Interval>): List<List<NotebookCellLines.Interval>> {
   val groups = SmartList<SmartList<NotebookCellLines.Interval>>()
   for (cell in cells) {
