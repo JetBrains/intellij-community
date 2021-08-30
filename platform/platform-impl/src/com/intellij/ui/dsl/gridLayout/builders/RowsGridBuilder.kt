@@ -49,9 +49,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
     setRowGaps(rowGaps)
 
     if (resizable) {
-      val resizableRows = grid.resizableRows.toMutableSet()
-      resizableRows.add(y)
-      grid.resizableRows = resizableRows
+      addResizableRow()
     }
 
     return this
@@ -150,9 +148,11 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
   }
 
   private fun addResizableColumn() {
-    val resizableColumns = grid.resizableColumns.toMutableSet()
-    resizableColumns.add(x)
-    grid.resizableColumns = resizableColumns
+    grid.resizableColumns = grid.resizableColumns.toMutableSet() + x
+  }
+
+  private fun addResizableRow() {
+    grid.resizableRows = grid.resizableRows.toMutableSet() + y
   }
 
   private fun startFirstRow() {
