@@ -121,11 +121,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }.layout(RowLayout.INDEPENDENT)
 
       row {
-        cell(ActionLink(message("link.get.more.themes"), ActionListener { e: ActionEvent ->
-            val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(e.source as ActionLink))
-            settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
-          })
-        )
+        link(message("link.get.more.themes")) {
+          val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
+          settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+        }
       }
 
       row {
@@ -207,7 +206,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
 
-      groupRowsRange (message("group.ui.options")) {
+      group (message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
           yield({ checkBox(cdShowTreeIndents) })
           yield({ checkBox(cdUseCompactTreeIndents) })

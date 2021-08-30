@@ -142,7 +142,7 @@ interface Row {
 
   fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
 
-  fun link(@NlsContexts.LinkLabel text: String, action: () -> Unit): Cell<ActionLink>
+  fun link(@NlsContexts.LinkLabel text: String, action: (ActionEvent) -> Unit): Cell<ActionLink>
 
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 

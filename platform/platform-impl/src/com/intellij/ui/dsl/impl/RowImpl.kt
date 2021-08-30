@@ -232,8 +232,8 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
-  override fun link(text: String, action: () -> Unit): CellImpl<ActionLink> {
-    return cell(ActionLink(text) { action() })
+  override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {
+    return cell(ActionLink(text, action))
   }
 
   override fun browserLink(text: String, url: String): CellImpl<BrowserLink> {
