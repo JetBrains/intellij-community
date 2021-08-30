@@ -27,7 +27,10 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
       if (childValue is MarkdownFile && parent.value !is MarkdownFileNode) {
         val mdChildren = findMarkdownFileNodeChildren(childValue as PsiFile, children)
 
-        if (mdChildren.size <= 1) continue
+        if (mdChildren.size <= 1) {
+          result.add(child)
+          continue
+        }
         val viewNode = createMarkdownViewNode(mdChildren, settings)
 
         result.add(viewNode)
