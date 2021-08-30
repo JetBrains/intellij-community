@@ -4976,6 +4976,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/lambdaLocalReturn.kt");
         }
 
+        @TestMetadata("letInline.kt")
+        public void testLetInline() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/letInline.kt");
+        }
+
         @TestMetadata("listAccess.kt")
         public void testListAccess() throws Exception {
             runTest("testData/inspectionsLocal/dfa/listAccess.kt");
