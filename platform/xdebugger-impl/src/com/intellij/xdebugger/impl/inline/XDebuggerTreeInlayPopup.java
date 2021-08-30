@@ -329,6 +329,7 @@ public class XDebuggerTreeInlayPopup<D> {
 
   public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup, boolean canShrink) {
     final Window popupWindow = SwingUtilities.windowForComponent(popup.getContent());
+    if (popupWindow == null) return;
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
     int hMargin = JBUI.scale(30);
