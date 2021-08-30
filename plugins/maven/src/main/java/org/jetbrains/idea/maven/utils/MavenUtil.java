@@ -904,7 +904,7 @@ public class MavenUtil {
 
   public static String getMirroredUrl(final File settingsFile, String url, String id) {
     try {
-      Element mirrorParent = getElementWithRegardToNamespace(JDOMUtil.load(settingsFile), "mirrors");
+      Element mirrorParent = getElementWithRegardToNamespace(getDomRootElement(settingsFile), "mirrors");
       if (mirrorParent == null) {
         return url;
       }
@@ -965,7 +965,12 @@ public class MavenUtil {
 
   @Nullable
   private static Element getRepositoryElement(File file) throws JDOMException, IOException {
-    return getElementWithRegardToNamespace(JDOMUtil.load(file), "localRepository");
+    return getElementWithRegardToNamespace(getDomRootElement(file), "localRepository");
+  }
+
+  private static Element getDomRootElement(File file) throws IOException, JDOMException {
+    InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
+    return JDOMUtil.load(reader);
   }
 
   @Nullable
