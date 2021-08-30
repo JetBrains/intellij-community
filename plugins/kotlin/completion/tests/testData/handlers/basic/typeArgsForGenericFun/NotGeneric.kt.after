@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 fun Int.chain(): Int = this
 fun test() {

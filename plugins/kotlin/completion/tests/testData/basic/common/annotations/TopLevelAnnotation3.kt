@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 annotation class Hello
 val v = 1

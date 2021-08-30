@@ -249,7 +249,7 @@ object IgnoreTests {
                 || KtUsefulTestCase.IS_UNDER_TEAMCITY
 
 
-    fun getFirTestFile(originalTestFile: File): File {
+    fun getFirTestFile(originalTestFile: File, vararg additionalFilesExtensions: String): File {
         if (originalTestFile.readLines().any { it.startsWith(DIRECTIVES.FIR_IDENTICAL) }) {
             return originalTestFile
         }
@@ -257,21 +257,29 @@ object IgnoreTests {
         if (!firTestFile.exists()) {
             FileUtil.copy(originalTestFile, firTestFile)
         }
+        for (extension in additionalFilesExtensions) {
+            val additionalFirFile = firTestFile.withExtension(firTestFile.extension + extension)
+            val additionalOriginalFile = originalTestFile.withExtension(originalTestFile.extension + extension)
+            if (!additionalFirFile.exists() && additionalOriginalFile.exists()) {
+                FileUtil.copy(additionalOriginalFile, additionalFirFile)
+            }
+        }
         return firTestFile
     }
 
-    fun getFirTestFileIfFirPassing(originalTestFile: File, passingDirective: String): File {
+    fun getFirTestFileIfFirPassing(originalTestFile: File, passingDirective: String, vararg additionalFilesExtensions: String): File {
         if (!InTextDirectivesUtils.isDirectiveDefined(originalTestFile.readText(), passingDirective)) {
             return originalTestFile
         }
-        return getFirTestFile(originalTestFile)
+        return getFirTestFile(originalTestFile, *additionalFilesExtensions)
     }
 
 
     fun cleanUpIdenticalFirTestFile(
         originalTestFile: File,
         firTestFile: File = deriveFirTestFile(originalTestFile),
-        additionalFileToMarkFirIdentical: File? = null
+        additionalFileToMarkFirIdentical: File? = null,
+        additionalFileToDeleteIfIdentical: File? = null
     ) {
         if (firTestFile.exists() && firTestFile.readText().trim() == originalTestFile.readText().trim()) {
             val message = if (isTeamCityBuild) {
@@ -282,6 +290,7 @@ object IgnoreTests {
                 firTestFile.delete()
                 originalTestFile.prependFirIdentical()
                 additionalFileToMarkFirIdentical?.prependFirIdentical()
+                if (additionalFileToDeleteIfIdentical?.exists() == true) additionalFileToDeleteIfIdentical.delete()
 
                 "Deleted $firTestFile, added // FIR_IDENTICAL to test source file $originalTestFile"
             }
@@ -297,6 +306,7 @@ object IgnoreTests {
 
     private fun File.prependFirIdentical() {
         val content = readText()
+        if (content.contains(DIRECTIVES.FIR_IDENTICAL)) return
         writer().use {
             it.appendLine(DIRECTIVES.FIR_IDENTICAL)
             it.append(content)

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 fun topLevel() = 1
 
 class A(val prop: Int, arg: Int) {

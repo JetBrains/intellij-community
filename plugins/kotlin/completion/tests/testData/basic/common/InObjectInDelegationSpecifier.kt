@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 open class PageManager(a: Runnable)
 class Tab
 

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 open class Base<T>
 class A<U> : Base<<caret>>
 

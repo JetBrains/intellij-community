@@ -1,0 +1,6 @@
+// FIR_COMPARISON
+class C constructor(<caret>) {
+
+}
+
+// ELEMENT: constructor

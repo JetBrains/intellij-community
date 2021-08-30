@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 fun <T> Iterable<T>.foobarbaz() : T? {
     return this.iterator()?.next()

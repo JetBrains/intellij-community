@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 // ELEMENT: foo
 // CHAR: '\t'
