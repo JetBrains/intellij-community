@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecu
 import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.ReflectionTraverser
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
 
@@ -24,7 +25,8 @@ internal class GradleTargetPathsConverter(private val executionSettings: GradleE
           field.isAccessible = true
           field[it] = localPath
         }
-        catch (ignore: Throwable) {
+        catch (reflectionError: Throwable) {
+          LOG.error("Failed to update mapped file", reflectionError)
         }
       }
     }
@@ -32,5 +34,9 @@ internal class GradleTargetPathsConverter(private val executionSettings: GradleE
 
   override fun close() {
     traverser.close()
+  }
+
+  companion object {
+    private val LOG = LoggerFactory.getLogger(GradleTargetPathsConverter::class.java)
   }
 }
