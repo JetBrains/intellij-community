@@ -65,7 +65,7 @@ class DefaultLayoutOption(private val options: XDebugFramesAndThreadsLayoutOptio
 
   override fun createView(): XFramesView = XFramesView(options.session.project)
 
-  override fun isSelected(): Boolean = options.debugTab.threadFramesView is XFramesView
+  override fun isThisOptionSelected(): Boolean = options.debugTab.threadFramesView is XFramesView
 
   override fun getOptionKey(): String = XDebugFramesAndThreadsLayoutOptions.DEFAULT_VIEW_KEY
 }
@@ -76,7 +76,7 @@ class ThreadsTreeLayoutOption(
 
   override fun createView(): XThreadsView = XThreadsView(options.session.project, options.session)
 
-  override fun isSelected(): Boolean = options.debugTab.threadFramesView is XThreadsView
+  override fun isThisOptionSelected(): Boolean = options.debugTab.threadFramesView is XThreadsView
 
   override fun getOptionKey(): String = XDebugFramesAndThreadsLayoutOptions.THREADS_VIEW_KEY
 }
@@ -85,7 +85,7 @@ abstract class SideBySideLayoutOptionBase(private val options: XDebugFramesAndTh
 
   override fun createView(): XThreadsFramesView = XThreadsFramesView(options.session.project).apply { this.setThreadsVisible(areThreadsVisible) }
 
-  override fun isSelected(): Boolean {
+  override fun isThisOptionSelected(): Boolean {
     val view = options.debugTab.threadFramesView
     if (view !is XThreadsFramesView) return false
     return view.isThreadsViewVisible() == areThreadsVisible
