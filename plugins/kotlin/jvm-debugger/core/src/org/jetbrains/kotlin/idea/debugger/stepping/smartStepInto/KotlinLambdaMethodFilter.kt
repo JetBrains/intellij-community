@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 
 class KotlinLambdaMethodFilter(target: KotlinLambdaSmartStepTarget) : BreakpointStepMethodFilter {
     private val lambdaPtr = target.getLambda().createSmartPointer()
@@ -64,11 +65,8 @@ class KotlinLambdaMethodFilter(target: KotlinLambdaSmartStepTarget) : Breakpoint
 
     private fun isLambdaName(name: String?): Boolean {
         if (isSuspend && name != null) {
-            //todo
-            //return isResumeImplMethodNameFromAnyLanguageSettings(name)
+            return name == INVOKE_SUSPEND_METHOD_NAME
         }
-
         return name == OperatorNameConventions.INVOKE.asString()
     }
-
 }
