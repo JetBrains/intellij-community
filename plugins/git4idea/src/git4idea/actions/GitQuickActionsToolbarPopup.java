@@ -74,10 +74,6 @@ final class GitQuickActionsToolbarPopup extends VcsQuickActionsToolbarPopup {
     var project = e.getProject();
     var presentation = e.getPresentation();
 
-    if (project == null || project.isDisposed() || !project.isOpen()) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
     GitRepository repo = GitBranchUtil.getCurrentRepository(project);
 
     if (repo == null) {
@@ -93,7 +89,5 @@ final class GitQuickActionsToolbarPopup extends VcsQuickActionsToolbarPopup {
       presentation.putClientProperty(KEY_ICON_WITH_TEXT, false);
       presentation.setIcon(icon);
     }
-
-    super.update(e);
   }
 }
