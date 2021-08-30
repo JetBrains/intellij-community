@@ -44,7 +44,10 @@ class XDebugFramesAndThreadsLayoutOptions(
     }
 
     val contentUi = RunnerContentUi.KEY.getData(debugTab.ui as RunnerLayoutUiImpl)
-    if (contentUi != null && !isContentVisible()) {
+    if (contentUi != null &&
+        !isContentVisible() &&
+        !contentUi.isEmpty //avoid force restore of not initialized ui
+      ) {
       contentUi.restore(content)
       contentUi.select(content, true)
     }
