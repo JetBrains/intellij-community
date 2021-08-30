@@ -19,6 +19,7 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
@@ -29,8 +30,7 @@ import com.intellij.util.lang.JavaVersion
 import icons.GradleIcons
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder.getBuildScriptData
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.suggestGradleVersion
+import org.jetbrains.plugins.gradle.util.*
 import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JList
@@ -62,12 +62,25 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
           }
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
             textField(settings.artifactIdProperty)
+              .withValidationOnApply { validateArtifactId() }
+              .withValidationOnInput { validateArtifactId() }
           }
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
             textField(settings.versionProperty)
           }
         }.largeGapAfter()
       }
+    }
+
+    private fun ValidationInfoBuilder.validateArtifactId(): ValidationInfo? {
+      if (settings.artifactId.isEmpty()) {
+        return error(GradleBundle.message("gradle.structure.wizard.artifact.id.missing.error", if (context.isCreatingNewProject) 1 else 0))
+      }
+      if (settings.artifactId != NewModuleStep.Settings.getName(context)) {
+        return error(GradleBundle.message("gradle.structure.wizard.name.and.artifact.id.is.different.error",
+          if (context.isCreatingNewProject) 1 else 0))
+      }
+      return null
     }
 
     private fun getParentRenderer(): ListCellRenderer<DataView<ProjectData>?> {
