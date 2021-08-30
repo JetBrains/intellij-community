@@ -191,7 +191,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
       }
 
       addFieldsAfter(this)
-    }.withVisualPadding(NAME_FIELD_TOP_PADDING)
+    }.withVisualPadding(topField = true)
   }
 
   protected open fun addFieldsBefore(layout: LayoutBuilder) {}

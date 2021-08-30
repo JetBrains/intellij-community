@@ -4,6 +4,7 @@ package com.intellij.ide.starters.shared
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CheckboxTreeBase
@@ -25,10 +26,14 @@ import javax.swing.event.DocumentEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 
-const val NAME_FIELD_TOP_PADDING: Int = 15
-
-fun DialogPanel.withVisualPadding(top: Int = 5): DialogPanel {
-  border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 5, 0, 5))
+fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
+  if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
+    val top = if (topField) 20 else 15
+    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 20, 20, 20))
+  } else {
+    val top = if (topField) 15 else 5
+    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 5, 0, 5))
+  }
 
   return this
 }
