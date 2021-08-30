@@ -16,7 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-class OpenFeaturesInScratchFile : AnAction() {
+class OpenFeaturesInScratchFileAction : AnAction() {
   companion object {
     private const val SHOULD_ORDER_BY_ML_KEY = "shouldOrderByMl"
     private const val CONTEXT_INFO_KEY = "contextInfo"

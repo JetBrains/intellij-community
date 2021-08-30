@@ -41,8 +41,8 @@
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
   <actions>
-    <action id="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFile"
-            class="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFile">
+    <action id="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFileAction"
+            class="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFileAction">
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
       <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
     </action>
