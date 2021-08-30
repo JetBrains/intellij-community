@@ -37,6 +37,10 @@ public enum LanguageLevel {
   JDK_13(JavaPsiBundle.messagePointer("jdk.13.language.level.description"), 13),
   JDK_14(JavaPsiBundle.messagePointer("jdk.14.language.level.description"), 14),
   JDK_15(JavaPsiBundle.messagePointer("jdk.15.language.level.description"), 15),
+  /**
+   * @deprecated will be removed in 2021.3
+   */@Deprecated
+  JDK_15_PREVIEW(JavaPsiBundle.messagePointer("jdk.15.preview.language.level.description"), 15),
   JDK_16(JavaPsiBundle.messagePointer("jdk.16.language.level.description"), 16),
   JDK_16_PREVIEW(JavaPsiBundle.messagePointer("jdk.16.preview.language.level.description"), 16),
   JDK_17(JavaPsiBundle.messagePointer("jdk.17.language.level.description"), 17),
