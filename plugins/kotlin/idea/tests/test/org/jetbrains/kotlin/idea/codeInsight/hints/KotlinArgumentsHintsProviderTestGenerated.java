@@ -17,14 +17,19 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/codeInsight/hints/ranges")
-public class KotlinRangeHintsProviderTestGenerated extends AbstractKotlinRangeHintsProviderTest {
+@TestMetadata("testData/codeInsight/hints/arguments")
+public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArgumentsHintsProviderTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("javaParameters.kt")
+    public void testJavaParameters() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/javaParameters.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
-        runTest("testData/codeInsight/hints/ranges/simple.kt");
+        runTest("testData/codeInsight/hints/arguments/simple.kt");
     }
 }

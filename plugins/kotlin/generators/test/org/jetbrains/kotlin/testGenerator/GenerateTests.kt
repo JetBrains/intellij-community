@@ -24,8 +24,9 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionT
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
-import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangeHintsProviderTest
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -895,10 +896,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/postfix")
         }
 
+        testClass<AbstractKotlinArgumentsHintsProviderTest> {
+            model("codeInsight/hints/arguments")
+        }
         testClass<AbstractKotlinLambdasHintsProvider> {
             model("codeInsight/hints/lambda")
         }
-        testClass<AbstractKotlinRangeHintsProviderTest> {
+        testClass<AbstractKotlinRangesHintsProviderTest> {
             model("codeInsight/hints/ranges")
         }
 

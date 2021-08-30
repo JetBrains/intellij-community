@@ -8,7 +8,7 @@ import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
 
-abstract class AbstractKotlinRangeHintsProviderTest :
+abstract class AbstractKotlinRangesHintsProviderTest :
     InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
