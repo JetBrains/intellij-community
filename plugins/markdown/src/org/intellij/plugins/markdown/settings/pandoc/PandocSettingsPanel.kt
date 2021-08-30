@@ -1,8 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings.pandoc
 
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
@@ -12,6 +16,7 @@ import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.io.File
 import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JPanel
@@ -62,7 +67,32 @@ internal class PandocSettingsPanel(private val project: Project): JPanel(GridBag
       }
       infoPanel.add(JBLabel(labelText).apply { border = IdeBorderFactory.createEmptyBorder(JBUI.insetsBottom(4)) })
     }
+    setupImagesPathFileChooser()
     reset()
+  }
+
+  private fun setupImagesPathFileChooser() {
+    val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+    settings.pathToImages?.takeIf { it.isNotEmpty() }?.let {
+      imagesPathSelector.text = it
+    }
+    imagesPathSelector.addActionListener {
+      val lastPath = imagesPath
+      val file = when {
+        lastPath != null && lastPath.isNotEmpty() -> VfsUtil.findFileByIoFile(File(lastPath), false)
+        else -> null
+      }
+      val files = FileChooser.chooseFiles(descriptor, project, file)
+      if (files.size == 1) {
+        imagesPathSelector.text = files.first().presentableUrl
+      }
+    }
+    FileChooserFactory.getInstance().installFileCompletion(
+      imagesPathSelector.textField,
+      descriptor,
+      true,
+      imagesPathSelector
+    )
   }
 
   fun apply() {
