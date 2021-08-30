@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
 public interface CustomContentLayoutOption {
+  boolean isEnabled();
   boolean isSelected();
   void select();
   @NotNull @Nls @NlsActions.ActionText String getDisplayName();

@@ -58,6 +58,9 @@ abstract class PersistentContentCustomLayoutOptions(private val content: Content
 }
 
 abstract class PersistentContentCustomLayoutOption(private val options: PersistentContentCustomLayoutOptions) : CustomContentLayoutOption {
+
+  override fun isEnabled(): Boolean = true
+
   override fun isSelected(): Boolean = options.isContentVisible() && isThisOptionSelected()
 
   override fun select() = options.select(this)

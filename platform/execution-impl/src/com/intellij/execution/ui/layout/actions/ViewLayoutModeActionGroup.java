@@ -71,6 +71,7 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
+      e.getPresentation().setEnabled(myOption.isEnabled());
       e.getPresentation().setText(myOption.getDisplayName());
     }
   }
@@ -96,6 +97,11 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
     public void select() {
       myUi.minimize(myContent, null);
       myOptions.onHide();
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return isSelected() || myUi.getContentManager().getContents().length > 1;
     }
 
     @Override
