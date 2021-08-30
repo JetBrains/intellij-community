@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -11,13 +13,16 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.actions.VcsAnnotateUtil
 import com.intellij.openapi.vcs.annotate.AnnotationsPreloader
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.ui.layout.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.CacheableAnnotationProvider
 import javax.swing.JComponent
 
@@ -28,12 +33,26 @@ private fun isCodeAuthorEnabledInSettings(): Boolean =
     .filter { it.provider.key == KEY }
     .any { InlayHintsSettings.instance().hintsShouldBeShown(KEY, it.language) }
 
+private fun isCodeAuthorEnabledInSettings(language: Language): Boolean {
+  val hasProviderForLanguage = InlayHintsProviderExtension.allForLanguage(language).any { it.key == KEY }
+  return hasProviderForLanguage && InlayHintsSettings.instance().hintsShouldBeShown(KEY, language)
+}
+
 internal fun isCodeAuthorInlayHintsEnabled(): Boolean = isCodeAuthorEnabledInRegistry() && isCodeAuthorEnabledInSettings()
 
-internal fun refreshCodeAuthorInlayHints() {
-  if (!isCodeAuthorInlayHintsEnabled()) return
+@RequiresEdt
+internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
+  if (!isCodeAuthorEnabledInRegistry()) return
 
-  InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+  val psiFile = PsiManagerEx.getInstanceEx(project).fileManager.getCachedPsiFile(file)
+  if (psiFile != null && !isCodeAuthorEnabledInSettings(psiFile.language)) return
+
+  val editors = VcsAnnotateUtil.getEditors(project, file)
+  val noCodeAuthorEditors = editors.filter { it.getUserData(VCS_CODE_AUTHOR_ANNOTATION) == null }
+  if (noCodeAuthorEditors.isEmpty()) return
+
+  for (editor in noCodeAuthorEditors) InlayHintsPassFactory.clearModificationStamp(editor)
+  if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
 }
 
 private val KEY = SettingsKey<NoSettings>("vcs.code.author")

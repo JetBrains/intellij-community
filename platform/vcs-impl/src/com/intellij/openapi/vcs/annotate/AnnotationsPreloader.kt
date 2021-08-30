@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.annotate
 import com.intellij.codeInsight.hints.isCodeAuthorInlayHintsEnabled
 import com.intellij.codeInsight.hints.refreshCodeAuthorInlayHints
 import com.intellij.ide.PowerSaveMode
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -52,7 +53,7 @@ internal class AnnotationsPreloader(private val project: Project) {
           annotationProvider.populateCache(file)
           LOG.debug { "Preloaded VCS annotations for ${file.name} in ${System.currentTimeMillis() - start} ms" }
 
-          refreshCodeAuthorInlayHints()
+          runInEdt { refreshCodeAuthorInlayHints(project, file) }
         }
         catch (e: VcsException) {
           LOG.info(e)
