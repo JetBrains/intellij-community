@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 interface I {
     protected var someVar: java.io.File?

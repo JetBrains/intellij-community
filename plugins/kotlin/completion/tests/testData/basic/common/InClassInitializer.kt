@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val testExternal
 
 class Some(testParam : Int) {

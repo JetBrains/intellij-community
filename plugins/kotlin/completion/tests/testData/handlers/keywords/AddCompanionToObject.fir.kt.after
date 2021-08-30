@@ -1,0 +1,8 @@
+// FIR_COMPARISON
+class C {
+    companion <caret>object {
+
+    }
+}
+
+// ELEMENT: "companion"

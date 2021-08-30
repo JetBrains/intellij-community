@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 fun <T: Number> create(param: List<T> = listOf(1 as T)): List<T> = TODO()
 
