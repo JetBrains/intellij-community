@@ -38,10 +38,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -894,32 +891,15 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private static PsiElement resolveInBgThread(@NotNull final Project project,
                                               @NotNull final PsiReference reference) {
     final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.resolving.reference.text", reference.getElement().getText());
-    final Callable<PsiElement> resolver = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> reference::resolve);
-
-    return ProgressManager.getInstance().run(new Task.WithResult<>(project, progressDialogTitle, true) {
-      @Override
-      protected PsiElement compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
-        return ReadAction.nonBlocking(resolver).executeSynchronously();
-      }
-    });
+    return computeSlowOperationsSafeInBgThread(project, progressDialogTitle, reference::resolve);
   }
 
   @Contract(pure = true)
   private static @Nullable PsiElement multiResolveInBgThread(@NotNull final Project project,
                                                              @NotNull final PsiPolyVariantReference reference) {
-    final Callable<ResolveResult[]> resolver = () ->
-      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
-        () -> reference.multiResolve(true)
-      );
-
     final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.resolving.reference.text", reference.getElement().getText());
-    return ProgressManager.getInstance().run(new Task.WithResult<>(project, progressDialogTitle, true) {
-      @Override
-      protected PsiElement compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
-        final ResolveResult[] results = ReadAction.nonBlocking(resolver).executeSynchronously();
-        return results.length == 0 ? null : results[0].getElement();
-      }
-    });
+    final ResolveResult[] results = computeSlowOperationsSafeInBgThread(project, progressDialogTitle, () -> reference.multiResolve(true));
+    return results.length == 0 ? null : results[0].getElement();
   }
 
   @Nullable
@@ -1073,7 +1053,13 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       final PsiElement rootElement = (getTreeStructure()).getRootPsiElement();
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;
-      final PsiElement element = InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), offset);
+      final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.get.element.at.offset");
+      final ThrowableComputable<PsiElement, RuntimeException> finder =
+        () -> InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(),
+                                                             offset);
+
+      final PsiElement element = computeSlowOperationsSafeInBgThread(myProject, progressDialogTitle, finder);
+
       myBlockTree.selectNodeFromEditor(element);
       myStubTree.selectNodeFromEditor(element);
       myPsiTreeBuilder.select(element);
@@ -1090,9 +1076,14 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       int baseOffset = textRange != null ? textRange.getStartOffset() : 0;
       final int start = selection.getSelectionStart() + baseOffset;
       final int end = selection.getSelectionEnd() + baseOffset - 1;
-      final PsiElement element =
-        findCommonParent(InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), start),
-                         InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), end));
+
+      final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.get.common.parent");
+      final ThrowableComputable<PsiElement, RuntimeException> finder =
+        () -> findCommonParent(InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), start),
+                               InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), end));
+
+      final PsiElement element = computeSlowOperationsSafeInBgThread(myProject, progressDialogTitle, finder);
+
       if (element != null) {
         if (myEditor.getContentComponent().hasFocus()) {
           myBlockTree.selectNodeFromEditor(element);
@@ -1149,5 +1140,19 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       }
       return false;
     }
+  }
+
+  private static <T> T computeSlowOperationsSafeInBgThread(@NotNull Project project,
+                                                           @NlsContexts.DialogTitle @NotNull String progressDialogTitle,
+                                                           @NotNull ThrowableComputable<T, RuntimeException> computable) {
+    final Callable<T> callable = () ->
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(computable);
+
+    return ProgressManager.getInstance().run(new Task.WithResult<>(project, progressDialogTitle, true) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
+        return ReadAction.nonBlocking(callable).executeSynchronously();
+      }
+    });
   }
 }
