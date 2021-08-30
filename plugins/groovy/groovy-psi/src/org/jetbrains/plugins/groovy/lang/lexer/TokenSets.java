@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.TokenType;
@@ -80,10 +80,10 @@ public interface TokenSets {
     kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY,
     kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE,
     kLONG,
-    kNATIVE, kNEW, kNULL,
-    kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC,
+    kNATIVE, kNEW, kNONSEALED, kNULL,
+    kPACKAGE, kPERMITS, kPRIVATE, kPROTECTED, kPUBLIC,
     kRETURN,
-    kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
+    kSEALED, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
     kSYNCHRONIZED,
     kTHIS, kTHROW, kTHROWS, kTRAIT, kTRANSIENT, kTRUE, kTRY,
     kVOID, kVOLATILE,

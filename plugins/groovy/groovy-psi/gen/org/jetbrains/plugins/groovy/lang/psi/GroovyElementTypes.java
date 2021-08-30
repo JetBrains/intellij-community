@@ -1,3 +1,5 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -31,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterListElementType;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPermitsClauseElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrThrowsClauseElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTraitElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType;
@@ -127,6 +130,7 @@ public interface GroovyElementTypes {
   GrParameterElementType PARAMETER = new GrParameterElementType("PARAMETER");
   GrParameterListElementType PARAMETER_LIST = new GrParameterListElementType("PARAMETER_LIST");
   GroovyElementType PARENTHESIZED_EXPRESSION = new GroovyElementType("PARENTHESIZED_EXPRESSION");
+  GrPermitsClauseElementType PERMITS_CLAUSE = new GrPermitsClauseElementType("PERMITS_CLAUSE");
   GroovyElementType POWER_EXPRESSION = new GroovyElementType("POWER_EXPRESSION");
   GroovyElementType PRIMITIVE_TYPE_ELEMENT = new GroovyElementType("PRIMITIVE_TYPE_ELEMENT");
   GroovyElementType PROPERTY_EXPRESSION = new GroovyElementType("PROPERTY_EXPRESSION");
@@ -207,12 +211,15 @@ public interface GroovyElementTypes {
   IElementType KW_LONG = new GroovyElementType("long");
   IElementType KW_NATIVE = new GroovyElementType("native");
   IElementType KW_NEW = new GroovyElementType("new");
+  IElementType KW_NONSEALED = new GroovyElementType("non-sealed");
   IElementType KW_NULL = new GroovyElementType("null");
   IElementType KW_PACKAGE = new GroovyElementType("package");
+  IElementType KW_PERMITS = new GroovyElementType("permits");
   IElementType KW_PRIVATE = new GroovyElementType("private");
   IElementType KW_PROTECTED = new GroovyElementType("protected");
   IElementType KW_PUBLIC = new GroovyElementType("public");
   IElementType KW_RETURN = new GroovyElementType("return");
+  IElementType KW_SEALED = new GroovyElementType("sealed");
   IElementType KW_SHORT = new GroovyElementType("short");
   IElementType KW_STATIC = new GroovyElementType("static");
   IElementType KW_STRICTFP = new GroovyElementType("strictfp");

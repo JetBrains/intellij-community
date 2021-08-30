@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
@@ -171,12 +171,15 @@ public interface GroovyTokenTypes {
   IElementType kLONG = KW_LONG;
   IElementType kNATIVE = KW_NATIVE;
   IElementType kNEW = KW_NEW;
+  IElementType kNONSEALED = KW_NONSEALED;
   IElementType kNULL = KW_NULL;
   IElementType kPACKAGE = KW_PACKAGE;
+  IElementType kPERMITS = KW_PERMITS;
   IElementType kPRIVATE = KW_PRIVATE;
   IElementType kPROTECTED = KW_PROTECTED;
   IElementType kPUBLIC = KW_PUBLIC;
   IElementType kRETURN = KW_RETURN;
+  IElementType kSEALED = KW_SEALED;
   IElementType kSHORT = KW_SHORT;
   IElementType kSTATIC = KW_STATIC;
   IElementType kSTRICTFP = KW_STRICTFP;

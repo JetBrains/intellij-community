@@ -130,11 +130,14 @@
     KW_NATIVE = 'native'
     KW_NULL = 'null'
     KW_NEW = 'new'
+    KW_NONSEALED = 'non-sealed'
     KW_PACKAGE = 'package'
+    KW_PERMITS = 'permits'
     KW_PRIVATE = 'private'
     KW_PROTECTED = 'protected'
     KW_PUBLIC = 'public'
     KW_RETURN = 'return'
+    KW_SEALED = 'sealed'
     KW_STATIC = 'static'
     KW_STRICTFP = 'strictfp'
     KW_SUPER = 'super'
@@ -236,6 +239,8 @@ private modifier ::= 'abstract'
                    | 'synchronized' !'('
                    | 'transient'
                    | 'volatile'
+                   | 'sealed'
+                   | 'non-sealed'
                    | def_modifier
                    | var_modifier
 {
@@ -294,9 +299,9 @@ private type_definition_tail ::= class_type_definition
                                | trait_type_definition
                                | enum_type_definition
                                | annotation_type_definition
-private class_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_implements
-private interface_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_non_empty_implements?
-private trait_definition_header ::= IDENTIFIER type_parameter_list? nl_extends nl_implements
+private class_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_implements nl_permits
+private interface_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_non_empty_implements? nl_permits
+private trait_definition_header ::= IDENTIFIER type_parameter_list? nl_extends nl_implements nl_permits
 private enum_definition_header ::= <<classIdentifier>> nl_non_empty_extends? nl_implements
 private annotation_definition_header ::= IDENTIFIER
 
@@ -487,18 +492,22 @@ parameter ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.st
 // region Reference lists
 fake extends_clause ::=     { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrExtendsClauseElementType' }
 fake implements_clause ::=  { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImplementsClauseElementType' }
+fake permits_clause ::=     { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPermitsClauseElementType' }
 fake throws_clause ::=      { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrThrowsClauseElementType' }
 
 private nl_extends ::= nl_non_empty_extends | empty_extends_clause
 private nl_implements ::= nl_non_empty_implements | empty_implements_clause
+private nl_permits ::= nl_non_empty_permits | empty_permits_clause
 private nl_throws ::= [nl &('throws' | '{')] (non_empty_throws_clause | empty_throws_clause)
 
 empty_extends_clause ::= empty { elementType = extends_clause }
 empty_implements_clause ::= empty { elementType = implements_clause }
+empty_permits_clause ::= empty { elementType = permits_clause }
 empty_throws_clause ::= empty { elementType = throws_clause }
 
 private nl_non_empty_extends ::= mb_nl non_empty_extends_clause { consumeTokenMethod = 'consumeTokenFast' }
 private nl_non_empty_implements ::= mb_nl non_empty_implements_clause { consumeTokenMethod = 'consumeTokenFast' }
+private nl_non_empty_permits ::= mb_nl non_empty_permits_clause { consumeTokenMethod = 'consumeTokenFast' }
 
 non_empty_extends_clause ::= 'extends' <<comma_list_p extends_list_item>>
 {
@@ -510,6 +519,12 @@ non_empty_implements_clause ::= 'implements' <<comma_list_p implements_list_item
 {
   pin = 1
   elementType = implements_clause
+  consumeTokenMethod = 'consumeTokenFast'
+}
+non_empty_permits_clause ::= 'permits' <<comma_list_p permits_list_item>>
+{
+  pin = 1
+  elementType = permits_clause
   consumeTokenMethod = 'consumeTokenFast'
 }
 non_empty_throws_clause ::= 'throws' <<comma_list_p throws_list_item>>
@@ -525,6 +540,9 @@ private extends_recovery ::= !(',' | 'implements' | '{')
 private implements_list_item ::= mb_nl type_code_reference | implement_list_item_recovered
 private implement_list_item_recovered ::= empty fail { pin = 1 recoverWhile = implements_recovery }
 private implements_recovery ::= !(',' | '{')
+private permits_list_item ::= mb_nl type_code_reference | permits_list_recovered
+private permits_list_recovered ::= empty fail { pin = 1 recoverWhile = permits_recovery }
+private permits_recovery ::= !(',' | '{')
 private throws_list_item ::= mb_nl type_code_reference
 // endregion
 
