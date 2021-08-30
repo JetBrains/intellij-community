@@ -155,6 +155,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     calcPositionAndShow(initEvent, project, myBalloon);
   }
 
+  @Override
+  public @NotNull SearchEverywhereUI getCurrentlyShownUI() {
+    checkIsShown();
+    return mySearchEverywhereUI;
+  }
+
   private WindowStateService getStateService() {
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }

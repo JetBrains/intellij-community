@@ -2,6 +2,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.actions
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
 import com.intellij.ide.scratch.ScratchFileCreationHelper
@@ -11,11 +12,9 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ui.UIUtil
 
 class OpenFeaturesInScratchFile : AnAction() {
   companion object {
@@ -29,22 +28,18 @@ class OpenFeaturesInScratchFile : AnAction() {
   }
 
   private fun shouldActionBeEnabled(e: AnActionEvent): Boolean {
-    val searchEverywhereUi = getSearchEverywhereUi(e)
+    val seManager = SearchEverywhereManager.getInstance(e.project)
     val session = SearchEverywhereMlSessionService.getService().getCurrentSession()
 
     return e.project != null
-           && searchEverywhereUi != null
+           && seManager.isShown
            && session != null
-           && session.isMLSupportedTab(searchEverywhereUi.selectedTabID)
+           && session.isMLSupportedTab(seManager.selectedTabID)
            && session.getCurrentSearchState() != null
   }
 
-  private fun getSearchEverywhereUi(e: AnActionEvent): SearchEverywhereUI? {
-    return UIUtil.getParentOfType(SearchEverywhereUI::class.java, e.getData(PlatformDataKeys.CONTEXT_COMPONENT))
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
-    val searchEverywhereUI = getSearchEverywhereUi(e)!!
+    val searchEverywhereUI = SearchEverywhereManager.getInstance(e.project).currentlyShownUI
 
     val report = getFeaturesReport(searchEverywhereUI)
     val json = jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(report)
