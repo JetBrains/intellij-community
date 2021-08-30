@@ -462,7 +462,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
 
 
     myBalloon = builder.createBalloon();
-    myBalloon = myBalloon;
     myBalloonImpl = myBalloon instanceof BalloonImpl ? (BalloonImpl)myBalloon : null;
     myBalloonUi = myBalloon instanceof IdeTooltip.Ui ? (IdeTooltip.Ui)myBalloon : null;
 
