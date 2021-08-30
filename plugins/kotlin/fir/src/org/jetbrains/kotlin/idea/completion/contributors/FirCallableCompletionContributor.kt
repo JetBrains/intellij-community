@@ -41,9 +41,9 @@ internal open class FirCallableCompletionContributor(
         symbol: KtCallableSymbol,
         applicabilityResult: KtExtensionApplicabilityResult
     ): CallableInsertionStrategy? = when (applicabilityResult) {
-        KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(symbol)
-        KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> CallableInsertionStrategy.AsCall
-        KtExtensionApplicabilityResult.NonApplicable -> null
+        is KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(symbol)
+        is KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> CallableInsertionStrategy.AsCall
+        is KtExtensionApplicabilityResult.NonApplicable -> null
     }
 
     protected fun KtAnalysisSession.getOptions(symbol: KtCallableSymbol): CallableInsertionOptions =
@@ -258,9 +258,9 @@ internal class FirCallableReferenceCompletionContributor(
         symbol: KtCallableSymbol,
         applicabilityResult: KtExtensionApplicabilityResult
     ): CallableInsertionStrategy? = when (applicabilityResult) {
-        KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> CallableInsertionStrategy.AsIdentifier
-        KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
-        KtExtensionApplicabilityResult.NonApplicable -> null
+        is KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> CallableInsertionStrategy.AsIdentifier
+        is KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
+        is KtExtensionApplicabilityResult.NonApplicable -> null
     }
 
     override fun KtAnalysisSession.collectDotCompletion(
@@ -299,9 +299,9 @@ internal class FirInfixCallableCompletionContributor(
         symbol: KtCallableSymbol,
         applicabilityResult: KtExtensionApplicabilityResult
     ): CallableInsertionStrategy? = when (applicabilityResult) {
-        KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(symbol)
-        KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
-        KtExtensionApplicabilityResult.NonApplicable -> null
+        is KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(symbol)
+        is KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
+        is KtExtensionApplicabilityResult.NonApplicable -> null
     }
 
     override fun KtAnalysisSession.filter(symbol: KtCallableSymbol): Boolean {
