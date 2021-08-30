@@ -11,7 +11,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
@@ -29,7 +28,6 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListe
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBRadioButton
@@ -48,15 +46,19 @@ class GroovyNewProjectWizard : NewProjectWizard {
 
   override fun createStep(context: WizardContext) = Step(context)
 
-  class Step(private val context: WizardContext) : NewProjectWizardStep<Settings> {
-    override val settings = Settings(context)
+  class Step(context: WizardContext) : NewProjectWizardStep(context) {
+    private var javaSdk: Sdk? = null
+    private var useMavenLibrary: Boolean = false
+    private var useLocalLibrary: Boolean = false
+    private var mavenVersion: FrameworkLibraryVersion? = null
+    private var sdkPath: String = ""
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {
         row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
           val sdkCombo = JdkComboBox(null, ProjectSdksModel().also { it.syncSdks() }, { it is JavaSdkType }, null, null, null)
             .apply { minimumSize = Dimension(0, 0) }
-            .also { combo -> combo.addItemListener { settings.javaSdk = combo.selectedJdk } }
+            .also { combo -> combo.addItemListener { javaSdk = combo.selectedJdk } }
           sdkCombo()
         }
         nestedPanel {
@@ -76,14 +78,14 @@ class GroovyNewProjectWizard : NewProjectWizard {
       twoColumnRow(
         {
           checkbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"),
-            settings::useMavenLibrary).component.apply { isSelected = true }
+            ::useMavenLibrary).component.apply { isSelected = true }
         },
         {
           val groovyLibraryType = LibraryType.EP_NAME.findExtensionOrFail(GroovyDownloadableLibraryType::class.java)
           val downloadableLibraryDescription = groovyLibraryType.libraryDescription
           comboBox(
             DefaultComboBoxModel(emptyArray()),
-            { settings.mavenVersion }, { settings.mavenVersion = it },
+            { mavenVersion }, { mavenVersion = it },
             SimpleListCellRenderer.create(GroovyBundle.message("combo.box.null.value.placeholder")) { it?.versionString ?: "<unknown>" }
           ).applyToComponent {
             downloadableLibraryDescription.fetchVersions(object : FileSetVersionsCallback<FrameworkLibraryVersion>() {
@@ -99,7 +101,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
       lateinit var checkbox: JBRadioButton
       lateinit var disposable: Disposable
       twoColumnRow(
-        { checkbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), settings::useLocalLibrary).component },
+        { checkbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), ::useLocalLibrary).component },
         {
           // todo: color text field in red if selected path does not correspond to a groovy sdk home
           val groovyLibraryDescription = GroovyLibraryDescription()
@@ -121,7 +123,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
             }
             .let(::component)
             .constraints(growX)
-            .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, settings::sdkPath.toBinding())
+            .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, ::sdkPath.toBinding())
             .enableIf(checkbox.selected)
 
           disposable = textWithBrowse.component
@@ -135,7 +137,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
         contentEntryPath = project.basePath
         name = project.name
-        moduleJdk = settings.javaSdk
+        moduleJdk = javaSdk
       }
 
       val librariesContainer = LibrariesContainerFactory.createContainer(context.project)
@@ -155,13 +157,13 @@ class GroovyNewProjectWizard : NewProjectWizard {
       // compositionSettings implements Disposable, but it is done that way because of the field with the type Library.
       // this field in our usage is always null, so there is no need to dispose compositionSettings
       val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
-        FrameworkLibraryVersionFilter.ALL, listOf(settings.mavenVersion))
-      if (settings.useMavenLibrary && settings.mavenVersion != null) {
+        FrameworkLibraryVersionFilter.ALL, listOf(mavenVersion))
+      if (useMavenLibrary && mavenVersion != null) {
         compositionSettings.setDownloadLibraries(true)
         compositionSettings.downloadFiles(null)
       }
-      else if (settings.useLocalLibrary) {
-        val virtualFile = VfsUtil.findFile(Path.of(settings.sdkPath), false) ?: return compositionSettings
+      else if (useLocalLibrary) {
+        val virtualFile = VfsUtil.findFile(Path.of(sdkPath), false) ?: return compositionSettings
         val newLibraryConfiguration =
           libraryDescription.createLibraryConfiguration(getCurrentKeyboardFocusManager().activeWindow, virtualFile)
           ?: return compositionSettings
@@ -183,18 +185,6 @@ class GroovyNewProjectWizard : NewProjectWizard {
         leftUnstable -> 1
         else -> -1
       }
-    }
-  }
-
-  class Settings(context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context) {
-    var javaSdk: Sdk? = null
-    var useMavenLibrary: Boolean = false
-    var useLocalLibrary: Boolean = false
-    var mavenVersion: FrameworkLibraryVersion? = null
-    var sdkPath: String = ""
-
-    companion object {
-      val KEY = Key.create<Settings>(Settings::class.java.name)
     }
   }
 }

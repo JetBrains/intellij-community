@@ -9,5 +9,5 @@ interface NewProjectWizardMultiStepFactory {
 
   val isEnabled: Boolean get() = true
 
-  fun createStep(context: WizardContext): NewProjectWizardStep<*>
+  fun createStep(context: WizardContext): NewProjectWizardStep
 }

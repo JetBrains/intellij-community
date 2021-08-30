@@ -7,7 +7,6 @@ import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -21,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
@@ -43,8 +41,56 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
 
   override fun createStep(context: WizardContext) = Step(context)
 
-  class Step(private val context: WizardContext) : NewProjectWizardStep<Settings> {
-    override val settings = Settings(context)
+  class Step(context: WizardContext) : NewProjectWizardStep(context) {
+    private val parentProperty = propertyGraph.graphProperty(::suggestParentByPath)
+    private val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
+    private val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
+    private val versionProperty = propertyGraph.graphProperty(::suggestVersionByParent)
+
+    private var parent by parentProperty
+    private var groupId by groupIdProperty.map { it.trim() }
+    private var artifactId by artifactIdProperty.map { it.trim() }
+    private var version by versionProperty.map { it.trim() }
+
+    private val parents by lazy { findAllParents().map(::GradleDataView) }
+    private var parentData: ProjectData?
+      get() = DataView.getData(parent)
+      set(value) {
+        parent = if (value == null) EMPTY_VIEW else GradleDataView(value)
+      }
+
+    private fun findAllParents(): List<ProjectData> {
+      val project = context.project ?: return emptyList()
+      return ProjectDataManager.getInstance()
+        .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
+        .mapNotNull { it.externalProjectStructure }
+        .map { it.data }
+    }
+
+    private fun suggestParentByPath(): DataView<ProjectData> {
+      val path = NewModuleStep.Step.getPath(context)
+      return parents.find { FileUtil.isAncestor(it.location, path.systemIndependentPath, true) } ?: EMPTY_VIEW
+    }
+
+    private fun suggestGroupIdByParent(): String {
+      return parent.groupId
+    }
+
+    private fun suggestArtifactIdByName(): String {
+      return NewModuleStep.Step.getName(context)
+    }
+
+    private fun suggestVersionByParent(): String {
+      return parent.version
+    }
+
+    private fun suggestNameByArtifactId(): String {
+      return artifactId
+    }
+
+    private fun suggestLocationByParent(): String {
+      return if (parent.isPresent) parent.location else context.projectFileDirectory
+    }
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {
@@ -54,32 +100,32 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
             val presentationName = Function<DataView<ProjectData>, String> { it.presentationName }
             val parentComboBoxModel = SortedComboBoxModel(Comparator.comparing(presentationName, String.CASE_INSENSITIVE_ORDER))
-            parentComboBoxModel.add(Settings.EMPTY_VIEW)
-            parentComboBoxModel.addAll(settings.parents)
-            comboBox(parentComboBoxModel, settings.parentProperty, renderer = getParentRenderer())
+            parentComboBoxModel.add(EMPTY_VIEW)
+            parentComboBoxModel.addAll(parents)
+            comboBox(parentComboBoxModel, parentProperty, renderer = getParentRenderer())
           }.largeGapAfter()
         }
         hideableRow(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
-            textField(settings.groupIdProperty)
+            textField(groupIdProperty)
           }
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
-            textField(settings.artifactIdProperty)
+            textField(artifactIdProperty)
               .withValidationOnApply { validateArtifactId() }
               .withValidationOnInput { validateArtifactId() }
           }
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
-            textField(settings.versionProperty)
+            textField(versionProperty)
           }
         }.largeGapAfter()
       }
     }
 
     private fun ValidationInfoBuilder.validateArtifactId(): ValidationInfo? {
-      if (settings.artifactId.isEmpty()) {
+      if (artifactId.isEmpty()) {
         return error(GradleBundle.message("gradle.structure.wizard.artifact.id.missing.error", if (context.isCreatingNewProject) 1 else 0))
       }
-      if (settings.artifactId != NewModuleStep.Settings.getName(context)) {
+      if (artifactId != NewModuleStep.Step.getName(context)) {
         return error(GradleBundle.message("gradle.structure.wizard.name.and.artifact.id.is.different.error",
           if (context.isCreatingNewProject) 1 else 0))
       }
@@ -106,7 +152,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     private fun getJavaVersion(): JavaVersion? {
-      val jdk = JavaNewProjectWizard.SdkSettings.getSdk(context) ?: return null
+      val jdk = JavaNewProjectWizard.SdkStep.getSdk(context) ?: return null
       val versionString = jdk.versionString ?: return null
       return JavaVersion.tryParse(versionString)
     }
@@ -136,7 +182,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
                                index: Int,
                                selected: Boolean,
                                hasFocus: Boolean) {
-          val view = value ?: Settings.EMPTY_VIEW
+          val view = value ?: EMPTY_VIEW
           text = view.presentationName
           icon = DataView.getIcon(view)
         }
@@ -146,12 +192,12 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     override fun setupProject(project: Project) {
       val builder = InternalGradleModuleBuilder().apply {
         isCreatingNewProject = true
-        moduleJdk = JavaNewProjectWizard.SdkSettings.getSdk(context)
+        moduleJdk = JavaNewProjectWizard.SdkStep.getSdk(context)
 
-        parentProject = settings.parentData
-        projectId = ProjectId(settings.groupId, settings.artifactId, settings.version)
-        isInheritGroupId = settings.parentData?.group == settings.groupId
-        isInheritVersion = settings.parentData?.version == settings.version
+        parentProject = parentData
+        projectId = ProjectId(groupId, artifactId, version)
+        isInheritGroupId = parentData?.group == groupId
+        isInheritVersion = parentData?.version == version
 
         isUseKotlinDsl = false
 
@@ -169,62 +215,11 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
       ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
     }
-  }
-
-  class Settings(private val context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context) {
-    val parentProperty = propertyGraph.graphProperty(::suggestParentByPath)
-    val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
-    val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
-    val versionProperty = propertyGraph.graphProperty(::suggestVersionByParent)
-
-    var parent by parentProperty
-    var groupId by groupIdProperty.map { it.trim() }
-    var artifactId by artifactIdProperty.map { it.trim() }
-    var version by versionProperty.map { it.trim() }
-
-    val parents by lazy { findAllParents().map(::GradleDataView) }
-    var parentData: ProjectData?
-      get() = DataView.getData(parent)
-      set(value) {
-        parent = if (value == null) EMPTY_VIEW else GradleDataView(value)
-      }
-
-    private fun findAllParents(): List<ProjectData> {
-      val project = context.project ?: return emptyList()
-      return ProjectDataManager.getInstance()
-        .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
-        .mapNotNull { it.externalProjectStructure }
-        .map { it.data }
-    }
-
-    private fun suggestParentByPath(): DataView<ProjectData> {
-      val path = NewModuleStep.Settings.getPath(context)
-      return parents.find { FileUtil.isAncestor(it.location, path.systemIndependentPath, true) } ?: EMPTY_VIEW
-    }
-
-    private fun suggestGroupIdByParent(): String {
-      return parent.groupId
-    }
-
-    private fun suggestArtifactIdByName(): String {
-      return NewModuleStep.Settings.getName(context)
-    }
-
-    private fun suggestVersionByParent(): String {
-      return parent.version
-    }
-
-    private fun suggestNameByArtifactId(): String {
-      return artifactId
-    }
-
-    private fun suggestLocationByParent(): String {
-      return if (parent.isPresent) parent.location else context.projectFileDirectory
-    }
 
     init {
-      val nameProperty = NewModuleStep.Settings.getNameProperty(context)
-      val pathProperty = NewModuleStep.Settings.getPathProperty(context)
+      val nameProperty = NewModuleStep.Step.getNameProperty(context)
+      val pathProperty = NewModuleStep.Step.getPathProperty(context)
+
       nameProperty.dependsOn(artifactIdProperty, ::suggestNameByArtifactId)
       parentProperty.dependsOn(pathProperty, ::suggestParentByPath)
       pathProperty.dependsOn(parentProperty, ::suggestLocationByParent)
@@ -242,8 +237,6 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     companion object {
-      val KEY = Key.create<Settings>(Settings::class.java.name)
-
       val EMPTY_VIEW = object : DataView<Nothing>() {
         override val data: Nothing get() = throw UnsupportedOperationException()
         override val location: String = ""

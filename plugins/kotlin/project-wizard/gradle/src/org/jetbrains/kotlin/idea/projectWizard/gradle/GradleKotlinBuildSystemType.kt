@@ -3,9 +3,7 @@ package org.jetbrains.kotlin.idea.projectWizard.gradle
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -15,17 +13,18 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType {
 
     override fun createStep(context: WizardContext) = Step(context)
 
-    class Step(context: WizardContext) : NewProjectWizardStep<Settings> {
-        override val settings = Settings(context)
+    class Step(context: WizardContext) : NewProjectWizardStep(context) {
+        private var groupId: String = ""
+        private var artifactId: String = ""
 
         override fun setupUI(builder: RowBuilder) {
             with(builder) {
                 hideableRow(GradleBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                     row(GradleBundle.message("label.project.wizard.new.project.group.id")) {
-                        textField(settings::groupId)
+                        textField(::groupId)
                     }
                     row(GradleBundle.message("label.project.wizard.new.project.artifact.id")) {
-                        textField(settings::artifactId)
+                        textField(::artifactId)
                     }
                 }.largeGapAfter()
             }
@@ -33,16 +32,6 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType {
 
         override fun setupProject(project: Project) {
             TODO("Not yet implemented")
-        }
-    }
-
-    class Settings(context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context) {
-        var groupId: String = ""
-        var artifactId: String = ""
-        var version: String = ""
-
-        companion object {
-            val KEY = Key.create<Settings>(Settings::class.java.name)
         }
     }
 }

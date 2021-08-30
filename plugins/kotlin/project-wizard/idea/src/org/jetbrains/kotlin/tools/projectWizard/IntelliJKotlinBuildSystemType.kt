@@ -3,9 +3,7 @@ package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.ui.layout.*
 
 class IntelliJKotlinBuildSystemType : KotlinBuildSystemType {
@@ -13,21 +11,11 @@ class IntelliJKotlinBuildSystemType : KotlinBuildSystemType {
 
     override fun createStep(context: WizardContext) = Step(context)
 
-    class Step(context: WizardContext) : NewProjectWizardStep<Settings> {
-        override val settings = Settings(context)
-
-        override fun setupUI(builder: RowBuilder) {
-
-        }
+    class Step(context: WizardContext) : NewProjectWizardStep(context) {
+        override fun setupUI(builder: RowBuilder) {}
 
         override fun setupProject(project: Project) {
             TODO("Not yet implemented")
-        }
-    }
-
-    class Settings(context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context) {
-        companion object {
-            val KEY = Key.create<Settings>(Settings::class.java.name)
         }
     }
 }

@@ -6,7 +6,6 @@ import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.NewProjectWizardStepSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -36,7 +35,7 @@ import javax.swing.JLabel
 
 abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
 
-  protected open val steps = listOf<NewProjectWizardStep<*>>(Step(context))
+  protected open val steps = listOf<NewProjectWizardStep>(Step(context))
 
   final override fun getPreferredFocusedComponent() = panel.preferredFocusedComponent
 
@@ -86,35 +85,56 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
     steps.forEach { it.setupProject(project) }
   }
 
-  open class Step(private val context: WizardContext) : NewProjectWizardStep<Settings> {
-    override val settings = Settings(context)
+  class Step(context: WizardContext) : NewProjectWizardStep(context, PropertyGraph("New Project Wizard")) {
+    val nameProperty = propertyGraph.graphProperty { suggestName(context) }
+    val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
+    val gitProperty = propertyGraph.graphProperty { false }
+
+    var name by nameProperty
+    var path by pathProperty
+    var git by gitProperty
+
+    val projectPath: Path get() = Path.of(path, name)
+
+    private fun suggestName(context: WizardContext): String {
+      val moduleNames = findAllModules(context).map { it.name }.toSet()
+      return FileUtil.createSequentFileName(File(path), "untitled", "") {
+        !it.exists() && it.name !in moduleNames
+      }
+    }
+
+    private fun findAllModules(context: WizardContext): List<Module> {
+      val project = context.project ?: return emptyList()
+      val moduleManager = ModuleManager.getInstance(project)
+      return moduleManager.modules.toList()
+    }
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {
         row(UIBundle.message("label.project.wizard.new.project.name")) {
-          textField(settings.nameProperty)
+          textField(nameProperty)
             .withValidationOnApply { validateName() }
             .withValidationOnInput { validateName() }
             .constraints(pushX)
             .focused()
-          installNameGenerators(getBuilderId(), settings.nameProperty)
+          installNameGenerators(getBuilderId(), nameProperty)
         }.largeGapAfter()
         row(UIBundle.message("label.project.wizard.new.project.location")) {
           val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
           val fileChosen = { file: VirtualFile -> getUiPath(file.path) }
           val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-          val pathProperty = settings.pathProperty.transform(::getUiPath, ::getModelPath)
-          textFieldWithBrowseButton(pathProperty, title, context.project, fileChooserDescriptor, fileChosen)
+          val uiPathProperty = pathProperty.transform(::getUiPath, ::getModelPath)
+          textFieldWithBrowseButton(uiPathProperty, title, context.project, fileChooserDescriptor, fileChosen)
             .withValidationOnApply { validateLocation() }
             .withValidationOnInput { validateLocation() }
         }.largeGapAfter()
         row("") {
-          checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), settings.gitProperty)
+          checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), gitProperty)
         }.largeGapAfter()
 
         onGlobalApply {
-          context.projectName = settings.name
-          context.setProjectFileDirectory(settings.projectPath, false)
+          context.projectName = name
+          context.setProjectFileDirectory(projectPath, false)
         }
       }
     }
@@ -136,7 +156,6 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
     }
 
     private fun ValidationInfoBuilder.validateName(): ValidationInfo? {
-      val name = settings.name
       if (name.isEmpty()) {
         return error(UIBundle.message("label.project.wizard.new.project.missing.name.error", if (context.isCreatingNewProject) 1 else 0))
       }
@@ -153,12 +172,12 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
     }
 
     private fun ValidationInfoBuilder.validateLocation(): ValidationInfo? {
-      if (settings.path.isEmpty()) {
+      if (path.isEmpty()) {
         return error(UIBundle.message("label.project.wizard.new.project.missing.path.error", if (context.isCreatingNewProject) 1 else 0))
       }
 
       val projectPath = try {
-        settings.projectPath
+        projectPath
       }
       catch (ex: InvalidPathException) {
         return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))
@@ -188,34 +207,13 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
     }
 
     override fun setupProject(project: Project) {}
-  }
 
-  class Settings(context: WizardContext) : NewProjectWizardStepSettings<Settings>(KEY, context, PropertyGraph("New Project Wizard")) {
-    val nameProperty = propertyGraph.graphProperty { suggestName(context) }
-    val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
-    val gitProperty = propertyGraph.graphProperty { false }
-
-    var name by nameProperty
-    var path by pathProperty
-    var git by gitProperty
-
-    val projectPath: Path get() = Path.of(path, name)
-
-    private fun suggestName(context: WizardContext): String {
-      val moduleNames = findAllModules(context).map { it.name }.toSet()
-      return FileUtil.createSequentFileName(File(path), "untitled", "") {
-        !it.exists() && it.name !in moduleNames
-      }
-    }
-
-    private fun findAllModules(context: WizardContext): List<Module> {
-      val project = context.project ?: return emptyList()
-      val moduleManager = ModuleManager.getInstance(project)
-      return moduleManager.modules.toList()
+    init {
+      KEY.set(context, this)
     }
 
     companion object {
-      val KEY = Key.create<Settings>(Settings::class.java.name)
+      val KEY = Key.create<Step>(Step::class.java.name)
 
       fun getNameProperty(context: WizardContext) = KEY.get(context).nameProperty
       fun getPathProperty(context: WizardContext) = KEY.get(context).pathProperty

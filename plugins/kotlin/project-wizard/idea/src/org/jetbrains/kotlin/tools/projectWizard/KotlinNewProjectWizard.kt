@@ -6,38 +6,35 @@ import com.intellij.ide.NewProjectWizard
 import com.intellij.ide.projectWizard.generators.SdkNewProjectWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardMultiStep
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard.Settings
 
 class KotlinNewProjectWizard : NewProjectWizard {
     override val name: String = "Kotlin"
 
     override fun createStep(context: WizardContext) = Step(context)
 
-    class Step(context: WizardContext) : NewProjectWizardMultiStep<Settings>(context, KotlinBuildSystemType.EP_NAME) {
+    class Step(context: WizardContext) : NewProjectWizardMultiStep(context, KotlinBuildSystemType.EP_NAME) {
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
-
-        override val settings = Settings(context)
 
         override val commonSteps = listOf(SdkStep(context))
     }
 
-    class Settings(context: WizardContext) : NewProjectWizardMultiStep.Settings<Settings>(KEY, context) {
-        companion object {
-            val KEY = Key.create<Settings>(Settings::class.java.name)
+    class SdkStep(context: WizardContext) : SdkNewProjectWizardStep(context) {
+        override fun sdkTypeFilter(type: SdkTypeId): Boolean {
+            return type is JavaSdkType && type !is DependentSdkType
         }
-    }
 
-    class SdkStep(context: WizardContext) : SdkNewProjectWizardStep<SdkSettings>(context) {
-        override val settings = SdkSettings(context)
+        init {
+            KEY.set(context, this)
+        }
 
-        override fun sdkTypeFilter(type: SdkTypeId) = true
-    }
-
-    class SdkSettings(context: WizardContext) : SdkNewProjectWizardStep.Settings<SdkSettings>(KEY, context) {
         companion object {
-            val KEY = Key.create<SdkSettings>(SdkSettings::class.java.name)
+            val KEY = Key.create<SdkStep>(SdkStep::class.java.name)
+
+            fun getSdk(context: WizardContext) = KEY.get(context).sdk
         }
     }
 }

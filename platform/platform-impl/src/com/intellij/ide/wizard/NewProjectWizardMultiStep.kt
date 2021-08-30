@@ -6,19 +6,21 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
 import javax.swing.DefaultComboBoxModel
 
-abstract class NewProjectWizardMultiStep<S : NewProjectWizardMultiStep.Settings<S>>(
-  private val context: WizardContext,
+abstract class NewProjectWizardMultiStep(
+  context: WizardContext,
   epName: ExtensionPointName<out NewProjectWizardMultiStepFactory>
-) : NewProjectWizardStep<S> {
+) : NewProjectWizardStep(context) {
 
   protected abstract val label: @NlsContexts.Label String
 
-  protected open val commonSteps = emptyList<NewProjectWizardStep<*>>()
+  protected open val commonSteps = emptyList<NewProjectWizardStep>()
+
+  protected val stepProperty = propertyGraph.graphProperty { "" }
+  protected var step by stepProperty
 
   private val steps = epName.extensionList
     .filter { it.isEnabled }
@@ -28,10 +30,10 @@ abstract class NewProjectWizardMultiStep<S : NewProjectWizardMultiStep.Settings<
     with(builder) {
       row(label) {
         if (steps.size > 4) {
-          comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()), settings.stepProperty)
+          comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()), stepProperty)
         }
         else {
-          buttonSelector(steps.map { it.key }, settings.stepProperty) { it }
+          buttonSelector(steps.map { it.key }, stepProperty) { it }
         }
       }.largeGapAfter()
 
@@ -43,21 +45,16 @@ abstract class NewProjectWizardMultiStep<S : NewProjectWizardMultiStep.Settings<
           step.setupUI(this)
         }.component
       }
-      settings.stepProperty.afterChange {
+      stepProperty.afterChange {
         stepsControllers.values.forEach { it.isVisible = false }
-        stepsControllers[settings.step]?.isVisible = true
+        stepsControllers[step]?.isVisible = true
       }
-      settings.step = steps.keys.first()
+      step = steps.keys.first()
     }
   }
 
   final override fun setupProject(project: Project) {
     commonSteps.forEach { it.setupProject(project) }
-    steps[settings.step]?.setupProject(project)
-  }
-
-  abstract class Settings<S : Settings<S>>(key: Key<S>, context: WizardContext) : NewProjectWizardStepSettings<S>(key, context) {
-    val stepProperty = propertyGraph.graphProperty { "" }
-    var step by stepProperty
+    steps[step]?.setupProject(project)
   }
 }
