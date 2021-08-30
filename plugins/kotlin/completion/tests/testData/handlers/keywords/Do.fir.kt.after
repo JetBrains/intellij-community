@@ -1,0 +1,8 @@
+// FIR_COMPARISON
+fun t() {
+    do {
+        <caret>
+    }
+}
+
+// ELEMENT: do

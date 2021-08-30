@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val some = 12
 class Some(someParam : Int) {
   init {

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 public inline fun <reified T> Iterable<*>.myFirstIsInstance(): T { }
 
