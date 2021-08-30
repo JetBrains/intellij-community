@@ -31,9 +31,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-public class JUnit5SuiteRunner {
+public class JUnit5Runner {
   public static void main(String[] args) throws ClassNotFoundException {
-    Class<?> aClass = Class.forName(args[0], true, JUnit5SuiteRunner.class.getClassLoader());
+    Class<?> aClass = Class.forName(args[0], true, JUnit5Runner.class.getClassLoader());
     Launcher launcher = LauncherFactory.create();
     DiscoverySelector selector;
     if (args.length == 1) {
@@ -42,7 +42,7 @@ public class JUnit5SuiteRunner {
     else {
       selector = DiscoverySelectors.selectMethod(aClass, args[1]);
     }
-    launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), new TCTestExecutionListener());
+    launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), new TCExecutionListener());
     System.exit(0);
   }
 
@@ -88,13 +88,13 @@ public class JUnit5SuiteRunner {
   }
   
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static class TCTestExecutionListener implements TestExecutionListener {
+  private static class TCExecutionListener implements TestExecutionListener {
     private final PrintStream myPrintStream;
     private TestPlan myTestPlan;
     private long myCurrentTestStart;
     private int myFinishCount = 0;
     
-    private TCTestExecutionListener() {
+    private TCExecutionListener() {
       myPrintStream = System.out;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
     }

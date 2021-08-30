@@ -500,7 +500,7 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
 
-    args.add("com.intellij.tests.JUnit5SuiteRunner")
+    args.add("com.intellij.tests.JUnit5Runner")
     args.add(suiteName)
     if (methodName != null) {
       args.add(methodName)
