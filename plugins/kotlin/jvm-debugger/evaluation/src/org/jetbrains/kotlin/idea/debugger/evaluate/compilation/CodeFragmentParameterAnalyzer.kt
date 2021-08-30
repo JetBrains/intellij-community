@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.createFunctionType
+import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_FQ_NAME
 
 class CodeFragmentParameterInfo(
     val parameters: List<Smart>,
@@ -337,8 +338,7 @@ class CodeFragmentParameterAnalyzer(
     }
 
     private fun processCoroutineContextCall(target: DeclarationDescriptor): Smart? {
-        //todo fixme
-        if (target is PropertyDescriptor /*&& target.fqNameSafe == COROUTINE_CONTEXT_1_3_FQ_NAME*/) {
+        if (target is PropertyDescriptor && target.fqNameSafe == COROUTINE_CONTEXT_FQ_NAME) {
             return parameters.getOrPut(target) {
                 Smart(Dumb(Kind.COROUTINE_CONTEXT, ""), target.type, target)
             }
