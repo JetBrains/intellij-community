@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 
 class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) : BreakpointStepMethodFilter {
     private val lambdaPtr = target.getLambda().createSmartPointer()
