@@ -284,9 +284,14 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   private void handleSelectionChanged() {
     mySelectedClass = calcSelectedClass();
-    ReadAction.nonBlocking(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myClassFilter.isAccepted(mySelectedClass)))
-      .finishOnUiThread(getModalityState(), (isAccepted) -> setOKActionEnabled(mySelectedClass != null && isAccepted))
-      .submit(AppExecutorUtil.getAppExecutorService());
+    if (mySelectedClass == null) {
+      setOKActionEnabled(false);
+    } else {
+      ReadAction
+        .nonBlocking(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myClassFilter.isAccepted(mySelectedClass)))
+        .finishOnUiThread(getModalityState(), (isAccepted) -> setOKActionEnabled(mySelectedClass != null && isAccepted))
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   @Override
