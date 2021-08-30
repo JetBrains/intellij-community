@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 package some
 
 annotation class SomeAnnotation

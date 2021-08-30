@@ -10,10 +10,10 @@ import org.jetbrains.kotlin.idea.completion.test.addCharacterCodingException
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.utils.addToStdlib.indexOfOrNull
 import java.io.File
 
@@ -28,13 +28,16 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
         const val CODE_STYLE_SETTING_PREFIX = "CODE_STYLE_SETTING:"
     }
 
+    protected open fun handleTestPath(path: String): File = File(path)
+
     protected open fun doTest(testPath: String) {
-        setUpFixture(fileName())
+        val actualTestFile = handleTestPath(testPath)
+        setUpFixture(actualTestFile.name)
         try {
             configureCodeStyleAndRun(project) {
-                val fileText = FileUtil.loadFile(File(testPath))
+                val fileText = FileUtil.loadFile(actualTestFile)
                 withCustomCompilerOptions(fileText, project, module) {
-                    assertTrue("\"<caret>\" is missing in file \"$testPath\"", fileText.contains("<caret>"))
+                    assertTrue("\"<caret>\" is missing in file \"$actualTestFile\"", fileText.contains("<caret>"))
 
                     val invocationCount = InTextDirectivesUtils.getPrefixedInt(fileText, INVOCATION_COUNT_PREFIX) ?: 1
                     val lookupString = InTextDirectivesUtils.findStringWithPrefixes(fileText, LOOKUP_STRING_PREFIX)
@@ -72,7 +75,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                         itemText,
                         tailText,
                         completionChars,
-                        File(testPath).name + ".after",
+                        actualTestFile.name + ".after",
                     )
                 }
             }

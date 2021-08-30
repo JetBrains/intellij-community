@@ -71,6 +71,8 @@ import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
+//import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
+//import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
@@ -85,17 +87,19 @@ import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 //import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
 //import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
 //import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
+//import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
+//import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
 //import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
 //import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
 //import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
+//import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 //import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 //import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 //import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
-//import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
-//import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
-//import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
-//import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 //import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
+//import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
+//import org.jetbrains.kotlin.idea.fir.uast.*
+//import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
@@ -176,8 +180,8 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
-import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractProjectTemplateBuildFileGenerationTest
@@ -1128,8 +1132,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     /*testGroup("fir", testDataPath = "../completion/tests/testData") {
         testClass<AbstractHighLevelJvmBasicCompletionTest> {
-            model("basic/common")
-            model("basic/java")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
         }
 
@@ -1310,13 +1314,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJSBasicCompletionTest> {
-            model("basic/common")
-            model("basic/js")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/js", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJvmBasicCompletionTest> {
-            model("basic/common")
-            model("basic/java")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJvmSmartCompletionTest> {

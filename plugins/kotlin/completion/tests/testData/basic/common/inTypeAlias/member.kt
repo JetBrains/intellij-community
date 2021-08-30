@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 class X {
     typealias Y = <caret>
 }

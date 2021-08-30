@@ -1,0 +1,9 @@
+// FIR_COMPARISON
+import java.util.List as UtilList
+
+/**
+ * [UtilList<caret>]
+ */
+fun foo(){}
+
+// ELEMENT: UtilList

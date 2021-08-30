@@ -1,2 +1,3 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 @fi<caret>
