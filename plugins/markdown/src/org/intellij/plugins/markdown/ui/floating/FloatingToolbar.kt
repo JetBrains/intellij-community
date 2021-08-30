@@ -183,7 +183,8 @@ class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : D
       MarkdownElementTypes.CODE_FENCE,
       MarkdownElementTypes.CODE_BLOCK,
       MarkdownElementTypes.CODE_SPAN,
-      MarkdownElementTypes.HTML_BLOCK
+      MarkdownElementTypes.HTML_BLOCK,
+      MarkdownElementTypes.LINK_DESTINATION
     )
   }
 }
