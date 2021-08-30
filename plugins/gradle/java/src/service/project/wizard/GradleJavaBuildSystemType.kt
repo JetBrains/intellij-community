@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
-import com.intellij.ide.NewModuleStep
+import com.intellij.ide.NewProjectStep
 import com.intellij.ide.projectWizard.generators.JavaBuildSystemType
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
@@ -68,7 +68,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     private fun suggestParentByPath(): DataView<ProjectData> {
-      val path = NewModuleStep.Step.getPath(context)
+      val path = NewProjectStep.getPath(context)
       return parents.find { FileUtil.isAncestor(it.location, path.systemIndependentPath, true) } ?: EMPTY_VIEW
     }
 
@@ -77,7 +77,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     private fun suggestArtifactIdByName(): String {
-      return NewModuleStep.Step.getName(context)
+      return NewProjectStep.getName(context)
     }
 
     private fun suggestVersionByParent(): String {
@@ -125,7 +125,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
       if (artifactId.isEmpty()) {
         return error(GradleBundle.message("gradle.structure.wizard.artifact.id.missing.error", if (context.isCreatingNewProject) 1 else 0))
       }
-      if (artifactId != NewModuleStep.Step.getName(context)) {
+      if (artifactId != NewProjectStep.getName(context)) {
         return error(GradleBundle.message("gradle.structure.wizard.name.and.artifact.id.is.different.error",
           if (context.isCreatingNewProject) 1 else 0))
       }
@@ -217,8 +217,8 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     init {
-      val nameProperty = NewModuleStep.Step.getNameProperty(context)
-      val pathProperty = NewModuleStep.Step.getPathProperty(context)
+      val nameProperty = NewProjectStep.getNameProperty(context)
+      val pathProperty = NewProjectStep.getPathProperty(context)
 
       nameProperty.dependsOn(artifactIdProperty, ::suggestNameByArtifactId)
       parentProperty.dependsOn(pathProperty, ::suggestParentByPath)

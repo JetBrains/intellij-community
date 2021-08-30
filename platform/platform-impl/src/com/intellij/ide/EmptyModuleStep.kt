@@ -3,4 +3,4 @@ package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
 
-class EmptyModuleStep(context: WizardContext) : NewModuleStep(context)
+class EmptyModuleStep(context: WizardContext) : NewModuleStep(null, context)

@@ -33,9 +33,9 @@ import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
+abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWizardStep() {
 
-  protected open val steps = listOf<NewProjectWizardStep>(Step(context))
+  protected open val steps = listOf<NewProjectWizardStep>(Step(key, context))
 
   final override fun getPreferredFocusedComponent() = panel.preferredFocusedComponent
 
@@ -85,7 +85,7 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
     steps.forEach { it.setupProject(project) }
   }
 
-  class Step(context: WizardContext) : NewProjectWizardStep(context, PropertyGraph("New Project Wizard")) {
+  class Step(key: Key<Step>?, context: WizardContext) : NewProjectWizardStep(context, PropertyGraph("New Project Wizard")) {
     val nameProperty = propertyGraph.graphProperty { suggestName(context) }
     val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
     val gitProperty = propertyGraph.graphProperty { false }
@@ -209,16 +209,7 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
     override fun setupProject(project: Project) {}
 
     init {
-      KEY.set(context, this)
-    }
-
-    companion object {
-      val KEY = Key.create<Step>(Step::class.java.name)
-
-      fun getNameProperty(context: WizardContext) = KEY.get(context).nameProperty
-      fun getPathProperty(context: WizardContext) = KEY.get(context).pathProperty
-      fun getName(context: WizardContext) = KEY.get(context).name
-      fun getPath(context: WizardContext) = KEY.get(context).projectPath
+      key?.set(context, this)
     }
   }
 
