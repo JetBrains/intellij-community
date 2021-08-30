@@ -33,7 +33,7 @@ internal class StartEditingAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    // javax.swing.plaf.basic.BasicTableUI.Actions.START_EDITING
+    // javax.swing.plaf.basic.BasicTreeUI.Actions.START_EDITING
     SwingActionDelegate.performAction("startEditing", event.contextTree)
   }
 
