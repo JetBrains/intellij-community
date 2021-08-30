@@ -1651,6 +1651,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithNoArguments.kt");
         }
 
+        @TestMetadata("methodCallWithTypeMismatch.kt")
+        public void testMethodCallWithTypeMismatch() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithTypeMismatch.kt");
+        }
+
         @TestMetadata("methodCallWithVararg.kt")
         public void testMethodCallWithVararg() throws Exception {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
