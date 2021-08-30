@@ -2,11 +2,15 @@
 package com.intellij.lang.jvm;
 
 /**
- * Represents a value (e.g. integers, longs, strings etc..).
+ * Represents a value (e.g. integers, longs, strings etc..). In the future, this class should function as a base class for JVM method calls
+ * and field references as well.
  */
 public interface JvmValue {
+
   /**
-   * @return the underlying value
+   * Creates a long value.
    */
-  Object getValue();
+  static JvmLong createLongValue(long value) {
+    return new JvmLongImpl(value);
+  }
 }

@@ -4,4 +4,9 @@ package com.intellij.lang.jvm;
 /**
  * Represents a long primitive value.
  */
-public interface JvmLong extends JvmValue { }
+public interface JvmLong extends JvmValue {
+  /**
+   * @return The underlying long value.
+   */
+  Long getLongValue();
+}

@@ -29,4 +29,4 @@ fun fieldRequest(
   targetSubstitutor: JvmSubstitutor,
   initializer: JvmValue?,
   isConstant: Boolean,
-) = SimpleFieldRequest(fieldName, modifiers, fieldType, targetSubstitutor, initializer, isConstant)
+): CreateFieldRequest = SimpleFieldRequest(fieldName, modifiers, fieldType, targetSubstitutor, initializer, isConstant)

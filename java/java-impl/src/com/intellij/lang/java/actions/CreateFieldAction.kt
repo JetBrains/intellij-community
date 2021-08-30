@@ -92,7 +92,7 @@ internal class JavaFieldRenderer(
 
     val requestInitializer = request.initializer
     if (requestInitializer is JvmLong) {
-      field.initializer = PsiElementFactory.getInstance(project).createExpressionFromText("${requestInitializer.value}L", null)
+      field.initializer = PsiElementFactory.getInstance(project).createExpressionFromText("${requestInitializer.longValue}L", null)
     }
 
     return field

@@ -32,7 +32,7 @@ class AddFieldActionCreateCallableFromUsageFix(
             val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
             val requestInitializer = request.initializer
             val initializer = if (requestInitializer is JvmLong) {
-                KtPsiFactory(targetContainer).createExpression("${requestInitializer.value}L")
+                KtPsiFactory(targetContainer).createExpression("${requestInitializer.longValue}L")
             } else if (!lateinit) {
                 KtPsiFactory(targetContainer).createExpression("TODO(\"initialize me\")")
             } else null

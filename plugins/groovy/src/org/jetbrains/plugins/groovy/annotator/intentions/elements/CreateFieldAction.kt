@@ -110,7 +110,7 @@ private class GroovyFieldRenderer(
 
     val requestInitializer = request.initializer
     if (requestInitializer is JvmLong) {
-      field.initializerGroovy = elementFactory.createExpressionFromText("${requestInitializer.value}L", null)
+      field.initializerGroovy = elementFactory.createExpressionFromText("${requestInitializer.longValue}L", null)
     }
 
     return field

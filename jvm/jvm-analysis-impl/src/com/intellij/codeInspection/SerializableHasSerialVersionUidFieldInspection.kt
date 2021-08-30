@@ -3,8 +3,8 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.createAddFieldActions
-import com.intellij.lang.jvm.actions.createLongValue
 import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.lang.jvm.actions.fieldRequest
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -51,7 +51,7 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
         modifiers = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC),
         fieldType = expectedTypes(PsiType.LONG),
         targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
-        initializer = createLongValue(serialUid),
+        initializer = JvmValue.createLongValue(serialUid),
         isConstant = true
       )).first()
       val vFile = containingFile.virtualFile ?: return
