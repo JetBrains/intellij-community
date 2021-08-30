@@ -107,6 +107,8 @@ public interface TokenSets {
     kSTRICTFP,
     kVOLATILE,
     kSTRICTFP,
+    kSEALED,
+    kNONSEALED,
     kDEF,
     kVAR
   );
