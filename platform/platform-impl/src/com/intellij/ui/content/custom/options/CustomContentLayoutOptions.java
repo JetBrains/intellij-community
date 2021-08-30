@@ -17,4 +17,6 @@ public interface CustomContentLayoutOptions {
   boolean isSelected(@NotNull CustomContentLayoutOption option);
 
   void restore();
+
+  void onHide();
 }

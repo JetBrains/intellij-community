@@ -104,7 +104,7 @@ class XDebugSessionTab3(
       val customLayoutOptions = XDebugFramesAndThreadsLayoutOptions(session, content, this)
       content.putUserData(CustomContentLayoutOptions.KEY, customLayoutOptions)
       val currentOption = customLayoutOptions.getCurrentOption()
-      if (!currentOption.isSelected && customLayoutOptions.isContentVisible()) {
+      if (currentOption != null && !currentOption.isSelected) {
         customLayoutOptions.select(currentOption)
       }
     }

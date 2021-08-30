@@ -25,7 +25,7 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
     CustomContentLayoutOptions customLayoutOptions = content.getUserData(CustomContentLayoutOptions.KEY);
     assert customLayoutOptions != null;
 
-    add(new ViewLayoutModeAction(new HideContentLayoutModeOption(content, ui)));
+    add(new ViewLayoutModeAction(new HideContentLayoutModeOption(content, ui, customLayoutOptions)));
     for (CustomContentLayoutOption option : customLayoutOptions.getAvailableOptions()) {
       add(new ViewLayoutModeAction(option));
     }
@@ -79,11 +79,12 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
 
     private final Content myContent;
     private final RunnerContentUi myUi;
+    private final CustomContentLayoutOptions myOptions;
 
-    public HideContentLayoutModeOption(Content content, RunnerContentUi ui) {
-
+    public HideContentLayoutModeOption(Content content, RunnerContentUi ui, CustomContentLayoutOptions options) {
       myContent = content;
       myUi = ui;
+      myOptions = options;
     }
 
     @Override
@@ -94,6 +95,7 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
     @Override
     public void select() {
       myUi.minimize(myContent, null);
+      myOptions.onHide();
     }
 
     @Override

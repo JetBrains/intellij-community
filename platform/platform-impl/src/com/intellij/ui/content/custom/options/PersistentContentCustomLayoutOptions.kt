@@ -4,10 +4,16 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.content.Content
 
-abstract class PersistentContentCustomLayoutOptions(private val content: Content, private val selectedOptionKey: String) : CustomContentLayoutOptions {
+abstract class PersistentContentCustomLayoutOptions(private val content: Content,
+                                                    private val selectedOptionKey: String) : CustomContentLayoutOptions {
+
+  companion object {
+    private const val HIDE_OPTION_KEY = "Hidden" //TODO check that none of the options have the same key
+  }
 
   override fun select(option: CustomContentLayoutOption) {
-    option as? PersistentContentCustomLayoutOption ?: throw IllegalStateException("Option is not a ${PersistentContentCustomLayoutOption::class.java.name}")
+    option as? PersistentContentCustomLayoutOption ?: throw IllegalStateException(
+      "Option is not a ${PersistentContentCustomLayoutOption::class.java.name}")
     doSelect(option)
     saveOption(option.getOptionKey())
   }
@@ -24,7 +30,14 @@ abstract class PersistentContentCustomLayoutOptions(private val content: Content
   fun isContentVisible(): Boolean {
     return content.isValid && (content.manager?.getIndexOfContent(content) ?: -1) != -1
   }
-  fun getCurrentOption() = getPersistentOptions().first { it.getOptionKey() == getCurrentOptionKey() }
+
+  fun getCurrentOption(): PersistentContentCustomLayoutOption? {
+    val currentOptionKey = getCurrentOptionKey()
+    if (currentOptionKey == HIDE_OPTION_KEY) {
+      return null
+    }
+    return getPersistentOptions().first { it.getOptionKey() == getCurrentOptionKey() }
+  }
 
   protected abstract fun doSelect(option: CustomContentLayoutOption)
 
@@ -38,6 +51,10 @@ abstract class PersistentContentCustomLayoutOptions(private val content: Content
   }
 
   private fun getPersistentOptions() = availableOptions.filterIsInstance<PersistentContentCustomLayoutOption>()
+
+  override fun onHide() {
+    saveOption(HIDE_OPTION_KEY)
+  }
 }
 
 abstract class PersistentContentCustomLayoutOption(private val options: PersistentContentCustomLayoutOptions) : CustomContentLayoutOption {
