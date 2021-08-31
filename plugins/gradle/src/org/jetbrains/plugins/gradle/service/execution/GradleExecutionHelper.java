@@ -44,6 +44,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -193,6 +194,7 @@ public class GradleExecutionHelper {
     });
   }
 
+  @SuppressWarnings("deprecation")
   private void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
                                       @NotNull String projectPath,
                                       @NotNull GradleExecutionSettings settings,
@@ -204,7 +206,7 @@ public class GradleExecutionHelper {
     List<String> arguments = settings.getArguments();
     try {
       settings.setRemoteProcessIdleTtlInMs(100);
-      settings.setArguments(ContainerUtil.emptyList());
+      settings.setArguments(GradleCommandLine.parse(arguments).getScriptParameters());
 
       if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
         // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
