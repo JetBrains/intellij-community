@@ -15,10 +15,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class MavenSpyOutputParser {
-  public final static String PREFIX = "[IJ]-";
-  private final static String SEPARATOR = "-[IJ]-";
-  private final static String NEWLINE = "-[N]-";
-  public static final String DOWNLOAD_DEPENDENCIES_NAME = "dependencies";
+  public static final String PREFIX = "[IJ]-";
+  private static final String SEPARATOR = "-[IJ]-";
+  private static final String NEWLINE = "-[N]-";
+  private static final String DOWNLOAD_DEPENDENCIES_NAME = "dependencies";
   private final Set<String> downloadingMap = new HashSet<>();
   private final MavenParsingContext myContext;
 
@@ -83,6 +83,10 @@ public class MavenSpyOutputParser {
         myContext.setProjectsInReactor(projectsInReactor);
         return;
       }
+      case SESSION_ENDED: {
+        doFinishSession(messageConsumer, myContext);
+        return;
+      }
       case PROJECT_STARTED: {
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, true);
         if (execution == null) {
@@ -142,6 +146,7 @@ public class MavenSpyOutputParser {
       case PROJECT_FAILED: {
         stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
+        myContext.setProjectFailure(true);
         doError(messageConsumer, execution, parameters.get("error"));
         return;
       }
@@ -296,5 +301,16 @@ public class MavenSpyOutputParser {
         new FinishEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName(),
                             new SuccessResultImpl()));
     execution.complete();
+  }
+
+  private static void doFinishSession(Consumer<? super BuildEvent> messageConsumer, MavenParsingContext context) {
+    context.setSessionEnded(true);
+    if (context.getProjectFailure()) {
+      messageConsumer
+        .accept(new FinishBuildEventImpl(context.getMyTaskId(), null, System.currentTimeMillis(), "", new FailureResultImpl()));
+    } else {
+      messageConsumer
+        .accept(new FinishBuildEventImpl(context.getMyTaskId(), null, System.currentTimeMillis(), "", new SuccessResultImpl()));
+    }
   }
 }
