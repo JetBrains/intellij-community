@@ -7,4 +7,4 @@ UFile (package = ) [public final class DefaultParameterValuesKt {...]
             UParameter (name = foo) [@org.jetbrains.annotations.Nullable var foo: java.lang.String = null]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
                 ULiteralExpression (value = null) [null] : PsiType:Void
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit

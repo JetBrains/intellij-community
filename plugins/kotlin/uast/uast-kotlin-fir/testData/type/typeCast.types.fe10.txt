@@ -4,7 +4,7 @@ UFile (package = ) [import java.lang.Runnable...]
         UMethod (name = stringConsumer) [public static final fun stringConsumer(@org.jetbrains.annotations.NotNull s: java.lang.String) : void {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = foo) [public static final fun foo(@org.jetbrains.annotations.NotNull x: java.lang.Object, @org.jetbrains.annotations.NotNull isSafe: boolean) : java.lang.Runnable {...}]
             UParameter (name = x) [@org.jetbrains.annotations.NotNull var x: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -25,15 +25,15 @@ UFile (package = ) [import java.lang.Runnable...]
                 UDeclarationsExpression [var x: java.lang.Object = stringConsumer("Hi") as java.lang.Object]
                     ULocalVariable (name = x) [var x: java.lang.Object = stringConsumer("Hi") as java.lang.Object]
                         UBinaryExpressionWithType [stringConsumer("Hi") as java.lang.Object] : PsiType:Object
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi")] : PsiType:void
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi")] : PsiType:Unit
                                 UIdentifier (Identifier (stringConsumer)) [UIdentifier (Identifier (stringConsumer))]
-                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : PsiType:void
+                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : PsiType:Unit
                                 ULiteralExpression (value = "Hi") ["Hi"] : PsiType:String
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
-                UIfExpression [if (x != Unit) return "Fail: " + x] : PsiType:void
+                UIfExpression [if (x != Unit) return "Fail: " + x] : PsiType:Unit
                     UBinaryExpression (operator = !=) [x != Unit] : PsiType:boolean
                         USimpleNameReferenceExpression (identifier = x) [x] : PsiType:Object
-                        USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:void
+                        USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:Unit
                     UReturnExpression [return "Fail: " + x] : PsiType:Void
                         UPolyadicExpression (operator = +) ["Fail: " + x] : PsiType:String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
@@ -41,15 +41,15 @@ UFile (package = ) [import java.lang.Runnable...]
                 UDeclarationsExpression [var y: java.lang.Object = stringConsumer("Hi, again") as java.lang.Object]
                     ULocalVariable (name = y) [var y: java.lang.Object = stringConsumer("Hi, again") as java.lang.Object]
                         UBinaryExpressionWithType [stringConsumer("Hi, again") as java.lang.Object] : PsiType:Object
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi, again")] : PsiType:void
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi, again")] : PsiType:Unit
                                 UIdentifier (Identifier (stringConsumer)) [UIdentifier (Identifier (stringConsumer))]
-                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : PsiType:void
+                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : PsiType:Unit
                                 ULiteralExpression (value = "Hi, again") ["Hi, again"] : PsiType:String
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
-                UIfExpression [if (y != Unit) return "Fail: " + y] : PsiType:void
+                UIfExpression [if (y != Unit) return "Fail: " + y] : PsiType:Unit
                     UBinaryExpression (operator = !=) [y != Unit] : PsiType:boolean
                         USimpleNameReferenceExpression (identifier = y) [y] : PsiType:Object
-                        USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:void
+                        USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:Unit
                     UReturnExpression [return "Fail: " + y] : PsiType:Void
                         UPolyadicExpression (operator = +) ["Fail: " + y] : PsiType:String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
@@ -59,9 +59,9 @@ UFile (package = ) [import java.lang.Runnable...]
                         UObjectLiteralExpression [anonymous object : Runnable {...    }] : PsiType:Runnable
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
                                 UMethod (name = run) [public fun run() : void {...}]
-                                    UBlockExpression [{...}] : PsiType:void
+                                    UBlockExpression [{...}] : PsiType:Unit
                                 UMethod (name = ) [private fun () = UastEmptyExpression]
-                UIfExpression [if (foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : PsiType:void
+                UIfExpression [if (foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : PsiType:Unit
                     UBinaryExpression (operator = !==) [foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression] : PsiType:boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, true)] : PsiType:Runnable
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
@@ -75,7 +75,7 @@ UFile (package = ) [import java.lang.Runnable...]
                         UPolyadicExpression (operator = +) ["Fail: " + r] : PsiType:String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
                             USimpleNameReferenceExpression (identifier = r) [r] : PsiType:<ErrorType>
-                UIfExpression [if (foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : PsiType:void
+                UIfExpression [if (foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : PsiType:Unit
                     UBinaryExpression (operator = !==) [foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression] : PsiType:boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, false)] : PsiType:Runnable
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]

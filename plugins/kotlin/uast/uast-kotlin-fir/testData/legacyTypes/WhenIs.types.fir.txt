@@ -5,9 +5,9 @@ UFile (package = ) [public final class WhenIsKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return switch (bar)  {...]
-                    USwitchExpression [switch (bar)  {...] : PsiType:void
+                    USwitchExpression [switch (bar)  {...] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = bar) [bar] : PsiType:Object
-                        UExpressionList (when) [    it is java.lang.String -> {...    ] : PsiType:void
+                        UExpressionList (when) [    it is java.lang.String -> {...    ] : PsiType:Unit
                             USwitchClauseExpressionWithBody [it is java.lang.String -> {...]
                                 UBinaryExpressionWithType [it is java.lang.String]
                                     USimpleNameReferenceExpression (identifier = it) [it]

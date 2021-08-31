@@ -1,11 +1,11 @@
 UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
-UTypeReferenceExpression (name = void) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Void: Void
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:TODO) -> USimpleNameReferenceExpression (identifier = TODO) -> PsiMethod:TODO: TODO
 UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
-UTypeReferenceExpression (name = void) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Void: Void
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:TODO) -> USimpleNameReferenceExpression (identifier = TODO) -> PsiMethod:TODO: TODO
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to LightMethodBuilder:foo) -> USimpleNameReferenceExpression (identifier = foo) -> LightMethodBuilder:foo: foo

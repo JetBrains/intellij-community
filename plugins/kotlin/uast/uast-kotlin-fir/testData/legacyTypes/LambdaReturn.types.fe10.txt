@@ -1,7 +1,7 @@
 UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin...]
     UClass (name = LambdaReturnKt) [public final class LambdaReturnKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
                 UDeclarationsExpression [var lam1: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
                     ULocalVariable (name = lam1) [var lam1: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
                         ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
@@ -55,7 +55,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}] : PsiType:Void
-                                UIfExpression [if (a < 5) return "5"] : PsiType:void
+                                UIfExpression [if (a < 5) return "5"] : PsiType:Unit
                                     UBinaryExpression (operator = <) [a < 5] : PsiType:boolean
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                                         ULiteralExpression (value = 5) [5] : PsiType:int
@@ -79,13 +79,13 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     UBinaryExpression (operator = +) ["a" + a] : PsiType:String
                                         ULiteralExpression (value = "a") ["a"] : PsiType:String
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] : PsiType:void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] : PsiType:Unit
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:Unit
                     ULambdaExpression [{ var it: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
                         UParameter (name = it) [var it: int]
                         UBlockExpression [{...}]
-                            UIfExpression [if (it > 5) return] : PsiType:void
+                            UIfExpression [if (it > 5) return] : PsiType:Unit
                                 UBinaryExpression (operator = >) [it > 5] : PsiType:boolean
                                     USimpleNameReferenceExpression (identifier = it) [it] : PsiType:int
                                     ULiteralExpression (value = 5) [5] : PsiType:int
