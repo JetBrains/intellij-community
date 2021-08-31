@@ -109,7 +109,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   }
 
   private Map<?, ValueMarkup> getValueMarkers() {
-    XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(myFrame.getVirtualMachine().getDebugProcess());
+    XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(getDebugProcess());
     return markers != null ? markers.getAllMarkers() : Collections.emptyMap();
   }
 
