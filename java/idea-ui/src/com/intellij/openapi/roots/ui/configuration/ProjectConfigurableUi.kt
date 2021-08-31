@@ -108,7 +108,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
 
   fun getProjectName(): String = myProjectName.text
   fun getProjectCompilerOutput(): String = myProjectCompilerOutput.text
-  fun getLanguageLevel(): LanguageLevel = myLanguageLevelCombo.selectedLevel
+  fun getLanguageLevel(): LanguageLevel? = myLanguageLevelCombo.selectedLevel
   fun isDefaultLanguageLevel(): Boolean = myLanguageLevelCombo.isDefault
   fun isProjectJdkConfigurableModified(): Boolean = myProjectJdkConfigurable.isModified
   fun applyProjectJdkConfigurable() = myProjectJdkConfigurable.apply()
