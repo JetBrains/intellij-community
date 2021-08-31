@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenConsole;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory.Transformer;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -38,7 +39,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator) {
-    setCustomization(console, indicator, null, false, false, null);
+    boolean alwaysUpdateSnapshots = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
+    setCustomization(console, indicator, null, false, alwaysUpdateSnapshots, null);
     perform(() -> {
       doCustomize();
       return null;
@@ -70,7 +72,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                         MavenConsole console,
                                         MavenProgressIndicator indicator) {
     MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
-    setCustomization(console, indicator, serverWorkspaceMap, true, false, null);
+    boolean alwaysUpdateSnapshots = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
+    setCustomization(console, indicator, serverWorkspaceMap, true, alwaysUpdateSnapshots, null);
     perform(() -> {
       doCustomize();
       return null;
