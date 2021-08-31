@@ -2,7 +2,7 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardMultiStep
 import com.intellij.openapi.projectRoots.JavaSdkType

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.ide.projectWizard.generators.SdkNewProjectWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardMultiStep

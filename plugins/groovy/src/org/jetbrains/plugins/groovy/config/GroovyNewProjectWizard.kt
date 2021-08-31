@@ -5,7 +5,7 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.WizardContext
