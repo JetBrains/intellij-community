@@ -11,10 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBScrollPane
-import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Timeout
 import training.actions.ChooseProgrammingLanguageForLearningAction
 import training.lang.LangManager
@@ -81,10 +79,8 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     if (gotIt.canShow()) {
       val needToFindButton = restartAction() ?: return
       ApplicationManager.getApplication().executeOnPooledThread {
-        val ideFrame = WindowManagerEx.getInstanceEx().getFrame(project)
-                       ?: throw ComponentLookupException("Failed to find IDE frame for project: $project")
         val button = LearningUiUtil.findShowingComponentWithTimeout(
-          ideFrame, ActionButton::class.java, Timeout.timeout(500, TimeUnit.MILLISECONDS)
+          null, ActionButton::class.java, Timeout.timeout(500, TimeUnit.MILLISECONDS)
         ) { it.action == needToFindButton }
         invokeLater {
           gotIt.show(button, GotItTooltip.BOTTOM_MIDDLE)
