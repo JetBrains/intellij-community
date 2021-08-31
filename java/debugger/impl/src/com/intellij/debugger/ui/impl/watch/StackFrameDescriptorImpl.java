@@ -44,7 +44,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private ObjectReference myThisObject;
   private SourcePosition mySourcePosition;
 
-  private Icon myIcon = AllIcons.Debugger.Frame;
+  private Icon myIcon = JBUIScale.scaleIcon(EmptyIcon.create(6));
 
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame, @NotNull MethodsTracker tracker) {
     myFrame = frame;
@@ -122,7 +122,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    myIcon = calcIcon();
+    calcIconLater(descriptorLabelListener);
 
     if (myLocation == null) {
       return "";
@@ -194,16 +194,17 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return mySourcePosition;
   }
 
-  private Icon calcIcon() {
+  private void calcIconLater(DescriptorLabelListener descriptorLabelListener) {
     try {
-      if(myFrame.isObsolete()) {
-        return AllIcons.Debugger.Db_obsolete;
-      }
+      myFrame.isObsolete().thenAccept(res -> {
+        if (res) {
+          myIcon = AllIcons.Debugger.Db_obsolete;
+          descriptorLabelListener.labelChanged();
+        }
+      });
     }
     catch (EvaluateException ignored) {
     }
-    //AllIcons.Debugger.StackFrame;
-    return JBUIScale.scaleIcon(EmptyIcon.create(6));
   }
 
   public Icon getIcon() {

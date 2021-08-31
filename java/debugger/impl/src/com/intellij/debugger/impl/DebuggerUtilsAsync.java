@@ -313,6 +313,20 @@ public final class DebuggerUtilsAsync {
     return self;
   }
 
+  public static CompletableFuture<Method> method(Location location) {
+    if (location instanceof LocationImpl && isAsyncEnabled()) {
+      return reschedule(((LocationImpl)location).methodAsync());
+    }
+    return toCompletableFuture(() -> location.method());
+  }
+
+  public static CompletableFuture<Boolean> isObsolete(Method method) {
+    if (method instanceof MethodImpl && isAsyncEnabled()) {
+      return reschedule(((MethodImpl)method).isObsoleteAsync());
+    }
+    return toCompletableFuture(() -> method.isObsolete());
+  }
+
   // Reader thread
   public static CompletableFuture<List<Method>> methods(ReferenceType type) {
     if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {

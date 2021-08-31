@@ -264,7 +264,10 @@ public class JavaExecutionStack extends XExecutionStack {
         for (XStackFrame frame : frames) {
           if (first || showFrame(frame)) {
             if (frame instanceof JavaStackFrame) {
-              ((JavaStackFrame)frame).getDescriptor().updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
+              ((JavaStackFrame)frame).getDescriptor().updateRepresentationNoNotify(null, () -> {
+              // repaint on icon change
+              myContainer.addStackFrames(Collections.emptyList(), !myStackFramesIterator.hasNext());
+            });
             }
             addFrameIfNeeded(frame, false);
           }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ThreeState;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
   private static final Logger LOG = Logger.getInstance(StackFrameProxyImpl.class);
@@ -32,7 +34,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
   private StackFrame myStackFrame;
   private ObjectReference myThisReference;
   private ClassLoaderReference myClassLoader;
-  private ThreeState myIsObsolete = ThreeState.UNSURE;
+  private volatile ThreeState myIsObsolete = ThreeState.UNSURE;
   private Map<LocalVariable, Value> myAllValues;
 
   public StackFrameProxyImpl(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull StackFrame frame, int fromBottomIndex /* 1-based */) {
@@ -42,36 +44,39 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     myStackFrame = frame;
   }
 
-  public boolean isObsolete() throws EvaluateException {
+  public CompletableFuture<Boolean> isObsolete() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!getVirtualMachine().canRedefineClasses()) {
-      return false;
+      return CompletableFuture.completedFuture(false);
     }
     checkValid();
     if (myIsObsolete != ThreeState.UNSURE) {
-      return myIsObsolete.toBoolean();
+      return CompletableFuture.completedFuture(myIsObsolete.toBoolean());
     }
-    InvalidStackFrameException error = null;
-    for (int attempt = 0; attempt < 2; attempt++) {
-      try {
-        Method method = DebuggerUtilsEx.getMethod(location());
-        boolean isObsolete = method == null || method.isObsolete();
-        myIsObsolete = ThreeState.fromBoolean(isObsolete);
-        return isObsolete;
-      }
-      catch (InvalidStackFrameException e) {
-        error = e;
-        clearCaches();
-      }
-      catch (InternalException e) {
-        if (e.errorCode() == JvmtiError.INVALID_METHODID) {
+    return DebuggerUtilsAsync.method(location())
+      .thenCompose(method -> {
+        if (method == null) {
+          myIsObsolete = ThreeState.YES;
+          return CompletableFuture.completedFuture(true);
+        }
+        else {
+          return DebuggerUtilsAsync.isObsolete(method).thenApply(res -> {
+            myIsObsolete = ThreeState.fromBoolean(res);
+            return res;
+          });
+        }
+      })
+      .exceptionally(throwable -> {
+        Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
+        if (exception instanceof InternalException && ((InternalException)exception).errorCode() == JvmtiError.INVALID_METHODID) {
           myIsObsolete = ThreeState.YES;
           return true;
         }
-        throw e;
-      }
-    }
-    throw new EvaluateException(error.getMessage(), error);
+        else {
+          DebuggerUtilsAsync.logError(throwable);
+          throw (RuntimeException)throwable;
+        }
+      });
   }
 
   @Override
