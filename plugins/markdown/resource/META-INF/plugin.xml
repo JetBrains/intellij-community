@@ -323,8 +323,5 @@ Includes the following features:</p>
       <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
               class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
-
-    <action id="org.intellij.plugins.markdown.settings.MarkdownFontSettingsAction"
-            class="org.intellij.plugins.markdown.settings.MarkdownFontSettingsAction"/>
   </actions>
 </idea-plugin>
