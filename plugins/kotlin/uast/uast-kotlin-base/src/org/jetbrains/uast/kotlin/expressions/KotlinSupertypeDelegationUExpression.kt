@@ -18,7 +18,7 @@ class KotlinSupertypeDelegationUExpression(
     val typeReference: UTypeReferenceExpression? by lz {
         sourcePsi.typeReference?.let {
             KotlinUTypeReferenceExpression(it, this) {
-                baseResolveProviderService.resolveToType(it, this) ?: UastErrorType
+                baseResolveProviderService.resolveToType(it, this, boxed = false) ?: UastErrorType
             }
         }
     }
