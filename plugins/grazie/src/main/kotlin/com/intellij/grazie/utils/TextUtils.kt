@@ -44,14 +44,21 @@ object Text {
 
   fun CharSequence.looksLikeCode(): Boolean {
     var codeChars = 0
-    var textChars = 0
+    var textTokens = 0
+    var inToken = false
     for (c in this) {
-      if ("(){}[]<>=+-*/%|&!;,.:\"'\\@$#^".contains(c)) {
-        codeChars++
-      } else if (c.isLetterOrDigit()) {
-        textChars++
+      if (c.isLetterOrDigit()) {
+        if (!inToken) {
+          inToken = true
+          textTokens++
+        }
+      } else {
+        inToken = false
+        if ("(){}[]<>=+-*/%|&!;,.:\"'\\@$#^".contains(c)) {
+          codeChars++
+        }
       }
     }
-    return codeChars > 0 && textChars / codeChars < 4
+    return codeChars > 0 && textTokens / codeChars < 2
   }
 }
