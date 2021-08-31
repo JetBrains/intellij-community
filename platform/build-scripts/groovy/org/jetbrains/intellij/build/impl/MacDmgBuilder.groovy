@@ -78,7 +78,7 @@ final class MacDmgBuilder {
     Files.createDirectories(signedFilesDir)
 
     List<String> failedToSign = []
-    customizer.getBinariesToSign(arch).each { relativePath ->
+    customizer.getBinariesToSign(buildContext, arch).each { relativePath ->
       buildContext.messages.progress("Signing $relativePath")
       Path fullPath = macDistPath.resolve(relativePath)
       ftpAction("put") {

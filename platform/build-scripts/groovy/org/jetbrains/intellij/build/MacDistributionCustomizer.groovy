@@ -87,14 +87,18 @@ abstract class MacDistributionCustomizer {
   /**
    * Relative paths to files in macOS distribution which should be signed
    */
-  List<String> getBinariesToSign(JvmArchitecture arch) {
-    def binary = RepairUtilityBuilder.BINARIES.find {
-      it.os == OsFamily.MACOS && it.arch == arch
+  List<String> getBinariesToSign(BuildContext context, JvmArchitecture arch) {
+    List<String> binaries = []
+    if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      def binary = RepairUtilityBuilder.BINARIES.find {
+        it.os == OsFamily.MACOS && it.arch == arch
+      }
+      if (binary == null) {
+        context.messages.error("No binary found for $OsFamily.MACOS and $arch")
+      }
+      binaries += binary.relativeTargetPath
     }
-    if (binary == null) {
-      throw new IllegalArgumentException("No binary found for $OsFamily.MACOS and $arch")
-    }
-    return [binary.relativeTargetPath]
+    return binaries
   }
 
   /**
