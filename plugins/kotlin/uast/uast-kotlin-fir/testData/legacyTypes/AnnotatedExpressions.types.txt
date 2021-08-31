@@ -1,11 +1,11 @@
 UFile (package = ) [public final class AnnotatedExpressionsKt {...]
     UClass (name = AnnotatedExpressionsKt) [public final class AnnotatedExpressionsKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:Unit
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:Unit
                 UDeclarationsExpression [@kotlin.Suppress var a: int = 1]
                     ULocalVariable (name = a) [@kotlin.Suppress var a: int = 1]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
@@ -14,7 +14,7 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                     ULocalVariable (name = b) [@kotlin.Suppress var b: int = 2]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                         ULiteralExpression (value = 2) [2] : PsiType:int
-                UBinaryExpression (operator = =) [b = a] : PsiType:void
+                UBinaryExpression (operator = =) [b = a] : PsiType:Unit
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     USimpleNameReferenceExpression (identifier = b) [b] : PsiType:int
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int

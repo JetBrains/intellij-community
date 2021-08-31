@@ -109,7 +109,9 @@ internal fun KotlinType.toPsiType(lightDeclaration: PsiModifierListOwner?, conte
             StandardClassIds.Char.asSingleFqName() -> PsiType.CHAR.orBoxed()
             StandardClassIds.Double.asSingleFqName() -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float.asSingleFqName() -> PsiType.FLOAT.orBoxed()
-            StandardClassIds.Unit.asSingleFqName() -> PsiType.VOID.orBoxed()
+            StandardClassIds.Unit.asSingleFqName() -> {
+                if (context is KtNamedFunction) PsiType.VOID.orBoxed() else null
+            }
             StandardClassIds.String.asSingleFqName() -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> {
                 when (val typeConstructor = this.constructor) {

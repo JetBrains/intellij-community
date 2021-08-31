@@ -14,12 +14,12 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                             UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
                                 USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
                                 USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
-                UBinaryExpression (operator = =) [a.mutableProp = 1] : PsiType:void
+                UBinaryExpression (operator = =) [a.mutableProp = 1] : PsiType:Unit
                     UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                     ULiteralExpression (value = 1) [1] : PsiType:int
-                UBinaryExpression (operator = +=) [a.mutableProp += x] : PsiType:void
+                UBinaryExpression (operator = +=) [a.mutableProp += x] : PsiType:Unit
                     UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
@@ -40,10 +40,10 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                     ULocalVariable (name = x) [var x: int = -mutableProp]
                         UPrefixExpression (operator = -) [-mutableProp] : PsiType:int
                             USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
-                UBinaryExpression (operator = =) [mutableProp = 1] : PsiType:void
+                UBinaryExpression (operator = =) [mutableProp = 1] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                     ULiteralExpression (value = 1) [1] : PsiType:int
-                UBinaryExpression (operator = +=) [mutableProp += x] : PsiType:void
+                UBinaryExpression (operator = +=) [mutableProp += x] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                 UPrefixExpression (operator = ++) [++mutableProp] : PsiType:int
@@ -67,7 +67,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                 UDeclarationsExpression [var result: int = privateProp]
                     ULocalVariable (name = result) [var result: int = privateProp]
                         USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : PsiType:int
-                UBinaryExpression (operator = =) [privateProp = x] : PsiType:void
+                UBinaryExpression (operator = =) [privateProp = x] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : PsiType:int
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                 UReturnExpression [return privateProp] : PsiType:Void
@@ -76,7 +76,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UBlockExpression [{...}] : PsiType:void
-                    UBinaryExpression (operator = =) [mutableProp = init] : PsiType:void
+                UBlockExpression [{...}] : PsiType:Unit
+                    UBinaryExpression (operator = =) [mutableProp = init] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                         USimpleNameReferenceExpression (identifier = init) [init] : PsiType:int

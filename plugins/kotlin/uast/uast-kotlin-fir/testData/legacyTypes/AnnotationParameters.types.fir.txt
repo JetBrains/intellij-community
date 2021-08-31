@@ -36,7 +36,7 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                     ULiteralExpression (value = "Dolor") ["Dolor"] : PsiType:String
             UBlockExpression [{...}]
                 UReturnExpression [return Unit]
-                    USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:Unit
         UMethod (name = fooWithArrLiteral) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])...}]
             UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])]
                 UNamedExpression (name = anyOf) [anyOf = collectionLiteral[1, 2, 3]]

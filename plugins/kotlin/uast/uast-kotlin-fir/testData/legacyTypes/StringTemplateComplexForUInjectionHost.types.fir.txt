@@ -55,10 +55,10 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                 UReturnExpression [return i]
                     USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
         UMethod (name = foo) [public static final fun foo() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] : PsiType:Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = baz) [baz] : PsiType:<ErrorType>
                 UDeclarationsExpression [var template1: java.lang.String = simpleForTemplate()]
                     ULocalVariable (name = template1) [var template1: java.lang.String = simpleForTemplate()]

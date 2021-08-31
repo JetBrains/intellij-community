@@ -17,7 +17,7 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
         UMethod (name = getXs) [public static final fun getXs() : Z[] = UastEmptyExpression]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UBinaryExpression (operator = =) [xs[0] = <init>(12)] : PsiType:void
+                UBinaryExpression (operator = =) [xs[0] = <init>(12)] : PsiType:Unit
                     UArrayAccessExpression [xs[0]] : PsiType:int
                         USimpleNameReferenceExpression (identifier = xs) [xs] : PsiType:Z[]
                         ULiteralExpression (value = 0) [0] : PsiType:int
@@ -30,7 +30,7 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                         UArrayAccessExpression [xs[0]] : PsiType:int
                             USimpleNameReferenceExpression (identifier = xs) [xs] : PsiType:Z[]
                             ULiteralExpression (value = 0) [0] : PsiType:int
-                UIfExpression [if (t.data != 12) throw <init>(t)] : PsiType:void
+                UIfExpression [if (t.data != 12) throw <init>(t)] : PsiType:Unit
                     UBinaryExpression (operator = !=) [t.data != 12] : PsiType:boolean
                         UQualifiedReferenceExpression [t.data] : PsiType:int
                             USimpleNameReferenceExpression (identifier = t) [t] : PsiType:int
