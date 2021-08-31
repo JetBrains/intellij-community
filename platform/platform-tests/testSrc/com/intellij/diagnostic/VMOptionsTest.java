@@ -9,10 +9,12 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
@@ -71,8 +73,8 @@ public class VMOptionsTest {
 
   @Test
   public void writing() throws IOException {
-    VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 512);
+    VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
+    VMOptions.setOption(VMOptions.MemoryKind.METASPACE, 512);
 
     assertThat(myFile).hasContent("-Xmx1024m\n-XX:MaxMetaspaceSize=512m");
   }
@@ -81,8 +83,8 @@ public class VMOptionsTest {
   public void writingPreservingLocation() throws IOException {
     Files.write(myFile, List.of("-someOption", "-Xmx512m", "-XX:MaxMetaspaceSize=128m", "-anotherOption"));
 
-    VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 256);
+    VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
+    VMOptions.setOption(VMOptions.MemoryKind.METASPACE, 256);
 
     assertThat(myFile).hasContent("-someOption\n-Xmx1024m\n-XX:MaxMetaspaceSize=256m\n-anotherOption");
   }
@@ -91,38 +93,43 @@ public class VMOptionsTest {
   public void writingNew() throws IOException {
     Files.writeString(myFile, "-someOption");
 
-    VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 256);
-    VMOptions.writeOption(VMOptions.MemoryKind.CODE_CACHE, 256);
+    VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
+    VMOptions.setOption(VMOptions.MemoryKind.METASPACE, 256);
+    VMOptions.setOption(VMOptions.MemoryKind.CODE_CACHE, 256);
 
     assertThat(myFile).hasContent("-someOption\n-Xmx1024m\n-XX:MaxMetaspaceSize=256m\n-XX:ReservedCodeCacheSize=256m");
   }
 
-  @Test
+  @Test(expected = AccessDeniedException.class)
   public void writingReadOnlyFile() throws IOException {
     NioFiles.setReadOnly(myFile, true);
-    VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 256);
-
-    assertThat(myFile).hasContent("-Xmx1024m\n-XX:MaxMetaspaceSize=256m");
+    VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
   }
 
   @Test
   public void writingNonExistingFile() throws IOException {
     Files.delete(myFile);
 
-    VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 256);
+    VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
+    VMOptions.setOption(VMOptions.MemoryKind.METASPACE, 256);
 
     assertThat(myFile).hasContent("-Xmx1024m\n-XX:MaxMetaspaceSize=256m");
+  }
+
+  @Test
+  public void deletingAllEntries() throws IOException {
+    Files.write(myFile, List.of("-Xmx128m", "-XX:MaxMetaspaceSize=240m", "-Xmx512m", "-Dx=y"));
+
+    VMOptions.setOption(VMOptions.MemoryKind.HEAP, -1);
+
+    assertThat(myFile).hasContent("-XX:MaxMetaspaceSize=240m\n-Dx=y");
   }
 
   @Test
   public void writingCDSArchiveFileFromScratch() throws IOException {
     Files.delete(myFile);
 
-    String myCDSFile = "a/b/c/cds-for-test.jsa";
-    VMOptions.writeEnableCDSArchiveOption(myCDSFile);
+    enableCDS("a/b/c/cds-for-test.jsa");
 
     assertThat(myFile).hasContent("-Xshare:auto\n-XX:+UnlockDiagnosticVMOptions\n-XX:SharedArchiveFile=a/b/c/cds-for-test.jsa");
   }
@@ -131,8 +138,7 @@ public class VMOptionsTest {
   public void writingCDSArchiveFileFromXDumpClash() throws IOException {
     Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-Xshare:dump", "junk"));
 
-    String myCDSFile = "a/b/c/cds-for-test.jsa";
-    VMOptions.writeEnableCDSArchiveOption(myCDSFile);
+    enableCDS("a/b/c/cds-for-test.jsa");
 
     assertThat(myFile).hasContent(
       "-someOption\n-Xmx512m\n-anotherOption\n-Xshare:auto\njunk\n-XX:+UnlockDiagnosticVMOptions\n-XX:SharedArchiveFile=a/b/c/cds-for-test.jsa");
@@ -142,8 +148,7 @@ public class VMOptionsTest {
   public void writingCDSArchiveFileFromXXClash() throws IOException {
     Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-XX:+UnlockDiagnosticVMOptions", "junk"));
 
-    String myCDSFile = "a/b/c/cds-for-test.jsa";
-    VMOptions.writeEnableCDSArchiveOption(myCDSFile);
+    enableCDS("a/b/c/cds-for-test.jsa");
 
     assertThat(myFile).hasContent(
       "-someOption\n-Xmx512m\n-anotherOption\n-XX:+UnlockDiagnosticVMOptions\njunk\n-Xshare:auto\n-XX:SharedArchiveFile=a/b/c/cds-for-test.jsa");
@@ -153,8 +158,7 @@ public class VMOptionsTest {
   public void writingCDSArchiveFileFromArchiveClash() throws IOException {
     Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-XX:SharedArchiveFile=foo-bar", "junk"));
 
-    String myCDSFile = "cds-for-test.jsa";
-    VMOptions.writeEnableCDSArchiveOption(myCDSFile);
+    enableCDS("cds-for-test.jsa");
 
     assertThat(myFile).hasContent(
       "-someOption\n-Xmx512m\n-anotherOption\n-XX:SharedArchiveFile=cds-for-test.jsa\njunk\n-Xshare:auto\n-XX:+UnlockDiagnosticVMOptions");
@@ -164,7 +168,7 @@ public class VMOptionsTest {
   public void writingCDSDisableScratch() throws IOException {
     Files.writeString(myFile, "");
 
-    VMOptions.writeDisableCDSArchiveOption();
+    disableCDS();
 
     assertThat(myFile).hasContent("");
   }
@@ -176,7 +180,7 @@ public class VMOptionsTest {
       "-XX:SharedArchiveFile=a/b/c/cds-for-test.jsa", "junk3");
     Files.write(myFile, lines);
 
-    VMOptions.writeDisableCDSArchiveOption();
+    disableCDS();
 
     assertThat(myFile).hasContent("-someOption\n-Xmx512m\n-anotherOption\n-XX:+UnlockDiagnosticVMOptions\njunk\njunk2\njunk3");
   }
@@ -187,8 +191,16 @@ public class VMOptionsTest {
       "-someOption", "-Xmx512m", "-anotherOption", "-XX:+UnlockDiagnosticVMOptions", "-Xshare:dump", "-XX:SharedArchiveFile=545\njunk");
     Files.write(myFile, lines);
 
-    VMOptions.writeDisableCDSArchiveOption();
+    disableCDS();
 
     assertThat(myFile).hasContent("-someOption\n-Xmx512m\n-anotherOption\n-XX:+UnlockDiagnosticVMOptions\njunk");
+  }
+
+  private static void enableCDS(String path) throws IOException {
+    VMOptions.setOptions(List.of(pair("-Xshare:", "auto"), pair("-XX:+UnlockDiagnosticVMOptions", ""), pair("-XX:SharedArchiveFile=", path)));
+  }
+
+  private static void disableCDS() throws IOException {
+    VMOptions.setOptions(List.of(pair("-Xshare:", null), pair("-XX:SharedArchiveFile=", null)));
   }
 }

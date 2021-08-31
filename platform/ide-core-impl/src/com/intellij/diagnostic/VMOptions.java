@@ -7,10 +7,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -18,13 +20,15 @@ import org.jetbrains.annotations.PropertyKey;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ListIterator;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
@@ -50,43 +54,78 @@ public final class VMOptions {
     }
   }
 
+  /**
+   * Returns a value of the given {@link MemoryKind memory setting} (in MiBs), or {@code -1} when unable to find out
+   * (e.g. a user doesn't have custom memory settings).
+   *
+   * @see #readOption(String, boolean)
+   */
   public static int readOption(@NotNull MemoryKind kind, boolean effective) {
-    List<String> arguments;
-    if (effective) {
-      arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-    }
-    else {
-      Path file = getWriteFile();
-      if (file == null || !Files.exists(file)) {
-        return -1;
-      }
-
+    String strValue = readOption(kind.option, effective);
+    if (strValue != null) {
       try {
-        arguments = FileUtil.loadLines(file.toFile());
+        return (int)(parseMemoryOption(strValue) >> 20);
       }
-      catch (IOException e) {
-        LOG.warn(e);
-        return -1;
-      }
-    }
-
-    for (String argument : arguments) {
-      if (argument.startsWith(kind.option)) {
-        try {
-          return (int)(parseMemoryOption(argument.substring(kind.option.length())) >> 20);
-        }
-        catch (IllegalArgumentException e) {
-          LOG.info(e);
-          break;
-        }
+      catch (IllegalArgumentException e) {
+        LOG.info(e);
       }
     }
-
     return -1;
   }
 
   /**
-   * Parses a Java VM memory option string (such as "-Xmx") and returns its numeric value, in bytes.
+   * Returns a value of the given option, or {@code null} when unable to find.
+   *
+   * @param effective when {@code true}, the method returns a value for the current JVM (from {@link ManagementFactory#getRuntimeMXBean()}),
+   *                  otherwise it reads a user's .vmoptions {@link #getWriteFile file}.
+   */
+  public static @Nullable String readOption(@NotNull String prefix, boolean effective) {
+    List<String> lines = options(effective);
+    for (int i = lines.size() - 1; i >= 0; i--) {
+      String line = lines.get(i).trim();
+      if (line.startsWith(prefix)) {
+        return line.substring(prefix.length());
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Returns a (possibly empty) list of values of the given option.
+   *
+   * @see #readOption(String, boolean)
+   */
+  public static @NotNull List<String> readOptions(@NotNull String prefix, boolean effective) {
+    List<String> lines = options(effective), values = new SmartList<>();
+    for (String s : lines) {
+      String line = s.trim();
+      if (line.startsWith(prefix)) {
+        values.add(line.substring(prefix.length()));
+      }
+    }
+    return values;
+  }
+
+  private static List<String> options(boolean effective) {
+    if (effective) {
+      return ManagementFactory.getRuntimeMXBean().getInputArguments();
+    }
+    else {
+      Path file = getWriteFile();
+      if (file != null && Files.exists(file)) {
+        try {
+          return Files.readAllLines(file);
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      }
+    }
+    return List.of();
+  }
+
+  /**
+   * Parses a Java VM memory option (such as "-Xmx") string value and returns its numeric value, in bytes.
    * See <a href="https://docs.oracle.com/en/java/javase/16/docs/specs/man/java.html#extra-options-for-java">'java' command manual</a>
    * for the syntax.
    *
@@ -106,83 +145,75 @@ public final class VMOptions {
     return numValue;
   }
 
-  public static void writeOption(@NotNull MemoryKind option, int value) {
-    String optionValue = option.option + value + "m";
-    writeGeneralOption(Pattern.compile(option.option + "(\\d*)([a-zA-Z]*)"), optionValue);
+  /**
+   * Sets or deletes a Java memory limit (in MiBs). See {@link #setOption(String, String)} for details.
+   */
+  public static void setOption(@NotNull MemoryKind option, int value) throws IOException {
+    setOption(option.option, value > 0 ? value + "m" : null);
   }
 
-  public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
-    writeGeneralOption(Pattern.compile("-D" + option + separator + "(true|false)*([a-zA-Z0-9]*)"), "-D" + option + separator + value);
+  /**
+   * Sets or deletes a Java system property. See {@link #setOption(String, String)} for details.
+   */
+  public static void setProperty(@NotNull String name, @Nullable String newValue) throws IOException {
+    setOption("-D" + name + '=', newValue);
   }
 
-  public static void writeEnableCDSArchiveOption(@NotNull final String archivePath) {
-    writeGeneralOptions(
-      Function.<String>identity()
-        .andThen(replaceOrAddOption(Pattern.compile("-Xshare:.*"), "-Xshare:auto"))
-        .andThen(replaceOrAddOption(Pattern.compile("-XX:\\+UnlockDiagnosticVMOptions"), "-XX:+UnlockDiagnosticVMOptions"))
-        .andThen(replaceOrAddOption(Pattern.compile("-XX:SharedArchiveFile=.*"), "-XX:SharedArchiveFile=" + archivePath))
-    );
+  /**
+   * <p>Sets or deletes a VM option in a user's .vmoptions {@link #getWriteFile file}.</p>
+   *
+   * <p>When {@code newValue} is {@code null}, all options that start with a given prefix are removed from the file.
+   * When {@code newValue} is not {@code null} and an option is present in the file, it's value is replaced, otherwise
+   * the option is added to the file.</p>
+   */
+  public static void setOption(@NotNull String prefix, @Nullable String newValue) throws IOException {
+    setOptions(List.of(pair(prefix, newValue)));
   }
 
-  public static void writeDisableCDSArchiveOption() {
-    writeGeneralOptions(
-      Function.<String>identity()
-        .andThen(replaceOrAddOption(Pattern.compile("-Xshare:.*\\r?\\n?"), ""))
-        // we cannot remove "-XX:+UnlockDiagnosticVMOptions", we do not know the reason it was included
-        .andThen(replaceOrAddOption(Pattern.compile("-XX:SharedArchiveFile=.*\\r?\\n?"), ""))
-    );
-  }
-
-  private static void writeGeneralOption(@NotNull Pattern pattern, @NotNull String value) {
-    writeGeneralOptions(replaceOrAddOption(pattern, value));
-  }
-
-  @NotNull
-  private static Function<String, String> replaceOrAddOption(@NotNull Pattern pattern, @NotNull String value) {
-    return content -> {
-      if (!StringUtil.isEmptyOrSpaces(content)) {
-        Matcher m = pattern.matcher(content);
-        if (m.find()) {
-          StringBuilder b = new StringBuilder();
-          m.appendReplacement(b, Matcher.quoteReplacement(value));
-          m.appendTail(b);
-          content = b.toString();
-        }
-        else if (!StringUtil.isEmptyOrSpaces(value)) {
-          content = StringUtil.trimTrailing(content) + System.lineSeparator() + value;
-        }
-      }
-      else {
-        content = value;
-      }
-
-      return content;
-    };
-  }
-
-  private static void writeGeneralOptions(@NotNull Function<? super String, String> transformContent) {
-    Path path = getWriteFile();
-    if (path == null) {
-      LOG.warn("VM options file not configured");
-      return;
+  /**
+   * Sets or deletes multiple options in one pass. See {@link #setOption(String, String)} for details.
+   */
+  public static void setOptions(@NotNull List<Pair<@NotNull String, @Nullable String>> _options) throws IOException {
+    Path file = getWriteFile();
+    if (file == null) {
+      throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ")");
     }
 
-    File file = path.toFile();
-    try {
-      String content = file.exists() ? FileUtil.loadFile(file) : read();
-      content = transformContent.apply(content);
+    List<String> lines = Files.exists(file) ? new ArrayList<>(Files.readAllLines(file)) : new ArrayList<>();
+    List<Pair<String, @Nullable String>> options = new ArrayList<>(_options);
+    boolean modified = false;
 
-      if (file.exists()) {
-        FileUtil.setReadOnlyAttribute(file.getPath(), false);
+    for (ListIterator<String> il = lines.listIterator(lines.size()); il.hasPrevious(); ) {
+      String line = il.previous().trim();
+      for (Iterator<Pair<String, String>> io = options.iterator(); io.hasNext(); ) {
+        Pair<String, String> option = io.next();
+        if (line.startsWith(option.first)) {
+          if (option.second == null) {
+            il.remove();
+            modified = true;
+          }
+          else {
+            String newLine = option.first + option.second;
+            if (!newLine.equals(line)) {
+              il.set(newLine);
+              modified = true;
+            }
+            io.remove();
+          }
+          break;
+        }
       }
-      else {
-        FileUtil.ensureExists(file.getParentFile());
-      }
-
-      FileUtil.writeToFile(file, content);
     }
-    catch (IOException e) {
-      LOG.warn(e);
+
+    for (Pair<String, String> option : options) {
+      if (option.second != null) {
+        lines.add(option.first + option.second);
+        modified = true;
+      }
+    }
+
+    if (modified) {
+      Files.write(file, lines);
     }
   }
 
@@ -195,12 +226,12 @@ public final class VMOptions {
     try {
       Path newFile = getWriteFile();
       if (newFile != null && Files.exists(newFile)) {
-        return FileUtil.loadFile(newFile.toFile());
+        return Files.readString(newFile);
       }
 
       String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
       if (vmOptionsFile != null) {
-        return FileUtil.loadFile(new File(vmOptionsFile));
+        return Files.readString(Path.of(vmOptionsFile));
       }
     }
     catch (IOException e) {
@@ -220,7 +251,7 @@ public final class VMOptions {
     vmOptionsFile = new File(vmOptionsFile).getAbsolutePath();
     if (!PathManager.isUnderHomeDirectory(vmOptionsFile)) {
       // a file is located outside the IDE installation - meaning it is safe to overwrite
-      return Paths.get(vmOptionsFile);
+      return Path.of(vmOptionsFile);
     }
 
     String location = PathManager.getCustomOptionsDirectory();
@@ -228,7 +259,7 @@ public final class VMOptions {
       return null;
     }
 
-    return Paths.get(location, getCustomVMOptionsFileName());
+    return Path.of(location, getCustomVMOptionsFileName());
   }
 
   @NotNull
@@ -239,4 +270,31 @@ public final class VMOptions {
     fileName += ".vmoptions";
     return fileName;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated ignores write errors; please use {@link #setOption(MemoryKind, int)} instead */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static void writeOption(@NotNull MemoryKind option, int value) {
+    try {
+      setOption(option.option, value + "m");
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+
+  /** @deprecated ignores write errors; please use {@link #setProperty} instead */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
+    try {
+      setOption("-D" + option + separator, value);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+  //</editor-fold>
 }
