@@ -20,21 +20,6 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull ModuleCustomImlDataEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityIterator(@NotNull ModuleCustomImlDataEntity entity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project) {
-    return Collections.emptyList();
-  }
-
-  @Override
   public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull ModuleCustomImlDataEntity entity,
                                                                                       @NotNull WorkspaceEntityStorage storage,
                                                                                       @NotNull Project project) {

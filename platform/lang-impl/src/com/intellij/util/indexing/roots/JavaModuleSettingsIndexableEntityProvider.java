@@ -4,7 +4,6 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -16,21 +15,6 @@ class JavaModuleSettingsIndexableEntityProvider implements IndexableEntityProvid
   @Override
   public @NotNull Class<JavaModuleSettingsEntity> getEntityClass() {
     return JavaModuleSettingsEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityIterator(@NotNull JavaModuleSettingsEntity entity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project) {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull JavaModuleSettingsEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
-    return Collections.emptyList();
   }
 
   @Override

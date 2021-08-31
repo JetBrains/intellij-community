@@ -64,7 +64,9 @@ object IndexableEntityProviderMethods {
       val iterators = mutableListOf<IndexableFilesIterator>()
       val entityStorage = WorkspaceModel.Companion.getInstance(project).entityStorage.current
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
-        addIteratorsFromProvider(provider, entity, entityStorage, project, iterators)
+        if (provider is IndexableEntityProvider.Existing) {
+          addIteratorsFromProvider(provider, entity, entityStorage, project, iterators)
+        }
       }
       return mergeIterators(iterators)
     }
@@ -78,7 +80,7 @@ object IndexableEntityProviderMethods {
   }
 
 
-  private fun <E : WorkspaceEntity> addIteratorsFromProvider(provider: IndexableEntityProvider<E>,
+  private fun <E : WorkspaceEntity> addIteratorsFromProvider(provider: IndexableEntityProvider.Existing<E>,
                                                              moduleEntity: ModuleEntity,
                                                              entityStorage: WorkspaceEntityStorage,
                                                              project: Project,

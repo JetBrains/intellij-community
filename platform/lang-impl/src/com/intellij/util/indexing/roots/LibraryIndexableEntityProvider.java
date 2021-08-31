@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +21,6 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
   @Override
   public @NotNull Class<LibraryEntity> getEntityClass() {
     return LibraryEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull LibraryEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
-    return Collections.emptyList();
   }
 
   @Override

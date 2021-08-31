@@ -19,11 +19,22 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider<ModuleEntity> {
+public class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider.Existing<ModuleEntity> {
 
   @Override
   public @NotNull Class<ModuleEntity> getEntityClass() {
     return ModuleEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityIterator(@NotNull ModuleEntity entity,
+                                                                                         @NotNull WorkspaceEntityStorage storage,
+                                                                                         @NotNull Project project) {
+    List<IndexableFilesIterator> iterators = new SmartList<>();
+    for (ModuleDependencyItem dependency : entity.getDependencies()) {
+      iterators.addAll(createIteratorsForDependency(project, dependency, storage));
+    }
+    return iterators;
   }
 
   @Override

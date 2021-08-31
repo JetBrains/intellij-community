@@ -21,7 +21,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class ContentRootIndexableEntityProvider implements IndexableEntityProvider.ModuleEntityDependent<ContentRootEntity> {
+class ContentRootIndexableEntityProvider implements IndexableEntityProvider.ModuleEntityDependent<ContentRootEntity>,
+                                                    IndexableEntityProvider.Existing<ContentRootEntity> {
 
   @Override
   public @NotNull Class<ContentRootEntity> getEntityClass() {

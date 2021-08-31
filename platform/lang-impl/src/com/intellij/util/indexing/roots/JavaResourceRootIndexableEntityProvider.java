@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import static com.intellij.util.indexing.roots.JavaSourceRootIndexableEntityProvider.collectIteratorsOnAddedEntityWithDataExtractor;
 import static com.intellij.util.indexing.roots.JavaSourceRootIndexableEntityProvider.collectIteratorsOnReplacedEntityWithDataExtractor;
@@ -22,17 +21,6 @@ class JavaResourceRootIndexableEntityProvider implements IndexableEntityProvider
   @Override
   public @NotNull Class<JavaResourceRootEntity> getEntityClass() {
     return JavaResourceRootEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull JavaResourceRootEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
-    if (moduleEntity.equals(entity.getSourceRoot().getContentRoot().getModule())) {
-      return getExistingEntityIterator(entity, entityStorage, project);
-    }
-    return Collections.emptyList();
   }
 
   @Override

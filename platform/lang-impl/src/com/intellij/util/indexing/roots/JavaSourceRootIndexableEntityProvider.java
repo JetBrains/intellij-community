@@ -25,17 +25,6 @@ class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<J
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull JavaSourceRootEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
-    if (entity.getSourceRoot().getContentRoot().getModule().equals(moduleEntity)) {
-      return getExistingEntityIterator(entity, entityStorage, project);
-    }
-    return Collections.emptyList();
-  }
-
-  @Override
   public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull JavaSourceRootEntity entity,
                                                                                       @NotNull WorkspaceEntityStorage storage,
                                                                                       @NotNull Project project) {

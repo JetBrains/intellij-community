@@ -25,7 +25,9 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
       val iterators: MutableList<IndexableFilesIterator> = mutableListOf()
       val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
-        addIteratorsFromProvider(provider, entityStorage, project, iterators)
+        if (provider is IndexableEntityProvider.Existing) {
+          addIteratorsFromProvider(provider, entityStorage, project, iterators)
+        }
       }
       return mergeIterators(iterators)
     }
@@ -75,13 +77,13 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
   }
 
   companion object {
-    private fun <E : WorkspaceEntity> addIteratorsFromProvider(provider: IndexableEntityProvider<E>,
+    private fun <E : WorkspaceEntity> addIteratorsFromProvider(provider: IndexableEntityProvider.Existing<E>,
                                                                entityStorage: WorkspaceEntityStorage,
                                                                project: Project,
                                                                iterators: MutableList<IndexableFilesIterator>) {
       val entityClass = provider.entityClass
       for (entity in entityStorage.entities(entityClass)) {
-        iterators.addAll(provider.getAddedEntityIterator(entity, entityStorage, project))
+        iterators.addAll(provider.getExistingEntityIterator(entity, entityStorage, project))
       }
     }
 
