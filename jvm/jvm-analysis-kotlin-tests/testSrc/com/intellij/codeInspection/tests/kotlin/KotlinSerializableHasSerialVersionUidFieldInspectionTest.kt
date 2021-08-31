@@ -1,12 +1,8 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.SerializableHasSerialVersionUidFieldInspectionTestBase
-import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 
 class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {
-  override fun getBasePath() =
-    KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/serializablehasserialversionuidfield"
-
   fun `test highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       import java.io.Serializable

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.tests
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.InspectionTestUtil
@@ -16,14 +17,16 @@ abstract class UastInspectionTestBase : JavaCodeInsightFixtureTestCase() {
 
   abstract val inspection: InspectionProfileEntry
 
+  protected open val languageLevel = LanguageLevel.JDK_1_8
+
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(inspection)
+    LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
   }
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     super.tuneFixture(moduleBuilder)
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().path)
   }
 

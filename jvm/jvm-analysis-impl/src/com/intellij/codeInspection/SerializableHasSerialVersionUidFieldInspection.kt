@@ -4,13 +4,16 @@ package com.intellij.codeInspection
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmValue
+import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddFieldActions
 import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.lang.jvm.actions.fieldRequest
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiUtil
 import com.siyeh.HardcodedMethodConstants
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.fixes.SerialVersionUIDBuilder
@@ -46,8 +49,12 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
       val psiClass = uClass.javaPsi
       val containingFile = psiClass.containingFile ?: return
       val serialUid = SerialVersionUIDBuilder.computeDefaultSUID(psiClass)
+      val annotations = if (PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_14)) {
+        listOf(annotationRequest("java.io.Serial"))
+      } else emptyList()
       val action = createAddFieldActions(psiClass, fieldRequest(
         fieldName = HardcodedMethodConstants.SERIAL_VERSION_UID,
+        annotations = annotations,
         modifiers = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC),
         fieldType = expectedTypes(PsiType.LONG),
         targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
