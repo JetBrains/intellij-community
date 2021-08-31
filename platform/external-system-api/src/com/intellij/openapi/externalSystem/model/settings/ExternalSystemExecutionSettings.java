@@ -68,6 +68,10 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     return Collections.unmodifiableList(myArguments);
   }
 
+  /**
+   * @deprecated ExternalSystemExecutionSettings isn't modifiable
+   */
+  @Deprecated
   public void setArguments(@NotNull List<String> arguments) {
     myArguments = new ArrayList<>(arguments);
   }
