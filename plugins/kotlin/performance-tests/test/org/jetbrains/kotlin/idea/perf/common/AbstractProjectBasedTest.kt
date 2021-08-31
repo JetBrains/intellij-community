@@ -77,17 +77,40 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
 
 
     private fun perfOpenRustPluginProject(projectData: ProjectData, stats: Stats) {
-        if (projectData.openAction == ProjectOpenAction.GRADLE_PROJECT) {
-            System.setProperty("org.gradle.native", "false")
+        withGradleNativeSetToFalse(projectData.openAction) {
+            myProject = perfOpenProject(
+                name = projectData.name,
+                stats = stats,
+                note = "",
+                path = projectData.path,
+                openAction = projectData.openAction,
+                fast = true
+            )
         }
-        myProject = perfOpenProject(
-            name = projectData.name,
-            stats = stats,
-            note = "",
-            path = projectData.path,
-            openAction = projectData.openAction,
-            fast = true
-        )
+    }
+
+    private inline fun withGradleNativeSetToFalse(openAction: ProjectOpenAction, body: () -> Unit) {
+        when (openAction) {
+            ProjectOpenAction.GRADLE_PROJECT -> {
+                val oldValue = System.getProperty(ORG_GRADLE_NATIVE)
+                System.setProperty("org.gradle.native", "false")
+                try {
+                    body()
+                } finally {
+                    when (oldValue) {
+                        null -> System.clearProperty(ORG_GRADLE_NATIVE)
+                        else -> System.setProperty(ORG_GRADLE_NATIVE, oldValue)
+                    }
+                }
+            }
+            else -> {
+                body()
+            }
+        }
+    }
+
+    companion object {
+        private const val ORG_GRADLE_NATIVE = "org.gradle.native"
     }
 }
 
