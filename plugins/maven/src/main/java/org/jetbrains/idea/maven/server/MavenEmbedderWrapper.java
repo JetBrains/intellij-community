@@ -22,7 +22,7 @@ import java.util.*;
 
 public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
   private Customization myCustomization;
-  private Project myProject;
+  private final Project myProject;
 
   public MavenEmbedderWrapper(@NotNull Project project, @Nullable RemoteObjectWrapper<?> parent) {
     super(parent);
@@ -93,7 +93,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                    myCustomization.failOnUnresolvedDependency,
                                    myCustomization.console,
                                    myCustomization.indicator,
-                                   myCustomization.alwaysUpdateSnapshot || ApplicationManager.getApplication().isUnitTestMode(),
+                                   myCustomization.alwaysUpdateSnapshot,
                                    myCustomization.userProperties,
                                    ourToken);
   }
