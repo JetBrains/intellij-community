@@ -57,4 +57,10 @@ class B implements A {}
 interface C extends A {}
 class D implements <error>A</error> {}'''
   }
+
+  void 'test non-sealed class without sealed superclass'() {
+    highlightingTest '''
+<error>non-sealed</error> class A {}
+'''
+  }
 }

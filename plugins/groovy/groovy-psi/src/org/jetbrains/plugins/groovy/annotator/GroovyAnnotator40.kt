@@ -59,6 +59,18 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
         }
       }
     }
+    if (nonSealed != null) {
+      val referencedClasses = (owner.extendsClause?.referencedTypes?.toList() ?: emptyList()) + (owner.implementsClause?.referencedTypes?.toList() ?: emptyList())
+      if (referencedClasses.all { it.resolve()?.hasModifierProperty(GrModifier.SEALED) != true }) {
+        if (owner.isInterface) {
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               GroovyBundle.message("inspection.message.interface.cannot.be.non.sealed.without.sealed.parent", owner.name)).range(nonSealed).create()
+        } else {
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               GroovyBundle.message("inspection.message.class.cannot.be.non.sealed.without.sealed.parent", owner.name)).range(nonSealed).create()
+        }
+      }
+    }
   }
 
   private fun checkEnum(owner: GrTypeDefinition,
