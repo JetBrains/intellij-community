@@ -288,8 +288,8 @@ public final class JobLauncherImpl extends JobLauncher {
               if (element == null) element = things.take();
 
               if (element == tombStone) {
-                boolean success = things.offer(tombStone); // return just popped tombStone to the 'things' queue for everybody else to sense it
-                assert success; // since the queue is drained up to the tombStone, there surely should be a place for one element
+                things.put(tombStone); // return just popped tombStone to the 'things' queue for everybody else to see it
+                // since the queue is drained up to the tombStone, there surely should be a place for one element
                 result[0] = true;
                 break;
               }
@@ -331,7 +331,12 @@ public final class JobLauncherImpl extends JobLauncher {
     // if the tombstone was removed by this batch operation, return it back to the queue to give chance tasks to stop themselves
     if (ContainerUtil.getLastItem(firstElements) == tombStone) {
       firstElements.remove(firstElements.size() - 1);
-      things.offer(tombStone);
+      try {
+        things.put(tombStone);
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
     }
     for (int i = 0; i < n-1; i++) {
       tasks.add(ForkJoinPool.commonPool().submit(new MyProcessQueueTask(i, i < firstElements.size() ? firstElements.get(i) : null)));

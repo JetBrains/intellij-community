@@ -332,7 +332,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     BlockingQueue<VirtualFile> filesToInspect = new ArrayBlockingQueue<>(1000);
     // use original progress indicator here since we don't want it to cancel on write action start
     ProgressIndicator iteratingIndicator = new SensitiveProgressWrapper(progressIndicator);
-    Future<?> future = startIterateScopeInBackground(scope, localScopeFiles, headlessEnvironment, filesToInspect, iteratingIndicator);
+    Future<?> future = startIterateScopeInBackground(scope, iteratingIndicator, headlessEnvironment, localScopeFiles, filesToInspect);
 
     PsiManager psiManager = PsiManager.getInstance(getProject());
     Processor<VirtualFile> processor = virtualFile -> {
@@ -348,11 +348,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           return true;
         }
         boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
+        List<GlobalInspectionToolWrapper> globalSimpleWrappers = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow,
+                                                                       wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
+        List<LocalInspectionToolWrapper> localToolWrappers = getWrappersFromTools(localTools, file, includeDoNotShow,
+                                                                      wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, map,
-                    getWrappersFromTools(globalSimpleTools, file, includeDoNotShow,
-                                         wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)),
-                    getWrappersFromTools(localTools, file, includeDoNotShow,
-                                         wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)),
+                    globalSimpleWrappers,
+                    localToolWrappers,
                     inspectInjectedPsi && scope.isAnalyzeInjectedCode());
         if (start != 0) {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
@@ -530,22 +532,23 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private static final VirtualFile TOMBSTONE = new LightVirtualFile("TOMBSTONE");
 
   private @NotNull Future<?> startIterateScopeInBackground(@NotNull AnalysisScope scope,
-                                                           @Nullable Collection<? super VirtualFile> localScopeFiles,
+                                                           @NotNull ProgressIndicator progressIndicator,
                                                            boolean headlessEnvironment,
-                                                           @NotNull BlockingQueue<? super VirtualFile> outFilesToInspect,
-                                                           @NotNull ProgressIndicator progressIndicator) {
+                                                           @Nullable Collection<? super VirtualFile> localScopeFiles,
+                                                           @NotNull BlockingQueue<? super VirtualFile> outFilesToInspect) {
     Task.Backgroundable task = new Task.Backgroundable(getProject(), InspectionsBundle.message("scanning.files.to.inspect.progress.text")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+          Project project = scope.getProject();
+          FileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           scope.accept(file -> {
             ProgressManager.checkCanceled();
             if (!forceInspectAllScope && (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file))) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
-              if (getProject().isDisposed()) throw new ProcessCanceledException();
-              PsiFile psi = PsiManager.getInstance(getProject()).findFile(file);
+              if (project.isDisposed()) throw new ProcessCanceledException();
+              PsiFile psi = PsiManager.getInstance(project).findFile(file);
               Document document = psi == null ? null : shouldProcess(psi, headlessEnvironment, localScopeFiles);
               if (document != null) {
                 return psi;

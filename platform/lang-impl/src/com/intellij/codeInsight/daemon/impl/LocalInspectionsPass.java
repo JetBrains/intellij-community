@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -396,7 +397,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                 ProgressManager.checkCanceled();
                 if (element == favoriteElement) continue; // already visited
                 element.accept(context.visitor);
-                if (holder.getResultCount() != resultCount && resultCount != -1) {
+                if (resultCount != -1 && holder.getResultCount() != resultCount) {
                   context.myFavoriteElement = element;
                   resultCount = -1; // mark as "new favorite element is stored"
                 }
@@ -441,8 +442,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionContext context : init) {
       context.problemsSizeAfterInsideElementsProcessed = context.holder.getResultCount();
     }
+    PsiFile file = session.getFile();
     if (InspectionProfilerDataHolder.isInspectionSortByLatencyEnabled()) {
-      processInOrder(init, outside, false, finalPriorityRange, getFile(), TOMB_STONE, indicator, context -> {
+      processInOrder(init, outside, false, finalPriorityRange, file, TOMB_STONE, indicator, context -> {
         InspectionProblemsHolder holder = context.holder;
         holder.finishTimeStamp = System.nanoTime();
         context.tool.getTool().inspectionFinished(session, holder);
@@ -450,7 +452,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         if (holder.hasResults()) {
           List<ProblemDescriptor> allProblems = holder.getResults();
           List<ProblemDescriptor> restProblems = allProblems.subList(context.problemsSizeAfterInsideElementsProcessed, allProblems.size());
-          appendDescriptors(getFile(), restProblems, context.tool);
+          appendDescriptors(file, restProblems, context.tool);
         }
       });
     }
@@ -468,7 +470,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           if (holder.hasResults()) {
             List<ProblemDescriptor> allProblems = holder.getResults();
             List<ProblemDescriptor> restProblems = allProblems.subList(context.problemsSizeAfterInsideElementsProcessed, allProblems.size());
-            appendDescriptors(getFile(), restProblems, context.tool);
+            appendDescriptors(file, restProblems, context.tool);
           }
           return true;
         };
@@ -487,10 +489,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                    @NotNull Set<? extends PsiFile> alreadyVisitedInjected) {
     if (!myInspectInjectedPsi) return Collections.emptySet();
     Set<PsiFile> injected = new HashSet<>();
+    PsiFile containingFile = getFile();
+    Project project = containingFile.getProject();
     for (PsiElement element : elements) {
-      PsiFile containingFile = getFile();
-      InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false,
-                                                                                   (injectedPsi, places) -> injected.add(injectedPsi));
+      InjectedLanguageManager.getInstance(project).enumerateEx(element, containingFile, false,
+                                                               (injectedPsi, __) -> injected.add(injectedPsi));
     }
     injected.removeAll(alreadyVisitedInjected);
     if (!injected.isEmpty()) {
@@ -957,9 +960,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   static class InspectionContext {
-    private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
-                              @NotNull InspectionProblemsHolder holder,
-                              @NotNull PsiElementVisitor visitor) {
+    private InspectionContext(@NotNull LocalInspectionToolWrapper tool, @NotNull InspectionProblemsHolder holder, @NotNull PsiElementVisitor visitor) {
       this.tool = tool;
       this.holder = holder;
       this.visitor = visitor;
