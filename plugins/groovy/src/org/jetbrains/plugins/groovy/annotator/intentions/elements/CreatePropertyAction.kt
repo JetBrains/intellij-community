@@ -82,8 +82,9 @@ internal class CreatePropertyAction(
   override fun getActionGroup(): JvmActionGroup = if (readOnly) CreateReadOnlyPropertyActionGroup else CreatePropertyActionGroup
 
   inner class PropertyRequest : CreateFieldRequest {
-
     override fun isValid() = true
+
+    override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
 
     override fun getModifiers() = if (readOnly) listOf(JvmModifier.FINAL) else emptyList()
 

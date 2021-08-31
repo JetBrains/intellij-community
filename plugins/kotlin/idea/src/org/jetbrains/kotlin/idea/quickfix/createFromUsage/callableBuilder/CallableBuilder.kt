@@ -577,6 +577,10 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     }
                 }
 
+                if (callableInfo is PropertyInfo) {
+                    callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
+                }
+
                 val newInitializer = pointerOfAssignmentToReplace?.element
                 if (newInitializer != null) {
                     (declaration as KtProperty).initializer = newInitializer.right

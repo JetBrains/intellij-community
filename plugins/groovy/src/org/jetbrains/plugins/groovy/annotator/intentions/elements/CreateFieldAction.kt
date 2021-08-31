@@ -97,6 +97,10 @@ private class GroovyFieldRenderer(
       }
     }
 
+    for (annotation in request.annotations) {
+      field.modifierList?.addAnnotation(annotation.qualifiedName)
+    }
+
     // setup actual modifiers
     for (modifier in modifiersToRender.map(JvmModifier::toPsiModifier)) {
       PsiUtil.setModifierProperty(field, modifier, true)

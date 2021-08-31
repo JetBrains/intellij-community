@@ -27,14 +27,16 @@ class AddFieldActionCreateCallableFromUsageFix(
     override val propertyInfo: PropertyInfo?
         get() = run {
             val targetContainer = element ?: return@run null
+            val ktFactory = KtPsiFactory(targetContainer)
             val resolutionFacade = targetContainer.getResolutionFacade()
             val typeInfo = request.fieldType.toKotlinTypeInfo(resolutionFacade)
             val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
             val requestInitializer = request.initializer
+            val annotations = request.annotations.map { ktFactory.createAnnotationEntry("@${it.qualifiedName}") }
             val initializer = if (requestInitializer is JvmLong) {
-                KtPsiFactory(targetContainer).createExpression("${requestInitializer.longValue}L")
+                ktFactory.createExpression("${requestInitializer.longValue}L")
             } else if (!lateinit) {
-                KtPsiFactory(targetContainer).createExpression("TODO(\"initialize me\")")
+                ktFactory.createExpression("TODO(\"initialize me\")")
             } else null
             PropertyInfo(
                 request.fieldName,
@@ -45,6 +47,7 @@ class AddFieldActionCreateCallableFromUsageFix(
                 isLateinitPreferred = false, // Dont set it to `lateinit` because it works via templates that brings issues in batch field adding
                 isConst = request.isConstant,
                 isForCompanion = JvmModifier.STATIC in request.modifiers,
+                annotations = annotations,
                 modifierList = KotlinElementActionsFactory.ModifierBuilder(targetContainer, allowJvmStatic = false).apply {
                     addJvmModifiers(request.modifiers)
                     if (modifierList.children.none { it.node.elementType in KtTokens.VISIBILITY_MODIFIERS })

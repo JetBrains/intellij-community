@@ -90,6 +90,12 @@ internal class JavaFieldRenderer(
       PsiUtil.setModifierProperty(field, modifier, true)
     }
 
+    field.modifierList?.let { modifierList ->
+      for (annRequest in request.annotations) {
+        modifierList.addAnnotation(annRequest.qualifiedName)
+      }
+    }
+
     val requestInitializer = request.initializer
     if (requestInitializer is JvmLong) {
       field.initializer = PsiElementFactory.getInstance(project).createExpressionFromText("${requestInitializer.longValue}L", null)

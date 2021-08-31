@@ -30,12 +30,14 @@ public interface CreateFieldRequest extends ActionRequest {
   @NotNull
   JvmSubstitutor getTargetSubstitutor();
 
-
   /**
    * The field initializer. Currently, only value initializers are supported.
    */
   @Nullable
   JvmValue getInitializer();
+
+  @NotNull
+  Collection<AnnotationRequest> getAnnotations();
 
   /**
    * Implementation are free to render any modifiers as long as they don't contradict with requested ones.

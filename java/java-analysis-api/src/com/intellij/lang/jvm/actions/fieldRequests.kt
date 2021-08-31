@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.types.JvmSubstitutor
 
 class SimpleFieldRequest(
   private val fieldName: String,
+  private val annotations: Collection<AnnotationRequest>,
   private val modifiers: Collection<JvmModifier>,
   private val fieldType: ExpectedTypes,
   private val targetSubstitutor: JvmSubstitutor,
@@ -15,6 +16,7 @@ class SimpleFieldRequest(
 ) : CreateFieldRequest {
   override fun isValid(): Boolean = true
   override fun getFieldName() = fieldName
+  override fun getAnnotations() = annotations
   override fun getModifiers() = modifiers
   override fun getFieldType() = fieldType
   override fun getTargetSubstitutor() = targetSubstitutor
@@ -24,9 +26,10 @@ class SimpleFieldRequest(
 
 fun fieldRequest(
   fieldName: String,
+  annotations: Collection<AnnotationRequest>,
   modifiers: Collection<JvmModifier>,
   fieldType: ExpectedTypes,
   targetSubstitutor: JvmSubstitutor,
   initializer: JvmValue?,
   isConstant: Boolean,
-): CreateFieldRequest = SimpleFieldRequest(fieldName, modifiers, fieldType, targetSubstitutor, initializer, isConstant)
+): CreateFieldRequest = SimpleFieldRequest(fieldName, annotations, modifiers, fieldType, targetSubstitutor, initializer, isConstant)

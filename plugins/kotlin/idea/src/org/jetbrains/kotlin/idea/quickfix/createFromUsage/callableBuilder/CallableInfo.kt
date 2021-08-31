@@ -278,6 +278,7 @@ class PropertyInfo(
     val isLateinitPreferred: Boolean = false,
     val isConst: Boolean = false,
     isForCompanion: Boolean = false,
+    val annotations: List<KtAnnotationEntry> = emptyList(),
     modifierList: KtModifierList? = null,
     val initializer: KtExpression? = null
 ) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList) {
@@ -305,6 +306,7 @@ class PropertyInfo(
         isConst,
         isLateinitPreferred,
         isForCompanion,
+        annotations,
         modifierList,
         initializer
     )

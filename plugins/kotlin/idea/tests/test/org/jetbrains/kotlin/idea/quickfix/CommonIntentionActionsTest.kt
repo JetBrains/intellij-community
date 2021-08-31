@@ -695,6 +695,8 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
     ) : CreateFieldRequest {
         override fun getTargetSubstitutor(): JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
 
+        override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
+
         override fun getModifiers(): Collection<JvmModifier> = modifiers
 
         override fun isConstant(): Boolean = false
