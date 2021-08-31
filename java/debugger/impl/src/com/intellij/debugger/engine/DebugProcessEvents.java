@@ -13,7 +13,6 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -45,6 +44,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
@@ -251,7 +251,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event, notifiedClassPrepareEventRequestors);
                     }
                     else if (event instanceof LocatableEvent) {
-                      preloadThreadInfo(((LocatableEvent)event).thread());
+                      preloadEventInfo(((LocatableEvent)event));
                       //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
                       //ModificationWatchpointEvent, StepEvent, WatchpointEvent
                       if (event instanceof StepEvent) {
@@ -531,19 +531,27 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
   }
 
-  // Preload thread info in "parallel" commands, to avoid sync jdwp requests after
-  private static void preloadThreadInfo(@Nullable ThreadReference thread) {
-    if (Registry.is("debugger.preload.thread.info") && thread != null) {
-      if (DebuggerUtilsAsync.isAsyncEnabled() && thread instanceof ThreadReferenceImpl) {
+  // Preload event info in "parallel" commands, to avoid sync jdwp requests after
+  private static void preloadEventInfo(LocatableEvent event) {
+    if (Registry.is("debugger.preload.event.info") && DebuggerUtilsAsync.isAsyncEnabled()) {
+      List<CompletableFuture> commands = new ArrayList<>();
+      ThreadReference thread = event.thread();
+      if (thread instanceof ThreadReferenceImpl) {
         ThreadReferenceImpl t = (ThreadReferenceImpl)thread;
-        try {
-          CompletableFuture.allOf(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)).get(1, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException ignored) {
-        }
-        catch (Exception e) {
-          DebuggerUtilsAsync.logError(e);
-        }
+        commands.addAll(List.of(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)));
+      }
+      Location location = event.location();
+      if (location instanceof LocationImpl) {
+        LocationImpl l = (LocationImpl)location;
+        commands.add(l.methodAsync());
+      }
+      try {
+        CompletableFuture.allOf(commands.toArray(CompletableFuture[]::new)).get(1, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (Exception e) {
+        DebuggerUtilsAsync.logError(e);
       }
     }
   }
