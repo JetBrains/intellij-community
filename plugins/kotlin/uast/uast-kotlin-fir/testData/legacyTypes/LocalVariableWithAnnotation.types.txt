@@ -1,7 +1,7 @@
 UFile (package = ) [public final class LocalVariableWithAnnotationKt {...]
     UClass (name = LocalVariableWithAnnotationKt) [public final class LocalVariableWithAnnotationKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
                 UDeclarationsExpression [@TestAnnotation var bar: java.lang.String = "lorem ipsum"]
                     ULocalVariable (name = bar) [@TestAnnotation var bar: java.lang.String = "lorem ipsum"]
                         UAnnotation (fqName = TestAnnotation) [@TestAnnotation]
