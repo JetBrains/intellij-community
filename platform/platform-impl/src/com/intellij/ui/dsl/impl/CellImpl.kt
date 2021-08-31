@@ -17,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.event.HyperlinkEvent
 
 @ApiStatus.Internal
 internal class CellImpl<T : JComponent>(
@@ -148,8 +149,18 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun commentHtml(comment: String?, action: (HyperlinkEvent) -> Unit): Cell<T> {
+    this.comment = if (comment == null) null else createHtmlComment(comment, action)
+    return this
+  }
+
   override fun label(label: String): CellImpl<T> {
     this.label = Label(label)
+    return this
+  }
+
+  override fun label(label: JLabel): Cell<T> {
+    this.label = label
     return this
   }
 

@@ -9,20 +9,20 @@ interface JBGrid {
   /**
    * Set of columns that fill available extra space in container
    */
-  var resizableColumns: Set<Int>
+  val resizableColumns: MutableSet<Int>
 
   /**
    * Set of rows that fill available extra space in container
    */
-  var resizableRows: Set<Int>
+  val resizableRows: MutableSet<Int>
 
   /**
    * Gaps around columns. Used only when column is visible
    */
-  var columnsGaps: List<ColumnGaps>
+  val columnsGaps: MutableList<ColumnGaps>
 
   /**
    * Gaps around rows. Used only when row is visible
    */
-  var rowsGaps: List<RowGaps>
+  val rowsGaps: MutableList<RowGaps>
 }

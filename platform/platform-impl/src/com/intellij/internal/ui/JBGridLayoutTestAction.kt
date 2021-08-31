@@ -36,7 +36,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
         result.addTab("TODO", createTodoPanel())
         result.addTab(
           "NoResizableCells", createTabPanel("No resizable cells",
-                                             createPanelLabels(3, 4) { _, _, _ -> null })
+          createPanelLabels(3, 4) { _, _, _ -> null })
         )
         result.addTab("ResizableCell[1, 1]", createResizableCell11Panel())
         result.addTab("CellAlignments", createCellAlignmentsPanel())
@@ -79,7 +79,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       val label = JLabel(text)
       label.preferredSize = Dimension(150, 40)
       label.verticalAlignment = SwingConstants.TOP
-      cell(label)
+      cell(label, verticalAlign = VerticalAlign.FILL)
       return this
     }
 
@@ -128,8 +128,8 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
   fun createVisualPaddingsPanel(): JPanel {
     val layoutManager = JBGridLayout()
     val rootGrid = layoutManager.rootGrid
-    rootGrid.resizableColumns = setOf(1)
-    rootGrid.resizableRows = setOf(2)
+    rootGrid.resizableColumns.add(1)
+    rootGrid.resizableRows.add(2)
     val panel = JPanel(layoutManager)
 
     fillGridByLabels(panel, rootGrid, 3, 4) { grid, x, y ->
@@ -163,18 +163,18 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       )
     }
     val grid = (panel.layout as JBGridLayout).rootGrid
-    grid.resizableColumns = (0..HorizontalAlign.values().size).toSet()
-    grid.resizableRows = (0..VerticalAlign.values().size).toSet()
+    grid.resizableColumns.addAll(0..HorizontalAlign.values().size)
+    grid.resizableRows.addAll(0..VerticalAlign.values().size)
     return createTabPanel("Every second cell has own Gaps", panel)
   }
 
   fun createColRowGapsPanel(): JPanel {
     val layoutManager = JBGridLayout()
     val grid = layoutManager.rootGrid
-    grid.resizableColumns = (0..4).toSet()
-    grid.resizableRows = (0..3).toSet()
-    grid.columnsGaps = (0..4).map { ColumnGaps(it * 20, it * 20 + 10) }
-    grid.rowsGaps = (0..3).map { RowGaps(it * 5 + 5, it * 5 + 15) }
+    grid.resizableColumns.addAll(0..4)
+    grid.resizableRows.addAll(0..3)
+    grid.columnsGaps.addAll((0..4).map { ColumnGaps(it * 20, it * 20 + 10) })
+    grid.rowsGaps.addAll((0..3).map { RowGaps(it * 5 + 5, it * 5 + 15) })
     val panel = JPanel(layoutManager)
 
     fillGridByCompoundLabels(panel, grid)
@@ -185,8 +185,8 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
   fun createJointCellsPanel(): JPanel {
     val layoutManager = JBGridLayout()
     val grid = layoutManager.rootGrid
-    grid.resizableColumns = setOf(1)
-    grid.resizableRows = setOf(1)
+    grid.resizableColumns.add(1)
+    grid.resizableRows.add(1)
     val panel = JPanel(layoutManager)
 
     fun addLabel(x: Int, y: Int, width: Int = 1, height: Int = 1) {
@@ -233,8 +233,8 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       )
     }
     val grid = (panel.layout as JBGridLayout).rootGrid
-    grid.resizableColumns = (0..HorizontalAlign.values().size).toSet()
-    grid.resizableRows = (0..VerticalAlign.values().size).toSet()
+    grid.resizableColumns.addAll(0..HorizontalAlign.values().size)
+    grid.resizableRows.addAll(0..VerticalAlign.values().size)
     return createTabPanel("Cells size is equal, component layouts have different alignments", panel)
   }
 
@@ -246,15 +246,15 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
         null
     }
     val grid = (panel.layout as JBGridLayout).rootGrid
-    grid.resizableColumns = setOf(1)
-    grid.resizableRows = setOf(1)
+    grid.resizableColumns.add(1)
+    grid.resizableRows.add(1)
     return createTabPanel("One column and row are resizable", panel)
   }
 
   fun createSubGridPanel(): JPanel {
     val layoutManager = JBGridLayout()
-    layoutManager.rootGrid.resizableColumns = setOf(1)
-    layoutManager.rootGrid.resizableRows = setOf(1)
+    layoutManager.rootGrid.resizableColumns.add(1)
+    layoutManager.rootGrid.resizableRows.add(1)
     val panel = JPanel(layoutManager)
 
     val subGrid = layoutManager.addLayoutSubGrid(
@@ -263,8 +263,8 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
         horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL
       )
     )
-    subGrid.resizableColumns = setOf(1)
-    subGrid.resizableRows = setOf(1)
+    subGrid.resizableColumns.add(1)
+    subGrid.resizableRows.add(1)
     fillGridByLabels(panel, subGrid, 3, 3) { grid, x, y ->
       if (x == 1 && y == 1)
         JBConstraints(grid, x, y, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL)
@@ -400,8 +400,8 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     val layoutManager = JBGridLayout()
     val rootGrid = layoutManager.rootGrid
     val result = JPanel(layoutManager)
-    rootGrid.resizableColumns = setOf(0)
-    rootGrid.resizableRows = setOf(1)
+    rootGrid.resizableColumns.add(0)
+    rootGrid.resizableRows.add(1)
     val label = JLabel("<html>$title<br>${gridToHtmlString((content.layout as JBGridLayout).rootGrid)}")
     label.background = Color.LIGHT_GRAY
     label.isOpaque = true
@@ -471,8 +471,8 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       list.updateUI()
     }
 
-    grid.resizableColumns = setOf(0, 1)
-    grid.resizableRows = setOf(0)
+    grid.resizableColumns.addAll(0..1)
+    grid.resizableRows.add(0)
     container.add(
       JScrollPane(list), JBConstraints(
       grid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL,

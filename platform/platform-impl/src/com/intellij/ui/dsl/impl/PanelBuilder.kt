@@ -50,7 +50,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         continue
       }
 
-      rowsGridBuilder.setRowGaps(getRowGaps(row))
+      val rowGaps = getRowGaps(row)
+      rowsGridBuilder.setRowGaps(RowGaps(top = rowGaps.top))
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
@@ -102,6 +103,9 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps)
         rowsGridBuilder.row()
       }
+
+      val rowsGaps = rowsGridBuilder.grid.rowsGaps
+      rowsGaps[rowsGaps.size - 2] = rowsGaps[rowsGaps.size - 2].copy(bottom = rowGaps.bottom)
     }
 
     setLastColumnResizable(rowsGridBuilder)
@@ -139,7 +143,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
   private fun setLastColumnResizable(builder: RowsGridBuilder) {
     if (builder.resizableColumns.isEmpty() && builder.columnsCount > 0) {
-      builder.resizableColumns = setOf(builder.columnsCount - 1)
+      builder.resizableColumns.add(builder.columnsCount - 1)
     }
   }
 

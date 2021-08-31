@@ -12,11 +12,11 @@ import kotlin.math.min
 
 internal class JBGridImpl : JBGrid {
 
-  override var resizableColumns = emptySet<Int>()
-  override var resizableRows = emptySet<Int>()
+  override val resizableColumns = mutableSetOf<Int>()
+  override val resizableRows = mutableSetOf<Int>()
 
-  override var columnsGaps = emptyList<ColumnGaps>()
-  override var rowsGaps = emptyList<RowGaps>()
+  override val columnsGaps = mutableListOf<ColumnGaps>()
+  override val rowsGaps = mutableListOf<RowGaps>()
 
   val visible: Boolean
     get() = cells.any { it.visible }

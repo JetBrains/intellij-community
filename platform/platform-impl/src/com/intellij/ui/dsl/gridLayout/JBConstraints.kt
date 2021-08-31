@@ -69,7 +69,7 @@ data class JBConstraints(
   /**
    * Vertical alignment of content inside the cell
    */
-  val verticalAlign: VerticalAlign = VerticalAlign.TOP,
+  val verticalAlign: VerticalAlign = VerticalAlign.CENTER,
 
   /**
    * If true then vertical align is done by baseline:

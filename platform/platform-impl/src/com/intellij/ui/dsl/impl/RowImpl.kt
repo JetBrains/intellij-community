@@ -23,7 +23,6 @@ import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.Row
 import com.intellij.ui.dsl.gridLayout.RowGaps
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.UIUtil
@@ -34,6 +33,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.*
+import javax.swing.event.HyperlinkEvent
 
 @ApiStatus.Internal
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
@@ -230,6 +230,10 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun commentNoWrap(text: String): CellImpl<JLabel> {
     return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
+  }
+
+  override fun commentHtml(text: String, action: (HyperlinkEvent) -> Unit): Cell<JEditorPane> {
+    return cell(createHtmlComment(text, action))
   }
 
   override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.*
+import javax.swing.event.HyperlinkEvent
 
 /**
  * Determines relation between row grid and parent's grid
@@ -142,8 +143,16 @@ interface Row {
 
   fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
 
+  fun commentHtml(@NlsContexts.DetailedDescription text: String, action: (HyperlinkEvent) -> Unit): Cell<JEditorPane>
+
+  /**
+   * Creates focusable link with text inside. Should not be used with html inside
+   */
   fun link(@NlsContexts.LinkLabel text: String, action: (ActionEvent) -> Unit): Cell<ActionLink>
 
+  /**
+   * Creates focusable browser link with text inside. Should not be used with html inside
+   */
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 
   fun icon(icon: Icon): Cell<JLabel>

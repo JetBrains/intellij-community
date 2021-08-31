@@ -11,6 +11,8 @@ import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.event.HyperlinkEvent
 
 const val COLUMNS_MEDIUM = 25
 
@@ -49,9 +51,20 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
               maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Cell<T>
 
   /**
-   * Adds label before the cell. Visibility and enabled state of the cell affects label as well
+   * Adds html comment under the cell.
+   * See doc for comment method
+   */
+  fun commentHtml(@NlsContexts.DetailedDescription comment: String?, action: (HyperlinkEvent) -> Unit): Cell<T>
+
+  /**
+   * See doc for overloaded method
    */
   fun label(@NlsContexts.Label label: String): Cell<T>
+
+  /**
+   * Adds label before the cell. Visibility and enabled state of the cell affects label as well
+   */
+  fun label(label: JLabel): Cell<T>
 
   /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled

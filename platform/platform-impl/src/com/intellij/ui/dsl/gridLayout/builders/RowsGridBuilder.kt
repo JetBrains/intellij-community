@@ -6,34 +6,38 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import kotlin.math.max
 
+private const val GRID_EMPTY = -1
+
 /**
  * Builds grid layout row by row
  */
 @ApiStatus.Experimental
 class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
 
-  private val GRID_EMPTY = -1
   private val layout = panel.layout as JBGridLayout
-  private val grid = grid ?: layout.rootGrid
-  private var x = 0
-  private var y = GRID_EMPTY
+
+  val grid = grid ?: layout.rootGrid
 
   var columnsCount: Int = 0
     private set
 
-  var resizableColumns: Set<Int> by this.grid::resizableColumns
+  val resizableColumns: MutableSet<Int> by this.grid::resizableColumns
 
   var defaultHorizontalAlign = HorizontalAlign.LEFT
     private set
 
-  var defaultVerticalAlign = VerticalAlign.TOP
+  var defaultVerticalAlign = VerticalAlign.CENTER
     private set
 
   var defaultBaselineAlign = false
     private set
 
+  private var x = 0
+  private var y = GRID_EMPTY
+
   fun columnsGaps(value: List<ColumnGaps>): RowsGridBuilder {
-    grid.columnsGaps = value
+    grid.columnsGaps.clear()
+    grid.columnsGaps.addAll(value)
     return this
   }
 
@@ -120,16 +124,11 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
 
   fun setRowGaps(rowGaps: RowGaps) {
     startFirstRow()
-    if (rowGaps == RowGaps.EMPTY) {
-      return
-    }
 
-    val rowsGaps = grid.rowsGaps.toMutableList()
-    while (rowsGaps.size <= y) {
-      rowsGaps.add(RowGaps.EMPTY)
+    while (grid.rowsGaps.size <= y) {
+      grid.rowsGaps.add(RowGaps.EMPTY)
     }
-    rowsGaps[y] = rowGaps
-    grid.rowsGaps = rowsGaps
+    grid.rowsGaps[y] = rowGaps
   }
 
   fun defaultHorizontalAlign(defaultHorizontalAlign: HorizontalAlign): RowsGridBuilder {
@@ -148,11 +147,11 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
   }
 
   private fun addResizableColumn() {
-    grid.resizableColumns = grid.resizableColumns.toMutableSet() + x
+    grid.resizableColumns += x
   }
 
   private fun addResizableRow() {
-    grid.resizableRows = grid.resizableRows.toMutableSet() + y
+    grid.resizableRows += y
   }
 
   private fun startFirstRow() {

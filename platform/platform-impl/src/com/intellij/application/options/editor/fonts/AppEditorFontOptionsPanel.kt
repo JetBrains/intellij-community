@@ -16,13 +16,12 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.AbstractFontCombo
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.layout.*
+import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -31,7 +30,7 @@ class AppEditorFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstra
 
   private val defaultPreferences = FontPreferencesImpl()
 
-  private lateinit var restoreDefaults: ActionLink
+  private lateinit var restoreDefaults: Cell<ActionLink>
   private var regularWeightCombo: FontWeightCombo? = null
   private var boldWeightCombo: FontWeightCombo? = null
 
@@ -101,86 +100,70 @@ class AppEditorFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstra
   override fun createControls(): JComponent {
     return panel {
       row(primaryLabel) {
-        component(primaryCombo)
+        cell(primaryCombo)
       }
 
       row(sizeLabel) {
-        component(editorFontSizeField)
-        component(lineSpacingLabel).withLargeLeftGap()
-        component(lineSpacingField)
-      }
+        cell(editorFontSizeField)
 
-      fullRow {
-        component(enableLigaturesCheckbox)
-        component(enableLigaturesHintLabel).withLeftGap()
+        cell(lineSpacingField)
+          .label(lineSpacingLabel)
       }
 
       row {
-        hyperlink(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"),
-                  style = UIUtil.ComponentStyle.SMALL,
-                  color = UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER)) {
+        cell(enableLigaturesCheckbox)
+          .gap(RightGap.SMALL)
+        cell(enableLigaturesHintLabel)
+      }.layout(RowLayout.INDEPENDENT)
+
+      row {
+        commentHtml(ApplicationBundle.message("comment.use.ligatures.with.reader.mode")) {
           goToReaderMode()
         }
       }
 
       row {
-        restoreDefaults = ActionLink(ApplicationBundle.message("settings.editor.font.restored.defaults")) {
+        restoreDefaults = link(ApplicationBundle.message("settings.editor.font.restored.defaults")) {
           restoreDefaults()
         }
-
-        component(restoreDefaults)
       }
 
-      row {
-        component(createTypographySettings())
-      }
+      createTypographySettings()
     }.withBorder(JBUI.Borders.empty(BASE_INSET))
   }
 
   fun updateFontPreferences() {
-    restoreDefaults.isEnabled = defaultPreferences != fontPreferences
+    restoreDefaults.enabled(defaultPreferences != fontPreferences)
 
     regularWeightCombo?.apply { update(fontPreferences) }
     boldWeightCombo?.apply { update(fontPreferences) }
   }
 
-  private fun createTypographySettings(): DialogPanel {
-    return panel {
-      hideableRow(ApplicationBundle.message("settings.editor.font.typography.settings"),
-                  incrementsIndent = false) {
-        if (isAdvancedFontFamiliesUI()) {
-          row(ApplicationBundle.message("settings.editor.font.main.weight")) {
-            val component = createRegularWeightCombo()
-            regularWeightCombo = component
-            component(component)
-          }
+  private fun Panel.createTypographySettings() {
+    // todo hideable
+    group(ApplicationBundle.message("settings.editor.font.typography.settings"), indent = false) {
+      if (isAdvancedFontFamiliesUI()) {
+        row(ApplicationBundle.message("settings.editor.font.main.weight")) {
+          val component = createRegularWeightCombo()
+          regularWeightCombo = component
+          cell(component)
+        }
 
-          row(ApplicationBundle.message("settings.editor.font.bold.weight")) {
-            val component = createBoldWeightCombo()
-            boldWeightCombo = component
-            component(component)
-          }
-
-          row("") {
-            hyperlink(ApplicationBundle.message("settings.editor.font.bold.weight.hint"),
-                      style = UIUtil.ComponentStyle.SMALL,
-                      color = UIUtil.getContextHelpForeground()) {
+        row(ApplicationBundle.message("settings.editor.font.bold.weight")) {
+          val component = createBoldWeightCombo()
+          boldWeightCombo = component
+          cell(component)
+            .commentHtml(ApplicationBundle.message("settings.editor.font.bold.weight.hint")) {
               navigateToColorSchemeTextSettings()
             }
-          } // .largeGapAfter() doesn't work now
-        }
+        }.bottomGap(BottomGap.SMALL)
+      }
 
-        row {
-          val secondaryFont = label(ApplicationBundle.message("secondary.font"))
-          setSecondaryFontLabel(secondaryFont.component)
-          component(secondaryCombo)
-        }
-
-        row("") {
-          val description = label(ApplicationBundle.message("label.fallback.fonts.list.description"),
-                                  style = UIUtil.ComponentStyle.SMALL)
-          description.component.foreground = UIUtil.getContextHelpForeground()
-        }
+      val secondaryFont = Label(ApplicationBundle.message("secondary.font"))
+      setSecondaryFontLabel(secondaryFont)
+      row(secondaryFont) {
+        cell(secondaryCombo)
+          .comment(ApplicationBundle.message("label.fallback.fonts.list.description"))
       }
     }
   }
