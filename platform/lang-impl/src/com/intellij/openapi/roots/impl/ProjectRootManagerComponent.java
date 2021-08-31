@@ -114,14 +114,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     });
 
-    if (!LightEdit.owns(myProject)) {
-      VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerListener() {
-        @Override
-        public void afterRefreshFinish(boolean asynchronous) {
-          doUpdateOnRefresh();
-        }
-      }, this);
-    }
     StartupManager.getInstance(myProject).registerStartupActivity(() -> {
       myStartupActivityPerformed = true;
     });
@@ -198,17 +190,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, watchRoots.first, watchRoots.second);
       });
     });
-  }
-
-  private void doUpdateOnRefresh() {
-    if (ApplicationManager.getApplication().isUnitTestMode() && (!myStartupActivityPerformed || myProject.isDisposed())) {
-      return; // in test mode suppress addition to a queue unless project is properly initialized
-    }
-
-    if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
-      LOG.debug("refresh");
-    }
-    FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(myProject);
   }
 
   @Override
