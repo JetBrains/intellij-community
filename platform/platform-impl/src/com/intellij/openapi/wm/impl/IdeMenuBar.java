@@ -26,6 +26,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +74,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Nullable private final MyExitFullScreenButton myButton;
   @Nullable private final Animator myAnimator;
   @Nullable private final Timer myActivationWatcher;
+  private final Alarm myUpdateAlarm = new Alarm();
   @NotNull private State myState = State.EXPANDED;
   private double myProgress;
   private boolean myActivated;
@@ -312,8 +314,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    myPresentationFactory.reset();
-    updateMenuActions(true);
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(() -> {
+      myPresentationFactory.reset();
+      updateMenuActions(true);
+    }, 50);
   }
 
   @Override
