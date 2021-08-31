@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrPermitsClauseInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 
 @CompileStatic
@@ -39,7 +40,7 @@ class B extends A {}'''
     highlightingTest '''
 sealed class A permits <error>B</error> {}
 class B {}
-'''
+''', GrPermitsClauseInspection
   }
 
   void 'test extending without permission'() {

@@ -75,20 +75,6 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
                            GroovyBundle.message("inspection.message.invalid.permits.clause.must.be.sealed", owner.name)).range(
         permitsClause.keyword!!).create()
     }
-    val ownerType = owner.type()
-    for (subclass in permitsClause.referenceElementsGroovy) {
-      val classDefinition = subclass.resolve() as? GrTypeDefinition ?: continue
-      val targetReferenceList = when {
-        owner.isInterface && classDefinition.isInterface -> classDefinition.extendsListTypes
-        owner.isInterface -> classDefinition.implementsListTypes
-        else -> classDefinition.extendsListTypes
-      }
-      if (ownerType !in targetReferenceList) {
-        holder.newAnnotation(HighlightSeverity.ERROR,
-                             GroovyBundle.message("inspection.message.invalid.permits.clause.must.directly.extend", classDefinition.name,
-                                                  owner.name)).range(subclass).create()
-      }
-    }
   }
 
   override fun visitExtendsClause(extendsClause: GrExtendsClause) {
