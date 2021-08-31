@@ -225,8 +225,10 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
       val foundFileDirectory = if (item.isDirectory) item.virtualFile else item.virtualFile.parent
 
-      Pair(fileIndex.getPackageNameByDirectory(openedFile.parent),
-           fileIndex.getPackageNameByDirectory(foundFileDirectory))
+      val openedFilePackageName = openedFile.parent?.let { fileIndex.getPackageNameByDirectory(it) }
+      val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
+
+      Pair(openedFilePackageName, foundFilePackageName)
     }.run {
       fun splitPackage(s: String?) = if (s == null) {
         null
