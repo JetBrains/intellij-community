@@ -3,12 +3,13 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "RefactoringSettings", storages = @Storage("baseRefactoring.xml"))
+@State(name = "RefactoringSettings", storages = @Storage("baseRefactoring.xml"), category = SettingsCategory.CODE)
 public class JavaRefactoringSettings implements PersistentStateComponent<JavaRefactoringSettings> {
   // properties should be public in order to get saved by DefaultExternalizable implementation
 
