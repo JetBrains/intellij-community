@@ -8,7 +8,6 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.annotator.GroovyAnnotatorPre40.Companion.registerModifierProblem
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
@@ -20,22 +19,6 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     val owner = modifierList.parentsOfType<PsiModifierListOwner>().firstOrNull { it.modifierList === modifierList }
     if (owner is GrTypeDefinition) {
       checkTypeDefinitionModifiers(owner, modifierList)
-    }
-    else {
-      forbidSealedModifiers(modifierList)
-    }
-  }
-
-  private fun forbidSealedModifiers(modifierList: GrModifierList) {
-    val sealed = modifierList.getModifier(GrModifier.SEALED)
-    if (sealed != null) {
-      holder.registerModifierProblem(sealed, GroovyBundle.message("modifier.sealed.should.be.applied.only.to.type.definitions"),
-                                     GroovyBundle.message("illegal.sealed.modifier.fix"))
-    }
-    val nonsealed = modifierList.getModifier(GrModifier.NON_SEALED)
-    if (nonsealed != null) {
-      holder.registerModifierProblem(nonsealed, GroovyBundle.message("modifier.non.sealed.should.be.applied.only.to.type.definitions"),
-                                     GroovyBundle.message("illegal.nonsealed.modifier.fix"))
     }
   }
 
