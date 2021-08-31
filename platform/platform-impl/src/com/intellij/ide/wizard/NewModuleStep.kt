@@ -115,7 +115,7 @@ abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWi
           textField(nameProperty)
             .withValidationOnApply { validateName() }
             .withValidationOnInput { validateName() }
-            .constraints(pushX)
+            .growPolicy(GrowPolicy.SHORT_TEXT)
             .focused()
           installNameGenerators(getBuilderId(), nameProperty)
         }.largeGapAfter()
