@@ -23,8 +23,8 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = elem) [@org.jetbrains.annotations.NotNull var elem: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
-                UBinaryExpression (operator = =) [this[index1 + index2] = elem] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
+                UBinaryExpression (operator = =) [this[index1 + index2] = elem] : PsiType:Unit
                     UArrayAccessExpression [this[index1 + index2]] : PsiType:String
                         UThisExpression (label = null) [this] : PsiType:String[]
                         UBinaryExpression (operator = +) [index1 + index2] : PsiType:int
@@ -44,14 +44,14 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                                 UBlockExpression [{...}]
                                     UReturnExpression [return ""]
                                         ULiteralExpression (value = "") [""] : PsiType:String
-                UBinaryExpression (operator = =) [s[1, -1] = "O"] : PsiType:void
+                UBinaryExpression (operator = =) [s[1, -1] = "O"] : PsiType:Unit
                     UArrayAccessExpression [s[1, -1]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String[]
                         ULiteralExpression (value = 1) [1] : PsiType:int
                         UPrefixExpression (operator = -) [-1] : PsiType:int
                             ULiteralExpression (value = 1) [1] : PsiType:int
                     ULiteralExpression (value = "O") ["O"] : PsiType:String
-                UBinaryExpression (operator = +=) [s[2, -2] += "K"] : PsiType:void
+                UBinaryExpression (operator = +=) [s[2, -2] += "K"] : PsiType:Unit
                     UArrayAccessExpression [s[2, -2]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String[]
                         ULiteralExpression (value = 2) [2] : PsiType:int

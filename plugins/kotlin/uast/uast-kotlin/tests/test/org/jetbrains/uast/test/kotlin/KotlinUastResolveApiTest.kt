@@ -107,7 +107,7 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
             "PsiType:void print(PsiType:Object)"
         )
 
-        TestCase.assertEquals(PsiType.VOID, functionCall.getExpressionType())
+        TestCase.assertEquals("PsiType:Unit", functionCall.getExpressionType()?.toString())
 
         val firstArgument = main.findElementByText<UElement>("1")
         val firstParameter = functionCall.getArgumentForParameter(0)

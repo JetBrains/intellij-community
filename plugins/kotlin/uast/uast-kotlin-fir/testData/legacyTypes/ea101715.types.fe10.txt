@@ -1,7 +1,7 @@
 UFile (package = ) [public final class Ea101715Kt {...]
     UClass (name = Ea101715Kt) [public final class Ea101715Kt {...}]
         UMethod (name = a) [public static final fun a() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
                 UDeclarationsExpression [var a: <ErrorType> = <anonymous class>(555)]
                     ULocalVariable (name = a) [var a: <ErrorType> = <anonymous class>(555)]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(555)]

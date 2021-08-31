@@ -5,9 +5,9 @@ UFile (package = ) [public final class ElvisTypeKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}]
                 UReturnExpression [return bar(elvis {...})]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar(elvis {...})] : PsiType:void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar(elvis {...})] : PsiType:Unit
                         UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                        USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:void
+                        USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:Unit
                         UExpressionList (elvis) [elvis {...}] : PsiType:String
                             UDeclarationsExpression [var var63c495f9: java.lang.String = text]
                                 ULocalVariable (name = var63c495f9) [var var63c495f9: java.lang.String = text]
@@ -21,4 +21,4 @@ UFile (package = ) [public final class ElvisTypeKt {...]
         UMethod (name = bar) [public static final fun bar(@org.jetbrains.annotations.NotNull o: java.lang.Object) : void {...}]
             UParameter (name = o) [@org.jetbrains.annotations.NotNull var o: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
