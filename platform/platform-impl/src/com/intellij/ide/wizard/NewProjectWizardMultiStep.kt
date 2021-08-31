@@ -10,6 +10,17 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
 import javax.swing.DefaultComboBoxModel
 
+/**
+ * Describes fork in steps' tree in new project wizard.
+ * Appends control and logic to switch UI from different vertical wizard steps,
+ * and applies data from steps which are selected when wizard's finish button is pressed.
+ * Steps can form tree structure, i.e. direct or indirect child of multistep can be multistep.
+ *
+ * @param epName is extension point which provides children steps to switch.
+ * @property commonSteps are common steps that should be displayed between switcher and children steps.
+ *
+ * @see NewProjectWizardStep
+ */
 abstract class NewProjectWizardMultiStep(
   context: WizardContext,
   epName: ExtensionPointName<out NewProjectWizardMultiStepFactory>
