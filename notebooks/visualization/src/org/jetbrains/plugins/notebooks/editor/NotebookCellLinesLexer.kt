@@ -3,7 +3,8 @@ package org.jetbrains.plugins.notebooks.editor
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.plugins.notebooks.editor.NotebookCellLines.MarkerLines
+import org.jetbrains.plugins.notebooks.editor.NotebookCellLines.CellType
+import org.jetbrains.plugins.notebooks.editor.NotebookCellLines.MarkersAtLines
 import kotlin.math.max
 
 interface NotebookCellLinesLexer {
@@ -13,7 +14,7 @@ interface NotebookCellLinesLexer {
 
   companion object {
     fun defaultMarkerSequence(underlyingLexerFactory: () -> Lexer,
-                              tokenToCellType: (IElementType) -> NotebookCellLines.CellType?,
+                              tokenToCellType: (IElementType) -> CellType?,
                               chars: CharSequence,
                               ordinalIncrement: Int,
                               offsetIncrement: Int): Sequence<NotebookCellLines.Marker> = sequence {
@@ -36,14 +37,12 @@ interface NotebookCellLinesLexer {
     }
 
     fun defaultIntervals(document: Document, markers: List<NotebookCellLines.Marker>): List<NotebookCellLines.Interval> {
-      val lineMarkers = toLineMarkers(document, markers)
-      val isFirstMarkerAtStart = markers.firstOrNull()?.offset == 0
+      val intervals = toIntervalsInfo(document, markers)
 
       val result = mutableListOf<NotebookCellLines.Interval>()
-      for (i in 0 until (lineMarkers.size - 1)) {
-        val markerLines = if (i == 0 && !isFirstMarkerAtStart) MarkerLines.NO else MarkerLines.TOP
-        result += NotebookCellLines.Interval(ordinal = i, type = lineMarkers[i].type,
-          lines = lineMarkers[i].startLine until lineMarkers[i + 1].startLine, markers = markerLines)
+      for (i in 0 until (intervals.size - 1)) {
+        result += NotebookCellLines.Interval(ordinal = i, type = intervals[i].second,
+          lines = intervals[i].first until intervals[i + 1].first, markers = intervals[i].third)
       }
       return result
     }
@@ -55,21 +54,19 @@ interface NotebookCellLinesLexer {
   }
 }
 
-private fun toLineMarkers(document: Document, markers: List<NotebookCellLines.Marker>): List<LineMarker> {
-  val m = mutableListOf<LineMarker>()
+private fun toIntervalsInfo(document: Document, markers: List<NotebookCellLines.Marker>): List<Triple<Int, CellType, MarkersAtLines>> {
+  val m = mutableListOf<Triple<Int, CellType, MarkersAtLines>>()
 
   // add first if necessary
   if (markers.isEmpty() || document.getLineNumber(markers.first().offset) != 0) {
-    m += LineMarker(0, NotebookCellLines.CellType.RAW)
+    m += Triple(0, CellType.RAW, MarkersAtLines.NO)
   }
 
   for (marker in markers) {
-    m += LineMarker(document.getLineNumber(marker.offset), marker.type)
+    m += Triple(document.getLineNumber(marker.offset), marker.type, MarkersAtLines.TOP)
   }
 
   // marker for the end
-  m += LineMarker(max(document.lineCount, 1), NotebookCellLines.CellType.RAW)
+  m += Triple(max(document.lineCount, 1), CellType.RAW, MarkersAtLines.NO)
   return m
 }
-
-private data class LineMarker(val startLine: Int, val type: NotebookCellLines.CellType)

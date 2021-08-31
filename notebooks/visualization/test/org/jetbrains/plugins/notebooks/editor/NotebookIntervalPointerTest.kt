@@ -130,7 +130,7 @@ class NotebookIntervalPointerTest {
   }
 
   private fun makeInterval(ordinal: Int, lines: IntRange) =
-    Interval(ordinal, NotebookCellLines.CellType.RAW, lines, NotebookCellLines.MarkerLines.NO)
+    Interval(ordinal, NotebookCellLines.CellType.RAW, lines, NotebookCellLines.MarkersAtLines.NO)
 
   private fun makeIntervals(vararg lines: IntRange): List<Interval> =
     lines.withIndex().map { (index, lines) -> makeInterval(index, lines) }
