@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
+import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -52,7 +53,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
                 element.functionLiteral,
         ] as? AnonymousFunctionDescriptor ?: return false
 
-        if (descriptor.valueParameters.any { it.name.isSpecial || it.type is ErrorType }) return false
+        if (descriptor.valueParameters.any { it.isDestructuring() || it.type is ErrorType }) return false
 
         val lastElement = element.functionLiteral.arrow ?: element.functionLiteral.lBrace
         return caretOffset <= lastElement.endOffset
@@ -70,13 +71,16 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
         argument.moveInsideParentheses(argument.analyze(BodyResolveMode.PARTIAL))
     }
 
+    private fun ValueParameterDescriptor.isDestructuring() = this is ValueParameterDescriptorImpl.WithDestructuringDeclaration
+
     companion object {
         fun convertLambdaToFunction(
             lambda: KtLambdaExpression,
             functionDescriptor: FunctionDescriptor,
             functionName: String = "",
             functionParameterName: (ValueParameterDescriptor, Int) -> String = { parameter, _ ->
-                parameter.name.asString().quoteIfNeeded()
+                val parameterName = parameter.name
+                if (parameterName.isSpecial) "_" else parameterName.asString().quoteIfNeeded()
             },
             typeParameters: Map<TypeConstructor, KotlinType> = emptyMap(),
             replaceElement: (KtNamedFunction) -> KtExpression = { lambda.replaced(it) }

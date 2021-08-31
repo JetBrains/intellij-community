@@ -2,5 +2,7 @@
 fun foo(f: (Int, String, Int) -> String) {}
 
 fun test() {
-    foo <caret>{ _, _, i -> "" }
+    foo(fun(_: Int, _: String, i: Int): String {
+        return ""
+    })
 }
