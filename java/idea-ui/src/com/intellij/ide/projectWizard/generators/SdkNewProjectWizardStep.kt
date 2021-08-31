@@ -30,7 +30,7 @@ abstract class SdkNewProjectWizardStep(context: WizardContext) : NewProjectWizar
     with(builder) {
       row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
         sdkComboBox = sdkComboBox(sdksModel, sdkProperty, context.project, ::sdkTypeFilter)
-          .withValidationOnApply { validateSdk(sdkProperty, sdksModel) }
+          .withValidationOnApply { if (component.parent.isVisible) validateSdk(sdkProperty, sdksModel) else null }
           .onApply { context.projectJdk = sdk }
       }
     }
