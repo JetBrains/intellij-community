@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun String.forString(){}
