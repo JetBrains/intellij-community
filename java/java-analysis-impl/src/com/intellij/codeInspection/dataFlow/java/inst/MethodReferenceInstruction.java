@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java.inst;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
@@ -33,7 +32,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     final DfaValue qualifier = stateBefore.pop();
     JavaDfaHelpers.dropLocality(qualifier, stateBefore);
     handleMethodReference(qualifier, expression, interpreter, stateBefore);
-    pushResult(interpreter, stateBefore, typedObject(expression.getFunctionalInterfaceType(), Nullability.NOT_NULL));
+    pushResult(interpreter, stateBefore, JavaDfaHelpers.getFunctionDfType(expression));
     return nextStates(interpreter, stateBefore);
   }
 

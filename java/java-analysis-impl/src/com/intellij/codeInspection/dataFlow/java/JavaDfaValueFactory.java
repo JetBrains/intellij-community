@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescript
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -80,8 +81,15 @@ public class JavaDfaValueFactory {
       return factory.fromDfType(DfaPsiUtil.fromLiteral((PsiLiteralExpression)expression));
     }
 
-    if (expression instanceof PsiNewExpression || expression instanceof PsiLambdaExpression) {
-      return factory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.NOT_NULL));
+    if (expression instanceof PsiNewExpression) {
+      PsiType psiType = expression.getType();
+      DfType dfType = psiType == null ? DfType.TOP : TypeConstraints.exact(psiType).asDfType();
+      return factory.fromDfType(dfType.meet(DfTypes.NOT_NULL_OBJECT));
+    }
+
+    if (expression instanceof PsiLambdaExpression) {
+      DfType dfType = JavaDfaHelpers.getFunctionDfType((PsiFunctionalExpression)expression);
+      return factory.fromDfType(dfType.meet(DfTypes.NOT_NULL_OBJECT));
     }
 
     final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
