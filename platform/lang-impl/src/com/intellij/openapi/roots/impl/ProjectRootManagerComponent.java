@@ -65,8 +65,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
                                              : AppExecutorUtil.createBoundedApplicationPoolExecutor("Project Root Manager", 1);
   private @NotNull Future<?> myCollectWatchRootsFuture = CompletableFuture.completedFuture(null); // accessed in EDT only
 
-  private final OnlyOnceExceptionLogger myRootsChangedLogger = new OnlyOnceExceptionLogger(LOG);
-
   private boolean myPointerChangesDetected;
   private int myInsideWriteAction;
   private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = CollectionFactory.createSmallMemoryFootprintSet();
@@ -316,12 +314,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private void logRootChanges(@NotNull String message) {
+  private static void logRootChanges(@NotNull String message) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.info(message);
+      LOG.debug(message, new Throwable());
     }
     else {
-      myRootsChangedLogger.info(message, new Throwable());
+      LOG.debug(message);
     }
   }
 
