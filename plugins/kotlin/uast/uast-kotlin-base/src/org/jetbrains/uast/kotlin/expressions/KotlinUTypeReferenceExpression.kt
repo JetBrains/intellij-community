@@ -15,7 +15,7 @@ class KotlinUTypeReferenceExpression(
 ) : KotlinAbstractUExpression(givenParent), UTypeReferenceExpression, KotlinUElementWithType {
     override val type: PsiType by lz {
         typeSupplier?.invoke()
-            ?: sourcePsi?.let { baseResolveProviderService.resolveToType(it, uastParent ?: this) }
+            ?: sourcePsi?.let { baseResolveProviderService.resolveToType(it, uastParent ?: this, boxed = false) }
             ?: UastErrorType
     }
 }
