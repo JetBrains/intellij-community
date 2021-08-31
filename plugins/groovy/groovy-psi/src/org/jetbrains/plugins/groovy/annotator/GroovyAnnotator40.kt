@@ -9,6 +9,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
@@ -32,15 +33,11 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
   private fun checkTypeDefinitionModifiers(owner: GrTypeDefinition, modifierList: GrModifierList) {
     var modifierCounter = 0
     val sealed = modifierList.getModifier(GrModifier.SEALED)?.apply { modifierCounter += 1 }
-    val nonsealed = modifierList.getModifier(GrModifier.NON_SEALED)?.apply {
-      holder.newAnnotation(HighlightSeverity.WEAK_WARNING,
-                           GroovyBundle.message("inspection.message.modifier.non.sealed.redundant")).range(this).create()
-      modifierCounter += 1
-    }
+    val nonSealed = modifierList.getModifier(GrModifier.NON_SEALED)?.apply { modifierCounter += 1 }
     val final = modifierList.getModifier(GrModifier.FINAL)?.apply { modifierCounter += 1 }
     if (modifierCounter >= 2) {
       sealed?.let(this::createExclusivenessAnnotation)
-      nonsealed?.let(this::createExclusivenessAnnotation)
+      nonSealed?.let(this::createExclusivenessAnnotation)
       final?.let(this::createExclusivenessAnnotation)
     }
     if (owner is GrEnumTypeDefinition) {
@@ -48,10 +45,22 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
         holder.newAnnotation(HighlightSeverity.ERROR,
                              GroovyBundle.message("inspection.message.modifier.sealed.cannot.be.applied.to.enum.class")).range(it).create()
       }
-      nonsealed?.let {
+      nonSealed?.let {
         holder.newAnnotation(HighlightSeverity.ERROR,
-                             GroovyBundle.message("inspection.message.modifier.non.sealed.cannot.be.applied.to.enum.class")).range(
-          it).create()
+                             GroovyBundle.message("inspection.message.modifier.non.sealed.cannot.be.applied.to.enum.class")).range(it).create()
+      }
+      return
+    }
+    if (sealed != null) {
+      if (owner.permitsClause?.keyword == null && (owner.containingFile as? GroovyFile)?.classes?.takeIf { it.isNotEmpty() }?.all { owner.type() !in it.extendsListTypes && owner.type() !in it.implementsListTypes } == true) {
+        if (owner.isInterface) {
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               GroovyBundle.message("inspection.message.interface.has.no.explicit.or.implicit.implementors",
+                                                    owner.name)).range(sealed).create()
+        } else {
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               GroovyBundle.message("inspection.message.class.has.no.explicit.or.implicit.subclasses", owner.name)).range(sealed).create()
+        }
       }
     }
   }
