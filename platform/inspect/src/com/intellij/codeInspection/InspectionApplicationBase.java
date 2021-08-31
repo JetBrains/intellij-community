@@ -357,7 +357,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
                          });
   }
 
-  private static void updateProjectStructure(AtomicInteger counter, InspectionsReportConverter reportConverter, Project project, Path rootLogDir) {
+  private static void updateProjectStructure(AtomicInteger counter,
+                                             InspectionsReportConverter reportConverter,
+                                             Project project,
+                                             Path rootLogDir) {
     int i = counter.incrementAndGet();
     reportConverter.projectData(project, rootLogDir.resolve("state" + i));
     LOG.info("Project structure update written. Change number " + i);
@@ -441,6 +444,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
+
+    for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
+      CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
+      configurator.preConfigureProject(project,context);
+    }
+
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
       if (configurator.isApplicable(context)) {
