@@ -3,13 +3,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.SealedHelper.inferReferencedClass
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 internal fun getAllSealedElements(typeDef : GrTypeDefinition) : List<PsiElement> {
   val modifier = typeDef.modifierList?.getModifier(GrModifier.SEALED)
@@ -20,15 +25,40 @@ internal fun getAllSealedElements(typeDef : GrTypeDefinition) : List<PsiElement>
 fun GrTypeDefinition.getSealedElement() : PsiElement? = getAllSealedElements(this).firstOrNull()
 
 fun getAllPermittedClassElements(typeDef : GrTypeDefinition) : List<PsiElement> {
-  val permitsClause = typeDef.permitsClause?.referenceElementsGroovy ?: emptyArray()
-  val annotation = (typeDef.modifierList?.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_SEALED) as? GrAnnotation)
-  val value = if (annotation != null) AnnotationUtil.arrayAttributeValues(annotation.findDeclaredAttributeValue ("permittedSubclasses")) else emptyList()
-  return permitsClause.toList() + value
+  var isTypeDefSealed = false
+  if (typeDef.hasModifierProperty(GrModifier.SEALED)) {
+    isTypeDefSealed = true
+    if (typeDef.permitsClause?.keyword != null) {
+      return typeDef.permitsClause?.referenceElementsGroovy?.toList() ?: emptyList()
+    }
+  }
+  else {
+    val annotation = typeDef.modifierList?.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_SEALED) as? GrAnnotation
+    val declaredAttribute = annotation?.findDeclaredAttributeValue("permittedSubclasses")
+    if (annotation != null) {
+      isTypeDefSealed = true
+      if (declaredAttribute != null) {
+        return AnnotationUtil.arrayAttributeValues(declaredAttribute)
+      }
+    }
+  }
+  if (isTypeDefSealed) {
+    val ownerType = typeDef.type()
+    return (typeDef.containingFile as? GroovyFile)?.classes?.filter { ownerType in it.extendsListTypes || ownerType in it.implementsListTypes }
+           ?: emptyList()
+  }
+  return emptyList()
 }
 
-fun getAllPermittedClassesWithElements(typeDef : GrTypeDefinition) : List<PsiClass> {
-  val permitsClause = typeDef.permitsClause?.referencedTypes?.mapNotNull { it.resolve() } ?: emptyList()
-  val annotation = (typeDef.modifierList?.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_SEALED) as? GrAnnotation)
-  val value = if (annotation != null) GrAnnotationUtil.getClassArrayValue(annotation, "permittedSubclasses", true) else emptyList()
-  return permitsClause + value
+// reduce visibility of this function to avoid misuse
+object SealedHelper {
+  fun inferReferencedClass(element : PsiElement) : PsiClass? = when (element) {
+    is GrCodeReferenceElement -> element.resolve() as? PsiClass
+    is PsiAnnotationMemberValue -> GrAnnotationUtil.getPsiClass(element)
+    is PsiClass -> element
+    else -> null
+  }
 }
+
+fun getAllPermittedClasses(typeDef: GrTypeDefinition): List<PsiClass> =
+  getAllPermittedClassElements(typeDef).mapNotNull(::inferReferencedClass)

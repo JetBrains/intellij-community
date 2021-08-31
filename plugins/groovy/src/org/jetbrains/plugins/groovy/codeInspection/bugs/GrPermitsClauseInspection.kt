@@ -3,42 +3,51 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.annotator.intentions.AddToExtendsList
 import org.jetbrains.plugins.groovy.annotator.intentions.AddToImplementsList
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.util.SealedHelper.inferReferencedClass
+import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClassElements
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class GrPermitsClauseInspection : BaseInspection() {
   override fun buildVisitor(): BaseInspectionVisitor = object : BaseInspectionVisitor() {
-    override fun visitElement(element: GroovyPsiElement) {
-      if (element !is GrPermitsClause) return super.visitElement(element)
-      val owner = element.parentOfType<GrTypeDefinition>()?.takeIf { it.permitsClause === element } ?: return
-      val ownerType = owner.type()
-      for (subclassReferenceElement in element.referenceElementsGroovy) {
-        val subclassDefinition = subclassReferenceElement.resolve() as? GrTypeDefinition ?: continue
 
-        val targetReferenceList = when {
-          owner.isInterface && subclassDefinition.isInterface -> subclassDefinition.extendsClause
-          owner.isInterface -> subclassDefinition.implementsClause
-          else -> subclassDefinition.extendsClause
-        } ?: continue
+
+    override fun visitTypeDefinition(typeDefinition: GrTypeDefinition) {
+      val permittedClassElements = getAllPermittedClassElements(typeDefinition).filter { it !is PsiClass }
+      if (permittedClassElements.isNotEmpty()) {
+        checkPermittedClasses(typeDefinition, permittedClassElements)
+      }
+    }
+
+    fun checkPermittedClasses(baseClass: GrTypeDefinition, permittedElements: List<PsiElement>) {
+      val ownerType = baseClass.type()
+      for (element in permittedElements) {
+        val subClass = inferReferencedClass(element) as? GrTypeDefinition ?: continue
+        val targetReferenceList =
+          when {
+            baseClass.isInterface && subClass.isInterface -> subClass.extendsClause
+            baseClass.isInterface -> subClass.implementsClause
+            else -> subClass.extendsClause
+          } ?: continue
         if (ownerType !in targetReferenceList.referencedTypes) {
-          registerError(subclassReferenceElement,
-                        GroovyBundle.message("inspection.message.invalid.permits.clause.must.directly.extend", subclassDefinition.name,
-                                             owner.name),
-                        arrayOf<LocalQuickFix>(if (targetReferenceList is GrExtendsClause)
-                                                 AddToExtendsList(owner, targetReferenceList)
-                                               else
-                                                 AddToImplementsList(owner, targetReferenceList as GrImplementsClause)),
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+          registerError(
+            element,
+            GroovyBundle.message("inspection.message.invalid.permits.clause.must.directly.extend", subClass.name, baseClass.name),
+            arrayOf<LocalQuickFix>(
+              if (targetReferenceList is GrExtendsClause)
+                AddToExtendsList(baseClass, targetReferenceList)
+              else
+                AddToImplementsList(baseClass, targetReferenceList as GrImplementsClause)),
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
       }
     }

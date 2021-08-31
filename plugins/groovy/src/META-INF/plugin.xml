@@ -1070,7 +1070,7 @@
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.non.extending.permitted.subclasses"
                      level="ERROR"
-                     groupKey="inspection.annotations" enabledByDefault="true"
+                     groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrPermitsClauseInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.unresolved.labels.in.named.variant"
