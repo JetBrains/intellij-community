@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
@@ -30,7 +31,7 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
 }
 
 internal fun KtAnalysisSession.toPsiClass(ktType: KtType, context: KtElement): PsiClass? {
-    return PsiTypesUtil.getPsiClass(toPsiType(ktType, context))
+    return PsiTypesUtil.getPsiClass(toPsiType(ktType, context, boxed = true))
 }
 
 internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
@@ -45,20 +46,20 @@ internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
     }
 }
 
-internal fun KtAnalysisSession.toPsiType(ktType: KtType, context: KtElement): PsiType {
+internal fun KtAnalysisSession.toPsiType(ktType: KtType, context: KtElement, boxed: Boolean = false): PsiType {
     if (ktType is KtNonErrorClassType && ktType.typeArguments.isEmpty()) {
-        // TODO: unclear when we need boxed type.
+        fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
         val psiType = when (ktType.classId) {
-            StandardClassIds.Int -> PsiType.INT
-            StandardClassIds.Long -> PsiType.LONG
-            StandardClassIds.Short -> PsiType.SHORT
-            StandardClassIds.Boolean -> PsiType.BOOLEAN
-            StandardClassIds.Byte -> PsiType.BYTE
-            StandardClassIds.Char -> PsiType.CHAR
-            StandardClassIds.Double -> PsiType.DOUBLE
-            StandardClassIds.Float -> PsiType.FLOAT
+            StandardClassIds.Int -> PsiType.INT.orBoxed()
+            StandardClassIds.Long -> PsiType.LONG.orBoxed()
+            StandardClassIds.Short -> PsiType.SHORT.orBoxed()
+            StandardClassIds.Boolean -> PsiType.BOOLEAN.orBoxed()
+            StandardClassIds.Byte -> PsiType.BYTE.orBoxed()
+            StandardClassIds.Char -> PsiType.CHAR.orBoxed()
+            StandardClassIds.Double -> PsiType.DOUBLE.orBoxed()
+            StandardClassIds.Float -> PsiType.FLOAT.orBoxed()
             StandardClassIds.Unit -> {
-                if (context is KtNamedFunction) PsiType.VOID else null
+                if (context is KtNamedFunction) PsiType.VOID.orBoxed() else null
             }
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null

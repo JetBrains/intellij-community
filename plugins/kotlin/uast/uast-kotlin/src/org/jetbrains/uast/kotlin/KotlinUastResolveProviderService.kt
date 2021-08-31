@@ -228,8 +228,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolveToDeclarationImpl(ktExpression)
     }
 
-    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType? {
-        return ktTypeReference.toPsiType(source)
+    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType? {
+        return ktTypeReference.toPsiType(source, boxed)
     }
 
     override fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType? {

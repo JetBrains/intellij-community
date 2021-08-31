@@ -106,7 +106,7 @@ class KotlinUFunctionCallExpression(
 
     override val typeArguments by lz {
         sourcePsi.typeArguments.map { ktTypeProjection ->
-            ktTypeProjection.typeReference?.let { baseResolveProviderService.resolveToType(it, this) } ?: UastErrorType
+            ktTypeProjection.typeReference?.let { baseResolveProviderService.resolveToType(it, this, boxed = true) } ?: UastErrorType
         }
     }
 
