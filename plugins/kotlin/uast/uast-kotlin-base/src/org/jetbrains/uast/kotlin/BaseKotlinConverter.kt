@@ -413,7 +413,7 @@ interface BaseKotlinConverter {
                         }
                         typeReference = condition.typeReference?.let {
                             val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
-                            KotlinUTypeReferenceExpression(it, this) { service.resolveToType(it, this) ?: UastErrorType }
+                            KotlinUTypeReferenceExpression(it, this) { service.resolveToType(it, this, boxed = true) ?: UastErrorType }
                         }
                     }
                 }

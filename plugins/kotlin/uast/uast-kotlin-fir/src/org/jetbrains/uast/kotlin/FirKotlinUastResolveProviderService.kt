@@ -222,19 +222,19 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType? {
-        return resolveToType(ktTypeReference)
+    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType? {
+        return resolveToType(ktTypeReference, boxed)
     }
 
     override fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType? {
         return resolveToType(ktTypeReference)
     }
 
-    private fun resolveToType(ktTypeReference: KtTypeReference): PsiType? {
+    private fun resolveToType(ktTypeReference: KtTypeReference, boxed: Boolean = false): PsiType? {
         analyseForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
             if (ktType is KtClassErrorType) return null
-            return toPsiType(ktType, ktTypeReference)
+            return toPsiType(ktType, ktTypeReference, boxed)
         }
     }
 
@@ -242,7 +242,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktCallElement) {
             val ktType = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull()?.receiverType?.type ?: return null
             if (ktType is KtClassErrorType) return null
-            return toPsiType(ktType, ktCallElement)
+            return toPsiType(ktType, ktCallElement, boxed = true)
         }
     }
 
@@ -251,14 +251,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val ktType =
                 ktSimpleNameExpression.resolveAccessorCall()?.targetFunction?.candidates?.singleOrNull()?.receiverType?.type ?: return null
             if (ktType is KtClassErrorType) return null
-            return toPsiType(ktType, ktSimpleNameExpression)
+            return toPsiType(ktType, ktSimpleNameExpression, boxed = true)
         }
     }
 
     override fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType? {
         analyseForUast(ktDoubleColonExpression) {
             val receiverKtType = ktDoubleColonExpression.getReceiverKtType() ?: return null
-            return toPsiType(receiverKtType, ktDoubleColonExpression)
+            return toPsiType(receiverKtType, ktDoubleColonExpression, boxed = true)
         }
     }
 
