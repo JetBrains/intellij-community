@@ -11,7 +11,7 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                     USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : PsiType:Void
                     ULiteralExpression (value = "message") ["message"] : PsiType:String
         UMethod (name = resolve) [public static final fun resolve() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:String
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                     USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:String

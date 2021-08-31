@@ -4,11 +4,15 @@
  */
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiType
 import junit.framework.TestCase
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UFile
-import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
+import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
+import java.lang.IllegalStateException
 
 interface UastApiTestBase : UastPluginSelection {
 
@@ -59,6 +63,23 @@ interface UastApiTestBase : UastPluginSelection {
             "java.util.concurrent.Callable<V>",
             uFile.findElementByText<ULambdaExpression>("{ \"Callable\" }").functionalInterfaceType?.canonicalText
         )
+    }
+
+    fun checkCallbackForSimple(uFilePath: String, uFile: UFile) {
+        val simpleClass = uFile.classes.find { it.name == "Simple" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+
+        val m = simpleClass.methods.find { it.name == "method" }
+            ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")
+        // type delegated from LC
+        TestCase.assertEquals(PsiType.VOID, m.returnType)
+        // type through the base service
+        val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+        TestCase.assertEquals(PsiType.VOID, service.getType(m.sourcePsi as KtDeclaration, m as UElement))
+
+        val functionCall = m.findElementByText<UElement>("println").uastParent as KotlinUFunctionCallExpression
+        // type through the base service: KotlinUElementWithType#getExpressionType
+        TestCase.assertEquals("PsiType:Unit", functionCall.getExpressionType()?.toString())
     }
 
 }

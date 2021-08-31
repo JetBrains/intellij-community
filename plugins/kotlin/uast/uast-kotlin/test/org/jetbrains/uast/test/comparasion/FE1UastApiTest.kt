@@ -34,5 +34,10 @@ class FE1UastApiTest : AbstractFE1UastTest() {
         fun testSAM() {
             doTest("SAM", ::checkCallbackForSAM)
         }
+
+        @TestMetadata("Simple.kt")
+        fun testSimple() {
+            doTest("Simple", ::checkCallbackForSimple)
+        }
     }
 }

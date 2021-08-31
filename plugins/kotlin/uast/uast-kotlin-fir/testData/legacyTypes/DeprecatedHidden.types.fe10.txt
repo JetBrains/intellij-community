@@ -1,7 +1,7 @@
 UFile (package = test.pkg) [package test.pkg...]
     UClass (name = Test) [public final class Test {...}]
         UMethod (name = test1) [public final fun test1() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = Test) [public fun Test() = UastEmptyExpression]
         UMethod (name = test2) [@kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")...}]
             UAnnotation (fqName = kotlin.Deprecated) [@kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")]
@@ -11,4 +11,4 @@ UFile (package = test.pkg) [package test.pkg...]
                         USimpleNameReferenceExpression (identifier = HIDDEN) [HIDDEN] : PsiType:DeprecationLevel
                 UNamedExpression (name = message) [message = "nothing"]
                     ULiteralExpression (value = "nothing") ["nothing"] : PsiType:String
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit

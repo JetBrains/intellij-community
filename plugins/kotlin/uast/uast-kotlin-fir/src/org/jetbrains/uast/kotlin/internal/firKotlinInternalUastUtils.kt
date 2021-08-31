@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
@@ -56,7 +57,9 @@ internal fun KtAnalysisSession.toPsiType(ktType: KtType, context: KtElement): Ps
             StandardClassIds.Char -> PsiType.CHAR
             StandardClassIds.Double -> PsiType.DOUBLE
             StandardClassIds.Float -> PsiType.FLOAT
-            StandardClassIds.Unit -> PsiType.VOID
+            StandardClassIds.Unit -> {
+                if (context is KtNamedFunction) PsiType.VOID else null
+            }
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null
         }
