@@ -99,6 +99,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testFallthroughDefault() {
+    doTest();
+  }
+
   public void testUnusedPatternVariable() {
     myFixture.enableInspections(new UnusedDeclarationInspection());
     doTest();

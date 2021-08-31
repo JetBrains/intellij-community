@@ -21,17 +21,17 @@ class Main {
     };
 
     int i4 = switch(o) {
-      case String s, <error descr="Illegal fall-through to a pattern">X x</error> -> x.f();
+      case String s, X x -> <error descr="Cannot resolve symbol 'x'">x</error>.f();
       default -> 1;
     };
 
     int i5 = switch(o) {
-      case String s, <error descr="Illegal fall-through to a pattern">X x</error> -> x.f();
+      case String s, X x -> <error descr="Cannot resolve symbol 'x'">x</error>.f();
       default -> 1;
     };
 
     int i6 = switch(o) {
-      case X x, <error descr="Illegal fall-through to a pattern">String s</error> -> x.f();
+      case X x, String s -> <error descr="Cannot resolve symbol 'x'">x</error>.f();
       default -> 1;
     };
     return i1 + i2 + i3 + i4 + i5 + i6;
