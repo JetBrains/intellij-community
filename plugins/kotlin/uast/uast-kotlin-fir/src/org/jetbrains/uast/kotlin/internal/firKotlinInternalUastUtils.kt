@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLanguagePlugin
@@ -46,17 +47,17 @@ internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
 internal fun KtAnalysisSession.toPsiType(ktType: KtType, context: KtElement): PsiType {
     if (ktType is KtNonErrorClassType && ktType.typeArguments.isEmpty()) {
         // TODO: unclear when we need boxed type.
-        val psiType = when (ktType.classId.asFqNameString()) {
-            "kotlin.Int" -> PsiType.INT
-            "kotlin.Long" -> PsiType.LONG
-            "kotlin.Short" -> PsiType.SHORT
-            "kotlin.Boolean" -> PsiType.BOOLEAN
-            "kotlin.Byte" -> PsiType.BYTE
-            "kotlin.Char" -> PsiType.CHAR
-            "kotlin.Double" -> PsiType.DOUBLE
-            "kotlin.Float" -> PsiType.FLOAT
-            "kotlin.Unit" -> PsiType.VOID
-            "kotlin.String" -> PsiType.getJavaLangString(context.manager, context.resolveScope)
+        val psiType = when (ktType.classId) {
+            StandardClassIds.Int -> PsiType.INT
+            StandardClassIds.Long -> PsiType.LONG
+            StandardClassIds.Short -> PsiType.SHORT
+            StandardClassIds.Boolean -> PsiType.BOOLEAN
+            StandardClassIds.Byte -> PsiType.BYTE
+            StandardClassIds.Char -> PsiType.CHAR
+            StandardClassIds.Double -> PsiType.DOUBLE
+            StandardClassIds.Float -> PsiType.FLOAT
+            StandardClassIds.Unit -> PsiType.VOID
+            StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null
         }
         if (psiType != null) return psiType

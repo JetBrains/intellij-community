@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.metadata.deserialization.getExtensionOrNull
 import org.jetbrains.kotlin.metadata.jvm.JvmProtoBuf
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMemberSignature
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -97,24 +98,25 @@ internal fun KotlinType.toPsiType(lightDeclaration: PsiModifierListOwner?, conte
     }
 
     if (arguments.isEmpty()) {
-        val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe?.asString()
+        val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe
         fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
         val psiType = when (typeFqName) {
-            "kotlin.Int" -> PsiType.INT.orBoxed()
-            "kotlin.Long" -> PsiType.LONG.orBoxed()
-            "kotlin.Short" -> PsiType.SHORT.orBoxed()
-            "kotlin.Boolean" -> PsiType.BOOLEAN.orBoxed()
-            "kotlin.Byte" -> PsiType.BYTE.orBoxed()
-            "kotlin.Char" -> PsiType.CHAR.orBoxed()
-            "kotlin.Double" -> PsiType.DOUBLE.orBoxed()
-            "kotlin.Float" -> PsiType.FLOAT.orBoxed()
-            "kotlin.Unit" -> PsiType.VOID.orBoxed()
-            "kotlin.String" -> PsiType.getJavaLangString(context.manager, context.resolveScope)
+            StandardClassIds.Int.asSingleFqName() -> PsiType.INT.orBoxed()
+            StandardClassIds.Long.asSingleFqName() -> PsiType.LONG.orBoxed()
+            StandardClassIds.Short.asSingleFqName() -> PsiType.SHORT.orBoxed()
+            StandardClassIds.Boolean.asSingleFqName() -> PsiType.BOOLEAN.orBoxed()
+            StandardClassIds.Byte.asSingleFqName() -> PsiType.BYTE.orBoxed()
+            StandardClassIds.Char.asSingleFqName() -> PsiType.CHAR.orBoxed()
+            StandardClassIds.Double.asSingleFqName() -> PsiType.DOUBLE.orBoxed()
+            StandardClassIds.Float.asSingleFqName() -> PsiType.FLOAT.orBoxed()
+            StandardClassIds.Unit.asSingleFqName() -> PsiType.VOID.orBoxed()
+            StandardClassIds.String.asSingleFqName() -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> {
-                val typeConstructor = this.constructor
-                when (typeConstructor) {
-                    is IntegerValueTypeConstructor -> TypeUtils.getDefaultPrimitiveNumberType(typeConstructor).toPsiType(lightDeclaration, context, boxed)
-                    is IntegerLiteralTypeConstructor -> typeConstructor.getApproximatedType().toPsiType(lightDeclaration, context, boxed)
+                when (val typeConstructor = this.constructor) {
+                    is IntegerValueTypeConstructor ->
+                        TypeUtils.getDefaultPrimitiveNumberType(typeConstructor).toPsiType(lightDeclaration, context, boxed)
+                    is IntegerLiteralTypeConstructor ->
+                        typeConstructor.getApproximatedType().toPsiType(lightDeclaration, context, boxed)
                     else -> null
                 }
             }
