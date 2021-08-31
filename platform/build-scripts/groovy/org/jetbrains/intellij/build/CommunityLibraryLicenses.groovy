@@ -172,13 +172,17 @@ final class CommunityLibraryLicenses {
                        url: "https://github.com/apache/commons-text").apache(),
     new LibraryLicense(name: "Apache Ivy", libraryName: "org.apache.ivy", url: "https://github.com/apache/ant-ivy").apache(),
     new LibraryLicense(name: "Apache Lucene",
-                       libraryName: "lucene-core-2.4.1.jar", version: "2.4.1", url: "https://lucene.apache.org/java",
+                       libraryName: "lucene-core", url: "https://lucene.apache.org/java",
                        additionalLibraryNames: [
                          "lucene-suggest",
+                         "lucene-memory",
+                         "lucene-sandbox",
                          "lucene-codecs",
                          "lucene-highlighter",
                          "lucene-queryparser",
+                         "lucene-queries",
                          "lucene-analyzers-common",
+                         "lucene-core-2.4.1.jar"
                          ]).apache(),
     new LibraryLicense(name: "ASM (JetBrains's fork)", libraryName: "ASM",
                        url: "https://github.com/JetBrains/intellij-deps-asm",

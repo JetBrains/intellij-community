@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="lucene-analyzers-common" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-analyzers-common:8.9.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analyzers-common/8.9.0/lucene-analyzers-common-8.9.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analyzers-common/8.9.0/lucene-analyzers-common-8.9.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analyzers-common/8.9.0/lucene-analyzers-common-8.9.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
