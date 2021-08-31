@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
@@ -8,6 +9,8 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.annotator.intentions.AddToPermitsList
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
@@ -24,10 +27,10 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
   }
 
   private fun createExclusivenessAnnotation(modifier: PsiElement) {
-    holder.newAnnotation(HighlightSeverity.ERROR,
-                         GroovyBundle.message("inspection.message.only.one.final.sealed.non.sealed.should.be.applied.to.class")).range(
-      modifier).create()
-
+    (modifier.parent as? GrModifierList)?.let {
+      checkModifierIsNotAllowed(it, modifier.text, GroovyBundle.message(
+        "inspection.message.only.one.final.sealed.non.sealed.should.be.applied.to.class"), holder)
+    }
   }
 
   private fun checkTypeDefinitionModifiers(owner: GrTypeDefinition, modifierList: GrModifierList) {
@@ -40,15 +43,7 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
       nonSealed?.let(this::createExclusivenessAnnotation)
       final?.let(this::createExclusivenessAnnotation)
     }
-    if (owner is GrEnumTypeDefinition) {
-      sealed?.let {
-        holder.newAnnotation(HighlightSeverity.ERROR,
-                             GroovyBundle.message("inspection.message.modifier.sealed.cannot.be.applied.to.enum.class")).range(it).create()
-      }
-      nonSealed?.let {
-        holder.newAnnotation(HighlightSeverity.ERROR,
-                             GroovyBundle.message("inspection.message.modifier.non.sealed.cannot.be.applied.to.enum.class")).range(it).create()
-      }
+    if (checkEnum(owner, sealed, modifierList, nonSealed)) {
       return
     }
     if (sealed != null) {
@@ -57,7 +52,8 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
           holder.newAnnotation(HighlightSeverity.ERROR,
                                GroovyBundle.message("inspection.message.interface.has.no.explicit.or.implicit.implementors",
                                                     owner.name)).range(sealed).create()
-        } else {
+        }
+        else {
           holder.newAnnotation(HighlightSeverity.ERROR,
                                GroovyBundle.message("inspection.message.class.has.no.explicit.or.implicit.subclasses", owner.name)).range(sealed).create()
         }
@@ -65,15 +61,37 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     }
   }
 
+  private fun checkEnum(owner: GrTypeDefinition,
+                        sealed: PsiElement?,
+                        modifierList: GrModifierList,
+                        nonSealed: PsiElement?): Boolean {
+    if (owner is GrEnumTypeDefinition) {
+      sealed?.let {
+        checkModifierIsNotAllowed(modifierList, GrModifier.SEALED,
+                                  GroovyBundle.message("inspection.message.modifier.sealed.cannot.be.applied.to.enum.class"), holder)
+      }
+      nonSealed?.let {
+        checkModifierIsNotAllowed(modifierList, GrModifier.SEALED,
+                                  GroovyBundle.message("inspection.message.modifier.non.sealed.cannot.be.applied.to.enum.class"), holder)
+      }
+      return true
+    }
+    else {
+      return false
+    }
+  }
+
+  @Suppress("MoveLambdaOutsideParentheses")
   override fun visitPermitsClause(permitsClause: GrPermitsClause) {
     if (permitsClause.keyword == null || permitsClause.referencedTypes.isEmpty()) {
       return super.visitPermitsClause(permitsClause)
     }
     val owner = permitsClause.parentOfType<GrTypeDefinition>()?.takeIf { it.permitsClause === permitsClause } ?: return
     if (owner.modifierList?.hasModifierProperty(GrModifier.SEALED) != true) {
-      holder.newAnnotation(HighlightSeverity.ERROR,
-                           GroovyBundle.message("inspection.message.invalid.permits.clause.must.be.sealed", owner.name)).range(
-        permitsClause.keyword!!).create()
+      val builder = holder.newAnnotation(HighlightSeverity.ERROR,
+                           GroovyBundle.message("inspection.message.invalid.permits.clause.must.be.sealed", owner.name)).range(permitsClause.keyword!!)
+      registerLocalFix(builder, GrModifierFix(owner, GrModifier.SEALED, false, true, { it.startElement.parentOfType<PsiModifierListOwner>()?.modifierList }), permitsClause, GroovyBundle.message("inspection.message.invalid.permits.clause.must.be.sealed", owner.name), ProblemHighlightType.ERROR, permitsClause.textRange)
+      builder.create()
     }
   }
 
@@ -81,31 +99,33 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     checkPermissions(extendsClause)
   }
 
-  private fun checkPermissions(referenceClause: GrReferenceList) {
-    val ownerType = referenceClause
-                      .parentOfType<GrTypeDefinition>()
-                      ?.takeIf {
-                        if (referenceClause is GrExtendsClause)
-                          it.extendsClause === referenceClause
-                        else
-                          it.implementsClause === referenceClause
-                      }
-                      ?.type() ?: return
-    for ((type, element) in referenceClause.referencedTypes.zip(referenceClause.referenceElementsGroovy)) {
-      val clazz = type.resolve()?.takeIf { it.hasModifierProperty(GrModifier.SEALED) } ?: continue
-      if (clazz.permitsListTypes.isEmpty() && clazz.containingFile === referenceClause.containingFile) {
-        continue
-      }
-      if (clazz.permitsListTypes.contains(ownerType)) {
-        continue
-      }
-      holder.newAnnotation(HighlightSeverity.ERROR,
-                           GroovyBundle.message("inspection.message.not.allowed.in.sealed.hierarchy", ownerType.className)).range(
-        element).create()
-    }
-  }
-
   override fun visitImplementsClause(implementsClause: GrImplementsClause) {
     checkPermissions(implementsClause)
+  }
+
+  private fun checkPermissions(referenceClause: GrReferenceList) {
+    val ownerClass = referenceClause
+                       .parentOfType<GrTypeDefinition>()
+                       ?.takeIf {
+                         if (referenceClause is GrExtendsClause)
+                           it.extendsClause === referenceClause
+                         else
+                           it.implementsClause === referenceClause
+                       } ?: return
+    val ownerType = ownerClass.type()
+    for ((type, element) in referenceClause.referencedTypes.zip(referenceClause.referenceElementsGroovy)) {
+      val baseClass = type.resolve()?.takeIf { it.hasModifierProperty(GrModifier.SEALED) } as? GrTypeDefinition ?: continue
+      if (baseClass.permitsListTypes.isEmpty() && baseClass.containingFile === referenceClause.containingFile) {
+        continue
+      }
+      if (baseClass.permitsListTypes.contains(ownerType)) {
+        continue
+      }
+      holder
+        .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.not.allowed.in.sealed.hierarchy", ownerType.className))
+        .range(element)
+        .apply { baseClass.permitsClause?.let { withFix(AddToPermitsList(ownerClass, it)) } }
+        .create()
+    }
   }
 }
