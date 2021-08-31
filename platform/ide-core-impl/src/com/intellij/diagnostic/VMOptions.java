@@ -5,10 +5,7 @@ import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.system.CpuArch;
@@ -32,6 +29,16 @@ import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
+
+  private static final NotNullLazyValue<Charset> JNU_CHARSET = NotNullLazyValue.createValue(() -> {
+    try {
+      return Charset.forName(System.getProperty("sun.jnu.encoding"));
+    }
+    catch (Exception e) {
+      LOG.info(e);
+      return Charset.defaultCharset();
+    }
+  });
 
   public enum MemoryKind {
     HEAP("Xmx", "", "change.memory.max.heap"),
@@ -114,7 +121,7 @@ public final class VMOptions {
       Path file = getWriteFile();
       if (file != null && Files.exists(file)) {
         try {
-          return Files.readAllLines(file);
+          return Files.readAllLines(file, getFileCharset());
         }
         catch (IOException e) {
           LOG.warn(e);
@@ -179,7 +186,7 @@ public final class VMOptions {
       throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ")");
     }
 
-    List<String> lines = Files.exists(file) ? new ArrayList<>(Files.readAllLines(file)) : new ArrayList<>();
+    List<String> lines = Files.exists(file) ? new ArrayList<>(Files.readAllLines(file, getFileCharset())) : new ArrayList<>();
     List<Pair<String, @Nullable String>> options = new ArrayList<>(_options);
     boolean modified = false;
 
@@ -213,7 +220,7 @@ public final class VMOptions {
     }
 
     if (modified) {
-      Files.write(file, lines);
+      Files.write(file, lines, getFileCharset());
     }
   }
 
@@ -226,12 +233,12 @@ public final class VMOptions {
     try {
       Path newFile = getWriteFile();
       if (newFile != null && Files.exists(newFile)) {
-        return Files.readString(newFile);
+        return Files.readString(newFile, getFileCharset());
       }
 
       String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
       if (vmOptionsFile != null) {
-        return Files.readString(Path.of(vmOptionsFile));
+        return Files.readString(Path.of(vmOptionsFile), getFileCharset());
       }
     }
     catch (IOException e) {
@@ -269,6 +276,14 @@ public final class VMOptions {
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
     return fileName;
+  }
+
+  /**
+   * In general, clients should abstain from direct reading or modification of a user's .vmoptions {@link #getWriteFile file},
+   * but when unavoidable, this charset must be used for reading and writing the file.
+   */
+  public static @NotNull Charset getFileCharset() {
+    return JNU_CHARSET.getValue();
   }
 
   //<editor-fold desc="Deprecated stuff.">

@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.ArrayUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -17,6 +20,7 @@ import java.util.List;
 import static com.intellij.openapi.util.Pair.pair;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 public class VMOptionsTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -26,7 +30,7 @@ public class VMOptionsTest {
   @Before
   public void setUp() throws IOException {
     myFile = tempDir.newFile("vmoptions.txt").toPath();
-    Files.write(myFile, List.of("-Xmx512m", "-XX:MaxMetaspaceSize=128m"));
+    Files.write(myFile, List.of("-Xmx512m", "-XX:MaxMetaspaceSize=128m"), VMOptions.getFileCharset());
     System.setProperty("jb.vmOptionsFile", myFile.toString());
   }
 
@@ -43,7 +47,7 @@ public class VMOptionsTest {
 
   @Test
   public void readingEmpty() throws IOException {
-    Files.writeString(myFile, "");
+    Files.write(myFile, ArrayUtil.EMPTY_BYTE_ARRAY);
 
     assertEquals(-1, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
     assertEquals(-1, VMOptions.readOption(VMOptions.MemoryKind.METASPACE, false));
@@ -51,7 +55,7 @@ public class VMOptionsTest {
 
   @Test
   public void readingUnits() throws IOException {
-    Files.write(myFile, List.of("-Xmx2g", "-XX:MaxMetaspaceSize=128M", "-XX:ReservedCodeCacheSize=256000K"));
+    Files.write(myFile, List.of("-Xmx2g", "-XX:MaxMetaspaceSize=128M", "-XX:ReservedCodeCacheSize=256000K"), VMOptions.getFileCharset());
 
     assertEquals(2 << 10, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
     assertEquals(128, VMOptions.readOption(VMOptions.MemoryKind.METASPACE, false));
@@ -60,7 +64,7 @@ public class VMOptionsTest {
 
   @Test
   public void readingWithoutUnit() throws IOException {
-    Files.write(myFile, List.of("-Xmx4194304", "-XX:MaxMetaspaceSize=128"));
+    Files.write(myFile, List.of("-Xmx4194304", "-XX:MaxMetaspaceSize=128"), VMOptions.getFileCharset());
 
     assertEquals(4, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
     assertEquals(0, VMOptions.readOption(VMOptions.MemoryKind.METASPACE, false));
@@ -81,7 +85,7 @@ public class VMOptionsTest {
 
   @Test
   public void writingPreservingLocation() throws IOException {
-    Files.write(myFile, List.of("-someOption", "-Xmx512m", "-XX:MaxMetaspaceSize=128m", "-anotherOption"));
+    Files.write(myFile, List.of("-someOption", "-Xmx512m", "-XX:MaxMetaspaceSize=128m", "-anotherOption"), VMOptions.getFileCharset());
 
     VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
     VMOptions.setOption(VMOptions.MemoryKind.METASPACE, 256);
@@ -91,7 +95,7 @@ public class VMOptionsTest {
 
   @Test
   public void writingNew() throws IOException {
-    Files.writeString(myFile, "-someOption");
+    Files.writeString(myFile, "-someOption", VMOptions.getFileCharset());
 
     VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
     VMOptions.setOption(VMOptions.MemoryKind.METASPACE, 256);
@@ -118,11 +122,20 @@ public class VMOptionsTest {
 
   @Test
   public void deletingAllEntries() throws IOException {
-    Files.write(myFile, List.of("-Xmx128m", "-XX:MaxMetaspaceSize=240m", "-Xmx512m", "-Dx=y"));
+    Files.write(myFile, List.of("-Xmx128m", "-XX:MaxMetaspaceSize=240m", "-Xmx512m", "-Dx=y"), VMOptions.getFileCharset());
 
     VMOptions.setOption(VMOptions.MemoryKind.HEAP, -1);
 
     assertThat(myFile).hasContent("-XX:MaxMetaspaceSize=240m\n-Dx=y");
+  }
+
+  @Test
+  public void charsetCompatibility() throws IOException {
+    String name = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(VMOptions.getFileCharset().name()) : IoTestUtil.getUnicodeName();
+    assumeTrue("Cannot work on " + VMOptions.getFileCharset(), name != null);
+
+    VMOptions.setProperty("my.test.property", name);
+    assertThat(VMOptions.readOption("-Dmy.test.property=", false)).isEqualTo(name);
   }
 
   @Test
@@ -136,7 +149,7 @@ public class VMOptionsTest {
 
   @Test
   public void writingCDSArchiveFileFromXDumpClash() throws IOException {
-    Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-Xshare:dump", "junk"));
+    Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-Xshare:dump", "junk"), VMOptions.getFileCharset());
 
     enableCDS("a/b/c/cds-for-test.jsa");
 
@@ -146,7 +159,7 @@ public class VMOptionsTest {
 
   @Test
   public void writingCDSArchiveFileFromXXClash() throws IOException {
-    Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-XX:+UnlockDiagnosticVMOptions", "junk"));
+    Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-XX:+UnlockDiagnosticVMOptions", "junk"), VMOptions.getFileCharset());
 
     enableCDS("a/b/c/cds-for-test.jsa");
 
@@ -156,7 +169,7 @@ public class VMOptionsTest {
 
   @Test
   public void writingCDSArchiveFileFromArchiveClash() throws IOException {
-    Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-XX:SharedArchiveFile=foo-bar", "junk"));
+    Files.write(myFile, List.of("-someOption", "-Xmx512m", "-anotherOption", "-XX:SharedArchiveFile=foo-bar", "junk"), VMOptions.getFileCharset());
 
     enableCDS("cds-for-test.jsa");
 
@@ -166,7 +179,7 @@ public class VMOptionsTest {
 
   @Test
   public void writingCDSDisableScratch() throws IOException {
-    Files.writeString(myFile, "");
+    Files.writeString(myFile, "", VMOptions.getFileCharset());
 
     disableCDS();
 
@@ -178,7 +191,7 @@ public class VMOptionsTest {
     List<String> lines = List.of(
       "-someOption", "-Xmx512m", "-anotherOption", "-XX:+UnlockDiagnosticVMOptions", "junk", "-Xshare:auto", "junk2",
       "-XX:SharedArchiveFile=a/b/c/cds-for-test.jsa", "junk3");
-    Files.write(myFile, lines);
+    Files.write(myFile, lines, VMOptions.getFileCharset());
 
     disableCDS();
 
@@ -189,7 +202,7 @@ public class VMOptionsTest {
   public void writingCDSDisableXShare() throws IOException {
     List<String> lines = List.of(
       "-someOption", "-Xmx512m", "-anotherOption", "-XX:+UnlockDiagnosticVMOptions", "-Xshare:dump", "-XX:SharedArchiveFile=545\njunk");
-    Files.write(myFile, lines);
+    Files.write(myFile, lines, VMOptions.getFileCharset());
 
     disableCDS();
 

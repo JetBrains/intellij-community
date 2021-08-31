@@ -969,7 +969,7 @@ public final class ConfigImportHelper {
     Path vmOptionsFile = newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName());
     if (Files.exists(vmOptionsFile)) {
       try {
-        List<String> lines = Files.readAllLines(vmOptionsFile);
+        List<String> lines = Files.readAllLines(vmOptionsFile, VMOptions.getFileCharset());
         boolean updated = false;
         for (ListIterator<String> i = lines.listIterator(); i.hasNext(); ) {
           String line = i.next().trim();
@@ -983,7 +983,7 @@ public final class ConfigImportHelper {
           }
         }
         if (updated) {
-          Files.write(vmOptionsFile, lines);
+          Files.write(vmOptionsFile, lines, VMOptions.getFileCharset());
         }
       }
       catch (IOException e) {

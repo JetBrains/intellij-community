@@ -27,6 +27,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.IoErrorText
 import java.io.IOException
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JFrame
@@ -35,6 +37,7 @@ import javax.swing.ScrollPaneConstants
 abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun file(): Path?
   protected abstract fun template(): String
+  protected open fun charset(): Charset = StandardCharsets.UTF_8
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = (e.project != null || WelcomeFrame.getInstance() != null) && file() != null
@@ -58,7 +61,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   private fun openInEditor(file: Path, project: Project) {
     if (!Files.exists(file)) {
       try {
-        Files.write(file, template().split('\n'))
+        Files.write(file, template().split('\n'), charset())
       }
       catch (e: IOException) {
         Logger.getInstance(javaClass).warn(file.toString(), e)
@@ -81,7 +84,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   private fun openInDialog(file: Path, frame: JFrame) {
     val text = if (!Files.exists(file)) template() else {
       try {
-        Files.readAllLines(file).joinToString("\n")
+        Files.readAllLines(file, charset()).joinToString("\n")
       }
       catch (e: IOException) {
         Logger.getInstance(javaClass).warn(file.toString(), e)
@@ -119,7 +122,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
 
       override fun doOKAction() {
         try {
-          Files.write(file, editor.text.split('\n'))
+          Files.write(file, editor.text.split('\n'), charset())
           close(OK_EXIT_CODE)
         }
         catch (e: IOException) {
@@ -153,6 +156,7 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
 
   override fun file(): Path? = file.value
   override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
+  override fun charset(): Charset = VMOptions.getFileCharset()
 
   fun isEnabled(): Boolean = file() != null
 
