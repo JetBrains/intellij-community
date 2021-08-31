@@ -212,16 +212,4 @@ abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWi
       key?.set(context, this)
     }
   }
-
-  companion object {
-    fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: InnerCell.() -> Unit): Row = row {
-      cell {
-        column1()
-      }
-      cell {
-        column2()
-      }
-      placeholder().constraints(growX, pushX)
-    }
-  }
 }

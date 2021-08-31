@@ -5,7 +5,6 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.NewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
@@ -75,12 +74,12 @@ class GroovyNewProjectWizard : NewProjectWizard {
 
     private fun Row.createDownloadableLibraryPanel() {
       lateinit var checkbox: JBRadioButton
-      twoColumnRow(
-        {
+      row {
+        cell {
           checkbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"),
             ::useMavenLibrary).component.apply { isSelected = true }
-        },
-        {
+        }
+        cell {
           val groovyLibraryType = LibraryType.EP_NAME.findExtensionOrFail(GroovyDownloadableLibraryType::class.java)
           val downloadableLibraryDescription = groovyLibraryType.libraryDescription
           comboBox(
@@ -94,15 +93,16 @@ class GroovyNewProjectWizard : NewProjectWizard {
               }
             })
           }.enableIf(checkbox.selected)
-        })
+        }
+      }
     }
 
     private fun Row.createFileSystemLibraryPanel(): Disposable {
       lateinit var checkbox: JBRadioButton
       lateinit var disposable: Disposable
-      twoColumnRow(
-        { checkbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), ::useLocalLibrary).component },
-        {
+      row {
+        cell { checkbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), ::useLocalLibrary).component }
+        cell {
           // todo: color text field in red if selected path does not correspond to a groovy sdk home
           val groovyLibraryDescription = GroovyLibraryDescription()
           val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
@@ -128,7 +128,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
 
           disposable = textWithBrowse.component
         }
-      )
+      }
       return disposable
     }
 
