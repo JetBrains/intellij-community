@@ -11,4 +11,4 @@ UFile (package = ) [public final class ParametersWithDefaultValuesKt {...]
             UParameter (name = flag) [@org.jetbrains.annotations.NotNull var flag: boolean = false]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 ULiteralExpression (value = false) [false] : PsiType:boolean
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit

@@ -11,7 +11,7 @@ UFile (package = ) [public final class UnresolvedKt {...]
         UField (name = prop) [@org.jetbrains.annotations.NotNull private final var prop: error.NonExistentClass]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = bar) [public fun bar() : error.NonExistentClass {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = getProp) [public final fun getProp() : error.NonExistentClass = UastEmptyExpression]
         UMethod (name = A) [public fun A(@org.jetbrains.annotations.NotNull prop: error.NonExistentClass) {...}]
             UParameter (name = prop) [@org.jetbrains.annotations.NotNull var prop: error.NonExistentClass]

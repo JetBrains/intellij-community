@@ -10,10 +10,10 @@ UFile (package = ) [public final class SimpleAnnotated {...]
             UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "abc")]
                 UNamedExpression (name = names) [names = "abc"]
                     ULiteralExpression (value = "abc") ["abc"] : PsiType:String
-            UBlockExpression [{...}] : PsiType:void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("Hello, world!")] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("Hello, world!")] : PsiType:Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
                     ULiteralExpression (value = "Hello, world!") ["Hello, world!"] : PsiType:String
         UMethod (name = getProperty) [@kotlin.SinceKotlin(version = "1.0")...public final fun getProperty() : java.lang.String = UastEmptyExpression]
             UAnnotation (fqName = kotlin.SinceKotlin) [@kotlin.SinceKotlin(version = "1.0")]

@@ -24,10 +24,10 @@ UFile (package = ) [import java.util.stream.Stream...]
         UMethod (name = doSelectItem) [public static final fun doSelectItem(@org.jetbrains.annotations.NotNull selectItemFunction: kotlin.jvm.functions.Function0<kotlin.Unit>) : void {...}]
             UParameter (name = selectItemFunction) [@org.jetbrains.annotations.NotNull var selectItemFunction: kotlin.jvm.functions.Function0<kotlin.Unit>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
                     UIdentifier (Identifier (selectItemFunction)) [UIdentifier (Identifier (selectItemFunction))]
-                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
                 UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                     ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}]
@@ -35,13 +35,13 @@ UFile (package = ) [import java.util.stream.Stream...]
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()]
                                     UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
                                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
                     UIdentifier (Identifier (baz)) [UIdentifier (Identifier (baz))]
-                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
         UMethod (name = lambdaInPlaceCall) [public static final fun lambdaInPlaceCall() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
                 UWhileExpression [while (invoke()) {...}]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:boolean
                         UIdentifier (Identifier ({)) [UIdentifier (Identifier ({))]
                         USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:boolean
-                    UBlockExpression [{...}] : PsiType:void
+                    UBlockExpression [{...}] : PsiType:Unit
