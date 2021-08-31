@@ -143,7 +143,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     val propagationTarget = functionUsageInfo is CallerUsageInfo ||
                             (functionUsageInfo is OverriderUsageInfo && !functionUsageInfo.isOriginalOverrider)
 
-                    for (reference in ReferencesSearch.search(callee, callee.useScope.restrictToKotlinSources())) {
+                    for (reference in ReferencesSearch.search(callee, PsiSearchHelper.getInstance(callee.project).getCodeUsageScope(callee).restrictToKotlinSources())) {
                         val callElement = reference.element.getParentOfTypeAndBranch<KtCallElement> { calleeExpression } ?: continue
                         val usage = if (propagationTarget) {
                             KotlinCallerCallUsage(callElement)

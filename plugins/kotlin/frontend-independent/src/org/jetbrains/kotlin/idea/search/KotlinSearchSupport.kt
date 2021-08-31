@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
@@ -67,7 +68,7 @@ interface KotlinSearchUsagesSupport {
         ): Boolean = getInstance(ktClass.project).forEachKotlinOverride(ktClass, members, scope, searchDeeply, processor)
 
         fun PsiMethod.forEachOverridingMethod(
-            scope: SearchScope = runReadAction { useScope },
+            scope: SearchScope = runReadAction { PsiSearchHelper.getInstance(project).getCodeUsageScope(this) },
             processor: (PsiMethod) -> Boolean
         ): Boolean = getInstance(project).forEachOverridingMethod(this, scope, processor)
 

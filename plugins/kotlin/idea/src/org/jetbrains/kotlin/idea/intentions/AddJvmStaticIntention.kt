@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -63,7 +64,7 @@ class AddJvmStaticIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
         val expressionsToReplaceWithQualifier =
             project.runSynchronouslyWithProgress(KotlinBundle.message("looking.for.usages.in.java.files"), true) {
                 runReadAction {
-                    val searchScope = element.useScope.restrictByFileType(JavaFileType.INSTANCE)
+                    val searchScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(element).restrictByFileType(JavaFileType.INSTANCE)
                     ReferencesSearch
                         .search(element, searchScope)
                         .mapNotNull {

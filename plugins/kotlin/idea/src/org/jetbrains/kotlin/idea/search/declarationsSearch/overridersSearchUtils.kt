@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -72,7 +73,7 @@ fun forEachKotlinOverride(
 }
 
 fun PsiMethod.forEachOverridingMethod(
-    scope: SearchScope = runReadAction { useScope },
+    scope: SearchScope = runReadAction { PsiSearchHelper.getInstance(project).getCodeUsageScope(this) },
     processor: (PsiMethod) -> Boolean
 ): Boolean {
     if (this !is KtFakeLightMethod) {

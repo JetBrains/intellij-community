@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -68,7 +69,7 @@ fun KtCallableDeclaration.hasUsages(inElements: Collection<KtElement>): Boolean 
 fun KtVariableDeclaration.hasWriteUsages(): Boolean {
     assert(this.isPhysical)
     if (!isVar) return false
-    return ReferencesSearch.search(this, useScope).any {
+    return ReferencesSearch.search(this, PsiSearchHelper.getInstance(project).getCodeUsageScope(this)).any {
         (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
     }
 }
@@ -86,13 +87,13 @@ fun KtCallableDeclaration.countUsages(inElements: Collection<KtElement>): Int {
 
 fun KtCallableDeclaration.countUsages(): Int {
     assert(this.isPhysical)
-    return ReferencesSearch.search(this, useScope).count()
+    return ReferencesSearch.search(this, PsiSearchHelper.getInstance(project).getCodeUsageScope(this)).count()
 }
 
 fun KtVariableDeclaration.countWriteUsages(): Int {
     assert(this.isPhysical)
     if (!isVar) return 0
-    return ReferencesSearch.search(this, useScope).count {
+    return ReferencesSearch.search(this, PsiSearchHelper.getInstance(project).getCodeUsageScope(this)).count {
         (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
     }
 }
