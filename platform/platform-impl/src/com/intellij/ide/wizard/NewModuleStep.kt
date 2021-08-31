@@ -121,9 +121,9 @@ abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWi
         }.largeGapAfter()
         row(UIBundle.message("label.project.wizard.new.project.location")) {
           val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-          val fileChosen = { file: VirtualFile -> getUiPath(file.path) }
+          val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
           val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-          val uiPathProperty = pathProperty.transform(::getUiPath, ::getModelPath)
+          val uiPathProperty = pathProperty.transform(::getPresentablePath, ::getCanonicalPath)
           textFieldWithBrowseButton(uiPathProperty, title, context.project, fileChooserDescriptor, fileChosen)
             .withValidationOnApply { validateLocation() }
             .withValidationOnInput { validateLocation() }
@@ -137,14 +137,6 @@ abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWi
           context.setProjectFileDirectory(projectPath, false)
         }
       }
-    }
-
-    private fun getUiPath(path: String): String {
-      return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
-    }
-
-    private fun getModelPath(path: String, removeLastSlash: Boolean = true): String {
-      return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
     }
 
     private fun getBuilderId(): String? {
