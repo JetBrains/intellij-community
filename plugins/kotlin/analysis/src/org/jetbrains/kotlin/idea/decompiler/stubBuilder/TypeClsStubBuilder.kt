@@ -72,13 +72,7 @@ class TypeClsStubBuilder(private val c: ClsStubBuilderContext) {
     private fun createTypeParameterStub(parent: KotlinStubBaseImpl<*>, type: Type, name: Name, annotations: List<ClassIdWithTarget>) {
         createTypeAnnotationStubs(parent, type, annotations)
         val nullableParentWrapper = nullableTypeParent(parent, type)
-        val definitelyNotNullTypeWrapper =
-            if (Flags.DEFINITELY_NOT_NULL_TYPE.get(type.flags))
-                KotlinPlaceHolderStubImpl<KtNullableType>(parent, KtStubElementTypes.DEFINITELY_NOT_NULL_TYPE)
-            else
-                nullableParentWrapper
-
-        createStubForTypeName(ClassId.topLevel(FqName.topLevel(name)), definitelyNotNullTypeWrapper)
+        createStubForTypeName(ClassId.topLevel(FqName.topLevel(name)), nullableParentWrapper)
     }
 
     private fun createClassReferenceTypeStub(parent: KotlinStubBaseImpl<*>, type: Type, annotations: List<ClassIdWithTarget>) {
