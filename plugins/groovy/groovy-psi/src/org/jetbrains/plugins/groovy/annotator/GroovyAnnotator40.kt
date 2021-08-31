@@ -95,11 +95,19 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     checkPermissions(extendsClause)
   }
 
-  private fun checkPermissions(extendsClause: GrReferenceList) {
-    val ownerType = extendsClause.parentOfType<GrTypeDefinition>()?.takeIf { it.extendsClause === extendsClause }?.type() ?: return
-    for ((type, element) in extendsClause.referencedTypes.zip(extendsClause.referenceElementsGroovy)) {
+  private fun checkPermissions(referenceClause: GrReferenceList) {
+    val ownerType = referenceClause
+                      .parentOfType<GrTypeDefinition>()
+                      ?.takeIf {
+                        if (referenceClause is GrExtendsClause)
+                          it.extendsClause === referenceClause
+                        else
+                          it.implementsClause === referenceClause
+                      }
+                      ?.type() ?: return
+    for ((type, element) in referenceClause.referencedTypes.zip(referenceClause.referenceElementsGroovy)) {
       val clazz = type.resolve()?.takeIf { it.hasModifierProperty(GrModifier.SEALED) } ?: continue
-      if (clazz.permitsListTypes.isEmpty() && clazz.containingFile === extendsClause.containingFile) {
+      if (clazz.permitsListTypes.isEmpty() && clazz.containingFile === referenceClause.containingFile) {
         continue
       }
       if (clazz.permitsListTypes.contains(ownerType)) {
