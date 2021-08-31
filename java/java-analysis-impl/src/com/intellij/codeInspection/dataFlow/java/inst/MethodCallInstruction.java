@@ -393,19 +393,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue precalculated = getPrecalculatedReturnValue();
     PsiType type = getResultType();
 
-    SpecialField field = SpecialField.findSpecialField(myTargetMethod);
-    if (field != null) {
-      return field.createValue(factory, qualifierValue);
+    VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(myTargetMethod);
+    if (descriptor instanceof SpecialField || descriptor != null && qualifierValue instanceof DfaVariableValue) {
+      return descriptor.createValue(factory, qualifierValue);
     }
     if (precalculated != null) {
       return precalculated;
-    }
-
-    if (getContext() instanceof PsiMethodReferenceExpression && qualifierValue instanceof DfaVariableValue) {
-      VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(myTargetMethod);
-      if (descriptor != null) {
-        return descriptor.createValue(factory, qualifierValue);
-      }
     }
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {
