@@ -15,20 +15,28 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClassesWithElements
+import org.jetbrains.plugins.groovy.lang.psi.util.getSealedElement
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
   override fun visitModifierList(modifierList: GrModifierList) {
+    // todo: visit type definition
     val owner = modifierList.parentsOfType<PsiModifierListOwner>().firstOrNull { it.modifierList === modifierList }
     if (owner is GrTypeDefinition) {
       checkTypeDefinitionModifiers(owner, modifierList)
     }
   }
 
-  private fun createExclusivenessAnnotation(modifier: PsiElement) {
-    (modifier.parent as? GrModifierList)?.let {
-      checkModifierIsNotAllowed(it, modifier.text, GroovyBundle.message(
+  private fun createExclusivenessAnnotation(element: PsiElement) {
+    if (element is GrAnnotation) {
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message(
+        "inspection.message.only.one.final.sealed.non.sealed.should.be.applied.to.class")).range(element).create()
+    } else {
+      checkModifierIsNotAllowed(element.parent as GrModifierList, element.text, GroovyBundle.message(
         "inspection.message.only.one.final.sealed.non.sealed.should.be.applied.to.class"), holder)
     }
   }
@@ -38,36 +46,43 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     val sealed = modifierList.getModifier(GrModifier.SEALED)?.apply { modifierCounter += 1 }
     val nonSealed = modifierList.getModifier(GrModifier.NON_SEALED)?.apply { modifierCounter += 1 }
     val final = modifierList.getModifier(GrModifier.FINAL)?.apply { modifierCounter += 1 }
+    val sealedAnno = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_SEALED)?.apply { modifierCounter += 1 }
+    val nonSealedAnno = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_NON_SEALED)?.apply { modifierCounter += 1 }
     if (modifierCounter >= 2) {
-      sealed?.let(this::createExclusivenessAnnotation)
-      nonSealed?.let(this::createExclusivenessAnnotation)
-      final?.let(this::createExclusivenessAnnotation)
+      listOfNotNull(sealed, nonSealed, final, sealedAnno, nonSealedAnno).forEach(this::createExclusivenessAnnotation)
     }
     if (checkEnum(owner, sealed, modifierList, nonSealed)) {
       return
     }
-    if (sealed != null) {
+    val sealedElement = sealed ?: sealedAnno
+    if (sealedElement != null) {
       if (owner.permitsClause?.keyword == null && (owner.containingFile as? GroovyFile)?.classes?.takeIf { it.isNotEmpty() }?.all { owner.type() !in it.extendsListTypes && owner.type() !in it.implementsListTypes } == true) {
         if (owner.isInterface) {
           holder.newAnnotation(HighlightSeverity.ERROR,
                                GroovyBundle.message("inspection.message.interface.has.no.explicit.or.implicit.implementors",
-                                                    owner.name)).range(sealed).create()
+                                                    owner.name)).range(sealedElement).create()
         }
         else {
           holder.newAnnotation(HighlightSeverity.ERROR,
-                               GroovyBundle.message("inspection.message.class.has.no.explicit.or.implicit.subclasses", owner.name)).range(sealed).create()
+                               GroovyBundle.message("inspection.message.class.has.no.explicit.or.implicit.subclasses", owner.name)).range(
+            sealedElement).create()
         }
       }
     }
-    if (nonSealed != null) {
-      val referencedClasses = (owner.extendsClause?.referencedTypes?.toList() ?: emptyList()) + (owner.implementsClause?.referencedTypes?.toList() ?: emptyList())
-      if (referencedClasses.all { it.resolve()?.hasModifierProperty(GrModifier.SEALED) != true }) {
+    val nonSealedElement = nonSealed ?: nonSealedAnno
+    if (nonSealedElement != null) {
+      val referencedClasses = (owner.extendsClause?.referencedTypes?.toList()
+                               ?: emptyList()) + (owner.implementsClause?.referencedTypes?.toList() ?: emptyList())
+      if (referencedClasses.all { it.resolve().run { this !is GrTypeDefinition || getSealedElement() == null } }) {
         if (owner.isInterface) {
           holder.newAnnotation(HighlightSeverity.ERROR,
-                               GroovyBundle.message("inspection.message.interface.cannot.be.non.sealed.without.sealed.parent", owner.name)).range(nonSealed).create()
-        } else {
+                               GroovyBundle.message("inspection.message.interface.cannot.be.non.sealed.without.sealed.parent",
+                                                    owner.name)).range(nonSealedElement).create()
+        }
+        else {
           holder.newAnnotation(HighlightSeverity.ERROR,
-                               GroovyBundle.message("inspection.message.class.cannot.be.non.sealed.without.sealed.parent", owner.name)).range(nonSealed).create()
+                               GroovyBundle.message("inspection.message.class.cannot.be.non.sealed.without.sealed.parent",
+                                                    owner.name)).range(nonSealedElement).create()
         }
       }
     }
@@ -126,11 +141,12 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
                        } ?: return
     val ownerType = ownerClass.type()
     for ((type, element) in referenceClause.referencedTypes.zip(referenceClause.referenceElementsGroovy)) {
-      val baseClass = type.resolve()?.takeIf { it.hasModifierProperty(GrModifier.SEALED) } as? GrTypeDefinition ?: continue
-      if (baseClass.permitsListTypes.isEmpty() && baseClass.containingFile === referenceClause.containingFile) {
+      val baseClass = type.resolve()?.takeIf { it is GrTypeDefinition && it.getSealedElement() != null } as? GrTypeDefinition ?: continue
+      val permittedClasses = getAllPermittedClassesWithElements(baseClass)
+      if (permittedClasses.isEmpty() && baseClass.containingFile === referenceClause.containingFile) {
         continue
       }
-      if (baseClass.permitsListTypes.contains(ownerType)) {
+      if (ownerClass in permittedClasses) {
         continue
       }
       holder

@@ -26,11 +26,11 @@ class GrPermitsClauseInspection : BaseInspection() {
         val subclassDefinition = subclassReferenceElement.resolve() as? GrTypeDefinition ?: continue
 
         val targetReferenceList = when {
-          owner.isInterface && subclassDefinition.isInterface -> subclassDefinition.extendsListTypes
-          owner.isInterface -> subclassDefinition.implementsListTypes
-          else -> subclassDefinition.extendsListTypes
-        }
-        if (ownerType !in targetReferenceList) {
+          owner.isInterface && subclassDefinition.isInterface -> subclassDefinition.extendsClause
+          owner.isInterface -> subclassDefinition.implementsClause
+          else -> subclassDefinition.extendsClause
+        } ?: continue
+        if (ownerType !in targetReferenceList.referencedTypes) {
           registerError(subclassReferenceElement,
                         GroovyBundle.message("inspection.message.invalid.permits.clause.must.directly.extend", subclassDefinition.name,
                                              owner.name),
