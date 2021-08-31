@@ -182,7 +182,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
 
   private fun doGetModifiableRootModel(module: Module): ModifiableRootModel {
     val rootConfigurationAccessor: RootConfigurationAccessor = object : RootConfigurationAccessor() {
-      override fun getLibrary(library: Library, libraryName: String, libraryLevel: String): Library? {
+      override fun getLibrary(library: Library?, libraryName: String, libraryLevel: String): Library? {
         return if (LibraryTablesRegistrar.PROJECT_LEVEL == libraryLevel) {
           librariesModel.getLibraryByName(libraryName)
         }
