@@ -37,5 +37,10 @@ open class FirUastApiTest : AbstractFirUastTest() {
         fun testSAM() {
             doCheck("uast-kotlin/testData/SAM.kt", ::checkCallbackForSAM)
         }
+
+        @TestMetadata("Simple.kt")
+        fun testSimple() {
+            doCheck("uast-kotlin/testData/Simple.kt", ::checkCallbackForSimple)
+        }
     }
 }
