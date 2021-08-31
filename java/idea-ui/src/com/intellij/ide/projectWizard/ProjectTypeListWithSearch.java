@@ -11,7 +11,6 @@ import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,9 +23,8 @@ public class ProjectTypeListWithSearch<T> extends JPanel {
 
     list.getEmptyText().setText(UIBundle.message("message.noMatchesFound"));
 
-    SearchTextField searchTextField = new SearchTextField();
-    searchTextField.getTextEditor().setBorder(JBUI.Borders.empty());
-    UIUtil.setNotOpaqueRecursively(searchTextField);
+    SearchTextField searchTextField = new SearchTextField(false);
+    searchTextField.getTextEditor().setBorder(JBUI.Borders.empty(2, 5, 2, 0));
     scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
 
     add(searchTextField, BorderLayout.NORTH);
