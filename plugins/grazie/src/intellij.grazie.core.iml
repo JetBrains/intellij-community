@@ -266,25 +266,25 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module-library">
       <library name="ai.grazie.nlp:nlp-common" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common:0.1.36" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common:0.1.37" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.36/nlp-common-0.1.36.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.37/nlp-common-0.1.37.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.36/nlp-common-0.1.36-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.37/nlp-common-0.1.37-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.nlp:nlp-tokenizer" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.36" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.37" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.36/nlp-tokenizer-0.1.36.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.37/nlp-tokenizer-0.1.37.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.36/nlp-tokenizer-0.1.36-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.37/nlp-tokenizer-0.1.37-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
