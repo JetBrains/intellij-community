@@ -14,10 +14,15 @@ class FirE2ETest : AbstractFirProjectBasedTests() {
     override val warmUpOnHelloWorldProject: Boolean = false
 
     fun testRustPlugin() {
+        /*
+        The fork of intellij-rust plugin is considered here https://github.com/darthorimar/intellij-rust
+        It has required code pregenerated manually
+        Also, it is always the same version of rust plugin codebase to test against
+         */
         val project = ProjectData(
             name = "intellijRustPlugin",
             path = "../intellij-rust",
-            openAction = ProjectOpenAction.EXISTING_IDEA_PROJECT,
+            openAction = ProjectOpenAction.GRADLE_PROJECT,
         )
 
         val profile = PerformanceTestProfile(
