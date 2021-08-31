@@ -114,9 +114,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     rebuildViews();
   }
 
-  private void initFocusingVariablesFromFramesView() {
-    XFramesView framesView = ObjectUtils.tryCast(myViews.get(DebuggerContentInfo.FRAME_CONTENT), XFramesView.class);
-    XVariablesViewBase variablesView = ObjectUtils.tryCast(myViews.get(DebuggerContentInfo.VARIABLES_CONTENT), XVariablesViewBase.class);
+  protected @Nullable <T> T getView(String viewId, Class<T> viewClass) {
+    return ObjectUtils.tryCast(myViews.get(viewId), viewClass);
+  }
+
+  protected void initFocusingVariablesFromFramesView() {
+    XFramesView framesView = getView(DebuggerContentInfo.FRAME_CONTENT, XFramesView.class);
+    XVariablesViewBase variablesView = getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
     if (framesView == null || variablesView == null) return;
 
     framesView.onFrameSelectionKeyPressed(frame -> {

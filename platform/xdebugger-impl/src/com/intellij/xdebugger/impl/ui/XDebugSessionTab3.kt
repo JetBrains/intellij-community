@@ -9,18 +9,15 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.content.custom.options.CustomContentLayoutOptions
-import com.intellij.ui.content.tabs.PinToolwindowTabAction
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -36,17 +33,9 @@ class XDebugSessionTab3(
 ) : XDebugSessionTab(session, icon, environment, false) {
 
   companion object {
-    private const val threadsIsVisibleKey = "threadsIsVisibleKey"
     private const val viewProportionKey = "debugger.layout.watches.defaultThreadsProportion"
     private const val debuggerContentId = "DebuggerView"
   }
-
-  private val project = session.project
-  private var threadsIsVisible
-    get() = PropertiesComponent.getInstance(project).getBoolean(threadsIsVisibleKey, true)
-    set(value) = PropertiesComponent.getInstance(project).setValue(threadsIsVisibleKey, value, true)
-
-  private val lifetime = Disposer.newDisposable()
 
   private val splitter = OnePixelSplitter(viewProportionKey, 0.35f).apply {
     addPropertyChangeListener {
@@ -55,9 +44,8 @@ class XDebugSessionTab3(
       }
     }
   }
-  private var xThreadsFramesView : XDebugView = XFramesView(myProject)
 
-  private var variables: XVariablesView? = null
+  private var xThreadsFramesView : XDebugView = XFramesView(myProject)
 
   private var mySingleContentSupplier: SingleContentSupplier? = null
 
@@ -70,14 +58,10 @@ class XDebugSessionTab3(
     if (isWatchesInVariables) {
       variablesView = XWatchesViewImpl(session, true, true, false)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
-      variables = variablesView
-
       myWatchesView = variablesView
     } else {
       variablesView = XVariablesView(session)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
-      variables = variablesView
-
       watchesView = XWatchesViewImpl(session, false, true, false)
       registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
       myWatchesView = watchesView
@@ -157,45 +141,26 @@ class XDebugSessionTab3(
     mySingleContentSupplier = RunTabSupplier(toolbar)
   }
 
+  override fun initFocusingVariablesFromFramesView() {
+    val xFramesView = xThreadsFramesView as? XFramesView ?: return
+    xFramesView.mainComponent?.isFocusCycleRoot = false
+    xFramesView.onFrameSelectionKeyPressed {
+      val variablesView = getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase::class.java)
+      variablesView?.onReady()?.whenComplete { _, _ ->
+        with(variablesView.tree) {
+          requestFocus()
+          if (isSelectionEmpty) {
+            setSelectionRow(0)
+          }
+        }
+      }
+    }
+  }
+
   val threadFramesView: XDebugView
     get() = xThreadsFramesView
 
   override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier
-
-  override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
-    leftToolbar.apply {
-      val constraints = Constraints(Anchor.BEFORE, XDebuggerActions.VIEW_BREAKPOINTS)
-
-      add(object : ToggleAction() {
-        override fun setSelected(e: AnActionEvent, state: Boolean) {
-          if (threadsIsVisible != state) {
-            threadsIsVisible = state
-          }
-          //xThreadsFramesView.setThreadsVisible(state)
-          Toggleable.setSelected(e.presentation, state)
-        }
-
-        override fun isSelected(e: AnActionEvent) = threadsIsVisible
-
-        override fun update(e: AnActionEvent) {
-          e.presentation.icon = AllIcons.Actions.SplitVertically
-          if (threadsIsVisible) {
-            e.presentation.text = XDebuggerBundle.message("session.tab.hide.threads.view")
-          }
-          else {
-            e.presentation.text = XDebuggerBundle.message("session.tab.show.threads.view")
-          }
-
-          setSelected(e, threadsIsVisible)
-        }
-      }, constraints)
-
-      add(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP), constraints)
-      add(Separator.getInstance(), constraints)
-    }
-
-    super.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
-  }
 
   private fun updateSplitterOrientation() {
     splitter.orientation = UIUtil.getParentOfType(InternalDecoratorImpl::class.java, splitter)
@@ -219,12 +184,8 @@ class XDebugSessionTab3(
     if (isChanged) {
       attachViewToSession(session, view)
       view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session)
+      initFocusingVariablesFromFramesView()
     }
     UIUtil.removeScrollBorder(splitter)
-  }
-
-  override fun dispose() {
-    Disposer.dispose(lifetime)
-    super.dispose()
   }
 }
