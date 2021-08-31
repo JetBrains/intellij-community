@@ -18,7 +18,7 @@ class KotlinUTypeCheckExpression(
 
     override val type by lz {
         sourcePsi.typeReference?.let {
-            baseResolveProviderService.resolveToType(it, this)
+            baseResolveProviderService.resolveToType(it, this, boxed = false)
         } ?: UastErrorType
     }
 
