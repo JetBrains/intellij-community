@@ -34,7 +34,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private final Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
-  private static Boolean myNavToolbarGroupExist;
+  private Boolean myNavToolbarGroupExist;
   private JScrollPane myScrollPane;
 
   public NavBarRootPaneExtension(@NotNull Project project) {
@@ -71,7 +71,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return  b;
   }
 
-  public static boolean runToolbarExists() {
+  private boolean runToolbarExists() {
     if (myNavToolbarGroupExist == null) {
       final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
       myNavToolbarGroupExist = correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||
@@ -226,16 +226,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
       @Override
       public void updateUI() {
-        if(!ApplicationManager.getApplication().isDispatchThread()){
-          ApplicationManager.getApplication().invokeLater(() -> {
-            updateUiInternal();
-          });
-        } else {
-          updateUiInternal();
-        }
-      }
-
-      private void updateUiInternal(){
         super.updateUI();
         setOpaque(true);
         if (myScrollPane == null || myNavigationBar == null) return;
