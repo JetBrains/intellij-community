@@ -100,7 +100,8 @@ class Stats(
             fastIterations = fastIterations,
             setUp = setUp,
             test = test,
-            tearDown = tearDown
+            tearDown = tearDown,
+            afterTestCheck = afterTestCheck,
         )
         val block = {
             val metricChildren = mutableListOf<Metric>()
@@ -112,7 +113,8 @@ class Stats(
                         fastIterations = fastIterations,
                         setUp = setUp,
                         test = test,
-                        tearDown = tearDown
+                        tearDown = tearDown,
+                        afterTestCheck = afterTestCheck,
                     )
                     warmUpPhase(warmPhaseData, metricChildren, stopAtException)
                 }
@@ -305,6 +307,14 @@ class Stats(
                         valueMap["counter \"$name\": time"] = nanos.nsToMs
                     }
 
+                    when (val result = phaseData.afterTestCheck(testData)) {
+                        is TestCheckResult.Failure -> {
+                            val messages = result.messages.joinToString(separator = "\n")
+                            error(messages)
+                        }
+                        TestCheckResult.Success -> {}
+                    }
+
                 } catch (t: Throwable) {
                     logMessage(t) { "error at $attemptName" }
                     valueMap[ERROR_KEY] = t
@@ -489,7 +499,8 @@ data class PhaseData<SV, TV>(
     val setUp: (TestData<SV, TV>) -> Unit,
     val test: (TestData<SV, TV>) -> Unit,
     val tearDown: (TestData<SV, TV>) -> Unit,
-    val fastIterations: Boolean = false
+    val fastIterations: Boolean = false,
+    val afterTestCheck: (TestData<SV, TV>) -> TestCheckResult,
 )
 
 data class TestData<SV, TV>(var setUpValue: SV?, var value: TV?) {

@@ -16,15 +16,17 @@ data class PerfTest<SV, TV>(
     val test: (TestData<SV, TV>) -> Unit,
     val tearDown: (TestData<SV, TV>) -> Unit,
     val profilerConfig: ProfilerConfig,
+    val afterTestCheck: (TestData<SV, TV>) -> TestCheckResult
 )
 
-abstract class PerfTestBuilderBase {
+abstract class PerfTestBuilderBase<SV, TV> {
     protected var name: String? = null
     protected var warmUpIterations: Int? = null
     protected var iterations: Int? = null
     protected var fastIterations: Boolean? = null
     protected var checkStability: Boolean? = null
     protected var stopAtException: Boolean? = null
+    protected var afterTestCheck: ((TestData<SV, TV>) -> TestCheckResult)? = null
 
     fun name(name: String) {
         this.name = name
@@ -50,32 +52,38 @@ abstract class PerfTestBuilderBase {
     fun stopAtException(stopAtException: Boolean) {
         this.stopAtException = stopAtException
     }
+
+    fun afterTestCheck(check: (TestData<SV, TV>) -> TestCheckResult) {
+        this.afterTestCheck = check
+    }
 }
 
-class PerfTestOverrideBuilder : PerfTestBuilderBase() {
-    fun build(): PerfTestSettingsOverride =
+class PerfTestOverrideBuilder<SV, TV> : PerfTestBuilderBase<SV, TV>() {
+    fun build(): PerfTestSettingsOverride<SV, TV> =
         PerfTestSettingsOverride(
             name,
             warmUpIterations,
             iterations,
             fastIterations,
             checkStability,
-            stopAtException
+            stopAtException,
+            afterTestCheck,
         )
 }
 
-fun settingsOverride(init: PerfTestOverrideBuilder.() -> Unit): PerfTestSettingsOverride =
-    PerfTestOverrideBuilder().apply(init).build()
+fun <SV, TV> settingsOverride(init: PerfTestOverrideBuilder<SV, TV>.() -> Unit): PerfTestSettingsOverride<SV, TV> =
+    PerfTestOverrideBuilder<SV, TV>().apply(init).build()
 
-class PerfTestSettingsOverride(
+class PerfTestSettingsOverride<SV, TV>(
     val name: String?,
     val warmUpIterations: Int?,
     val iterations: Int?,
     val fastIterations: Boolean?,
     val checkStability: Boolean?,
     val stopAtException: Boolean?,
+    val afterTestCheck: ((TestData<SV, TV>) -> TestCheckResult)?
 ) {
-    fun <SV, TV> applyToPerfTest(perfTest: PerfTest<SV, TV>): PerfTest<SV, TV> {
+    fun applyToPerfTest(perfTest: PerfTest<SV, TV>): PerfTest<SV, TV> {
         return perfTest.copy(
             name = name ?: perfTest.name,
             warmUpIterations = warmUpIterations ?: perfTest.warmUpIterations,
@@ -83,12 +91,13 @@ class PerfTestSettingsOverride(
             fastIterations = fastIterations ?: perfTest.fastIterations,
             checkStability = checkStability ?: perfTest.checkStability,
             stopAtException = stopAtException ?: perfTest.stopAtException,
+            afterTestCheck = afterTestCheck?.and(perfTest.afterTestCheck) ?: perfTest.afterTestCheck,
         )
     }
 }
 
 
-class PerfTestBuilder<SV, TV> : PerfTestBuilderBase() {
+class PerfTestBuilder<SV, TV> : PerfTestBuilderBase<SV, TV>() {
     private lateinit var stats: Stats
     private var setUp: (TestData<SV, TV>) -> Unit = { }
     private lateinit var test: (TestData<SV, TV>) -> Unit
@@ -101,6 +110,7 @@ class PerfTestBuilder<SV, TV> : PerfTestBuilderBase() {
         fastIterations = false
         checkStability = true
         stopAtException = false
+        afterTestCheck = { TestCheckResult.Success }
     }
 
     fun stats(stats: Stats) {
@@ -135,17 +145,18 @@ class PerfTestBuilder<SV, TV> : PerfTestBuilderBase() {
             setUp = setUp,
             test = test,
             tearDown = tearDown,
-            profilerConfig = profilerConfig
+            profilerConfig = profilerConfig,
+            afterTestCheck = afterTestCheck!!,
         )
 }
 
 fun <SV, TV> performanceTest(
-    overrides: List<PerfTestSettingsOverride> = emptyList(),
+    overrides: List<PerfTestSettingsOverride<SV, TV>> = emptyList(),
     initializer: PerfTestBuilder<SV, TV>.() -> Unit,
 ) {
     val perfTest = PerfTestBuilder<SV, TV>().apply(initializer).build().applyOverrides(overrides.toList())
     perfTest.stats.perfTest(perfTest.name, perfTest)
 }
 
-private fun <SV, TV> PerfTest<SV, TV>.applyOverrides(overrides: List<PerfTestSettingsOverride>): PerfTest<SV, TV> =
+private fun <SV, TV> PerfTest<SV, TV>.applyOverrides(overrides: List<PerfTestSettingsOverride<SV, TV>>): PerfTest<SV, TV> =
     overrides.fold(this) { test, override -> override.applyToPerfTest(test) }

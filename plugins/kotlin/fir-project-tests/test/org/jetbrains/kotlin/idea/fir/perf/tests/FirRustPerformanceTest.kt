@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.perf.tests
 
 import org.jetbrains.kotlin.idea.fir.project.test.base.AbstractFirProjectBasedTests
 import org.jetbrains.kotlin.idea.fir.project.test.base.RustProject
+import org.jetbrains.kotlin.idea.perf.common.ProjectBasedTestPreferences
 import org.jetbrains.kotlin.idea.perf.live.PerformanceTestProfile
 
 class FirRustPerformanceTest: AbstractFirProjectBasedTests() {
@@ -10,9 +11,10 @@ class FirRustPerformanceTest: AbstractFirProjectBasedTests() {
     override val warmUpOnHelloWorldProject: Boolean = true
 
     fun testRustPlugin() {
-        val profile = PerformanceTestProfile(
+        val profile = ProjectBasedTestPreferences(
             warmUpIterations = 5,
             iterations = 10,
+            checkForValidity = false,
         )
 
         test("Rust Plugin", RustProject.project, RustProject.actions, profile)
