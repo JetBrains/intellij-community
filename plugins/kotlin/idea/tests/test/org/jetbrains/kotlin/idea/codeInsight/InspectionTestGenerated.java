@@ -228,6 +228,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/naming/property/inspectionData/inspections.test");
         }
 
+        @TestMetadata("nonExhaustiveWhenStatementMigration/inspectionData/inspections.test")
+        public void testNonExhaustiveWhenStatementMigration_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/nonExhaustiveWhenStatementMigration/inspectionData/inspections.test");
+        }
+
         @TestMetadata("nullableBooleanElvis/inspectionData/inspections.test")
         public void testNullableBooleanElvis_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/nullableBooleanElvis/inspectionData/inspections.test");
