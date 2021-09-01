@@ -453,8 +453,6 @@ object DynamicPlugins {
       }
     }
 
-    var classLoaderUnloaded: Boolean
-    val classLoaders = WeakList<PluginClassLoader>()
     try {
       if (options.save) {
         saveDocumentsAndProjectsAndApp(true)
@@ -463,6 +461,16 @@ object DynamicPlugins {
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
       IdeEventQueue.getInstance().flushQueue()
+    }
+    catch (e: Exception) {
+      logger<DynamicPlugins>().error(e)
+      reportUnloadResultToFus(success = false, pluginDescriptor)
+      return false
+    }
+
+    var classLoaderUnloaded: Boolean
+    val classLoaders = WeakList<PluginClassLoader>()
+    try {
       app.runWriteAction {
         // must be after flushQueue (e.g. https://youtrack.jetbrains.com/issue/IDEA-252010)
         val forbidGettingServicesToken = app.forbidGettingServices("Plugin $pluginId being unloaded.")
@@ -578,10 +586,7 @@ object DynamicPlugins {
           InstalledPluginsState.getInstance().isRestartRequired = true
         }
 
-        val eventId = if (classLoaderUnloaded) "unload.success" else "unload.fail"
-        val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
-        @Suppress("DEPRECATION")
-        FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", eventId, fuData)
+        reportUnloadResultToFus(classLoaderUnloaded, pluginDescriptor)
       }
     }
 
@@ -1340,4 +1345,11 @@ private fun setClassLoaderState(pluginDescriptor: IdeaPluginDescriptorImpl, stat
   for (dependency in pluginDescriptor.pluginDependencies) {
     dependency.subDescriptor?.let { setClassLoaderState(it, state) }
   }
+}
+
+private fun reportUnloadResultToFus(success: Boolean, pluginDescriptor: IdeaPluginDescriptorImpl) {
+  val eventId = if (success) "unload.success" else "unload.fail"
+  val usageData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
+  @Suppress("DEPRECATION")
+  FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", eventId, usageData)
 }
