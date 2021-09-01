@@ -55,12 +55,17 @@ public class GitCherryPicker extends VcsCherryPicker {
     if (indicator != null) {
       indicator.setIndeterminate(false);
     }
-    Ref<Integer> cherryPickedCommitsCount = Ref.create(0);
+    Ref<Integer> cherryPickedCommitsCount = Ref.create(1);
     new GitApplyChangesProcess(myProject, commits, true,
                                GitBundle.message("cherry.pick.name"), GitBundle.message("cherry.pick.applied"),
                                (repository, commit, autoCommit, listeners) -> {
                                  if (indicator != null) {
-                                   indicator.setText(DvcsBundle.message("cherry.picking.process.commit", StringUtil.trimMiddle(commit.getSubject(), 30)));
+                                   indicator.setText(DvcsBundle.message(
+                                     "cherry.picking.process.commit",
+                                     StringUtil.trimMiddle(commit.getSubject(), 30),
+                                     cherryPickedCommitsCount.get(),
+                                     commits.size()
+                                   ));
                                    indicator.setFraction((double) cherryPickedCommitsCount.get() / commits.size());
                                  }
                                  GitCommandResult result = Git.getInstance()
