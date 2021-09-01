@@ -174,7 +174,7 @@ class Foo<A, B> {
   }
 
   void testInnerClassExtendsImplementsCompletion() {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "extends", "implements")
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "extends", "implements", "permits")
   }
 
   void testInnerClassCompletion() {

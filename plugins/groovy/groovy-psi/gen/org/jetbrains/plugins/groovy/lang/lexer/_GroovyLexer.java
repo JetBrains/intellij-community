@@ -1186,6 +1186,7 @@ public class _GroovyLexer extends GroovyLexerBase implements FlexLexer {
     zzAtEOF  = false;
     zzAtBOL = true;
     zzEndRead = end;
+    resetState();
     yybegin(initialState);
   }
 

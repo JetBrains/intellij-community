@@ -65,6 +65,7 @@ class D implements <error>A</error> {}'''
 '''
   }
 
+  @Bombed(year = 2021, month = 10, day = 1, user = "knisht", description = "Waiting for Groovy 4.0.0-beta-1 release")
   void 'test sealed annotation'() {
     highlightingTest '''
 import groovy.transform.Sealed

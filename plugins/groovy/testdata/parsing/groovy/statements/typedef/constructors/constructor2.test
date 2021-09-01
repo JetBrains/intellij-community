@@ -48,4 +48,3 @@ Groovy script
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiElement(})('}')
-  PsiWhiteSpace('  ')
