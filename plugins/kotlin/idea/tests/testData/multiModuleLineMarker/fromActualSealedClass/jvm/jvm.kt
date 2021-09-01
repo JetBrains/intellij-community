@@ -1,4 +1,4 @@
-actual sealed class <!LINE_MARKER("descr='Is subclassed by Sealed1 in Sealed [jvm] Sealed2 in Sealed [jvm]  Click or press ... to navigate'"), LINE_MARKER("descr='Has declaration in common module'")!>Sealed<!> {
+actual sealed class <!LINE_MARKER("descr='Has declaration in common module'"), LINE_MARKER("descr='Is subclassed by Sealed1 in Sealed [jvm] Sealed2 in Sealed [jvm]  Click or press ... to navigate'")!>Sealed<!> {
 
     actual object <!LINE_MARKER("descr='Has declaration in common module'")!>Sealed1<!> : Sealed()
 
@@ -7,5 +7,3 @@ actual sealed class <!LINE_MARKER("descr='Is subclassed by Sealed1 in Sealed [jv
         actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>foo<!>() = ""
     }
 }
-
-
