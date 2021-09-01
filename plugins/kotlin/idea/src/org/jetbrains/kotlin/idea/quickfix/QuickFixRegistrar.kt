@@ -270,15 +270,13 @@ class QuickFixRegistrar : QuickFixContributor {
         MUST_BE_INITIALIZED.registerActions(SpecifyTypeExplicitlyFix())
 
         ELSE_MISPLACED_IN_WHEN.registerFactory(MoveWhenElseBranchFix)
-        NO_ELSE_IN_WHEN.registerFactory(AddWhenElseBranchFix)
-        NO_ELSE_IN_WHEN.registerFactory(AddWhenRemainingBranchesFix)
         REDUNDANT_ELSE_IN_WHEN.registerFactory(RemoveWhenBranchFix)
         SENSELESS_NULL_IN_WHEN.registerFactory(RemoveWhenBranchFix, RemoveWhenConditionFix)
-        NON_EXHAUSTIVE_WHEN.registerFactory(AddWhenElseBranchFix)
-        NON_EXHAUSTIVE_WHEN.registerFactory(AddWhenRemainingBranchesFix)
-        NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS.registerFactory(AddWhenElseBranchFix)
-        NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS.registerFactory(AddWhenRemainingBranchesFix)
         BREAK_OR_CONTINUE_IN_WHEN.registerFactory(AddLoopLabelFix)
+        NO_ELSE_IN_WHEN.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
+        NON_EXHAUSTIVE_WHEN.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
+        NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
+        NON_EXHAUSTIVE_WHEN_STATEMENT.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
 
         NO_TYPE_ARGUMENTS_ON_RHS.registerFactory(AddStarProjectionsFixFactory)
 

@@ -1,6 +1,6 @@
 // "Add remaining branches" "false"
-// ACTION: Eliminate argument of 'when'
 // WITH_RUNTIME
+// ERROR: 'when' expression must be exhaustive, add necessary 'is B' branch or 'else' branch instead
 
 sealed class A
 class B : A()

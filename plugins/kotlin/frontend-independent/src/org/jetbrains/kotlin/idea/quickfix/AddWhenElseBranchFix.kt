@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -19,21 +18,15 @@ class AddWhenElseBranchFix(element: KtWhenExpression) : KotlinPsiOnlyQuickFixAct
     override fun getFamilyName() = KotlinBundle.message("fix.add.else.branch.when")
     override fun getText() = familyName
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        val element = element ?: return false
-        return element.closeBrace != null
-    }
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element?.closeBrace != null
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val psiFactory = KtPsiFactory(file)
-        val entry = psiFactory.createWhenEntry("else ->")
-        val whenCloseBrace = element.closeBrace ?: error("isAvailable should check if close brace exist")
-        val insertedWhenEntry =
-            CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element.addBefore(entry, whenCloseBrace)) as KtWhenEntry
-        val endOffset = insertedWhenEntry.endOffset
-        editor?.document?.insertString(endOffset, " ")
-        editor?.caretModel?.moveToOffset(endOffset + 1)
+        val whenCloseBrace = element.closeBrace ?: return
+        val entry = KtPsiFactory(file).createWhenEntry("else -> {}")
+        CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element.addBefore(entry, whenCloseBrace))?.endOffset?.let { offset ->
+            editor?.caretModel?.moveToOffset(offset - 1)
+        }
     }
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
