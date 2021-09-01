@@ -28,8 +28,6 @@ internal class PandocSettingsPanel(private val project: Project): JPanel(GridBag
   private val infoPanel = JPanel().apply { layout = BoxLayout(this, BoxLayout.Y_AXIS) }
   private val imagesPathSelector = TextFieldWithBrowseButton()
 
-  private val detector = PandocExecutableDetector()
-
   private val settings
     get() = PandocSettings.getInstance(project)
 
@@ -61,8 +59,8 @@ internal class PandocSettingsPanel(private val project: Project): JPanel(GridBag
     add(imagesPathSelector, gb.next().coverLine().insets(0, 0, 1, 0))
     testButton.addActionListener {
       infoPanel.removeAll()
-      val path = executablePath ?: detector.detect()
-      val labelText = when (val detectedVersion = detector.tryToGetPandocVersion(project, path)) {
+      val path = executablePath ?: PandocExecutableDetector.detect()
+      val labelText = when (val detectedVersion = PandocExecutableDetector.obtainPandocVersion(project, path)) {
         null -> MarkdownBundle.message("markdown.settings.pandoc.executable.error.msg", path)
         else -> MarkdownBundle.message("markdown.settings.pandoc.executable.success.msg", detectedVersion)
       }
@@ -110,7 +108,7 @@ internal class PandocSettingsPanel(private val project: Project): JPanel(GridBag
   }
 
   private fun updateExecutablePathSelectorEmptyText() {
-    val detectedPath = detector.detect()
+    val detectedPath = PandocExecutableDetector.detect()
     if (detectedPath.isNotEmpty()) {
       (executablePathSelector.textField as JBTextField).emptyText.text = MarkdownBundle.message(
         "markdown.settings.pandoc.executable.auto",
