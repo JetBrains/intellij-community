@@ -114,13 +114,14 @@ class AppEditorFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstra
 
         cell(lineSpacingField)
           .label(lineSpacingLabel)
-      }
+      }.bottomGap(BottomGap.SMALL)
 
       row {
         cell(enableLigaturesCheckbox)
           .gap(RightGap.SMALL)
         cell(enableLigaturesHintLabel)
       }.layout(RowLayout.INDEPENDENT)
+        .bottomGap(BottomGap.SMALL)
 
       row {
         commentHtml(ApplicationBundle.message("comment.use.ligatures.with.reader.mode")) {
