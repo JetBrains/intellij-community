@@ -99,6 +99,7 @@ public final class RefactoringListeners {
     @Override
     public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
       T newElement1 = convertNewElement(newElement);
+      if (newElement1 == null) return;
       String qualifiedName = getQualifiedName(newElement1);
       if (myPath.length() > 0) {
         qualifiedName = qualifiedName + "." + myPath;
@@ -112,6 +113,7 @@ public final class RefactoringListeners {
       }
     }
 
+    @Nullable
     protected T convertNewElement(PsiElement newElement) {
       return (T)newElement;
     }
@@ -119,7 +121,7 @@ public final class RefactoringListeners {
     @Nullable
     protected abstract T findNewElement(T newParent, String qualifiedName);
 
-    protected abstract String getQualifiedName(T element);
+    protected abstract String getQualifiedName(@NotNull T element);
 
     @Override
     public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
@@ -138,7 +140,7 @@ public final class RefactoringListeners {
     }
 
     @Override
-    public String getQualifiedName(final PsiPackage psiPackage) {
+    public String getQualifiedName(final @NotNull PsiPackage psiPackage) {
       return psiPackage.getQualifiedName();
     }
   }
@@ -184,7 +186,7 @@ public final class RefactoringListeners {
     }
 
     @Override
-    public String getQualifiedName(final UClass psiClass) {
+    public String getQualifiedName(final @NotNull UClass psiClass) {
       return psiClass.getQualifiedName();
     }
   }
@@ -207,7 +209,7 @@ public final class RefactoringListeners {
     }
 
     @Override
-    public String getQualifiedName(final PsiClass psiClass) {
+    public String getQualifiedName(final @NotNull PsiClass psiClass) {
       final String qualifiedName = psiClass.getQualifiedName();
       return qualifiedName != null ? StringUtil.getPackageName(qualifiedName) : null;
     }
