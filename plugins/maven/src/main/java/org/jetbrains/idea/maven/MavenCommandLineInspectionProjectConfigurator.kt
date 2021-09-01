@@ -7,7 +7,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 
@@ -27,11 +29,16 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
   override fun configureProject(project: Project, context: ConfiguratorContext) {
     val basePath = project.basePath ?: return
+
+    val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
+    if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
+
     val mavenProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(MavenUtil.SYSTEM_ID)!!
 
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
 
     val isMavenProjectLinked = mavenProjectAware.isLinkedProject(project, basePath)
+
     LOG.info("maven project is linked: $isMavenProjectLinked")
 
     LOG.info("mavenProjectsManager isMavenized: ${mavenProjectsManager.isMavenizedProject}")
