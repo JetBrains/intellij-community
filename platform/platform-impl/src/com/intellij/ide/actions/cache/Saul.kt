@@ -2,22 +2,19 @@
 package com.intellij.ide.actions.cache
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationListener
-import com.intellij.notification.NotificationType
+import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
-import javax.swing.event.HyperlinkEvent
 
 @Service
 internal class Saul {
@@ -70,19 +67,22 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
     if (!hasNextRecoveryAction(project)) return
     val recoveryAction = actionSeq.next()
 
-    NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches")
-      .createNotification(IdeBundle.message("notification.cache.diagnostic.helper.title"),
-                          IdeBundle.message("notification.cache.diagnostic.helper.text", previousRecoveryAction.presentableName, recoveryAction.presentableName),
-                          NotificationType.INFORMATION)
-      .setListener(object : NotificationListener.Adapter() {
-        override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
-          notification.expire()
-          when (e.description) {
-            "next" -> perform(recoveryAction, project)
-            "stop" -> reportStoppedToFus(project)
-          }
-        }
+    val notification = NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
+      .createNotification(
+        IdeBundle.message("notification.cache.diagnostic.helper.title"),
+        IdeBundle.message("notification.cache.diagnostic.helper.text", previousRecoveryAction.presentableName),
+        NotificationType.WARNING
+      )
+    notification
+      .addAction(DumbAwareAction.create(IdeBundle.message("notification.cache.diagnostic.stop.text")) {
+        notification.expire()
+        reportStoppedToFus(project)
       })
+      .addAction(DumbAwareAction.create(recoveryAction.presentableName) {
+        notification.expire()
+        perform(recoveryAction, project)
+      })
+      .setImportant(true)
       .notify(project)
   }
 
