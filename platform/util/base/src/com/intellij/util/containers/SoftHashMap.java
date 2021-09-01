@@ -2,36 +2,11 @@
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
-import com.intellij.util.DeprecatedMethodException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 
-/**
- * Soft keys hash map.
- * Null keys are NOT allowed
- * Null values are allowed
- *
- * @deprecated use {@link ContainerUtil#createSoftMap()} instead
- */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
-  /**
-   * Soft keys hash map.
-   * Null keys are NOT allowed
-   * Null values are allowed
-   *
-   * @deprecated use {@link ContainerUtil#createSoftMap()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public SoftHashMap() {
-    DeprecatedMethodException.report("Use ContainerUtil.createSoftMap() instead");
-  }
-
+final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   SoftHashMap(int initialCapacity) {
     super(initialCapacity);
   }
@@ -47,9 +22,9 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
 
   private static final class SoftKey<T> extends SoftReference<T> implements Key<T> {
     private final int myHash;  /* Hash code of key, stored here since the key may be tossed by the GC */
-    @NotNull private final HashingStrategy<? super T> myStrategy;
+    private final HashingStrategy<? super T> myStrategy;
 
-    private SoftKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
+    private SoftKey(T k, HashingStrategy<? super T> strategy, ReferenceQueue<? super T> q) {
       super(k, q);
       myStrategy = strategy;
       myHash = strategy.hashCode(k);
@@ -61,7 +36,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
       if (!(o instanceof Key)) return false;
       if (myHash != o.hashCode()) return false;
       T t = get();
-      T u = ((Key<T>)o).get();
+      @SuppressWarnings("unchecked") T u = ((Key<T>)o).get();
       if (t == null || u == null) return false;
       return keysEqual(t, u, myStrategy);
     }
@@ -71,7 +46,6 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
       return myHash;
     }
 
-    @NonNls
     @Override
     public String toString() {
       return "SoftHashMap.SoftKey(" + get() + ")";
