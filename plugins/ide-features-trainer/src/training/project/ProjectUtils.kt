@@ -152,7 +152,14 @@ object ProjectUtils {
     val copied = copyLearningProjectFiles(contentRoot, langSupport)
     if (!copied) return
     createVersionFile(contentRoot)
-    openOrImportLearningProject(contentRoot, openProjectTask, langSupport, postInitCallback)
+    openOrImportLearningProject(contentRoot, openProjectTask, langSupport) {
+      updateLearningModificationTimestamp(it)
+      postInitCallback(it)
+    }
+  }
+
+  private fun updateLearningModificationTimestamp(it: Project) {
+    PropertiesComponent.getInstance(it).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
   }
 
   private fun openOrImportLearningProject(contentRoot: Path,
@@ -170,7 +177,6 @@ object ProjectUtils {
       val nioPath = projectDirectoryVirtualFile.toNioPath()
       val project = ProjectUtil.openOrImport(nioPath, task)
                     ?: error("Could not create project for ${langSupport.primaryLanguage} at $nioPath")
-      PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
       project.setTrusted(true)
       postInitCallback(project)
     }
