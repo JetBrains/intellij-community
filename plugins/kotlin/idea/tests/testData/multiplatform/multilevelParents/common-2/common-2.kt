@@ -2,14 +2,14 @@
 
 package sample
 
-expect interface <!LINE_MARKER("descr='Is subclassed by B [common-2] Case_2_3  Click or press ... to navigate'"), LINE_MARKER("descr='Has actuals in JVM'")!>A_Common<!> {
+expect interface <!LINE_MARKER("descr='Has actuals in JVM'"), LINE_MARKER("descr='Is subclassed by B [common-2] Case_2_3  Click or press ... to navigate'")!>A_Common<!> {
     fun <!LINE_MARKER("descr='Has actuals in JVM'")!>common_1_A<!>()
     fun <!LINE_MARKER("descr='Has actuals in JVM'")!>common_2_A<!>()
 }
 
 actual typealias <!LINE_MARKER("descr='Has declaration in common module'")!>A<!> = A_Common
 
-actual interface <!LINE_MARKER("descr='Is implemented by Case_2_3  Click or press ... to navigate'"), LINE_MARKER("descr='Has declaration in common module'")!>B<!> : A {
+actual interface <!LINE_MARKER("descr='Has declaration in common module'"), LINE_MARKER("descr='Is implemented by Case_2_3  Click or press ... to navigate'")!>B<!> : A {
     actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>common_1_B<!>()
     fun common_1_2_B()
 }

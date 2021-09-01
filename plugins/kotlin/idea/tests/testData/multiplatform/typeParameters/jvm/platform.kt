@@ -4,7 +4,7 @@ package foo
 
 interface <!LINE_MARKER("descr='Is implemented by A [jvm] AImpl  Click or press ... to navigate'")!>B<!>
 
-actual interface <!LINE_MARKER("descr='Is implemented by AImpl  Click or press ... to navigate'"), LINE_MARKER("descr='Has declaration in common module'")!>A<!> : B {
+actual interface <!LINE_MARKER("descr='Has declaration in common module'"), LINE_MARKER("descr='Is implemented by AImpl  Click or press ... to navigate'")!>A<!> : B {
     actual fun <!LINE_MARKER("descr='Has declaration in common module'"), LINE_MARKER("descr='Is implemented in foo.AImpl'")!>commonFun<!>()
 
     fun <!LINE_MARKER("descr='Is implemented in foo.AImpl'")!>platformFun<!>()
