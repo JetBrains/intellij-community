@@ -247,7 +247,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         revertChangesAtTheEnd: Boolean = true,
         note: String = "",
         stopAtException: Boolean = false,
-        overrides: List<PerfTestSettingsOverride> = emptyList(),
+        overrides: List<PerfTestSettingsOverride<Unit, Array<LookupElement>>> = emptyList(),
     ) = perfTypeAndAutocomplete(
         project = project(),
         stats = stats,
@@ -277,7 +277,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         revertChangesAtTheEnd: Boolean = true,
         note: String = "",
         stopAtException: Boolean = false,
-        overrides: List<PerfTestSettingsOverride> = emptyList(),
+        overrides: List<PerfTestSettingsOverride<Unit, Array<LookupElement>>> = emptyList(),
     ) {
         assertTrue("lookupElements has to be not empty", lookupElements.isNotEmpty())
         perfTypeAndDo(
@@ -365,7 +365,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         tearDownCheck: (Fixture, V?) -> Unit,
         revertChangesAtTheEnd: Boolean,
         stopAtException: Boolean = false,
-        overrides: List<PerfTestSettingsOverride> = emptyList(),
+        overrides: List<PerfTestSettingsOverride<Unit, V>> = emptyList(),
     ) {
         openFixture(project, fileName).use { fixture ->
             val editor = fixture.editor
@@ -601,7 +601,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         stats: Stats,
         stopAtException: Boolean = false,
         tearDown: () -> Unit = {},
-        overrides: List<PerfTestSettingsOverride> = emptyList(),
+        overrides: List<PerfTestSettingsOverride<EditorFile, List<HighlightInfo>>> = emptyList(),
     ): List<HighlightInfo> =
         perfHighlightFile(
             project(),
@@ -626,7 +626,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         stopAtException: Boolean = false,
         filenameSimplifier: (String) -> String = ::simpleFilename,
         tearDown: () -> Unit = {},
-        overrides: List<PerfTestSettingsOverride> = emptyList(),
+        overrides: List<PerfTestSettingsOverride<EditorFile, List<HighlightInfo>>> = emptyList(),
     ): List<HighlightInfo> {
         val profileManager = ProjectInspectionProfileManager.getInstance(project)
         val currentProfile = profileManager.currentProfile

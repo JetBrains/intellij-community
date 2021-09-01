@@ -2,13 +2,15 @@
 
 package org.jetbrains.kotlin.idea.perf.common
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.WarmUpProject
+import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.perf.*
 import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
-import org.jetbrains.kotlin.idea.perf.live.PerformanceTestProfile
-import org.jetbrains.kotlin.idea.perf.settingsOverride
 import org.jetbrains.kotlin.idea.perf.util.TeamCity
+import org.jetbrains.kotlin.idea.testFramework.EditorFile
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 
 abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
@@ -31,7 +33,7 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
         name: String,
         project: ProjectData,
         actions: List<ProjectAction>,
-        profile: PerformanceTestProfile,
+        profile: ProjectBasedTestPreferences,
     ) {
         TeamCity.suite("$testPrefix $name") {
             Stats("$testPrefix $name").use { stats ->
@@ -44,8 +46,10 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
     }
 
 
-    private fun runAction(action: ProjectAction, stats: Stats, profile: PerformanceTestProfile) {
-        val iterationsOverride = settingsOverride {
+    @OptIn(ExperimentalStdlibApi::class)
+    @Suppress("UNCHECKED_CAST")
+    private fun runAction(action: ProjectAction, stats: Stats, profile: ProjectBasedTestPreferences) {
+        val iterationsOverride = settingsOverride<Any, Any> {
             warmUpIterations(profile.warmUpIterations)
             iterations(profile.iterations)
         }
@@ -56,7 +60,17 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
                     stats = stats,
                     stopAtException = true,
                     tearDown = { invalidateCaches(project()) },
-                    overrides = listOf(iterationsOverride),
+                    overrides = buildList {
+                        add(iterationsOverride as PerfTestSettingsOverride<EditorFile, List<HighlightInfo>>)
+                        if (profile.checkForValidity) {
+                            add(settingsOverride<EditorFile, List<HighlightInfo>> {
+                                afterTestCheck { (file, highlightings) ->
+                                    val psiFile = file?.psiFile ?: error("No file was provided")
+                                    checkHighlightings(psiFile, highlightings)
+                                }
+                            })
+                        }
+                    }
                 )
             }
             is TypeAndAutocompleteInFile -> {
@@ -69,12 +83,26 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
                     lookupElements = action.expectedLookupElements,
                     note = action.note ?: "",
                     stopAtException = true,
-                    overrides = listOf(iterationsOverride)
+                    overrides = listOf(
+                        iterationsOverride as PerfTestSettingsOverride<Unit, Array<LookupElement>>
+                    )
                 )
             }
         }
     }
 
+    private fun checkHighlightings(psiFile: PsiFile, highlightings: List<HighlightInfo>?): TestCheckResult {
+        val filename = psiFile.name
+        if (highlightings == null) return TestCheckResult.Failure("Highlighting of $filename did not complete successfully")
+        val errors = highlightings.filter { it.severity == HighlightSeverity.ERROR }
+        if (errors.isEmpty()) {
+            return TestCheckResult.Success
+        } else {
+            return TestCheckResult.Failure(
+                "The following errors arose during highlighting of $filename:${errors.joinToString(separator = "\n")}"
+            )
+        }
+    }
 
     private fun perfOpenRustPluginProject(projectData: ProjectData, stats: Stats) {
         withGradleNativeSetToFalse(projectData.openAction) {
@@ -114,3 +142,8 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
     }
 }
 
+class ProjectBasedTestPreferences(
+    val warmUpIterations: Int,
+    val iterations: Int,
+    val checkForValidity: Boolean,
+)
