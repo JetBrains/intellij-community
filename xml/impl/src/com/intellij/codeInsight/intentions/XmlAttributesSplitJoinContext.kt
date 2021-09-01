@@ -3,7 +3,11 @@ package com.intellij.codeInsight.intentions
 
 import com.intellij.openapi.editor.actions.lists.ListWithElements
 import com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContext
+import com.intellij.openapi.editor.actions.lists.JoinOrSplit
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
@@ -18,6 +22,14 @@ class XmlAttributesSplitJoinContext : DefaultListSplitJoinContext() {
     return ListWithElements(tag, tag.attributes.toList())
   }
 
+  override fun reformatRange(file: PsiFile, rangeToAdjust: TextRange, split: JoinOrSplit) {
+    when (split) {
+      JoinOrSplit.JOIN -> super.reformatRange(file, rangeToAdjust, split)
+      //infer position of the first element using formatter, instead of direct code style settings 
+      JoinOrSplit.SPLIT -> CodeStyleManager.getInstance(file.project).reformatText(file, rangeToAdjust.startOffset, rangeToAdjust.endOffset)
+    }
+  }
+  
   override fun isSeparator(element: PsiElement): Boolean = false
   override fun getHeadBreakJoinReplacement(): String = " "
   override fun getSplitText(data: ListWithElements): String = XmlBundle.message("intention.name.split.attributes")
