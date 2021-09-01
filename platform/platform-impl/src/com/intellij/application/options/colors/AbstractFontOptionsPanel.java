@@ -82,8 +82,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     enableLigaturesHintLabel.setToolTipText(ApplicationBundle.message("ligatures.tooltip"));
     myOnlyMonospacedCheckBox.setFont(JBUI.Fonts.smallFont());
 
-    setLayout(new FlowLayout(FlowLayout.LEFT));
-    add(createControls());
+    addControls();
 
     myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -211,6 +210,11 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   protected JLabel getEnableLigaturesHintLabel() {
     return enableLigaturesHintLabel;
+  }
+
+  protected void addControls() {
+    setLayout(new FlowLayout(FlowLayout.LEFT));
+    add(createControls());
   }
 
   protected AbstractFontCombo<?> createPrimaryFontCombo() {

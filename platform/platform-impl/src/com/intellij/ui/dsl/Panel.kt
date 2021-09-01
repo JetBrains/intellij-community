@@ -67,6 +67,13 @@ interface Panel : CellBase<Panel> {
   fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit): RowsRange
 
   /**
+   * Adds hideable panel with independent grid, title and some vertical space before the group.
+   *
+   * @param indent true left indent is needed
+   */
+  fun hideableGroup(@NlsContexts.BorderTitle title: String, indent: Boolean = true, init: Panel.() -> Unit): HideablePanel
+
+  /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
    * Note that [Panel.group] provides different gaps around the title
    */

@@ -22,6 +22,7 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
 import java.awt.Dimension
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -87,6 +88,11 @@ class AppEditorFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstra
     }
   }
 
+  override fun addControls() {
+    layout = BorderLayout()
+    add(createControls(), BorderLayout.CENTER)
+  }
+
   fun updateOnChangedFont() {
     updateOptionsList()
     fireFontChanged()
@@ -140,8 +146,7 @@ class AppEditorFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstra
   }
 
   private fun Panel.createTypographySettings() {
-    // todo hideable
-    group(ApplicationBundle.message("settings.editor.font.typography.settings"), indent = false) {
+    hideableGroup(ApplicationBundle.message("settings.editor.font.typography.settings"), indent = false) {
       if (isAdvancedFontFamiliesUI()) {
         row(ApplicationBundle.message("settings.editor.font.main.weight")) {
           val component = createRegularWeightCombo()

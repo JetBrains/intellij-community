@@ -11,7 +11,6 @@ import com.intellij.ui.dsl.Row
 import com.intellij.ui.dsl.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +18,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
-internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBaseImpl<Panel>(), Panel {
+internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
@@ -139,6 +138,18 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     row.internalTopGap = dialogPanelConfig.spacing.groupTopGap
     indent(init)
     result.endIndex = _rows.size - 1
+    return result
+  }
+
+  override fun hideableGroup(title: String, indent: Boolean, init: Panel.() -> Unit): HideablePanelImpl {
+    val result = HideablePanelImpl(dialogPanelConfig, title)
+    if (indent) {
+      result.indent(init)
+    } else {
+      result.init()
+    }
+    result.collapse()
+    row { }.cell(result)
     return result
   }
 
