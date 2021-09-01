@@ -61,24 +61,25 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
   fun perform(recoveryAction: RecoveryAction, project: Project) {
     recoveryAction.performUnderProgress(project, true) { p ->
       if (hasNextRecoveryAction(p)) {
-        askUserToContinue(p)
+        askUserToContinue(p, recoveryAction)
       }
     }
   }
 
-  private fun askUserToContinue(project: Project) {
+  private fun askUserToContinue(project: Project, previousRecoveryAction: RecoveryAction) {
     if (!hasNextRecoveryAction(project)) return
     val recoveryAction = actionSeq.next()
 
     NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches")
       .createNotification(IdeBundle.message("notification.cache.diagnostic.helper.title"),
-                          IdeBundle.message("notification.cache.diagnostic.helper.text", recoveryAction.presentableName),
+                          IdeBundle.message("notification.cache.diagnostic.helper.text", previousRecoveryAction.presentableName, recoveryAction.presentableName),
                           NotificationType.INFORMATION)
       .setListener(object : NotificationListener.Adapter() {
         override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
           notification.expire()
-          if (e.description == "next") {
-            perform(recoveryAction, project)
+          when (e.description) {
+            "next" -> perform(recoveryAction, project)
+            "stop" -> reportStoppedToFus(project)
           }
         }
       })
@@ -101,6 +102,8 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
     assert(hasNextRecoveryAction(project))
     return next!!
   }
+
+  private fun reportStoppedToFus(project: Project) = CacheRecoveryUsageCollector.recordGuideStoppedEvent(project)
 }
 
 internal fun RecoveryAction.performUnderProgress(project: Project, fromGuide: Boolean, onComplete: (Project) -> Unit = {}) {
