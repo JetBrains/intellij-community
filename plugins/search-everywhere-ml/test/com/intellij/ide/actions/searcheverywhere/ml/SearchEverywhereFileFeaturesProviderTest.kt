@@ -3,6 +3,8 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_DAY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_HOUR_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY
@@ -150,15 +152,38 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .isEqualTo(priority)
   }
 
-  fun testFileTypeUsageRatio() {
+  fun `test file type usage ratio for the most popular file type`() {
     mockedFileStatsProvider
       .setStats(testFile.virtualFile.fileType.name, FileTypeUsageSummary(7, lastDay))
       .setStats("Python", FileTypeUsageSummary(2, lastDay))
       .setStats("XML", FileTypeUsageSummary(1, lastMinute))
 
-    checkThatFeature(FILETYPE_USAGE_RATIO_DATA_KEY)
+    val expectedValues = mapOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY to 0.7,
+      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY to 1.0,
+      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY to 7.0,
+    )
+
+    checkThatFeatures()
       .ofElement(testFile)
-      .isEqualTo(0.7)
+      .isEqualTo(expectedValues)
+  }
+
+  fun `test file type usage ratio for the least popular file type`() {
+    mockedFileStatsProvider
+      .setStats(testFile.virtualFile.fileType.name, FileTypeUsageSummary(1, lastDay))
+      .setStats("Python", FileTypeUsageSummary(2, lastDay))
+      .setStats("XML", FileTypeUsageSummary(7, lastMinute))
+
+    val expectedValues = mapOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY to 0.1,
+      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY to roundDouble(1.0 / 7.0),
+      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY to 1.0,
+    )
+
+    checkThatFeatures()
+      .ofElement(testFile)
+      .isEqualTo(expectedValues)
   }
 
   fun testFileTypeUsedInLastMinute() {
@@ -240,19 +265,19 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testFileTypeNeverUsed() {
     mockedFileStatsProvider.clearStats()
 
+    // We expect these features to be null, i.e. not reported
     val expectedValues = mapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to 0.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to Long.MAX_VALUE,
+      FILETYPE_USAGE_RATIO_DATA_KEY to null,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to null,
 
-      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_DAY_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to false,
+      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to null,
+      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to null,
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY to null,
+      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to null,
     )
 
     checkThatFeatures()
       .ofElement(testFile)
-      .withCurrentTime(currentTime)
       .isEqualTo(expectedValues)
   }
 
