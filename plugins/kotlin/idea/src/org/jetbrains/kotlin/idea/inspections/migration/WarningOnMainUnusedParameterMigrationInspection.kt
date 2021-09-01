@@ -31,7 +31,7 @@ class WarningOnMainUnusedParameterMigrationInspection :
     override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtParameter, *>
         get() = Errors.UNUSED_PARAMETER
 
-    override fun getCustomIntentionFactory(): ((Diagnostic) -> IntentionAction?)? = fun(diagnostic: Diagnostic): IntentionAction? {
+    override fun customIntentionFactory(): ((Diagnostic) -> IntentionAction?)? = fun(diagnostic: Diagnostic): IntentionAction? {
         val parameter = diagnostic.psiElement as? KtParameter ?: return null
         val ownerFunction = parameter.ownerFunction as? KtNamedFunction ?: return null
         val mainFunctionDetector = MainFunctionDetector(parameter.languageVersionSettings) { it.descriptor as? FunctionDescriptor }
