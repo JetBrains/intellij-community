@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.resolve.checkers.Experimentality
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object RemoveWrongOptInAnnotationTargetFactory : KotlinIntentionActionsFactory() {
@@ -21,12 +22,6 @@ object RemoveWrongOptInAnnotationTargetFactory : KotlinIntentionActionsFactory()
 
     private class RemoveAllForbiddenOptInTargetsFix(annotationEntry: KtAnnotationEntry) :
         KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry) {
-        private val forbiddenTargetValues: List<String> = listOf(
-            AnnotationTarget.EXPRESSION.toString(),
-            AnnotationTarget.FILE.toString(),
-            AnnotationTarget.TYPE.toString(),
-            AnnotationTarget.TYPE_PARAMETER.toString()
-        )
 
         override fun getText(): String {
             return KotlinBundle.message("fix.opt_in.remove.all.forbidden.targets")
@@ -38,12 +33,16 @@ object RemoveWrongOptInAnnotationTargetFactory : KotlinIntentionActionsFactory()
             val annotationEntry = element ?: return
             val argumentList = annotationEntry.valueArgumentList ?: return
             val forbiddenArguments: List<KtValueArgument> = argumentList.arguments.filter {
-                forbiddenTargetValues.any { name -> it.text?.contains(name) == true }
+                WRONG_TARGETS.any { name -> it.text?.contains(name) == true }
             }
 
             forbiddenArguments.forEach {
                 argumentList.removeArgument(it)
             }
+        }
+
+        companion object {
+            private val WRONG_TARGETS: List<String> = Experimentality.WRONG_TARGETS_FOR_MARKER.map {it.toString() }
         }
     }
 }
