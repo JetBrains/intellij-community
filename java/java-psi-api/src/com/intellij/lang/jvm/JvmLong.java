@@ -8,5 +8,5 @@ public interface JvmLong extends JvmValue {
   /**
    * @return The underlying long value.
    */
-  Long getLongValue();
+  long getLongValue();
 }
