@@ -110,7 +110,7 @@ internal class GridImpl : Grid {
     var rowsCount = 0
 
     for (cell in cells) {
-      var preferredSize: Dimension
+      val preferredSize: Dimension
 
       when (cell) {
         is ComponentCell -> {
@@ -118,7 +118,10 @@ internal class GridImpl : Grid {
           if (!component.isVisible) {
             continue
           }
-          preferredSize = component.preferredSize
+          val minimumSize = component.minimumSize
+          val componentPreferredSize = component.preferredSize
+          preferredSize = Dimension(max(minimumSize.width, componentPreferredSize.width),
+            max(minimumSize.height, componentPreferredSize.height))
         }
 
         is GridCell -> {

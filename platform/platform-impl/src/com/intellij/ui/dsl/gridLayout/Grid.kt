@@ -3,6 +3,9 @@ package com.intellij.ui.dsl.gridLayout
 
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Grid representation of [GridLayout] root container or cells sub-grids
+ */
 @ApiStatus.Experimental
 interface Grid {
 

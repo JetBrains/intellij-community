@@ -4,6 +4,9 @@ package com.intellij.ui.dsl.gridLayout
 import com.intellij.ui.dsl.checkNonNegative
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Horizontal gaps around columns. If column is not visible correspondent gaps disappear
+ */
 @ApiStatus.Experimental
 data class ColumnGaps(val left: Int = 0, val right: Int = 0) {
   companion object {

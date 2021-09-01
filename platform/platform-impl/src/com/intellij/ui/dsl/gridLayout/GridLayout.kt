@@ -8,9 +8,17 @@ import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 
+/**
+ * Layout manager represented as a table, where some cells can be merged in one cell (resulting cell occupies several columns and rows)
+ * and every cell (or merged cells) can contain a sub-table inside. [Constraints] specifies all possible settings for every cell.
+ * Root grid [rootGrid] and all sub-grids have own columns and rows settings placed in [Grid]
+ */
 @ApiStatus.Experimental
 class GridLayout : LayoutManager2 {
 
+  /**
+   * Root grid of layout
+   */
   val rootGrid: Grid
     get() = _rootGrid
 
@@ -22,6 +30,9 @@ class GridLayout : LayoutManager2 {
     (jbConstraints.grid as GridImpl).register(checkComponent(comp), jbConstraints)
   }
 
+  /**
+   * Creates sub grid in the specified cell
+   */
   fun addLayoutSubGrid(constraints: Constraints): Grid {
     return (constraints.grid as GridImpl).registerSubGrid(constraints)
   }

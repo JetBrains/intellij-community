@@ -20,7 +20,7 @@ import javax.swing.JScrollPane
 import javax.swing.border.Border
 
 
-class UiDslDemoAction : DumbAwareAction("Show UI DSL Demo") {
+class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
 
   override fun actionPerformed(e: AnActionEvent) {
     UiDslDemoDialog(e.project).show()
@@ -31,7 +31,7 @@ class UiDslDemoAction : DumbAwareAction("Show UI DSL Demo") {
 private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
 
   init {
-    title = "UI DSL Demo"
+    title = "UI DSL Tests"
     init()
   }
 

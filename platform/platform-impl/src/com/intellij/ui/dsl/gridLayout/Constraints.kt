@@ -16,21 +16,9 @@ enum class HorizontalAlign {
 
 @ApiStatus.Experimental
 enum class VerticalAlign {
-  /**
-   * Aligning by baseline on top
-   */
   TOP,
-
-  /**
-   * Aligning by baseline on center
-   */
   CENTER,
-
-  /**
-   * Aligning by baseline on bottom
-   */
   BOTTOM,
-
   FILL
 }
 
@@ -43,12 +31,12 @@ data class Constraints(
   val grid: Grid,
 
   /**
-   * Cell x coordinate
+   * Cell x coordinate in [grid]
    */
   val x: Int,
 
   /**
-   * Cell y coordinate
+   * Cell y coordinate in [grid]
    */
   val y: Int,
 
@@ -84,17 +72,17 @@ data class Constraints(
   val baselineAlign: Boolean = false,
 
   /**
-   * Gaps between grid cell bounds and components visual bounds (component bounds minus [visualPaddings])
+   * Gaps between grid cell bounds and components visual bounds (visual bounds is component bounds minus [visualPaddings])
    */
   val gaps: Gaps = Gaps.EMPTY,
 
   /**
-   * Visual gaps between component bounds and its content. Can be used when component has focus ring outside of
+   * Gaps between component bounds and its visual bounds. Can be used when component has focus ring outside of
    * its usual size. In such case components size is increased on focus size (so focus ring is not clipped)
    * and [visualPaddings] should be set to maintain right alignments
    *
-   * 1. Layout manager aligns components by their content
-   * 2. Calculated cell size with gaps equals to component.bounds + [gaps] - [visualPaddings]
+   * 1. Layout manager aligns components by their visual bounds
+   * 2. Cell size with gaps is calculated as component.bounds + [gaps] - [visualPaddings]
    */
   val visualPaddings: Gaps = Gaps.EMPTY
 ) {

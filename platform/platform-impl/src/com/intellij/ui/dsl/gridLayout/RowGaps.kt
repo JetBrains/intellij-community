@@ -4,6 +4,9 @@ package com.intellij.ui.dsl.gridLayout
 import com.intellij.ui.dsl.checkNonNegative
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Vertical gaps around rows. If row is not visible correspondent gaps disappear
+ */
 @ApiStatus.Experimental
 data class RowGaps(val top: Int = 0, val bottom: Int = 0) {
   companion object {
