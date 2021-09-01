@@ -14,8 +14,8 @@ class MavenKotlinBuildSystemType : KotlinBuildSystemType {
     override fun createStep(context: WizardContext) = Step(context)
 
     class Step(context: WizardContext) : NewProjectWizardStep(context) {
-        private var groupId: String = ""
-        private var artifactId: String = ""
+        var groupId: String = ""
+        var artifactId: String = ""
 
         override fun setupUI(builder: RowBuilder) {
             with(builder) {

@@ -16,9 +16,9 @@ class MavenJavaBuildSystemType : JavaBuildSystemType {
   override fun createStep(context: WizardContext) = Step(context)
 
   class Step(context: WizardContext) : NewProjectWizardStep(context) {
-    private var groupId: String = "org.example"
-    private var artifactId: String = ""
-    private var version: String = "1.0-SNAPSHOT"
+    var groupId: String = "org.example"
+    var artifactId: String = ""
+    var version: String = "1.0-SNAPSHOT"
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {

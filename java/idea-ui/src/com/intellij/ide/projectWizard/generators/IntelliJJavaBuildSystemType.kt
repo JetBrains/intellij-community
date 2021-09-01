@@ -18,9 +18,9 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
   override fun createStep(context: WizardContext) = Step(context)
 
   class Step(context: WizardContext) : NewProjectWizardStep(context) {
-    private var moduleName: String = ""
-    private var contentRoot: String = ""
-    private var moduleFileLocation: String = ""
+    var moduleName: String = ""
+    var contentRoot: String = ""
+    var moduleFileLocation: String = ""
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {

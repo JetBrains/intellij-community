@@ -46,11 +46,11 @@ class GroovyNewProjectWizard : NewProjectWizard {
   override fun createStep(context: WizardContext) = Step(context)
 
   class Step(context: WizardContext) : NewProjectWizardStep(context) {
-    private var javaSdk: Sdk? = null
-    private var useMavenLibrary: Boolean = false
-    private var useLocalLibrary: Boolean = false
-    private var mavenVersion: FrameworkLibraryVersion? = null
-    private var sdkPath: String = ""
+    var javaSdk: Sdk? = null
+    var useMavenLibrary: Boolean = false
+    var useLocalLibrary: Boolean = false
+    var mavenVersion: FrameworkLibraryVersion? = null
+    var sdkPath: String = ""
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {
