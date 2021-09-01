@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
@@ -71,9 +70,9 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
 
   private val myModifiableRootModels: MutableMap<Module, ModifiableRootModel> = HashMap()
   private val modifiableLibraryModels: MutableMap<Library, Library.ModifiableModel> = IdentityHashMap()
-  private val librariesModel: LibraryTable.ModifiableModel by lazy {
+  private val modifiableLibraryTable: ProjectModifiableLibraryTableBridge by lazy {
     val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-    (libraryTable as ProjectLibraryTableBridge).getModifiableModel(diff!!)
+    (libraryTable as ProjectLibraryTableBridge).getModifiableModel(diff!!) as ProjectModifiableLibraryTableBridge
   }
 
 
@@ -100,15 +99,14 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
       delegate.forceUpdateSubstitutions()
     }
 
-    val projectLibrariesModel: LibraryTable.ModifiableModel = delegate.modifiableProjectLibrariesModel
-    for ((fromLibrary, modifiableModel) in delegate.modifiableLibraryModels.entries) {
+    for ((fromLibrary, modifiableModel) in modifiableLibraryModels.entries) {
       val libraryName = fromLibrary.name
 
       // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
       // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
       val modifiableWorkspace = delegate.modifiableWorkspace
       if (fromLibrary is LibraryEx && fromLibrary.isDisposed
-          || fromLibrary.table != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null
+          || fromLibrary.table != null && libraryName != null && modifiableLibraryTable.getLibraryByName(libraryName) == null
           || modifiableWorkspace != null && modifiableWorkspace.isSubstituted(fromLibrary.name)) {
         Disposer.dispose(modifiableModel)
       }
@@ -116,9 +114,8 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
         (modifiableModel as LibraryModifiableModelBridge).prepareForCommit()
       }
     }
+    modifiableLibraryTable.prepareForCommit()
 
-
-    (projectLibrariesModel as ProjectModifiableLibraryTableBridge).prepareForCommit()
     val rootModels: List<ModifiableRootModel>
     val existingModules: Array<Module> = moduleModel.modules
     for (module in existingModules) {
@@ -159,7 +156,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
       modifiableLibraryModels.values
         .filter { !Disposer.isDisposed(it) }
         .forEach { Disposer.dispose(it) }
-      Disposer.dispose(librariesModel)
+      Disposer.dispose(modifiableLibraryTable)
     }
     delegate.dispose()
   }
@@ -184,7 +181,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
     val rootConfigurationAccessor: RootConfigurationAccessor = object : RootConfigurationAccessor() {
       override fun getLibrary(library: Library?, libraryName: String, libraryLevel: String): Library? {
         return if (LibraryTablesRegistrar.PROJECT_LEVEL == libraryLevel) {
-          librariesModel.getLibraryByName(libraryName)
+          modifiableLibraryTable.getLibraryByName(libraryName)
         }
         else library
       }
@@ -203,7 +200,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
       delegate.allLibraries
     }
     else {
-      librariesModel.libraries
+      modifiableLibraryTable.libraries
     }
 
   override fun removeLibrary(lib: Library) {
@@ -211,7 +208,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
       delegate.removeLibrary(lib)
     }
     else {
-      librariesModel.removeLibrary(lib)
+      modifiableLibraryTable.removeLibrary(lib)
     }
   }
 
@@ -220,7 +217,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
       delegate.createLibrary(name, source)
     }
     else {
-      librariesModel.createLibrary(name, null, source)
+      modifiableLibraryTable.createLibrary(name, null, source)
     }
   }
 
@@ -229,7 +226,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
       delegate.getLibraryByName(name)
     }
     else {
-      librariesModel.getLibraryByName(name)
+      modifiableLibraryTable.getLibraryByName(name)
     }
   }
 
