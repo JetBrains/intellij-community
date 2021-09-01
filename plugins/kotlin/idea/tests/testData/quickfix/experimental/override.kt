@@ -1,10 +1,10 @@
-// "Propagate '@MyExperimentalAPI' annotation to containing class 'Derived'" "false"
+// "Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Derived'" "false"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
-// ACTION: Propagate '@MyExperimentalAPI' annotation to 'foo'
-// ACTION: Opt-in for 'MyExperimentalAPI::class' on containing file 'override.kt'
-// ACTION: Opt-in for 'MyExperimentalAPI::class' on 'foo'
-// ACTION: Opt-in for 'MyExperimentalAPI::class' on containing class 'Derived'
+// ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to 'foo'
+// ACTION: Opt in for 'MyExperimentalAPI' on containing file 'override.kt'
+// ACTION: Opt in for 'MyExperimentalAPI' on 'foo'
+// ACTION: Opt in for 'MyExperimentalAPI' on containing class 'Derived'
 // ACTION: Add '-Xopt-in=MyExperimentalAPI' to module light_idea_test_case compiler arguments
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Go To Super Method
