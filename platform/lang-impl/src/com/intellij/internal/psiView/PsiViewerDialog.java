@@ -34,7 +34,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -66,7 +65,6 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -311,13 +309,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
                                                     boolean isSelected,
                                                     boolean cellHasFocus) {
         final Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        try {
-          final PsiElement[] elements = myRefsResolvedCache.get(getPsiElement());
-          if (elements == null || elements.length <= index || elements[index] == null) {
-            comp.setForeground(JBColor.RED);
-          }
-        }
-        catch (IndexNotReadyException ignore) {
+        final PsiElement[] elements = myRefsResolvedCache.get(getPsiElement());
+        if (elements == null || elements.length <= index || elements[index] == null) {
+          comp.setForeground(JBColor.RED);
         }
         return comp;
       }
@@ -807,52 +801,46 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     }
   }
 
-
   public void updateReferences(PsiElement element) {
     final DefaultListModel<String> model = (DefaultListModel<String>)myRefs.getModel();
     model.clear();
-    myRefsResolvedCache.clear();
+
     if (element == null) return;
 
-    final PsiReferenceService referenceService = PsiReferenceService.getService();
-    final Callable<List<PsiReference>> getReferences = () -> referenceService.getReferences(element, PsiReferenceService.Hints.NO_HINTS);
-
-    final String progressTitle = LangBundle.message("psi.viewer.progress.dialog.get.references");
-    final List<PsiReference> psiReferences = ProgressManager.getInstance().run(new Task.WithResult<>(myProject, progressTitle, true) {
-      @Override
-      protected List<PsiReference> compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
-        return ReadAction.nonBlocking(getReferences).executeSynchronously();
-      }
-    });
-
-    fillReferencesCache(element, psiReferences);
+    final String progressTitle = LangBundle.message("psi.viewer.progress.dialog.update.refs");
+    final List<PsiReference> psiReferences = computeSlowOperationsSafeInBgThread(myProject,
+                                                                                 progressTitle,
+                                                                                 () -> doUpdateReferences(element));
 
     for (PsiReference reference : psiReferences) {
       model.addElement(reference.getClass().getName());
     }
   }
 
-  private void fillReferencesCache(@NotNull PsiElement element, List<PsiReference> references) {
-    if (myRefsResolvedCache.containsKey(element)) return;
+  private @NotNull List<PsiReference> doUpdateReferences(@NotNull PsiElement element) {
+    final PsiReferenceService referenceService = PsiReferenceService.getService();
+    final List<PsiReference> psiReferences = referenceService.getReferences(element, PsiReferenceService.Hints.NO_HINTS);
 
-    final Project project = element.getProject();
+    if (myRefsResolvedCache.containsKey(element)) return psiReferences;
 
-    final PsiElement[] cache = new PsiElement[references.size()];
+    final PsiElement[] cache = new PsiElement[psiReferences.size()];
 
-    for (int i = 0; i < references.size(); i++) {
-      final PsiReference reference = references.get(i);
+    for (int i = 0; i < psiReferences.size(); i++) {
+      final PsiReference reference = psiReferences.get(i);
 
       final PsiElement resolveResult;
       if (reference instanceof PsiPolyVariantReference) {
-        resolveResult = multiResolveInBgThread(project, (PsiPolyVariantReference)reference);
+        final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(true);
+        resolveResult = results.length == 0 ? null : results[0].getElement();
       }
       else {
-        resolveResult = resolveInBgThread(project, reference);
+        resolveResult = reference.resolve();
       }
-
       cache[i] = resolveResult;
     }
     myRefsResolvedCache.put(element, cache);
+
+    return psiReferences;
   }
 
   private void clearSelection() {
@@ -885,21 +873,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
     super.dispose();
-  }
-
-  @Contract(pure = true)
-  private static PsiElement resolveInBgThread(@NotNull final Project project,
-                                              @NotNull final PsiReference reference) {
-    final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.resolving.reference.text", reference.getElement().getText());
-    return computeSlowOperationsSafeInBgThread(project, progressDialogTitle, reference::resolve);
-  }
-
-  @Contract(pure = true)
-  private static @Nullable PsiElement multiResolveInBgThread(@NotNull final Project project,
-                                                             @NotNull final PsiPolyVariantReference reference) {
-    final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.resolving.reference.text", reference.getElement().getText());
-    final ResolveResult[] results = computeSlowOperationsSafeInBgThread(project, progressDialogTitle, () -> reference.multiResolve(true));
-    return results.length == 0 ? null : results[0].getElement();
   }
 
   @Nullable
