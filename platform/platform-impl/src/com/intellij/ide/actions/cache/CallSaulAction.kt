@@ -29,7 +29,6 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
     return object: DumbAwareAction(recoveryAction.presentableName) {
       override fun actionPerformed(e: AnActionEvent) {
         val project = e.project!!
-        CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, false, project)
         recoveryAction.performUnderProgress(project, false)
       }
 

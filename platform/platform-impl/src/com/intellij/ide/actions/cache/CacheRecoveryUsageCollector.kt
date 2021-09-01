@@ -18,7 +18,8 @@ internal class CacheRecoveryUsageCollector : CounterUsagesCollector() {
           "reindex",
           "drop-shared-index",
           "rescan",
-          "stop"
+          "stop",
+          "reload-workspace-model"
         )
       )
 
