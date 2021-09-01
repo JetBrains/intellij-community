@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 
 internal object RustProject {
     /*
-      The fork of intellij-rust plugin is considered here https://github.com/darthorimar/intellij-rust
+      The fork (https://github.com/darthorimar/intellij-rust) of intellij-rust plugin is used
       It has required code pregenerated manually
       Also, it is always the same version of rust plugin codebase to test against
     */
