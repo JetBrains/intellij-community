@@ -30,12 +30,12 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   public void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeIndexingInfo> changes) {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
     if (Registry.is("indexing.full.rescan.on.workspace.model.changes")) {
-      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, "Reindex due to registry setting"));
+      new UnindexedFilesUpdater(project, "Reindex requested by project root model changes (full rescanning forced by registry key)").queue(project);
       return;
     }
     for (RootsChangeIndexingInfo change : changes) {
       if (change == RootsChangeIndexingInfo.TOTAL_REINDEX) {
-        DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, "Reindex requested by changes"));
+        new UnindexedFilesUpdater(project, "Reindex requested by project root model changes").queue(project);
         return;
       }
     }
