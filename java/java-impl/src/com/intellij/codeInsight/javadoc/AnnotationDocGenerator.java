@@ -3,12 +3,13 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil.appendStyledSpan;
+import static com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil.getStyledSpan;
 
 public final class AnnotationDocGenerator {
   private static final Logger LOG = Logger.getInstance(AnnotationDocGenerator.class);
@@ -85,12 +89,19 @@ public final class AnnotationDocGenerator {
     boolean generateLink = format != AnnotationFormat.ToolTip;
     boolean forceShortNames = format != AnnotationFormat.JavaDocComplete;
 
-    buffer.append("@");
+    if (red) {
+      buffer.append("@");
+    } else {
+      appendStyledSpan(buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, "@");
+    }
     String name = forceShortNames ? myNameReference.getReferenceName() : myNameReference.getText();
     if (type != null && generateLink) {
-      JavaDocInfoGenerator.generateLink(buffer, myTargetClass, name, format == AnnotationFormat.JavaDocComplete);
-    } else {
-      buffer.append(name);
+      String styledName = getStyledSpan(JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
+      new JavaDocInfoGenerator(myContext.getProject(), null, format != AnnotationFormat.JavaDocComplete)
+        .generateLink(buffer, myTargetClass, styledName, format == AnnotationFormat.JavaDocComplete);
+    }
+    else if (!red && name != null) {
+      appendStyledSpan(buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
     }
     if (red) buffer.append("</font>");
 
@@ -102,34 +113,36 @@ public final class AnnotationDocGenerator {
   private void generateAnnotationAttributes(StringBuilder buffer, boolean generateLink) {
     final PsiNameValuePair[] attributes = myAnnotation.getParameterList().getAttributes();
     if (attributes.length > 0) {
-      buffer.append("(");
+      appendStyledSpan(buffer, JavaHighlightingColors.PARENTHESES, "(");
       boolean first = true;
       for (PsiNameValuePair pair : attributes) {
-        if (!first) buffer.append(",&nbsp;");
+        if (!first) appendStyledSpan(buffer, JavaHighlightingColors.COMMA, ",&nbsp;");
         first = false;
         generateAnnotationAttribute(buffer, generateLink, pair);
       }
-      buffer.append(")");
+      appendStyledSpan(buffer, JavaHighlightingColors.PARENTHESES, ")");
     }
   }
 
   private static void generateAnnotationAttribute(StringBuilder buffer, boolean generateLink, PsiNameValuePair pair) {
     final String name = pair.getName();
     if (name != null) {
-      buffer.append(name);
-      buffer.append(" = ");
+      appendStyledSpan(buffer, JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES, name);
+      appendStyledSpan(buffer, JavaHighlightingColors.OPERATION_SIGN, " = ");
     }
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value != null) {
       if (value instanceof PsiArrayInitializerMemberValue) {
-        buffer.append("{");
+        appendStyledSpan(buffer, JavaHighlightingColors.BRACES, "{");
         boolean firstMember = true;
         for(PsiAnnotationMemberValue memberValue:((PsiArrayInitializerMemberValue)value).getInitializers()) {
-          if (!firstMember) buffer.append(",");
+          if (!firstMember) {
+            appendStyledSpan(buffer, JavaHighlightingColors.COMMA, ",");
+          }
           firstMember = false;
           appendLinkOrText(buffer, memberValue, generateLink);
         }
-        buffer.append("}");
+        appendStyledSpan(buffer, JavaHighlightingColors.BRACES, "}");
       }
       else {
         appendLinkOrText(buffer, value, generateLink);
@@ -161,12 +174,17 @@ public final class AnnotationDocGenerator {
         else {
           if (aClass != null) text = aClass.getQualifiedName() + '#' + field.getName();
         }
-        JavaDocInfoGenerator.generateLink(buffer, text, aClass != null? aClass.getName() + '.' + field.getName():null, memberValue, false);
+        new JavaDocInfoGenerator(field.getProject(), null, true)
+          .generateLink(buffer, text, aClass != null? aClass.getName() + '.' + field.getName():null, memberValue, false);
         return;
       }
     }
 
-    buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
+    HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+      buffer,
+      memberValue.getProject(),
+      memberValue.getLanguage(),
+      memberValue.getText());
   }
 
   public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiAnnotationOwner owner, @NotNull PsiElement context) {

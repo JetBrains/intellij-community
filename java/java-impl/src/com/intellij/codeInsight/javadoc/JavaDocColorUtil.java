@@ -12,8 +12,8 @@ import java.awt.*;
 /**
  * @author spleaner
  */
-public final class ColorUtil {
-  private ColorUtil() {
+public final class JavaDocColorUtil {
+  private JavaDocColorUtil() {
   }
 
   public static String generatePreviewHtml(@NotNull final Color color) {

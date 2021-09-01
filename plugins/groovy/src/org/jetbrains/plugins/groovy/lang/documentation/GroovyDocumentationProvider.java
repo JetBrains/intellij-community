@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -250,7 +251,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       generateTraitType(buffer, ((GrTraitType)type), context);
     }
     else if (type != null) {
-      JavaDocInfoGenerator.generateType(buffer, type, context);
+      JavaDocInfoGeneratorFactory.create(context.getProject(), null, false).generateType(buffer, type, context);
     }
     else {
       buffer.append(GrModifier.DEF);

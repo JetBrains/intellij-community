@@ -1410,7 +1410,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
-    DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink);
+    DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink, false);
   }
 
   @Override

@@ -217,7 +217,7 @@ public class MyCategory {
     myFixture.completeBasic()
     assert generateDoc().contains('Some doc')
     assert generateDoc().contains('foo')
-    assert generateDoc().contains('()')
+    assert generateDoc().contains('<span style="">(</span><span style="">)</span>')
   }
 
   void testPropertyDoc() {

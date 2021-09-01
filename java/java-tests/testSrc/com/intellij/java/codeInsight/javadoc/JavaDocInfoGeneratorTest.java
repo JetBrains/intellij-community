@@ -116,11 +116,12 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   public void testRepeatableAnnotations() {
     useJava8();
-    assertEquals("@R(&quot;a&quot;)&nbsp;\n" +
-                 "@R(&quot;b&quot;)&nbsp;\n" +
-                 "class <b>repeatableAnnotations</b>\n" +
-                 "extends <a href=\"psi_element://java.lang.Object\"><code>Object</code></a>",
-                 JavaDocInfoGenerator.generateSignature(getTestClass()));
+    assertEquals(
+      "<span style=\"color:#808000;\">@</span><span style=\"color:#808000;\">R</span><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"a\"</span><span style=\"\">)</span>&nbsp;\n" +
+      "<span style=\"color:#808000;\">@</span><span style=\"color:#808000;\">R</span><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"b\"</span><span style=\"\">)</span>&nbsp;\n" +
+      "<span style=\"color:#000080;font-weight:bold;\">class</span> <span style=\"color:#000000;\">repeatableAnnotations</span>\n" +
+      "<span style=\"color:#000080;font-weight:bold;\">extends </span><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#000000;\">Object</span></code></a>",
+      new JavaDocInfoGenerator(getProject(), getTestClass(), false).generateSignature(getTestClass()));
   }
   
   public void testAnonymousAndSuperJavadoc() {

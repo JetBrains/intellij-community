@@ -57,7 +57,7 @@ final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
     String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED);
     String borderColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor());
     String sectionColor = ColorUtil.toHtmlColor(SECTION_COLOR);
-    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\"; font-size: 96%;}";
+    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\";}";
 
     StyleSheet styleSheet = editorKit.getStyleSheet();
     styleSheet.addRule("tt" + editorFontStyle);
