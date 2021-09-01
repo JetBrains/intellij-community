@@ -60,7 +60,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private final List<AnAction> mySettingsActions = new ArrayList<>();
   private final List<AnAction> myToolbarActions = new ArrayList<>();
 
-  public BranchActionGroupPopup(@NotNull @NlsContexts.PopupTitle String title,
+  public BranchActionGroupPopup(@Nullable @NlsContexts.PopupTitle String title,
                                 @NotNull Project project,
                                 @NotNull Condition<? super AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
