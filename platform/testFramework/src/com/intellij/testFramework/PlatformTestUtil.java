@@ -1017,15 +1017,25 @@ public final class PlatformTestUtil {
   /**
    * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for 60 seconds till process ends.
    */
-  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration)
+    throws InterruptedException {
     return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
+  }
+
+  /**
+   * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for {@code timeoutInSeconds}
+   * seconds till process ends.
+   */
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration, long timeoutInSeconds)
+    throws InterruptedException {
+    return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID, timeoutInSeconds);
   }
 
   /**
    * Executes {@code runConfiguration} with executor {@code executorId} and waits for 60 seconds till process ends.
    */
   public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
-                                                                 @NotNull String executorId) throws InterruptedException {
+                                                                          @NotNull String executorId) throws InterruptedException {
     return executeConfigurationAndWait(runConfiguration, executorId, 60);
   }
 
