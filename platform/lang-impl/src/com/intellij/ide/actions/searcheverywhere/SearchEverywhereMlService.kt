@@ -32,7 +32,7 @@ abstract class SearchEverywhereMlService {
                                keysTyped: Int, backspacesTyped: Int, textLength: Int,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
 
-  abstract fun onItemSelected(project: Project?, indexes: IntArray, closePopup: Boolean,
+  abstract fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
 
   abstract fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)

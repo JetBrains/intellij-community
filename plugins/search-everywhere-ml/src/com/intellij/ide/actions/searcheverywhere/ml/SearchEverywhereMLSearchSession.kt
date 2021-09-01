@@ -50,7 +50,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   }
 
   fun onItemSelected(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
-                     indexes: IntArray, closePopup: Boolean,
+                     indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = getCurrentSearchState()
     if (state != null && isMLSupportedTab(state.tabId)) {
@@ -59,7 +59,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
         project, sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
         itemIdProvider, cachedContextInfo, state,
-        indexes, closePopup, elementsProvider
+        indexes, selectedItems, closePopup, elementsProvider
       )
     }
   }

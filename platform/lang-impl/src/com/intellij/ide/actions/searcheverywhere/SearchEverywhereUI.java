@@ -787,9 +787,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     boolean closePopup = false;
+    List<Object> selectedItems = new ArrayList<>();
     for (int i : indexes) {
       SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
       Object value = myListModel.getElementAt(i);
+      selectedItems.add(value);
 
       String selectedTabContributorID = myHeader.getSelectedTab().getReportableID();
       //noinspection ConstantConditions
@@ -812,7 +814,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
     if (mlService != null) {
-      mlService.onItemSelected(myProject, indexes, closePopup, () -> myListModel.getFoundElementsInfo());
+      mlService.onItemSelected(myProject, indexes, selectedItems, closePopup, () -> myListModel.getFoundElementsInfo());
     }
 
     if (closePopup) {

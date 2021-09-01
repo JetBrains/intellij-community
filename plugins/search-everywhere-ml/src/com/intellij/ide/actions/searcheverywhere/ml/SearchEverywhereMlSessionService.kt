@@ -54,10 +54,10 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     }
   }
 
-  override fun onItemSelected(project: Project?, indexes: IntArray, closePopup: Boolean,
+  override fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
-      getCurrentSession()?.onItemSelected(project, experiment, indexes, closePopup, elementsProvider)
+      getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, elementsProvider)
     }
   }
 
