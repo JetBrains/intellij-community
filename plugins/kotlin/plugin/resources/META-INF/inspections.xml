@@ -2420,7 +2420,6 @@
                      groupPath="Kotlin"
                      groupName="Migration"
                      enabledByDefault="false"
-                     cleanupTool="true"
                      level="WARNING"
                      language="kotlin"
                      key="inspection.non.exhaustive.when.statement.migration.display.name" bundle="messages.KotlinBundle"/>
