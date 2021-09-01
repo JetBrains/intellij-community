@@ -72,7 +72,7 @@ fun ValidationInfoBuilder.validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel
 }
 
 fun validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): Boolean {
-  return validateAndGetSdkValidationMessage(sdkProperty, sdkModel) != null
+  return validateAndGetSdkValidationMessage(sdkProperty, sdkModel) == null
 }
 
 private fun validateAndGetSdkValidationMessage(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): @DialogMessage String? {
