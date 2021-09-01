@@ -18,9 +18,10 @@ import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.NotNull
 import java.util.*
 
-class FileBasedIndexTumbler {
+class FileBasedIndexTumbler(private val reason: @NonNls String) {
   private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   private val dumbModeSemaphore = Semaphore()
 
@@ -59,7 +60,7 @@ class FileBasedIndexTumbler {
         LOG.assertTrue(fileTypeTracker == null)
         fileTypeTracker = FileTypeTracker()
         fileBasedIndex.waitUntilIndicesAreInitialized()
-        fileBasedIndex.performShutdown(true)
+        fileBasedIndex.performShutdown(true, reason)
         fileBasedIndex.dropRegisteredIndexes()
         val indexesAreOk = RebuildStatus.isOk()
         RebuildStatus.reset()
@@ -79,7 +80,7 @@ class FileBasedIndexTumbler {
   }
 
   @JvmOverloads
-  fun turnOn(beforeIndexTasksStarted: Runnable? = null, reason: @NonNls String? = null) {
+  fun turnOn(beforeIndexTasksStarted: Runnable? = null) {
     LOG.assertTrue(ApplicationManager.getApplication().isWriteThread)
     nestedLevelCount--
     if (nestedLevelCount == 0) {

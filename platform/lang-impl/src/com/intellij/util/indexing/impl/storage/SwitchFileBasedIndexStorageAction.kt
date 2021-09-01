@@ -29,13 +29,13 @@ class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
   private fun restartIndexesWithStorage(indexStorage: IndexStorageDescriptor) {
     val usedLayout = FileBasedIndexLayoutSettings.getUsedLayout()
     if (usedLayout != indexStorage.bean) {
-      val switcher = FileBasedIndexTumbler()
+      val switcher = FileBasedIndexTumbler("Index Storage Switching")
       switcher.turnOff()
       try {
         FileBasedIndexLayoutSettings.setUsedLayout(indexStorage.bean)
       }
       finally {
-        switcher.turnOn(null, "Index Storage Switching")
+        switcher.turnOn(null)
       }
     }
   }

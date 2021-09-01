@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 final class ForceIndexRebuildAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FileBasedIndexTumbler tumbler = new FileBasedIndexTumbler();
+    FileBasedIndexTumbler tumbler = new FileBasedIndexTumbler("Force index rebuild");
     tumbler.turnOff();
     try {
       CorruptionMarker.requestInvalidation();
