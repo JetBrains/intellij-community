@@ -30,8 +30,8 @@ abstract class NewProjectWizardMultiStep(
 
   protected open val commonSteps = emptyList<NewProjectWizardStep>()
 
-  protected val stepProperty = propertyGraph.graphProperty { "" }
-  protected var step by stepProperty
+  val stepProperty = propertyGraph.graphProperty { "" }
+  var step by stepProperty
 
   private val steps = epName.extensionList
     .filter { it.isEnabled }

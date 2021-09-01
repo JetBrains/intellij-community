@@ -94,7 +94,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {
-        JavaNewProjectWizard.SdkStep.getSdkComboBox(context)
+        JavaNewProjectWizard.getSdkComboBox(context)
           .withValidationOnApply { validateGradleVersion() }
         if (!context.isCreatingNewProject) {
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
@@ -152,7 +152,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     private fun getJavaVersion(): JavaVersion? {
-      val jdk = JavaNewProjectWizard.SdkStep.getSdk(context) ?: return null
+      val jdk = JavaNewProjectWizard.getSdk(context) ?: return null
       val versionString = jdk.versionString ?: return null
       return JavaVersion.tryParse(versionString)
     }
@@ -192,7 +192,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     override fun setupProject(project: Project) {
       val builder = InternalGradleModuleBuilder().apply {
         isCreatingNewProject = true
-        moduleJdk = JavaNewProjectWizard.SdkStep.getSdk(context)
+        moduleJdk = JavaNewProjectWizard.getSdk(context)
 
         parentProject = parentData
         projectId = ProjectId(groupId, artifactId, version)

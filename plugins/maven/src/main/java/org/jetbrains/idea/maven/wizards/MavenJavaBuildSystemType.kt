@@ -35,7 +35,7 @@ class MavenJavaBuildSystemType : JavaBuildSystemType {
 
     override fun setupProject(project: Project) {
       val builder = InternalMavenModuleBuilder().apply {
-        moduleJdk = JavaNewProjectWizard.SdkStep.getSdk(context)
+        moduleJdk = JavaNewProjectWizard.getSdk(context)
 
         parentProject = null
         aggregatorProject = null

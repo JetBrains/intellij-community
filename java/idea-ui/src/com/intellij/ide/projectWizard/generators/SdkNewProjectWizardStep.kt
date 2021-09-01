@@ -18,11 +18,11 @@ import com.intellij.ui.layout.*
 
 abstract class SdkNewProjectWizardStep(context: WizardContext) : NewProjectWizardStep(context) {
 
-  protected lateinit var sdkComboBox: CellBuilder<JdkComboBox>
+  lateinit var sdkComboBox: CellBuilder<JdkComboBox>
 
-  protected val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-  protected val sdk by sdkProperty
-  protected val sdksModel = ProjectSdksModel()
+  val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  val sdk by sdkProperty
+  val sdksModel = ProjectSdksModel()
 
   protected abstract fun sdkTypeFilter(type: SdkTypeId): Boolean
 

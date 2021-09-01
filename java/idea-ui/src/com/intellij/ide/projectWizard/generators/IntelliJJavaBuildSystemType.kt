@@ -49,7 +49,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
       builder.name = moduleName
       builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
       builder.contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
-      builder.moduleJdk = JavaNewProjectWizard.SdkStep.getSdk(context)
+      builder.moduleJdk = JavaNewProjectWizard.getSdk(context)
 
       builder.commit(project)
     }
