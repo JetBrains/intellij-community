@@ -182,7 +182,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
       DataInputOutputUtil.writeINT(oStream, level.ordinal());
     }
 
-    if (!areLanguageLevelsCompatible(oldLanguageLevel, level) || !ProjectFileIndex.getInstance(project).isInContent(fileOrDir)) {
+    if (oldLanguageLevel != null && (!areLanguageLevelsCompatible(oldLanguageLevel, level) || !ProjectFileIndex.getInstance(project).isInContent(fileOrDir))) {
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
     }
     for (VirtualFile child : fileOrDir.getChildren()) {
