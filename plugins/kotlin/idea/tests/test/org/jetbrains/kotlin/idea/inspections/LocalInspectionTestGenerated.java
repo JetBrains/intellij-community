@@ -7548,6 +7548,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration")
+    public static class NonExhaustiveWhenStatementMigration extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("boolean.kt")
+        public void testBoolean() throws Exception {
+            runTest("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration/boolean.kt");
+        }
+
+        @TestMetadata("enum.kt")
+        public void testEnum() throws Exception {
+            runTest("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration/enum.kt");
+        }
+
+        @TestMetadata("sealed.kt")
+        public void testSealed() throws Exception {
+            runTest("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration/sealed.kt");
+        }
+
+        @TestMetadata("sealed2.kt")
+        public void testSealed2() throws Exception {
+            runTest("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration/sealed2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nullChecksToSafeCall")
     public static class NullChecksToSafeCall extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
