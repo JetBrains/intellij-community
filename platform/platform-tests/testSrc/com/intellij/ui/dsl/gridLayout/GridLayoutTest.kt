@@ -15,11 +15,11 @@ const val PREFERRED_WIDTH = 60
 const val PREFERRED_HEIGHT = 40
 val PREFERRED_SIZE = Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT)
 
-class JBGridLayoutTest {
+class GridLayoutTest {
 
   @Test
   fun testEmpty() {
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
 
     Assert.assertEquals(panel.preferredSize, Dimension(0, 0))
 
@@ -29,14 +29,14 @@ class JBGridLayoutTest {
 
   @Test
   fun testOneCellSimple() {
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
     RowsGridBuilder(panel).cell(label())
     assertEquals(panel.preferredSize, PREFERRED_SIZE)
   }
 
   @Test
   fun testOneCellGaps() {
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
     val gaps = Gaps(1, 2, 3, 4)
     RowsGridBuilder(panel).cell(label(), gaps = gaps)
     assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH + gaps.width, PREFERRED_HEIGHT + gaps.height))
@@ -44,7 +44,7 @@ class JBGridLayoutTest {
 
   @Test
   fun testOneCellVisualPaddings() {
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
     val visualPaddings = Gaps(1, 2, 3, 4)
     val label = label()
     RowsGridBuilder(panel)
@@ -70,7 +70,7 @@ class JBGridLayoutTest {
 
   @Test
   fun testOneCellHorizontalAlignments() {
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
     val gaps = Gaps(1, 2, 3, 4)
     val label = label()
     RowsGridBuilder(panel)
@@ -103,7 +103,7 @@ class JBGridLayoutTest {
 
   @Test
   fun testOneCellVerticalAlignments() {
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
     val gaps = Gaps(1, 2, 3, 4)
     val label = label()
     RowsGridBuilder(panel)
@@ -140,7 +140,7 @@ class JBGridLayoutTest {
 
   @Test
   fun testOneCellComplex() {
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
     val label = label()
     val gaps = Gaps(1, 2, 3, 4)
     val visualPaddings = Gaps(5, 6, 7, 8)
@@ -166,7 +166,7 @@ class JBGridLayoutTest {
 
   @Test
   fun testLabeledGrid() {
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
     val builder = RowsGridBuilder(panel)
     val rowsCount = 10
     val labels = mutableListOf<Array<JLabel>>()
@@ -198,7 +198,7 @@ class JBGridLayoutTest {
 
   @Test
   fun testRowColumnGaps() {
-    val layout = JBGridLayout()
+    val layout = GridLayout()
     val panel = JPanel(layout)
     val labels = mutableListOf<List<JLabel>>()
     val columnsCount = 4
@@ -249,7 +249,7 @@ class JBGridLayoutTest {
         continue
       }
 
-      val panel = JPanel(JBGridLayout())
+      val panel = JPanel(GridLayout())
       val builder = RowsGridBuilder(panel)
         .defaultBaselineAlign(true)
 
@@ -279,7 +279,7 @@ class JBGridLayoutTest {
         continue
       }
 
-      val panel = JPanel(JBGridLayout())
+      val panel = JPanel(GridLayout())
       val builder = RowsGridBuilder(panel)
         .defaultBaselineAlign(true)
 
@@ -308,7 +308,7 @@ class JBGridLayoutTest {
 
   private fun doLayout(panel: JPanel, width: Int, height: Int) {
     panel.setSize(width, height)
-    (panel.layout as JBGridLayout).layoutContainer(panel)
+    (panel.layout as GridLayout).layoutContainer(panel)
   }
 
   private fun label(preferredWidth: Int = PREFERRED_WIDTH, preferredHeight: Int = PREFERRED_HEIGHT): JLabel {

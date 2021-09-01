@@ -12,9 +12,9 @@ private const val GRID_EMPTY = -1
  * Builds grid layout row by row
  */
 @ApiStatus.Experimental
-class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
+class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
-  private val layout = panel.layout as JBGridLayout
+  private val layout = panel.layout as GridLayout
 
   val grid = grid ?: layout.rootGrid
 
@@ -74,7 +74,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
       addResizableColumn()
     }
 
-    val constraints = JBConstraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
+    val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
       verticalAlign = verticalAlign, baselineAlign = baselineAlign,
       gaps = gaps, visualPaddings = visualPaddings)
     panel.add(component, constraints)
@@ -87,13 +87,13 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
               baselineAlign: Boolean = defaultBaselineAlign,
               resizableColumn: Boolean = false,
               gaps: Gaps = Gaps.EMPTY,
-              visualPaddings: Gaps = Gaps.EMPTY): JBGrid {
+              visualPaddings: Gaps = Gaps.EMPTY): Grid {
     startFirstRow()
     if (resizableColumn) {
       addResizableColumn()
     }
 
-    val constraints = JBConstraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
+    val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
       verticalAlign = verticalAlign, baselineAlign = baselineAlign,
       gaps = gaps, visualPaddings = visualPaddings)
     skip(width)

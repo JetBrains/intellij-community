@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.gridLayout
+package com.intellij.ui.dsl.gridLayout.impl
 
 import com.intellij.ui.dsl.UiDslException
 import org.jetbrains.annotations.ApiStatus
@@ -9,7 +9,7 @@ import kotlin.math.max
  * Calculates columns (or rows) sizes and position
  */
 @ApiStatus.Internal
-class JBColumnsSizeCalculator {
+class ColumnsSizeCalculator {
 
   private val sizes = mutableMapOf<ColumnInfo, Int>()
 
@@ -65,7 +65,7 @@ class JBColumnsSizeCalculator {
         val sizesWithoutFirstColumn = mutableMapOf<ColumnInfo, Int>()
         removeFirstColumn(remainedSizes, sizesFirstColumn, sizesWithoutFirstColumn, 0)
 
-        if (!sizesFirstColumn.isEmpty()) {
+        if (sizesFirstColumn.isNotEmpty()) {
           throw UiDslException()
         }
         remainedSizes = sizesWithoutFirstColumn

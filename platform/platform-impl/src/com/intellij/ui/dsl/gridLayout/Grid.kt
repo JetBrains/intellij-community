@@ -4,7 +4,7 @@ package com.intellij.ui.dsl.gridLayout
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface JBGrid {
+interface Grid {
 
   /**
    * Set of columns that fill available extra space in container

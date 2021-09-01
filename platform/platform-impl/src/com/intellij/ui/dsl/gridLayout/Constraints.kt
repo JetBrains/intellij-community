@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.dsl.checkPositive
+import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -34,12 +35,12 @@ enum class VerticalAlign {
 }
 
 @ApiStatus.Experimental
-data class JBConstraints(
+data class Constraints(
 
   /**
    * Grid destination
    */
-  val grid: JBGrid,
+  val grid: Grid,
 
   /**
    * Cell x coordinate
@@ -75,7 +76,7 @@ data class JBConstraints(
    * If true then vertical align is done by baseline:
    *
    * 1. All components that have baselineAlign = true in the same row and with the same [verticalAlign] are aligned by baseline together
-   * 2. Components are aligned even if they are placed in different sub grids (see [JBGridImpl.registerSubGrid])
+   * 2. Components are aligned even if they are placed in different sub grids (see [GridImpl.registerSubGrid])
    * 3. [VerticalAlign.FILL] alignment does not support [baselineAlign]
    * 4. Cells with [height] more than 1 do not support [baselineAlign]
    * 5. Only sub grids with one row can be aligned by baseline in parent grid

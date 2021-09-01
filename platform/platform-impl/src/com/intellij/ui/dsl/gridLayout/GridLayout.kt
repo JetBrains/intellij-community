@@ -4,25 +4,26 @@ package com.intellij.ui.dsl.gridLayout
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.checkComponent
 import com.intellij.ui.dsl.checkConstraints
+import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 
 @ApiStatus.Experimental
-class JBGridLayout : LayoutManager2 {
+class GridLayout : LayoutManager2 {
 
-  val rootGrid: JBGrid
+  val rootGrid: Grid
     get() = _rootGrid
 
-  private val _rootGrid = JBGridImpl()
+  private val _rootGrid = GridImpl()
 
   override fun addLayoutComponent(comp: Component?, constraints: Any?) {
     val jbConstraints = checkConstraints(constraints)
 
-    (jbConstraints.grid as JBGridImpl).register(checkComponent(comp), jbConstraints)
+    (jbConstraints.grid as GridImpl).register(checkComponent(comp), jbConstraints)
   }
 
-  fun addLayoutSubGrid(constraints: JBConstraints): JBGrid {
-    return (constraints.grid as JBGridImpl).registerSubGrid(constraints)
+  fun addLayoutSubGrid(constraints: Constraints): Grid {
+    return (constraints.grid as GridImpl).registerSubGrid(constraints)
   }
 
   override fun addLayoutComponent(name: String?, comp: Component?) {

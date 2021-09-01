@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl
 
-import com.intellij.ui.dsl.gridLayout.JBConstraints
+import com.intellij.ui.dsl.gridLayout.Constraints
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JComponent
@@ -48,8 +48,8 @@ fun checkComponent(component: Component?): JComponent {
   return component
 }
 
-fun checkConstraints(constraints: Any?): JBConstraints {
-  if (constraints !is JBConstraints) {
+fun checkConstraints(constraints: Any?): Constraints {
+  if (constraints !is Constraints) {
     throw UiDslException("Invalid constraints: $constraints")
   }
 

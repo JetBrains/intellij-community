@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.gridLayout
+package com.intellij.ui.dsl.gridLayout.impl
 
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.checkTrue
+import com.intellij.ui.dsl.gridLayout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.util.*
@@ -10,7 +12,8 @@ import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.math.min
 
-internal class JBGridImpl : JBGrid {
+@ApiStatus.Internal
+internal class GridImpl : Grid {
 
   override val resizableColumns = mutableSetOf<Int>()
   override val resizableRows = mutableSetOf<Int>()
@@ -22,23 +25,23 @@ internal class JBGridImpl : JBGrid {
     get() = cells.any { it.visible }
 
   private val layoutData = JBLayoutData()
-  private val cells = mutableListOf<JBCell>()
+  private val cells = mutableListOf<Cell>()
 
-  fun register(component: JComponent, constraints: JBConstraints) {
+  fun register(component: JComponent, constraints: Constraints) {
     if (!isEmpty(constraints)) {
       throw UiDslException("Some cells are occupied already: $constraints")
     }
 
-    cells.add(JBComponentCell(constraints, component))
+    cells.add(ComponentCell(constraints, component))
   }
 
-  fun registerSubGrid(constraints: JBConstraints): JBGrid {
+  fun registerSubGrid(constraints: Constraints): Grid {
     if (!isEmpty(constraints)) {
       throw UiDslException("Some cells are occupied already: $constraints")
     }
 
-    val result = JBGridImpl()
-    cells.add(JBGridCell(constraints, result))
+    val result = GridImpl()
+    cells.add(GridCell(constraints, result))
     return result
   }
 
@@ -46,13 +49,13 @@ internal class JBGridImpl : JBGrid {
     val iterator = cells.iterator()
     for (cell in iterator) {
       when (cell) {
-        is JBComponentCell -> {
+        is ComponentCell -> {
           if (cell.component == component) {
             iterator.remove()
             return true
           }
         }
-        is JBGridCell -> {
+        is GridCell -> {
           if (cell.content.unregister(component)) {
             return true
           }
@@ -74,10 +77,10 @@ internal class JBGridImpl : JBGrid {
     layoutData.visibleCellsData.forEach { layoutCellData ->
       val bounds = calculateBounds(layoutCellData, rect.x, rect.y)
       when (val cell = layoutCellData.cell) {
-        is JBComponentCell -> {
+        is ComponentCell -> {
           cell.component.bounds = bounds
         }
-        is JBGridCell -> {
+        is GridCell -> {
           cell.content.layout(bounds)
         }
       }
@@ -110,7 +113,7 @@ internal class JBGridImpl : JBGrid {
       var preferredSize: Dimension
 
       when (cell) {
-        is JBComponentCell -> {
+        is ComponentCell -> {
           val component = cell.component
           if (!component.isVisible) {
             continue
@@ -118,7 +121,7 @@ internal class JBGridImpl : JBGrid {
           preferredSize = component.preferredSize
         }
 
-        is JBGridCell -> {
+        is GridCell -> {
           val grid = cell.content
           if (!grid.visible) {
             continue
@@ -164,7 +167,7 @@ internal class JBGridImpl : JBGrid {
 
     for (layoutCellData in layoutData.visibleCellsData) {
       val cell = layoutCellData.cell
-      if (cell is JBGridCell) {
+      if (cell is GridCell) {
         cell.content.calculateLayoutDataStep2(layoutData.getFullPaddedWidth(layoutCellData))
       }
     }
@@ -181,7 +184,7 @@ internal class JBGridImpl : JBGrid {
       val constraints = layoutCellData.cell.constraints
       layoutCellData.baseline = null
       when (val cell = layoutCellData.cell) {
-        is JBComponentCell -> {
+        is ComponentCell -> {
           if (!isSupportedBaseline(constraints)) {
             continue
           }
@@ -203,7 +206,7 @@ internal class JBGridImpl : JBGrid {
           }
         }
 
-        is JBGridCell -> {
+        is GridCell -> {
           val grid = cell.content
           grid.calculateLayoutDataStep3()
           layoutCellData.preferredSize.height = grid.layoutData.preferredHeight
@@ -245,7 +248,7 @@ internal class JBGridImpl : JBGrid {
 
     for (layoutCellData in layoutData.visibleCellsData) {
       val cell = layoutCellData.cell
-      if (cell is JBGridCell) {
+      if (cell is GridCell) {
         cell.content.calculateLayoutDataStep4(layoutData.getFullPaddedHeight(layoutCellData))
       }
     }
@@ -299,7 +302,7 @@ internal class JBGridImpl : JBGrid {
     return Rectangle(offsetX + x, offsetY + y, paddedWidth + visualPaddings.width, paddedHeight + visualPaddings.height)
   }
 
-  private fun isEmpty(constraints: JBConstraints): Boolean {
+  private fun isEmpty(constraints: Constraints): Boolean {
     cells.forEach { cell ->
       with(cell.constraints) {
         if (constraints.x + constraints.width > x &&
@@ -325,7 +328,7 @@ private class JBLayoutData {
   //
 
   var visibleCellsData = emptyList<LayoutCellData>()
-  val columnsSizeCalculator = JBColumnsSizeCalculator()
+  val columnsSizeCalculator = ColumnsSizeCalculator()
   var preferredWidth = 0
 
   /**
@@ -341,7 +344,7 @@ private class JBLayoutData {
   //
   // Step 3
   //
-  val rowsSizeCalculator = JBColumnsSizeCalculator()
+  val rowsSizeCalculator = ColumnsSizeCalculator()
   var preferredHeight = 0
 
   val baselineData = BaselineData()
@@ -375,9 +378,9 @@ private class JBLayoutData {
 }
 
 /**
- * For sub-grids height of [preferredSize] calculated on late steps of [JBGridImpl.calculateLayoutData]
+ * For sub-grids height of [preferredSize] calculated on late steps of [GridImpl.calculateLayoutData]
  */
-private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension,
+private data class LayoutCellData(val cell: Cell, val preferredSize: Dimension,
                                   val columnGaps: ColumnGaps, val rowGaps: RowGaps) {
   /**
    * Calculated on step 3
@@ -398,22 +401,22 @@ private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension
 
 }
 
-private sealed class JBCell(val constraints: JBConstraints) {
+private sealed class Cell(val constraints: Constraints) {
   abstract val visible: Boolean
 }
 
-private class JBComponentCell(constraints: JBConstraints, val component: JComponent) : JBCell(constraints) {
+private class ComponentCell(constraints: Constraints, val component: JComponent) : Cell(constraints) {
   override val visible: Boolean
     get() = component.isVisible
 }
 
-private class JBGridCell(constraints: JBConstraints, val content: JBGridImpl) : JBCell(constraints) {
+private class GridCell(constraints: Constraints, val content: GridImpl) : Cell(constraints) {
   override val visible: Boolean
     get() = content.visible
 }
 
 /**
- * Contains baseline data for rows, see [JBConstraints.baselineAlign]
+ * Contains baseline data for rows, see [Constraints.baselineAlign]
  */
 private class BaselineData {
 
@@ -462,6 +465,6 @@ private data class RowBaselineData(var maxAboveBaseline: Int = 0, var maxBelowBa
     get() = maxAboveBaseline + maxBelowBaseline
 }
 
-private fun isSupportedBaseline(constraints: JBConstraints): Boolean {
+private fun isSupportedBaseline(constraints: Constraints): Boolean {
   return constraints.baselineAlign && constraints.verticalAlign != VerticalAlign.FILL && constraints.height == 1
 }

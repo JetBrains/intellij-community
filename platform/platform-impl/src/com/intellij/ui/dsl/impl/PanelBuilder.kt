@@ -31,7 +31,7 @@ private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
 )
 
 @ApiStatus.Internal
-internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: DialogPanelConfig, val panel: DialogPanel, val grid: JBGrid) {
+internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: DialogPanelConfig, val panel: DialogPanel, val grid: Grid) {
 
   private companion object {
     private val LOG = Logger.getInstance(PanelBuilder::class.java)
@@ -156,7 +156,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     return true
   }
 
-  private fun checkNoDoubleRowGaps(grid: JBGrid) {
+  private fun checkNoDoubleRowGaps(grid: Grid) {
     val gaps = grid.rowsGaps
     for (i in gaps.indices) {
       if (i > 0 && gaps[i - 1].bottom > 0 && gaps[i].top > 0) {

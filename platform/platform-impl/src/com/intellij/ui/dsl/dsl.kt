@@ -2,7 +2,7 @@
 package com.intellij.ui.dsl
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.gridLayout.JBGridLayout
+import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.impl.DialogPanelConfig
 import com.intellij.ui.dsl.impl.PanelBuilder
 import com.intellij.ui.dsl.impl.PanelImpl
@@ -20,7 +20,7 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
   val panel = PanelImpl(dialogPanelConfig)
   panel.init()
 
-  val layout = JBGridLayout()
+  val layout = GridLayout()
   val result = DialogPanel(layout = layout)
   val builder = PanelBuilder(panel.rows, dialogPanelConfig, result, layout.rootGrid)
   builder.build()

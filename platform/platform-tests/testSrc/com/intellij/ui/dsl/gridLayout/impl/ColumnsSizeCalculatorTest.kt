@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.gridLayout
+package com.intellij.ui.dsl.gridLayout.impl
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class JBColumnsSizeCalculatorTest {
+class ColumnsSizeCalculatorTest {
 
   @Test
   fun testColumnsSizeCalculator() {
@@ -93,7 +93,7 @@ class JBColumnsSizeCalculatorTest {
                                         expectedPreferredSize: Int) {
     assertEquals(constraints.size % 3, 0)
 
-    val calculator = JBColumnsSizeCalculator()
+    val calculator = ColumnsSizeCalculator()
     for (i in constraints.indices step 3) {
       calculator.addConstraint(constraints[i], constraints[i + 1], constraints[i + 2])
     }

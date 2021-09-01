@@ -16,12 +16,12 @@ import javax.swing.border.Border
 import kotlin.random.Random
 
 
-class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
+class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
 
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {
       init {
-        title = "JBGridLayout Test"
+        title = "GridLayout Test"
         init()
       }
 
@@ -83,7 +83,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       return this
     }
 
-    val panel = JPanel(JBGridLayout())
+    val panel = JPanel(GridLayout())
     val builder = RowsGridBuilder(panel)
       .defaultBaselineAlign(true)
 
@@ -126,7 +126,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
   }
 
   fun createVisualPaddingsPanel(): JPanel {
-    val layoutManager = JBGridLayout()
+    val layoutManager = GridLayout()
     val rootGrid = layoutManager.rootGrid
     rootGrid.resizableColumns.add(1)
     rootGrid.resizableRows.add(2)
@@ -134,10 +134,10 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
 
     fillGridByLabels(panel, rootGrid, 3, 4) { grid, x, y ->
       if (x == 0 && y == 1) {
-        JBConstraints(grid, x, y, visualPaddings = Gaps(10, 10, 10, 10))
+        Constraints(grid, x, y, visualPaddings = Gaps(10, 10, 10, 10))
       }
       else if (x == 1 && y == 2) {
-        JBConstraints(
+        Constraints(
           grid, x, y, horizontalAlign = HorizontalAlign.FILL,
           verticalAlign = VerticalAlign.FILL,
           visualPaddings = Gaps(10, 10, 10, 10)
@@ -153,7 +153,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
 
   fun createGapsPanel(): JPanel {
     val panel = createPanelLabels(4, 4) { grid, x, y ->
-      JBConstraints(
+      Constraints(
         grid,
         x,
         y,
@@ -162,14 +162,14 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
         gaps = if ((x + y) % 2 == 0) Gaps.EMPTY else Gaps(y * 20, x * 20, y * 30, x * 30)
       )
     }
-    val grid = (panel.layout as JBGridLayout).rootGrid
+    val grid = (panel.layout as GridLayout).rootGrid
     grid.resizableColumns.addAll(0..HorizontalAlign.values().size)
     grid.resizableRows.addAll(0..VerticalAlign.values().size)
     return createTabPanel("Every second cell has own Gaps", panel)
   }
 
   fun createColRowGapsPanel(): JPanel {
-    val layoutManager = JBGridLayout()
+    val layoutManager = GridLayout()
     val grid = layoutManager.rootGrid
     grid.resizableColumns.addAll(0..4)
     grid.resizableRows.addAll(0..3)
@@ -183,7 +183,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
   }
 
   fun createJointCellsPanel(): JPanel {
-    val layoutManager = JBGridLayout()
+    val layoutManager = GridLayout()
     val grid = layoutManager.rootGrid
     grid.resizableColumns.add(1)
     grid.resizableRows.add(1)
@@ -191,7 +191,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
 
     fun addLabel(x: Int, y: Int, width: Int = 1, height: Int = 1) {
       panel.addLabel(
-        JBConstraints(
+        Constraints(
           grid, x, y, width = width, height = height,
           horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL
         )
@@ -202,7 +202,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     addLabel(1, 0, width = 3)
     addLabel(4, 0, height = 3)
     addLabel(1, 1)
-    val jbConstraints = JBConstraints(
+    val constraints = Constraints(
       grid, 2, 1, width = 2, height = 2,
       horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL
     )
@@ -210,11 +210,11 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       JLabel(
         "<html>HighLabel<br>Label<br>Label<br>Label<br>Label<br>Label<br>Label<br>${
           constraintsToHtmlString(
-            jbConstraints
+            constraints
           )
         }"
       ),
-      jbConstraints
+      constraints
     )
     addLabel(0, 2, width = 2, height = 2)
     addLabel(2, 3, width = 3)
@@ -224,7 +224,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
 
   fun createCellAlignmentsPanel(): JPanel {
     val panel = createPanelLabels(HorizontalAlign.values().size, VerticalAlign.values().size) { grid, x, y ->
-      JBConstraints(
+      Constraints(
         grid,
         x,
         y,
@@ -232,7 +232,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
         verticalAlign = VerticalAlign.values()[y]
       )
     }
-    val grid = (panel.layout as JBGridLayout).rootGrid
+    val grid = (panel.layout as GridLayout).rootGrid
     grid.resizableColumns.addAll(0..HorizontalAlign.values().size)
     grid.resizableRows.addAll(0..VerticalAlign.values().size)
     return createTabPanel("Cells size is equal, component layouts have different alignments", panel)
@@ -241,24 +241,24 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
   fun createResizableCell11Panel(): JPanel {
     val panel = createPanelLabels(3, 4) { grid, x, y ->
       if (x == 1 && y == 1)
-        JBConstraints(grid, x, y, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL)
+        Constraints(grid, x, y, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL)
       else
         null
     }
-    val grid = (panel.layout as JBGridLayout).rootGrid
+    val grid = (panel.layout as GridLayout).rootGrid
     grid.resizableColumns.add(1)
     grid.resizableRows.add(1)
     return createTabPanel("One column and row are resizable", panel)
   }
 
   fun createSubGridPanel(): JPanel {
-    val layoutManager = JBGridLayout()
+    val layoutManager = GridLayout()
     layoutManager.rootGrid.resizableColumns.add(1)
     layoutManager.rootGrid.resizableRows.add(1)
     val panel = JPanel(layoutManager)
 
     val subGrid = layoutManager.addLayoutSubGrid(
-      JBConstraints(
+      Constraints(
         layoutManager.rootGrid, 1, 1,
         horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL
       )
@@ -267,7 +267,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     subGrid.resizableRows.add(1)
     fillGridByLabels(panel, subGrid, 3, 3) { grid, x, y ->
       if (x == 1 && y == 1)
-        JBConstraints(grid, x, y, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL)
+        Constraints(grid, x, y, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL)
       else
         null
     }
@@ -291,9 +291,9 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
   fun createPanelLabels(
     width: Int,
     height: Int,
-    constraintFactory: (grid: JBGrid, x: Int, y: Int) -> JBConstraints?
+    constraintFactory: (grid: Grid, x: Int, y: Int) -> Constraints?
   ): JPanel {
-    val layoutManager = JBGridLayout()
+    val layoutManager = GridLayout()
     val result = JPanel(layoutManager)
     fillGridByLabels(result, layoutManager.rootGrid, width, height, constraintFactory)
     return result
@@ -301,15 +301,15 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
 
   fun fillGridByLabels(
     container: JComponent,
-    grid: JBGrid,
+    grid: Grid,
     width: Int,
     height: Int,
-    constraintFactory: (grid: JBGrid, x: Int, y: Int) -> JBConstraints?
+    constraintFactory: (grid: Grid, x: Int, y: Int) -> Constraints?
   ) {
     for (x in 0 until width) {
       for (y in 0 until height) {
         val constraints =
-          constraintFactory.invoke(grid, x, y) ?: JBConstraints(grid, x, y)
+          constraintFactory.invoke(grid, x, y) ?: Constraints(grid, x, y)
 
         container.addLabel(constraints, longLabel = x == y)
       }
@@ -318,11 +318,11 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
 
   fun fillGridByCompoundLabels(
     container: JComponent,
-    grid: JBGrid
+    grid: Grid
   ) {
     fun addLabel(x: Int, y: Int, width: Int = 1, height: Int = 1) {
       container.addLabel(
-        JBConstraints(
+        Constraints(
           grid, x, y, width = width, height = height,
           horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL
         )
@@ -333,7 +333,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     addLabel(1, 0, width = 3)
     addLabel(4, 0, height = 3)
     addLabel(1, 1)
-    val jbConstraints = JBConstraints(
+    val constraints = Constraints(
       grid, 2, 1, width = 2, height = 2,
       horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL
     )
@@ -341,22 +341,22 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
       JLabel(
         "<html>HighLabel<br>Label<br>Label<br>Label<br>Label<br>Label<br>Label<br>${
           constraintsToHtmlString(
-            jbConstraints
+            constraints
           )
         }"
       ),
-      jbConstraints
+      constraints
     )
     addLabel(0, 2, width = 2, height = 2)
     addLabel(2, 3, width = 3)
   }
 
-  fun label(constraints: JBConstraints, longLabel: Boolean = false): JLabel {
+  fun label(constraints: Constraints, longLabel: Boolean = false): JLabel {
     val text = if (longLabel) "Very very very very very long label" else "Label"
     return JLabel("<html>$text<br>${constraintsToHtmlString(constraints)}")
   }
 
-  fun constraintsToHtmlString(constraints: JBConstraints): String {
+  fun constraintsToHtmlString(constraints: Constraints): String {
     var result = "x = ${constraints.x}, y = ${constraints.y}<br>" +
                  "width = ${constraints.width}, height = ${constraints.height}<br>" +
                  "hAlign = ${constraints.horizontalAlign}, vAlign = ${constraints.verticalAlign}<br>"
@@ -369,7 +369,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     return result
   }
 
-  fun gridToHtmlString(grid: JBGrid): String {
+  fun gridToHtmlString(grid: Grid): String {
     val result = mutableListOf<String>()
     if (grid.resizableColumns.isNotEmpty()) {
       result.add("resizableColumns = ${grid.resizableColumns.joinToString()}")
@@ -391,30 +391,30 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     return JLabel("$text [x = $x, y = $y]")
   }
 
-  fun JComponent.addLabel(constraints: JBConstraints, longLabel: Boolean = false) {
+  fun JComponent.addLabel(constraints: Constraints, longLabel: Boolean = false) {
     val label = label(constraints, longLabel)
     add(label, constraints)
   }
 
   fun createTabPanel(title: String, content: JComponent): JPanel {
-    val layoutManager = JBGridLayout()
+    val layoutManager = GridLayout()
     val rootGrid = layoutManager.rootGrid
     val result = JPanel(layoutManager)
     rootGrid.resizableColumns.add(0)
     rootGrid.resizableRows.add(1)
-    val label = JLabel("<html>$title<br>${gridToHtmlString((content.layout as JBGridLayout).rootGrid)}")
+    val label = JLabel("<html>$title<br>${gridToHtmlString((content.layout as GridLayout).rootGrid)}")
     label.background = Color.LIGHT_GRAY
     label.isOpaque = true
-    result.add(label, JBConstraints(rootGrid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL))
+    result.add(label, Constraints(rootGrid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL))
     result.add(
-      content, JBConstraints(
+      content, Constraints(
       rootGrid, 0, 1, verticalAlign = VerticalAlign.FILL,
       horizontalAlign = HorizontalAlign.FILL
     )
     )
 
     val controlGrid = layoutManager.addLayoutSubGrid(
-      JBConstraints(
+      Constraints(
         rootGrid,
         1,
         1,
@@ -426,7 +426,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     return result
   }
 
-  fun createControls(container: JComponent, content: JComponent, grid: JBGrid) {
+  fun createControls(container: JComponent, content: JComponent, grid: Grid) {
     val cbHighlight = JCheckBox("Highlight components")
     cbHighlight.addActionListener {
       for (component in content.components) {
@@ -474,13 +474,13 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     grid.resizableColumns.addAll(0..1)
     grid.resizableRows.add(0)
     container.add(
-      JScrollPane(list), JBConstraints(
+      JScrollPane(list), Constraints(
       grid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL,
       verticalAlign = VerticalAlign.FILL
     )
     )
-    container.add(btnHide, JBConstraints(grid, 0, 1, horizontalAlign = HorizontalAlign.CENTER))
-    container.add(btnShow, JBConstraints(grid, 1, 1, horizontalAlign = HorizontalAlign.CENTER))
-    container.add(cbHighlight, JBConstraints(grid, 0, 2, width = 2))
+    container.add(btnHide, Constraints(grid, 0, 1, horizontalAlign = HorizontalAlign.CENTER))
+    container.add(btnShow, Constraints(grid, 1, 1, horizontalAlign = HorizontalAlign.CENTER))
+    container.add(cbHighlight, Constraints(grid, 0, 2, width = 2))
   }
 }
