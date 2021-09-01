@@ -362,6 +362,9 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     @Override
     protected SeparatorWithText createSeparator() {
       SeparatorWithText separator = super.createSeparator();
+      if (ExperimentalUI.isNewVcsBranchPopup()) {
+        return separator;
+      }
       separator.setTextForeground(UIUtil.getListForeground());
       separator.setCaptionCentered(false);
       UIUtil.addInsets(separator, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
@@ -370,7 +373,10 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     @Override
     protected void setSeparatorFont(Font font) {
-      super.setSeparatorFont(RelativeFont.BOLD.derive(font));
+      super.setSeparatorFont(font);
+      if (!ExperimentalUI.isNewVcsBranchPopup()) {
+        super.setSeparatorFont(RelativeFont.BOLD.derive(font));
+      }
     }
 
     @Override
@@ -381,7 +387,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       super.customizeComponent(list, value, isSelected);
       if (mySeparatorComponent.isVisible()) {
-        ((GroupHeaderSeparator)mySeparatorComponent).setHideLine(myCurrentIndex == 0 || StringUtil.isNotEmpty(mySeparatorComponent.getCaption()));
+        boolean hideLineAboveCaption = !ExperimentalUI.isNewVcsBranchPopup() && StringUtil.isNotEmpty(mySeparatorComponent.getCaption());
+        ((GroupHeaderSeparator)mySeparatorComponent).setHideLine(myCurrentIndex == 0 || hideLineAboveCaption);
       }
 
       CustomIconProvider actionWithIconProvider = getSpecificAction(value, CustomIconProvider.class);
