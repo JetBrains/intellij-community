@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.impl
+package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
@@ -7,6 +7,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus

@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.RowGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign

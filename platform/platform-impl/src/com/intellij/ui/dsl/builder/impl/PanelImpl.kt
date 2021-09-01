@@ -1,14 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.impl
+package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.Label
-import com.intellij.ui.dsl.*
-import com.intellij.ui.dsl.Row
-import com.intellij.ui.dsl.SpacingConfiguration
+import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign

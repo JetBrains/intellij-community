@@ -4,8 +4,8 @@ package com.intellij.internal
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.components.dialog
-import com.intellij.ui.dsl.bindIntText
-import com.intellij.ui.dsl.panel
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.panel
 
 /**
  * @author Konstantin Bulenkov

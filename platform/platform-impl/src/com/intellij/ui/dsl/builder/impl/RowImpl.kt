@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.impl
+package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
@@ -19,9 +19,10 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.*
-import com.intellij.ui.dsl.*
-import com.intellij.ui.dsl.Cell
-import com.intellij.ui.dsl.Row
+import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.RowGaps
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil

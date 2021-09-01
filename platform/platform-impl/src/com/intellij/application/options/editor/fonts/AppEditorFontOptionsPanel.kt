@@ -19,7 +19,7 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.ui.AbstractFontCombo
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.Label
-import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout

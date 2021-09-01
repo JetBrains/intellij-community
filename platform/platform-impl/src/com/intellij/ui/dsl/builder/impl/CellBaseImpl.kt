@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.impl
+package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.ui.dsl.CellBase
-import com.intellij.ui.dsl.RightGap
+import com.intellij.ui.dsl.builder.CellBase
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus

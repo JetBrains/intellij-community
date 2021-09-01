@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl
+package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
+import com.intellij.ui.dsl.builder.impl.PanelBuilder
+import com.intellij.ui.dsl.builder.impl.PanelImpl
 import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.impl.DialogPanelConfig
-import com.intellij.ui.dsl.impl.PanelBuilder
-import com.intellij.ui.dsl.impl.PanelImpl
 import org.jetbrains.annotations.ApiStatus
 
 @DslMarker

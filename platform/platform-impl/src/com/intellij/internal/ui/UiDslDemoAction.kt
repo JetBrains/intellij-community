@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.awt.BorderLayout
 import java.awt.Dimension

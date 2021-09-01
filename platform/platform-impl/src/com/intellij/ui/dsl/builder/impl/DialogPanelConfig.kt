@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.impl
+package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.dsl.SpacingConfiguration
+import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus

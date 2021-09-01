@@ -17,7 +17,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.IntegerField;
-import com.intellij.ui.dsl.impl.UtilsKt;
+import com.intellij.ui.dsl.builder.impl.UtilsKt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;

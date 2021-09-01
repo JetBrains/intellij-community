@@ -27,12 +27,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.dsl.*
-import com.intellij.ui.dsl.bindItem
-import com.intellij.ui.dsl.bindSelected
-import com.intellij.ui.dsl.buttonGroup
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory

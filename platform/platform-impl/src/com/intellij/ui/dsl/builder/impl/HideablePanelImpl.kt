@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.impl
+package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.HideablePanel
+import com.intellij.ui.dsl.builder.HideablePanel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
