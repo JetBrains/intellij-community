@@ -55,16 +55,14 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       if (MarkdownHtmlPanelProvider.getAvailableProviders().size > 1) {
         htmlPanelProvidersRow()
       }
-      fullRow {
-        label(MarkdownBundle.message("markdown.settings.default.layout"))
+      row(MarkdownBundle.message("markdown.settings.default.layout")) {
         comboBox(
           model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
           prop = settings::splitLayout,
           renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
         )
       }
-      fullRow {
-        label(MarkdownBundle.message("markdown.settings.preview.layout.label"))
+      row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
         comboBox(
           model = DefaultComboBoxModel(arrayOf(false, true)),
           prop = settings::isVerticalSplit,
