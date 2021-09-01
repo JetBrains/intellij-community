@@ -46,6 +46,9 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
+
+  private static final String EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX = ".ExperimentalUi";
+
   static final String BRANCH_POPUP = "BranchWidget";
   private static final int BRANCH_POPUP_ROW_COUNT = 30;
   private Project myProject;
@@ -70,7 +73,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
-    myKey = dimensionKey;
+    myKey = buildDimensionKey(dimensionKey);
     if (myKey != null) {
       setDimensionServiceKey(myKey);
       if (WindowStateService.getInstance(myProject).getSizeFor(myProject, myKey) != null) {
@@ -82,6 +85,12 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
     setMaxRowCount(BRANCH_POPUP_ROW_COUNT);
     getList().setVisibleRowCount(BRANCH_POPUP_ROW_COUNT);
+  }
+
+  @Nullable
+  private static String buildDimensionKey(@Nullable final String initialDimensionKey) {
+    if (initialDimensionKey == null) return null;
+    return ExperimentalUI.isNewVcsBranchPopup() ? initialDimensionKey + EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX : initialDimensionKey;
   }
 
   private void createTitlePanelToolbar(@NotNull String dimensionKey) {
