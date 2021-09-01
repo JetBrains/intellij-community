@@ -1,16 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
+import com.intellij.navigation.TargetPresentation;
+import com.intellij.navigation.TargetPresentationBuilder;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.list.TargetPopup;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,17 +33,17 @@ public class ChangelistConflictDialog extends DialogWrapper {
   private JRadioButton mySwitchToChangelistRadioButton;
   private JRadioButton myIgnoreRadioButton;
   private JLabel myListTitle;
-  private JList<VirtualFile> myFileList;
+  private JList<Pair<VirtualFile, Icon>> myFileList;
 
   private final Project myProject;
 
-  public ChangelistConflictDialog(Project project, List<ChangeList> changeLists, List<VirtualFile> conflicts) {
+  public ChangelistConflictDialog(Project project, List<ChangeList> changeLists, List<Pair<VirtualFile, Icon>> conflicts) {
     super(project);
     myProject = project;
 
     setTitle(VcsBundle.message("dialog.title.resolve.changelist.conflict"));
 
-    boolean dirsOnly = conflicts.stream().allMatch(VirtualFile::isDirectory);
+    boolean dirsOnly = ContainerUtil.and(conflicts, pair -> pair.first.isDirectory());
     int size = conflicts.size();
 
     String text = (dirsOnly
@@ -48,7 +52,15 @@ public class ChangelistConflictDialog extends DialogWrapper {
 
     myListTitle.setText(text);
 
-    myFileList.setCellRenderer(new FileListRenderer());
+    myFileList.setCellRenderer(TargetPopup.createTargetPresentationRenderer((pair) -> {
+      VirtualFile vf = pair.first;
+      TargetPresentationBuilder builder = TargetPresentation.builder(vf.getPresentableName())
+        .icon(pair.second)
+        .presentableText(vf.getPresentableName());
+      VirtualFile vfParent = vf.getParent();
+      if (vfParent != null) builder = builder.locationText(vfParent.getPresentableUrl());
+      return builder.presentation();
+    }));
     myFileList.setModel(new CollectionListModel<>(conflicts));
 
     ChangelistConflictResolution resolution = ChangelistConflictTracker.getInstance(myProject).getOptions().LAST_RESOLUTION;
