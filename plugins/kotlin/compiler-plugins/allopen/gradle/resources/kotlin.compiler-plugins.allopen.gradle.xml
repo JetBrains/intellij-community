@@ -1,6 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.allopen.gradleJava">
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="kotlin.gradle.gradle-tooling"/>
+    <module name="kotlin.gradle.gradle-idea"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle"/>
   </dependencies>
