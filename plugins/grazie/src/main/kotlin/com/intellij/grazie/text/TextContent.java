@@ -106,8 +106,18 @@ public interface TextContent extends CharSequence {
   TextContent markUnknown(TextRange rangeInText);
 
   /**
+   * @return a copy of this TextContent with the given ranges excluded.
+   * This is equivalent to calling {@link #excludeRange} or {@link #markUnknown} for the ranges in reversed order, but works faster.
+   * Note: the ranges contain natural language text offsets, not PSI ones.
+   * They should not overlap and should be sorted.
+   */
+  @Contract(pure = true)
+  TextContent excludeRanges(List<Exclusion> ranges);
+
+  /**
    * @return whether the given PSI file text range has non-empty intersection with any fragment covered by this text content.
    */
+  @Contract(pure = true)
   boolean intersectsRange(TextRange rangeInFile);
 
   /**
@@ -115,7 +125,12 @@ public interface TextContent extends CharSequence {
    * (as in {@link Character#isWhitespace(int)} and {@link Character#isSpaceChar(char)}),
    * or {@code null} if the text consists only of whitespace.
    */
+  @Contract(pure = true)
   @Nullable TextContent trimWhitespace();
+
+  /** For each line of the text, remove the prefix consisting of the given characters. */
+  @Contract(pure = true)
+  TextContent removeIndents(Set<Character> indentChars);
 
   enum TextDomain {
     /** String literals of a programming language */
@@ -194,5 +209,23 @@ public interface TextContent extends CharSequence {
       throw new IllegalArgumentException("Joined TextContents should share the same domain");
     }
     return domain;
+  }
+
+  /** An object representing the range to pass to either {@link #excludeRange} or {@link #markUnknown(TextRange)} */
+  class Exclusion {
+    public final int start, end;
+    public final boolean markUnknown;
+
+    public Exclusion(int start, int end, boolean markUnknown) {
+      if (start > end) throw new IllegalArgumentException(start + ">" + end);
+      this.start = start;
+      this.end = end;
+      this.markUnknown = markUnknown;
+    }
+
+    @Override
+    public String toString() {
+      return "(" + (markUnknown ? "?" : "") + start + "," + end + ")";
+    }
   }
 }

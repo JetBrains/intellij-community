@@ -3,8 +3,14 @@ package com.intellij.grazie.text;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.ImperativeCommand;
+import org.jetbrains.jetCheck.PropertyChecker;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.PLAIN_TEXT;
@@ -98,5 +104,50 @@ public class TextContentTest extends BasePlatformTestCase {
       }
     }
     return sb.toString();
+  }
+
+  public void testBatchRangeExclusionIsEquivalentToSequential() {
+    PropertyChecker
+      .checkScenarios(() -> env -> {
+        String text = env.generateValue(Generator.stringsOf("abc"), "Text %s");
+        List<TextContentImpl.Exclusion> ranges = generateSortedRanges(env, text);
+        env.logMessage("Ranges " + ranges);
+
+        TextContentImpl initial = (TextContentImpl)TextContent.psiFragment(PLAIN_TEXT, myFixture.configureByText("a.txt", text));
+        TextContent batchExcluded = initial.excludeRanges(ranges);
+        TextContent sequentiallyExcluded = excludeSequentially(ranges, initial);
+        if (!sequentiallyExcluded.equals(batchExcluded)) {
+          assertEquals(((TextContentImpl)sequentiallyExcluded).tokens, ((TextContentImpl)batchExcluded).tokens);
+        }
+      });
+  }
+
+  private static TextContent excludeSequentially(List<TextContentImpl.Exclusion> ranges, TextContentImpl initial) {
+    TextContent result = initial;
+    for (TextContentImpl.Exclusion exclusion : ContainerUtil.reverse(ranges)) {
+      TextRange range = new TextRange(exclusion.start, exclusion.end);
+      result = exclusion.markUnknown ? result.markUnknown(range) : result.excludeRange(range);
+    }
+    return result;
+  }
+
+  private static List<TextContentImpl.Exclusion> generateSortedRanges(ImperativeCommand.Environment env, String text) {
+    int rangeCount = env.generateValue(Generator.integers(0, 100), null);
+    int[] offsets = new int[rangeCount * 2];
+    for (int i = 0; i < offsets.length; i++) {
+      offsets[i] = env.generateValue(Generator.integers(0, text.length()), null);
+    }
+    Arrays.sort(offsets);
+    List<TextContentImpl.Exclusion> ranges = new ArrayList<>();
+    int min = 0;
+    for (int i = 0; i < rangeCount; i++) {
+      int start = Math.max(min, offsets[i * 2]);
+      if (start > text.length()) break;
+
+      int end = Math.max(Math.max(min, offsets[i * 2 + 1]), start);
+      ranges.add(new TextContentImpl.Exclusion(start, end, env.generateValue(Generator.booleans(), null)));
+      min = end + 1;
+    }
+    return ranges;
   }
 }
