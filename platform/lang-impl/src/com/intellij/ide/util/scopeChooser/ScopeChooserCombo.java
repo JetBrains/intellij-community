@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
@@ -32,10 +35,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -47,6 +52,8 @@ import java.util.List;
  * <code>getDisposable()</code> is <code>DialogWrapper</code>'s method.
  */
 public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ScopeChooserCombo.class);
+
 
   public static final int OPT_LIBRARIES = 0x1;
   public static final int OPT_SEARCH_RESULTS = 0x2;
@@ -153,17 +160,51 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
   }
 
+  /**
+   * @deprecated use processScopesAsync instead, this method may block UI
+   */
+  @Deprecated
   public static boolean processScopes(@NotNull Project project,
                                       @NotNull DataContext dataContext,
                                       @MagicConstant(flagsFromClass = ScopeChooserCombo.class) int options,
                                       @NotNull Processor<? super ScopeDescriptor> processor) {
-    List<SearchScope> predefinedScopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
+    List<SearchScope> scopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
       project, dataContext,
       BitUtil.isSet(options, OPT_LIBRARIES),
       BitUtil.isSet(options, OPT_SEARCH_RESULTS),
       BitUtil.isSet(options, OPT_FROM_SELECTION),
       BitUtil.isSet(options, OPT_USAGE_VIEW),
-      BitUtil.isSet(options, OPT_EMPTY_SCOPES));
+      BitUtil.isSet(options, OPT_EMPTY_SCOPES)
+    );
+    return doProcessScopes(project, dataContext, processor, scopes);
+  }
+
+  public static Promise<Boolean> processScopesAsync(@NotNull Project project,
+                                      @NotNull DataContext dataContext,
+                                      @MagicConstant(flagsFromClass = ScopeChooserCombo.class) int options,
+                                      @NotNull Processor<? super ScopeDescriptor> processor) {
+    return PredefinedSearchScopeProvider.getInstance().getPredefinedScopesAsync(
+      project, dataContext,
+      BitUtil.isSet(options, OPT_LIBRARIES),
+      BitUtil.isSet(options, OPT_SEARCH_RESULTS),
+      BitUtil.isSet(options, OPT_FROM_SELECTION),
+      BitUtil.isSet(options, OPT_USAGE_VIEW),
+      BitUtil.isSet(options, OPT_EMPTY_SCOPES)
+    ).thenAsync(predefinedScopes -> Promises.runAsync(() -> {
+      Ref<Boolean> res = new Ref<>();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        res.set(doProcessScopes(project, dataContext, processor, predefinedScopes));
+      });
+      return res.get();
+    }));
+  }
+
+  // called in EDT
+  @NotNull
+  private static Boolean doProcessScopes(@NotNull Project project,
+                                         @NotNull DataContext dataContext,
+                                         @NotNull Processor<? super ScopeDescriptor> processor,
+                                         List<SearchScope> predefinedScopes) {
     for (SearchScope searchScope : predefinedScopes) {
       if (!processor.process(new ScopeDescriptor(searchScope))) return false;
     }
@@ -194,19 +235,35 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
     Promise<DataContext> promise = DataManager.getInstance().getDataContextFromFocusAsync();
     promise.onSuccess(c -> {
-      processScopes(model, c);
-      getComboBox().setModel(model);
-      selectItem(selection);
+      processScopes(model, c)
+        .onSuccess(__ -> {
+          SwingUtilities.invokeLater(() -> {
+            getComboBox().setModel(model);
+            selectItem(selection);
+          });
+        });
     });
   }
 
-  protected void processScopes(DefaultComboBoxModel<ScopeDescriptor> model, DataContext c) {
-    processScopes(myProject, c, myOptions, descriptor -> {
+  private @NotNull Promise<?> processScopes(DefaultComboBoxModel<ScopeDescriptor> model, DataContext c) {
+    List<ScopeDescriptor> descriptors = new ArrayList<>();
+    return processScopesAsync(myProject, c, myOptions, descriptor -> {
       if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
-        model.addElement(descriptor);
+        descriptors.add(descriptor);
       }
       return true;
+    }).onSuccess(aBoolean -> {
+      SwingUtilities.invokeLater(() -> {
+        updateModel(model, descriptors);
+      });
     });
+  }
+
+  // called in EDT
+  protected void updateModel(DefaultComboBoxModel<ScopeDescriptor> model, List<ScopeDescriptor> descriptors) {
+    for (ScopeDescriptor descriptor : descriptors) {
+      model.addElement(descriptor);
+    }
   }
 
   @Override
