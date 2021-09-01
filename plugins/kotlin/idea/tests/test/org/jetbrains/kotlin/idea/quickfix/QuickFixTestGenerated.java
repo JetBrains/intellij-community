@@ -7168,6 +7168,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/annotationInTopLevelProperty.kt");
         }
 
+        @TestMetadata("appendFileAnnotationToAnnotationList.kt")
+        public void testAppendFileAnnotationToAnnotationList() throws Exception {
+            runTest("testData/quickfix/experimental/appendFileAnnotationToAnnotationList.kt");
+        }
+
+        @TestMetadata("appendFileAnnotationToOtherFileAnnotations.kt")
+        public void testAppendFileAnnotationToOtherFileAnnotations() throws Exception {
+            runTest("testData/quickfix/experimental/appendFileAnnotationToOtherFileAnnotations.kt");
+        }
+
+        @TestMetadata("appendFileAnnotationWithAnnotationList.kt")
+        public void testAppendFileAnnotationWithAnnotationList() throws Exception {
+            runTest("testData/quickfix/experimental/appendFileAnnotationWithAnnotationList.kt");
+        }
+
         @TestMetadata("basicFunction.kt")
         public void testBasicFunction() throws Exception {
             runTest("testData/quickfix/experimental/basicFunction.kt");
