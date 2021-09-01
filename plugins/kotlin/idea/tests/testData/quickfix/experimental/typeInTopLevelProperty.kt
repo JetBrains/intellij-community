@@ -1,4 +1,4 @@
-// "Propagate '@TopMarker' annotation to 'topUserVal'" "true"
+// "Propagate 'TopMarker' opt-in requirement to 'topUserVal'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 

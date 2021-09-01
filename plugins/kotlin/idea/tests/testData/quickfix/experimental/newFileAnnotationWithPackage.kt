@@ -1,4 +1,4 @@
-// "Opt-in for 'A::class' on containing file 'newFileAnnotationWithPackage.kt'" "true"
+// "Opt in for 'A' on containing file 'newFileAnnotationWithPackage.kt'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 package p

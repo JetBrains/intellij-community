@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Propagate '@Ann' annotation to 'test'" "true"
+// "Propagate 'Ann' opt-in requirement to 'test'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 // ERROR: This declaration is experimental and its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'
@@ -20,7 +20,7 @@ class C
 
 
 // FILE: first.after.kt
-// "Propagate '@Ann' annotation to 'test'" "true"
+// "Propagate 'Ann' opt-in requirement to 'test'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 // ERROR: This declaration is experimental and its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'

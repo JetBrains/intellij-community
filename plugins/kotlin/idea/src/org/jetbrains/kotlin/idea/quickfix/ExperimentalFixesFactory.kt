@@ -163,7 +163,7 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
         private val elementName = element.name ?: "?"
 
         override fun getText(): String {
-            val argumentText = "${argumentClassFqName.shortName().asString()}::class"
+            val argumentText = argumentClassFqName.shortName().asString()
             return when (kind) {
                 Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, elementName)
                 Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.use.constructor", argumentText)
@@ -195,7 +195,7 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
         private val fileName = file.name
 
         override fun getText(): String {
-            val argumentText = "${argumentClassFqName.shortName().asString()}::class"
+            val argumentText = argumentClassFqName.shortName().asString()
             return KotlinBundle.message("fix.opt_in.text.use.containing.file", argumentText, fileName)
         }
 
