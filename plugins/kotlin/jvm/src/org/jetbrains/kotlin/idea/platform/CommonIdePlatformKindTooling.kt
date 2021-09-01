@@ -7,11 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.gradle.KotlinPlatform
 import org.jetbrains.kotlin.idea.caches.project.implementingModules
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.CommonStandardLibraryDescription
 import org.jetbrains.kotlin.idea.framework.getCommonRuntimeLibraryVersion
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatform
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isCompatibleWith
 import org.jetbrains.kotlin.idea.platform.tooling

@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.annotationBased.Abstr
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
-import org.jetbrains.kotlin.noarg.ide.NoArgModel
+import org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModel
 
 class NoArgGradleProjectImportHandler : AbstractGradleImportHandler<NoArgModel>() {
     override val compilerPluginId = NoArgCommandLineProcessor.PLUGIN_ID

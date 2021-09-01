@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.gradleJava
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.annotationBased.AbstractGradleImportHandler
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor
-import org.jetbrains.kotlin.samWithReceiver.ide.SamWithReceiverModel
+import org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithReceiverModel
 
 class SamWithReceiverGradleProjectImportHandler : AbstractGradleImportHandler<SamWithReceiverModel>() {
     override val compilerPluginId = SamWithReceiverCommandLineProcessor.PLUGIN_ID

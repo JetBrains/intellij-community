@@ -13,9 +13,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Consumer
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
-import org.jetbrains.kotlin.gradle.KotlinMPPGradleModelBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 

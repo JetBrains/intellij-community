@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.api.artifacts.Dependency
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.roots.findAll
@@ -30,6 +29,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataOrFail
+import org.jetbrains.kotlin.idea.gradleTooling.*
 import java.io.File
 import java.util.*
 

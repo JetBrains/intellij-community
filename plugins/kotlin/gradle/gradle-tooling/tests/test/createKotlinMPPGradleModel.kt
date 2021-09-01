@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinTaskProperties
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinTaskPropertiesImpl
+import org.jetbrains.kotlin.idea.gradleTooling.*
+
 internal fun createKotlinMPPGradleModel(
     dependencyMap: Map<KotlinDependencyId, KotlinDependency> = emptyMap(),
     sourceSets: Set<KotlinSourceSet> = emptySet(),
@@ -104,9 +108,9 @@ internal fun createKotlinTaskProperties(): KotlinTaskPropertiesImpl {
 }
 
 internal fun createKotlinTarget(
-    name: String,
-    platform: KotlinPlatform = KotlinPlatform.COMMON,
-    compilations: Iterable<KotlinCompilation> = emptyList()
+  name: String,
+  platform: KotlinPlatform = KotlinPlatform.COMMON,
+  compilations: Iterable<KotlinCompilation> = emptyList()
 ): KotlinTargetImpl {
     return KotlinTargetImpl(
         name = name,

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.VfsUtil
 import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
-import org.jetbrains.kotlin.gradle.BrokenKotlinDslScriptsModel
+import org.jetbrains.kotlin.idea.gradleTooling.BrokenKotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.*
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleScriptInputsStamp

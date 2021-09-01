@@ -4,16 +4,16 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 import com.google.common.graph.Graph
 import com.intellij.openapi.externalSystem.model.DataNode
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.gradle.*
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinAndroidSourceSets
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.createSourceSetVisibilityGraph
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.transitiveClosure
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
-import org.jetbrains.kotlin.idea.gradle.configuration.utils.transitiveClosure
+import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 

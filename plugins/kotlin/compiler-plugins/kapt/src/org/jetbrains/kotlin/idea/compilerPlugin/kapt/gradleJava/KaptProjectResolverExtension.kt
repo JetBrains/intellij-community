@@ -9,8 +9,8 @@ import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
-import org.jetbrains.kotlin.kapt.idea.KaptGradleModel
-import org.jetbrains.kotlin.kapt.idea.KaptModelBuilderService
+import org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptModelBuilderService
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 

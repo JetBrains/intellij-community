@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
-import org.jetbrains.kotlin.gradle.KotlinDslScriptAdditionalTask
-import org.jetbrains.kotlin.gradle.KotlinDslScriptModelProvider
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.commonizer
 
-import org.jetbrains.kotlin.gradle.EnableCommonizerTask
+import org.jetbrains.kotlin.idea.gradleTooling.EnableCommonizerTask
 import org.jetbrains.plugins.gradle.model.ClassSetProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 

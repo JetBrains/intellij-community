@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.allopen.gradleJava
 
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.allopen.ide.AllOpenModel
+import org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModel
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.annotationBased.AnnotationBasedPluginProjectResolverExtension
 
 class AllOpenProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<AllOpenModel>() {
