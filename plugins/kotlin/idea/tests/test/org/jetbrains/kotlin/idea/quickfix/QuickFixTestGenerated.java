@@ -14872,6 +14872,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/when/addElseBranchEnumStatement.kt");
         }
 
+        @TestMetadata("addElseBranchSealed.kt")
+        public void testAddElseBranchSealed() throws Exception {
+            runTest("testData/quickfix/when/addElseBranchSealed.kt");
+        }
+
         @TestMetadata("addRemainingBranchesBlankLine.kt")
         public void testAddRemainingBranchesBlankLine() throws Exception {
             runTest("testData/quickfix/when/addRemainingBranchesBlankLine.kt");
