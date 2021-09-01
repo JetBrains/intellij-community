@@ -115,6 +115,7 @@
           <element id="module-output" name="kotlin.uast.uast-kotlin" />
           <element id="module-output" name="kotlin.uast.uast-kotlin-idea" />
           <element id="module-output" name="kotlin.i18n" />
+          <element id="module-output" name="kotlin.project-model" />
         </element>
         <element id="archive" name="kotlin-jps-common.jar">
           <element id="module-output" name="kotlin.jps-common" />

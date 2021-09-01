@@ -8,8 +8,10 @@ import com.google.common.graph.GraphBuilder
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.createSourceSetDependsOnGraph
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.putInferredTestToProductionEdges
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.junit.Test
 import kotlin.test.assertEquals
 

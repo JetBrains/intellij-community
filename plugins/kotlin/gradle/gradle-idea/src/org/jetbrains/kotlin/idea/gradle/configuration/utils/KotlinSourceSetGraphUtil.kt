@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.gradle.configuration.utils
 import com.google.common.graph.*
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatform
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 
 @IntellijInternalApi
 fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {

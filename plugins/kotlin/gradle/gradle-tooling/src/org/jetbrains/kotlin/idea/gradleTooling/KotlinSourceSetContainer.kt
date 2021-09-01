@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+
 interface KotlinSourceSetContainer {
     val sourceSetsByName: Map<String, KotlinSourceSet>
 }

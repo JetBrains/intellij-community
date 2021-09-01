@@ -14,6 +14,9 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProject
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 

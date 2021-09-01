@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
+import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
 
 class KotlinSourceSetProto(

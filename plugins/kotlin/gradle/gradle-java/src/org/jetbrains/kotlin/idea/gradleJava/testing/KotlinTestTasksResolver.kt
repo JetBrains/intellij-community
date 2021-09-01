@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 
@@ -29,7 +30,7 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
     private val LOG by lazy { Logger.getInstance(KotlinTestTasksResolver::class.java) }
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
-        return setOf(KotlinMPPGradleModelBuilder::class.java, Unit::class.java)
+        return setOf(KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java, Unit::class.java)
     }
 
     override fun populateModuleTasks(

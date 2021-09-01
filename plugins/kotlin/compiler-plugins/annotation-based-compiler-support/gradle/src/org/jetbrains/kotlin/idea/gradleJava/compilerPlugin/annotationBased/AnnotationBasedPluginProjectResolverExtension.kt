@@ -19,7 +19,7 @@ abstract class AnnotationBasedPluginProjectResolverExtension<T : AnnotationBased
     abstract val modelClass: Class<T>
     abstract val userDataKey: Key<T>
 
-    override fun getExtraProjectModelClasses() = setOf(modelClass)
+    override fun getExtraProjectModelClasses() = setOf(modelClass, AnnotationBasedPluginModel::class.java)
 
     override fun getToolingExtensionsClasses() = setOf(
             modelClass,

@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+
 @ExperimentalGradleToolingApi
 fun KotlinMPPGradleModel.getCompilations(sourceSet: KotlinSourceSet): Set<KotlinCompilation> {
     return targets.flatMap { target -> target.compilations }

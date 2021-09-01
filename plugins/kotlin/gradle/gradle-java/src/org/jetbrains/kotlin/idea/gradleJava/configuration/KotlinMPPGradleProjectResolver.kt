@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
@@ -72,9 +73,13 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         }
     }
 
-    override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(KotlinMPPGradleModelBuilder::class.java, Unit::class.java)
+    override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
+        return setOf(KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java, Unit::class.java)
+    }
 
-    override fun getExtraProjectModelClasses(): Set<Class<out Any>> = setOf(KotlinMPPGradleModel::class.java)
+    override fun getExtraProjectModelClasses(): Set<Class<out Any>> {
+        return setOf(KotlinMPPGradleModel::class.java, KotlinTarget::class.java)
+    }
 
     override fun getExtraCommandLineArgs(): List<String> =
         /**

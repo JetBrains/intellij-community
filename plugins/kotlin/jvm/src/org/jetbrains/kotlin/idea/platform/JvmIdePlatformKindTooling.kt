@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatform
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isKotlinTestDeclaration
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework
 import org.jetbrains.kotlin.idea.platform.testintegration.NoLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.platform.testintegration.ResolvedLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.platform.testintegration.UnsureLightTestFrameworkResult
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction

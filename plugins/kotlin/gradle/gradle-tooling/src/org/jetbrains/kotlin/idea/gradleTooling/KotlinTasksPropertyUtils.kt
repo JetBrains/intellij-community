@@ -10,15 +10,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.kotlinPluginWrapper
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.kotlinProjectExtensionClass
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.kotlinSourceSetClass
+import org.jetbrains.kotlin.idea.gradleTooling.compilationFullName
+import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import java.io.File
-import java.io.Serializable
-
-interface KotlinTaskProperties : Serializable {
-    val incremental: Boolean?
-    val packagePrefix: String?
-    val pureKotlinSourceFolders: List<File>?
-    val pluginVersion: String?
-}
 
 data class KotlinTaskPropertiesImpl(
     override val incremental: Boolean?,

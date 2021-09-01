@@ -27,11 +27,11 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilation
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinModule
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatform
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinSourceSet
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinModule
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.roots.pathAsUrl
 import org.jetbrains.kotlin.platform.IdePlatformKind
