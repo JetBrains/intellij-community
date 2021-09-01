@@ -1,4 +1,3 @@
-/home/grisha/.jdks/adopt-openjdk-16.0.1/bin/java -Dmaven.multiModuleProjectDirectory=/home/grisha/IdeaProjects/jb/demo-old-version -Dmaven.home=/home/grisha/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-0/212.5080.55/plugins/maven/lib/maven3 -Dclassworlds.conf=/home/grisha/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-0/212.5080.55/plugins/maven/lib/maven3/bin/m2.conf -Dmaven.ext.class.path=/home/grisha/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-0/212.5080.55/plugins/maven/lib/maven-event-listener.jar -javaagent:/home/grisha/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-0/212.5080.55/lib/idea_rt.jar=41571:/home/grisha/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-0/212.5080.55/bin -Dfile.encoding=UTF-8 -classpath /home/grisha/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-0/212.5080.55/plugins/maven/lib/maven3/boot/plexus-classworlds-2.6.0.jar:/home/grisha/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-0/212.5080.55/plugins/maven/lib/maven3/boot/plexus-classworlds.license org.codehaus.classworlds.Launcher -Didea.version=2021.2.1 package -q
 [IJ]-1-Unknown-[IJ]-event=org.apache.maven.settings.building.DefaultSettingsBuildingRequest@5f4d427e
 [IJ]-1-Unknown-[IJ]-event=org.apache.maven.settings.building.DefaultSettingsBuildingResult@2416a51
 [IJ]-1-Unknown-[IJ]-event=org.apache.maven.toolchain.building.DefaultToolchainsBuildingRequest@389adf1d
@@ -15,15 +14,15 @@
 [IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=resources-[IJ]-id=org.example:child1:jar:1.0-SNAPSHOT-[IJ]-error=
 [IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=org.example:child1:jar:1.0-SNAPSHOT-[IJ]-error=
 [ERROR] COMPILATION ERROR :
-[ERROR] /home/grisha/IdeaProjects/jb/demo-old-version/child1/src/main/java/c/C.java:[5,9] not a statement
-[ERROR] /home/grisha/IdeaProjects/jb/demo-old-version/child1/src/main/java/c/C.java:[5,10] ';' expected
+[ERROR] /IdeaProjects/jb/demo-old-version/child1/src/main/java/c/C.java:[5,9] not a statement
+[ERROR] /IdeaProjects/jb/demo-old-version/child1/src/main/java/c/C.java:[5,10] ';' expected
 [IJ]-1-MojoFailed-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=org.example:child1:jar:1.0-SNAPSHOT-[IJ]-error=Compilation failure
 [IJ]-1-ProjectFailed-[IJ]-id=org.example:child1:jar:1.0-SNAPSHOT
 [IJ]-1-SessionEnded-[IJ]-id=unknown
 [IJ]-1-Unknown-[IJ]-event=org.apache.maven.execution.DefaultMavenExecutionResult@4d192aef
 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.1:compile (default-compile) on project child1: Compilation failure: Compilation failure: 
-[ERROR] /home/grisha/IdeaProjects/jb/demo-old-version/child1/src/main/java/c/C.java:[5,9] not a statement
-[ERROR] /home/grisha/IdeaProjects/jb/demo-old-version/child1/src/main/java/c/C.java:[5,10] ';' expected
+[ERROR] /IdeaProjects/jb/demo-old-version/child1/src/main/java/c/C.java:[5,9] not a statement
+[ERROR] /IdeaProjects/jb/demo-old-version/child1/src/main/java/c/C.java:[5,10] ';' expected
 [ERROR] -> [Help 1]
 [ERROR] 
 [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
