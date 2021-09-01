@@ -1050,6 +1050,15 @@ public final class PlatformTestUtil {
   }
 
   /**
+   * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for {@code timeoutInSeconds}
+   * seconds till process ends.
+   */
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration, long timeoutInSeconds)
+    throws InterruptedException {
+    return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID, timeoutInSeconds);
+  }
+
+  /**
    * Executing {@code runConfiguration} with executor {@code executoId} and wait for 60 seconds till process ends.
    */
   @NotNull
