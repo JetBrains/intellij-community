@@ -112,26 +112,27 @@ public final class ProjectWizardUtil {
     if (project != null) {
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null && sdkTypeFilter.value(sdk.getSdkType())) {
-        // use project SDK
+        // select project SDK
         jdkComboBox.setSelectedItem(jdkComboBox.showProjectSdkItem());
         return;
       }
     }
 
-    if (lastUsedSdk != null) {
-      Sdk sdk = ProjectJdkTable.getInstance().findJdk(lastUsedSdk);
-      if (sdk != null && sdkTypeFilter.value(sdk.getSdkType())) {
-        jdkComboBox.setSelectedJdk(sdk);
-        return;
-      }
-    }
-
-    // set default project SDK
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     Sdk selected = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (selected != null && sdkFilter.value(selected.getSdkType())) {
+      // select default project SDK
       jdkComboBox.setSelectedJdk(selected);
       return;
+    }
+
+    if (lastUsedSdk != null) {
+      Sdk sdk = ProjectJdkTable.getInstance().findJdk(lastUsedSdk);
+      if (sdk != null && sdkTypeFilter.value(sdk.getSdkType())) {
+        // select last used SDK
+        jdkComboBox.setSelectedJdk(sdk);
+        return;
+      }
     }
 
     Sdk best = null;
