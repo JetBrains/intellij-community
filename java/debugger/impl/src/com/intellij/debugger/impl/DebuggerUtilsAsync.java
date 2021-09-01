@@ -327,6 +327,28 @@ public final class DebuggerUtilsAsync {
     return toCompletableFuture(() -> method.isObsolete());
   }
 
+  public static CompletableFuture<StackFrame> frame(ThreadReference thread, int index) {
+    if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
+      return reschedule(((ThreadReferenceImpl)thread).frameAsync(index));
+    }
+    return toCompletableFuture(() -> thread.frame(index));
+  }
+
+  public static CompletableFuture<List<StackFrame>> frames(ThreadReference thread, int start, int length) {
+    if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
+      return reschedule(((ThreadReferenceImpl)thread).framesAsync(start, length));
+    }
+    return toCompletableFuture(() -> thread.frames(start, length));
+  }
+
+  public static CompletableFuture<Integer> frameCount(ThreadReference thread) {
+    if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
+      return reschedule(((ThreadReferenceImpl)thread).frameCountAsync());
+    }
+    return toCompletableFuture(() -> thread.frameCount());
+  }
+
+
   // Reader thread
   public static CompletableFuture<List<Method>> methods(ReferenceType type) {
     if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {

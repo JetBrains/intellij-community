@@ -14,7 +14,6 @@ import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
@@ -161,6 +160,27 @@ public class JavaExecutionStack extends XExecutionStack {
     return Collections.singletonList(new JavaStackFrame(descriptor, true));
   }
 
+  @NotNull
+  private CompletableFuture<List<XStackFrame>> createStackFramesAsync(@NotNull StackFrameProxyImpl stackFrameProxy) {
+    return StackFrameDescriptorImpl.createAsync(stackFrameProxy, myTracker)
+      .thenApply(descriptor -> {
+        XStackFrame topFrame = ContainerUtil.getFirstItem(myTopFrames);
+        if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame) {
+          Method method = descriptor.getMethod();
+          if (method != null) {
+            ((JavaStackFrame)topFrame).getDescriptor().putUserData(BreakpointIntentionAction.CALLER_KEY, DebuggerUtilsEx.methodKey(method));
+          }
+        }
+
+        List<XStackFrame> customFrames = myDebugProcess.getPositionManager().createStackFrames(descriptor);
+        if (!customFrames.isEmpty()) {
+          return customFrames;
+        }
+
+        return Collections.singletonList(new JavaStackFrame(descriptor, true));
+      });
+  }
+
   @Nullable
   @Override
   public XStackFrame getTopFrame() {
@@ -246,57 +266,60 @@ public class JavaExecutionStack extends XExecutionStack {
       if (myContainer.isObsolete()) return;
       if (myStackFramesIterator.hasNext()) {
         StackFrameProxyImpl frameProxy;
-        List<XStackFrame> frames;
+        CompletableFuture<List<XStackFrame>> framesAsync;
         boolean first = myAdded == 0;
+        frameProxy = myStackFramesIterator.next();
         if (first && myTopFramesReady) {
-          frames = myTopFrames;
-          frameProxy = myStackFramesIterator.next();
+          framesAsync = CompletableFuture.completedFuture(myTopFrames);
         }
         else {
-          frameProxy = myStackFramesIterator.next();
-          frames = createStackFrames(frameProxy);
-          if (first && !myTopFramesReady) {
-            myTopFrames = frames;
-            myTopFramesReady = true;
-          }
-        }
-
-        for (XStackFrame frame : frames) {
-          if (first || showFrame(frame)) {
-            if (frame instanceof JavaStackFrame) {
-              ((JavaStackFrame)frame).getDescriptor().updateRepresentationNoNotify(null, () -> {
-              // repaint on icon change
-              myContainer.addStackFrames(Collections.emptyList(), !myStackFramesIterator.hasNext());
-            });
+          framesAsync = createStackFramesAsync(frameProxy).thenApply(fs -> {
+            if (first && !myTopFramesReady) {
+              myTopFrames = fs;
+              myTopFramesReady = true;
             }
-            addFrameIfNeeded(frame, false);
-          }
+            return fs;
+          });
         }
 
-        // replace the rest with the related stack (if available)
-        if (myAsyncStack != null) {
-          appendRelatedStack(myAsyncStack);
-          return;
-        }
-
-        List<StackFrameItem> relatedStack = null;
-        XStackFrame topFrame = ContainerUtil.getFirstItem(frames);
-        if (AsyncStacksToggleAction.isAsyncStacksEnabled(
-          (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
-            topFrame instanceof JavaStackFrame) {
-          for (AsyncStackTraceProvider asyncStackTraceProvider : AsyncStackTraceProvider.EP.getExtensionList()) {
-            relatedStack = asyncStackTraceProvider.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext);
-            if (relatedStack != null) {
-              appendRelatedStack(relatedStack);
-              return;
+        framesAsync.thenAccept(frames -> {
+          for (XStackFrame frame : frames) {
+            if (first || showFrame(frame)) {
+              if (frame instanceof JavaStackFrame) {
+                ((JavaStackFrame)frame).getDescriptor().updateRepresentationNoNotify(null, () -> {
+                  // repaint on icon change
+                  myContainer.addStackFrames(Collections.emptyList(), !myStackFramesIterator.hasNext());
+                });
+              }
+              addFrameIfNeeded(frame, false);
             }
           }
-          // append agent stack after the next frame
-          relatedStack = AsyncStacksUtils.getAgentRelatedStack(frameProxy, suspendContext);
-        }
 
-        myDebugProcess.getManagerThread().schedule(
-          new AppendFrameCommand(suspendContext, myStackFramesIterator, myContainer, myAdded, mySkip, relatedStack));
+          // replace the rest with the related stack (if available)
+          if (myAsyncStack != null) {
+            appendRelatedStack(myAsyncStack);
+            return;
+          }
+
+          List<StackFrameItem> relatedStack = null;
+          XStackFrame topFrame = ContainerUtil.getFirstItem(frames);
+          if (AsyncStacksToggleAction.isAsyncStacksEnabled(
+            (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
+              topFrame instanceof JavaStackFrame) {
+            for (AsyncStackTraceProvider asyncStackTraceProvider : AsyncStackTraceProvider.EP.getExtensionList()) {
+              relatedStack = asyncStackTraceProvider.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext);
+              if (relatedStack != null) {
+                appendRelatedStack(relatedStack);
+                return;
+              }
+            }
+            // append agent stack after the next frame
+            relatedStack = AsyncStacksUtils.getAgentRelatedStack(frameProxy, suspendContext);
+          }
+
+          myDebugProcess.getManagerThread().schedule(
+            new AppendFrameCommand(suspendContext, myStackFramesIterator, myContainer, myAdded, mySkip, relatedStack));
+        });
       }
       else {
         myContainer.addStackFrames(Collections.emptyList(), true);

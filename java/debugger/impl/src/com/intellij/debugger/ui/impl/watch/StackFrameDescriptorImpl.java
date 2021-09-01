@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Nodes of this type cannot be updated, because StackFrame objects become invalid as soon as VM has been resumed
@@ -67,6 +69,46 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myMethodOccurrence = tracker.getMethodOccurrence(0, null);
       myIsSynthetic = false;
       myIsInLibraryContent = false;
+    }
+  }
+
+  private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                   @Nullable Method method,
+                                   @NotNull MethodsTracker tracker) {
+    myFrame = frame;
+
+    try {
+      myUiIndex = frame.getFrameIndex();
+      myLocation = frame.location();
+      if (!getValueMarkers().isEmpty()) {
+        getThisObject(); // init this object for markup
+      }
+      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, method);
+      myIsSynthetic = DebuggerUtils.isSynthetic(method);
+      mySourcePosition = ContextUtil.getSourcePosition(this);
+      PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
+      myIsInLibraryContent =
+        DebuggerUtilsEx.isInLibraryContent(psiFile != null ? psiFile.getVirtualFile() : null, getDebugProcess().getProject());
+    }
+    catch (InternalException | EvaluateException e) {
+      LOG.info(e);
+      myLocation = null;
+      myMethodOccurrence = tracker.getMethodOccurrence(0, null);
+      myIsSynthetic = false;
+      myIsInLibraryContent = false;
+    }
+  }
+
+  public static CompletableFuture<StackFrameDescriptorImpl> createAsync(@NotNull StackFrameProxyImpl frame,
+                                                                        @NotNull MethodsTracker tracker) {
+    try {
+      return frame.locationAsync()
+        .thenCompose(DebuggerUtilsAsync::method)
+        .thenApply(method -> new StackFrameDescriptorImpl(frame, method, tracker));
+    }
+    catch (EvaluateException e) {
+      LOG.error(e);
+      return CompletableFuture.completedFuture(new StackFrameDescriptorImpl(frame, tracker));
     }
   }
 
