@@ -25,14 +25,12 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Modul
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull SourceRootEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
-    if (moduleEntity.equals(entity.getContentRoot().getModule())) {
-      return getExistingEntityIterator(entity, entityStorage, project);
-    }
-    return Collections.emptyList();
+  public @NotNull Collection<? extends IndexableFilesIterator> getIteratorsForExistingModule(@NotNull ModuleEntity entity,
+                                                                                             @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                             @NotNull Project project) {
+
+    List<VirtualFile> roots = collectRoots(entity.getSourceRoots());
+    return IndexableEntityProviderMethods.INSTANCE.createIterators(entity, roots, project);
   }
 
   @Override

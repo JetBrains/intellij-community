@@ -38,10 +38,9 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull ModuleEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
+  public @NotNull Collection<? extends IndexableFilesIterator> getIteratorsForExistingModule(@NotNull ModuleEntity entity,
+                                                                                             @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                             @NotNull Project project) {
     return Collections.emptyList();
   }
 

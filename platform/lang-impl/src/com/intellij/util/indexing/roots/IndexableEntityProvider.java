@@ -86,9 +86,8 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
      * Provides iterators to index files belonging to a module when just module content is indexed, no events given
      */
     @NotNull
-    Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull E entity,
-                                                                                    @NotNull ModuleEntity moduleEntity,
-                                                                                    @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                    @NotNull Project project);
+    Collection<? extends IndexableFilesIterator> getIteratorsForExistingModule(@NotNull ModuleEntity entity,
+                                                                               @NotNull WorkspaceEntityStorage entityStorage,
+                                                                               @NotNull Project project);
   }
 }
