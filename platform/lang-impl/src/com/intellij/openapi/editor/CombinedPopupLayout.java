@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
-import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.ui.WidthBasedLayout;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +13,9 @@ final class CombinedPopupLayout implements LayoutManager {
   private static final int MAX_POPUP_WIDTH = 650;
 
   private final @NotNull JComponent highlightInfoComponent;
-  private final @NotNull DocumentationComponent quickDocComponent;
+  private final @NotNull JComponent quickDocComponent;
 
-  CombinedPopupLayout(@NotNull JComponent highlightInfoComponent, @NotNull DocumentationComponent quickDocComponent) {
+  CombinedPopupLayout(@NotNull JComponent highlightInfoComponent, @NotNull JComponent quickDocComponent) {
     this.highlightInfoComponent = highlightInfoComponent;
     this.quickDocComponent = quickDocComponent;
   }
