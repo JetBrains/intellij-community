@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -58,12 +58,22 @@ public final class DiffDividerDrawUtil {
                                    @NotNull Editor editor1,
                                    @NotNull Editor editor2,
                                    @NotNull DividerPaintable paintable) {
-    paintPolygons(gg, width, true, editor1, editor2, paintable);
+    paintPolygons(gg, width, true, false, editor1, editor2, paintable);
+  }
+
+  public static void paintPolygons(@NotNull Graphics2D gg,
+                                   int width,
+                                   boolean alignedSides,
+                                   @NotNull Editor editor1,
+                                   @NotNull Editor editor2,
+                                   @NotNull DividerPaintable paintable) {
+    paintPolygons(gg, width, true, alignedSides, editor1, editor2, paintable);
   }
 
   public static void paintPolygons(@NotNull Graphics2D gg,
                                    int width,
                                    boolean curved,
+                                   boolean alignedSides,
                                    @NotNull Editor editor1,
                                    @NotNull Editor editor2,
                                    @NotNull DividerPaintable paintable) {
@@ -71,7 +81,7 @@ public final class DiffDividerDrawUtil {
 
     GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
     for (DividerPolygon polygon : polygons) {
-      polygon.paint(gg, width, curved);
+      polygon.paint(gg, width, curved, alignedSides);
     }
     config.restore();
   }
@@ -386,27 +396,31 @@ public final class DiffDividerDrawUtil {
     }
 
     public void paint(Graphics2D g, int width, boolean curve) {
+      paint(g, width, curve, false);
+    }
+
+    public void paint(Graphics2D g, int width, boolean curve, boolean alignedSides) {
       int startY1;
       int endY1;
       int startY2;
       int endY2;
 
       if (myEnd1 - myStart1 < 2) {
-        startY1 = myStart1 - 1;
+        startY1 = myStart1 + (alignedSides ? 0 : -1);
         endY1 = myStart1;
       }
       else {
         startY1 = myStart1;
-        endY1 = myEnd1 - 1;
+        endY1 = myEnd1 + (alignedSides ? 0 : -1);
       }
 
       if (myEnd2 - myStart2 < 2) {
-        startY2 = myStart2 - 1;
+        startY2 = myStart2 + (alignedSides ? 0 : -1);
         endY2 = myStart2;
       }
       else {
         startY2 = myStart2;
-        endY2 = myEnd2 - 1;
+        endY2 = myEnd2 + (alignedSides ? 0 : -1);
       }
 
       Stroke oldStroke = g.getStroke();
@@ -414,7 +428,21 @@ public final class DiffDividerDrawUtil {
         g.setStroke(BOLD_DOTTED_STROKE);
       }
 
-      drawTrapezium(g, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor, curve);
+      if (alignedSides) {
+        if (startY1 == endY1 && startY1 == endY2) {
+          drawTrapezium(g, width, startY2, endY1, startY2, endY2, myFillColor, myBorderColor, curve, true);
+        }
+        else if (startY2 == endY1 && endY1 == endY2) {
+          drawTrapezium(g, width, startY1, endY1, startY1, endY2, myFillColor, myBorderColor, curve, true);
+        }
+        else if (startY1 == endY1) {
+          drawTrapezium(g, width, startY1, endY2, startY2, endY2, myFillColor, myBorderColor, curve, true);
+        }
+        else if (startY1 == startY2) {
+          drawTrapezium(g, width, startY1, endY1, startY2, endY1, myFillColor, myBorderColor, curve, true);
+        }
+      }
+      drawTrapezium(g, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor, curve, alignedSides);
 
       g.setStroke(oldStroke);
     }
@@ -424,9 +452,9 @@ public final class DiffDividerDrawUtil {
                                       int startY1, int endY1,
                                       int startY2, int endY2,
                                       @Nullable Color fillColor, @Nullable Color borderColor,
-                                      boolean curve) {
+                                      boolean curve, boolean alignedSides) {
       if (curve) {
-        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor, alignedSides);
       }
       else {
         DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
