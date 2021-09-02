@@ -3,11 +3,16 @@
 package org.jetbrains.kotlin.idea.kdoc
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex
+import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
+import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
@@ -44,6 +49,22 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
             .toList()
         if (descriptors.isNotEmpty())
             return descriptors
+
+        val javaClasses = JavaShortClassNameIndex.getInstance().get(shortName, project, scope).asSequence()
+            .filter { it.getKotlinFqName() == targetFqName }
+            .mapNotNull { it.getJavaClassDescriptor() }
+            .toList()
+        if (javaClasses.isNotEmpty()) {
+            return javaClasses
+        }
+
+        val javaFunctions = JavaMethodNameIndex.getInstance().get(shortName, project, scope).asSequence()
+            .filter { it.getKotlinFqName() == targetFqName }
+            .mapNotNull { it.getJavaMethodDescriptor() }
+            .toList()
+        if (javaFunctions.isNotEmpty()) {
+            return javaFunctions
+        }
 
         if (!targetFqName.isRoot && PackageIndexUtil.packageExists(targetFqName, scope, project))
             return listOf(GlobalSyntheticPackageViewDescriptor(targetFqName, project, scope))
