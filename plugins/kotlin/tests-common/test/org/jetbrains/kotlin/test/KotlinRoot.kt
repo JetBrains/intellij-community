@@ -10,11 +10,11 @@ import java.nio.file.Path
 
 object KotlinRoot {
     @JvmField
-    val REPO: File = File(PathManager.getHomePath())
+    val REPO: File = File(PathManager.getHomePath()).canonicalFile
 
     @JvmField
     val DIR: File = REPO.resolve("community/plugins/kotlin").takeIf { it.exists() }
-        ?: File(PathManager.getCommunityHomePath()).resolve("plugins/kotlin")
+        ?: File(PathManager.getCommunityHomePath()).resolve("plugins/kotlin").canonicalFile
 
     @JvmField
     val DIR_PATH: Path = DIR.toPath()
