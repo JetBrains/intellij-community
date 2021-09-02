@@ -473,13 +473,10 @@ public class WSLDistribution {
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
-
   public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    if (wslPath.startsWith(getMntRoot())) {
-      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
-      if (windowsPath != null) {
-        return windowsPath;
-      }
+    String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+    if (windowsPath != null) {
+      return windowsPath;
     }
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
