@@ -5,6 +5,8 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -32,16 +34,16 @@ open class ReplaceAnnotationFix(
     private val useSiteTarget: AnnotationUseSiteTarget? = null,
     private val existingReplacementAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
 ) : KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry) {
-    protected fun renderAnnotationText(): String {
-        val useSiteTargetPrefix = if (useSiteTarget != null) "${useSiteTarget.renderName}:" else ""
+    protected fun renderAnnotationText(renderUserSiteTarget: Boolean): String {
+        val useSiteTargetPrefix = if (useSiteTarget != null && renderUserSiteTarget) "${useSiteTarget.renderName}:" else ""
         val annotationShortName = annotationFqName.shortName().render()
         return when (val annotationInnerText = argumentClassFqName?.let { "${it.shortName().render()}::class"}) {
-            null -> "@${useSiteTargetPrefix}${annotationShortName}"
-            else -> "@${useSiteTargetPrefix}${annotationShortName}($annotationInnerText)"
+            null -> "${useSiteTargetPrefix}${annotationShortName}"
+            else -> "${useSiteTargetPrefix}${annotationShortName}($annotationInnerText)"
         }
     }
     override fun getText(): String {
-        return KotlinBundle.message("fix.replace.annotation.text", renderAnnotationText())
+        return KotlinBundle.message("fix.replace.annotation.text", renderAnnotationText(renderUserSiteTarget = true))
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.replace.annotation.family")
@@ -62,19 +64,3 @@ open class ReplaceAnnotationFix(
         }
     }
 }
-
-class HighPriorityReplaceAnnotationFix(
-    annotationEntry: KtAnnotationEntry,
-    modifierListOwner: SmartPsiElementPointer<KtModifierListOwner>,
-    annotationFqName: FqName,
-    argumentFqName: FqName? = null,
-    useSiteTarget: AnnotationUseSiteTarget? = null,
-    existingReplacementAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-) : ReplaceAnnotationFix(
-    annotationEntry,
-    modifierListOwner,
-    annotationFqName,
-    argumentFqName,
-    useSiteTarget,
-    existingReplacementAnnotationEntry
-), HighPriorityAction
