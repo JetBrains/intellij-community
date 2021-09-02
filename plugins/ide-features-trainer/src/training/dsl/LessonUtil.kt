@@ -44,10 +44,7 @@ import training.ui.LearningUiManager
 import training.ui.LearningUiUtil
 import training.ui.UISettings
 import training.util.learningToolWindow
-import java.awt.Component
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.Window
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.lang.reflect.Modifier
@@ -57,8 +54,10 @@ import javax.swing.JList
 import javax.swing.KeyStroke
 
 object LessonUtil {
-  val productName: String
-    get() = ApplicationNamesInfo.getInstance().fullProductName
+  val productName: String get() {
+    val name = ApplicationNamesInfo.getInstance().fullProductName
+    return if (name == "DataSpell") "JetBrains DataSpell" else name
+    }
 
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManager.getInstance(project)
@@ -284,6 +283,18 @@ object LessonUtil {
       else -> return false
     }
     return true
+  }
+
+  inline fun<reified T: Component> findUiParent(start: Component, predicate: (Component) -> Boolean): T? {
+    if (start is T && predicate(start)) return start
+    var ui: Container? = start.parent
+    while (ui != null) {
+      if (ui is T && predicate(ui)) {
+        return ui
+      }
+      ui = ui.parent
+    }
+    return null
   }
 }
 
