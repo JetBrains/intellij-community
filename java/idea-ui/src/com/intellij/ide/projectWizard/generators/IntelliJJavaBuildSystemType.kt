@@ -64,7 +64,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
       moduleFileLocationProperty.dependsOn(moduleNameProperty, pathFromModuleName)
     }
 
-    override fun setupUI(builder: RowBuilder) {
+    override fun setupUI(builder: LayoutBuilder) {
       with(builder) {
         hideableRow(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
           row(UIBundle.message("label.project.wizard.new.project.module.name")) {

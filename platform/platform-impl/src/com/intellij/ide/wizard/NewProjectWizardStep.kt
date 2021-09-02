@@ -39,7 +39,7 @@ interface NewProjectWizardStep {
    * ```
    * See also: `https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl.html`
    */
-  fun setupUI(builder: RowBuilder)
+  fun setupUI(builder: LayoutBuilder)
 
   /**
    * Applies data from UI into project model or settings.

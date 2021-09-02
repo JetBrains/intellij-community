@@ -17,7 +17,7 @@ class MavenKotlinBuildSystemType : KotlinBuildSystemType {
         var groupId: String = ""
         var artifactId: String = ""
 
-        override fun setupUI(builder: RowBuilder) {
+        override fun setupUI(builder: LayoutBuilder) {
             with(builder) {
                 hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                     row(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) {

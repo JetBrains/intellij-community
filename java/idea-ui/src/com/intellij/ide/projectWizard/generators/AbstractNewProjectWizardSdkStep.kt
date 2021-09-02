@@ -29,11 +29,11 @@ abstract class AbstractNewProjectWizardSdkStep(
 
   protected abstract fun sdkTypeFilter(type: SdkTypeId): Boolean
 
-  override fun setupUI(builder: RowBuilder) {
+  override fun setupUI(builder: LayoutBuilder) {
     with(builder) {
       row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
         sdkComboBox = sdkComboBox(sdksModel, sdkProperty, context.project, ::sdkTypeFilter)
-          .withValidationOnApply { if (component.parent.isVisible) validateSdk(sdkProperty, sdksModel) else null }
+          .withValidationOnApply { validateSdk(sdkProperty, sdksModel) }
           .onApply { context.projectJdk = sdk }
       }
     }

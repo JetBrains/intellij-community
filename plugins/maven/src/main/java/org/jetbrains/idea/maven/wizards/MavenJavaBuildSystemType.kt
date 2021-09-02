@@ -19,7 +19,7 @@ class MavenJavaBuildSystemType : JavaBuildSystemType {
     var artifactId: String = ""
     var version: String = "1.0-SNAPSHOT"
 
-    override fun setupUI(builder: RowBuilder) {
+    override fun setupUI(builder: LayoutBuilder) {
       with(builder) {
         hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
           row(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) {

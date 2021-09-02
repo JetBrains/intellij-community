@@ -90,7 +90,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
       return if (parent.isPresent) parent.location else context.projectFileDirectory
     }
 
-    override fun setupUI(builder: RowBuilder) {
+    override fun setupUI(builder: LayoutBuilder) {
       with(builder) {
         parentStep.sdkComboBox
           .withValidationOnApply { validateGradleVersion() }

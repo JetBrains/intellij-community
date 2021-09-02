@@ -11,7 +11,7 @@ class IntelliJKotlinBuildSystemType : KotlinBuildSystemType {
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent)
 
     class Step(parent: KotlinNewProjectWizard.Step) : AbstractNewProjectWizardChildStep<KotlinNewProjectWizard.Step>(parent) {
-        override fun setupUI(builder: RowBuilder) {}
+        override fun setupUI(builder: LayoutBuilder) {}
 
         override fun setupProject(project: Project) {
             TODO("Not yet implemented")

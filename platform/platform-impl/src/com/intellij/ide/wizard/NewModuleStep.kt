@@ -36,27 +36,18 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
 
   abstract val steps: List<NewProjectWizardStep>
 
-  final override fun getPreferredFocusedComponent() = panel.preferredFocusedComponent
+  private val panelBuilder = NewProjectWizardPanelBuilder(context)
 
-  final override fun getComponent() = panel
+  override fun validate() = panelBuilder.validate()
 
-  final override fun updateDataModel() {
-    panel.apply()
-  }
+  override fun updateDataModel() = panelBuilder.apply()
 
-  private val panel by lazy {
-    panel { steps.forEach { it.setupUI(this) } }
+  override fun getPreferredFocusedComponent() = panelBuilder.preferredFocusedComponent
+
+  override fun getComponent() =
+    panelBuilder.panel { steps.forEach { it.setupUI(this) } }
       .apply { withBorder(JBUI.Borders.empty(20, 20)) }
       .also { fixUiShiftingWhenChoosingMultiStep(it) }
-      .apply { registerValidators(context.disposable) }
-  }
-
-  override fun validate(): Boolean {
-    return panel.validateCallbacks
-      .asSequence()
-      .mapNotNull { it() }
-      .all { it.okEnabled }
-  }
 
   private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {
     val labels = UIUtil.uiTraverser(panel)
@@ -111,7 +102,7 @@ abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
       return moduleManager.modules.toList()
     }
 
-    override fun setupUI(builder: RowBuilder) {
+    override fun setupUI(builder: LayoutBuilder) {
       with(builder) {
         row(UIBundle.message("label.project.wizard.new.project.name")) {
           textField(nameProperty)

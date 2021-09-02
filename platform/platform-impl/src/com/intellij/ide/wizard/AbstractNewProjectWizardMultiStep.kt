@@ -30,7 +30,7 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
       .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }
   }
 
-  final override fun setupUI(builder: RowBuilder) {
+  final override fun setupUI(builder: LayoutBuilder) {
     with(builder) {
       row(label) {
         if (steps.size > 4) {
@@ -43,15 +43,16 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
 
       commonSteps.forEach { it.setupUI(this) }
 
-      val stepsControllers = HashMap<String, DialogPanel>()
+      val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
+      val stepsPanels = HashMap<String, DialogPanel>()
       for ((name, step) in steps) {
-        stepsControllers[name] = nestedPanel {
-          step.setupUI(this)
-        }.component
+        val panel = panelBuilder.panel(step::setupUI)
+        row { panel(growX) }
+        stepsPanels[name] = panel
       }
       stepProperty.afterChange {
-        stepsControllers.values.forEach { it.isVisible = false }
-        stepsControllers[step]?.isVisible = true
+        stepsPanels.values.forEach { it.isVisible = false }
+        stepsPanels[step]?.isVisible = true
       }
       step = steps.keys.first()
     }

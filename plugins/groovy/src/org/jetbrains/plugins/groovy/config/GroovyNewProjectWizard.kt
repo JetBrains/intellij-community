@@ -52,7 +52,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
     var mavenVersion: FrameworkLibraryVersion? = null
     var sdkPath: String = ""
 
-    override fun setupUI(builder: RowBuilder) {
+    override fun setupUI(builder: LayoutBuilder) {
       with(builder) {
         row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
           val sdkCombo = JdkComboBox(null, ProjectSdksModel().also { it.syncSdks() }, { it is JavaSdkType }, null, null, null)
