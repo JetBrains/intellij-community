@@ -14,7 +14,8 @@ interface MarkdownCodeViewExtension : MarkdownJCEFPreviewExtension {
   //fun openTag(escapedCodeLine: String, project: Project?, file: VirtualFile?): String
   //fun closeTag(escapedCodeLine: String, project: Project?, file: VirtualFile?): String
 
-  fun processCodeLine(escapedCodeLine: String, project: Project?, file: VirtualFile?): String
+  // todo: inBlock -> type: code_fence / code_span
+  fun processCodeLine(escapedCodeLine: String, project: Project?, file: VirtualFile?, inBlock: Boolean = true): String
 
 
   companion object {

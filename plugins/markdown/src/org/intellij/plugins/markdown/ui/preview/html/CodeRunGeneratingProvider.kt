@@ -34,7 +34,7 @@ internal class CodeRunGeneratingProvider(val generatingProvider: GeneratingProvi
           MarkdownTokenTypes.TEXT -> {
             val codeLine = text.substring(child.startOffset, child.endOffset)
             visitor.consumeTagOpen(node, "code")
-            visitor.consumeHtml(codeViewExtension.processCodeLine(escape(codeLine), project, file))
+            visitor.consumeHtml(codeViewExtension.processCodeLine(escape(codeLine), project, file, false))
             visitor.consumeTagClose("code")
           }
         }

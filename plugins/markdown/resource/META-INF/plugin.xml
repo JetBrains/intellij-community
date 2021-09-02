@@ -41,6 +41,9 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownExportProvider"
                     interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
+                    interface="org.intellij.plugins.markdown.extensions.jcef.MarkdownRunner"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -75,6 +78,7 @@ Includes the following features:</p>
     <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownHighlightingAnnotator"/>
 
     <multiHostInjector implementation="org.intellij.plugins.markdown.injection.CodeFenceInjector"/>
+    <runLineMarkerContributor language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownRunLineMarkersProvider"/>
 
     <completion.contributor language="Markdown"
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>

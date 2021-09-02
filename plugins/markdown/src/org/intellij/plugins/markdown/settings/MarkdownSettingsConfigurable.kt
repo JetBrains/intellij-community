@@ -198,7 +198,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         getter = { extensionsSettings.extensionsEnabledState[extension.id] ?: false },
         setter = { extensionsSettings.extensionsEnabledState[extension.id] = it}
       )
-      extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable == true)
+      extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable ?: true)
       component(ContextHelpLabel.create(extension.description))
       if ((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable == false) {
         component(ActionLink(MarkdownBundle.message("markdown.settings.extension.install.label"))).apply {
