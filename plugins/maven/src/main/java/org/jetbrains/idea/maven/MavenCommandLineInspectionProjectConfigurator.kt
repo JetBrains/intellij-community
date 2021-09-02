@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "maven.create.dummy.module.on.first.import"
@@ -74,7 +75,12 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
       val hasUnresolvedPlugins = mavenProject.hasUnresolvedPlugins()
       LOG.info("maven project: ${mavenProject.name} has unresolved plugins: $hasUnresolvedPlugins")
-      if (hasUnresolvedPlugins) throw IllegalStateException("Maven project ${mavenProject.name} has unresolved plugins.")
+      if (hasUnresolvedPlugins) {
+        val unresolvedPlugins = mavenProject.declaredPlugins.filterNot { plugin ->
+          MavenArtifactUtil.hasArtifactFile(mavenProject.localRepository, plugin.mavenId)
+        }
+        throw IllegalStateException("maven project: ${mavenProject.name} has unresolved plugins: $unresolvedPlugins")
+      }
     }
   }
 }
