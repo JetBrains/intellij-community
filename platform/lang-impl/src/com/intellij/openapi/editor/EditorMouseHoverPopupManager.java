@@ -42,8 +42,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -72,11 +70,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 public class EditorMouseHoverPopupManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorMouseHoverPopupManager.class);
@@ -804,44 +799,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
   public DocumentationComponent getDocumentationComponent() {
     AbstractPopup hint = getCurrentHint();
     return hint == null ? null : UIUtil.findComponentOfType(hint.getComponent(), DocumentationComponent.class);
-  }
-
-  protected static class PopupBridge {
-    public PopupBridge() {
-    }
-
-    private AbstractPopup popup;
-    private List<Consumer<? super AbstractPopup>> consumers = new ArrayList<>();
-
-    private void setPopup(@NotNull AbstractPopup popup) {
-      assert this.popup == null;
-      this.popup = popup;
-      consumers.forEach(c -> c.accept(popup));
-      consumers = null;
-    }
-
-    @Nullable
-    private AbstractPopup getPopup() {
-      return popup;
-    }
-
-    private void performWhenAvailable(@NotNull Consumer<? super AbstractPopup> consumer) {
-      if (popup == null) {
-        consumers.add(consumer);
-      }
-      else {
-        consumer.accept(popup);
-      }
-    }
-
-    private void performOnCancel(@NotNull Runnable runnable) {
-      performWhenAvailable(popup -> popup.addListener(new JBPopupListener() {
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          runnable.run();
-        }
-      }));
-    }
   }
 
   private static final class CombinedPopupLayout implements LayoutManager {
