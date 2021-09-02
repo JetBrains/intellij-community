@@ -6,11 +6,11 @@ import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ public final class TypeConstraints {
       List<TypeConstraint.Exact> supers = new ArrayList<>();
       for (PsiType conjunct : ((PsiIntersectionType)superType).getConjuncts()) {
         TypeConstraint.Exact exact = createExact(conjunct);
-        if (exact == null || exact.isFinal()) break;
+        if (exact == null || exact.isFinal()) return BOTTOM;
         supers.add(exact);
       }
       return new ExactSubclass(id, supers.toArray(new TypeConstraint.Exact[0]));
@@ -505,7 +505,14 @@ public final class TypeConstraints {
 
     ExactSubclass(@NotNull Object id, @NotNull Exact @NotNull ... supers) {
       assert supers.length != 0;
-      assert ContainerUtil.and(supers, s -> s instanceof ExactClass || s instanceof ArraySuperInterface || s == EXACTLY_OBJECT);
+      for (Exact superClass : supers) {
+        if (!(superClass instanceof ExactClass ||
+              superClass instanceof ArraySuperInterface ||
+              superClass instanceof Unresolved ||
+              superClass == EXACTLY_OBJECT)) {
+          throw new IllegalArgumentException("Unexpected supertype: "+superClass);
+        }
+      }
       mySupers = supers;
       myId = id;
     }
