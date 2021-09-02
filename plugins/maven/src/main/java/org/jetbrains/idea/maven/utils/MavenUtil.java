@@ -49,6 +49,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
@@ -1465,5 +1466,15 @@ public class MavenUtil {
 
   public static MavenDistribution getEffectiveMavenHome(Project project, String workingDirectory) {
     return MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirectory);
+  }
+
+  @Nullable
+  public static String getMaxLanguageLevel(@Nullable String level1, @Nullable String level2) {
+    LanguageLevel languageLevel1 = LanguageLevel.parse(level1);
+    LanguageLevel languageLevel2 = LanguageLevel.parse(level2);
+    if (languageLevel1 == null || languageLevel2 == null) {
+      return level1 != null ? level1 : level2;
+    }
+    return languageLevel1.isAtLeast(languageLevel2) ? level1 : level2;
   }
 }

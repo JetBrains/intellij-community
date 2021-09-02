@@ -397,14 +397,11 @@ public final class MavenModuleImporter {
     }
 
     if (level == null) {
-      String mavenProjectReleaseLevel = mavenProject.getReleaseLevel();
-      level = LanguageLevel.parse(mavenProjectReleaseLevel);
-      if (level == null) {
-        String mavenProjectSourceLevel = mavenProject.getSourceLevel();
-        level = LanguageLevel.parse(mavenProjectSourceLevel);
-        if (level == null && (StringUtil.isNotEmpty(mavenProjectSourceLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
-          level = LanguageLevel.HIGHEST;
-        }
+      String releaseLevel = mavenProject.getReleaseLevel();
+      String sourceLevel = mavenProject.getSourceLevel();
+      level = LanguageLevel.parse(MavenUtil.getMaxLanguageLevel(releaseLevel, sourceLevel));
+      if (level == null && (StringUtil.isNotEmpty(sourceLevel) || StringUtil.isNotEmpty(releaseLevel))) {
+        level = LanguageLevel.HIGHEST;
       }
     }
 

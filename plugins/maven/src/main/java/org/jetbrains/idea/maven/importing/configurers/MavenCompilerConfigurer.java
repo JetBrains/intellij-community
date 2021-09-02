@@ -23,11 +23,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenDisposable;
-import org.jetbrains.idea.maven.importing.MavenModuleImporter;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenUtil;
+
+import static com.intellij.util.ObjectUtils.notNull;
+import static org.jetbrains.idea.maven.importing.MavenModuleImporter.getDefaultLevel;
 
 /**
  * @author Sergey Evdokimov
@@ -40,13 +42,12 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
   public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     if (!Boolean.TRUE.equals(module.getUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY))) {
-      String targetLevel = mavenProject.getTargetLevel();
-      if (targetLevel == null) {
-        targetLevel = mavenProject.getReleaseLevel();
-      }
+      var releaseLevel = mavenProject.getReleaseLevel();
+      var targetLevel = mavenProject.getTargetLevel();
+      String finalTargetLevel = MavenUtil.getMaxLanguageLevel(releaseLevel, targetLevel);
 
-      // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
-      configuration.setBytecodeTargetLevel(module, ObjectUtils.notNull(targetLevel, MavenModuleImporter.getDefaultLevel(mavenProject).toJavaVersion().toString()));
+      // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin!
+      configuration.setBytecodeTargetLevel(module, notNull(finalTargetLevel, getDefaultLevel(mavenProject).toJavaVersion().toString()));
     }
     module.putUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY, Boolean.FALSE);
 
