@@ -2119,6 +2119,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         !(myConnection instanceof DelayedRemoteConnection) &&
         myConnection.isServerMode()) {
       createVirtualMachine(environment);
+      if (myIsFailed.get()) {
+        myExecutionResult = null;
+        return null;
+      }
     }
 
     ExecutionResult executionResult;
@@ -2149,6 +2153,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       ((DelayedRemoteConnection)myConnection).setAttachRunnable(() -> createVirtualMachine(environment));
     } else if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
       createVirtualMachine(environment);
+      if (myIsFailed.get()) {
+        myExecutionResult = null;
+        return null;
+      }
     }
 
     return executionResult;
