@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.ReflectionTraverser
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
 
@@ -37,6 +37,6 @@ internal class GradleTargetPathsConverter(private val executionSettings: GradleE
   }
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(GradleTargetPathsConverter::class.java)
+    private val LOG = logger<GradleTargetPathsConverter>()
   }
 }
