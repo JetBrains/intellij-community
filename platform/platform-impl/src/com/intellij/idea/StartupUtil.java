@@ -219,7 +219,7 @@ public final class StartupUtil {
 
     forkJoinPool.execute(() -> {
       setupSystemLibraries();
-      logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance());
+      logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args);
       loadSystemLibraries(log);
     });
 
@@ -837,7 +837,9 @@ public final class StartupUtil {
     activity.end();
   }
 
-  private static void logEssentialInfoAboutIde(Logger log, ApplicationInfo appInfo) {
+  private static void logEssentialInfoAboutIde(Logger log,
+                                               ApplicationInfo appInfo,
+                                               String [] args) {
     Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
 
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
@@ -847,9 +849,13 @@ public final class StartupUtil {
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
 
-    List<String> arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-    if (arguments != null) {
-      log.info("JVM Args: " + String.join(" ", arguments));
+    List<String> jvmArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    if (jvmArguments != null) {
+      log.info("JVM Args: " + String.join(" ", jvmArguments));
+    }
+
+    if (args != null) {
+      log.info("Program Args: " + String.join(" ", args));
     }
 
     String extDirs = System.getProperty("java.ext.dirs");
