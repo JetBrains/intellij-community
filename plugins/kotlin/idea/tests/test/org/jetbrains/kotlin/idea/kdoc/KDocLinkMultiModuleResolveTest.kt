@@ -20,8 +20,8 @@ import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
-class KDocSampleTest : AbstractMultiModuleTest() {
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("kdoc/multiModuleSamples")
+class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
+    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("kdoc/multiModuleResolve")
 
     fun testSimple() {
         val code = module("code")
