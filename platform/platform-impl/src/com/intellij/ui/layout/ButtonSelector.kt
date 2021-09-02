@@ -70,8 +70,7 @@ private class ButtonSelector(
   override fun getPreferredSize(): Dimension {
     val old = super.getPreferredSize()
     val proposedHeight = old.height + TOP_BOTTOM_PADDING * 2
-    val height = if (forceFieldHeight) max(30, proposedHeight) else proposedHeight
-    return Dimension(old.width + LEFT_RIGHT_PADDING * 2, height)
+    return Dimension(old.width + LEFT_RIGHT_PADDING * 2, calcHeight(forceFieldHeight, proposedHeight))
   }
 }
 
@@ -89,12 +88,12 @@ class ButtonSelectorToolbar @JvmOverloads constructor(
 
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()
-    return Dimension(size.width, max(30, size.height)) // there can be non-default font-size
+    return Dimension(size.width, calcHeight(forceFieldHeight, size.height)) // there can be non-default font-size
   }
 
   override fun getMinimumSize(): Dimension {
     val size = super.getMinimumSize()
-    return Dimension(size.width, max(30, size.height)) // there can be non-default font-size
+    return Dimension(size.width, calcHeight(forceFieldHeight, size.height)) // there can be non-default font-size
   }
 
   init {
@@ -109,4 +108,8 @@ class ButtonSelectorToolbar @JvmOverloads constructor(
     presentation: Presentation,
     minimumSize: Dimension
   ): ActionButton = ButtonSelector(action as ButtonSelectorAction<*>, presentation, place, minimumSize, forceFieldHeight)
+}
+
+private fun calcHeight(forceFieldHeight: Boolean, height: Int): Int {
+  return if (forceFieldHeight) max(30, height) else height
 }

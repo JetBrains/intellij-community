@@ -27,8 +27,8 @@ public class ActionToolbarBorder implements Border {
       float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
       float lw = DarculaUIUtil.LW.getFloat();
       Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-      border.append(new RoundRectangle2D.Float(rect.x, rect.y, rect.width - lw * 2, rect.height - lw * 2, arc, arc), false);
-      border.append(new RoundRectangle2D.Float(rect.x + lw, rect.y + lw, rect.width - lw * 4, rect.height - lw * 4, arc - lw, arc - lw),
+      border.append(new RoundRectangle2D.Float(rect.x, rect.y, rect.width, rect.height, arc, arc), false);
+      border.append(new RoundRectangle2D.Float(rect.x + lw, rect.y + lw, rect.width - lw * 2, rect.height - lw * 2, arc - lw, arc - lw),
                     false);
 
       g2.fill(border);

@@ -18,6 +18,8 @@ interface SpacingConfiguration {
       override val groupTopGap = 0
       override val verticalSmallGap = 0
       override val buttonGroupHeaderBottomGap = 0
+      override val segmentedButtonVerticalGap = 0
+      override val segmentedButtonHorizontalGap = 0
     }
   }
 
@@ -70,5 +72,15 @@ interface SpacingConfiguration {
    * Vertical gap after button group header
    */
   val buttonGroupHeaderBottomGap: Int
+
+  /**
+   * Vertical gaps between text and button border for segmented buttons
+   */
+  val segmentedButtonVerticalGap: Int
+
+  /**
+   * Horizontal gaps between text and button border for segmented buttons
+   */
+  val segmentedButtonHorizontalGap: Int
 
 }

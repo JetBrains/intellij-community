@@ -2,6 +2,8 @@
 package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -46,6 +48,7 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Text Fields", createTextFields())
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
     result.addTab("Groups", createGroupsPanel())
+    result.addTab("Segmented Button", createSegmentedButton())
 
     return result
   }
@@ -153,6 +156,38 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
         }
       }
     }
+  }
+
+  fun createSegmentedButton(): JPanel {
+    val buttons = listOf("Button 1", "Button 2", "Button Last")
+    val propertyGraph = PropertyGraph()
+    val property = propertyGraph.graphProperty { "" }
+    val rows = mutableMapOf<String, Row>()
+    val result = panel {
+      row("Segmented Button") {
+        segmentedButton(buttons, property, { s -> s })
+      }
+
+      rows[buttons[0]] = row(buttons[0]) {
+        textField()
+      }
+      rows[buttons[1]] = row(buttons[1]) {
+        checkBox("checkBox")
+      }
+      rows[buttons[2]] = row(buttons[2]) {
+        button("button") {}
+      }
+    }
+
+    property.afterChange {
+      for ((key, row) in rows) {
+        row.visible(key == it)
+      }
+    }
+
+    property.set(buttons[1])
+
+    return result
   }
 
   fun createCommentsPanel(): JPanel {
