@@ -34,6 +34,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -75,6 +76,27 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
     Data result = myCalculator.calcData(project, file);
     cacheResult(stamp, result, project, file);
     return result;
+  }
+
+  Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull VirtualFile file) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ProgressManager.checkCanceled();
+
+    if (!(file instanceof VirtualFileWithId)) return null;
+
+    int stamp = PersistentFS.getInstance().getModificationCount(file) + ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
+
+    try (DataInputStream stream = getFileAttribute(project).readAttribute(file)) {
+      if (stream != null && DataInputOutputUtil.readINT(stream) == stamp) {
+        Data value = stream.readBoolean() ? myExternalizer.read(stream) : null;
+        return () -> value;
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
+    return null;
   }
 
   private void cacheResult(int modCount, @Nullable Data result, Project project, VirtualFile file) {

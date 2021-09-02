@@ -18,6 +18,9 @@ package com.intellij.util.gist;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * Calculates some data based on {@link PsiFile} content, persists it between IDE restarts,
@@ -38,4 +41,9 @@ public interface PsiFileGist<Data> {
    * Calculate or get the cached data by the current PSI content.
    */
   Data getFileData(@NotNull PsiFile file);
+
+  /**
+   * Get the cached data by the current PSI content.
+   */
+  @Nullable Supplier<Data> getUpToDateOrNull(@NotNull PsiFile file);
 }

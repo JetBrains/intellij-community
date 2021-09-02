@@ -33,9 +33,13 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -72,6 +76,17 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
 
     file.putUserData(myCacheKey, null);
     return myPersistence.getFileData(file.getProject(), file.getVirtualFile());
+  }
+
+  @Override
+  @RequiresReadLock
+  public @Nullable Supplier<Data> getUpToDateOrNull(@NotNull PsiFile file) {
+    if (shouldUseMemoryStorage(file)) {
+      CachedValue<Data> data = file.getUserData(myCacheKey);
+      return data != null ? data.getUpToDateOrNull() : null;
+    }
+
+    return ((VirtualFileGistImpl<Data>)myPersistence).getUpToDateOrNull(file.getProject(), file.getVirtualFile());
   }
 
   private static boolean shouldUseMemoryStorage(PsiFile file) {
