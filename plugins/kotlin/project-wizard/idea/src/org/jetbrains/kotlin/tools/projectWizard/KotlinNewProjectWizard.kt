@@ -2,49 +2,33 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.generators.SdkNewProjectWizardStep
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.NewProjectWizard
-import com.intellij.ide.wizard.NewProjectWizardMultiStep
-import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.ide.projectWizard.generators.AbstractNewProjectWizardSdkStep
+import com.intellij.ide.wizard.*
 import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.openapi.util.Key
 
 class KotlinNewProjectWizard : NewProjectWizard {
     override val name: String = "Kotlin"
 
-    override fun createStep(context: WizardContext) = Step(context)
+    override fun createStep(parent: NewProjectStep.Step) = Step(parent, SdkStep(parent))
 
-    class Step(context: WizardContext) : NewProjectWizardMultiStep(context, KotlinBuildSystemType.EP_NAME) {
+    class Step(
+        parent: NewProjectStep.Step,
+        sdkStep: SdkStep
+    ) : AbstractNewProjectWizardMultiStep<NewProjectStep.Step, Step>(parent, KotlinBuildSystemType.EP_NAME),
+        NewProjectWizardBuildSystemData,
+        NewProjectWizardLanguageData by parent {
+
+        override val self = this
+
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
 
-        override val commonSteps = listOf(SdkStep(context))
+        override val commonSteps = listOf(sdkStep)
 
-        init {
-            BUILD_SYSTEM_STEP_KEY.set(context, this)
-        }
+        override val buildSystemProperty by ::stepProperty
+        override val buildSystem by ::step
     }
 
-    class SdkStep(context: WizardContext) : SdkNewProjectWizardStep(context) {
-        override fun sdkTypeFilter(type: SdkTypeId): Boolean {
-            return type is JavaSdkType && type !is DependentSdkType
-        }
-
-        init {
-            SDK_STEP_KEY.set(context, this)
-        }
-    }
-
-    @Suppress("unused")
-    companion object {
-        val BUILD_SYSTEM_STEP_KEY = Key.create<Step>(Step::class.java.name)
-        fun getBuildSystemProperty(context: WizardContext) = BUILD_SYSTEM_STEP_KEY.get(context).stepProperty
-        fun getBuildSystem(context: WizardContext) = BUILD_SYSTEM_STEP_KEY.get(context).step
-
-        val SDK_STEP_KEY = Key.create<SdkStep>(SdkStep::class.java.name)
-        fun getSdkComboBox(context: WizardContext) = SDK_STEP_KEY.get(context).sdkComboBox
-        fun getSdkProperty(context: WizardContext) = SDK_STEP_KEY.get(context).sdkProperty
-        fun getSdk(context: WizardContext) = SDK_STEP_KEY.get(context).sdk
+    class SdkStep(parent: NewProjectStep.Step) : AbstractNewProjectWizardSdkStep(parent) {
+        override fun sdkTypeFilter(type: SdkTypeId) = true
     }
 }

@@ -2,7 +2,7 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -16,13 +16,16 @@ import com.intellij.openapi.roots.ui.configuration.validateSdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.layout.*
 
-abstract class SdkNewProjectWizardStep(context: WizardContext) : NewProjectWizardStep(context) {
+abstract class AbstractNewProjectWizardSdkStep(
+  parent: NewProjectWizardStep
+) : AbstractNewProjectWizardChildStep<NewProjectWizardStep>(parent), NewProjectWizardSdkData {
 
-  lateinit var sdkComboBox: CellBuilder<JdkComboBox>
+  final override lateinit var sdkComboBox: CellBuilder<JdkComboBox>
 
-  val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-  val sdk by sdkProperty
-  val sdksModel = ProjectSdksModel()
+  final override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  final override val sdk by sdkProperty
+
+  private val sdksModel = ProjectSdksModel()
 
   protected abstract fun sdkTypeFilter(type: SdkTypeId): Boolean
 
@@ -44,11 +47,8 @@ abstract class SdkNewProjectWizardStep(context: WizardContext) : NewProjectWizar
   override fun setupProject(project: Project) {}
 
   init {
-    val parentDisposable = context.disposable
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, Disposable {
-        sdksModel.disposeUIResources()
-      })
-    }
+    Disposer.register(context.disposable, Disposable {
+      sdksModel.disposeUIResources()
+    })
   }
 }

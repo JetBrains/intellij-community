@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
-import com.intellij.ide.wizard.NewProjectStep
 import com.intellij.ide.projectWizard.generators.JavaBuildSystemType
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -39,9 +37,10 @@ import javax.swing.ListCellRenderer
 class GradleJavaBuildSystemType : JavaBuildSystemType {
   override val name = "Gradle"
 
-  override fun createStep(context: WizardContext) = Step(context)
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
-  class Step(context: WizardContext) : NewProjectWizardStep(context) {
+  class Step(parent: JavaNewProjectWizard.Step) : AbstractNewProjectWizardChildStep<JavaNewProjectWizard.Step>(parent) {
+
     private val parentProperty = propertyGraph.graphProperty(::suggestParentByPath)
     private val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
     private val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
@@ -68,7 +67,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     private fun suggestParentByPath(): DataView<ProjectData> {
-      val path = NewProjectStep.getPath(context)
+      val path = parentStep.projectPath
       return parents.find { FileUtil.isAncestor(it.location, path.systemIndependentPath, true) } ?: EMPTY_VIEW
     }
 
@@ -77,7 +76,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     private fun suggestArtifactIdByName(): String {
-      return NewProjectStep.getName(context)
+      return parentStep.name
     }
 
     private fun suggestVersionByParent(): String {
@@ -94,7 +93,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
 
     override fun setupUI(builder: RowBuilder) {
       with(builder) {
-        JavaNewProjectWizard.getSdkComboBox(context)
+        parentStep.sdkComboBox
           .withValidationOnApply { validateGradleVersion() }
         if (!context.isCreatingNewProject) {
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
@@ -125,7 +124,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
       if (artifactId.isEmpty()) {
         return error(GradleBundle.message("gradle.structure.wizard.artifact.id.missing.error", if (context.isCreatingNewProject) 1 else 0))
       }
-      if (artifactId != NewProjectStep.getName(context)) {
+      if (artifactId != parentStep.name) {
         return error(GradleBundle.message("gradle.structure.wizard.name.and.artifact.id.is.different.error",
           if (context.isCreatingNewProject) 1 else 0))
       }
@@ -152,7 +151,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     private fun getJavaVersion(): JavaVersion? {
-      val jdk = JavaNewProjectWizard.getSdk(context) ?: return null
+      val jdk = parentStep.sdk ?: return null
       val versionString = jdk.versionString ?: return null
       return JavaVersion.tryParse(versionString)
     }
@@ -192,7 +191,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     override fun setupProject(project: Project) {
       val builder = InternalGradleModuleBuilder().apply {
         isCreatingNewProject = true
-        moduleJdk = JavaNewProjectWizard.getSdk(context)
+        moduleJdk = parentStep.sdk
 
         parentProject = parentData
         projectId = ProjectId(groupId, artifactId, version)
@@ -217,14 +216,11 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
     }
 
     init {
-      val nameProperty = NewProjectStep.getNameProperty(context)
-      val pathProperty = NewProjectStep.getPathProperty(context)
-
-      nameProperty.dependsOn(artifactIdProperty, ::suggestNameByArtifactId)
-      parentProperty.dependsOn(pathProperty, ::suggestParentByPath)
-      pathProperty.dependsOn(parentProperty, ::suggestLocationByParent)
+      parentStep.nameProperty.dependsOn(artifactIdProperty, ::suggestNameByArtifactId)
+      parentProperty.dependsOn(parentStep.pathProperty, ::suggestParentByPath)
+      parentStep.pathProperty.dependsOn(parentProperty, ::suggestLocationByParent)
       groupIdProperty.dependsOn(parentProperty, ::suggestGroupIdByParent)
-      artifactIdProperty.dependsOn(nameProperty, ::suggestArtifactIdByName)
+      artifactIdProperty.dependsOn(parentStep.nameProperty, ::suggestArtifactIdByName)
       versionProperty.dependsOn(parentProperty, ::suggestVersionByParent)
     }
 

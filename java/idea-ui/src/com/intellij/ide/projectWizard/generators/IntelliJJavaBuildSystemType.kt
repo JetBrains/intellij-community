@@ -3,8 +3,7 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -15,9 +14,9 @@ import java.nio.file.Paths
 class IntelliJJavaBuildSystemType : JavaBuildSystemType {
   override val name = "IntelliJ"
 
-  override fun createStep(context: WizardContext) = Step(context)
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
-  class Step(context: WizardContext) : NewProjectWizardStep(context) {
+  class Step(parent: JavaNewProjectWizard.Step) : AbstractNewProjectWizardChildStep<JavaNewProjectWizard.Step>(parent) {
     var moduleName: String = ""
     var contentRoot: String = ""
     var moduleFileLocation: String = ""
@@ -49,7 +48,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
       builder.name = moduleName
       builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
       builder.contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
-      builder.moduleJdk = JavaNewProjectWizard.getSdk(context)
+      builder.moduleJdk = parentStep.sdk
 
       builder.commit(project)
     }

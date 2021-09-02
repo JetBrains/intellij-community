@@ -3,8 +3,7 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.generators.JavaBuildSystemType
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.ui.layout.*
@@ -13,9 +12,9 @@ import org.jetbrains.idea.maven.model.MavenId
 class MavenJavaBuildSystemType : JavaBuildSystemType {
   override val name = "Maven"
 
-  override fun createStep(context: WizardContext) = Step(context)
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
-  class Step(context: WizardContext) : NewProjectWizardStep(context) {
+  class Step(parent: JavaNewProjectWizard.Step) : AbstractNewProjectWizardChildStep<JavaNewProjectWizard.Step>(parent) {
     var groupId: String = "org.example"
     var artifactId: String = ""
     var version: String = "1.0-SNAPSHOT"
@@ -35,7 +34,7 @@ class MavenJavaBuildSystemType : JavaBuildSystemType {
 
     override fun setupProject(project: Project) {
       val builder = InternalMavenModuleBuilder().apply {
-        moduleJdk = JavaNewProjectWizard.getSdk(context)
+        moduleJdk = parentStep.sdk
 
         parentProject = null
         aggregatorProject = null

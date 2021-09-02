@@ -3,7 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.openapi.extensions.ExtensionPointName
 
-interface NewProjectWizard : NewProjectWizardMultiStepFactory {
+interface NewProjectWizard : NewProjectWizardMultiStepFactory<NewProjectStep.Step> {
   companion object {
     val EP_NAME = ExtensionPointName<NewProjectWizard>("com.intellij.newProjectWizard")
   }

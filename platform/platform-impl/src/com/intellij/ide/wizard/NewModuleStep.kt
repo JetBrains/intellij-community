@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
@@ -33,9 +32,9 @@ import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWizardStep() {
+abstract class NewModuleStep(context: WizardContext) : ModuleWizardStep() {
 
-  protected open val steps = listOf<NewProjectWizardStep>(Step(key, context))
+  abstract val steps: List<NewProjectWizardStep>
 
   final override fun getPreferredFocusedComponent() = panel.preferredFocusedComponent
 
@@ -85,25 +84,28 @@ abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWi
     steps.forEach { it.setupProject(project) }
   }
 
-  class Step(key: Key<Step>?, context: WizardContext) : NewProjectWizardStep(context, PropertyGraph("New Project Wizard")) {
-    val nameProperty = propertyGraph.graphProperty { suggestName(context) }
-    val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
-    val gitProperty = propertyGraph.graphProperty { false }
+  class Step(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardData {
 
-    var name by nameProperty
-    var path by pathProperty
-    var git by gitProperty
+    override val propertyGraph = PropertyGraph("New project wizard")
 
-    val projectPath: Path get() = Path.of(path, name)
+    override val nameProperty = propertyGraph.graphProperty { suggestName() }
+    override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
+    override val gitProperty = propertyGraph.graphProperty { false }
 
-    private fun suggestName(context: WizardContext): String {
-      val moduleNames = findAllModules(context).map { it.name }.toSet()
+    override var name by nameProperty
+    override var path by pathProperty
+    override var git by gitProperty
+
+    override val projectPath: Path get() = Path.of(path, name)
+
+    private fun suggestName(): String {
+      val moduleNames = findAllModules().map { it.name }.toSet()
       return FileUtil.createSequentFileName(File(path), "untitled", "") {
         !it.exists() && it.name !in moduleNames
       }
     }
 
-    private fun findAllModules(context: WizardContext): List<Module> {
+    private fun findAllModules(): List<Module> {
       val project = context.project ?: return emptyList()
       val moduleManager = ModuleManager.getInstance(project)
       return moduleManager.modules.toList()
@@ -157,12 +159,6 @@ abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWi
       return null
     }
 
-    private fun findAllModules(): List<Module> {
-      val project = context.project ?: return emptyList()
-      val moduleManager = ModuleManager.getInstance(project)
-      return moduleManager.modules.toList()
-    }
-
     private fun ValidationInfoBuilder.validateLocation(): ValidationInfo? {
       if (path.isEmpty()) {
         return error(UIBundle.message("label.project.wizard.new.project.missing.path.error", if (context.isCreatingNewProject) 1 else 0))
@@ -199,9 +195,5 @@ abstract class NewModuleStep(key: Key<Step>?, context: WizardContext) : ModuleWi
     }
 
     override fun setupProject(project: Project) {}
-
-    init {
-      key?.set(context, this)
-    }
   }
 }

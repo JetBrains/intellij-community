@@ -5,11 +5,11 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
+import com.intellij.ide.wizard.NewProjectStep
+import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
@@ -43,9 +43,9 @@ import javax.swing.SwingUtilities
 class GroovyNewProjectWizard : NewProjectWizard {
   override val name: String = "Groovy"
 
-  override fun createStep(context: WizardContext) = Step(context)
+  override fun createStep(parent: NewProjectStep.Step) = Step(parent)
 
-  class Step(context: WizardContext) : NewProjectWizardStep(context) {
+  class Step(parent: NewProjectStep.Step) : AbstractNewProjectWizardChildStep<NewProjectStep.Step>(parent) {
     var javaSdk: Sdk? = null
     var useMavenLibrary: Boolean = false
     var useLocalLibrary: Boolean = false
