@@ -58,7 +58,8 @@ var DataNode<out ModuleData>.hasKotlinPlugin: Boolean
         kotlinGradleProjectDataOrFail.hasKotlinPlugin = value
     }
 
-@Deprecated("Use KotlinGradleSourceSetData#compilerArgumentsBySourceSet instead", level = DeprecationLevel.ERROR)
+// FIXME-ank6: there is no KotlinGradleSourceSetData#compilerArgumentsBySourceSet
+// @Deprecated("Use KotlinGradleSourceSetData#compilerArgumentsBySourceSet instead", level = DeprecationLevel.ERROR)
 var DataNode<out ModuleData>.compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet
     @Suppress("DEPRECATION_ERROR")
     get() = when (data) {
