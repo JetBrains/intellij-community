@@ -460,7 +460,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), false);
         DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
-        settings.setLineNumbersShown(false);
+        settings.setLineNumbersShown(true);
         settings.setFoldingOutlineShown(true);
         settings.setLineMarkerAreaShown(true);
         settings.setGutterIconsShown(false);
