@@ -40,7 +40,6 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
   override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
   class Step(parent: JavaNewProjectWizard.Step) : AbstractNewProjectWizardChildStep<JavaNewProjectWizard.Step>(parent) {
-
     private val parentProperty = propertyGraph.graphProperty(::suggestParentByPath)
     private val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
     private val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
@@ -107,14 +106,17 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
         hideableRow(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
             textField(groupIdProperty)
+              .growPolicy(GrowPolicy.SHORT_TEXT)
           }
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
             textField(artifactIdProperty)
+              .growPolicy(GrowPolicy.SHORT_TEXT)
               .withValidationOnApply { validateArtifactId() }
               .withValidationOnInput { validateArtifactId() }
           }
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
             textField(versionProperty)
+              .growPolicy(GrowPolicy.SHORT_TEXT)
           }
         }.largeGapAfter()
       }

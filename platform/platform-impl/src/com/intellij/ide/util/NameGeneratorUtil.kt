@@ -9,7 +9,7 @@ fun Cell.installNameGenerators(place: String?, nameProperty: GraphProperty<Strin
   for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
     val nameGeneratorUi = nameGenerator.getUi(place, nameProperty::set)
     if (nameGeneratorUi != null) {
-      component(nameGeneratorUi)
+      nameGeneratorUi(pushX)
     }
   }
 }
