@@ -29,7 +29,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -221,6 +220,6 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     }
 
     @Override
-    protected void showHint(@Nls @NotNull String text, @NotNull Rectangle viewRect, @Nullable String ref) {}
+    protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {}
   }
 }

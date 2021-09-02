@@ -486,19 +486,20 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = false;
     if (myManager == null) return;
 
+    myEditorPane.setText(text);
     setElement(element);
     if (element != null && element.getElement() != null) {
       myManager.updateToolWindowTabName(element.getElement());
     }
 
-    showHint(text, viewRect, ref);
+    showHint(viewRect, ref);
 
     if (myManager != null) {
       myManager.getProject().getMessageBus().syncPublisher(DocumentationComponentListener.TOPIC).onComponentDataChanged();
     }
   }
 
-  protected void showHint(@Nls @NotNull String text, @NotNull Rectangle viewRect, @Nullable String ref) {
+  protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
     String refToUse;
     Rectangle viewRectToUse;
     if (DocumentationManagerProtocol.KEEP_SCROLLING_POSITION_REF.equals(ref)) {
@@ -514,7 +515,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myLinkHandler.highlightLink(-1);
 
-    myEditorPane.setText(text);
     myEditorPane.applyFontProps(getQuickDocFontSize());
 
     showHint();
