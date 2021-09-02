@@ -27,7 +27,7 @@ public class BlockingCallDetectionKtTest extends JavaCodeInsightFixtureTestCase 
                                "import org.jetbrains.annotations.NonBlocking\n" +
                                "@NonBlocking\n" +
                                "fun nonBlockingFunction() {\n" +
-                               "  <warning descr=\"Inappropriate blocking method call\">blockingFunction</warning>();\n" +
+                               "  <warning descr=\"Possibly blocking call in non-blocking context could lead to thread starvation\">blockingFunction</warning>();\n" +
                                "}\n" +
                                "@Blocking\n" +
                                "fun blockingFunction() {}");
@@ -42,7 +42,7 @@ public class BlockingCallDetectionKtTest extends JavaCodeInsightFixtureTestCase 
                                "import org.jetbrains.annotations.NonBlocking\n" +
                                "@NonBlocking\n" +
                                "fun nonBlockingFunction() {\n" +
-                               "  Thread.<warning descr=\"Inappropriate blocking method call\">sleep</warning>(111);}");
+                               "  Thread.<warning descr=\"Possibly blocking call in non-blocking context could lead to thread starvation\">sleep</warning>(111);}");
     myFixture.testHighlighting(true, false, true, "TestKotlinThrowsTypeDetection.kt");
   }
 }

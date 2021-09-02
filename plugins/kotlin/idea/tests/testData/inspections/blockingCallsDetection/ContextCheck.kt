@@ -14,7 +14,7 @@ suspend fun testFunction() {
     withContext(getContext()) {Thread.sleep(3)}
 
     withContext(getNonBlockingContext()) {
-        Thread.<warning descr="Inappropriate blocking method call">sleep</warning>(3);
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(3);
     }
 }
 
