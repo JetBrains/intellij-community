@@ -93,8 +93,9 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
     cefBrowser.executeJavaScript(code, null, 0)
   }
 
-  override fun setHtml(html: String, initialScrollOffset: Int, baseUrl: Path?) {
-    val builder = IncrementalDOMBuilder(html, baseUrl)
+  override fun setHtml(html: String, initialScrollOffset: Int, documentPath: Path?) {
+    val basePath = documentPath?.parent
+    val builder = IncrementalDOMBuilder(html, basePath)
     updateDom(builder.generateRenderClosure(), initialScrollOffset)
     firstUpdate = false
   }
