@@ -413,6 +413,8 @@
       <module fileurl="file://$PROJECT_DIR$/android/dagger/intellij.android.dagger.tests.iml" filepath="$PROJECT_DIR$/android/dagger/intellij.android.dagger.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/databinding/intellij.android.databinding.iml" filepath="$PROJECT_DIR$/android/databinding/intellij.android.databinding.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/databinding/intellij.android.databinding.tests.iml" filepath="$PROJECT_DIR$/android/databinding/intellij.android.databinding.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/debuggers/intellij.android.debuggers.iml" filepath="$PROJECT_DIR$/android/debuggers/intellij.android.debuggers.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/debuggers/intellij.android.debuggers.tests.iml" filepath="$PROJECT_DIR$/android/debuggers/intellij.android.debuggers.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/deploy/intellij.android.deploy.iml" filepath="$PROJECT_DIR$/android/deploy/intellij.android.deploy.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/designer/intellij.android.designer.iml" filepath="$PROJECT_DIR$/android/designer/intellij.android.designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/designer/customview/intellij.android.designer.customview.iml" filepath="$PROJECT_DIR$/android/designer/customview/intellij.android.designer.customview.iml" />
