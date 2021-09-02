@@ -507,8 +507,14 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
     @Nullable
     protected EditorHoverInfo calcInfo(@NotNull Editor editor) {
-      HighlightHoverInfo highlightHoverInfo = HighlightHoverInfo.highlightHoverInfo(editor, getHighlightInfo());
+      var highlightHoverInfo = HighlightHoverInfo.highlightHoverInfo(editor, getHighlightInfo());
+      var documentationHoverInfo = documentationPsiHoverInfo(editor);
+      return highlightHoverInfo == null && documentationHoverInfo == null
+             ? null
+             : new EditorHoverInfo(highlightHoverInfo, documentationHoverInfo);
+    }
 
+    private @Nullable DocumentationPsiHoverInfo documentationPsiHoverInfo(@NotNull Editor editor) {
       @Nls String quickDocMessage = null;
       DocumentationProvider provider = null;
       PsiElement targetElement = null;
@@ -546,9 +552,12 @@ public class EditorMouseHoverPopupManager implements Disposable {
           LOG.warn(e);
         }
       }
-      return highlightHoverInfo == null && quickDocMessage == null
-             ? null
-             : new EditorHoverInfo(highlightHoverInfo, quickDocMessage, targetElement, provider);
+      if (quickDocMessage != null) {
+        return new DocumentationPsiHoverInfo(quickDocMessage, targetElement, provider);
+      }
+      else {
+        return null;
+      }
     }
 
     @Nullable
