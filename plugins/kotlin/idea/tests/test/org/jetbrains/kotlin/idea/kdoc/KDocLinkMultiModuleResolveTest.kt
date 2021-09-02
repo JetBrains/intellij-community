@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest.wr
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.BindingContext.DECLARATION_TO_DESCRIPTOR
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -29,7 +31,7 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
 
         samples.addDependency(code)
 
-        doInfoTest("simple/code/usage.kt")
+        doInfoTest("code/usage.kt")
     }
 
     fun testFqName() {
@@ -38,18 +40,18 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
 
         samples.addDependency(code)
 
-        doInfoTest("fqName/code/usage.kt")
-        doResolveTest("fqName/code/usage.kt", "samples")
-        doResolveTest("fqName/code/usage.kt", "samples.SampleGroup")
-        doResolveTest("fqName/code/usage.kt", "samples.megasamples")
-        doResolveTest("fqName/code/usage.kt", "samples.megasamples.MegaSamplesGroup")
-        doResolveTest("fqName/code/usage.kt", "samples.notindir")
-        doResolveTest("fqName/code/usage.kt", "samples.notindir.NotInDirSamples")
-        doResolveTest("fqName/code/usage.kt", "samplez")
-        doResolveTest("fqName/code/usage.kt", "samplez.a")
-        doResolveTest("fqName/code/usage.kt", "samplez.a.b")
-        doResolveTest("fqName/code/usage.kt", "samplez.a.b.c")
-        doResolveTest("fqName/code/usage.kt", "samplez.a.b.c.Samplez")
+        doInfoTest("code/usage.kt")
+        doResolveSampleTest("samples")
+        doResolveSampleTest("samples.SampleGroup")
+        doResolveSampleTest("samples.megasamples")
+        doResolveSampleTest("samples.megasamples.MegaSamplesGroup")
+        doResolveSampleTest("samples.notindir")
+        doResolveSampleTest("samples.notindir.NotInDirSamples")
+        doResolveSampleTest("samplez")
+        doResolveSampleTest("samplez.a")
+        doResolveSampleTest("samplez.a.b")
+        doResolveSampleTest("samplez.a.b.c")
+        doResolveSampleTest("samplez.a.b.c.Samplez")
     }
 
     fun testTypeParameters() {
@@ -58,12 +60,12 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
 
         samples.addDependency(code)
 
-        doInfoTest("typeParameters/code/usageSingleTypeParameter.kt")
-        doInfoTest("typeParameters/code/usageNestedTypeParameters.kt")
+        doInfoTest("code/usageSingleTypeParameter.kt")
+        doInfoTest("code/usageNestedTypeParameters.kt")
     }
 
-    fun doResolveTest(path: String, link: String) {
-        configureByFile(path)
+    private fun doResolveSampleTest(link: String) {
+        configureByFile("${getTestName(true)}/code/usage.kt")
         val documentationManager = DocumentationManager.getInstance(myProject)
         val targetElement = documentationManager.findTargetElement(myEditor, file)
 
@@ -74,12 +76,12 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
         val kdoc = descriptor.findKDoc()!! as KDocSection
         val resolutionFacade = targetElement.getResolutionFacade()
         assertNotEmpty(resolveKDocLink(bindingContext, resolutionFacade, descriptor, kdoc.findTagByName("sample")!!, link.split(".")))
-
     }
 
-    fun doInfoTest(path: String) {
-        val testDataFile = File(testDataPath, path)
-        configureByFile(path)
+    private fun doInfoTest(path: String) {
+        val fullPath = "${getTestName(true)}/$path"
+        val testDataFile = File(testDataPath, fullPath)
+        configureByFile(fullPath)
         val documentationManager = DocumentationManager.getInstance(myProject)
         val targetElement = documentationManager.findTargetElement(myEditor, file)
         val originalElement = DocumentationManager.getOriginalElement(targetElement)
@@ -114,4 +116,34 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
             }
         }
     }
+
+    fun testSeeTagFqName() {
+        module("usage")
+        module("code")
+
+        doResolveTest("usage/usage.kt", KtClass::class.java)
+    }
+
+    fun testMarkdownLinkFqName() {
+        module("usage")
+        module("code")
+
+        doResolveTest("usage/usage.kt", KtNamedFunction::class.java)
+    }
+
+    fun testSamePackages() {
+        module("usage")
+        module("code")
+
+        doResolveTest("usage/foo/bar/usage.kt", KtClass::class.java)
+    }
+
+    private fun doResolveTest(path: String, clazz: Class<*>) {
+        configureByFile("${getTestName(true)}/$path")
+        val element = file.findReferenceAt(editor.caretModel.offset)
+        val resolvedElement = element?.resolve()
+        assertNotNull(resolvedElement)
+        assertInstanceOf(resolvedElement, clazz)
+    }
+
 }

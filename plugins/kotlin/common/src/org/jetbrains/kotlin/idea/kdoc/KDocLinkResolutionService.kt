@@ -18,7 +18,7 @@ interface KDocLinkResolutionService {
     companion object {
 
         /**
-         * It's internal implementation, please use [resolveKDocSampleLink], or [resolveKDocLink]
+         * It's internal implementation, please use [resolveKDocLink]
          */
         internal fun resolveKDocLinkGlobal(
             context: BindingContext,
