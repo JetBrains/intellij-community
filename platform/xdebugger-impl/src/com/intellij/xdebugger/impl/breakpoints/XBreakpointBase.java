@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -140,6 +141,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public void setSuspendPolicy(@NotNull SuspendPolicy policy) {
     if (myState.getSuspendPolicy() != policy) {
       myState.setSuspendPolicy(policy);
+      if (policy == SuspendPolicy.NONE) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("debugger.breakpoint.non.suspending");
+      }
       fireBreakpointChanged();
     }
   }
