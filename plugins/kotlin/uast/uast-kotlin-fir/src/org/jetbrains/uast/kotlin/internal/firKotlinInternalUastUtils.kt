@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
+import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.lz
 import java.lang.IllegalStateException
 
@@ -30,8 +31,12 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
         ?: FirKotlinUastLanguagePlugin()
 }
 
-internal fun KtAnalysisSession.toPsiClass(ktType: KtType, context: KtElement): PsiClass? {
-    return PsiTypesUtil.getPsiClass(toPsiType(ktType, context, boxed = true))
+internal fun KtAnalysisSession.toPsiClass(
+    ktType: KtType,
+    context: KtElement,
+    typeOwnerKind: TypeOwnerKind
+): PsiClass? {
+    return PsiTypesUtil.getPsiClass(toPsiType(ktType, context, typeOwnerKind, boxed = true))
 }
 
 internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
@@ -46,7 +51,12 @@ internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
     }
 }
 
-internal fun KtAnalysisSession.toPsiType(ktType: KtType, context: KtElement, boxed: Boolean = false): PsiType {
+internal fun KtAnalysisSession.toPsiType(
+    ktType: KtType,
+    context: KtElement,
+    typeOwnerKind: TypeOwnerKind,
+    boxed: Boolean = false
+): PsiType {
     if (ktType is KtNonErrorClassType && ktType.typeArguments.isEmpty()) {
         fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
         val psiType = when (ktType.classId) {
@@ -59,7 +69,9 @@ internal fun KtAnalysisSession.toPsiType(ktType: KtType, context: KtElement, box
             StandardClassIds.Double -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float -> PsiType.FLOAT.orBoxed()
             StandardClassIds.Unit -> {
-                if (context is KtNamedFunction) PsiType.VOID.orBoxed() else null
+                if (typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction)
+                    PsiType.VOID.orBoxed()
+                else null
             }
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null
