@@ -21,11 +21,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 @Internal
-public final class DocumentationPsiHoverInfo {
+public final class DocumentationPsiHoverInfo implements DocumentationHoverInfo {
 
   private final @Nls @NotNull String quickDocMessage;
   private final WeakReference<PsiElement> quickDocElement;
@@ -41,7 +42,13 @@ public final class DocumentationPsiHoverInfo {
     this.docProvider = docProvider;
   }
 
-  @Nullable DocumentationComponent createQuickDocComponent(@NotNull Editor editor, boolean deEmphasize, @NotNull PopupBridge popupBridge) {
+  @Override
+  public boolean showInPopup(@NotNull Project project) {
+    return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION) == null;
+  }
+
+  @Override
+  public @Nullable JComponent createQuickDocComponent(@NotNull Editor editor, boolean deEmphasize, @NotNull PopupBridge popupBridge) {
     PsiElement element = quickDocElement.get();
     Project project = Objects.requireNonNull(editor.getProject());
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
