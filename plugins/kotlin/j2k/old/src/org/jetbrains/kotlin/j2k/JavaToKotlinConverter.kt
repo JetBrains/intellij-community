@@ -104,7 +104,7 @@ class OldJavaToKotlinConverter(
     private val services: JavaToKotlinConverterServices
 ) : JavaToKotlinConverter() {
     companion object {
-        private val LOG = Logger.getInstance("#org.jetbrains.kotlin.j2k.JavaToKotlinConverter")
+        private val LOG = Logger.getInstance(JavaToKotlinConverter::class.java)
     }
 
     override fun filesToKotlin(
@@ -390,17 +390,8 @@ class ProgressPortionReporter(
 }
 
 // Copied from com.intellij.ide.util.DelegatingProgressIndicator
-open class DelegatingProgressIndicator : WrappedProgressIndicator, StandardProgressIndicator {
-    protected val delegate: ProgressIndicator
-
-    constructor(indicator: ProgressIndicator) {
-        delegate = indicator
-    }
-
-    constructor() {
-        val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
-        delegate = indicator ?: EmptyProgressIndicator()
-    }
+open class DelegatingProgressIndicator(indicator: ProgressIndicator) : WrappedProgressIndicator, StandardProgressIndicator {
+    protected val delegate: ProgressIndicator = indicator
 
     override fun start() = delegate.start()
     override fun stop() = delegate.stop()
@@ -427,8 +418,6 @@ open class DelegatingProgressIndicator : WrappedProgressIndicator, StandardProgr
 
     override fun pushState() = delegate.pushState()
     override fun popState() = delegate.popState()
-    override fun startNonCancelableSection() = delegate.startNonCancelableSection()
-    override fun finishNonCancelableSection() = delegate.finishNonCancelableSection()
     override fun isModal() = delegate.isModal
     override fun getModalityState() = delegate.modalityState
 
