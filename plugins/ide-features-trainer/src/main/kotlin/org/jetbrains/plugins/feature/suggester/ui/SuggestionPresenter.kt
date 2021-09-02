@@ -33,7 +33,6 @@ class NotificationSuggestionPresenter :
     override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
         val notification = notificationGroup.createNotification(
             title = "IDE Feature Suggester",
-            subtitle = "Suggestion found!",
             content = suggestion.message,
             type = NotificationType.INFORMATION
         ).apply {
