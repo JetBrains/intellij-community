@@ -296,7 +296,7 @@
 
     <searchScopesProvider implementation="com.intellij.vcs.changes.ChangeListsSearchScopeProvider"/>
 
-    <generalEditorOptionsExtension instance="com.intellij.options.VcsGeneralEditorOptionsExtension" />
+    <generalVcsSettingsExtension instance="com.intellij.options.VcsGeneralEditorOptionsExtension" />
 
     <modelScopeItemPresenter implementation="com.intellij.analysis.VcsScopeItemPresenter" id="vcs_scope" order="after module_scope" />
 
