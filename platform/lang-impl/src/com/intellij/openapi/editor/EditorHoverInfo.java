@@ -27,7 +27,7 @@ public final class EditorHoverInfo {
     this.documentationHoverInfo = documentationHoverInfo;
   }
 
-  public JComponent createComponent(Editor editor, PopupBridge popupBridge, boolean requestFocus) {
+  public @Nullable JComponent createComponent(@NotNull Editor editor, @NotNull PopupBridge popupBridge, boolean requestFocus) {
     boolean quickDocShownInPopup = documentationHoverInfo != null &&
                                    ToolWindowManager.getInstance(Objects.requireNonNull(editor.getProject()))
                                      .getToolWindow(ToolWindowId.DOCUMENTATION) == null;
