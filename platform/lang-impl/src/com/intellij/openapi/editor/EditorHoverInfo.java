@@ -38,11 +38,13 @@ public final class EditorHoverInfo {
                                 ? null
                                 : documentationHoverInfo.createQuickDocComponent(editor, c1 != null, popupBridge);
     assert quickDocShownInPopup == (c2 != null);
-    if (c1 == null && c2 == null) return null;
+    if (c1 == null || c2 == null) {
+      return c1 != null ? c1 : c2;
+    }
     JPanel p = new JPanel(new CombinedPopupLayout(c1, c2));
     p.setBorder(null);
-    if (c1 != null) p.add(c1);
-    if (c2 != null) p.add(c2);
+    p.add(c1);
+    p.add(c2);
     return p;
   }
 
