@@ -177,7 +177,7 @@ class XDebugSessionTab3(
     unregisterView(DebuggerContentInfo.FRAME_CONTENT)
     registerView(DebuggerContentInfo.FRAME_CONTENT, view)
 
-    splitter.firstComponent = view.mainComponent.apply {
+    splitter.firstComponent = view.mainComponent?.apply {
       minimumSize = Dimension(20, 0)
     }
 

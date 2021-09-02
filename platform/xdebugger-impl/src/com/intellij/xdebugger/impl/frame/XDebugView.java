@@ -38,7 +38,10 @@ public abstract class XDebugView implements Disposable {
     }
   }
 
-  public abstract JComponent getMainComponent();
+  @Nullable
+  public JComponent getMainComponent() {
+    return null;
+  }
 
   protected final void cancelClear() {
     myClearAlarm.cancel();
