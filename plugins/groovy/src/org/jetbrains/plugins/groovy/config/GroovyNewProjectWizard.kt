@@ -8,7 +8,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
-import com.intellij.ide.wizard.NewProjectStep
+import com.intellij.ide.wizard.NewProjectWizardLanguageStep
 import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -43,9 +43,9 @@ import javax.swing.SwingUtilities
 class GroovyNewProjectWizard : NewProjectWizard {
   override val name: String = "Groovy"
 
-  override fun createStep(parent: NewProjectStep.Step) = Step(parent)
+  override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-  class Step(parent: NewProjectStep.Step) : AbstractNewProjectWizardChildStep<NewProjectStep.Step>(parent) {
+  class Step(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardChildStep<NewProjectWizardLanguageStep>(parent) {
     var javaSdk: Sdk? = null
     var useMavenLibrary: Boolean = false
     var useLocalLibrary: Boolean = false

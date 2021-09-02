@@ -7,13 +7,12 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 
-abstract class NewWizardModuleBuilder : ModuleBuilder() {
+abstract class NewWizardModuleBuilder(private val factory: NewProjectWizardStep.Factory) : ModuleBuilder() {
   private var step: NewModuleStep? = null
 
-  abstract fun createStep(context: WizardContext): NewModuleStep
-
   final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep {
-    return createStep(context).also { step = it }
+    return NewModuleStep(context, factory)
+      .also { step = it }
   }
 
   override fun createProject(name: String?, path: String?): Project? {

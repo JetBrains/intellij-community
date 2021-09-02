@@ -4,7 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.observable.properties.GraphProperty
 import java.nio.file.Path
 
-interface NewProjectWizardData {
+interface NewProjectWizardBaseData {
 
   val nameProperty: GraphProperty<String>
   val pathProperty: GraphProperty<String>

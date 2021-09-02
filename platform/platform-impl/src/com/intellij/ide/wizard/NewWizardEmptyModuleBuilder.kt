@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
-import com.intellij.ide.util.projectWizard.WizardContext
 import javax.swing.Icon
 
-class NewWizardEmptyModuleBuilder : NewWizardModuleBuilder() {
-  override fun createStep(context: WizardContext) = EmptyModuleStep(context)
+class NewWizardEmptyModuleBuilder : NewWizardModuleBuilder(NewProjectWizardBaseStep.Factory()) {
 
   override fun getModuleType() = NewWizardEmptyModuleType.INSTANCE
   override fun getGroupName() = DEFAULT_GROUP

@@ -47,10 +47,8 @@ interface NewProjectWizardStep {
    */
   fun setupProject(project: Project)
 
-  interface Factory<P : NewProjectWizardStep> {
-    /**
-     * Creates child step for new project wizard.
-     */
-    fun createStep(parent: P): NewProjectWizardStep
+  interface Factory {
+
+    fun createStep(context: WizardContext): NewProjectWizardStep
   }
 }

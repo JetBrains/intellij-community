@@ -9,12 +9,12 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 class KotlinNewProjectWizard : NewProjectWizard {
     override val name: String = "Kotlin"
 
-    override fun createStep(parent: NewProjectStep.Step) = Step(parent, SdkStep(parent))
+    override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent, SdkStep(parent))
 
     class Step(
-        parent: NewProjectStep.Step,
-        sdkStep: SdkStep
-    ) : AbstractNewProjectWizardMultiStep<NewProjectStep.Step, Step>(parent, KotlinBuildSystemType.EP_NAME),
+        parent: NewProjectWizardLanguageStep,
+        override val commonStep: SdkStep
+    ) : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, KotlinBuildSystemType.EP_NAME),
         NewProjectWizardBuildSystemData,
         NewProjectWizardLanguageData by parent {
 
@@ -22,13 +22,11 @@ class KotlinNewProjectWizard : NewProjectWizard {
 
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
 
-        override val commonSteps = listOf(sdkStep)
-
         override val buildSystemProperty by ::stepProperty
         override val buildSystem by ::step
     }
 
-    class SdkStep(parent: NewProjectStep.Step) : AbstractNewProjectWizardSdkStep(parent) {
+    class SdkStep(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardSdkStep(parent) {
         override fun sdkTypeFilter(type: SdkTypeId) = true
     }
 }
