@@ -295,7 +295,7 @@ abstract class CommaListSplitJoinContext : DefaultListSplitJoinContext() {
     super.addTailReplacementsForJoining(data, replacements, lastElement)
   }
 
-  protected open fun getTrailingComma(data: ListWithElements, split: JoinOrSplit, lastElement: PsiElement): TrailingComma {
+  protected open fun getTrailingComma(data: ListWithElements, mode: JoinOrSplit, lastElement: PsiElement): TrailingComma {
     return TrailingComma.IGNORE
   }
 }
