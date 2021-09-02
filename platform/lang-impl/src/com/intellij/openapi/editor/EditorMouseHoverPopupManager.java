@@ -4,7 +4,6 @@ package com.intellij.openapi.editor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -30,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -509,23 +507,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
     @Nullable
     protected EditorHoverInfo calcInfo(@NotNull Editor editor) {
-      HighlightInfo info = getHighlightInfo();
-      HighlightInfo infoToUse = null;
-      TooltipAction tooltipAction = null;
-      if (info != null && info.getDescription() != null && info.getToolTip() != null) {
-        infoToUse = info;
-        try {
-          tooltipAction = ReadAction.nonBlocking(() -> TooltipActionProvider.calcTooltipAction(info, editor)).executeSynchronously();
-        }
-        catch (IndexNotReadyException ignored) {
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-      }
+      HighlightHoverInfo highlightHoverInfo = HighlightHoverInfo.highlightHoverInfo(editor, getHighlightInfo());
 
       @Nls String quickDocMessage = null;
       DocumentationProvider provider = null;
@@ -564,9 +546,9 @@ public class EditorMouseHoverPopupManager implements Disposable {
           LOG.warn(e);
         }
       }
-      return infoToUse == null && quickDocMessage == null
+      return highlightHoverInfo == null && quickDocMessage == null
              ? null
-             : new EditorHoverInfo(infoToUse, tooltipAction, quickDocMessage, targetElement, provider);
+             : new EditorHoverInfo(highlightHoverInfo, quickDocMessage, targetElement, provider);
     }
 
     @Nullable
