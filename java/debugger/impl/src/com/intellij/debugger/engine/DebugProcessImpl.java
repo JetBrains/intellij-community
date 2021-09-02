@@ -2213,7 +2213,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   // propagate exception only in case we succeeded to obtain execution result,
                   // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
-                  if ((myExecutionResult != null && !terminated) || !connectorIsReady.get()) {
+                  if (((myExecutionResult != null && !terminated) || !connectorIsReady.get()) &&
+                      !ApplicationManager.getApplication().isHeadlessEnvironment()) {
                     ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, sessionName, e);
                   }
                 });
