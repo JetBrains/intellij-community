@@ -24,7 +24,7 @@ public class CompletionStageChainCallExtractor implements ChainCallExtractor {
     CallMatcher.instanceCall("java.util.concurrent.CompletionStage", "thenApply", "thenAccept", "thenCompose").parameterCount(1);
 
   @Override
-  public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType) {
+  public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, @NotNull PsiExpression expression, PsiType expressionType) {
     if (expressionType instanceof PsiPrimitiveType) return false;
     if (call.getMethodExpression().getQualifierExpression() == null) return false;
     return NEXT_CALL.test(call);

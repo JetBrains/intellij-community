@@ -26,7 +26,7 @@ public class GuavaFluentIterableChainCallExtractor implements ChainCallExtractor
     CallMatcher.instanceCall(FLUENT_ITERABLE, "transform", "firstMatch", "transformAndConcat", "anyMatch", "allMatch").parameterCount(1);
 
   @Override
-  public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType) {
+  public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, @NotNull PsiExpression expression, PsiType expressionType) {
     if (expressionType instanceof PsiPrimitiveType) return false;
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return false;
