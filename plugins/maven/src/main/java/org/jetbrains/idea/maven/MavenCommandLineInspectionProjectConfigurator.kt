@@ -10,7 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "maven.create.dummy.module.on.first.import"
@@ -36,7 +37,6 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     val mavenProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(MavenUtil.SYSTEM_ID)!!
 
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-
     val isMavenProjectLinked = mavenProjectAware.isLinkedProject(project, basePath)
 
     LOG.info("maven project is linked: $isMavenProjectLinked")
@@ -53,6 +53,28 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
       LOG.info("mavenProjectsManager isMavenized after link and load project: ${mavenProjectsManager.isMavenizedProject}")
       LOG.info("mavenProjectsManager has projects after link and load project: ${mavenProjectsManager.hasProjects()}")
+    }
+
+    val mavenProjectsTree = mavenProjectsManager.projectsTreeForTests
+    for (mavenProject in mavenProjectsTree.projects) {
+      val hasReadingProblems = mavenProject.hasReadingProblems()
+      LOG.info("maven project: ${mavenProject.name} has read problems: $hasReadingProblems")
+      if (hasReadingProblems) {
+        LOG.info("Failed to import project ${mavenProject.name}: " + mavenProject.problems)
+        throw IllegalStateException("Maven project ${mavenProject.name} has import problems:" + mavenProject.problems)
+      }
+
+      val hasUnresolvedArtifacts = mavenProject.hasUnresolvedArtifacts()
+      LOG.info("maven project: ${mavenProject.name} has unresolved artifacts: $hasUnresolvedArtifacts")
+      if (hasUnresolvedArtifacts) {
+        val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.isResolved } +
+                                  mavenProject.externalAnnotationProcessors.filterNot { it.isResolved }
+        throw IllegalStateException("Maven project ${mavenProject.name} has unresolved artifacts: $unresolvedArtifacts")
+      }
+
+      val hasUnresolvedPlugins = mavenProject.hasUnresolvedPlugins()
+      LOG.info("maven project: ${mavenProject.name} has unresolved artifacts problems: $hasUnresolvedPlugins")
+      if (hasUnresolvedPlugins) throw IllegalStateException("Maven project ${mavenProject.name} has unresolved plugins.")
     }
   }
 }
