@@ -32,7 +32,7 @@ class MarkdownRenamer(element: MarkdownFile?, newName: String?) : AutomaticRenam
       val elementName = element.virtualFile.nameWithoutExtension
 
       return elementDir.children.filterIsInstance<PsiFile>().filter {
-        it.virtualFile.extension in docExtensions && it.virtualFile.nameWithoutExtension == elementName
+        it.virtualFile.extension?.lowercase() in docExtensions && it.virtualFile.nameWithoutExtension == elementName
       }
     }
   }

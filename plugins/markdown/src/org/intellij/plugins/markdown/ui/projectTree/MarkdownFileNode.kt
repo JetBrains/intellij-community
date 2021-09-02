@@ -12,8 +12,7 @@ class MarkdownFileNode(private val nodeChildren: Collection<PsiFile>) : Iterable
   }
 
   val name: String
-    get() =
-      nodeChildren.find { it.virtualFile.extension == MarkdownFileType.INSTANCE.defaultExtension }!!.virtualFile.nameWithoutExtension
+    get() = nodeChildren.find { it.virtualFile.fileType is MarkdownFileType }!!.virtualFile.nameWithoutExtension
 
   override fun iterator(): Iterator<PsiElement> = nodeChildren.iterator()
 }
