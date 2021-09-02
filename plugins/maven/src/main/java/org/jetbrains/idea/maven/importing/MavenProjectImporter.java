@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.project.PackagingModifiableModel;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -227,9 +228,10 @@ public class MavenProjectImporter {
     if (myProject.isDisposed()) return null;
 
     final boolean projectsHaveChanges = projectsToImportHaveChanges();
+    final List<MavenModuleImporter> importers = new ArrayList<>();
     if (projectsHaveChanges) {
       hasChanges = true;
-      importModules(postTasks);
+      importers.addAll(importModules(postTasks));
       scheduleRefreshResolvedArtifacts(postTasks);
     }
 
@@ -264,6 +266,22 @@ public class MavenProjectImporter {
           }
         });
       });
+
+      if (!importers.isEmpty()) {
+        IdeModifiableModelsProvider provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
+        try {
+          for (MavenModuleImporter importer : importers) {
+            importer.setProviderForExtensions(provider);
+          }
+          configFacets(postTasks, importers);
+        } finally {
+          MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
+            ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+              provider.commit();
+            });
+          });
+        }
+      }
 
       configureMavenProjects();
     }
@@ -554,7 +572,7 @@ public class MavenProjectImporter {
     javacOptions.ADDITIONAL_OPTIONS_STRING = options;
   }
 
-  private void importModules(final List<MavenProjectsProcessorTask> tasks) {
+  private List<MavenModuleImporter> importModules(final List<MavenProjectsProcessorTask> tasks) {
     Map<MavenProject, MavenProjectChanges> projectsWithChanges = myProjectsToImportWithChanges;
 
     Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<>();
@@ -592,7 +610,7 @@ public class MavenProjectImporter {
       }
     }
 
-    configFacets(tasks, importers);
+    return importers;
   }
 
   private void configFacets(List<MavenProjectsProcessorTask> tasks, List<MavenModuleImporter> importers) {

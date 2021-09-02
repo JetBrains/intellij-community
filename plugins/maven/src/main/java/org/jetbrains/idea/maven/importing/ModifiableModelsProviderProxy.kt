@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
@@ -44,9 +43,6 @@ interface ModifiableModelsProviderProxy {
   fun getLibraryByName(name: String): Library?
   fun getModifiableLibraryModel(library: Library): Library.ModifiableModel?
   fun trySubstitute(module: Module, entry: LibraryOrderEntry, id: ProjectId)
-
-  // bridge back to original interface
-  val modifiableModelsProvider: IdeModifiableModelsProvider?
 }
 class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModelsProviderImpl,
                                         private val project: Project) : ModifiableModelsProviderProxy {
@@ -258,10 +254,6 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
       modifiableRootModel.removeOrderEntry(entry)
     }
   }
-
-  override val modifiableModelsProvider: IdeModifiableModelsProvider
-    get() = delegate
-
 }
 
 
