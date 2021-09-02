@@ -4,6 +4,7 @@ import com.intellij.grazie.grammar.strategy.StrategyUtils;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class TextContentImpl implements TextContent {
+class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
   final List<TokenInfo> tokens;
   private volatile String text;

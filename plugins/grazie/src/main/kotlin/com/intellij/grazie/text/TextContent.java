@@ -1,6 +1,8 @@
 package com.intellij.grazie.text;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +23,7 @@ import java.util.function.Function;
  * This object is immutable (as long as the underlying PSI stays intact).
  */
 @ApiStatus.NonExtendable
-public interface TextContent extends CharSequence {
+public interface TextContent extends CharSequence, UserDataHolderEx {
 
   /** The domain of all underlying PSI elements */
   TextDomain getDomain();
