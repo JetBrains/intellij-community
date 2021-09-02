@@ -52,6 +52,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       if (contextConfiguration == null) {
         return;
       }
+      runManager.setTemporaryConfiguration(contextConfiguration);
       perform(runManager, contextConfiguration, context);
     }
     else  {
@@ -60,6 +61,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
         .finishOnUiThread(ModalityState.defaultModalityState(), (existingContext) -> {
           if (configuration != existingContext) {
             RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
+            runManager.setTemporaryConfiguration(configuration);
             perform(runManager, configuration, context);
           } else {
             perform(runManager, configuration, context);
@@ -70,7 +72,6 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   private void perform(RunManagerEx runManager, RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
-    runManager.setTemporaryConfiguration(configuration);
     if (runManager.shouldSetRunConfigurationFromContext()) {
       runManager.setSelectedConfiguration(configuration);
     }
