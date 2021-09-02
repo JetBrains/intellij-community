@@ -86,3 +86,25 @@ private val KtCallElement.isAnnotationArgument: Boolean
 fun isAnnotationArgumentArrayInitializer(ktCallElement: KtCallElement, fqNameOfCallee: FqName): Boolean {
     return ktCallElement.isAnnotationArgument && fqNameOfCallee in ArrayFqNames.ARRAY_CALL_FQ_NAMES
 }
+
+/**
+ * Depending on type owner kind, type conversion to [PsiType] would vary. For example, we need to convert `Unit` to `void` only if the given
+ * type is used as a return type of a function. Usually, the "context" of type conversion would be the owner of the type to be converted,
+ * but it's not guaranteed. So, the caller/user of the type conversion should specify the kind of the type owner.
+ */
+enum class TypeOwnerKind {
+    UNKNOWN,
+    TYPE_REFERENCE,
+    CALL_ELEMENT,
+    DECLARATION,
+    EXPRESSION,
+}
+
+val KtElement.typeOwnerKind: TypeOwnerKind
+    get() = when (this) {
+        is KtTypeReference -> TypeOwnerKind.TYPE_REFERENCE
+        is KtCallElement -> TypeOwnerKind.CALL_ELEMENT
+        is KtDeclaration -> TypeOwnerKind.DECLARATION
+        is KtExpression -> TypeOwnerKind.EXPRESSION
+        else -> TypeOwnerKind.UNKNOWN
+    }

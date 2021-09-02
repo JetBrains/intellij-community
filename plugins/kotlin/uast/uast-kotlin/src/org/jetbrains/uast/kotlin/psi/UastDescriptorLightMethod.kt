@@ -9,12 +9,17 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.uast.kotlin.TypeOwnerKind
+import org.jetbrains.uast.kotlin.lz
 import org.jetbrains.uast.kotlin.toPsiType
 
-internal class UastDescriptorLightMethod(original: SimpleFunctionDescriptor, containingClass: PsiClass, context: KtElement) :
-    UastDescriptorLightMethodBase<SimpleFunctionDescriptor>(original, containingClass, context) {
+internal class UastDescriptorLightMethod(
+    original: SimpleFunctionDescriptor,
+    containingClass: PsiClass,
+    context: KtElement,
+) : UastDescriptorLightMethodBase<SimpleFunctionDescriptor>(original, containingClass, context) {
 
-    private val _buildTypeParameterList by lazy {
+    private val _buildTypeParameterList by lz {
         KotlinLightTypeParameterListBuilder(this).also { paramList ->
             for ((i, p) in original.typeParameters.withIndex()) {
                 paramList.addParameter(
@@ -23,10 +28,10 @@ internal class UastDescriptorLightMethod(original: SimpleFunctionDescriptor, con
                         this,
                         i
                     ) {
-                        private val myExtendsList by lazy {
+                        private val myExtendsList by lz {
                             super.getExtendsList().apply {
                                 p.upperBounds.forEach { bound ->
-                                    bound.toPsiType(this@UastDescriptorLightMethod, context, false)
+                                    bound.toPsiType(this@UastDescriptorLightMethod, context, TypeOwnerKind.DECLARATION, boxed = false)
                                         .safeAs<PsiClassType>()
                                         ?.let { addReference(it) }
                                 }
@@ -42,7 +47,7 @@ internal class UastDescriptorLightMethod(original: SimpleFunctionDescriptor, con
 
     override fun getTypeParameterList(): PsiTypeParameterList = _buildTypeParameterList
 
-    private val paramsList: PsiParameterList by lazy {
+    private val paramsList: PsiParameterList by lz {
         object : LightParameterListBuilder(containingClass.manager, containingClass.language) {
             override fun getParent(): PsiElement = this@UastDescriptorLightMethod
             override fun getContainingFile(): PsiFile = parent.containingFile
@@ -54,7 +59,7 @@ internal class UastDescriptorLightMethod(original: SimpleFunctionDescriptor, con
                     this.addParameter(
                         UastDescriptorLightParameterBase(
                             "\$this\$${original.name.identifier}",
-                            receiver.type.toPsiType(this@UastDescriptorLightMethod, context, false),
+                            receiver.type.toPsiType(this@UastDescriptorLightMethod, context, TypeOwnerKind.DECLARATION, boxed = false),
                             parameterList,
                             receiver
                         )
@@ -65,7 +70,7 @@ internal class UastDescriptorLightMethod(original: SimpleFunctionDescriptor, con
                     this.addParameter(
                         UastDescriptorLightParameter(
                             p.name.identifier,
-                            p.type.toPsiType(this@UastDescriptorLightMethod, context, false),
+                            p.type.toPsiType(this@UastDescriptorLightMethod, context, TypeOwnerKind.DECLARATION, boxed = false),
                             parameterList,
                             p
                         )
@@ -79,7 +84,9 @@ internal class UastDescriptorLightMethod(original: SimpleFunctionDescriptor, con
 }
 
 internal abstract class UastDescriptorLightMethodBase<T: CallableMemberDescriptor>(
-    internal val original: T, containingClass: PsiClass, protected val context: KtElement
+    internal val original: T,
+    containingClass: PsiClass,
+    protected val context: KtElement,
 ) : LightMethodBuilder(
     containingClass.manager, containingClass.language, original.name.identifier,
     LightParameterListBuilder(containingClass.manager, containingClass.language),
@@ -93,9 +100,8 @@ internal abstract class UastDescriptorLightMethodBase<T: CallableMemberDescripto
         }
     }
 
-
     override fun getReturnType(): PsiType? {
-        return original.returnType?.toPsiType(this, context, false)
+        return original.returnType?.toPsiType(this, context, TypeOwnerKind.DECLARATION, boxed = false)
     }
 
     override fun getParent(): PsiElement? = containingClass
