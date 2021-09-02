@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.search.codeUsageScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -69,7 +69,7 @@ fun KtCallableDeclaration.hasUsages(inElements: Collection<KtElement>): Boolean 
 fun KtVariableDeclaration.hasWriteUsages(): Boolean {
     assert(this.isPhysical)
     if (!isVar) return false
-    return ReferencesSearch.search(this, PsiSearchHelper.getInstance(project).getCodeUsageScope(this)).any {
+    return ReferencesSearch.search(this, codeUsageScope()).any {
         (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
     }
 }
@@ -82,18 +82,18 @@ fun KtCallableDeclaration.countUsages(inElement: KtElement): Int {
 fun KtCallableDeclaration.countUsages(inElements: Collection<KtElement>): Int {
     assert(this.isPhysical)
     // TODO: it's a temporary workaround about strange dead-lock when running inspections
-    return inElements.sumBy { ReferencesSearch.search(this, LocalSearchScope(it)).count() }
+    return inElements.sumOf { ReferencesSearch.search(this, LocalSearchScope(it)).count() }
 }
 
 fun KtCallableDeclaration.countUsages(): Int {
     assert(this.isPhysical)
-    return ReferencesSearch.search(this, PsiSearchHelper.getInstance(project).getCodeUsageScope(this)).count()
+    return ReferencesSearch.search(this, codeUsageScope()).count()
 }
 
 fun KtVariableDeclaration.countWriteUsages(): Int {
     assert(this.isPhysical)
     if (!isVar) return 0
-    return ReferencesSearch.search(this, PsiSearchHelper.getInstance(project).getCodeUsageScope(this)).count {
+    return ReferencesSearch.search(this, codeUsageScope()).count {
         (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
     }
 }
@@ -115,7 +115,7 @@ fun KtVariableDeclaration.hasWriteUsages(inElement: KtElement): Boolean {
 }
 
 fun KtCallableDeclaration.hasDifferentSetsOfUsages(elements1: Collection<KtElement>, elements2: Collection<KtElement>): Boolean {
-    return countUsages(elements1 - elements2) != countUsages(elements2 - elements1)
+    return countUsages(elements1 - elements2.toSet()) != countUsages(elements2 - elements1.toSet())
 }
 
 fun KtExpressionWithLabel.targetLoop(context: BindingContext? = null): KtLoopExpression? {
@@ -137,13 +137,13 @@ fun KtExpression.isPlusPlusOf(): KtExpression? {
 fun KtExpression.previousStatement(): KtExpression? {
     val statement = unwrapIfLabeled()
     if (statement.parent !is KtBlockExpression) return null
-    return statement.siblings(forward = false, withItself = false).firstIsInstanceOrNull<KtExpression>()
+    return statement.siblings(forward = false, withItself = false).firstIsInstanceOrNull()
 }
 
 fun KtExpression.nextStatement(): KtExpression? {
     val statement = unwrapIfLabeled()
     if (statement.parent !is KtBlockExpression) return null
-    return statement.siblings(forward = true, withItself = false).firstIsInstanceOrNull<KtExpression>()
+    return statement.siblings(forward = true, withItself = false).firstIsInstanceOrNull()
 }
 
 fun KtExpression.unwrapIfLabeled(): KtExpression {
