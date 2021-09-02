@@ -18,6 +18,6 @@ class KotlinUArrayAccessExpression(
         // for unknown reason in assignment position there is no `EXPRESSION_TYPE_INFO` so we getting it from the array type
         val arrayExpression = sourcePsi.arrayExpression ?: return null
         val arrayType = arrayExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, arrayExpression]?.type ?: return null
-        return arrayType.arguments.firstOrNull()?.type?.toPsiType(this, arrayExpression, false )
+        return arrayType.arguments.firstOrNull()?.type?.toPsiType(this, arrayExpression, arrayExpression.typeOwnerKind, boxed = false)
     }
 }
