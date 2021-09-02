@@ -73,7 +73,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
       }
 
       val hasUnresolvedPlugins = mavenProject.hasUnresolvedPlugins()
-      LOG.info("maven project: ${mavenProject.name} has unresolved artifacts problems: $hasUnresolvedPlugins")
+      LOG.info("maven project: ${mavenProject.name} has unresolved plugins: $hasUnresolvedPlugins")
       if (hasUnresolvedPlugins) throw IllegalStateException("Maven project ${mavenProject.name} has unresolved plugins.")
     }
   }
