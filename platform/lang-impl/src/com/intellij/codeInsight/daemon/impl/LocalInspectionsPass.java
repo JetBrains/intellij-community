@@ -18,6 +18,7 @@ import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
@@ -41,21 +42,19 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.containers.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -239,6 +238,40 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (isOnTheFly) {
       highlightRedundantSuppressions(toolWrappers, iManager, inside, outside);
     }
+  }
+
+  @NotNull
+  private static Set<PsiFile> createInjectedFileSet() {
+    // TODO remove when injected PsiFile implemented equals() base on its offsets in the host
+    return CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
+      @Override
+      public int hashCode(PsiFile f) {
+        if (f == null) return 0;
+        VirtualFile v = f.getVirtualFile();
+        VirtualFile host = v instanceof VirtualFileWindow ? ((VirtualFileWindow)v).getDelegate() : null;
+        if (host == null) return 0;
+        // host + offset in host
+        return v.hashCode() * 37 + Objects.hashCode(ArrayUtil.getFirstElement(((VirtualFileWindow)v).getDocumentWindow().getHostRanges()));
+      }
+
+      @Override
+      public boolean equals(PsiFile f1, PsiFile f2) {
+        if (f1 == null || f2 == null || f1 == f2) {
+          return f1 == f2;
+        }
+        VirtualFile v1 = f1.getVirtualFile();
+        VirtualFile v2 = f2.getVirtualFile();
+        if (!(v1 instanceof VirtualFileWindow) || !(v2 instanceof VirtualFileWindow)) {
+          return Objects.equals(v1, v2);
+        }
+        VirtualFile d1 = ((VirtualFileWindow)v1).getDelegate();
+        VirtualFile d2 = ((VirtualFileWindow)v2).getDelegate();
+        if (!Objects.equals(d1, d2)) {
+          return false;
+        }
+        return Arrays.equals(((VirtualFileWindow)v1).getDocumentWindow().getHostRanges(), ((VirtualFileWindow)v2).getDocumentWindow().getHostRanges());
+      }
+    });
   }
 
   private void reportStatsToQodana(boolean isOnTheFly, @NotNull List<? extends InspectionContext> contexts) {
@@ -488,7 +521,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                    @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
                                                    @NotNull Set<? extends PsiFile> alreadyVisitedInjected) {
     if (!myInspectInjectedPsi) return Collections.emptySet();
-    Set<PsiFile> injected = new HashSet<>();
+    Set<PsiFile> injected = createInjectedFileSet();
     PsiFile containingFile = getFile();
     Project project = containingFile.getProject();
     for (PsiElement element : elements) {
@@ -729,9 +762,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void registerSuppressedElements(@NotNull PsiElement element, @NotNull String id, @Nullable String alternativeID) {
-    mySuppressedElements.computeIfAbsent(id, shortName -> new HashSet<>()).add(element);
+    mySuppressedElements.computeIfAbsent(id, __ -> new HashSet<>()).add(element);
     if (alternativeID != null) {
-      mySuppressedElements.computeIfAbsent(alternativeID, shortName -> new HashSet<>()).add(element);
+      mySuppressedElements.computeIfAbsent(alternativeID, __ -> new HashSet<>()).add(element);
     }
   }
 
