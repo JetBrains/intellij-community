@@ -321,12 +321,11 @@ internal class GitVcsPanel(private val project: Project) :
       row {
         cell {
           label(message("settings.update.method"))
-          comboBox(
-            CollectionComboBoxModel(getUpdateMethods()),
-            { projectSettings.updateMethod },
-            { projectSettings.updateMethod = it!! },
-            renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
-          )
+          buttonGroup({ projectSettings.updateMethod }, { projectSettings.updateMethod = it }) {
+            getUpdateMethods().forEach { saveSetting ->
+              radioButton(saveSetting.methodName, saveSetting)
+            }
+          }
         }
       }
       row {

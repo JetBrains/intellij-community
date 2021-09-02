@@ -954,7 +954,7 @@ public class GitBranchPopupActions {
       String branchPresentation = getSelectedBranchFullPresentation(myBranchName);
       String description = GitBundle.message("action.Git.Update.Selected.description",
                                              myBranchNameList.size(),
-                                             GitVcsSettings.getInstance(myProject).getUpdateMethod().getName().toLowerCase(Locale.ROOT));
+                                             GitVcsSettings.getInstance(myProject).getUpdateMethod().getMethodName().toLowerCase(Locale.ROOT));
       presentation.setDescription(description);
       if (GitFetchSupport.fetchSupport(myProject).isFetchRunning()) {
         presentation.setEnabled(false);
