@@ -56,7 +56,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +76,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorMouseHoverPopupManager.class);
   private static final Key<Boolean> DISABLE_BINDING = Key.create("EditorMouseHoverPopupManager.disable.binding");
   private static final TooltipGroup EDITOR_INFO_GROUP = new TooltipGroup("EDITOR_INFO_GROUP", 0);
-  private static final int MAX_POPUP_WIDTH = 650;
   public static final int MAX_QUICK_DOC_CHARACTERS = 100_000;
 
   protected final Alarm myAlarm;
@@ -799,56 +797,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
   public DocumentationComponent getDocumentationComponent() {
     AbstractPopup hint = getCurrentHint();
     return hint == null ? null : UIUtil.findComponentOfType(hint.getComponent(), DocumentationComponent.class);
-  }
-
-  private static final class CombinedPopupLayout implements LayoutManager {
-    private final JComponent highlightInfoComponent;
-    private final DocumentationComponent quickDocComponent;
-
-    private CombinedPopupLayout(JComponent highlightInfoComponent, DocumentationComponent quickDocComponent) {
-      this.highlightInfoComponent = highlightInfoComponent;
-      this.quickDocComponent = quickDocComponent;
-    }
-
-    @Override
-    public void addLayoutComponent(String name, Component comp) {}
-
-    @Override
-    public void removeLayoutComponent(Component comp) {}
-
-    @Override
-    public Dimension preferredLayoutSize(Container parent) {
-      int w1 = WidthBasedLayout.getPreferredWidth(highlightInfoComponent);
-      int w2 = WidthBasedLayout.getPreferredWidth(quickDocComponent);
-      int preferredWidth = Math.min(JBUI.scale(MAX_POPUP_WIDTH), Math.max(w1, w2));
-      int h1 = WidthBasedLayout.getPreferredHeight(highlightInfoComponent, preferredWidth);
-      int h2 = WidthBasedLayout.getPreferredHeight(quickDocComponent, preferredWidth);
-      return new Dimension(preferredWidth, h1 + h2);
-    }
-
-    @Override
-    public Dimension minimumLayoutSize(Container parent) {
-      Dimension d1 = highlightInfoComponent == null ? new Dimension() : highlightInfoComponent.getMinimumSize();
-      Dimension d2 = quickDocComponent == null ? new Dimension() : quickDocComponent.getMinimumSize();
-      return new Dimension(Math.max(d1.width, d2.width), d1.height + d2.height);
-    }
-
-    @Override
-    public void layoutContainer(Container parent) {
-      int width = parent.getWidth();
-      int height = parent.getHeight();
-      if (highlightInfoComponent == null) {
-        if (quickDocComponent != null) quickDocComponent.setBounds(0, 0, width, height);
-      }
-      else if (quickDocComponent == null) {
-        highlightInfoComponent.setBounds(0, 0, width, height);
-      }
-      else {
-        int h1 = Math.min(height, highlightInfoComponent.getPreferredSize().height);
-        highlightInfoComponent.setBounds(0, 0, width, h1);
-        quickDocComponent.setBounds(0, h1, width, height - h1);
-      }
-    }
   }
 
   static final class MyEditorMouseMotionEventListener implements EditorMouseMotionListener {
