@@ -33,7 +33,6 @@ class KotlinPluginBuilder {
     "kotlin.line-indent-provider",
     "kotlin.jvm",
     "kotlin.refIndex",
-    "kotlin.compiler-plugins.scripting-ide-services",
     "kotlin.compiler-plugins.parcelize.common",
     "kotlin.compiler-plugins.parcelize.gradle",
     "kotlin.compiler-plugins.allopen.common",
