@@ -46,12 +46,14 @@ class IntroduceVariableSuggester : FeatureSuggester {
         }
     }
 
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private var extractedExprData: ExtractedExpressionData? = null
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val action = actions.lastOrNull() ?: return NoSuggestion
+        val language = action.language ?: return NoSuggestion
+        val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         when (action) {
             is BeforeEditorTextRemovedAction -> {
                 with(action) {
@@ -61,7 +63,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
                     val curElement = psiFile.findElementAt(contentOffset) ?: return NoSuggestion
                     if (langSupport.isPartOfExpression(curElement)) {
                         val changedStatement =
-                            curElement.getTopmostStatementWithText(deletedText) ?: return NoSuggestion
+                            langSupport.getTopmostStatementWithText(curElement, deletedText) ?: return NoSuggestion
                         extractedExprData = ExtractedExpressionData(textFragment.text, changedStatement)
                     }
                 }
@@ -70,13 +72,13 @@ class IntroduceVariableSuggester : FeatureSuggester {
                 if (extractedExprData == null) return NoSuggestion
                 with(action) {
                     when {
-                        isVariableDeclarationAdded() -> {
+                        langSupport.isVariableDeclarationAdded(this) -> {
                             extractedExprData!!.declaration = newChild
                         }
                         newChild.text.trim() == extractedExprData!!.changedStatementText -> {
                             extractedExprData!!.changedStatement = newChild
                         }
-                        isVariableInserted() -> {
+                        langSupport.isVariableInserted(this) -> {
                             extractedExprData = null
                             return createTipSuggestion(
                                 createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
@@ -90,7 +92,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
             is ChildAddedAction -> {
                 if (extractedExprData == null) return NoSuggestion
                 with(action) {
-                    if (isVariableDeclarationAdded()) {
+                    if (langSupport.isVariableDeclarationAdded(this)) {
                         extractedExprData!!.declaration = newChild
                     } else if (newChild.text.trim() == extractedExprData!!.changedStatementText) {
                         extractedExprData!!.changedStatement = newChild
@@ -134,14 +136,12 @@ class IntroduceVariableSuggester : FeatureSuggester {
         }
     }
 
-    private fun ChildReplacedAction.isVariableDeclarationAdded(): Boolean {
-        return langSupport.isExpressionStatement(oldChild) &&
-            langSupport.isVariableDeclaration(newChild)
+    private fun LanguageSupport.isVariableDeclarationAdded(action: ChildReplacedAction): Boolean {
+        return isExpressionStatement(action.oldChild) && isVariableDeclaration(action.newChild)
     }
 
-    private fun ChildAddedAction.isVariableDeclarationAdded(): Boolean {
-        return langSupport.isCodeBlock(parent) &&
-            langSupport.isVariableDeclaration(newChild)
+    private fun LanguageSupport.isVariableDeclarationAdded(action: ChildAddedAction): Boolean {
+        return isCodeBlock(action.parent) && isVariableDeclaration(action.newChild)
     }
 
     private fun isVariableEditingFinished(): Boolean {
@@ -152,18 +152,18 @@ class IntroduceVariableSuggester : FeatureSuggester {
         }
     }
 
-    private fun ChildReplacedAction.isVariableInserted(): Boolean {
+    private fun LanguageSupport.isVariableInserted(action: ChildReplacedAction): Boolean {
         if (extractedExprData == null) return false
         with(extractedExprData!!) {
             return variableEditingFinished && declaration != null &&
-                newChild.text == langSupport.getVariableName(declaration!!) &&
-                changedStatement === newChild.getTopmostStatementWithText("")
+                    action.newChild.text == getVariableName(declaration!!) &&
+                    changedStatement === getTopmostStatementWithText(action.newChild, "")
         }
     }
 
-    private fun PsiElement.getTopmostStatementWithText(text: String): PsiElement? {
-        val statement = getParentByPredicate {
-            langSupport.isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text
+    private fun LanguageSupport.getTopmostStatementWithText(psiElement: PsiElement, text: String): PsiElement? {
+        val statement = psiElement.getParentByPredicate {
+            isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text
         }
         return if (statement is KtCallExpression) {
             return statement.getTopmostParentOfType<KtDotQualifiedExpression>() ?: statement

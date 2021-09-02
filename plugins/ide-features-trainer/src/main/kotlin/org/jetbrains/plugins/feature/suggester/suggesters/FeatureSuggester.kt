@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.KeymapUtil
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 @Suppress("UnstableApiUsage")
 interface FeatureSuggester {
@@ -31,7 +30,10 @@ interface FeatureSuggester {
         }
     }
 
-    var langSupport: LanguageSupport
+    /**
+     * ID of languages for which this suggester can be applied
+     */
+    val languages: List<String>
 
     fun getSuggestion(actions: UserActionsHistory): Suggestion
 

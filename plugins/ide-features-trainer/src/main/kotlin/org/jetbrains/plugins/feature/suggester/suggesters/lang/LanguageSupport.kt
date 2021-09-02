@@ -18,7 +18,11 @@ interface LanguageSupport {
             return if (language == Language.ANY) {
                 extensions.firstOrNull()?.instance
             } else {
-                extensions.find { it.language == language.id }?.instance
+                val langSupport = extensions.find { it.language == language.id }?.instance
+                if (langSupport == null && language.baseLanguage != null) {
+                    val baseLanguage = language.baseLanguage!!
+                    extensions.find { it.language == baseLanguage.id }?.instance
+                } else langSupport
             }
         }
     }

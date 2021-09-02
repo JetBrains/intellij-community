@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.intellij.lang.Language
 import com.intellij.openapi.ide.CopyPasteManager
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
@@ -10,7 +11,6 @@ import org.jetbrains.plugins.feature.suggester.asString
 import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
-import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.awt.datatransfer.Transferable
 import java.util.concurrent.TimeUnit
 
@@ -25,7 +25,7 @@ class CopyPasteSuggester : FeatureSuggester {
         const val MAX_COPY_INTERVAL_TIME_MILLIS = 20000L
     }
 
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf(Language.ANY.id)
 
     private val actionsSummary = actionsLocalSummary()
     private val copyPasteManager = CopyPasteManager.getInstance()

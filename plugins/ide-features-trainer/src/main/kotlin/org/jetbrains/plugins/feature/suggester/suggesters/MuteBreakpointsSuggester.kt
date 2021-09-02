@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.intellij.lang.Language
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
@@ -14,7 +15,6 @@ import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.findBreakpointOnPosition
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
-import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
@@ -29,7 +29,7 @@ class MuteBreakpointsSuggester : FeatureSuggester {
     }
 
     private val actionsSummary = actionsLocalSummary()
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf(Language.ANY.id)
 
     private object State {
         var lastBreakpointPosition: XSourcePosition? = null

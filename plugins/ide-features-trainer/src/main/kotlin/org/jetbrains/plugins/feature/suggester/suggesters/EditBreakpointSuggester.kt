@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.intellij.lang.Language
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -11,7 +12,6 @@ import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.findBreakpointOnPosition
 import org.jetbrains.plugins.feature.suggester.history.ChangesHistory
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.util.concurrent.TimeUnit
 
 class EditBreakpointSuggester : FeatureSuggester {
@@ -25,7 +25,7 @@ class EditBreakpointSuggester : FeatureSuggester {
     }
 
     private val actionsSummary = actionsLocalSummary()
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf(Language.ANY.id)
 
     private val pausesOnBreakpointHistory = ChangesHistory<XSourcePosition>(NUM_OF_PAUSES_TO_GET_SUGGESTION)
     private var previousSuggestionPosition: XSourcePosition? = null

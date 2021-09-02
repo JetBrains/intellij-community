@@ -25,11 +25,14 @@ class FileStructureSuggester : FeatureSuggester {
     }
 
     private val actionsSummary = actionsLocalSummary()
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         if (actions.size < 2) return NoSuggestion
-        when (val action = actions.lastOrNull()) {
+        val action = actions.lastOrNull()!!
+        val language = action.language ?: return NoSuggestion
+        val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+        when (action) {
             is EditorFocusGainedAction -> {
                 if (actions.get(1) !is EditorFindAction) return NoSuggestion // check that previous action is Find
                 val psiFile = action.psiFile ?: return NoSuggestion
@@ -38,7 +41,7 @@ class FileStructureSuggester : FeatureSuggester {
 
                 val findModel = getFindModel(project)
                 val textToFind = findModel.stringToFind
-                val definition = getDefinitionOnCaret(psiFile, editor.caretModel.offset)
+                val definition = langSupport.getDefinitionOnCaret(psiFile, editor.caretModel.offset)
                 if (definition is PsiNamedElement && langSupport.isFileStructureElement(definition) &&
                     definition.name?.contains(textToFind, !findModel.isCaseSensitive) == true
                 ) {
@@ -63,11 +66,11 @@ class FileStructureSuggester : FeatureSuggester {
         )
     }
 
-    private fun getDefinitionOnCaret(psiFile: PsiFile, caretOffset: Int): PsiElement? {
+    private fun LanguageSupport.getDefinitionOnCaret(psiFile: PsiFile, caretOffset: Int): PsiElement? {
         val offset = caretOffset - 1
         if (offset < 0) return null
         val curElement = psiFile.findElementAt(offset)
-        return if (curElement != null && langSupport.isIdentifier(curElement)) {
+        return if (curElement != null && isIdentifier(curElement)) {
             curElement.parent
         } else {
             null

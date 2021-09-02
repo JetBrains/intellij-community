@@ -65,13 +65,15 @@ class SurroundWithSuggester : FeatureSuggester {
     }
 
     private val actionsSummary = actionsLocalSummary()
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     @Suppress("NestedBlockDepth")
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val action = actions.lastOrNull() ?: return NoSuggestion
+        val language = action.language ?: return NoSuggestion
+        val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         if (State.surroundingStatement?.isValid == false && action is PsiAction) {
-            State.tryToUpdateSurroundingStatement(action)
+            State.tryToUpdateSurroundingStatement(langSupport, action)
         }
         when (action) {
             is ChildReplacedAction -> {
@@ -84,7 +86,7 @@ class SurroundWithSuggester : FeatureSuggester {
                 }
             }
             is ChildAddedAction -> {
-                if (action.newChild.isSurroundingStatement()) {
+                if (langSupport.isSurroundingStatement(action.newChild)) {
                     State.applySurroundingStatementAddition(action.newChild, action.timeMillis)
                 }
             }
@@ -99,16 +101,21 @@ class SurroundWithSuggester : FeatureSuggester {
                     } else if (text == "{") {
                         if (State.isLeftBraceAdded) {
                             State.reset()
-                        } else if (State.isBraceAddedToStatement(psiFile, textInsertedAction.caretOffset)) {
+                        } else if (State.isBraceAddedToStatement(
+                                langSupport,
+                                psiFile,
+                                textInsertedAction.caretOffset
+                            )
+                        ) {
                             State.applyBraceAddition(action.timeMillis, "{")
-                            State.saveFirstStatementInBlock()
+                            State.saveFirstStatementInBlock(langSupport)
                         }
                     } else if (text == "}") {
                         if (State.isLeftBraceAdded &&
-                            State.isBraceAddedToStatement(psiFile, textInsertedAction.caretOffset)
+                            State.isBraceAddedToStatement(langSupport, psiFile, textInsertedAction.caretOffset)
                         ) {
                             State.applyBraceAddition(action.timeMillis, "}")
-                            if (State.isStatementsSurrounded()) {
+                            if (State.isStatementsSurrounded(langSupport)) {
                                 State.reset()
                                 return createTipSuggestion(
                                     createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
@@ -134,11 +141,11 @@ class SurroundWithSuggester : FeatureSuggester {
         )
     }
 
-    private fun State.tryToUpdateSurroundingStatement(action: PsiAction) {
+    private fun State.tryToUpdateSurroundingStatement(langSupport: LanguageSupport, action: PsiAction) {
         val psiFile = action.parent.containingFile ?: return
         val element = psiFile.findElementAt(surroundingStatementStartOffset) ?: return
         val parent = element.parent ?: return
-        if (parent.isSurroundingStatement()) {
+        if (langSupport.isSurroundingStatement(parent)) {
             surroundingStatement = parent
         }
     }
@@ -147,43 +154,41 @@ class SurroundWithSuggester : FeatureSuggester {
         return asIterable().findLast { it is EditorTextInsertedAction } as? EditorTextInsertedAction
     }
 
-    private fun State.isBraceAddedToStatement(psiFile: PsiFile, offset: Int): Boolean {
+    private fun State.isBraceAddedToStatement(langSupport: LanguageSupport, psiFile: PsiFile, offset: Int): Boolean {
         val curElement = psiFile.findElementAt(offset) ?: return false
         return curElement.parent === langSupport.getCodeBlock(surroundingStatement!!)
     }
 
-    private fun State.saveFirstStatementInBlock() {
-        val statements = surroundingStatement!!.getStatements()
+    private fun State.saveFirstStatementInBlock(langSupport: LanguageSupport) {
+        val statements = langSupport.getStatementsOfBlock(surroundingStatement!!)
         if (statements.isNotEmpty()) {
             firstStatementInBlockText = statements.first().text
         }
     }
 
-    private fun State.isStatementsSurrounded(): Boolean {
+    private fun State.isStatementsSurrounded(langSupport: LanguageSupport): Boolean {
         if (surroundingStatement?.isValid == false ||
             !isLeftBraceAdded ||
             !isRightBraceAdded
         ) {
             return false
         }
-        val statements = surroundingStatement!!.getStatements()
+        val statements = langSupport.getStatementsOfBlock(surroundingStatement!!)
         return statements.isNotEmpty() &&
-            statements.first().text == firstStatementInBlockText
+                statements.first().text == firstStatementInBlockText
     }
 
-    private fun PsiElement.getStatements(): List<PsiElement> {
-        val codeBlock = langSupport.getCodeBlock(this)
+    private fun LanguageSupport.getStatementsOfBlock(psiElement: PsiElement): List<PsiElement> {
+        val codeBlock = getCodeBlock(psiElement)
         return if (codeBlock != null) {
-            langSupport.getStatements(codeBlock)
+            getStatements(codeBlock)
         } else {
             emptyList()
         }
     }
 
-    private fun PsiElement.isSurroundingStatement(): Boolean {
-        return langSupport.isIfStatement(this) ||
-            langSupport.isForStatement(this) ||
-            langSupport.isWhileStatement(this)
+    private fun LanguageSupport.isSurroundingStatement(psiElement: PsiElement): Boolean {
+        return isIfStatement(psiElement) || isForStatement(psiElement) || isWhileStatement(psiElement)
     }
 
     override val id: String = "Surround with"

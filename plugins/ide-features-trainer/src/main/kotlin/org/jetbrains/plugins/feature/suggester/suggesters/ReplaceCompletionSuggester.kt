@@ -58,15 +58,18 @@ class ReplaceCompletionSuggester : FeatureSuggester {
     }
 
     private val actionsSummary = actionsLocalSummary()
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private var editedStatementData: EditedStatementData? = null
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        when (val action = actions.lastOrNull()) {
+        val action = actions.lastOrNull() ?: return NoSuggestion
+        val language = action.language ?: return NoSuggestion
+        val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+        when (action) {
             is BeforeEditorTextRemovedAction -> {
                 if (action.textFragment.text == ".") {
-                    editedStatementData = createEditedStatementData(action, action.caretOffset)
+                    editedStatementData = langSupport.createEditedStatementData(action, action.caretOffset)
                 }
             }
             is BeforeEditorTextInsertedAction -> {
@@ -81,7 +84,7 @@ class ReplaceCompletionSuggester : FeatureSuggester {
                 val caretOffset = action.caretOffset
                 val document = action.document ?: return NoSuggestion
                 if (document.getText(TextRange(caretOffset - 1, caretOffset)) == ".") {
-                    editedStatementData = createEditedStatementData(action, action.caretOffset)?.apply {
+                    editedStatementData = langSupport.createEditedStatementData(action, action.caretOffset)?.apply {
                         isCompletionStarted = true
                     }
                 }
@@ -141,9 +144,9 @@ class ReplaceCompletionSuggester : FeatureSuggester {
     }
 
     @Suppress("DuplicatedCode")
-    private fun createEditedStatementData(action: EditorAction, offset: Int): EditedStatementData? {
+    private fun LanguageSupport.createEditedStatementData(action: EditorAction, offset: Int): EditedStatementData? {
         val curElement = action.psiFile?.findElementAt(offset) ?: return null
-        return if (curElement.getParentByPredicate(langSupport::isLiteralExpression) == null &&
+        return if (curElement.getParentByPredicate(::isLiteralExpression) == null &&
             curElement.getParentOfType<PsiComment>() == null
         ) {
             EditedStatementData(offset)

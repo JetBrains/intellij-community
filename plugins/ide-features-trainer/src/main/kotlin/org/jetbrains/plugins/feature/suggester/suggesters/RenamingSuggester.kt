@@ -46,18 +46,21 @@ class RenamingSuggester : FeatureSuggester {
         }
     }
 
-    override lateinit var langSupport: LanguageSupport
+    override val languages: List<String> = emptyList()
 
     private var renamedIdentifiersData = RenamedIdentifiersData("", emptyList())
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
+        val action = actions.lastOrNull() ?: return NoSuggestion
+        val language = action.language ?: return NoSuggestion
+        val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         val name = CommandProcessor.getInstance().currentCommandName
         if (name != null && name != "Paste") {
             return NoSuggestion
         }
-        when (val lastAction = actions.lastOrNull()) {
+        when (action) {
             is BeforeChildReplacedAction -> {
-                val (parent, newChild, oldChild) = lastAction
+                val (parent, newChild, oldChild) = action
                 if (langSupport.isIdentifier(oldChild)) {
                     if (!renamedIdentifiersData.references.contains(parent)) {
                         // TODO Find out why resolve reference causes:
@@ -65,6 +68,7 @@ class RenamingSuggester : FeatureSuggester {
                         //  not only is this expensive, but will also cause stub PSI invalidation"
                         //  Can be reproduced placing '{' before another code block "{ ... }"
                         val declaration = parent.reference?.resolve() ?: parent
+
                         @Suppress("SpreadOperator")
                         val references = arrayListOf(declaration, *declaration.getAllReferences().toTypedArray())
                         renamedIdentifiersData = RenamedIdentifiersData(oldChild.text, references)
@@ -72,7 +76,7 @@ class RenamingSuggester : FeatureSuggester {
                 }
             }
             is ChildReplacedAction -> {
-                val (parent, newChild, oldChild) = lastAction
+                val (parent, newChild, oldChild) = action
                 if (langSupport.isIdentifier(newChild)) {
                     if (renamedIdentifiersData.references.contains(parent) &&
                         renamedIdentifiersData.isAllRenamed()

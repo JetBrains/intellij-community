@@ -14,7 +14,6 @@ import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.SUGGESTION_FOUND
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
-import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
 import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
 import java.lang.ref.WeakReference
@@ -36,26 +35,14 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
 
     fun actionPerformed(action: Action) {
         val language = action.language ?: return
-        val langSupport = getLanguageSupport(language)
-        if (langSupport != null) {
+        val suggesters = FeatureSuggester.suggesters
+            .filter { it.languages.find { id -> id == Language.ANY.id || id == language.id } != null }
+        if (suggesters.isNotEmpty()) {
             actionsHistory.add(action)
-            processSuggesters(langSupport)
-        }
-    }
-
-    private fun getLanguageSupport(language: Language): LanguageSupport? {
-        val langSupport = LanguageSupport.getForLanguage(language)
-        return if (langSupport == null && language.baseLanguage != null) {
-            LanguageSupport.getForLanguage(language.baseLanguage!!)
-        } else {
-            langSupport
-        }
-    }
-
-    private fun processSuggesters(langSupport: LanguageSupport) {
-        for (suggester in FeatureSuggester.suggesters) {
-            if (suggester.isEnabled()) {
-                suggester.langSupport = langSupportprocessSuggester(suggester)
+            for (suggester in suggesters) {
+                if (suggester.isEnabled()) {
+                    processSuggester(suggester)
+                }
             }
         }
     }

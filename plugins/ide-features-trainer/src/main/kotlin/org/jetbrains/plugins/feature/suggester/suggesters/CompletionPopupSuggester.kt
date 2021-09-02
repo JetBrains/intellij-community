@@ -62,15 +62,18 @@ class CompletionPopupSuggester : FeatureSuggester {
     }
 
     private val actionsSummary = actionsLocalSummary()
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        when (val action = actions.lastOrNull()) {
+        val action = actions.lastOrNull() ?: return NoSuggestion
+        val language = action.language ?: return NoSuggestion
+        val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+        when (action) {
             is BeforeEditorTextRemovedAction -> {
                 if (action.textFragment.text == ".") {
                     State.reset()
                     val psiFile = action.psiFile ?: return NoSuggestion
-                    if (!isInsideCommentOrLiteral(psiFile, action.caretOffset)) {
+                    if (!langSupport.isInsideCommentOrLiteral(psiFile, action.caretOffset)) {
                         State.applyDotRemoving(action.caretOffset, action.timeMillis)
                     }
                 }
@@ -115,10 +118,10 @@ class CompletionPopupSuggester : FeatureSuggester {
         )
     }
 
-    private fun isInsideCommentOrLiteral(psiFile: PsiFile, offset: Int): Boolean {
+    private fun LanguageSupport.isInsideCommentOrLiteral(psiFile: PsiFile, offset: Int): Boolean {
         val curElement = psiFile.findElementAt(offset) ?: return false
-        return curElement.getParentByPredicate(langSupport::isLiteralExpression) != null ||
-            curElement.getParentOfType<PsiComment>() != null
+        return curElement.getParentByPredicate(::isLiteralExpression) != null ||
+                curElement.getParentOfType<PsiComment>() != null
     }
 
     private fun createSuggestion(): Suggestion {

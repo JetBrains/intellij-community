@@ -42,19 +42,21 @@ class UnwrapSuggester : FeatureSuggester {
         }
     }
 
-    override lateinit var langSupport: LanguageSupport
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private val actionsSummary = actionsLocalSummary()
     private val surroundingStatementStartRegex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val action = actions.lastOrNull() ?: return NoSuggestion
+        val language = action.language ?: return NoSuggestion
+        val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         if (action is BeforeEditorTextRemovedAction) {
             val text = action.textFragment.text
             when {
-                text == "}" -> return handleCloseBraceDeleted(action)
+                text == "}" -> return langSupport.handleCloseBraceDeleted(action)
                 text.matches(surroundingStatementStartRegex) -> {
-                    return handleStatementStartDeleted(action)
+                    return langSupport.handleStatementStartDeleted(action)
                 }
                 else -> State.reset()
             }
@@ -62,7 +64,7 @@ class UnwrapSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    private fun handleCloseBraceDeleted(action: BeforeEditorTextRemovedAction): Suggestion {
+    private fun LanguageSupport.handleCloseBraceDeleted(action: BeforeEditorTextRemovedAction): Suggestion {
         when {
             State.isInitial -> handleCloseBraceDeletedFirst(action)
             State.closeBraceOffset != -1 -> {
@@ -77,7 +79,7 @@ class UnwrapSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    private fun handleStatementStartDeleted(action: BeforeEditorTextRemovedAction): Suggestion {
+    private fun LanguageSupport.handleStatementStartDeleted(action: BeforeEditorTextRemovedAction): Suggestion {
         when {
             State.isInitial -> handleStatementStartDeletedFirst(action)
             State.surroundingStatementStartOffset != -1 -> {
@@ -92,14 +94,14 @@ class UnwrapSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    private fun handleCloseBraceDeletedFirst(action: BeforeEditorTextRemovedAction) {
+    private fun LanguageSupport.handleCloseBraceDeletedFirst(action: BeforeEditorTextRemovedAction) {
         val curElement = action.psiFile?.findElementAt(action.caretOffset) ?: return
         val codeBlock = curElement.parent
-        if (!langSupport.isCodeBlock(codeBlock)) return
-        val statements = langSupport.getStatements(codeBlock)
+        if (!isCodeBlock(codeBlock)) return
+        val statements = getStatements(codeBlock)
         if (statements.isNotEmpty()) {
-            val statement = langSupport.getParentStatementOfBlock(codeBlock) ?: return
-            if (statement.isSurroundingStatement()) {
+            val statement = getParentStatementOfBlock(codeBlock) ?: return
+            if (isSurroundingStatement(statement)) {
                 State.surroundingStatementStartOffset = statement.startOffset
                 State.lastChangeTimeMillis = action.timeMillis
             }
@@ -111,13 +113,13 @@ class UnwrapSuggester : FeatureSuggester {
             surroundingStatementStartOffset == action.textFragment.contentStartOffset
     }
 
-    private fun handleStatementStartDeletedFirst(action: BeforeEditorTextRemovedAction) {
+    private fun LanguageSupport.handleStatementStartDeletedFirst(action: BeforeEditorTextRemovedAction) {
         val textFragment = action.textFragment
         val curElement = action.psiFile?.findElementAt(textFragment.contentStartOffset) ?: return
         val curStatement = curElement.parent
-        if (curStatement.isSurroundingStatement()) {
-            val codeBlock = langSupport.getCodeBlock(curStatement) ?: return
-            val statements = langSupport.getStatements(codeBlock)
+        if (isSurroundingStatement(curStatement)) {
+            val codeBlock = getCodeBlock(curStatement) ?: return
+            val statements = getStatements(codeBlock)
             if (statements.isNotEmpty()) {
                 State.closeBraceOffset = curStatement.endOffset - textFragment.text.length - 1
                 State.lastChangeTimeMillis = action.timeMillis
@@ -151,10 +153,8 @@ class UnwrapSuggester : FeatureSuggester {
             return startOffset + countOfStartDelimiters
         }
 
-    private fun PsiElement.isSurroundingStatement(): Boolean {
-        return langSupport.isIfStatement(this) ||
-            langSupport.isForStatement(this) ||
-            langSupport.isWhileStatement(this)
+    private fun LanguageSupport.isSurroundingStatement(psiElement: PsiElement): Boolean {
+        return isIfStatement(psiElement) || isForStatement(psiElement) || isWhileStatement(psiElement)
     }
 
     override val id: String = "Unwrap"
