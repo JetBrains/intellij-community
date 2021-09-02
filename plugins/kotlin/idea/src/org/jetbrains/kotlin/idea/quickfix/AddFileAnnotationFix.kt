@@ -61,9 +61,10 @@ class AddFileAnnotationFix(
             val annotationList = fileToAnnotate.fileAnnotationList ?: return
             if (existingAnnotationEntry == null) {
                 // There are file-level annotations, but the fix is expected to add a new entry
-                val newAnnotation = psiFactory.createAnnotationEntry(annotationText)
+                val newAnnotation = psiFactory.createFileAnnotation(annotationText)
+                annotationList.add(psiFactory.createWhiteSpace("\n"))
                 annotationList.add(newAnnotation)
-                ShortenReferences.DEFAULT.process(newAnnotation)
+                ShortenReferences.DEFAULT.process(annotationList)
             } else if (innerText != null) {
                 // There is an existing annotation and the non-null argument that should be added to it
                 addArgumentToExistingAnnotation(existingAnnotationEntry, innerText)
