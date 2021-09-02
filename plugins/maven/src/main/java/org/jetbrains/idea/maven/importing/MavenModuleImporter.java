@@ -369,12 +369,15 @@ public final class MavenModuleImporter {
     }
   }
 
-  public IdeModifiableModelsProvider getProviderForExtensions() {
+  public IdeModifiableModelsProvider getModifiableModelsProvider() {
     return myProviderForExtensions;
   }
 
-  public void setProviderForExtensions(IdeModifiableModelsProvider providerForExtensions) {
+  public void setModifiableModelsProvider(IdeModifiableModelsProvider providerForExtensions) {
     myProviderForExtensions = providerForExtensions;
+    MavenRootModelAdapter mavenRootModelAdapter = new MavenRootModelAdapter(
+      new MavenRootModelAdapterLegacyImpl(myMavenProject, myModule, new ModifiableModelsProviderProxyWrapper(myProviderForExtensions)));
+    setRootModelAdapter(mavenRootModelAdapter);
   }
 
   @NotNull

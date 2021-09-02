@@ -271,7 +271,7 @@ public class MavenProjectImporter {
         IdeModifiableModelsProvider provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
         try {
           for (MavenModuleImporter importer : importers) {
-            importer.setProviderForExtensions(provider);
+            importer.setModifiableModelsProvider(provider);
           }
           configFacets(postTasks, importers);
         } finally {

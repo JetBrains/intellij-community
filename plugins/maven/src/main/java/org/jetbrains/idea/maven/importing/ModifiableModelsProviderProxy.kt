@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
@@ -44,6 +45,8 @@ interface ModifiableModelsProviderProxy {
   fun getModifiableLibraryModel(library: Library): Library.ModifiableModel?
   fun trySubstitute(module: Module, entry: LibraryOrderEntry, id: ProjectId)
 }
+
+
 class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModelsProviderImpl,
                                         private val project: Project) : ModifiableModelsProviderProxy {
 
@@ -256,4 +259,51 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
   }
 }
 
+
+class ModifiableModelsProviderProxyWrapper(private val delegate: IdeModifiableModelsProvider) : ModifiableModelsProviderProxy {
+  override val modifiableModuleModel: ModifiableModuleModel
+    get() = delegate.modifiableModuleModel
+
+  override fun commit() {
+    delegate.commit()
+  }
+
+  override fun dispose() {
+    delegate.dispose()
+  }
+
+  override val modalityStateForQuestionDialogs: ModalityState
+    get() = delegate.modalityStateForQuestionDialogs
+
+  override fun registerModulePublication(module: Module, id: ProjectCoordinate) {
+    delegate.registerModulePublication(module, id)
+  }
+
+  override fun getModifiableRootModel(module: Module): ModifiableRootModel {
+    return delegate.getModifiableRootModel(module)
+  }
+
+  override val allLibraries: Array<Library?>
+    get() = delegate.allLibraries
+
+  override fun removeLibrary(lib: Library) {
+    delegate.removeLibrary(lib)
+  }
+
+  override fun createLibrary(name: String?, source: ProjectModelExternalSource?): Library? {
+    return delegate.createLibrary(name, source)
+  }
+
+  override fun getLibraryByName(name: String): Library? {
+    return delegate.getLibraryByName(name)
+  }
+
+  override fun getModifiableLibraryModel(library: Library): Library.ModifiableModel? {
+    return delegate.getModifiableLibraryModel(library)
+  }
+
+  override fun trySubstitute(module: Module, entry: LibraryOrderEntry, id: ProjectId) {
+    delegate.trySubstitute(module, entry, id)
+  }
+}
 
