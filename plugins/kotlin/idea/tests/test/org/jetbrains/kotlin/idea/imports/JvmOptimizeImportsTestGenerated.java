@@ -286,6 +286,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             runTest("testData/editor/optimizeImports/common/Companion.kt");
         }
 
+        @TestMetadata("CompanionExtensionFunctionReference.kt")
+        public void testCompanionExtensionFunctionReference() throws Exception {
+            runTest("testData/editor/optimizeImports/common/CompanionExtensionFunctionReference.kt");
+        }
+
         @TestMetadata("CompanionFunction.kt")
         public void testCompanionFunction() throws Exception {
             runTest("testData/editor/optimizeImports/common/CompanionFunction.kt");
