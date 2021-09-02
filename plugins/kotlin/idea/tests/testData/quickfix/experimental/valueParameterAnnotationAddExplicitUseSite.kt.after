@@ -1,4 +1,4 @@
-// "Replace annotation with '@property:SomeOptInAnnotation'" "true"
+// "Move 'SomeOptInAnnotation' opt-in requirement from value parameter to property" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 
