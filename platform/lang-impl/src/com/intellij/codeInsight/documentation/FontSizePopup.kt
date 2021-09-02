@@ -3,6 +3,8 @@ package com.intellij.codeInsight.documentation
 
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBSlider
@@ -24,6 +26,7 @@ object FontSizePopup {
     parentComponent: Component,
     initialFont: T,
     fontRange: List<T>,
+    onPopupClose: () -> Unit,
     changeCallback: (T) -> Unit
   ): FontSizePopupData {
     val slider = JBSlider(0, fontRange.size - 1).apply {
@@ -48,6 +51,12 @@ object FontSizePopup {
     panel.border = BorderFactory.createLineBorder(JBColor.border(), 1)
 
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, slider).createPopup()
+    popup.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        onPopupClose()
+      }
+    })
+
     val location = MouseInfo.getPointerInfo().location
     popup.show(
       RelativePoint(Point(

@@ -27,6 +27,10 @@ public final class DocFontSizePopup {
       parentComponent,
       DocumentationComponent.getQuickDocFontSize(),
       Arrays.asList(FontSize.values()),
+      () -> {
+        ourCurrentSlider = null;
+        return Unit.INSTANCE;
+      },
       size -> {
         DocumentationComponent.setQuickDocFontSize(size);
         changeCallback.accept(size);
