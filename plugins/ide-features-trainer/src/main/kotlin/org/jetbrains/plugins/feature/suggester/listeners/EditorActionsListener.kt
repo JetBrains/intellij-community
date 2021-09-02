@@ -4,8 +4,8 @@ import com.intellij.codeInsight.completion.actions.CodeCompletionAction
 import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actions.BackspaceAction
@@ -39,10 +39,10 @@ import java.lang.ref.WeakReference
 object EditorActionsListener : AnActionListener {
     private val copyPasteManager = CopyPasteManager.getInstance()
 
-    override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
         if (!action.isSupportedAction()) return
-        val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
-        val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+        val project = event.getData(CommonDataKeys.PROJECT) ?: return
         when (action) {
             is CopyAction -> {
                 val copiedText = copyPasteManager.contents?.asString() ?: return
@@ -132,10 +132,10 @@ object EditorActionsListener : AnActionListener {
         }
     }
 
-    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         if (!action.isSupportedAction()) return
-        val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
-        val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+        val project = event.getData(CommonDataKeys.PROJECT) ?: return
         when (action) {
             is CopyAction -> {
                 val selectedText = editor.getSelectedText() ?: return
