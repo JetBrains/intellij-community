@@ -844,33 +844,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static final class WrapperPanel extends JPanel implements WidthBasedLayout {
-    private WrapperPanel(JComponent content) {
-      super(new BorderLayout());
-      setBorder(null);
-      setContent(content);
-    }
-
-    private void setContent(JComponent content) {
-      removeAll();
-      add(content, BorderLayout.CENTER);
-    }
-
-    private JComponent getComponent() {
-      return (JComponent)getComponent(0);
-    }
-
-    @Override
-    public int getPreferredWidth() {
-      return WidthBasedLayout.getPreferredWidth(getComponent());
-    }
-
-    @Override
-    public int getPreferredHeight(int width) {
-      return WidthBasedLayout.getPreferredHeight(getComponent(), width);
-    }
-  }
-
   private static final class CombinedPopupLayout implements LayoutManager {
     private final JComponent highlightInfoComponent;
     private final DocumentationComponent quickDocComponent;
