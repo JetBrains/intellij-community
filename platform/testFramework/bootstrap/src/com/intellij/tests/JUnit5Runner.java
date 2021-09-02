@@ -8,7 +8,6 @@ import junit.framework.JUnit4TestAdapter;
 import junit.framework.JUnit4TestAdapterCache;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
-import org.junit.AssumptionViolatedException;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -82,11 +81,6 @@ public class JUnit5Runner {
     };
   }
 
-  private static class IgnoreException extends Exception {
-    public static final IgnoreException INSTANCE = new IgnoreException();
-    private IgnoreException() { }
-  }
-  
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static class TCExecutionListener implements TestExecutionListener {
     private final PrintStream myPrintStream;
@@ -138,11 +132,9 @@ public class JUnit5Runner {
     @Override
     public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
       final Throwable throwable = testExecutionResult.getThrowable().orElse(null);
-      if (throwable instanceof AssumptionViolatedException) {
-        executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, throwable.getMessage());
-      }
-      else if (throwable instanceof IgnoreException) {
-        executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, "");
+      if (IgnoreException.isIgnoringThrowable(throwable)) {
+        String message = throwable.getMessage();
+        executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, message != null ? message : "");
       }
       else {
         executionFinished(testIdentifier, testExecutionResult.getStatus(), throwable, null);
