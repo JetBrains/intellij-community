@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.resolve.BindingContext
 
-interface SampleResolutionService {
-    fun resolveSample(
+interface KDocLinkResolutionService {
+    fun resolveKDocLink(
         context: BindingContext,
         fromDescriptor: DeclarationDescriptor,
         resolutionFacade: ResolutionFacade,
@@ -20,14 +20,14 @@ interface SampleResolutionService {
         /**
          * It's internal implementation, please use [resolveKDocSampleLink], or [resolveKDocLink]
          */
-        internal fun resolveSample(
+        internal fun resolveKDocLinkGlobal(
             context: BindingContext,
             fromDescriptor: DeclarationDescriptor,
             resolutionFacade: ResolutionFacade,
             qualifiedName: List<String>
         ): Collection<DeclarationDescriptor> {
-            val instance = resolutionFacade.project.getService<SampleResolutionService>()
-            return instance?.resolveSample(context, fromDescriptor, resolutionFacade, qualifiedName) ?: emptyList()
+            val instance = resolutionFacade.project.getService<KDocLinkResolutionService>()
+            return instance?.resolveKDocLink(context, fromDescriptor, resolutionFacade, qualifiedName) ?: emptyList()
         }
     }
 }

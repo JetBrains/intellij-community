@@ -81,7 +81,7 @@ fun resolveKDocSampleLink(
     qualifiedName: List<String>
 ): Collection<DeclarationDescriptor> {
 
-    val resolvedViaService = SampleResolutionService.resolveSample(context, fromDescriptor, resolutionFacade, qualifiedName)
+    val resolvedViaService = KDocLinkResolutionService.resolveKDocLinkGlobal(context, fromDescriptor, resolutionFacade, qualifiedName)
     if (resolvedViaService.isNotEmpty()) return resolvedViaService
 
     return resolveDefaultKDocLink(context, resolutionFacade, fromDescriptor, qualifiedName)

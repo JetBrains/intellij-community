@@ -21,9 +21,9 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.utils.Printer
 
-class IdeSampleResolutionService(val project: Project) : SampleResolutionService {
+class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionService {
 
-    override fun resolveSample(
+    override fun resolveKDocLink(
         context: BindingContext,
         fromDescriptor: DeclarationDescriptor,
         resolutionFacade: ResolutionFacade,
