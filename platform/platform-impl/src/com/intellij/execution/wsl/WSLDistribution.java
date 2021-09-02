@@ -545,7 +545,7 @@ public class WSLDistribution {
 
   @Override
   public String toString() {
-    return "WSLDistribution{myDescriptor=" + myDescriptor + '}';
+    return myDescriptor.getMsId();
   }
 
   private static void prependCommand(@NotNull List<? super String> command, String @NotNull ... commandToPrepend) {
