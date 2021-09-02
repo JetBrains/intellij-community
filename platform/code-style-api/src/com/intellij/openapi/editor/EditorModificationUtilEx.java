@@ -60,7 +60,7 @@ public class EditorModificationUtilEx {
     int oldOffset = editor.getSelectionModel().getSelectionStart();
 
     String filler = editor.getSelectionModel().hasSelection() ? "" : calcStringToFillVirtualSpace(editor);
-    if (filler.length() > 0) {
+    if (!filler.isEmpty()) {
       s = filler + s;
     }
 
@@ -108,7 +108,7 @@ public class EditorModificationUtilEx {
     return offset;
   }
 
-  public static String calcStringToFillVirtualSpace(Editor editor) {
+  public static @NotNull String calcStringToFillVirtualSpace(@NotNull Editor editor) {
     int afterLineEnd = calcAfterLineEnd(editor);
     if (afterLineEnd > 0) {
       return calcStringToFillVirtualSpace(editor, afterLineEnd);
@@ -117,7 +117,7 @@ public class EditorModificationUtilEx {
     return "";
   }
 
-  public static String calcStringToFillVirtualSpace(Editor editor, int afterLineEnd) {
+  public static @NotNull String calcStringToFillVirtualSpace(@NotNull Editor editor, int afterLineEnd) {
     final Project project = editor.getProject();
     StringBuilder buf = new StringBuilder();
     final Document doc = editor.getDocument();
@@ -181,7 +181,7 @@ public class EditorModificationUtilEx {
    * @return          difference in columns between current editor caret position and end of the logical line fragment displayed
    *                  on a current visual line
    */
-  public static int calcAfterLineEnd(Editor editor) {
+  public static int calcAfterLineEnd(@NotNull Editor editor) {
     CaretModel caretModel = editor.getCaretModel();
     int caretOffset = caretModel.getOffset();
     LogicalPosition logicalPosition = caretModel.getLogicalPosition();
@@ -203,7 +203,7 @@ public class EditorModificationUtilEx {
    *                        on a current visual line
    */
   @ApiStatus.Experimental
-  public static int calcAfterLineEnd(Editor editor, int caretOffset, LogicalPosition logicalPosition, VisualPosition visualPosition) {
+  public static int calcAfterLineEnd(@NotNull Editor editor, int caretOffset, @NotNull LogicalPosition logicalPosition, @NotNull VisualPosition visualPosition) {
     Document document = editor.getDocument();
     int lineNumber = logicalPosition.line;
     int columnNumber = logicalPosition.column;
@@ -247,6 +247,4 @@ public class EditorModificationUtilEx {
     int lineEndColumnNumber = editor.offsetToLogicalPosition(anchorLineEndOffset).column;
     return columnNumber - lineEndColumnNumber;
   }
-
-
 }
