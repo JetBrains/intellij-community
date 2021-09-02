@@ -162,6 +162,9 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @NotNull
   private CompletableFuture<List<XStackFrame>> createStackFramesAsync(@NotNull StackFrameProxyImpl stackFrameProxy) {
+    // TODO: quickfix for a deadlock for now
+    if (true) return CompletableFuture.completedFuture(createStackFrames(stackFrameProxy));
+
     return StackFrameDescriptorImpl.createAsync(stackFrameProxy, myTracker)
       .thenApply(descriptor -> {
         XStackFrame topFrame = ContainerUtil.getFirstItem(myTopFrames);
