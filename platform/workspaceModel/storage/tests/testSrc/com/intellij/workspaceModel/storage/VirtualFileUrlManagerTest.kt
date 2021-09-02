@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.Assert.*
@@ -189,16 +188,6 @@ class VirtualFileUrlManagerTest {
   @Test
   fun `check normalize slashes`() {
     assertEquals("jar://C:/Users/X/a.txt", virtualFileManager.fromUrl("jar://C:/Users\\X\\a.txt").url)
-  }
-
-  @Test
-  fun `check case sensitivity`() {
-    IoTestUtil.assumeCaseInsensitiveFS()
-    val firstUrl = virtualFileManager.fromUrl("C:/Users/X/.m2/repository/org/jetbrains/one.txt")
-    val secondUrl = virtualFileManager.fromUrl("C:/USERS/X/.m2/repository/org/jetbrains/two.txt")
-    val thirdUrl = virtualFileManager.fromUrl("C:/Users/X/.m2/REPOSITORY/org/jetbrains/two.txt")
-    assertEquals(secondUrl, thirdUrl)
-    assertNotEquals(firstUrl, secondUrl)
   }
 
   private fun assertFilePath(expectedResult: String?, url: String) {

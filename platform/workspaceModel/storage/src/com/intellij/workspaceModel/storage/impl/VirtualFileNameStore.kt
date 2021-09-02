@@ -1,23 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 
 internal class VirtualFileNameStore {
   private val generator = IntIdGenerator()
-  private val name2IdStore: MutableMap<String, IdPerCount>
+  private val name2IdStore = CollectionFactory.createSmallMemoryFootprintMap<String, IdPerCount>()
   private val id2NameStore = Int2ObjectOpenHashMap<String>()
-
-  init {
-    name2IdStore = if (SystemInfo.isFileSystemCaseSensitive) {
-      CollectionFactory.createSmallMemoryFootprintMap()
-    } else {
-      CollectionFactory.createCaseInsensitiveStringMap()
-    }
-  }
 
   fun generateIdForName(name: String): Int {
     val idPerCount = name2IdStore[name]
