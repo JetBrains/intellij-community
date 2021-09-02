@@ -42,7 +42,6 @@ import java.util.Objects;
 
 import static com.intellij.icons.AllIcons.General.FitContent;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
-import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
@@ -366,26 +365,6 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     MyPopupListElementRenderer(ListPopupImpl aPopup) {
       super(aPopup);
-    }
-
-    @Override
-    protected SeparatorWithText createSeparator() {
-      SeparatorWithText separator = super.createSeparator();
-      if (ExperimentalUI.isNewVcsBranchPopup()) {
-        return separator;
-      }
-      separator.setTextForeground(UIUtil.getListForeground());
-      separator.setCaptionCentered(false);
-      UIUtil.addInsets(separator, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
-      return separator;
-    }
-
-    @Override
-    protected void setSeparatorFont(Font font) {
-      super.setSeparatorFont(font);
-      if (!ExperimentalUI.isNewVcsBranchPopup()) {
-        super.setSeparatorFont(RelativeFont.BOLD.derive(font));
-      }
     }
 
     @Override
