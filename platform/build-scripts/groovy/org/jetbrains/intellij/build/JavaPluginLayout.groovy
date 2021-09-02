@@ -76,7 +76,6 @@ final class JavaPluginLayout {
       }
 
       withArtifact("debugger-agent", "rt")
-      withArtifact("debugger-agent-storage", "rt")
       withProjectLibrary("Eclipse")
       withProjectLibrary("jgoodies-common")
       withProjectLibrary("jps-javac-extension")

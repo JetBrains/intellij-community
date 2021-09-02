@@ -741,11 +741,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        properties.setValue(PREVIEW_PROPERTY_KEY, state);
-        cancel(popupRef.get());
+        if (e.getDataContext() != DataContext.EMPTY_CONTEXT) { // Avoid fake events
+          properties.setValue(PREVIEW_PROPERTY_KEY, state);
+          cancel(popupRef.get());
 
-        WindowStateService.getInstance().putSize(DIMENSION_SERVICE_KEY, null);
-        showElementUsages(parameters, actionHandler);
+          WindowStateService.getInstance().putSize(DIMENSION_SERVICE_KEY, null);
+          showElementUsages(parameters, actionHandler);
+        }
       }
     });
 

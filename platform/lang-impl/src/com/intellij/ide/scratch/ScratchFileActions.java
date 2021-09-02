@@ -105,7 +105,7 @@ public final class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-      Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
 
       // selection from the current editor
       ScratchFileCreationHelper.Context context = createContext(e);
@@ -448,7 +448,7 @@ public final class ScratchFileActions {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      Component c = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      Component c = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       ScratchImplUtil.TextExtractor extractor = ScratchImplUtil.getTextExtractor(c);
       boolean isFileEditor = EditorUtil.isRealFileEditor(e.getData(CommonDataKeys.EDITOR));
       e.getPresentation().setEnabled(project != null && extractor != null && !isFileEditor);
@@ -458,7 +458,7 @@ public final class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-      ScratchImplUtil.TextExtractor extractor = ScratchImplUtil.getTextExtractor(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+      ScratchImplUtil.TextExtractor extractor = ScratchImplUtil.getTextExtractor(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
       String text = extractor == null ? null : extractor.extractText();
       if (text == null) return;
       ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();

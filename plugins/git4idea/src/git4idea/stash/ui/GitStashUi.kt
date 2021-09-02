@@ -3,13 +3,12 @@ package git4idea.stash.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
-import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -25,23 +24,20 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class GitStashUi(private val project: Project, isVertical: Boolean, isEditorDiffPreview: Boolean, disposable: Disposable) :
+class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boolean, disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
   private val tree: ChangesTree
-  private val changesBrowser: GitStashChangesBrowser
+  internal val changesBrowser: GitStashChangesBrowser
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
   private val toolbar: JComponent
-
-  private var diffPreviewProcessor: GitStashDiffPreview? = null
-  private var editorTabPreview: EditorTabPreview? = null
 
   init {
     tree = GitStashTree(project, this)
     PopupHandler.installPopupMenu(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
 
-    changesBrowser = GitStashChangesBrowser(project)
+    changesBrowser = GitStashChangesBrowser(project, this)
     tree.addSelectionListener {
       changesBrowser.selectStash(VcsTreeModelData.selected(tree).userObjectsStream(StashInfo::class.java).findAny().orNull())
     }
@@ -88,19 +84,15 @@ class GitStashUi(private val project: Project, isVertical: Boolean, isEditorDiff
   }
 
   private fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
-    if (!force && (isInEditor == (editorTabPreview != null))) return
+    if (!force && (isInEditor == (changesBrowser.editorTabPreview != null))) return
 
-    if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    diffPreviewProcessor = GitStashDiffPreview(project, changesBrowser.viewer, isInEditor, this)
-    diffPreviewProcessor!!.toolbarWrapper.setVerticalSizeReferent(toolbar)
-
+    val diffPreviewProcessor = changesBrowser.setDiffPreviewInEditor(isInEditor)
+    diffPreviewProcessor.toolbarWrapper.setVerticalSizeReferent(toolbar)
     if (isInEditor) {
-      editorTabPreview = GitStashEditorDiffPreview(diffPreviewProcessor!!, changesBrowser.viewer, this)
       treeDiffSplitter.secondComponent = null
     }
     else {
-      editorTabPreview = null
-      treeDiffSplitter.secondComponent = diffPreviewProcessor!!.component
+      treeDiffSplitter.secondComponent = diffPreviewProcessor.component
     }
   }
 
@@ -108,14 +100,13 @@ class GitStashUi(private val project: Project, isVertical: Boolean, isEditorDiff
   }
 
   override fun getData(dataId: String): Any? {
-    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
-    if (VcsDataKeys.CHANGES.`is`(dataId) || VcsDataKeys.SELECTED_CHANGES.`is`(dataId)) {
-      return changesBrowser.allChanges.toTypedArray()
-    }
+    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return changesBrowser.editorTabPreview
+    if (GIT_STASH_UI.`is`(dataId)) return this
     return null
   }
 
   companion object {
     const val GIT_STASH_UI_PLACE = "GitStashUiPlace"
+    val GIT_STASH_UI = DataKey.create<GitStashUi>("GitStashUi")
   }
 }

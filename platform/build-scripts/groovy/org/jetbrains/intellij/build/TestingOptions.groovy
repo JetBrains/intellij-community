@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -69,6 +69,11 @@ class TestingOptions {
    * Specifies path to JRE which will be used to run tests. By default tests run under the same JRE which is used to run the build scripts.
    */
   String customJrePath = System.getProperty("intellij.build.test.jre")
+
+  /**
+   * Specifies if ant or junit 5 direct runner should be used 
+   */
+  boolean preferAntRunner = SystemProperties.getBooleanProperty("intellij.build.test.ant.runner", true)
 
   /**
    * Enables capturing traces with IntelliJ test discovery agent.

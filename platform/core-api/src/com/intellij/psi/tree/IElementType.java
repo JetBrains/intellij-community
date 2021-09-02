@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
+import java.lang.annotation.ElementType;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -161,6 +162,10 @@ public class IElementType {
     return getDebugName();
   }
 
+  /**
+   * Don't use it directly. Override or call {@link ElementType#toString()}.
+   * Note, it should be used only for testing and logging purposes.
+   */
   @NonNls
   @NotNull
   @ApiStatus.Internal

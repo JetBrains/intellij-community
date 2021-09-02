@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -25,6 +26,7 @@ import java.awt.event.MouseEvent;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * A progress indicator for write actions. Paints itself explicitly, without resorting to normal Swing's delayed repaint API.
@@ -34,30 +36,21 @@ import java.util.concurrent.TimeUnit;
  */
 public final class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final Application myApp = ApplicationManager.getApplication();
+  private final EventStealer myEventStealer;
   private long myLastUiUpdate = System.currentTimeMillis();
-  private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
-  private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
 
-  public PotemkinProgress(@NotNull @NlsContexts.ProgressTitle String title, @Nullable Project project, @Nullable JComponent parentComponent,
+  public PotemkinProgress(@NotNull @NlsContexts.ProgressTitle String title,
+                          @Nullable Project project,
+                          @Nullable JComponent parentComponent,
                           @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
     myApp.assertIsDispatchThread();
-    startStealingInputEvents();
+    myEventStealer = startStealingInputEvents(this::dispatchInputEvent, this);
   }
 
-  private void startStealingInputEvents() {
-    IdeEventQueue.getInstance().addPostEventListener(event -> {
-      if (event instanceof MouseEvent || event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE) {
-        myInputEvents.offer((InputEvent)event);
-        return true;
-      }
-      if (event instanceof InvocationEvent && isUrgentInvocationEvent(event)) {
-        myInvocationEvents.offer((InvocationEvent)event);
-        return true;
-      }
-      return false;
-    }, this);
+  static @NotNull EventStealer startStealingInputEvents(@NotNull Consumer<InputEvent> inputConsumer, @NotNull Disposable parent) {
+    return new EventStealer(inputConsumer, parent);
   }
 
   private static boolean isUrgentInvocationEvent(AWTEvent event) {
@@ -91,26 +84,9 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     myLastInteraction = now;
 
     if (getDialog().getPanel().isShowing()) {
-      dispatchAwtEventsWithoutModelAccess(0);
+      myEventStealer.dispatchEvents(0);
     }
     updateUI(now);
-  }
-
-  private void dispatchAwtEventsWithoutModelAccess(int timeoutMs) {
-    SunToolkit.flushPendingEvents();
-    try {
-      while (true) {
-        dispatchInvocationEvents();
-
-        InputEvent event = myInputEvents.poll(timeoutMs, TimeUnit.MILLISECONDS);
-        if (event == null) return;
-
-        dispatchInputEvent(event);
-      }
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private void dispatchInputEvent(@NotNull InputEvent e) {
@@ -166,16 +142,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
   private void progressFinished() {
     getDialog().hideImmediately();
-    dispatchInvocationEvents();
-  }
-
-  private void dispatchInvocationEvents() {
-    while (true) {
-      InvocationEvent event = myInvocationEvents.poll();
-      if (event == null) return;
-
-      event.dispatch();
-    }
+    myEventStealer.dispatchInvocationEvents();
   }
 
   /**
@@ -212,7 +179,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
       ensureBackgroundThreadStarted(action);
 
       while (isRunning()) {
-        dispatchAwtEventsWithoutModelAccess(10);
+        myEventStealer.dispatchEvents(10);
         updateUI(System.currentTimeMillis());
       }
     }
@@ -242,6 +209,53 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private static final class MyInvocationEvent extends InvocationEvent {
     MyInvocationEvent(Object source, Runnable runnable) {
       super(source, runnable);
+    }
+  }
+
+  static final class EventStealer {
+    private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
+    private final Consumer<InputEvent> myInputEventDispatcher;
+
+    private EventStealer(@NotNull Consumer<InputEvent> inputConsumer, @NotNull Disposable parent) {
+      myInputEventDispatcher = inputConsumer;
+      IdeEventQueue.getInstance().addPostEventListener(event -> {
+        if (event instanceof MouseEvent || event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE) {
+          myInputEvents.offer((InputEvent)event);
+          return true;
+        }
+        if (event instanceof InvocationEvent && isUrgentInvocationEvent(event)) {
+          myInvocationEvents.offer((InvocationEvent)event);
+          return true;
+        }
+        return false;
+      }, parent);
+    }
+
+    void dispatchEvents(int timeoutMs) {
+      SunToolkit.flushPendingEvents();
+      try {
+        while (true) {
+          dispatchInvocationEvents();
+
+          InputEvent event = myInputEvents.poll(timeoutMs, TimeUnit.MILLISECONDS);
+          if (event == null) return;
+
+          myInputEventDispatcher.accept(event);
+        }
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    void dispatchInvocationEvents() {
+      while (true) {
+        InvocationEvent event = myInvocationEvents.poll();
+        if (event == null) return;
+
+        event.dispatch();
+      }
     }
   }
 }

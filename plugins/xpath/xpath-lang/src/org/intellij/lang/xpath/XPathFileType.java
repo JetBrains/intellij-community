@@ -29,6 +29,7 @@ public final class XPathFileType extends LanguageFileType {
     public static final XPathFileType XPATH = new XPathFileType(new XPathLanguage());
     public static final XPathFileType XPATH2 = new XPathFileType(new XPath2Language());
 
+    @SuppressWarnings("NonDefaultConstructor")
     private XPathFileType(Language language) {
         super(language);
     }

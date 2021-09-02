@@ -176,8 +176,16 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return psiElement.getContainingFile();
   }
 
+  /**
+   * Called before this inspection tool' visitor started processing any PSI elements the IDE wanted it to process in this session.
+   * There are no guarantees about which thread it's called from or whether there is a read/write action it's called under.
+   */
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}
 
+  /**
+   * Called when this inspection tool' visitor finished processing all PSI elements the IDE wanted it to process in this session.
+   * There are no guarantees about which thread it's called from or whether there is a read/write action it's called under.
+   */
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 

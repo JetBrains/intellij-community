@@ -130,7 +130,7 @@ abstract class ServiceView extends JPanel implements Disposable {
       }
     };
     serviceView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return ServiceViewManagerImpl.getToolWindowContextHelpId();
       }
       if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
@@ -158,7 +158,7 @@ abstract class ServiceView extends JPanel implements Disposable {
         return viewOptions;
       }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
-      if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
         return new SmartList<DataProvider>(slowDataId -> {
           if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowDataId)) {
             List<Navigatable> navigatables = ContainerUtil.mapNotNull(selectedItems, item -> item.getViewDescriptor().getNavigatable());

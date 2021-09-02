@@ -9,6 +9,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
@@ -17,6 +18,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
@@ -36,6 +38,7 @@ import training.lang.LangSupport
 import training.learn.course.KLesson
 import training.learn.course.Lesson
 import training.learn.course.LessonType
+import training.learn.exceptons.LessonPreparationException
 import training.learn.lesson.LessonManager
 import training.project.ProjectUtils
 import training.statistic.StatisticBase
@@ -94,7 +97,7 @@ internal object OpenLessonActivities {
           if (!isLearningProject(projectWhereToStartLesson, langSupport)) {
             //1. learnProject == null and current project has different name then initLearnProject and register post startup open lesson
             LOG.debug("${projectWhereToStartLesson.name}: 1. learnProject is null or disposed")
-            initLearnProject(projectWhereToStartLesson) {
+            initLearnProject(projectWhereToStartLesson, null) {
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... LearnProject has been started")
               openLessonWhenLearnProjectStart(lesson, it)
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... open lesson when learn project has been started")
@@ -140,12 +143,21 @@ internal object OpenLessonActivities {
   }
 
   private fun prepareAndOpenLesson(project: Project, lessonToOpen: Lesson, withCleanup: Boolean = true) {
-    runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) {
-      if (withCleanup) {
-        LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
+    runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) l@{
+      try {
+        if (withCleanup) {
+          LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
+        }
+        lessonToOpen.prepare(project)
       }
-      lessonToOpen.prepare(project)
-
+      catch (e: LessonPreparationException) {
+        thisLogger().warn("Error occurred when preparing the lesson ${lessonToOpen.id}", e)
+        return@l
+      }
+      catch (t: Throwable) {
+        thisLogger().error("Error occurred when preparing the lesson ${lessonToOpen.id}", t)
+        return@l
+      }
       invokeLater {
         openLessonForPreparedProject(project, lessonToOpen)
       }
@@ -279,9 +291,9 @@ internal object OpenLessonActivities {
     TextEditorWithPreview.openPreviewForFile(project, readme)
   }
 
-  fun openOnboardingFromWelcomeScreen(onboarding: Lesson) {
+  fun openOnboardingFromWelcomeScreen(onboarding: Lesson, selectedSdk: Sdk?) {
     StatisticBase.logLearnProjectOpenedForTheFirstTime(StatisticBase.LearnProjectOpeningWay.ONBOARDING_PROMOTER)
-    initLearnProject(null) { project ->
+    initLearnProject(null, selectedSdk) { project ->
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
           if (onboarding.properties.canStartInDumbMode) {
@@ -297,20 +309,21 @@ internal object OpenLessonActivities {
     }
   }
 
-  fun openLearnProjectFromWelcomeScreen() {
+  fun openLearnProjectFromWelcomeScreen(selectedSdk: Sdk?) {
     StatisticBase.logLearnProjectOpenedForTheFirstTime(StatisticBase.LearnProjectOpeningWay.LEARN_IDE)
-    initLearnProject(null) { project ->
+    initLearnProject(null, selectedSdk) { project ->
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
           openReadme(project)
           hideOtherViews(project)
-          showLearnPanel(project)
+          val anchor = LangManager.getInstance().getLangSupport()?.getToolWindowAnchor() ?: ToolWindowAnchor.LEFT
+          showLearnPanel(project, anchor)
           CourseManager.instance.unfoldModuleOnInit = null
           // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
-            showLearnPanel(project)
+            showLearnPanel(project, anchor)
             DumbService.getInstance(project).runWhenSmart {
-              showLearnPanel(project)
+              showLearnPanel(project, anchor)
             }
           }
           Alarm().addRequest(openWhenSmart, 500)
@@ -319,7 +332,7 @@ internal object OpenLessonActivities {
     }
   }
 
-  private fun showLearnPanel(project: Project, preferredAnchor: ToolWindowAnchor = ToolWindowAnchor.LEFT): Boolean {
+  private fun showLearnPanel(project: Project, preferredAnchor: ToolWindowAnchor): Boolean {
     val learn = learningToolWindow(project) ?: return false
     if (learn.anchor != preferredAnchor && learn.type == ToolWindowType.DOCKED) {
       learn.setAnchor(preferredAnchor, null)
@@ -446,7 +459,7 @@ internal object OpenLessonActivities {
     return vf
   }
 
-  private fun initLearnProject(projectToClose: Project?, postInitCallback: (learnProject: Project) -> Unit) {
+  private fun initLearnProject(projectToClose: Project?, selectedSdk: Sdk?, postInitCallback: (learnProject: Project) -> Unit) {
     val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language for learning plugin is not defined")
     //if projectToClose is open
     findLearnProjectInOpenedProjects(langSupport)?.let {
@@ -458,7 +471,7 @@ internal object OpenLessonActivities {
       if (!NewLearnProjectUtil.showDialogOpenLearnProject(projectToClose))
         return //if user abort to open lesson in a new Project
     try {
-      NewLearnProjectUtil.createLearnProject(projectToClose, langSupport) { learnProject ->
+      NewLearnProjectUtil.createLearnProject(projectToClose, langSupport, selectedSdk) { learnProject ->
         langSupport.applyToProjectAfterConfigure().invoke(learnProject)
         LearningUiManager.learnProject = learnProject
         runInEdt {

@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
@@ -687,6 +688,23 @@ class ExternalSystemStorageTest {
   fun `load regular facet and imported sub-facet`() = loadProjectAndCheckResults("singleModuleWithImportedSubFacet") { project ->
     val module = ModuleManager.getInstance(project).modules.single()
     checkFacetAndSubFacet(module, "web", null, MOCK_EXTERNAL_SOURCE)
+  }
+
+  @Test(expected = Test.None::class)
+  fun `get modifiable models of renamed module`() = loadProjectAndCheckResults("singleModuleWithImportedSubFacet") { project ->
+    runWriteActionAndWait {
+      val newModule = ModuleManager.getInstance(project).newModule("myModule", EmptyModuleType.EMPTY_MODULE)
+
+      val provider = IdeModifiableModelsProviderImpl(project)
+
+      val anotherModifiableModel = provider.modifiableModuleModel
+      anotherModifiableModel.renameModule(newModule, "newName")
+
+      // Assert no exceptions
+      provider.getModifiableRootModel(newModule)
+
+      anotherModifiableModel.dispose()
+    }
   }
 
   private fun createFacetAndSubFacet(module: Module, name: String, facetSource: ProjectModelExternalSource?,

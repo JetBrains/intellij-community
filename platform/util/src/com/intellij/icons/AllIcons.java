@@ -1118,6 +1118,7 @@ public class AllIcons {
   public static final class Vcs {
     /** 16x16 */ public static final @NotNull Icon Arrow_left = load("vcs/arrow_left.svg", 1017333724352847150L, 2);
     /** 16x16 */ public static final @NotNull Icon Arrow_right = load("vcs/arrow_right.svg", -2429994767337567621L, 2);
+    /** 16x16 */ public static final @NotNull Icon Author = load("vcs/author.svg", 3383923671362013096L, 0);
     /** 16x16 */ public static final @NotNull Icon Branch = load("vcs/branch.svg", -3485059698694640189L, 2);
     /** 16x16 */ public static final @NotNull Icon BranchNode = load("vcs/branchNode.svg", 3104359452876188913L, 0);
     /** 16x16 */ public static final @NotNull Icon Changelist = load("vcs/changelist.svg", -4687462271341097363L, 2);

@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.navigation.TargetPresentation;
+import com.intellij.navigation.TargetPresentationBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
@@ -12,6 +14,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.list.TargetPopup;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +26,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ReadOnlyStatusDialog extends OptionsDialog {
   private static final SimpleTextAttributes BOLD_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.foreground());
@@ -31,13 +33,13 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new JBColor(() -> UIUtil.getListSelectionForeground(true)));
 
   private JPanel myTopPanel;
-  private JList<VirtualFile> myFileList;
+  private JList<FileInfo> myFileList;
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
   private JComboBox<String> myChangelist;
-  private List<? extends FileInfo> myFiles;
+  private List<FileInfo> myFiles;
 
-  public ReadOnlyStatusDialog(Project project, @NotNull List<? extends FileInfo> files) {
+  public ReadOnlyStatusDialog(Project project, @NotNull List<FileInfo> files) {
     super(project);
     setTitle(IdeBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;
@@ -54,9 +56,15 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     myUsingFileSystemRadioButton.addActionListener(listener);
     (myUsingVcsRadioButton.isEnabled() ? myUsingVcsRadioButton : myUsingFileSystemRadioButton).setSelected(true);
     myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
-
-    myFileList.setCellRenderer(new FileListRenderer());
-
+    myFileList.setCellRenderer(TargetPopup.createTargetPresentationRenderer((fileInfo) -> {
+      VirtualFile vf = fileInfo.getFile();
+      TargetPresentationBuilder builder = TargetPresentation.builder(vf.getPresentableName())
+        .icon(fileInfo.getIcon())
+        .presentableText(vf.getPresentableName());
+      VirtualFile vfParent = vf.getParent();
+      if (vfParent != null) builder = builder.locationText(vfParent.getPresentableUrl());
+      return builder.presentation();
+    }));
     init();
   }
 
@@ -68,8 +76,8 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       }
 
       @Override
-      public VirtualFile getElementAt(final int index) {
-        return myFiles.get(index).getFile();
+      public FileInfo getElementAt(final int index) {
+        return myFiles.get(index);
       }
     });
 

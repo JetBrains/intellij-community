@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
 import com.intellij.ide.ReopenProjectAction
@@ -41,20 +40,20 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
     val ui = ProjectIconUI(projectPath)
 
     val panel = panel {
-      twoColumnRow(
-        {
+      row {
+        cell {
           component(IconPreviewPanel(ui.iconLabel)).withLargeLeftGap()
-        },
-        {
-         component(panel {
-           fullRow {
-             component(ui.setIconActionLink)
-               .comment(IdeBundle.message("link.change.project.icon.description"))
-             component(ui.removeIcon.component)
-           }
-         }).withLargeLeftGap()
         }
-      )
+        cell {
+          component(panel {
+            fullRow {
+              component(ui.setIconActionLink)
+                .comment(IdeBundle.message("link.change.project.icon.description"))
+              component(ui.removeIcon.component)
+            }
+          }).withLargeLeftGap()
+        }
+      }
     }
 
     if (dialog(IdeBundle.message("dialog.title.change.project.icon"), panel).showAndGet()) {

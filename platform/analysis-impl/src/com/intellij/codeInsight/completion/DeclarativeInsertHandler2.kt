@@ -48,7 +48,7 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<Decl
 
 /**
  * Important statements of the contract.
- * * Operations of RelativeTextEdit have greedy ranges which may NOT intersect, their offsets must also be independent (with regards to order of application), for example:
+ * * Operations of RelativeTextEdit have greedy ranges which may NOT intersect, their offsets must also be independent (in regard to order of application), for example:
  *    operations (0, 0, "AA) and (2, 2, "BB) - offsets of "BB" should not be calculated with expectation of operation "AA" applied first, and vice-versa.
  *    following text: _<caret>___ should look like: _<caret>AA_BB__
  * * Reasoning for intersection rule: if ranges intersect, then order of application becomes important; so please merge your operations' ranges

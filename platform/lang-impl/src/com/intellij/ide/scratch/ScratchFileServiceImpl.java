@@ -189,7 +189,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     RootType rootType = getRootType(file);
     if (rootType == null || rootType.isHidden()) return false;
     Document document = FileDocumentManager.getInstance().getDocument(file);
-    return document != null && document.getTextLength() < 1024 && StringUtil.isEmptyOrSpaces(document.getText());
+    return document != null && document.getTextLength() < 10240 && StringUtil.isEmptyOrSpaces(document.getText());
   }
 
   private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {
@@ -413,16 +413,21 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
         return null;
       }
     }
-    String ext = PathUtil.getFileExtension(pathName);
-    String fileNameExt = PathUtil.getFileName(pathName);
-    String fileName = StringUtil.trimEnd(fileNameExt, ext == null ? "" : "." + ext);
+    String fileName = PathUtil.getFileName(pathName);
     return WriteAction.compute(() -> {
       VirtualFile dir = VfsUtil.createDirectories(PathUtil.getParentPath(fullPath));
       if (option == Option.create_new_always) {
-        return dir.createChildData(fileSystem, ScratchImplUtil.getNextAvailableName(dir, fileName, StringUtil.notNullize(ext)));
+        return dir.createChildData(fileSystem, ScratchImplUtil.getNextAvailableName(dir, fileName));
+      }
+      else if (option == Option.create_if_missing && rootType instanceof ScratchRootType && fileName.startsWith("buffer")) {
+        VirtualFile file = ScratchImplUtil.findFileIgnoreExtension(dir, fileName);
+        if (file != null && !file.getName().equals(fileName)) {
+          file.rename(this, fileName);
+        }
+        return file != null ? file : dir.findOrCreateChildData(fileSystem, fileName);
       }
       else {
-        return dir.findOrCreateChildData(fileSystem, fileNameExt);
+        return dir.findOrCreateChildData(fileSystem, fileName);
       }
     });
   }

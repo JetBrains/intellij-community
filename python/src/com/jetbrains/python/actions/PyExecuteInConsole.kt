@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions
 
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -10,6 +11,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.xdebugger.XDebuggerManager
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.*
 import com.jetbrains.python.run.PythonRunConfiguration
 
@@ -26,6 +28,7 @@ object PyExecuteInConsole {
     var isDebug = false
     var newConsoleListener: PydevConsoleRunner.ConsoleListener? = null
     val virtualFile = (editor as? EditorImpl)?.virtualFile
+    if (!checkIfAvailableAndShowHint(editor)) return
     if (canUseExistingConsole) {
       if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
         val (descriptor, listener) = getCustomDescriptor(project, editor)
@@ -57,12 +60,22 @@ object PyExecuteInConsole {
     }
   }
 
+  fun checkIfAvailableAndShowHint(editor: Editor?): Boolean {
+    val virtualFile = (editor as? EditorImpl)?.virtualFile
+    if (editor != null && virtualFile != null && PyExecuteConsoleCustomizer.instance.getCustomDescriptorType(virtualFile) ==
+        DescriptorType.NON_INTERACTIVE) {
+      HintManager.getInstance().showErrorHint(editor, PyBundle.message("python.console.toolbar.action.available.non.interactive"))
+      return false
+    }
+    return true
+  }
+
   private fun getCustomDescriptor(project: Project, editor: Editor?): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
     val virtualFile = (editor as? EditorImpl)?.virtualFile ?: return Pair(null, null)
     val executeCustomizer = PyExecuteConsoleCustomizer.instance
     when (executeCustomizer.getCustomDescriptorType(virtualFile)) {
       DescriptorType.NEW -> {
-        return Pair(null, createNewConsoleListener(project, executeCustomizer, virtualFile))
+        return Pair(null, createNewConsoleListener(project, virtualFile))
       }
       DescriptorType.EXISTING -> {
         val console = executeCustomizer.getExistingDescriptor(virtualFile)
@@ -70,14 +83,14 @@ object PyExecuteInConsole {
           return Pair(console, null)
         }
         else {
-          return Pair(null, createNewConsoleListener(project, executeCustomizer, virtualFile))
+          return Pair(null, createNewConsoleListener(project, virtualFile))
         }
       }
       DescriptorType.STARTING -> {
         return Pair(null, null)
       }
       DescriptorType.NON_INTERACTIVE -> {
-        throw IllegalStateException("This code shouldn't be called for non-interactive descriptor")
+        throw IllegalStateException("This code shouldn't be called for a non-interactive descriptor")
       }
       else -> {
         throw IllegalStateException("Custom descriptor for ${virtualFile} is null")
@@ -85,12 +98,11 @@ object PyExecuteInConsole {
     }
   }
 
-  private fun createNewConsoleListener(project: Project, executeCustomizer: PyExecuteConsoleCustomizer,
-                                       virtualFile: VirtualFile): PydevConsoleRunner.ConsoleListener {
+  fun createNewConsoleListener(project: Project, virtualFile: VirtualFile): PydevConsoleRunner.ConsoleListener {
     return PydevConsoleRunner.ConsoleListener { consoleView ->
       val consoles = getAllRunningConsoles(project)
       val newDescriptor = consoles.find { it.executionConsole === consoleView }
-      executeCustomizer.updateDescriptor(virtualFile, DescriptorType.EXISTING, newDescriptor)
+      PyExecuteConsoleCustomizer.instance.updateDescriptor(virtualFile, DescriptorType.EXISTING, newDescriptor)
     }
   }
 
@@ -138,11 +150,10 @@ object PyExecuteInConsole {
     else {
       consoleRunnerFactory.createConsoleRunnerWithFile(project, null, runFileText, config)
     }
-    val toolWindow = PythonConsoleToolWindow.getInstance(project)
     runner.addConsoleListener { consoleView ->
       if (consoleView is PyCodeExecutor) {
         (consoleView as PyCodeExecutor).executeCode(runFileText, null)
-        toolWindow?.toolWindow?.show(null)
+        PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null)
       }
     }
     if (listener != null) {

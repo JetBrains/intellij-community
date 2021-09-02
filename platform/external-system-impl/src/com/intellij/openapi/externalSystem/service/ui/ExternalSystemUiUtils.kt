@@ -7,10 +7,8 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.DocumentAdapter
 import java.awt.event.*
-import java.io.File
 import javax.swing.InputMap
 import javax.swing.JComponent
 import javax.swing.KeyStroke
@@ -57,14 +55,6 @@ fun JComponent.addKeyboardAction(keyStrokes: List<KeyStroke>, action: (ActionEve
   for (keyStroke in keyStrokes) {
     registerKeyboardAction(action, keyStroke, JComponent.WHEN_FOCUSED)
   }
-}
-
-fun getUiPath(path: String): String {
-  return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
-}
-
-fun getModelPath(path: String, removeLastSlash: Boolean = true): String {
-  return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
 }
 
 fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit) {

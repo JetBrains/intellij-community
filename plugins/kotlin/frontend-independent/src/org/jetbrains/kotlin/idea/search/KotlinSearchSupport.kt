@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -66,7 +67,7 @@ interface KotlinSearchUsagesSupport {
         ): Boolean = getInstance(ktClass.project).forEachKotlinOverride(ktClass, members, scope, searchDeeply, processor)
 
         fun PsiMethod.forEachOverridingMethod(
-            scope: SearchScope = runReadAction { useScope },
+            scope: SearchScope = runReadAction { this.codeUsageScope() },
             processor: (PsiMethod) -> Boolean
         ): Boolean = getInstance(project).forEachOverridingMethod(this, scope, processor)
 
@@ -85,9 +86,11 @@ interface KotlinSearchUsagesSupport {
         fun KtClass.isInheritable(): Boolean =
             getInstance(project).isInheritable(this)
 
+        @NlsSafe
         fun formatJavaOrLightMethod(method: PsiMethod): String =
             getInstance(method.project).formatJavaOrLightMethod(method)
 
+        @NlsSafe
         fun formatClass(classOrObject: KtClassOrObject): String =
             getInstance(classOrObject.project).formatClass(classOrObject)
 

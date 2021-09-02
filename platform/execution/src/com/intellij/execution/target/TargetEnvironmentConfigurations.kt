@@ -8,11 +8,12 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.local.LocalTargetType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 
-private val Project.defaultTargetName: String?
+private val Project.defaultTargetName: @NlsSafe String?
   get() = TargetEnvironmentsManager.getInstance(this).defaultTarget?.displayName
 
-fun RunProfile.getEffectiveTargetName(): String? {
+fun RunProfile.getEffectiveTargetName(): @NlsSafe String? {
   if (this !is TargetEnvironmentAwareRunProfile) return null
 
   return when {
@@ -25,7 +26,7 @@ fun RunProfile.getEffectiveTargetName(): String? {
 /**
  * @see TargetEnvironmentsManager.defaultTarget
  */
-fun TargetEnvironmentAwareRunProfile.getEffectiveTargetName(project: Project): String? {
+fun TargetEnvironmentAwareRunProfile.getEffectiveTargetName(project: Project): @NlsSafe String? {
   return when (defaultTargetName) {
     LocalTargetType.LOCAL_TARGET_NAME -> null
     else -> defaultTargetName ?: project.defaultTargetName
@@ -58,7 +59,7 @@ fun getEffectiveConfiguration(targetName: String?, project: Project): TargetEnvi
  *
  * Differs from [getEffectiveConfiguration] that it does not search for the target configuration but rather uses the provided [targetName].
  */
-fun getEffectiveTargetName(targetName: String?, project: Project): String? =
+fun getEffectiveTargetName(targetName: String?, project: Project): @NlsSafe String? =
   when {
     targetName == LocalTargetType.LOCAL_TARGET_NAME -> null
     targetName != null -> targetName

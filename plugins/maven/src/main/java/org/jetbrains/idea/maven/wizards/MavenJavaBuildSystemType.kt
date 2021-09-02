@@ -2,51 +2,49 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.generators.JavaBuildSystemType
-import com.intellij.ide.projectWizard.generators.JavaSettings
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
+import org.jetbrains.idea.maven.model.MavenId
 
-class MavenJavaBuildSystemType : JavaBuildSystemType<MavenJavaBuildSystemSettings>("Maven") {
-  override var settingsFactory = { MavenJavaBuildSystemSettings() }
+class MavenJavaBuildSystemType : JavaBuildSystemType {
+  override val name = "Maven"
 
-  override fun setupProject(project: Project, languageSettings: JavaSettings, settings: MavenJavaBuildSystemSettings) {
-    TODO("Not yet implemented")
-  }
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
-  override fun advancedSettings(settings: MavenJavaBuildSystemSettings): DialogPanel =
-    panel {
-      hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
-        row {
-          cell { label(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) }
-          cell {
-            textField(settings::groupId)
+  class Step(parent: JavaNewProjectWizard.Step) : AbstractNewProjectWizardChildStep<JavaNewProjectWizard.Step>(parent) {
+    var groupId: String = "org.example"
+    var artifactId: String = ""
+    var version: String = "1.0-SNAPSHOT"
+
+    override fun setupUI(builder: RowBuilder) {
+      with(builder) {
+        hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
+          row(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) {
+            textField(::groupId)
           }
-        }
-
-        row {
-          cell { label(MavenWizardBundle.message("label.project.wizard.new.project.artifact.id")) }
-          cell {
-            textFieldWithBrowseButton(settings::artifactId, MavenWizardBundle.message("label.project.wizard.new.project.artifact.id"), null,
-                                      FileChooserDescriptorFactory.createSingleFolderDescriptor())
-          }
-        }
-
-        row {
-          cell { label(MavenWizardBundle.message("label.project.wizard.new.project.version")) }
-          cell {
-            textFieldWithBrowseButton(settings::version,
-                                      MavenWizardBundle.message("label.project.wizard.new.project.version"), null,
-                                      FileChooserDescriptorFactory.createSingleFolderDescriptor())
+          row(MavenWizardBundle.message("label.project.wizard.new.project.artifact.id")) {
+            textField(::artifactId)
           }
         }
       }
     }
-}
 
-class MavenJavaBuildSystemSettings {
-  var groupId: String = ""
-  var artifactId: String = ""
-  var version: String = ""
+    override fun setupProject(project: Project) {
+      val builder = InternalMavenModuleBuilder().apply {
+        moduleJdk = parentStep.sdk
+
+        parentProject = null
+        aggregatorProject = null
+        projectId = MavenId(groupId, artifactId, version)
+        isInheritGroupId = false
+        isInheritVersion = false
+      }
+
+      ExternalProjectsManagerImpl.setupCreatedProject(project)
+      builder.commit(project)
+    }
+  }
 }

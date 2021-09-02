@@ -63,6 +63,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -142,6 +143,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      if (myEditor != null) {
+        Document document = myEditor.getDocument();
+        FileDocumentManager.getInstance().reloadFromDisk(document);
+      }
       Project project = getProject();
       if (project != null) {
         doPostponedFormatting(project);
@@ -3018,6 +3023,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         break;
       }
     }
+  }
+
+  public void testPutArgumentsOnSeparateLinesIntentionMustNotRemoveErrorHighlighting() {
+    configureByText(JavaFileType.INSTANCE, "class X{ static void foo(String s1, String s2, String s3) { foo(\"1\", 1.2, \"2\"<caret>); }}");
+    assertEquals(1, highlightErrors().size());
+
+    List<IntentionAction> fixes = LightQuickFixTestCase.getAvailableActions(getEditor(), getFile());
+    IntentionAction intention = assertContainsOneOf(fixes, "Put arguments on separate lines");
+    assertNotNull(intention);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> intention.invoke(getProject(), getEditor(), getFile()));
+    assertEquals(1, highlightErrors().size());
   }
 }
 

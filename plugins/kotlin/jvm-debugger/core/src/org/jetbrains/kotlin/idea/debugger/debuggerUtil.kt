@@ -43,6 +43,14 @@ fun ReferenceType.isInKotlinSourcesAsync(): CompletableFuture<Boolean> {
             val fileExtension = it?.substringAfterLast('.')?.toLowerCase() ?: ""
             fileExtension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
         }
+        .exceptionally {
+            if (DebuggerUtilsAsync.unwrap(it) is AbsentInformationException) {
+                false
+            }
+            else {
+                throw it
+            }
+        }
         .thenCombine(containsKotlinStrataAsync()) { kotlinExt, kotlinStrata -> kotlinExt || kotlinStrata }
 }
 

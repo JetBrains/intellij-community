@@ -40,6 +40,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -119,7 +120,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public boolean canPutBreakpointAt(@NotNull Project project, @NotNull VirtualFile file, int line) {
-    return Arrays.stream(getLineBreakpointTypes()).anyMatch(type -> type.canPutAt(file, line, project));
+    return ContainerUtil.exists(getLineBreakpointTypes(), type -> type.canPutAt(file, line, project));
   }
 
   @Override

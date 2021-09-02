@@ -11,15 +11,15 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.SmartList;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,16 +27,24 @@ import org.jetbrains.uast.UCallExpression;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUastLocalInspectionTool {
 
-  public static final String DEFAULT_BLOCKING_ANNOTATION = "org.jetbrains.annotations.Blocking";
-  public static final String DEFAULT_NONBLOCKING_ANNOTATION = "org.jetbrains.annotations.NonBlocking";
+  public static final List<String> DEFAULT_BLOCKING_ANNOTATIONS = List.of(
+    "org.jetbrains.annotations.Blocking",
+    "io.micronaut.core.annotation.Blocking",
+    "io.smallrye.common.annotation.Blocking"
+  );
+  public static final List<String> DEFAULT_NONBLOCKING_ANNOTATIONS = List.of(
+    "org.jetbrains.annotations.NonBlocking",
+    "io.micronaut.core.annotation.NonBlocking",
+    "io.smallrye.common.annotation.NonBlocking"
+  );
 
-  public List<String> myBlockingAnnotations = new SmartList<>();
-  public List<String> myNonBlockingAnnotations = new SmartList<>();
+  public List<String> myBlockingAnnotations = new ArrayList<>(DEFAULT_BLOCKING_ANNOTATIONS);
+  public List<String> myNonBlockingAnnotations = new ArrayList<>(DEFAULT_NONBLOCKING_ANNOTATIONS);
 
   @Nullable
   @Override
@@ -47,7 +55,6 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-
     List<BlockingMethodChecker> blockingMethodCheckers =
       ContainerUtil.append(BlockingMethodChecker.EP_NAME.getExtensionList(),
                            new AnnotationBasedBlockingMethodChecker(myBlockingAnnotations));
@@ -72,7 +79,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
   private final class OptionsPanel extends JPanel {
     private OptionsPanel() {
       super(new BorderLayout());
-      final Splitter mainPanel = new Splitter(true);
+      JPanel mainPanel = new JPanel(new VerticalLayout(UIUtil.DEFAULT_VGAP));
 
       Project project = getCurrentProjectOrDefault(this);
       BlockingAnnotationsPanel blockingAnnotationsPanel =
@@ -80,26 +87,23 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
           project,
           JvmAnalysisBundle
             .message("jvm.inspections.blocking.method.annotation.blocking"),
-          DEFAULT_BLOCKING_ANNOTATION,
           myBlockingAnnotations,
-          Collections.singletonList(DEFAULT_BLOCKING_ANNOTATION),
+          DEFAULT_BLOCKING_ANNOTATIONS,
           JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.empty.text"),
           JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"));
-
 
       BlockingAnnotationsPanel nonBlockingAnnotationsPanel =
         new BlockingAnnotationsPanel(
           project,
           JvmAnalysisBundle.message(
             "jvm.inspections.blocking.method.annotation.non-blocking"),
-          DEFAULT_NONBLOCKING_ANNOTATION,
           myNonBlockingAnnotations,
-          Collections.singletonList(DEFAULT_NONBLOCKING_ANNOTATION),
+          DEFAULT_NONBLOCKING_ANNOTATIONS,
           JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.empty.text"),
           JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.non-blocking.title"));
 
-      mainPanel.setFirstComponent(blockingAnnotationsPanel.getComponent());
-      mainPanel.setSecondComponent(nonBlockingAnnotationsPanel.getComponent());
+      mainPanel.add(blockingAnnotationsPanel.getComponent());
+      mainPanel.add(nonBlockingAnnotationsPanel.getComponent());
 
       add(mainPanel, BorderLayout.CENTER);
     }

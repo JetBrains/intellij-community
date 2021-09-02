@@ -261,7 +261,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return getSelectedValue();
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
     return null;

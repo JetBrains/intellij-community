@@ -76,7 +76,6 @@ object GitLessonsUtil {
   fun LessonContext.resetGitLogWindow() {
     prepareRuntimeTask {
       val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi
-      // todo: find out how to open branches if it is hidden (git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY is internal and can't be accessed)
       vcsLogUi?.filterUi?.clearFilters()
       PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
 

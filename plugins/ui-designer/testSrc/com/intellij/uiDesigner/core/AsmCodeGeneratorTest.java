@@ -3,18 +3,18 @@ package com.intellij.uiDesigner.core;
 
 import com.intellij.DynamicBundle;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.rt.execution.application.AppMainV2;
-import com.intellij.testFramework.UsefulTestCaseKt;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
@@ -25,7 +25,6 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.*;
-import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
@@ -353,14 +352,15 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   public void testTitledBorderInternal() throws Exception {
-    UsefulTestCaseKt.setInternalForTest(this);
-    JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
+    PlatformTestUtil.withSystemProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY, "true", () -> {
+      JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
 
-    assertTrue(panel.getBorder() instanceof TitledBorder);
-    TitledBorder border = (TitledBorder)panel.getBorder();
-    assertEquals("Test Value", border.getTitle());
-    assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
-    assertEquals(border.getClass().getName(), "com.intellij.ui.border.IdeaTitledBorder");
+      assertTrue(panel.getBorder() instanceof TitledBorder);
+      TitledBorder border = (TitledBorder)panel.getBorder();
+      assertEquals("Test Value", border.getTitle());
+      assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
+      assertEquals(border.getClass().getName(), "com.intellij.ui.border.IdeaTitledBorder");
+    });
   }
 
   public void testTitledSeparator() throws Exception {

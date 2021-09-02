@@ -55,5 +55,4 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = toolWindow.initialize(project)
-
 }

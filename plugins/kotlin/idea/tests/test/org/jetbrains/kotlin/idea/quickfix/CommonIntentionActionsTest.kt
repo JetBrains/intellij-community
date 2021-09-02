@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmElement
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
@@ -694,6 +695,8 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
     ) : CreateFieldRequest {
         override fun getTargetSubstitutor(): JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
 
+        override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
+
         override fun getModifiers(): Collection<JvmModifier> = modifiers
 
         override fun isConstant(): Boolean = false
@@ -704,6 +707,8 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
         override fun getFieldName(): String = name
 
         override fun isValid(): Boolean = true
+
+        override fun getInitializer(): JvmValue? = null
     }
 
 }

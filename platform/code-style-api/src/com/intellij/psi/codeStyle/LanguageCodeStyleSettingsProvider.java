@@ -445,6 +445,10 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return true;
   }
 
+  /**
+   * Return true if formatter for this language uses {@link CommonCodeStyleSettings#KEEP_LINE_BREAKS} flag
+   * for custom line breaks processing
+   */
   @ApiStatus.Experimental
   public boolean usesCommonKeepLineBreaks() {
     return false;

@@ -7,7 +7,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -37,7 +37,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
-    val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
 
     val descriptor = object : FileChooserDescriptor(true, true, true, true, false, false) {
       override fun isFileSelectable(file: VirtualFile?): Boolean {

@@ -48,7 +48,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   private boolean myLeaveInTheSameRoot;
   private Consumer<String> myUpdateErrorMessage;
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm();
   public DestinationFolderComboBox() {
     super(new ComboBoxWithWidePopup());
   }

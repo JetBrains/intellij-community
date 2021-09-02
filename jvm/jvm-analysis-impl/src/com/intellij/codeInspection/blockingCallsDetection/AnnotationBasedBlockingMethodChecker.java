@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATIONS;
+
 public final class AnnotationBasedBlockingMethodChecker implements BlockingMethodChecker {
   private final List<String> myBlockingAnnotations;
 
@@ -20,7 +22,7 @@ public final class AnnotationBasedBlockingMethodChecker implements BlockingMetho
   @Override
   public boolean isApplicable(@NotNull PsiFile file) {
     return myBlockingAnnotations != null &&
-           StreamEx.of(BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATION)
+           StreamEx.of(DEFAULT_BLOCKING_ANNOTATIONS)
              .append(myBlockingAnnotations)
              .anyMatch(annotation -> JavaPsiFacade.getInstance(file.getProject()).findClass(annotation, file.getResolveScope()) != null);
   }

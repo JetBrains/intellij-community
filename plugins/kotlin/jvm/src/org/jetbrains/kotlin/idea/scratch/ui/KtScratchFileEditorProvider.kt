@@ -53,7 +53,7 @@ class KtScratchFileEditorProvider : FileEditorProvider, DumbAware {
 class KtScratchFileEditorWithPreview private constructor(
     val scratchFile: ScratchFile,
     sourceTextEditor: TextEditor,
-    private val previewTextEditor: TextEditor
+    previewTextEditor: TextEditor
 ) : TextEditorWithPreview(sourceTextEditor, previewTextEditor), TextEditor, ScratchEditorLinesTranslator {
 
     private val sourceEditor = sourceTextEditor.editor as EditorEx
@@ -77,6 +77,7 @@ class KtScratchFileEditorWithPreview private constructor(
 
     init {
         sourceTextEditor.parentScratchEditorWithPreview = this
+        previewTextEditor.parentScratchEditorWithPreview = this
 
         scratchFile.compilingScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
         scratchFile.replScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)

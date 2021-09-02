@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -20,9 +19,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,7 +39,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Function;
 
-public class RenameWrongRefFix implements IntentionAction, HintAction {
+public class RenameWrongRefFix implements HintAction {
   private final PsiReferenceExpression myRefExpr;
   @NonNls private static final String INPUT_VARIABLE_NAME = "INPUTVAR";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
@@ -74,16 +75,22 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
-  private LookupElement @NotNull [] collectItems() {
+  private LookupElement @NotNull [] collectItems(boolean onTheFly) {
     Set<LookupElement> items = new LinkedHashSet<>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
+      if (onTheFly && StringUtil.isCapitalized(myRefExpr.getText())) {
+        return LookupElement.EMPTY_ARRAY;
+      }
       PsiVariable[] vars = CreateFromUsageUtils.guessMatchingVariables(myRefExpr);
       for (PsiVariable var : vars) {
         items.add(createLookupElement(var, v-> v.getName()));
       }
     } else {
+      if (onTheFly) {
+        return LookupElement.EMPTY_ARRAY;
+      }
       class MyScopeProcessor implements PsiScopeProcessor {
         final ArrayList<PsiElement> myResult = new ArrayList<>();
         final boolean myFilterMethods;
@@ -139,7 +146,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
-    LookupElement[] items = collectItems();
+    LookupElement[] items = collectItems(false);
     ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(element);
@@ -178,7 +185,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
     if (!Registry.is("editor.show.popup.for.unresolved.references", false)) {
       return false;
     }
-    LookupElement[] items = collectItems();
+    LookupElement[] items = collectItems(true);
     if (items.length == 0) return false;
     String hintText = ShowAutoImportPass.getMessage(items.length > 1, items[0].getLookupString());
     TextRange textRange = myRefExpr.getTextRange();
@@ -216,6 +223,10 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
             if (value instanceof LookupElement) {
               @NlsSafe String refSuggestion = ((LookupElement)value).getLookupString();
               setText(refSuggestion);
+              Object object = ((LookupElement)value).getObject();
+              if (object instanceof Iconable) {
+                setIcon(((Iconable)object).getIcon(0));
+              }
             }
             return component;
           }

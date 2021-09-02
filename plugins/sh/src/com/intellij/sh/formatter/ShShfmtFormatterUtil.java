@@ -49,7 +49,7 @@ public final class ShShfmtFormatterUtil {
 
   private static final @NlsSafe String SHFMT = "shfmt";
   private static final @NlsSafe String OLD_SHFMT = "old_shfmt";
-  private static final @NlsSafe String SHFMT_VERSION = "v2.6.4";
+  private static final @NlsSafe String SHFMT_VERSION = "v3.3.1";
   private static final @NlsSafe String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
   private static final @NlsSafe String ARCH_i386 = "_386";

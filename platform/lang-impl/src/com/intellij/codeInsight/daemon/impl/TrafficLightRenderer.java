@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.UtilBundle;
@@ -38,14 +38,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,16 +65,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final SeverityRegistrar mySeverityRegistrar;
   private final TObjectIntHashMap<HighlightSeverity> errorCount = new TObjectIntHashMap<>();
   private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
-
-  /**
-   * @deprecated Please use {@link #TrafficLightRenderer(Project, Document)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public TrafficLightRenderer(Project project, Document document, PsiFile psiFile) {
-    this(project, document);
-    DeprecatedMethodException.report("Please use TrafficLightRenderer(Project, Document) instead");
-  }
 
   public TrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
     myProject = project;

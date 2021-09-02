@@ -4,7 +4,7 @@ from markdown.blockprocessors import BlockProcessor
 from markdown.extensions import Extension
 from markdown.inlinepatterns import InlineProcessor
 
-ABBR_REF_RE: Pattern
+ABBR_REF_RE: Pattern[str]
 
 class AbbrExtension(Extension): ...
 class AbbrPreprocessor(BlockProcessor): ...

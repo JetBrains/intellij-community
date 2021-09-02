@@ -16,7 +16,10 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
         return true /* TODO */
     }
 
-    override fun getInformationHint(element: KtExpression): String = analyseInModalWindow(element, "Getting expression type") {
+    override fun getInformationHint(element: KtExpression): String = analyseInModalWindow(
+        element,
+        KotlinBundle.message("dialog.title.getting.expression.type")
+    ) {
         @NlsSafe
         val rendered = element.getKtType().render()
         StringUtil.escapeXmlEntities(rendered)

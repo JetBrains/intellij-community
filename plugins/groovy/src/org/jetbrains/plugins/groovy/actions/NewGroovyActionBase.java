@@ -5,7 +5,7 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -50,7 +50,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
       return false;
     }
 
-    Module module = LangDataKeys.MODULE.getData(dataContext);
+    Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     return GroovyFacetUtil.isSuitableModule(module) && LibrariesUtil.hasGroovySdk(module);
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -21,6 +22,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.hover.HoverListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
@@ -95,6 +97,10 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     add(decoratorChild, BorderLayout.CENTER);
 
     setBorder(new InnerPanelBorder(toolWindow));
+
+    if (Registry.is("ide.experimental.ui")) {
+      new ToolwindowHoverListener().addTo(this);
+    }
   }
 
   @Override
@@ -108,11 +114,6 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   public ActionGroup getHeaderToolbarWestActions() {
     return header.getToolbarWestActions();
-  }
-
-  @Override
-  public void setBounds(int x, int y, int width, int height) {
-    super.setBounds(x, y, width, height);
   }
 
   @Override
@@ -498,5 +499,24 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   private static void installDefaultFocusTraversalKeys(@NotNull Container container, int id) {
     container.setFocusTraversalKeys(id, KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(id));
+  }
+
+  private class ToolwindowHoverListener extends HoverListener {
+    @Override
+    public void mouseMoved(@NotNull Component component, int x, int y) { }
+
+    @Override
+    public void mouseEntered(@NotNull Component component, int x, int y) {
+      updateToolbarVisibility(true);
+    }
+
+    @Override
+    public void mouseExited(@NotNull Component component) {
+      updateToolbarVisibility(false);
+    }
+
+    private void updateToolbarVisibility(boolean visible) {
+      getHeaderToolbar().getComponent().setVisible(visible);
+    }
   }
 }

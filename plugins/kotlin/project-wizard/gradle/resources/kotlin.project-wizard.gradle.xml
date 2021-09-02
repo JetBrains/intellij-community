@@ -1,0 +1,12 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.projectWizard.gradle">
+  <dependencies>
+    <plugin id="com.intellij.gradle"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.idea.projectWizard.gradle.GradleKotlinBuildSystemType"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <ideaWizardService implementation="org.jetbrains.kotlin.idea.projectWizard.gradle.IdeaGradleWizardService"/>
+  </extensions>
+</idea-plugin>

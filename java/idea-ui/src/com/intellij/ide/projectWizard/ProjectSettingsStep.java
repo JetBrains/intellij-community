@@ -69,6 +69,10 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     }
   }
 
+  JPanel getExpertPlaceholder() {
+    return myExpertPlaceholder;
+  }
+
   private JPanel getModulePanel() {
     return myModuleNameLocationComponent.getModulePanel();
   }

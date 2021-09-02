@@ -535,7 +535,7 @@ public abstract class MergeRequestProcessor implements Disposable {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         if (myRequest != null && myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
           return myRequest.getUserData(DiffUserDataKeys.HELP_ID);
         }

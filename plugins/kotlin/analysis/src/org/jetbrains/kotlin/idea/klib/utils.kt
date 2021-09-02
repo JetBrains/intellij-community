@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.klib
 
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.SingleRootFileViewProvider
@@ -45,7 +46,11 @@ fun VirtualFile.isKlibLibraryRootForPlatform(targetPlatform: TargetPlatform): Bo
         return true
     }
 
-    return children?.any { checkKlibComponent(it, requestedBuiltInsPlatform) } == true
+    try {
+        return children?.any { checkKlibComponent(it, requestedBuiltInsPlatform) } == true
+    } catch (e: InvalidVirtualFileAccessException) {
+        return false
+    }
 }
 
 private fun checkKlibComponent(componentFile: VirtualFile, requestedBuiltInsPlatform: BuiltInsPlatform): Boolean {

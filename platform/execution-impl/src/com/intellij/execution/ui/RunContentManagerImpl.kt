@@ -18,7 +18,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
@@ -137,7 +137,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       override fun getData(dataId: String): Any? {
-        if (PlatformDataKeys.HELP_ID.`is`(dataId)) return executor.helpId
+        if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) return executor.helpId
         return null
       }
     })

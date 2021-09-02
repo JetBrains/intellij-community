@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -287,9 +288,10 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
 
   @Override
   protected void onFinished(final List<JavaModuleSourceRoot> foundPaths, final boolean canceled) {
-    if (!foundPaths.isEmpty()) {
+    List<JavaModuleSourceRoot> paths = ContainerUtil.notNullize(foundPaths);
+    if (!paths.isEmpty()) {
       myCurrentMode = CHOOSE_SOURCE_PANEL;
-      mySourcePathsChooser.setElements(foundPaths, true);
+      mySourcePathsChooser.setElements(paths, true);
     }
     else {
       myCurrentMode = CREATE_SOURCE_PANEL;
@@ -297,7 +299,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     }
     updateStepUI(canceled ? null : getContentRootPath());
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
-      mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
+      mySourcePathsChooser.selectElements(paths.subList(0, 1));
     }
     else if (CREATE_SOURCE_PANEL.equals(myCurrentMode)) {
       myTfSourceDirectoryName.selectAll();

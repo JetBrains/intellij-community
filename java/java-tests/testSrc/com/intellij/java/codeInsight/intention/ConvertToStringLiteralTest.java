@@ -4,12 +4,9 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import org.junit.Assert;
-
-import java.util.List;
+import com.intellij.util.containers.ContainerUtil;
 
 
 public class ConvertToStringLiteralTest extends JavaCodeInsightFixtureTestCase {
@@ -25,13 +22,9 @@ public class ConvertToStringLiteralTest extends JavaCodeInsightFixtureTestCase {
     CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, "Simple.java", "Simple_after.java");
   }
 
-  public void testNotAvailable() {
+  public void testAvailableOnce() {
     myFixture.configureByFile(getTestName(false) + ".java");
-    List<IntentionAction> availableIntentions = myFixture.getAvailableIntentions();
-    final IntentionAction intentionAction = CodeInsightTestUtil.findIntentionByText(availableIntentions, myIntention);
-    if (intentionAction != null) {
-      Assert.fail("Action found: " + myIntention);
-    }
+    assertSize(1, ContainerUtil.filter(myFixture.getAvailableIntentions(), a -> myIntention.equals(a.getText())));
   }
 
   @Override

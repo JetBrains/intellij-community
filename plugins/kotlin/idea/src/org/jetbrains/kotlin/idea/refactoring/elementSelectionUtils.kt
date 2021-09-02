@@ -48,37 +48,48 @@ fun selectElement(
     callback: (PsiElement?) -> Unit
 ) {
     if (editor.selectionModel.hasSelection()) {
-        var selectionStart = editor.selectionModel.selectionStart
-        var selectionEnd = editor.selectionModel.selectionEnd
-
-        var firstElement: PsiElement = file.findElementAt(selectionStart)!!
-        var lastElement: PsiElement = file.findElementAt(selectionEnd - 1)!!
-
-        if (PsiTreeUtil.getParentOfType(
-                firstElement,
-                KtLiteralStringTemplateEntry::class.java,
-                KtEscapeStringTemplateEntry::class.java
-            ) == null
-            && PsiTreeUtil.getParentOfType(
-                lastElement,
-                KtLiteralStringTemplateEntry::class.java,
-                KtEscapeStringTemplateEntry::class.java
-            ) == null
-        ) {
-            firstElement = firstElement.getNextSiblingIgnoringWhitespaceAndComments(true)!!
-            lastElement = lastElement.getPrevSiblingIgnoringWhitespaceAndComments(true)!!
-            selectionStart = firstElement.textRange.startOffset
-            selectionEnd = lastElement.textRange.endOffset
-        }
-
-        val element = elementKinds.asSequence()
-            .mapNotNull { findElement(file, selectionStart, selectionEnd, failOnEmptySuggestion, it) }
-            .firstOrNull()
+        val selectionStart = editor.selectionModel.selectionStart
+        val selectionEnd = editor.selectionModel.selectionEnd
+        val element = findElementAtRange(file, selectionStart, selectionEnd, elementKinds, failOnEmptySuggestion)
         callback(element)
     } else {
         val offset = editor.caretModel.offset
         smartSelectElement(editor, file, offset, failOnEmptySuggestion, elementKinds, callback)
     }
+}
+
+fun findElementAtRange(
+    file: KtFile,
+    selectionStart: Int,
+    selectionEnd: Int,
+    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    failOnEmptySuggestion: Boolean
+): PsiElement? {
+    var adjustedStart = selectionStart
+    var adjustedEnd = selectionEnd
+    var firstElement: PsiElement = file.findElementAt(adjustedStart)!!
+    var lastElement: PsiElement = file.findElementAt(adjustedEnd - 1)!!
+
+    if (PsiTreeUtil.getParentOfType(
+            firstElement,
+            KtLiteralStringTemplateEntry::class.java,
+            KtEscapeStringTemplateEntry::class.java
+        ) == null
+        && PsiTreeUtil.getParentOfType(
+            lastElement,
+            KtLiteralStringTemplateEntry::class.java,
+            KtEscapeStringTemplateEntry::class.java
+        ) == null
+    ) {
+        firstElement = firstElement.getNextSiblingIgnoringWhitespaceAndComments(true)!!
+        lastElement = lastElement.getPrevSiblingIgnoringWhitespaceAndComments(true)!!
+        adjustedStart = firstElement.textRange.startOffset
+        adjustedEnd = lastElement.textRange.endOffset
+    }
+
+    return elementKinds.asSequence()
+        .mapNotNull { findElement(file, adjustedStart, adjustedEnd, failOnEmptySuggestion, it) }
+        .firstOrNull()
 }
 
 fun getSmartSelectSuggestions(

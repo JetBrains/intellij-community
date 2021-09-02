@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from typing import Optional
 
 from cryptography.hazmat.primitives.ciphers import CipherAlgorithm
 
@@ -68,7 +67,7 @@ class ECB(Mode):
     def validate_for_algorithm(self, algorithm: CipherAlgorithm) -> None: ...
 
 class GCM(Mode, ModeWithInitializationVector, ModeWithAuthenticationTag):
-    def __init__(self, initialization_vector: bytes, tag: Optional[bytes], min_tag_length: Optional[int]) -> None: ...
+    def __init__(self, initialization_vector: bytes, tag: bytes | None, min_tag_length: int | None) -> None: ...
     @property
     def initialization_vector(self) -> bytes: ...
     @property

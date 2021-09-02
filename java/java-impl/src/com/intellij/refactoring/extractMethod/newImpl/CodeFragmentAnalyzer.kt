@@ -16,6 +16,7 @@ import com.intellij.psi.controlFlow.*
 import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis
 import com.siyeh.ig.psiutils.VariableAccessUtils
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -100,8 +101,9 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   }
 
   fun findExitDescription(): ExitDescription {
+    val exitStatements = DEFAULT_EXIT_STATEMENTS_CLASSES + PsiYieldStatement::class.java
     val statements = ControlFlowUtil
-      .findExitPointsAndStatements(flow, flowRange.first, flowRange.last, IntArrayList(), *DEFAULT_EXIT_STATEMENTS_CLASSES)
+      .findExitPointsAndStatements(flow, flowRange.first, flowRange.last, IntArrayList(), *exitStatements)
       .filterNot { statement -> isExitInside(statement) }
     val exitPoints = findExitPoints()
     val hasSpecialExits = exitPoints.singleOrNull() != lastGotoPointFrom(flowRange.last)
@@ -138,8 +140,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   private fun lastGotoPointFrom(instructionOffset: Int): Int {
     if (instructionOffset >= flow.size) return instructionOffset
     val instruction = flow.instructions[instructionOffset]
-    fun returnsValue(instructionOffset: Int): Boolean = (flow.getElement(instructionOffset) as? PsiReturnStatement)?.returnValue != null
-    return if (instruction is GoToInstruction && !returnsValue(instructionOffset)) {
+    val statement = flow.getElement(instructionOffset) as? PsiStatement
+    return if (instruction is GoToInstruction && statement != null && getReturnedExpression(statement) == null) {
       lastGotoPointFrom(instruction.offset)
     } else {
       instructionOffset

@@ -3,6 +3,8 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 
+mkdir -p "$DIR/../work"
+
 cd "$DIR/../work"
 
 if [ ! -d "mdn-content" ]; then

@@ -3,7 +3,6 @@ package com.intellij.observable
 
 import com.intellij.openapi.observable.operations.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -129,8 +128,13 @@ class CompoundParallelOperationTraceTest : CompoundParallelOperationTraceTestCas
   fun `test operation listener start with TTL`() = testTrace<Int> {
     val isStarted = AtomicBoolean(false)
     val isFinished = AtomicBoolean(false)
-    trace.onceBeforeOperation { isStarted.set(true) }
-    trace.onceAfterOperation { isFinished.set(true) }
+    trace.onceBeforeOperation({
+      isStarted.set(true)
+    }, testDisposable)
+    trace.onceAfterOperation({
+      isFinished.set(true)
+    }, testDisposable)
+
     operation {
       trace.startTask(1)
       trace.finishTask(1)
@@ -141,32 +145,33 @@ class CompoundParallelOperationTraceTest : CompoundParallelOperationTraceTestCas
 
   @Test
   fun `test operation listening with TTL`() = testTrace<Int> {
-    Disposer.newDisposable().use { parentDisposable ->
-      val ttl = 10
-      val unsubscribeIndex = 7
+    val ttl = 10
+    val unsubscribeIndex = 7
 
-      val startCounter = AtomicInteger(0)
-      val finishCounter = AtomicInteger(0)
-      val startDisposable = trace.beforeOperation(ttl) { startCounter.incrementAndGet() }
-      val finishDisposable = trace.afterOperation(ttl) { finishCounter.incrementAndGet() }
+    val startCounter = AtomicInteger(0)
+    val finishCounter = AtomicInteger(0)
+    val startDisposable = Disposer.newDisposable(testDisposable, "Start operation subscription")
+    trace.beforeOperation(ttl, {
+      startCounter.incrementAndGet()
+    }, startDisposable)
+    trace.afterOperation(ttl, {
+      finishCounter.incrementAndGet()
+    }, testDisposable)
 
-      Disposer.register(parentDisposable, finishDisposable)
-
-      repeat(ttl) { index ->
-        if (index == unsubscribeIndex) {
-          Disposer.dispose(startDisposable)
-        }
-        operation {
-          trace.startTask(1)
-          trace.finishTask(1)
-        }
+    repeat(ttl) { index ->
+      if (index == unsubscribeIndex) {
+        Disposer.dispose(startDisposable)
       }
       operation {
         trace.startTask(1)
         trace.finishTask(1)
       }
-      assertEquals(unsubscribeIndex, startCounter.get())
-      assertEquals(ttl, finishCounter.get())
     }
+    operation {
+      trace.startTask(1)
+      trace.finishTask(1)
+    }
+    assertEquals(unsubscribeIndex, startCounter.get())
+    assertEquals(ttl, finishCounter.get())
   }
 }

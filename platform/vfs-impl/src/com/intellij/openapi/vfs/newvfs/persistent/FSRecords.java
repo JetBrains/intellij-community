@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -318,6 +317,7 @@ public final class FSRecords {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
         }
+        incModCount(parentId);
         updateSymlinksForNewChildren(parent, children, toSave);
         ourTreeAccessor.doSaveChildren(parentId, toSave);
       }

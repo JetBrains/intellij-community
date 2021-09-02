@@ -12,7 +12,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.light.LightFieldBuilder
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.NotNullFunction
@@ -21,6 +20,7 @@ import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+
 /**
  * @author peter
  */
@@ -346,10 +346,5 @@ record Point(int x, int y) {
       }
     }.invoke(project, myFixture.editor, myFixture.file)
     UIUtil.dispatchAllInvocationEvents()
-  }
-
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15
   }
 }

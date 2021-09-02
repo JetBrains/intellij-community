@@ -582,7 +582,12 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
     return indexes.entitySourceIndex.entries().asSequence().filter { sourceFilter(it) }.associateWith { source ->
       indexes.entitySourceIndex
-        .getIdsByEntry(source)!!.map { this.entityDataByIdOrDie(it).createEntity(this) }
+        .getIdsByEntry(source)!!.map {
+          this.entityDataById(it)?.createEntity(this) ?: run {
+            reportErrorAndAttachStorage("Cannot find an entity by id $it", this@AbstractEntityStorage)
+            error("Cannot find an entity by id $it")
+          }
+        }
         .groupBy { it.javaClass as Class<out WorkspaceEntity> }
     }
   }

@@ -65,6 +65,7 @@ import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
+import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
@@ -112,6 +113,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final boolean myTraceIndexUpdates;
 
   private volatile RegisteredIndexes myRegisteredIndexes;
+  private volatile @Nullable String myShutdownReason;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
 
@@ -133,7 +135,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private @Nullable Runnable myShutDownTask;
   private @Nullable ScheduledFuture<?> myFlushingFuture;
-  private @Nullable ScheduledFuture<?> myHealthСheсkFuture;
+  private @Nullable ScheduledFuture<?> myHealthCheckFuture;
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
@@ -360,7 +362,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void setUpHealthCheck() {
-    myHealthСheсkFuture = AppExecutorUtil
+    myHealthCheckFuture = AppExecutorUtil
       .getAppScheduledExecutorService()
       .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
         myIndexableFilesFilterHolder.runHealthCheck();
@@ -372,7 +374,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     public void run() {
       FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
       if (fileBasedIndex instanceof FileBasedIndexImpl) {
-        ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false);
+        ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false, "IDE shutdown");
       }
     }
   }
@@ -417,6 +419,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       LOG.assertTrue(myRegisteredIndexes == null);
       myStorageBufferingHandler.resetState();
       myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
+      myShutdownReason = null;
     }
   }
 
@@ -590,7 +593,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void performShutdown(boolean keepConnection) {
+  void performShutdown(boolean keepConnection, @NotNull String reason) {
+    myShutdownReason = keepConnection ? reason : null;
     RegisteredIndexes registeredIndexes = myRegisteredIndexes;
     if (registeredIndexes == null || !registeredIndexes.performShutdown()) {
       return; // already shut down
@@ -607,9 +611,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         myFlushingFuture.cancel(false);
         myFlushingFuture = null;
       }
-      if (myHealthСheсkFuture != null) {
-        myHealthСheсkFuture.cancel(false);
-        myHealthСheсkFuture = null;
+      if (myHealthCheckFuture != null) {
+        myHealthCheckFuture.cancel(false);
+        myHealthCheckFuture = null;
       }
     }
     finally {
@@ -767,6 +771,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                     @Nullable Project project,
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
+    String shutdownReason = myShutdownReason;
+    if (shutdownReason != null) {
+      LOG.info("FileBasedIndex is currently shutdown because: " + shutdownReason);
+      return false;
+    }
     ProgressManager.checkCanceled();
     SlowOperations.assertSlowOperationsAreAllowed();
     getChangedFilesCollector().ensureUpToDate();
@@ -1734,7 +1743,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     IndexingFlag.cleanProcessedFlagRecursively(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
-    Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRegisteredIndexes.getRequiringContentIndices());
 
     // transient index value can depend on disk value because former is diff to latter
     // it doesn't matter content hanged or not: indices might depend on file name too
@@ -1758,6 +1766,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
     final List<IndexableFilesFilter> filters = IndexableFilesFilter.EP_NAME.getExtensionList();
     if (!filters.isEmpty() && !ContainerUtil.exists(filters, e -> e.shouldIndex(file))) return;
+
+    if (myIndexableFilesFilterHolder.addFileId(fileId, () -> getContainingProjects(file)) == FileAddStatus.SKIPPED) {
+      doInvalidateIndicesForFile(fileId, file);
+      return;
+    }
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
@@ -1987,7 +2000,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public static final boolean DO_TRACE_STUB_INDEX_UPDATE = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false);
+  public static final boolean DO_TRACE_STUB_INDEX_UPDATE = Boolean.getBoolean("idea.trace.stub.index.update");
 
   @ApiStatus.Internal
   static <K, V> int getIndexExtensionVersion(@NotNull FileBasedIndexExtension<K, V> extension) {

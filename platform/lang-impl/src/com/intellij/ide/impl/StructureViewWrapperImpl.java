@@ -50,6 +50,7 @@ import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ import java.awt.event.HierarchyListener;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 
@@ -69,6 +71,10 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
  */
 public final class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class, Topic.BroadcastDirection.NONE);
+
+  @ApiStatus.Experimental
+  public static final DataKey<Optional<VirtualFile>> STRUCTURE_VIEW_TARGET_FILE_KEY = DataKey.create("STRUCTURE_VIEW_TARGET_FILE_KEY");
+
   private static final Logger LOG = Logger.getInstance(StructureViewWrapperImpl.class);
   private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
   private static final int REFRESH_TIME = 100; // time to check if a context file selection is changed or not
@@ -201,22 +207,34 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     }
     else {
       DataContext asyncDataContext = Utils.wrapDataContext(dataContext);
-      ReadAction.nonBlocking(() -> CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(asyncDataContext))
+      ReadAction.nonBlocking(() -> getTargetVirtualFile(asyncDataContext))
         .coalesceBy(this, owner)
-        .finishOnUiThread(ModalityState.defaultModalityState(), files -> {
-          if (files != null && files.length == 1) {
-            setFile(files[0]);
-          }
-          else if (files != null && files.length > 1) {
-            setFile(null);
+        .finishOnUiThread(ModalityState.defaultModalityState(), file -> {
+          if (file != null) {
+            setFile(file);
           }
           else if (myFirstRun) {
             setFileFromSelectionHistory();
+          }
+          else {
+            setFile(null);
           }
           myFirstRun = false;
         })
         .submit(AppExecutorUtil.getAppExecutorService());
     }
+  }
+
+  private static @Nullable VirtualFile getTargetVirtualFile(@NotNull DataContext asyncDataContext) {
+    final var explicitlySpecifiedFile = STRUCTURE_VIEW_TARGET_FILE_KEY.getData(asyncDataContext);
+    // explicitlySpecifiedFile == null           means no value was specified for this key
+    // explicitlySpecifiedFile.isEmpty() == true means target virtual file (and structure view itself) is explicitly suppressed
+    //noinspection OptionalAssignedToNull
+    if (explicitlySpecifiedFile != null) {
+      return explicitlySpecifiedFile.orElse(null);
+    }
+    final var commonFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(asyncDataContext);
+    return commonFiles != null && commonFiles.length == 1 ? commonFiles[0] : null;
   }
 
   private void setFileFromSelectionHistory() {

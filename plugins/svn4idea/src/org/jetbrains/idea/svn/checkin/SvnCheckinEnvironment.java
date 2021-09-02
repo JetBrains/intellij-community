@@ -264,10 +264,6 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     @Override
-    public void refresh() {
-    }
-
-    @Override
     public void saveState() {
       final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
       configuration.setKeepLocks(isKeepLocks());

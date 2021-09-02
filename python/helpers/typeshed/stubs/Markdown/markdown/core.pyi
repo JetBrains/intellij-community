@@ -1,4 +1,4 @@
-from typing import Any, BinaryIO, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Text, TextIO, Union
+from typing import Any, BinaryIO, Callable, ClassVar, Mapping, Sequence, Text, TextIO
 from typing_extensions import Literal
 from xml.etree.ElementTree import Element
 
@@ -13,23 +13,21 @@ class Markdown:
     postprocessors: Registry
     parser: BlockParser
     htmlStash: HtmlStash
-    output_formats: ClassVar[Dict[Literal["xhtml", "html"], Callable[[Element], Text]]]
+    output_formats: ClassVar[dict[Literal["xhtml", "html"], Callable[[Element], Text]]]
     output_format: Literal["xhtml", "html"]
     serializer: Callable[[Element], Text]
     tab_length: int
-    block_level_elements: List[str]
+    block_level_elements: list[str]
     def __init__(
         self,
         *,
-        extensions: Optional[Sequence[Union[str, Extension]]] = ...,
-        extension_configs: Optional[Mapping[str, Mapping[str, Any]]] = ...,
-        output_format: Optional[Literal["xhtml", "html"]] = ...,
-        tab_length: Optional[int] = ...,
+        extensions: Sequence[str | Extension] | None = ...,
+        extension_configs: Mapping[str, Mapping[str, Any]] | None = ...,
+        output_format: Literal["xhtml", "html"] | None = ...,
+        tab_length: int | None = ...,
     ) -> None: ...
     def build_parser(self) -> Markdown: ...
-    def registerExtensions(
-        self, extensions: Sequence[Union[Extension, str]], configs: Mapping[str, Mapping[str, Any]]
-    ) -> Markdown: ...
+    def registerExtensions(self, extensions: Sequence[Extension | str], configs: Mapping[str, Mapping[str, Any]]) -> Markdown: ...
     def build_extension(self, ext_name: Text, configs: Mapping[str, str]) -> Extension: ...
     def registerExtension(self, extension: Extension) -> Markdown: ...
     def reset(self: Markdown) -> Markdown: ...
@@ -38,26 +36,26 @@ class Markdown:
     def convert(self, source: Text) -> Text: ...
     def convertFile(
         self,
-        input: Optional[Union[str, TextIO, BinaryIO]] = ...,
-        output: Optional[Union[str, TextIO, BinaryIO]] = ...,
-        encoding: Optional[str] = ...,
+        input: str | TextIO | BinaryIO | None = ...,
+        output: str | TextIO | BinaryIO | None = ...,
+        encoding: str | None = ...,
     ) -> Markdown: ...
 
 def markdown(
     text: Text,
     *,
-    extensions: Optional[Sequence[Union[str, Extension]]] = ...,
-    extension_configs: Optional[Mapping[str, Mapping[str, Any]]] = ...,
-    output_format: Optional[Literal["xhtml", "html"]] = ...,
-    tab_length: Optional[int] = ...,
+    extensions: Sequence[str | Extension] | None = ...,
+    extension_configs: Mapping[str, Mapping[str, Any]] | None = ...,
+    output_format: Literal["xhtml", "html"] | None = ...,
+    tab_length: int | None = ...,
 ) -> Text: ...
 def markdownFromFile(
     *,
-    input: Optional[Union[str, TextIO, BinaryIO]] = ...,
-    output: Optional[Union[str, TextIO, BinaryIO]] = ...,
-    encoding: Optional[str] = ...,
-    extensions: Optional[Sequence[Union[str, Extension]]] = ...,
-    extension_configs: Optional[Mapping[str, Mapping[str, Any]]] = ...,
-    output_format: Optional[Literal["xhtml", "html"]] = ...,
-    tab_length: Optional[int] = ...,
+    input: str | TextIO | BinaryIO | None = ...,
+    output: str | TextIO | BinaryIO | None = ...,
+    encoding: str | None = ...,
+    extensions: Sequence[str | Extension] | None = ...,
+    extension_configs: Mapping[str, Mapping[str, Any]] | None = ...,
+    output_format: Literal["xhtml", "html"] | None = ...,
+    tab_length: int | None = ...,
 ) -> None: ...

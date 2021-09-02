@@ -43,7 +43,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
       return;
     }
     if (!openDiff(e.getDataContext(), null)) {
-      final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      final Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       Messages.showInfoMessage(component, TestRunnerBundle.message("dialog.message.comparison.error.was.found"),
                                TestRunnerBundle.message("dialog.title.no.comparison.data.found"));
     }

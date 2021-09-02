@@ -13,7 +13,6 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.util.EventDispatcher
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
@@ -132,21 +131,27 @@ open class ArtifactBridge(
     return artifactEntity.outputUrl?.url?.let { JpsPathUtil.urlToPath(it) }
   }
 
-  override fun getPropertiesProviders(): MutableCollection<out ArtifactPropertiesProvider> {
-    val artifactEntity = entityStorage.base.get(artifactId)
-    return artifactEntity.customProperties.map { ArtifactPropertiesProvider.findById(it.providerType)!! }.toMutableList()
+  override fun getPropertiesProviders(): Collection<ArtifactPropertiesProvider> {
+    val artifactType = this.artifactType
+    return ArtifactPropertiesProvider.getProviders().filter { it.isAvailableFor(artifactType) }
   }
 
   override fun getProperties(propertiesProvider: ArtifactPropertiesProvider): ArtifactProperties<*>? {
     val artifactEntity = entityStorage.base.get(artifactId)
     val providerId = propertiesProvider.id
-    val customProperty = artifactEntity.customProperties.find { it.providerType == providerId } ?: return null
-    val propertiesXmlTag = customProperty.propertiesXmlTag ?: return null
+    val customProperty = artifactEntity.customProperties.find { it.providerType == providerId }
+                         ?: return if (propertiesProvider.isAvailableFor(this.artifactType)) {
+                           propertiesProvider.createProperties(this.artifactType)
+                         }
+                         else null
 
     @Suppress("UNCHECKED_CAST")
     val createdProperties: ArtifactProperties<Any> = propertiesProvider.createProperties(this.artifactType) as ArtifactProperties<Any>
     val state = createdProperties.state!!
-    JDOMUtil.load(propertiesXmlTag).deserializeInto(state)
+
+    customProperty.propertiesXmlTag?.let {
+      JDOMUtil.load(it).deserializeInto(state)
+    }
 
     createdProperties.loadState(state)
 
@@ -226,13 +231,7 @@ open class ArtifactBridge(
       }
     }
     else {
-      val state = properties.state
-      val tag = if (state != null) {
-        val element = XmlSerializer.serialize(state)
-        element.name = "options"
-        JDOMUtil.write(element)
-      }
-      else null
+      val tag = properties.propertiesTag()
 
       val entity = diff.get(artifactId)
 
@@ -254,6 +253,8 @@ open class ArtifactBridge(
     diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
       this.artifactType = selected.id
     }
+
+    resetProperties(artifactId, diffOrNull)
   }
 
   fun copyFrom(modified: ArtifactBridge) {
@@ -269,5 +270,17 @@ open class ArtifactBridge(
   @NonNls
   override fun toString(): String {
     return "artifact:${artifactId.name}"
+  }
+
+  companion object {
+    internal fun resetProperties(id: ArtifactId, myDiff: WorkspaceEntityStorageBuilder?) {
+      // We process only artifact bridges with builder because this logic is applied to the new created artifacts only.
+      // If the artifact entity already exists, we suppose that this artifact already has all custom properties filled.
+      val builder = myDiff ?: return
+
+      val entity = builder.get(id)
+      val previousProperties = entity.customProperties.toList()
+      previousProperties.forEach { builder.removeEntity(it) }
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.experiment
 
 import com.intellij.ide.util.PropertiesComponent
@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import java.util.*
+import kotlin.collections.HashMap
 
 class ClientExperimentStatus : ExperimentStatus {
   companion object {
@@ -51,9 +53,10 @@ class ClientExperimentStatus : ExperimentStatus {
   private val languageToGroup: MutableMap<String, ExperimentInfo> = HashMap()
 
   init {
+    val bucketsMapping = getBucketsMapping(experimentConfig.seed)
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     for (languageSettings in experimentConfig.languages) {
-      val bucket = eventLogConfiguration.bucket % languageSettings.experimentBucketsCount
+      val bucket = bucketsMapping[eventLogConfiguration.bucket] % languageSettings.experimentBucketsCount
       val groupNumber = if (languageSettings.includeGroups.size > bucket) languageSettings.includeGroups[bucket] else experimentConfig.version
       val group = experimentConfig.groups.find { it.number == groupNumber }
       val groupInfo = if (group == null) {
@@ -95,5 +98,10 @@ class ClientExperimentStatus : ExperimentStatus {
     return languageToGroup.keys.find { languageId ->
       baseLanguages.any { languageId.equals(it.id, ignoreCase = true) }
     }
+  }
+
+  private fun getBucketsMapping(seed: Long?): List<Int> {
+    val buckets = 0 until 256
+    return if (seed == null) buckets.toList() else buckets.shuffled(Random(seed))
   }
 }

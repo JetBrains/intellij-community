@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem
 
+import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyType
@@ -162,8 +163,12 @@ sealed class ModuleDependencyType(
         @OptIn(ExperimentalStdlibApi::class)
         override fun Reader.createToIRs(from: Module, to: Module, data: ModulesToIrConversionData): TaskResult<List<BuildSystemIR>> {
             val iosTargetName = to.iosTargetSafe()?.name
-                ?: return Failure(InvalidModuleDependencyError(from, to, "Module ${to.name} should contain at least one iOS target"))
-
+                ?: return Failure(
+                    InvalidModuleDependencyError(
+                        from, to,
+                        KotlinNewProjectWizardBundle.message("error.text.module.0.should.contain.at.least.one.ios.target", to.name)
+                    )
+                )
 
             return irsList {
                 +GradleConfigureTaskIR(GradleByClassTasksCreateIR("packForXcode", "Sync")) {
@@ -192,7 +197,7 @@ sealed class ModuleDependencyType(
                             GradlePrinter.GradleDsl.GROOVY -> +"""[targetName]"""
                         }
                         +".binaries.getFramework(mode)"
-                    };
+                    }
 
                     addRaw { +"inputs.property(${"mode".quotified}, mode)" }
                     addRaw("dependsOn(framework.linkTask)")

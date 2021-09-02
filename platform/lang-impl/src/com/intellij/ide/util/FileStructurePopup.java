@@ -537,7 +537,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
         return myFileEditor;
       }
       if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {

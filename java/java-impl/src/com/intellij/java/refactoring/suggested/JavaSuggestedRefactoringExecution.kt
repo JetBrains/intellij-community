@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring.suggested
 
+import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
@@ -71,7 +74,14 @@ class JavaSuggestedRefactoringExecution(refactoringSupport: SuggestedRefactoring
 
       if (initialIndex == null) {
         when (val default = newParameterValues[newParameterValueIndex++]) {
-          is NewParameterValue.Expression -> info.defaultValue = default.expression.text
+          is NewParameterValue.Expression -> {
+            val fragment = default.expression
+            executeCommand {
+              runUndoTransparentWriteAction {
+               info.defaultValue = JavaCodeStyleManager.getInstance(fragment.project).qualifyClassReferences(fragment).text
+              }
+            }
+          }
           is NewParameterValue.AnyVariable -> info.isUseAnySingleVariable = true
           is NewParameterValue.None -> {
           }

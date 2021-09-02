@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBList;
@@ -22,11 +23,12 @@ public class ProjectTypeListWithSearch<T> extends JPanel {
 
     list.getEmptyText().setText(UIBundle.message("message.noMatchesFound"));
 
-    SearchTextField searchTextField = new SearchTextField();
+    SearchTextField searchTextField = new SearchTextField(false);
+    searchTextField.getTextEditor().setBorder(JBUI.Borders.empty(2, 5, 2, 0));
+    scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
+
     add(searchTextField, BorderLayout.NORTH);
     add(scrollPane, BorderLayout.CENTER);
-
-    scrollPane.setBorder(JBUI.Borders.empty());
 
     SpeedSearch speedSearch = new SpeedSearch();
     speedSearch.setEnabled(true);

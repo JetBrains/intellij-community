@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.types.DfType
-import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
@@ -28,18 +27,29 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
         if (variable is KtParameter && variable.isMutable) return false
         if (variable !is KtProperty || !variable.isVar) return true
         if (!variable.isLocal) return false
-        return getVariablesChangedInLambdas(variable.parent).contains(variable)
+        return !getVariablesChangedInNestedFunctions(variable.parent).contains(variable)
     }
 
-    private fun getVariablesChangedInLambdas(parent: PsiElement): Set<KtProperty> =
+    private fun getVariablesChangedInNestedFunctions(parent: PsiElement): Set<KtProperty> =
         CachedValuesManager.getProjectPsiDependentCache(parent) { scope ->
             val result = hashSetOf<KtProperty>()
             PsiTreeUtil.processElements(scope) { e ->
                 if (e is KtSimpleNameExpression && e.readWriteAccess(false).isWrite) {
                     val target = e.mainReference.resolve()
                     if (target is KtProperty && target.isLocal && PsiTreeUtil.isAncestor(parent, target, true)) {
-                        val parentLambda = PsiTreeUtil.getParentOfType(parent, KtLambdaExpression::class.java)
-                        if (parentLambda != null && PsiTreeUtil.isAncestor(parent, parentLambda, true)) {
+                        var parentScope : KtFunction?
+                        var context = e
+                        while(true) {
+                            parentScope = PsiTreeUtil.getParentOfType(context, KtFunction::class.java)
+                            val maybeLambda = parentScope?.parent as? KtLambdaExpression
+                            val maybeCall = (maybeLambda?.parent as? KtLambdaArgument)?.parent as? KtCallExpression
+                            if (maybeCall != null && getInlineableLambda(maybeCall) == maybeLambda) {
+                                context = maybeCall
+                                continue
+                            }
+                            break
+                        }
+                        if (parentScope != null && PsiTreeUtil.isAncestor(parent, parentScope, true)) {
                             result.add(target)
                         }
                     }
@@ -51,12 +61,12 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
 
     override fun isStable(): Boolean = stable
 
-    override fun getDfType(qualifier: DfaVariableValue?): DfType = variable.type().toDfType(variable)
-
-    override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
-        assert(qualifier == null) { "Local variable descriptor should not be qualified, got qualifier '$qualifier'" }
-        return factory.varFactory.createVariableValue(this)
+    override fun canBeCapturedInClosure(): Boolean {
+        if (variable is KtParameter && variable.isMutable) return false
+        return variable !is KtProperty || !variable.isVar
     }
+
+    override fun getDfType(qualifier: DfaVariableValue?): DfType = variable.type().toDfType(variable)
 
     override fun equals(other: Any?): Boolean = other is KtVariableDescriptor && other.variable == variable
 

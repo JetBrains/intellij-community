@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -71,5 +71,7 @@ public class HtmlChunkTest {
     assertEquals("<a href=\"foo\">foo</a><a href=\"bar\">bar</a><a href=\"baz\">baz</a>", fragment.toString());
     fragment = Stream.of("foo", "bar", "baz").map(HtmlChunk::text).collect(HtmlChunk.toFragment(HtmlChunk.br()));
     assertEquals("foo<br/>bar<br/>baz", fragment.toString());
+    fragment = HtmlChunk.fragment(HtmlChunk.text("label:").wrapWith("span"), HtmlChunk.text("description"));
+    assertEquals("<span>label:</span>description", fragment.toString());
   }
 }

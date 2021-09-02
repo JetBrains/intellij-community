@@ -1,7 +1,7 @@
 <html>
 <body>
-<p>Reports redundant Stream or Optional calls like <code>map(x -&gt; x)</code> or <code>filter(x -&gt; true)</code>,
-  redundant <code>sorted</code> or <code>distinct</code>.</p>
+Reports redundant Stream or Optional calls like <code>map(x -&gt; x)</code> or <code>filter(x -&gt; true)</code>,
+redundant <code>sorted</code> or <code>distinct</code>.
 <!-- tooltip end -->
 <p>Note that a mapping operation in code like <code>streamOfIntegers.map(Integer::valueOf)</code>
   works as <code>requireNonNull</code> check:

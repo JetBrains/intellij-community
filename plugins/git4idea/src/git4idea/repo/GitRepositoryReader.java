@@ -48,7 +48,6 @@ class GitRepositoryReader {
   GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
     myGitFiles = gitFiles;
     myHeadFile = gitFiles.getHeadFile();
-    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found at " + myHeadFile);
     myRefsHeadsDir = gitFiles.getRefsHeadsFile();
     myRefsRemotesDir = gitFiles.getRefsRemotesFile();
     myPackedRefsFile = gitFiles.getPackedRefsPath();

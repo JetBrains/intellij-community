@@ -536,7 +536,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     LanguageLevel forcedLanguageLevel = getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY);
     if (forcedLanguageLevel != null) return forcedLanguageLevel;
 
-    VirtualFile virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
+    VirtualFile virtualFile = getVirtualFile();
     if (virtualFile == null) virtualFile = getViewProvider().getVirtualFile();
 
     String sourceLevel = null;

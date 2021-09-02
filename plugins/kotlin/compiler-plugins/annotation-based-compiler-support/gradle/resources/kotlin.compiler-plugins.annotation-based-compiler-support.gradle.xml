@@ -1,0 +1,6 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.annotationBased">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="kotlin.gradle.gradle-java"/>
+  </dependencies>
+</idea-plugin>

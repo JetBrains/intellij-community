@@ -46,7 +46,7 @@
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module-library">
-      <library name="ai.grazie:nlp-detector:0.0.2" type="repository">
+      <library name="ai.grazie:nlp-detector" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie:nlp-detector-jvm:0.0.2" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp-detector-jvm/0.0.2/nlp-detector-jvm-0.0.2.jar!/" />
@@ -265,26 +265,30 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module-library">
-      <library name="Grazie NLP tokenizer" type="repository">
-        <properties maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.26">
-          <exclude>
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-          </exclude>
-        </properties>
+      <library name="ai.grazie.nlp:nlp-common" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common:0.1.37" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.26/nlp-tokenizer-0.1.26.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.26/nlp-common-0.1.26.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.37/nlp-common-0.1.37.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.26/nlp-tokenizer-0.1.26-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.26/nlp-common-0.1.26-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.37/nlp-common-0.1.37-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp:nlp-tokenizer" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.37" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.37/nlp-tokenizer-0.1.37.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.37/nlp-tokenizer-0.1.37-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
   </component>
 </module>

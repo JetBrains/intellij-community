@@ -14,7 +14,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   val kotlinVersion = if (isSupportedKotlin4(gradleVersion)) "1.4.32" else "1.3.50"
   val groovyVersion = "3.0.5"
   val junit4Version = "4.12"
-  val junit5Version = "5.7.0"
+  val junit5Version = "5.7.2"
 
   override fun addGroup(group: String) =
     withPrefix { assign("group", group) }
@@ -137,7 +137,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
         assignIfNotNull("mainModule", mainModule)
         assignIfNotNull("mainClass", mainClass)
         assignIfNotNull("executableDir", executableDir)
-        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let(::list))
+        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
       }
     }
   }

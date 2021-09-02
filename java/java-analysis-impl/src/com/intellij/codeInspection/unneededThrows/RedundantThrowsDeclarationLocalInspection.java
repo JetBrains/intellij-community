@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -119,7 +119,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     public void visitMethod(@NotNull final PsiMethod method) {
       getRedundantThrowsCandidates(method, myIgnoreEntryPoints)
         .filter(throwRefType -> !throwRefType.isThrownIn(method))
-        .filter(throwRefType -> !throwRefType.isInOverridenOf(method))
+        .filter(throwRefType -> !throwRefType.isInOverriddenOf(method))
         .filter(throwRefType -> !throwRefType.isCaught(method))
         .forEach(throwRefType -> {
           final PsiElement reference = throwRefType.myReference;
@@ -287,14 +287,13 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     }
 
     @Contract(pure = true)
-    private boolean isInOverridenOf(@NotNull final PsiMethod method) {
-      if (!isMethodPossiblyOverriden(method)) return false;
+    private boolean isInOverriddenOf(@NotNull final PsiMethod method) {
+      if (!isMethodPossiblyOverridden(method)) return false;
 
       final Predicate<PsiMethod> methodContainsThrownExceptions = m -> !ArrayUtil.isEmpty(m.getThrowsList().getReferencedTypes());
 
-      final Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method,
-                                                                                                             null,
-                                                                                                             methodContainsThrownExceptions);
+      final Stream<PsiMethod> overridingMethods =
+        JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, null, methodContainsThrownExceptions);
       if (overridingMethods == null) return true;
 
       return overridingMethods.anyMatch(m -> isThrownIn(m) || isInThrowsListOf(m));
@@ -344,7 +343,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     }
 
     @Contract(pure = true)
-    private static boolean isMethodPossiblyOverriden(@NotNull final PsiMethod method) {
+    private static boolean isMethodPossiblyOverridden(@NotNull final PsiMethod method) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return false;
 

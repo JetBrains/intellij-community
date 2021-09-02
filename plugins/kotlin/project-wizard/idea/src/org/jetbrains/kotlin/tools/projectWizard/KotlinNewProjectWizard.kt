@@ -1,67 +1,34 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard
 
-import com.intellij.ide.*
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.BuildSystemWithSettings
-import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
-import java.awt.Dimension
-import java.awt.event.ItemListener
-import javax.swing.JComponent
+import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.generators.AbstractNewProjectWizardSdkStep
+import com.intellij.ide.wizard.*
+import com.intellij.openapi.projectRoots.SdkTypeId
 
-class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
-  override val language: String = "Kotlin"
-  override var settingsFactory = { KotlinSettings() }
+class KotlinNewProjectWizard : NewProjectWizard {
+    override val name: String = "Kotlin"
 
-  override fun settingsList(settings: KotlinSettings): List<SettingsComponent> {
-      var component: JComponent = JBLabel()
-      panel {
-          row {
-              component = buttonSelector(settings.buildSystems.value, settings.buildSystemProperty) { it.name }.component
-          }.largeGapAfter()
-      }
+    override fun createStep(parent: NewProjectStep.Step) = Step(parent, SdkStep(parent))
 
-      settings.propertyGraph.afterPropagation {
-          settings.buildSystems.value.forEach { it.advancedSettings().apply { isVisible = false } }
-          settings.buildSystemProperty.get().advancedSettings().apply { isVisible = true }
-      }
+    class Step(
+        parent: NewProjectStep.Step,
+        sdkStep: SdkStep
+    ) : AbstractNewProjectWizardMultiStep<NewProjectStep.Step, Step>(parent, KotlinBuildSystemType.EP_NAME),
+        NewProjectWizardBuildSystemData,
+        NewProjectWizardLanguageData by parent {
 
-      val sdkCombo = JdkComboBox(null, ProjectSdksModel(), null, null, null, null)
-          .apply { minimumSize = Dimension(0, 0) }
-          .also { combo -> combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk }) }
+        override val self = this
 
-      settings.buildSystemProperty.set(settings.buildSystems.value.first())
+        override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
 
-      return listOf(
-          LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")), component),
-          LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo)
-      ).plus(settings.buildSystems.value.map { JustComponent(it.advancedSettings()) })
-  }
+        override val commonSteps = listOf(sdkStep)
 
-  override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(project, settings)
-  }
-}
-
-class KotlinSettings {
-    var sdk: Sdk? = null
-    val propertyGraph: PropertyGraph = PropertyGraph()
-    val buildSystems: Lazy<List<KotlinBuildSystemWithSettings<out Any?>>> = lazy {
-        KotlinBuildSystemType.EP_NAME.extensionList.map { KotlinBuildSystemWithSettings(it) }
+        override val buildSystemProperty by ::stepProperty
+        override val buildSystem by ::step
     }
 
-    val buildSystemProperty: GraphProperty<KotlinBuildSystemWithSettings<*>> = propertyGraph.graphProperty {
-        buildSystems.value.first()
+    class SdkStep(parent: NewProjectStep.Step) : AbstractNewProjectWizardSdkStep(parent) {
+        override fun sdkTypeFilter(type: SdkTypeId) = true
     }
 }
-
-open class KotlinBuildSystemWithSettings<P>(val buildSystemType: KotlinBuildSystemType<P>) :
-    BuildSystemWithSettings<KotlinSettings, P>(buildSystemType)

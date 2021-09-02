@@ -38,13 +38,13 @@ public final class JavaLexer extends LexerBase {
     return id != null &&
            (level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id) ||
             level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
-            level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && RECORD.contentEquals(id) ||
+            level.isAtLeast(LanguageLevel.JDK_16) && RECORD.contentEquals(id) ||
             level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
             (isSealedAvailable(level) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))));
   }
 
   public static boolean isSealedAvailable(@NotNull LanguageLevel level) {
-    return level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && (level.isAtLeast(LanguageLevel.JDK_17) || level.isPreview());
+    return level.isAtLeast(LanguageLevel.JDK_16_PREVIEW);
   }
 
   private final _JavaLexer myFlexLexer;

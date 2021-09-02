@@ -24,7 +24,7 @@ class KotlinSourceSetProto(
         sourceDirs = sourceDirs,
         resourceDirs = resourceDirs,
         regularDependencies = if (doBuildDependencies) regularDependencies() else emptyArray(),
-        intransitiveDependencies = if(doBuildDependencies) intransitiveDependencies() else emptyArray(),
+        intransitiveDependencies = if (doBuildDependencies) intransitiveDependencies() else emptyArray(),
         declaredDependsOnSourceSets = dependsOnSourceSets,
         allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames),
         additionalVisibleSourceSets = additionalVisibleSourceSets
@@ -94,20 +94,20 @@ data class KotlinLanguageSettingsImpl(
     override val apiVersion: String?,
     override val isProgressiveMode: Boolean,
     override val enabledLanguageFeatures: Set<String>,
-    override val experimentalAnnotationsInUse: Set<String>,
+    override val optInAnnotationsInUse: Set<String>,
     override val compilerPluginArguments: Array<String>,
     override val compilerPluginClasspath: Set<File>,
     override val freeCompilerArgs: Array<String>
 ) : KotlinLanguageSettings {
     constructor(settings: KotlinLanguageSettings) : this(
-        settings.languageVersion,
-        settings.apiVersion,
-        settings.isProgressiveMode,
-        settings.enabledLanguageFeatures,
-        settings.experimentalAnnotationsInUse,
-        settings.compilerPluginArguments,
-        settings.compilerPluginClasspath,
-        settings.freeCompilerArgs
+        languageVersion = settings.languageVersion,
+        apiVersion = settings.apiVersion,
+        isProgressiveMode = settings.isProgressiveMode,
+        enabledLanguageFeatures = settings.enabledLanguageFeatures,
+        optInAnnotationsInUse = settings.optInAnnotationsInUse,
+        compilerPluginArguments = settings.compilerPluginArguments,
+        compilerPluginClasspath = settings.compilerPluginClasspath,
+        freeCompilerArgs = settings.freeCompilerArgs
     )
 }
 

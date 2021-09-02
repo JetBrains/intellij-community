@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
@@ -13,7 +14,9 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfi
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinBuildSystemPluginIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleIRListBuilder
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradlePropertyAccessIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.BrowserJsSinglePlatformModuleConfigurator.settingsValue
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.isApplication
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.irOrLegacyCompiler
@@ -22,6 +25,7 @@ import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedC
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
@@ -205,3 +209,45 @@ fun GradleIRListBuilder.commonCssSupport() {
         +"cssSupport.enabled = true"
     }
 }
+
+object JsComposeMppConfigurator : JsBrowserBasedConfigurator, SimpleTargetConfigurator {
+    @NonNls
+    override val id = "jsBrowserComposeMpp"
+
+    @NonNls
+    override val suggestedModuleName = "js"
+
+    override val moduleKind = ModuleKind.target
+
+    override val text = KotlinNewProjectWizardBundle.message("module.configurator.simple.js.compose.browser")
+
+    override val moduleSubType = ModuleSubType.js
+
+    override fun createInnerTargetIrs(
+        reader: Reader,
+        module: Module
+    ): List<BuildSystemIR> = irsList {
+        +super<SimpleTargetConfigurator>.createInnerTargetIrs(reader, module)
+        "browser" {
+            "testTask" {
+                +"testLogging.showStandardStreams = true"
+                "useKarma" {
+                    +"useChromeHeadless()"
+                    +"useFirefox()"
+                }
+            }
+        }
+        applicationSupport()
+    }
+
+    override fun Reader.createTargetIrs(
+        module: Module
+    ): List<BuildSystemIR> = org.jetbrains.kotlin.tools.projectWizard.core.buildList {
+        +DefaultTargetConfigurationIR(
+            module.createTargetAccessIr(moduleSubType),
+            createInnerTargetIrs(this@createTargetIrs, module).toPersistentList(),
+            listOf(GradlePropertyAccessIR("IR"))
+        )
+    }
+}
+

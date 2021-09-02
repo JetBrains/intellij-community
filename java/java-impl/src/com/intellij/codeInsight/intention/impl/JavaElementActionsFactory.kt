@@ -20,7 +20,6 @@ import org.jetbrains.uast.UDeclaration
 import java.util.*
 
 class JavaElementActionsFactory : JvmElementActionsFactory() {
-
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
     val declaration = if (target is UDeclaration) target.javaPsi as PsiModifierListOwner else target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
@@ -54,7 +53,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
     val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
-    if (constantRequested || request.fieldName.toUpperCase(Locale.ENGLISH) == request.fieldName) {
+    if (constantRequested || request.fieldName.uppercase(Locale.ENGLISH) == request.fieldName) {
       result += CreateConstantAction(javaClass, request)
     }
     if (!constantRequested) {

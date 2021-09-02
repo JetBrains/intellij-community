@@ -55,7 +55,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     boolean isNewLayout = Registry.is("debugger.new.tool.window.layout");
 
-    DefaultActionGroup sortGroup = !isNewLayout ? actionGroup : new DefaultActionGroup();
+    var sortGroup = !isNewLayout ? actionGroup : DefaultActionGroup.createPopupGroup(() -> ExecutionBundle.message("junit.runing.info.sort.group.name"));
     sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                              ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
                                                              AllIcons.ObjectBrowser.Sorted,
@@ -65,7 +65,6 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     sortGroup.addAction(sortByStatistics);
 
     if (isNewLayout) {
-      sortGroup.setPopup(true);
       sortGroup.getTemplatePresentation().setIcon(sortByStatistics.getTemplatePresentation().getIcon());
       actionGroup.add(sortGroup);
     } else {

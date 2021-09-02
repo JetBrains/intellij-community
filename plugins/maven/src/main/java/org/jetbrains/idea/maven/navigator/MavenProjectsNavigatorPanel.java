@@ -121,7 +121,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
   @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
 
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
 

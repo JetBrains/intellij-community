@@ -41,15 +41,9 @@ fun injectIntoYamlMultiRanges(registrar: MultiHostRegistrar,
                               prefix: String?,
                               suffix: String?) {
   registrar.startInjecting(language)
-  
-  val indentSize = when (context) {
-    is YAMLBlockScalarImpl -> context.locateIndent()
-    is YAMLPlainTextImpl -> YAMLUtil.getIndentToThisElement(context)
-    else -> null
-  }
 
-  if (indentSize != null)
-    context.putUserData(InjectionMeta.INJECTION_INDENT, " ".repeat(indentSize))
+  if (context is YAMLBlockScalarImpl)
+    context.putUserData(InjectionMeta.INJECTION_INDENT, context.indentString)
 
   if (ranges.isEmpty()) {
     // do nothing

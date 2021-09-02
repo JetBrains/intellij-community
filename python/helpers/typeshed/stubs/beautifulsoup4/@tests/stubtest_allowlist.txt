@@ -1,0 +1,1 @@
+bs4.element.NavigableString.string  # created through __getattr__

@@ -75,7 +75,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(exprList, null)
 
     def expected =
-      "<div class='definition'><pre><a href=\"psi_element://Foo\"><code>Foo</code></a><br>void&nbsp;<b>doFoo</b>()</pre></div><table class='sections'><p></table>"
+      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">doFoo</span><span style=\"\">(</span><span style=\"\">)</span><br><span class=\'grayed\'>defined in </span><a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a></pre></div><table class=\'sections\'><p></table>"
 
     assert doc == expected
   }
@@ -87,7 +87,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
       class Foo {{
         new Bar<String>().f<caret>oo();
       }}""",
-    "Bar<br/> <a href=\"psi_element://java.util.List\">List</a>&lt;String&gt; foo(String param)")
+    "<span style=\"color:#000000;\"><a href=\"psi_element://Bar\">Bar</a></span><br/> <span style=\"color:#000000;\"><a href=\"psi_element://java.util.List\">List</a></span><span style=\"\">&lt;</span><span style=\"color:#000000;\">String</span><span style=\"\">&gt;</span> <span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"color:#000000;\">String</span> <span style=\"\">param</span><span style=\"\">)</span>")
   }
 
   void testGenericField() {
@@ -97,7 +97,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
       class Foo {{
         new Bar<Integer>().fi<caret>eld
       }}""",
-      "Bar<br/> Integer field")
+      "<span style=\"color:#000000;\"><a href=\"psi_element://Bar\">Bar</a></span><br/> <span style=\"color:#000000;\">Integer</span> <span style=\"color:#660e7a;font-weight:bold;\">field</span>")
   }
 
   void testMethodInAnonymousClass() {
@@ -112,7 +112,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
           private void m() {}
         }.run();
       }}""",
-      "private void m()")
+      "<span style=\"color:#000080;font-weight:bold;\">private</span> <span style=\"color:#000080;font-weight:bold;\">void</span> <span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span>")
   }
 
   void testAnnotationInCtrlHoverDoc() {
@@ -124,7 +124,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
       }
       @java.lang.annotation.Documented
       @interface Anno {} """,
-      "<a href=\"psi_element://Foo\">Foo</a><br/> @Anno&nbsp;<br/>private void m()")
+      "<span style=\"color:#000000;\"><a href=\"psi_element://Foo\">Foo</a></span><br/> <span style=\"color:#808000;\">@</span><span style=\"color:#808000;\"><a href=\"psi_element://Anno\">Anno</a></span>&nbsp;<br/><span style=\"color:#000080;font-weight:bold;\">private</span> <span style=\"color:#000080;font-weight:bold;\">void</span> <span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span>")
   }
 
   void testInnerClass() {
@@ -139,7 +139,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
       class Outer {
         class Inner {}
       }""",
-      "<a href=\"psi_element://C\">C</a><br/> <a href=\"psi_element://Outer.Inner\">Outer.Inner</a> field")
+      "<span style=\"color:#000000;\"><a href=\"psi_element://C\">C</a></span><br/> <span style=\"color:#000000;\"><a href=\"psi_element://Outer.Inner\">Outer.Inner</a></span> <span style=\"color:#660e7a;font-weight:bold;\">field</span>")
   }
 
   void testAsterisksFiltering() {
@@ -157,9 +157,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<div class='definition'><pre><a href=\"psi_element://C\"><code>C</code></a><br>public&nbsp;void&nbsp;<b>m</b>()</pre></div><div class='content'>\n" +
-      "     For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code>String.String(byte[], int, int, String)</code></a>.\n" +
-      "   <p></div><table class='sections'><p></table>"
+      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span><br><span class=\'grayed\'>defined in </span><a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></pre></div><div class=\'content\'>\n     For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#000000;\">String</span><span style=\"\">.</span><span style=\"color:#000000;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class=\'sections\'></table>"
 
     assert doc == expected
   }
@@ -175,7 +173,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<div class='definition'><pre><a href=\"psi_element://C\"><code>C</code></a><br>public&nbsp;void&nbsp;<b>m</b>()</pre></div><div class='content'> Visit the \"<code>/login</code>\" URL. <p></div><table class='sections'><p></table>"
+      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span><br><span class=\'grayed\'>defined in </span><a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></pre></div><div class=\'content\'> Visit the \"<code><span style=\"\"><span style=\"\">/login</span></span></code>\" URL. </div><table class=\'sections\'></table>"
 
     assert doc == expected
   }
@@ -219,9 +217,7 @@ class Bar {
     def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
-    String expected = "<div class='definition'><pre><a href=\"psi_element://Bar\"><code>Bar</code></a><br>void&nbsp;<b>foo</b>()</pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Description copied from class:</td><td valign='top'><p><a href=\"psi_element://Foo\"><code>Foo</code></a><br>\n" +
-                      "    Some doc\n" +
-                      "  </td></table>"
+    String expected = "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span><br><span class=\'grayed\'>defined in </span><a href=\"psi_element://Bar\"><code><span style=\"color:#000000;\">Bar</span></code></a></pre></div><table class=\'sections\'><p><tr><td valign=\'top\' class=\'section\'><p>From class:</td><td valign=\'top\'><p><a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a><br>\n    Some doc\n  </td></table>"
 
     assert doc == expected
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.posi
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.runWriteAction
@@ -96,6 +97,10 @@ private class GroovyFieldRenderer(
       }
     }
 
+    for (annotation in request.annotations) {
+      field.modifierList?.addAnnotation(annotation.qualifiedName)
+    }
+
     // setup actual modifiers
     for (modifier in modifiersToRender.map(JvmModifier::toPsiModifier)) {
       PsiUtil.setModifierProperty(field, modifier, true)
@@ -106,6 +111,12 @@ private class GroovyFieldRenderer(
     if (constantField) {
       field.initializerGroovy = elementFactory.createExpressionFromText("0", null)
     }
+
+    val requestInitializer = request.initializer
+    if (requestInitializer is JvmLong) {
+      field.initializerGroovy = elementFactory.createExpressionFromText("${requestInitializer.longValue}L", null)
+    }
+
     return field
   }
 

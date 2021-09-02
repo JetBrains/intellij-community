@@ -2,12 +2,12 @@
 package com.intellij.workspaceModel.storage.impl.external
 
 import com.google.common.collect.HashBiMap
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.NotThisEntityId
-import com.intellij.workspaceModel.storage.ThisEntityId
-import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import java.util.*
@@ -57,6 +57,14 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     startWrite()
     index[id] = data
     indexLog.add(IndexLogRecord.Add(id, data))
+    LOG.trace {
+      try {
+        "Adding to external index: $id -> $data. Data hash: ${data.hashCode()}"
+      }
+      catch (e: Throwable) {
+        "Adding to external index. $id, cannot get data info. ${e.message}"
+      }
+    }
   }
 
   override fun addIfAbsent(entity: WorkspaceEntity, data: T): Boolean {
@@ -93,6 +101,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
   internal fun remove(id: EntityId): T? {
     startWrite()
+    LOG.trace { "Remove $id from external index" }
     val removed = index.remove(id)
     indexLog.add(IndexLogRecord.Remove(id))
     return removed
@@ -173,6 +182,8 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
       }
       return Collections.unmodifiableMap(result)
     }
+
+    private val LOG = logger<MutableExternalEntityMappingImpl<*>>()
   }
 }
 

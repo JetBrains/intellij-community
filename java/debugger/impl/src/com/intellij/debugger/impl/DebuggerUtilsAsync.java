@@ -313,6 +313,42 @@ public final class DebuggerUtilsAsync {
     return self;
   }
 
+  public static CompletableFuture<Method> method(Location location) {
+    if (location instanceof LocationImpl && isAsyncEnabled()) {
+      return reschedule(((LocationImpl)location).methodAsync());
+    }
+    return toCompletableFuture(() -> location.method());
+  }
+
+  public static CompletableFuture<Boolean> isObsolete(Method method) {
+    if (method instanceof MethodImpl && isAsyncEnabled()) {
+      return reschedule(((MethodImpl)method).isObsoleteAsync());
+    }
+    return toCompletableFuture(() -> method.isObsolete());
+  }
+
+  public static CompletableFuture<StackFrame> frame(ThreadReference thread, int index) {
+    if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
+      return reschedule(((ThreadReferenceImpl)thread).frameAsync(index));
+    }
+    return toCompletableFuture(() -> thread.frame(index));
+  }
+
+  public static CompletableFuture<List<StackFrame>> frames(ThreadReference thread, int start, int length) {
+    if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
+      return reschedule(((ThreadReferenceImpl)thread).framesAsync(start, length));
+    }
+    return toCompletableFuture(() -> thread.frames(start, length));
+  }
+
+  public static CompletableFuture<Integer> frameCount(ThreadReference thread) {
+    if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
+      return reschedule(((ThreadReferenceImpl)thread).frameCountAsync());
+    }
+    return toCompletableFuture(() -> thread.frameCount());
+  }
+
+
   // Reader thread
   public static CompletableFuture<List<Method>> methods(ReferenceType type) {
     if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
@@ -488,7 +524,7 @@ public final class DebuggerUtilsAsync {
     }
   }
 
-  private static <T> void completeFuture(T res, Throwable ex, CompletableFuture<T> future) {
+  public static <T> void completeFuture(T res, Throwable ex, CompletableFuture<T> future) {
     if (ex != null) {
       future.completeExceptionally(ex);
     }

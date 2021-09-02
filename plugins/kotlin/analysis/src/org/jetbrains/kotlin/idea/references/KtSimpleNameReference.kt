@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.references
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor
@@ -185,7 +185,7 @@ class KtSimpleNameReferenceDescriptorsImpl(
             return newExpression
         }
 
-        return if (shorteningMode == ShorteningMode.FORCED_SHORTENING || !ApplicationManager.getApplication().isDispatchThread) {
+        return if (shorteningMode == ShorteningMode.FORCED_SHORTENING || !isDispatchThread()) {
             ShortenReferences.DEFAULT.process(newQualifiedElement)
         } else {
             newQualifiedElement.addToShorteningWaitSet()

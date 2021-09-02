@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -64,7 +63,7 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   public boolean showSelectiveImportDialogOnInitialImport() {
-    return SystemProperties.is("external.system.show.selective.import.dialog");
+    return Boolean.getBoolean("external.system.show.selective.import.dialog");
   }
 
   /**

@@ -1712,6 +1712,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("builtInFunction.kt")
+        public void testBuiltInFunction() throws Exception {
+            runTest("testData/quickfix/autoImports/builtInFunction.kt");
+        }
+
+        @TestMetadata("builtInFunctionAlreadyExists.kt")
+        public void testBuiltInFunctionAlreadyExists() throws Exception {
+            runTest("testData/quickfix/autoImports/builtInFunctionAlreadyExists.kt");
+        }
+
         @TestMetadata("checkNoStackOverflowInImportInnerClassInCurrentFile.kt")
         public void testCheckNoStackOverflowInImportInnerClassInCurrentFile() throws Exception {
             runTest("testData/quickfix/autoImports/checkNoStackOverflowInImportInnerClassInCurrentFile.kt");
@@ -2660,6 +2670,24 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/convertIllegalEscapeToUnicodeEscape")
+    public static class ConvertIllegalEscapeToUnicodeEscape extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("formFeed.kt")
+        public void testFormFeed() throws Exception {
+            runTest("testData/quickfix/convertIllegalEscapeToUnicodeEscape/formFeed.kt");
+        }
+
+        @TestMetadata("formFeedInStringTemplate.kt")
+        public void testFormFeedInStringTemplate() throws Exception {
+            runTest("testData/quickfix/convertIllegalEscapeToUnicodeEscape/formFeedInStringTemplate.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/convertLateinitPropertyToNotNullDelegate")
     public static class ConvertLateinitPropertyToNotNullDelegate extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -2780,6 +2808,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("typeArgument.kt")
         public void testTypeArgument() throws Exception {
             runTest("testData/quickfix/convertToAnonymousObject/typeArgument.kt");
+        }
+
+        @TestMetadata("typeArgument2.kt")
+        public void testTypeArgument2() throws Exception {
+            runTest("testData/quickfix/convertToAnonymousObject/typeArgument2.kt");
         }
 
         @TestMetadata("unit.kt")
@@ -6908,6 +6941,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgImportRuntime.kt");
             }
 
+            @TestMetadata("noImplicitTypeArgInClassWithTypeParam.kt")
+            public void testNoImplicitTypeArgInClassWithTypeParam() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgInClassWithTypeParam.kt");
+            }
+
+            @TestMetadata("noImplicitTypeArgInFunWithTypeParam.kt")
+            public void testNoImplicitTypeArgInFunWithTypeParam() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgInFunWithTypeParam.kt");
+            }
+
             @TestMetadata("nonEmptyVarargRuntime.kt")
             public void testNonEmptyVarargRuntime() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/nonEmptyVarargRuntime.kt");
@@ -7103,6 +7146,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/doNotSwitchOn.kt");
         }
 
+        @TestMetadata("existingFileAnnotationWithPackage.kt")
+        public void testExistingFileAnnotationWithPackage() throws Exception {
+            runTest("testData/quickfix/experimental/existingFileAnnotationWithPackage.kt");
+        }
+
         @TestMetadata("experimentalUnused.kt")
         public void testExperimentalUnused() throws Exception {
             runTest("testData/quickfix/experimental/experimentalUnused.kt");
@@ -7141,6 +7189,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("nestedClasses.kt")
         public void testNestedClasses() throws Exception {
             runTest("testData/quickfix/experimental/nestedClasses.kt");
+        }
+
+        @TestMetadata("newFileAnnotationWithPackage.kt")
+        public void testNewFileAnnotationWithPackage() throws Exception {
+            runTest("testData/quickfix/experimental/newFileAnnotationWithPackage.kt");
         }
 
         @TestMetadata("override.kt")

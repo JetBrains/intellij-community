@@ -23,6 +23,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
  * This handler removes the whole marker of the current list item.
@@ -35,7 +36,10 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDele
     item = null
 
     val deletedOffset = editor.caretModel.offset - 1
-    if (file !is MarkdownFile || deletedOffset < 0) return
+    if (file !is MarkdownFile || deletedOffset < 0
+        || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
+      return
+    }
 
     PsiDocumentManager.getInstance(file.project).commitDocument(editor.document)
     val marker = file.findElementAt(deletedOffset) ?: return

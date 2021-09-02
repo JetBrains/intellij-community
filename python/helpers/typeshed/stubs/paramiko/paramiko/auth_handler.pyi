@@ -1,9 +1,7 @@
 from threading import Event
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Tuple
 
-from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.server import InteractiveQuery
 from paramiko.ssh_gss import _SSH_GSSAuth
 from paramiko.transport import Transport
 
@@ -11,22 +9,22 @@ _InteractiveCallback = Callable[[str, str, List[Tuple[str, bool]]], List[str]]
 
 class AuthHandler:
     transport: Transport
-    username: Optional[str]
+    username: str | None
     authenticated: bool
-    auth_event: Optional[Event]
+    auth_event: Event | None
     auth_method: str
-    banner: Optional[str]
-    password: Optional[str]
-    private_key: Optional[PKey]
-    interactive_handler: Optional[_InteractiveCallback]
-    submethods: Optional[str]
-    auth_username: Optional[str]
+    banner: str | None
+    password: str | None
+    private_key: PKey | None
+    interactive_handler: _InteractiveCallback | None
+    submethods: str | None
+    auth_username: str | None
     auth_fail_count: int
-    gss_host: Optional[str]
+    gss_host: str | None
     gss_deleg_creds: bool
     def __init__(self, transport: Transport) -> None: ...
     def is_authenticated(self) -> bool: ...
-    def get_username(self) -> Optional[str]: ...
+    def get_username(self) -> str | None: ...
     def auth_none(self, username: str, event: Event) -> None: ...
     def auth_publickey(self, username: str, key: PKey, event: Event) -> None: ...
     def auth_password(self, username: str, password: str, event: Event) -> None: ...
@@ -34,7 +32,7 @@ class AuthHandler:
     def auth_gssapi_with_mic(self, username: str, gss_host: str, gss_deleg_creds: bool, event: Event) -> None: ...
     def auth_gssapi_keyex(self, username: str, event: Event) -> None: ...
     def abort(self) -> None: ...
-    def wait_for_response(self, event: Event) -> List[str]: ...
+    def wait_for_response(self, event: Event) -> list[str]: ...
 
 class GssapiWithMicAuthHandler:
     method: str

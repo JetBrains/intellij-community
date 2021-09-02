@@ -142,7 +142,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   @RequiresEdt
-  protected fun updateDocument(side: Side, commandName: String?, task: (Document) -> Unit): Boolean {
+  protected fun updateDocument(side: Side, commandName: @NlsContexts.Command String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = if (side.isLeft) vcsDocument else document
     return updateDocument(project, affectedDocument, commandName, task)
   }

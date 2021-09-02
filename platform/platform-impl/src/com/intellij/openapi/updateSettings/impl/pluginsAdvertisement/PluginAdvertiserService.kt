@@ -201,21 +201,40 @@ open class PluginAdvertiserService {
     val entries = addressedFeatures.entrySet()
     return if (entries.size == 1) {
       val feature = entries.single()
-      IdeBundle.message(
-        "plugins.advertiser.missing.feature",
-        pluginsNumber,
-        feature.key,
-        feature.value.joinToString(),
-        repoPluginsNumber,
-      )
+
+      if (feature.key != "dependency") {
+        IdeBundle.message(
+          "plugins.advertiser.missing.feature",
+          pluginsNumber,
+          feature.key,
+          feature.value.joinToString(),
+          repoPluginsNumber
+        )
+      }
+      else {
+        IdeBundle.message(
+          "plugins.advertiser.missing.feature.dependency",
+          pluginsNumber,
+          feature.value.joinToString()
+        )
+      }
     }
     else {
-      IdeBundle.message(
-        "plugins.advertiser.missing.features",
-        pluginsNumber,
-        entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
-        repoPluginsNumber,
-      )
+      if (entries.all { it.key == "dependency" }) {
+        IdeBundle.message(
+          "plugins.advertiser.missing.features.dependency",
+          pluginsNumber,
+          entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") }
+        )
+      }
+      else {
+        IdeBundle.message(
+          "plugins.advertiser.missing.features",
+          pluginsNumber,
+          entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
+          repoPluginsNumber
+        )
+      }
     }
   }
 

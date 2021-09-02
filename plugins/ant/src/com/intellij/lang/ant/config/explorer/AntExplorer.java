@@ -535,7 +535,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         return new OpenFileDescriptor(myProject, file);
       }
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
     }
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {

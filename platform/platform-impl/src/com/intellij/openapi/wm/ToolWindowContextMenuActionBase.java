@@ -3,6 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
 import com.intellij.ui.content.Content;
@@ -37,7 +38,7 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
 
   @Nullable
   private static Content getContextContent(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow) {
-    BaseLabel baseLabel = ObjectUtils.tryCast(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), BaseLabel.class);
+    BaseLabel baseLabel = ObjectUtils.tryCast(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), BaseLabel.class);
     Content selectedContent = baseLabel != null ? baseLabel.getContent() : null;
     if (selectedContent == null) {
       selectedContent = toolWindow.getContentManager().getSelectedContent();

@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -518,7 +517,7 @@ public class EditorComposite implements Disposable {
 
     @Override
     public final Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {

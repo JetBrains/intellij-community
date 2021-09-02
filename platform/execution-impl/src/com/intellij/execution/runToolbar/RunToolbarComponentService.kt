@@ -7,9 +7,13 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 
 class RunToolbarComponentService(val project: Project) {
+  companion object {
+    private val LOG = Logger.getInstance(RunToolbarComponentService::class.java)
+  }
   private val extraSlots = RunToolbarSlotManager.getInstance(project)
 
   private val executions: MutableMap<Long, ExecutionEnvironment> = mutableMapOf()
@@ -36,9 +40,15 @@ class RunToolbarComponentService(val project: Project) {
 
       extraSlots.addListener(object : ActiveListener {
         override fun enabled() {
+          LOG.info("slot manager ACTIVATION. put data ${executions.map{it.value}.map{"$it (${it.executionId}); "}} ")
           executions.forEach{
             extraSlots.processStarted(it.value)
           }
+        }
+
+        override fun disabled() {
+          LOG.info("slot manager INACTIVATION")
+          super.disabled()
         }
       })
     }
@@ -47,6 +57,7 @@ class RunToolbarComponentService(val project: Project) {
   private fun start(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions[env.executionId] = env
+      LOG.info("new active process added: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
       if(extraSlots.active) {
         extraSlots.processStarted(env)
       }
@@ -56,6 +67,7 @@ class RunToolbarComponentService(val project: Project) {
   private fun stop(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions.remove(env.executionId)
+      LOG.info("new active process removed: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
       if(extraSlots.active) {
         extraSlots.processStopped(env.executionId)
       }

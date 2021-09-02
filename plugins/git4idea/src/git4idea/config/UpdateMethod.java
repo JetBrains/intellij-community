@@ -16,6 +16,7 @@
 package git4idea.config;
 
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -48,13 +49,22 @@ public enum UpdateMethod {
     myPresentation = presentation;
   }
 
+  /**
+   * @deprecated use {@link #getMethodName()} to avoid confusion with built-in {@link #name()}.
+   */
   @NotNull
+  @Deprecated
   public String getName() {
+    return getMethodName();
+  }
+
+  @NotNull
+  public @Nls String getMethodName() {
     return GitBundle.message(myName);
   }
 
   @NotNull
-  public String getPresentation() {
+  public @Nls String getPresentation() {
     return GitBundle.message(myPresentation);
   }
 }

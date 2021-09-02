@@ -64,19 +64,19 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     @JvmStatic
     fun suggestPackageName(group: String, artifact: String): String {
-      val groupPrefix = group.toLowerCase().split(".")
+      val groupPrefix = group.lowercase().split(".")
         .joinToString(".") { sanitizePackage(it) }
 
       return "$groupPrefix.${sanitizePackage(artifact)}"
     }
 
     @JvmStatic
-    private fun sanitizePackage(input: String): String {
+    fun sanitizePackage(input: String): String {
       val fileName = FileUtil.sanitizeFileName(input, false)
       return fileName
         .replace("-", "")
         .replace(INVALID_PACKAGE_NAME_SYMBOL_PATTERN, "_")
-        .toLowerCase()
+        .lowercase()
     }
 
     @JvmStatic

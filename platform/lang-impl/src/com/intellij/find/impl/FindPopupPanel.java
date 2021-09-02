@@ -1887,7 +1887,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (e.getData(PlatformDataKeys.CONTEXT_COMPONENT) == null) return;
+      if (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) == null) return;
       if (myPopupState.isRecentlyHidden()) return;
 
       ListPopup listPopup =
@@ -2063,12 +2063,12 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(
         e.getData(CommonDataKeys.EDITOR) == null ||
-        SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField));
+        SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), myFileMaskField));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField) && myFileMaskField.isPopupVisible()) {
+      if (SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), myFileMaskField) && myFileMaskField.isPopupVisible()) {
         myFileMaskField.hidePopup();
         return;
       }

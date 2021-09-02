@@ -76,7 +76,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
 
   @Override
   protected boolean isAvailable(DataContext dataContext) {
-    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(LangDataKeys.MODULE.getData(dataContext));
+    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(PlatformCoreDataKeys.MODULE.getData(dataContext));
   }
 
   @Override

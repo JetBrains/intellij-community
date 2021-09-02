@@ -4,7 +4,7 @@ package com.jetbrains.python.console;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -27,7 +27,7 @@ public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware
     e.getPresentation().setEnabled(false);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, e.getData(LangDataKeys.MODULE));
+      Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, e.getData(PlatformCoreDataKeys.MODULE));
       if (sdkAndModule.first != null) {
         e.getPresentation().setEnabled(true);
       }

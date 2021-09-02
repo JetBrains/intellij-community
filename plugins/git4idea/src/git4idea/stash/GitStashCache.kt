@@ -11,9 +11,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import git4idea.GitCommit
 import git4idea.ui.StashInfo
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
@@ -24,23 +26,24 @@ class GitStashCache(val project: Project) : Disposable {
   private val cache = Caffeine.newBuilder()
     .maximumSize(100)
     .executor(executor)
-    .buildAsync<CommitId, StashData>(CacheLoader { commitId -> doLoadStashData(commitId) })
+    .buildAsync<StashId, StashData>(CacheLoader { stashId -> doLoadStashData(stashId) })
 
   init {
     LowMemoryWatcher.register(Runnable { cache.synchronous().invalidateAll() }, this)
   }
 
-  private fun doLoadStashData(commitId: CommitId): StashData {
+  private fun doLoadStashData(stashId: StashId): StashData {
     try {
-      LOG.debug("Loading stash at '${commitId.hash}' in '${commitId.root}'")
-      return StashData.ChangeList(GitStashOperations.loadStashedChanges(project, commitId.root, commitId.hash, false))
+      LOG.debug("Loading stash at '${stashId.hash}' in '${stashId.root}'")
+      val (changes, indexChanges) = GitStashOperations.loadStashChanges(project, stashId.root, stashId.hash, stashId.parentHashes)
+      return StashData.Changes(changes, indexChanges)
     }
     catch (e: VcsException) {
-      LOG.warn("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
+      LOG.warn("Could not load stash at '${stashId.hash}' in '${stashId.root}'", e)
       return StashData.Error(e)
     }
     catch (e: Exception) {
-      if (e !is ProcessCanceledException) LOG.error("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
+      if (e !is ProcessCanceledException) LOG.error("Could not load stash at '${stashId.hash}' in '${stashId.root}'", e)
       throw CompletionException(e);
     }
   }
@@ -48,7 +51,7 @@ class GitStashCache(val project: Project) : Disposable {
   fun loadStashData(stashInfo: StashInfo): CompletableFuture<StashData>? {
     if (Disposer.isDisposed(this)) return null
 
-    val commitId = CommitId(stashInfo.hash, stashInfo.root)
+    val commitId = StashId(stashInfo.hash, stashInfo.parentHashes, stashInfo.root)
     val future = cache.get(commitId)
     if (future.isCancelled) return cache.synchronous().refresh(commitId)
     return future
@@ -64,7 +67,9 @@ class GitStashCache(val project: Project) : Disposable {
   }
 
   sealed class StashData {
-    class ChangeList(val changeList: CommittedChangeList) : StashData()
+    class Changes(val changes: Collection<Change>, val parentCommits: Collection<GitCommit>) : StashData()
     class Error(val error: VcsException) : StashData()
   }
+
+  private data class StashId(val hash: Hash, val parentHashes: List<Hash>, val root: VirtualFile)
 }

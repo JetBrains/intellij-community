@@ -69,7 +69,7 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
     DeleteProvider provider = getDeleteProvider(dataContext);
     if (e.getInputEvent() instanceof KeyEvent) {
       KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
-      Object component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      Object component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component instanceof JTextComponent) provider = null; // Do not override text deletion
       if (keyEvent.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
         // Do not override text deletion in speed search

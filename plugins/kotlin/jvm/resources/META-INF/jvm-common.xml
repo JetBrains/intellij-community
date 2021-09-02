@@ -85,6 +85,15 @@
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
         <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider"/>
         <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.stepping.KotlinSimpleGetterProvider"/>
+
+        <projectService
+                serviceInterface="org.jetbrains.kotlin.idea.debugger.StackFrameInterceptor"
+                serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
+
+        <projectService
+                serviceInterface="org.jetbrains.kotlin.idea.debugger.coroutine.DebuggerListener"
+                serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebuggerListener"/>
+
         <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
 
         <framework.type implementation="org.jetbrains.kotlin.idea.framework.JavaFrameworkType"/>

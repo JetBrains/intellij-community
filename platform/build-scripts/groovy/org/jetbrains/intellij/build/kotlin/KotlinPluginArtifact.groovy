@@ -99,7 +99,7 @@ final class KotlinPluginArtifact {
       case KotlinPluginKind.IJ_CE:
         newText = replace(
           newText,
-          "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
+          "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",
           "<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>"
         )
         break
@@ -107,7 +107,7 @@ final class KotlinPluginArtifact {
         newText = replace(
           newText,
           "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
-          "<depends>com.intellij.modules.androidstudio</depends>"
+          "<plugin id=\"com.intellij.modules.androidstudio\"/>"
         )
         break
       case KotlinPluginKind.MI:

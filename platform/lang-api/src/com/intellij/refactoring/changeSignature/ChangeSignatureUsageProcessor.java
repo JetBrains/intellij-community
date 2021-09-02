@@ -45,8 +45,8 @@ public interface ChangeSignatureUsageProcessor {
 
   boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project);
 
-  void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+  void registerConflictResolvers(List<? super ResolveSnapshotProvider.ResolveSnapshot> snapshots,
                                  @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
-                                 UsageInfo[] usages, 
+                                 UsageInfo[] usages,
                                  ChangeInfo changeInfo);
 }

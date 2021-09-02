@@ -23,7 +23,7 @@ abstract class CreateParameterFromUsageFactory<E : KtElement> :
     override fun createFixes(
         originalElementPointer: SmartPsiElementPointer<E>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> CreateParameterData<E>?
+        quickFixDataFactory: (E) -> CreateParameterData<E>?
     ): List<QuickFixWithDelegateFactory> = QuickFixWithDelegateFactory(actionPriority) {
         originalElementPointer.element?.let { element ->
             CreateParameterFromUsageFix(element, quickFixDataFactory).takeIf { it.isAvailable(element.project, null, element.containingKtFile ) }

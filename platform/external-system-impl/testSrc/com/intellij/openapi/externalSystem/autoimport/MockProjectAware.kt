@@ -19,7 +19,8 @@ import kotlin.concurrent.thread
 
 class MockProjectAware(
   override val projectId: ExternalSystemProjectId,
-  private val project: Project
+  private val project: Project,
+  private val parentDisposable: Disposable
 ) : ExternalSystemProjectAware {
 
   val subscribeCounter = AtomicInteger(0)
@@ -63,7 +64,7 @@ class MockProjectAware(
       }
       CANCEL -> {
         val task = once { doRefreshProject(context) }
-        refresh.onceAfterOperation { task.run() }
+        refresh.onceAfterOperation({ task.run() }, parentDisposable)
         if (refresh.isOperationCompleted()) task.run()
       }
       IGNORE -> {
@@ -101,11 +102,13 @@ class MockProjectAware(
   }
 
   fun beforeRefresh(times: Int, action: () -> Unit) {
-    subscribe(times, action, {
-      object : Listener {
-        override fun beforeProjectRefresh() = it()
-      }
-    }, eventDispatcher::addListener)
+    subscribe(times, action, ::beforeRefresh, parentDisposable)
+  }
+
+  fun beforeRefresh(action: () -> Unit, parentDisposable: Disposable) {
+    eventDispatcher.addListener(object : Listener {
+      override fun beforeProjectRefresh() = action()
+    }, parentDisposable)
   }
 
   fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) {
@@ -113,11 +116,13 @@ class MockProjectAware(
   }
 
   fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) {
-    subscribe(times, action, {
-      object : Listener {
-        override fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) = it(context)
-      }
-    }, eventDispatcher::addListener)
+    subscribe(times, action, ::duringRefresh, parentDisposable)
+  }
+
+  fun duringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) {
+    eventDispatcher.addListener(object : Listener {
+      override fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) = action(context)
+    }, parentDisposable)
   }
 
   fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) {
@@ -125,11 +130,13 @@ class MockProjectAware(
   }
 
   fun afterRefresh(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) {
-    subscribe(times, action, {
-      object : Listener {
-        override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) = it(status)
-      }
-    }, eventDispatcher::addListener)
+    subscribe(times, action, ::afterRefresh, parentDisposable)
+  }
+
+  fun afterRefresh(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) {
+    eventDispatcher.addListener(object : Listener {
+      override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) = action(status)
+    }, parentDisposable)
   }
 
   interface Listener : ExternalSystemProjectRefreshListener, EventListener {

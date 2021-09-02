@@ -74,7 +74,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
     createCompoundReferenceRenderer(
       "Map", CommonClassNames.JAVA_UTIL_MAP,
-      createLabelRenderer(" size = ", "size()", null),
+      createLabelRenderer(" size = ", "size()"),
       createExpressionArrayChildrenRenderer("entrySet().toArray()", "!isEmpty()", myArrayRenderer)
     ),
     createCompoundReferenceRenderer(
@@ -85,7 +85,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     new ListObjectRenderer(this, myArrayRenderer),
     createCompoundReferenceRenderer(
       "Collection", "java.util.Collection",
-      createLabelRenderer(" size = ", "size()", null),
+      createLabelRenderer(" size = ", "size()"),
       createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", myArrayRenderer)
     )
   };
@@ -267,7 +267,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       visitAnnotatedElements(Debug.Renderer.class.getName().replace("$", "."), project, (e, annotation) -> {
         if (e instanceof PsiClass) {
             String text = getAttributeValue(annotation, "text");
-            LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text, null);
+            LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text);
             String childrenArray = getAttributeValue(annotation, "childrenArray");
             String isLeaf = getAttributeValue(annotation, "hasChildren");
             ExpressionChildrenRenderer childrenRenderer =
@@ -408,23 +408,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return childrenRenderer;
   }
 
-  private static LabelRenderer createLabelRenderer(@NonNls final String prefix, @NonNls final String expressionText, @NonNls final String postfix) {
-    final LabelRenderer labelRenderer = new LabelRenderer() {
-      @Override
-      public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) throws EvaluateException {
-        final String evaluated = super.calcLabel(descriptor, evaluationContext, labelListener);
-        if (prefix == null && postfix == null) {
-          return evaluated;
-        }
-        if (prefix != null && postfix != null) {
-          return prefix + evaluated + postfix;
-        }
-        if (prefix != null) {
-          return prefix + evaluated;
-        }
-        return evaluated + postfix;
-      }
-    };
+  private static LabelRenderer createLabelRenderer(@NonNls @Nullable String prefix, @NonNls String expressionText) {
+    LabelRenderer labelRenderer = new LabelRenderer();
+    labelRenderer.setPrefix(prefix);
     labelRenderer.setLabelExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", JavaFileType.INSTANCE));
     return labelRenderer;
   }
@@ -576,7 +562,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
       super(rendererSettings,
             "List",
-            createLabelRenderer(" size = ", "size()", null),
+            createLabelRenderer(" size = ", "size()"),
             createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
       setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, getClassName()));

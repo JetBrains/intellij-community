@@ -124,6 +124,6 @@ public abstract class BaseAnalysisAction extends AnAction {
         return scope.getModule();
       }
     }
-    return dataContext.getData(LangDataKeys.MODULE);
+    return dataContext.getData(PlatformCoreDataKeys.MODULE);
   }
 }

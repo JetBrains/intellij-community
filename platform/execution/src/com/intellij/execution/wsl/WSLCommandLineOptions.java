@@ -13,7 +13,7 @@ import java.util.List;
 
 public final class WSLCommandLineOptions {
 
-  static final @NlsSafe String DEFAULT_SHELL = "/bin/sh";
+  public static final @NlsSafe String DEFAULT_SHELL = "/bin/sh";
 
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
@@ -80,7 +80,7 @@ public final class WSLCommandLineOptions {
     return this;
   }
 
-  boolean isExecuteCommandInDefaultShell() {
+  public boolean isExecuteCommandInDefaultShell() {
     return myExecuteCommandInDefaultShell;
   }
 
@@ -93,7 +93,7 @@ public final class WSLCommandLineOptions {
    */
   @SuppressWarnings("SameParameterValue")
   @ApiStatus.Experimental
-  @NotNull WSLCommandLineOptions setExecuteCommandInDefaultShell(boolean executeCommandInDefaultShell) {
+  public @NotNull WSLCommandLineOptions setExecuteCommandInDefaultShell(boolean executeCommandInDefaultShell) {
     myExecuteCommandInDefaultShell = executeCommandInDefaultShell;
     return this;
   }

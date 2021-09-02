@@ -383,6 +383,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
       private void findNext() {
         hasNext = false;
         while (totalIterator.hasNext()) {
+          ProgressManager.checkCanceled();
           VirtualFile t = totalIterator.next();
           if (t != null) {
             next = t;

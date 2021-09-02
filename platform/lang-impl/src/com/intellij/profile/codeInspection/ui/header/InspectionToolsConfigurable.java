@@ -173,7 +173,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     final SingleInspectionProfilePanel panel = getSelectedPanel();
     if (panel != null) {
       panel.setVisible(true);//make sure that UI was initialized
-      mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+      mySelectionAlarm = new Alarm();
       mySelectionAlarm.cancelAllRequests();
       mySelectionAlarm.addRequest(panel::updateSelection, 200);
     }

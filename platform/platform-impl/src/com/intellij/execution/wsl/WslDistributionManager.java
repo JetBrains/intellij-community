@@ -29,6 +29,7 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private volatile CachedDistributions myInstalledDistributions;
+  private volatile List<WSLDistribution> myLastInstalledDistributions;
   private final Map<String, WSLDistribution> myMsIdToDistributionCache = CollectionFactory.createConcurrentWeakCaseInsensitiveMap();
 
   @Override
@@ -42,6 +43,14 @@ public abstract class WslDistributionManager implements Disposable {
    */
   public @Nullable List<WSLDistribution> getCachedInstalledDistributions() {
     return getInstalledDistributionsFuture().getNow(null);
+  }
+
+  /**
+   * @return last loaded list of installed distributions or {@code null} if it hasn't been loaded yet.
+   * Please note the returned list might be out-of-date. To get the up-to-date list, please use {@link #getInstalledDistributionsFuture}.
+   */
+  public @Nullable List<WSLDistribution> getLastInstalledDistributions() {
+    return myLastInstalledDistributions;
   }
 
   /**
@@ -60,6 +69,7 @@ public abstract class WslDistributionManager implements Disposable {
       if (cachedDistributions == null) {
         cachedDistributions = new CachedDistributions(loadInstalledDistributions());
         myInstalledDistributions = cachedDistributions;
+        myLastInstalledDistributions = cachedDistributions.myInstalledDistributions;
       }
     }
     return cachedDistributions.myInstalledDistributions;

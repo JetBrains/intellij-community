@@ -33,7 +33,11 @@ object StubIndexKeyDescriptorCache {
 
   @Suppress("UNCHECKED_CAST")
   private fun <K> StubIndexKey<K, *>.findExtension(): StubIndexExtension<K, *> {
-    return StubIndexExtension.EP_NAME.findFirstSafe(Predicate { it.key == this }) as StubIndexExtension<K, *>
+    val indexExtension = StubIndexExtension.EP_NAME.findFirstSafe(Predicate { it.key == this })
+    if (indexExtension == null) {
+      throw NullPointerException("Can't find stub index extension for key '$this'")
+    }
+    return indexExtension as StubIndexExtension<K, *>
   }
 }
 

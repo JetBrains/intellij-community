@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = ComponentCategory.CODE)
+@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
@@ -47,7 +47,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
     public String SOFT_WRAP_FILE_MASKS;
-    public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
+    public boolean USE_CUSTOM_SOFT_WRAP_INDENT = true;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = false;
     public boolean IS_CARET_INSIDE_TABS;
@@ -118,7 +118,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     }
   }
 
-  @State(name = "OsSpecificEditorSettings", storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS))
+  @State(
+    name = "OsSpecificEditorSettings",
+    storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS),
+    category = SettingsCategory.CODE)
   public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 

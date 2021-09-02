@@ -136,13 +136,13 @@ class ProjectLibraryTableBridgeImpl(
       .toList()
     LOG.debug("Initial load of project-level libraries")
     if (libraries.isNotEmpty()) {
+      WorkspaceModel.getInstance(project).updateProjectModelSilent {
+        libraries.forEach { (entity, library) ->
+          it.mutableLibraryMap.addIfAbsent(entity, library)
+        }
+      }
       runInEdt {
         runWriteAction {
-          WorkspaceModel.getInstance(project).updateProjectModelSilent {
-            libraries.forEach { (entity, library) ->
-              it.mutableLibraryMap.addIfAbsent(entity, library)
-            }
-          }
           libraries.forEach { (_, library) ->
             dispatcher.multicaster.afterLibraryAdded(library)
           }

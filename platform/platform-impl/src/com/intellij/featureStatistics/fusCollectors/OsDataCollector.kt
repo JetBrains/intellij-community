@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -35,7 +36,9 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
   private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ)
-  private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // for backward compatibility, keep until 2024.1
+  @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
+  @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi")
+  private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
   private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"))
 
   override fun getGroup(): EventLogGroup = GROUP

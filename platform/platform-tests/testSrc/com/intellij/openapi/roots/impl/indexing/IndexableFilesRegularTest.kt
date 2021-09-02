@@ -95,6 +95,9 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     lateinit var sourcesDir: DirectorySpec
     lateinit var excludedSourcesDir: DirectorySpec
 
+    lateinit var firstLibraryClassesDir: DirectorySpec
+    lateinit var firstLibraryFile: FileSpec
+
     buildDirectoryContent(commonRoot) {
       dir("library") {
         classesDir = dir("classes") {
@@ -109,6 +112,9 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
           }
           sourceFile = file("SourceFile.java", "class SourceFile {}")
         }
+        firstLibraryClassesDir = dir("firstLibraryClasses") {
+          firstLibraryFile = file("FirstLibraryFile.java", "class FirstLibraryFile {}")
+        }
       }
     }
     val module = projectModelRule.createModule()
@@ -118,11 +124,15 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         model.addRoot(sourcesDir.file, OrderRootType.SOURCES)
         model.addExcludedRoot(excludedClassesDir.file.url)
         model.addExcludedRoot(excludedSourcesDir.file.url)
+        if ("libraryOne" == libraryName) {
+          model.addRoot(firstLibraryClassesDir.file, OrderRootType.CLASSES)
+        }
       }
     }
     // ClassFile.java and SourceFile.java are iterated by only one of the "file iterators"
     // So they must be skipped when iterating for the second time.
-    assertIndexableFiles(expectedNumberOfSkippedFiles = 2, expectedFiles = arrayOf(classFile.file, sourceFile.file))
+    assertIndexableFiles(expectedNumberOfSkippedFiles = 2,
+      expectedFiles = arrayOf(classFile.file, sourceFile.file, firstLibraryFile.file))
   }
 
   @Test

@@ -3,13 +3,13 @@
 Reports constant new array expressions that can be replaced with an array initializer. Array initializers can omit the type because
 it is already specified in the left side of the assignment.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   int[] foo = new int[] {42};
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   int[] foo = {42};
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

@@ -103,7 +103,7 @@ final class PlatformModules {
     "intellij.platform.credentialStore",
     "intellij.platform.credentialStore.ui",
     "intellij.platform.rd.community",
-    "intellij.platform.ml.impl"
+    "intellij.platform.ml.impl",
   )
 
   private static final String UTIL_JAR = "util.jar"
@@ -163,6 +163,8 @@ final class PlatformModules {
       addModule("intellij.platform.util.ui", UTIL_JAR)
       addModule("intellij.platform.util.ex", UTIL_JAR)
       addModule("intellij.platform.ide.util.io", UTIL_JAR)
+      addModule("intellij.platform.ide.util.io.impl", UTIL_JAR)
+      addModule("intellij.platform.ide.util.netty", UTIL_JAR)
       addModule("intellij.platform.extensions", UTIL_JAR)
 
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")

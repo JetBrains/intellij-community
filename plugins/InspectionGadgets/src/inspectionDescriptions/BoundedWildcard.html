@@ -2,25 +2,25 @@
 <body>
 Reports generic method parameters that can make use of <a href="https://en.wikipedia.org/wiki/Wildcard_(Java)">bounded wildcards</a>.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   void process(Consumer&lt;Number&gt; consumer);
-</pre>
+</code></pre>
 <p>should be replaced with:</p>
-<pre>
+<pre><code>
   void process(Consumer&lt;? super Number&gt; consumer);
-</pre>
+</code></pre>
 <p>
   This method signature is more flexible because it accepts more types: not only
   <code>Consumer&lt;Number&gt;</code>, but also <code>Consumer&lt;Object&gt;</code>.
 </p>
 <p>Likewise, type parameters in covariant position:</p>
-<pre>
+<pre><code>
   T produce(Producer&lt;T&gt; p);
-</pre>
+</code></pre>
 <p>should be replaced with:</p>
-<pre>
+<pre><code>
   T produce(Producer&lt;? extends T&gt; p);
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   To quote <a href="https://en.wikipedia.org/wiki/Joshua_Bloch#Effective_Java">Joshua Bloch</a> in <em>Effective Java</em> third Edition:

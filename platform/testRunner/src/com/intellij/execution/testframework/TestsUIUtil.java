@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -36,7 +36,7 @@ public final class TestsUIUtil {
   }
 
   public static boolean isMultipleSelectionImpossible(DataContext dataContext) {
-    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTree) {
       final TreePath[] selectionPaths = ((JTree)component).getSelectionPaths();
       if (selectionPaths == null || selectionPaths.length == 0) {

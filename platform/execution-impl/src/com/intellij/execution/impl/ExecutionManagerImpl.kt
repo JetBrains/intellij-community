@@ -149,7 +149,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   @Volatile
   var forceCompilationInTests = false
 
-  private val awaitingTerminationAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
+  private val awaitingTerminationAlarm = Alarm()
   private val awaitingRunProfiles = HashMap<RunProfile, ExecutionEnvironment>()
   private val runningConfigurations: MutableList<RunningConfigurationEntry> = ContainerUtil.createLockFreeCopyOnWriteList()
 

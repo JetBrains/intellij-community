@@ -161,7 +161,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   public void actionPerformed(@NotNull AnActionEvent e) {
     InputEvent event = e.getInputEvent();
     if (event != null) event.consume();
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
 
     Project project = e.getProject();
     closeAllInspectorWindows();
@@ -179,15 +179,11 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   }
 
   @Override
-  public List<AnAction> promote(@NotNull List<? extends AnAction> actions,
-                                @NotNull DataContext context) {
-
-    ArrayList<AnAction> sorted = new ArrayList<>(actions);
-    if (context.getData(PlatformDataKeys.CONTEXT_COMPONENT) instanceof EditorComponentImpl) {
-      sorted.remove(this);
-      sorted.add(this);
+  public @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+    if (context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) instanceof EditorComponentImpl) {
+      return List.of(this);
     }
-    return sorted;
+    return null;
   }
 
   private static void closeAllInspectorWindows() {

@@ -612,7 +612,7 @@ internal object BranchesDashboardActions {
       val uiController = e.getData(BRANCHES_UI_CONTROLLER)
       val project = e.project
       val enabled = project != null && uiController != null && branchFilters != null && branchFilters.isNotEmpty()
-                    && e.getData(PlatformDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
+                    && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
       e.presentation.isEnabled = enabled
     }
 

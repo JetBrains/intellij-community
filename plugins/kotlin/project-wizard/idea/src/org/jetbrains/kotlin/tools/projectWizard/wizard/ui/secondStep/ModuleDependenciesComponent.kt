@@ -20,9 +20,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Dimension
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.reflect.KFunction0
 
 class ModuleDependenciesComponent(
     context: Context
@@ -40,7 +38,7 @@ class ModuleDependenciesComponent(
             AddModulesPopUp.create(
                 possibleDependencies(),
                 dependenciesList::addDependency
-            ).show(button.preferredPopupPoint!!)
+            ).show(button.preferredPopupPoint)
         }
         setAddActionName(KotlinNewProjectWizardUIBundle.message("module.dependencies.add.module.dependency"))
         setAddActionUpdater { e ->
@@ -159,10 +157,9 @@ private class ModuleDependenciesList(getDependencies: () -> List<Module>) : Abst
 }
 
 private fun ColoredListCellRenderer<Module>.renderModule(module: Module) {
+    @Suppress("HardCodedStringLiteral")
     append(module.path.asString())
     append(" ")
-    module.greyText?.let {
-        append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    }
+    append(module.greyText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
     icon = module.icon
 }

@@ -989,7 +989,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       else if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         if (myActiveRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
           return myActiveRequest.getUserData(DiffUserDataKeys.HELP_ID);
         }

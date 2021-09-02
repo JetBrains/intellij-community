@@ -8,41 +8,56 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.mergeIterators
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
 
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
-    val seenLibraries: MutableSet<Library> = HashSet()
-    val seenSdks: MutableSet<Sdk> = HashSet()
-    val modules = ModuleManager.getInstance(project).sortedModules
+    if (indexProjectBasedOnIndexableEntityProviders()) {
+      val iterators: MutableList<IndexableFilesIterator> = mutableListOf()
+      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
+        addIteratorsFromProvider(provider, entityStorage, project, iterators)
+      }
+      return mergeIterators(iterators)
+    }
+    else {
+      val seenLibraries: MutableSet<Library> = HashSet()
+      val seenSdks: MutableSet<Sdk> = HashSet()
+      val modules = ModuleManager.getInstance(project).sortedModules
 
-    val providers: MutableList<IndexableFilesIterator> = mutableListOf()
-    for (module in modules) {
-      providers.addAll(ModuleIndexableFilesIteratorImpl.getModuleIterators(module))
+      val providers: MutableList<IndexableFilesIterator> = mutableListOf()
+      for (module in modules) {
+        providers.addAll(ModuleIndexableFilesIteratorImpl.getModuleIterators(module))
 
-      val orderEntries = ModuleRootManager.getInstance(module).orderEntries
-      for (orderEntry in orderEntries) {
-        when (orderEntry) {
-          is LibraryOrderEntry -> {
-            val library = orderEntry.library
-            if (library != null && seenLibraries.add(library)) {
-              providers.add(LibraryIndexableFilesIteratorImpl(library))
+        val orderEntries = ModuleRootManager.getInstance(module).orderEntries
+        for (orderEntry in orderEntries) {
+          when (orderEntry) {
+            is LibraryOrderEntry -> {
+              val library = orderEntry.library
+              if (library != null && seenLibraries.add(library)) {
+                providers.add(LibraryIndexableFilesIteratorImpl(library))
+              }
             }
-          }
-          is JdkOrderEntry -> {
-            val sdk = orderEntry.jdk
-            if (sdk != null && seenSdks.add(sdk)) {
-              providers.add(SdkIndexableFilesIteratorImpl(sdk))
+            is JdkOrderEntry -> {
+              val sdk = orderEntry.jdk
+              if (sdk != null && seenSdks.add(sdk)) {
+                providers.add(SdkIndexableFilesIteratorImpl(sdk))
+              }
             }
           }
         }
       }
+      return providers
     }
-    return providers
   }
 
   override fun getOwnFilePredicate(project: Project): Predicate<VirtualFile> {
@@ -57,6 +72,21 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
       }
       else false
     }
+  }
+
+  companion object {
+    private fun <E : WorkspaceEntity> addIteratorsFromProvider(provider: IndexableEntityProvider<E>,
+                                                               entityStorage: WorkspaceEntityStorage,
+                                                               project: Project,
+                                                               iterators: MutableList<IndexableFilesIterator>) {
+      val entityClass = provider.entityClass
+      for (entity in entityStorage.entities(entityClass)) {
+        iterators.addAll(provider.getAddedEntityIterator(entity, entityStorage, project))
+      }
+    }
+
+    @JvmStatic
+    fun indexProjectBasedOnIndexableEntityProviders(): Boolean = Registry.`is`("indexing.enable.entity.provider.based.indexing")
   }
 }
 

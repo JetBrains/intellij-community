@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.server.ui
 import com.intellij.execution.util.ListTableWithButtons
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnActionButton
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.util.ui.ListTableModel
@@ -65,7 +66,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     return arrayOf(refresh, stop)
   }
 
-  private class TableColumn(name: String, val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
+  private class TableColumn(@NlsContexts.ColumnName name: String, val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
     name) {
 
     override fun getDescription(element: MavenServerConnector?): String? = null;

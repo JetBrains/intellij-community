@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 internal class CredentialStoreTest {
   @Rule
-  fun timeout() = Timeout(5, TimeUnit.SECONDS)
+  fun timeout() = Timeout(20, TimeUnit.SECONDS)
   @Rule
   fun application() = ApplicationRule()
 

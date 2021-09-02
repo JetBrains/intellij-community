@@ -11,7 +11,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -570,7 +570,7 @@ object UpdateChecker {
             title,
             message,
             NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatedPlugins.size)) { e, _ ->
-              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
             },
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), runnable),
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {

@@ -4,7 +4,7 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   ProgressIndicator myCurrentProgress;
   private JComponent myCurrentComponent;
   private UsageView myCurrentUsageView;
-  protected final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  protected final Alarm myAlarm = new Alarm();
 
   public UsagesPanel(@NotNull Project project) {
     super(new BorderLayout());
@@ -105,7 +105,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   @Nullable
   @NonNls
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "ideaInterface.find";
     }
     return null;

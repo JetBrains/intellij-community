@@ -6,6 +6,7 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -45,7 +46,7 @@ class AntBeforeCompileTask implements CompileTask {
     Module[] modules = scope.getAffectedModules();
     return SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
-      .add(LangDataKeys.MODULE, modules.length == 1 ? modules[0] : null)
+      .add(PlatformCoreDataKeys.MODULE, modules.length == 1 ? modules[0] : null)
       .add(LangDataKeys.MODULE_CONTEXT_ARRAY, modules)
       .add(COMPILER_CONTEXT_MAKE_KEY, context.isMake())
       .build();

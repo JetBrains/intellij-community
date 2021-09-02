@@ -84,6 +84,12 @@
                     interface="com.intellij.openapi.vcs.VcsConfigurableProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="generalVcsSettingsExtension"
+                    beanClass="com.intellij.openapi.vcs.configurable.GeneralVcSettingsProviderEP"
+                    area="IDEA_PROJECT" dynamic="true">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
+    </extensionPoint>
+
     <!--<extensionPoint name="writingAccessProvider"-->
     <!--interface="com.intellij.openapi.vfs.WritingAccessProvider"-->
     <!--area="IDEA_PROJECT"/>-->

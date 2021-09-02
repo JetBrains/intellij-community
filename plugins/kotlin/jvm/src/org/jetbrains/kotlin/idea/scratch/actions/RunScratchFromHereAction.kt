@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.scratch.getScratchFileFromSelectedEditor
 
 class RunScratchFromHereAction : ScratchAction(
     KotlinJvmBundle.message("scratch.run.from.here.button"),
@@ -14,8 +13,7 @@ class RunScratchFromHereAction : ScratchAction(
 ) {
 
     override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
-        val scratchFile = getScratchFileFromSelectedEditor(project) ?: return
+        val scratchFile = e.currentScratchFile ?: return
 
         doAction(scratchFile)
     }

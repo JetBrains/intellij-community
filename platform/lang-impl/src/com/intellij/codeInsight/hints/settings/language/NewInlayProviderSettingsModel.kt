@@ -5,7 +5,10 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.xmlb.SerializationFilter
 
@@ -21,11 +24,18 @@ class NewInlayProviderSettingsModel<T : Any>(
   override val mainCheckBoxLabel: String
     get() = providerWithSettings.configurable.mainCheckboxText
 
+  override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
+    providerWithSettings.provider.createFile(project, fileType, document)
+
   override val component by lazy {
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }
   override fun collectAndApply(editor: Editor, file: PsiFile) {
     providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApply(editor, file, isEnabled)
+  }
+
+  override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {
+    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApplyOnEdt(editor, file, isEnabled)
   }
 
   override val cases: List<ImmediateConfigurable.Case>

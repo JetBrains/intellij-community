@@ -187,13 +187,12 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         }
         val actualValue = it.value.first
         val expectedType = expectedArguments[it.key]?.second
-        val matchResult: Boolean = strictUnionMatch(expectedType,
-                                                    if (actualValue != null)
-                                                      PyLiteralType.promoteToLiteral(actualValue,
-                                                                                     expectedType,
-                                                                                     context) ?: context.getType(actualValue)
-                                                    else it.value.second,
-                                                    context)
+        val matchResult: Boolean = strictUnionMatch(
+          expectedType,
+          if (actualValue != null) PyLiteralType.promoteToLiteral(actualValue, expectedType, context, null) ?: context.getType(actualValue)
+          else it.value.second,
+          context
+        )
         if (!matchResult) {
           return false
         }

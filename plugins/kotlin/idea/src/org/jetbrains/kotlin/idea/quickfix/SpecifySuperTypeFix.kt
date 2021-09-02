@@ -48,7 +48,7 @@ class SpecifySuperTypeFix(
     }
 
     private fun KtSuperExpression.specifySuperType(superType: String) {
-        project.executeWriteCommand("Specify supertype") {
+        project.executeWriteCommand(KotlinIdeaCompletionBundle.message("intention.name.specify.supertype")) {
             val label = this.labelQualifier?.text ?: ""
             replace(KtPsiFactory(this).createExpression("super<$superType>$label"))
         }

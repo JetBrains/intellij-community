@@ -80,7 +80,7 @@ public final class HighlightNamesUtil {
     return false;
   }
 
-  private static boolean isStaticallyImported(@NotNull PsiElement elementToHighlight) {
+  public static boolean isStaticallyImported(@NotNull PsiElement elementToHighlight) {
     PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(elementToHighlight, PsiReferenceExpression.class);
     if (referenceExpression != null) {
       JavaResolveResult result = referenceExpression.advancedResolve(false);

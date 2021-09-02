@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -26,12 +26,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -215,15 +217,6 @@ public final class VfsRootAccess {
     if (roots.length == 0) return;
     doAllow(roots);
     Disposer.register(disposable, () -> disallowRootAccess(roots));
-  }
-
-  /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @TestOnly
-  public static void allowRootAccess(String @NotNull ... roots) {
-    DeprecatedMethodException.report("Use `allowRootAccess(Disposable, String...)` instead");
-    doAllow(roots);
   }
 
   private static void doAllow(String @NotNull ... roots) {

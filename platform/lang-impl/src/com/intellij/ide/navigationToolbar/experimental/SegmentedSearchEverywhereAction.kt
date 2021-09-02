@@ -3,19 +3,16 @@ package com.intellij.ide.navigationToolbar.experimental
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NotNull
+import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.SwingUtilities
 
 class SegmentedSearchEverywhereAction: SegmentedBarActionComponent(ActionPlaces.RUN_TOOLBAR) {
   init {
     ActionManager.getInstance().getAction("SegmentedSearchEverywhereGroup")?.let {
       if(it is ActionGroup) {
-        SwingUtilities.invokeLater {
           actionGroup = it
-        }
       }
     }
   }
@@ -26,8 +23,8 @@ class SegmentedSearchEverywhereAction: SegmentedBarActionComponent(ActionPlaces.
   }
 
   override fun createCustomComponent(presentation: Presentation, place_: String): JComponent {
-    return JPanel(MigLayout("novisualpadding, ins 1 2 1 2")).apply{
-      add(super.createCustomComponent(presentation, place_), "gap 0")
+    return JPanel(BorderLayout()).apply{
+      add(super.createCustomComponent(presentation, place_), BorderLayout.CENTER)
     }
   }
 }

@@ -10,11 +10,15 @@ private const val inspectionPath = "/codeInspection/testonly"
 class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
   override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "java"
+  fun `test @TestOnly not highlighting in javadoc`() {
+    myFixture.testHighlighting("TestOnlyDoc.java")
+  }
 
-  fun `test @TestOnly not highlighting in javadoc`() = testHighlighting("TestOnlyDoc")
+  fun `test @TestOnly in production code`() {
+    myFixture.testHighlighting("TestOnlyTest.java")
+  }
 
-  fun `test @TestOnly in production code`() = testHighlighting("TestOnlyTest")
-
-  fun `test @VisibleForTesting in production code`() = testHighlighting("VisibleForTestingTest", "VisibleForTestingTestApi")
+  fun `test @VisibleForTesting in production code`() {
+    myFixture.testHighlighting("VisibleForTestingTest.java", "VisibleForTestingTestApi.java")
+  }
 }

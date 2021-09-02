@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.psi.PsiFile
@@ -42,6 +43,7 @@ class ScriptExternalHighlightingPass(
             val (startOffset, endOffset) = scriptDiagnostic.location?.let { computeOffsets(document, it) } ?: (0 to 0)
             val exception = scriptDiagnostic.exception
             val exceptionMessage = if (exception != null) " ($exception)" else ""
+            @Suppress("HardCodedStringLiteral")
             val message = scriptDiagnostic.message + exceptionMessage
             val annotation = Annotation(
                 startOffset,
@@ -64,7 +66,7 @@ class ScriptExternalHighlightingPass(
         }
 
         val infos = annotations.map { HighlightInfo.fromAnnotation(it) }
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument!!, 0, file.textLength, infos, colorsScheme, id)
+        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, infos, colorsScheme, id)
     }
 
     private fun computeOffsets(document: Document, position: SourceCode.Location): Pair<Int, Int> {
@@ -96,7 +98,7 @@ class ScriptExternalHighlightingPass(
         }
     }
 
-    private fun showNotification(file: KtFile, message: String) {
+    private fun showNotification(file: KtFile, @NlsContexts.PopupContent message: String) {
         UIUtil.invokeLaterIfNeeded {
             val ideFrame = WindowManager.getInstance().getIdeFrame(file.project)
             if (ideFrame != null) {

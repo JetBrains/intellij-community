@@ -11,11 +11,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ExecutionDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -84,10 +80,10 @@ public class ConfigurationContext {
     Module module = null;
     if (sharedContext == null ||
         sharedContext.getLocation() == null ||
-        (calculatedLocation = calcLocation(dataContext, module = LangDataKeys.MODULE.getData(dataContext))).getFirst() == null ||
+        (calculatedLocation = calcLocation(dataContext, module = PlatformCoreDataKeys.MODULE.getData(dataContext))).getFirst() == null ||
         !Comparing.equal(sharedContext.getLocation().getPsiElement(), calculatedLocation.getFirst().getPsiElement())) {
       if (calculatedLocation==null) {
-        module = LangDataKeys.MODULE.getData(dataContext);
+        module = PlatformCoreDataKeys.MODULE.getData(dataContext);
         calculatedLocation = calcLocation(dataContext, module);
       }
       sharedContext = new ConfigurationContext(dataContext, calculatedLocation.getFirst(), module, calculatedLocation.getSecond(), place);
@@ -169,7 +165,7 @@ public class ConfigurationContext {
 
   private Object getDefaultData(String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return myLocation.getProject();
-    if (LangDataKeys.MODULE.is(dataId)) return myModule;
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) return myModule;
     if (Location.DATA_KEY.is(dataId)) return myLocation;
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation.getPsiElement();
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) return ContainerUtil.ar(myLocation.getPsiElement());

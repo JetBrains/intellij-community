@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
 import org.jetbrains.kotlin.psi.KtFile
 
-class DecompileKotlinToJavaAction : AnAction() {
+class DecompileKotlinToJavaAction : AnAction(KotlinJvmDecompilerBundle.message("action.decompile.java.name")) {
     override fun actionPerformed(e: AnActionEvent) {
         val binaryFile = getBinaryKotlinFile(e) ?: return
 

@@ -26,6 +26,10 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
     }
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
   private fun getSession(e: AnActionEvent): DebuggerSession? {
@@ -42,18 +46,16 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
-    if (project == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
     val session = getSession(e)
     e.presentation.isEnabledAndVisible =
-      (if(e.isItRunToolbarMainSlot()) RunToolbarSlotManager.getInstance(project).getState().isSingleProcess() || e.isOpened() else true)
-      && session != null
+      session != null
       && HotSwapUIImpl.canHotSwap(session)
       && Registry.`is`("ide.new.navbar.hotswap", false)
 
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 }

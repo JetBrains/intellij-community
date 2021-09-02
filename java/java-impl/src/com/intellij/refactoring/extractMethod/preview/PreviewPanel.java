@@ -43,7 +43,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   private final ButtonsPanel myButtonsPanel;
   private Content myContent;
   private final PreviewDiffPanel myDiffPanel;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
 
   PreviewPanel(ExtractMethodProcessor processor) {
     myProject = processor.getProject();

@@ -80,7 +80,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
     if ((files == null || files.length != 1) &&
              LangDataKeys.MODULE_CONTEXT.getData(context) == null &&
              LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context) == null &&
-             PlatformDataKeys.PROJECT_CONTEXT.getData(context) == null) {
+             PlatformCoreDataKeys.PROJECT_CONTEXT.getData(context) == null) {
       final PsiElement[] elems = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
       if (elems != null) {
         boolean copyrightEnabled = false;

@@ -2213,10 +2213,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="serialversionuid.private.static.final.long.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.serialization.SerialVersionUIDNotStaticFinalInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="serial" shortName="SerializableHasSerialVersionUIDField" alternativeId="serial"
-                     bundle="messages.InspectionGadgetsBundle" key="serializable.class.without.serialversionuid.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.serialization.SerializableHasSerialVersionUIDFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SerializableHasSerializationMethods" alternativeId="serial"
                      bundle="messages.InspectionGadgetsBundle" key="serializable.has.serialization.methods.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"

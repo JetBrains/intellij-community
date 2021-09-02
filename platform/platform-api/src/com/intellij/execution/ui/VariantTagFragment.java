@@ -27,6 +27,10 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     myVariantNameProvider = variantNameProvider;
   }
 
+  public void setVariantHintProvider(Function<? super V, String> variantHintProvider) {
+    myVariantHintProvider = variantHintProvider;
+  }
+
   public void setToggleListener(Consumer<? super V> toggleListener) {
     myToggleListener = toggleListener;
   }
@@ -57,6 +61,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   private final Function<? super T, ? extends V> myGetter;
   private final BiConsumer<? super T, ? super V> mySetter;
   private Function<? super V, String> myVariantNameProvider;
+  private Function<? super V, String> myVariantHintProvider;
   private Consumer<? super V> myToggleListener;
 
   public VariantTagFragment(String id,
@@ -112,6 +117,11 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     return myVariantNameProvider == null ? StringUtil.capitalize(variant.toString()) : myVariantNameProvider.apply(variant); //NON-NLS
   }
 
+  @Nls
+  protected @Nullable String getVariantHint(V variant) {
+    return myVariantHintProvider == null ? null : myVariantHintProvider.apply(variant); //NON-NLS
+  }
+
   @Override
   public boolean isTag() {
     return true;
@@ -119,7 +129,8 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   @Override
   public @Nullable ActionGroup getCustomActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup(getName(), ContainerUtil.map(getVariants(), s -> new ToggleAction(getVariantName(s)) {
+    DefaultActionGroup group = new DefaultActionGroup(getName(), ContainerUtil.map(getVariants(), s ->
+      new ToggleAction(getVariantName(s), getVariantHint(s), null) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return s.equals(mySelectedVariant);

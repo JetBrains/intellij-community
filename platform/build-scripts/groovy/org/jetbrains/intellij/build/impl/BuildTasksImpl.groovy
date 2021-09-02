@@ -385,9 +385,11 @@ idea.fatal.error.notification=disabled
     Path src = buildContext.paths.communityHomeDir.resolve("bin/log.xml")
     Path dst = buildContext.paths.distAllDir.resolve("bin/log.xml")
     Files.createDirectories(dst.parent)
-    Files.newBufferedWriter(dst).withCloseable {
-      src.filterLine { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(it)
-    }
+
+    String text = Files.readAllLines(src)
+      .findAll { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }
+      .join("\n")
+    Files.writeString(dst, text)
   }
 
   private static @NotNull BuildTaskRunnable<Path> createDistributionForOsTask(@NotNull String taskName,
@@ -686,7 +688,7 @@ idea.fatal.error.notification=disabled
     Files.createDirectories(destProjectorLibDir)
 
     def libNamesToCopy = new ArrayList<String>()
-    libNamesToCopy.addAll("projector-server", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
+    libNamesToCopy.addAll("projector-server", "projector-server-core", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
 
     ArrayList<File> projectorLibsToCopy = new ArrayList<>()
     ArrayList<String> failedLibs = new ArrayList<>()
@@ -817,11 +819,33 @@ idea.fatal.error.notification=disabled
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.each { plugin ->
-      checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
-      checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
-      checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
-      checkArtifacts(plugin.includedArtifacts.keySet(), "'$plugin.mainModule' plugin")
+      checkBaseLayout(plugin, "'$plugin.mainModule' plugin")
     }
+  }
+
+  private void checkBaseLayout(BaseLayout layout, String description) {
+    checkModules(layout.moduleJars.values(), "moduleJars in $description")
+    checkArtifacts(layout.includedArtifacts.keySet(), "includedArtifacts in $description")
+    checkModules(layout.resourcePaths.collect { it.moduleName }, "resourcePaths in $description")
+    checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description")
+    checkProjectLibraries(layout.includedProjectLibraries.collect { it.libraryName }, "includedProjectLibraries in $description")
+    for (data in layout.includedModuleLibraries) {
+      checkModules([data.moduleName], "includedModuleLibraries in $description")
+      if (buildContext.findRequiredModule(data.moduleName).libraryCollection.libraries.find { LayoutBuilder.LayoutSpec.getLibraryName(it) == data.libraryName } == null) {
+        buildContext.messages.error("Cannot find library '$data.libraryName' in '$data.moduleName' (used in $description)")
+      }
+    }
+    checkModules(layout.excludedModuleLibraries.keySet(), "excludedModuleLibraries in $description")
+    for (entry in layout.excludedModuleLibraries.entrySet()) {
+      def libraries = buildContext.findRequiredModule(entry.key).libraryCollection.libraries
+      for (libraryName in entry.value) {
+      if (libraries.find { LayoutBuilder.LayoutSpec.getLibraryName(it) == libraryName } == null) {
+          buildContext.messages.error("Cannot find library '$libraryName' in '$entry.key' (used in 'excludedModuleLibraries' in $description)")
+        }
+      }
+    }
+    checkProjectLibraries(layout.projectLibrariesToUnpack.values(), "projectLibrariesToUnpack in $description")
+    checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description")
   }
 
   private void checkPluginDuplicates(List<PluginLayout> nonTrivialPlugins) {

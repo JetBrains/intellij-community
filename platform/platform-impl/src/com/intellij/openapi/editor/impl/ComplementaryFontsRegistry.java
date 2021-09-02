@@ -188,8 +188,8 @@ public final class ComplementaryFontsRegistry {
       }
     }
     result = doGetFontAbleToDisplay(codePoint, remainingText, start, end, size, style, useLigatures, context);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Fallback font: " + result.getFont().getFontName());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Fallback font: " + result.getFont().getFontName());
     }
     return result;
   }

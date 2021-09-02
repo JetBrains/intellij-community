@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar.experimental
 
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.instance
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings
 import com.intellij.openapi.Disposable
@@ -18,7 +18,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.NotNull
 import java.awt.BorderLayout
 import java.awt.Graphics
@@ -26,21 +28,26 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExtension(), @NotNull Disposable {
-  val logger = Logger.getInstance(NewToolbarRootPaneExtension::class.java)
-  var inited = false
+interface VcsInitListener {
+  fun stateChanged()
+}
 
+class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExtension(), @NotNull Disposable {
   companion object {
+    val VCS_INIT_TOPIC: Topic<VcsInitListener> = Topic(VcsInitListener::class.java, Topic.BroadcastDirection.TO_CHILDREN, true)
     private const val NEW_TOOLBAR_KEY = "NEW_TOOLBAR_KEY"
     const val navBarKey = "ide.new.navbar"
   }
 
+  val logger = Logger.getInstance(NewToolbarRootPaneExtension::class.java)
+  var inited = false
+
   private val myPanelWrapper = JPanel(BorderLayout())
   private val myPanel: JPanel = object : JPanel(
-    NewToolbarBorderLayout()){
+    NewToolbarBorderLayout()) {
     init {
       isOpaque = true
-      border = BorderFactory.createEmptyBorder()
+      border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
     }
 
     override fun getComponentGraphics(graphics: Graphics?): Graphics {
@@ -57,13 +64,22 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   init {
     Disposer.register(myProject, this)
     Registry.get(navBarKey).addListener(registryListener, this)
+
+    val appMessageBus = myProject.messageBus.connect(this)
+    appMessageBus.subscribe(VCS_INIT_TOPIC, object : VcsInitListener {
+      override fun stateChanged() {
+        myPanel.revalidate()
+        myPanel.repaint()
+        ActivityTracker.getInstance().inc()
+      }
+    })
   }
 
-  private fun addGroupComponent(panel: JPanel, layoutConstrains: String , vararg children: AnAction) {
+  private fun addGroupComponent(panel: JPanel, layoutConstrains: String, vararg children: AnAction) {
     for (c in children) {
       val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.RUN_TOOLBAR,
-                                                                        if (c is ActionGroup) c else DefaultActionGroup(c),
-                                                                        true) as ActionToolbarImpl
+        if (c is ActionGroup) c else DefaultActionGroup(c),
+        true) as ActionToolbarImpl
       toolbar.targetComponent = panel
       toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
       panel.add(toolbar, layoutConstrains)
@@ -74,14 +90,14 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
     return NEW_TOOLBAR_KEY
   }
 
-  private fun clearAndRefill(){
+  private fun clearAndRefill() {
     myPanelWrapper.removeAll()
     myPanel.removeAll()
 
     fillToolbar()
   }
 
-  private fun fillToolbar(){
+  private fun fillToolbar() {
     val toolbarSettingsService = ToolbarSettings.Companion.getInstance()
     if (toolbarSettingsService is ExperimentalToolbarSettings) {
       val visibleAndEnabled = toolbarSettingsService.showNewToolbar && !instance.presentationMode
@@ -117,6 +133,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   }
 
   override fun revalidate() {
+    ActivityTracker.getInstance().inc()
   }
 
   override fun getComponent(): JComponent {

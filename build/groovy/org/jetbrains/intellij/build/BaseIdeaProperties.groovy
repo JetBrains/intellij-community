@@ -86,7 +86,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.grazie",
     "intellij.featuresTrainer",
     "intellij.vcs.git.featuresTrainer",
-    "intellij.lombok"
+    "intellij.lombok",
+    "intellij.searchEverywhereMl",
   ]
 
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
@@ -100,7 +101,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/java/lib/jshell-frontend.jar"                      : "9",
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
-    "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
     "plugins/Groovy/lib/groovy-rt.jar"                          : "1.6",
     "plugins/Groovy/lib/groovy-constants-rt.jar"                : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",
@@ -160,7 +160,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",
-      "kotlin.idea"
+      "kotlin.plugin"
     ]
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]

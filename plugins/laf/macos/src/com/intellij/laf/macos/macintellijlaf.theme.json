@@ -5,7 +5,7 @@
 
   "ui": {
     "*": {
-      "selectionBackground": "#2961DA",
+      "_comment": "All *.selectionBackground colors are redefined to native ones in MacIntelliJLaf.kt",
       "selectionBackgroundInactive": "#D8D8D8",
       "selectionForeground": "#ffffff",
       "selectionForegroundInactive": "#000000",
@@ -92,14 +92,16 @@
 
     "Menu": {
       "background": "#f6f6f6",
-      "border": "0,5,2,5",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
+      "borderColor": "#f6f6f6",
       "separatorColor": "#dfdfdf"
     },
 
     "MenuItem": {
+      "acceleratorForeground": "#808080",
       "acceleratorSelectionForeground": "#dcdcdc",
       "background": "#f6f6f6",
-      "border": "0,5,2,5"
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder"
     },
 
     "MnemonicIcon": {
@@ -128,16 +130,22 @@
 
     "PopupMenu": {
       "background": "#f6f6f6",
-      "borderInsets": "4,0,4,0",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
+      "borderInsets": "8,1,8,1",
+      "borderCornerRadiusX": 14,
+      "borderCornerRadiusY": 12,
+      "leftBorderWith": 10,
+      "rightBorderWith": 0,
       "borderWidth": 0,
       "translucentBackground": "#ececec",
-      "UI": "com.intellij.ide.ui.laf.intellij.MacPopupMenuUI"
+      "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
     },
 
     "PopupMenuSeparator": {
-      "height": 12,
-      "stripeIndent": 5,
-      "stripeWidth": 2,
+      "height": 9,
+      "stripeWidth": 1,
+      "stripeIndent": 4,
+      "withToEdge": 12,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
     },
 

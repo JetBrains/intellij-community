@@ -20,19 +20,20 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
@@ -78,6 +79,23 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                 TypeConstraints.instanceOf(toPsiType(context) ?: return DfType.TOP).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             FqNames.any -> DfTypes.NOT_NULL_OBJECT
             else -> {
+                if (fqNameUnsafe.shortNameOrSpecial().isSpecial) {
+                    val source = descriptor.source
+                    if (source is KotlinSourceElement) {
+                        val psi = source.psi
+                        if (psi is KtObjectDeclaration) {
+                            var objectConstraint = TypeConstraints.EXACTLY_OBJECT.instanceOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+                            for (entry in psi.superTypeListEntries) {
+                                val ref = entry.typeReference
+                                if (ref != null) {
+                                    val kotlinType = ref.getAbbreviatedTypeOrType(ref.analyze(BodyResolveMode.FULL))
+                                    objectConstraint = objectConstraint.meet(kotlinType?.toDfTypeNotNullable(context) ?: DfType.TOP)
+                                }
+                            }
+                            return objectConstraint
+                        }
+                    }
+                }
                 val typeConstraint = when (val typeFqName = correctFqName(fqNameUnsafe)) {
                     "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
                     "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())
@@ -112,6 +130,7 @@ private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNa
     "kotlin.Comparable" -> CommonClassNames.JAVA_LANG_COMPARABLE
     "kotlin.Enum" -> CommonClassNames.JAVA_LANG_ENUM
     "kotlin.Annotation" -> CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION
+    "kotlin.Nothing" -> CommonClassNames.JAVA_LANG_VOID
     "kotlin.collections.Iterable", "kotlin.collections.MutableIterable" -> CommonClassNames.JAVA_LANG_ITERABLE
     "kotlin.collections.Iterator", "kotlin.collections.MutableIterator" -> CommonClassNames.JAVA_UTIL_ITERATOR
     "kotlin.collections.Collection", "kotlin.collections.MutableCollection" -> CommonClassNames.JAVA_UTIL_COLLECTION
@@ -214,4 +233,16 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     KtTokens.DIVEQ -> LongRangeBinOp.DIV
     KtTokens.PERCEQ -> LongRangeBinOp.MOD
     else -> null
+}
+
+internal fun getInlineableLambda(expr: KtCallExpression): KtLambdaExpression? {
+    val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null
+    val index = expr.valueArguments.indexOf(lambdaArgument)
+    assert(index >= 0)
+    val descriptor = expr.resolveToCall()?.resultingDescriptor as? FunctionDescriptor
+    if (descriptor == null || !descriptor.isInline) return null
+    val valueParameters = descriptor.valueParameters
+    if (valueParameters.size <= index) return null
+    if (valueParameters[index].isNoinline) return null
+    return lambdaArgument.getLambdaExpression()
 }

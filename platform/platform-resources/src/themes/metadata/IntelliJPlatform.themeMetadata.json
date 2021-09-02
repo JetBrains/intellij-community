@@ -977,6 +977,10 @@
       "description": "Inactive tool window header"
     },
     {
+      "key": "ToolWindow.Header.padding",
+      "since": "2021.3"
+    },
+    {
       "key": "ToolWindow.HeaderCloseButton.background"
     },
     {
@@ -1016,6 +1020,14 @@
     {
       "key": "ToolWindow.HeaderTab.underlinedTabInactiveBackground",
       "since": "2019.2"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.padding",
+      "since": "2021.3"
+    },
+    {
+      "key": "ToolWindow.Background",
+      "since": "2021.3"
     },
     {
       "key": "Tooltip.separatorColor",
@@ -1262,8 +1274,18 @@
       "since": "2021.2"
     },
     {
+      "key": "Lesson.Tooltip.borderColor",
+      "description": "Border color for tooltips used in lessons",
+      "since": "2021.2"
+    },
+    {
       "key": "Lesson.Tooltip.spanBackground",
       "description": "Background for buttons and shortcuts used in lesson tooltips",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Tooltip.spanForeground",
+      "description": "Foreground for buttons and shortcuts used in lesson tooltips",
       "since": "2021.2"
     },
     {
@@ -1274,6 +1296,16 @@
     {
       "key": "Lesson.Tooltip.stepNumberForeground",
       "description": "Foreground for task numbers in lesson tooltips",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Badge.newLessonBackground",
+      "description": "Background for badge near new modules/lessons",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Badge.newLessonForeground",
+      "description": "Foreground for badge near new modules/lessons",
       "since": "2021.2"
     },
     {

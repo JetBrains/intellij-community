@@ -8,7 +8,7 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -246,7 +246,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       else {
         Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
         if (editor != null) {
-          if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+          if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
             return TextEditorProvider.getInstance().getTextEditor(editor);
           }
           else {

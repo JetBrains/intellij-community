@@ -25,7 +25,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="library" name="Velocity" level="project" />
   </component>
 </module>

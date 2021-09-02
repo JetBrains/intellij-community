@@ -37,6 +37,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -71,6 +72,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,27 +253,38 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
     if (getProject().isDisposed()) return;
 
-    InspectionResultsView newView = myView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
-    if (!(myView == null ? newView : myView).hasProblems()) {
-      int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
+    InspectionResultsView oldView = myView;
+    InspectionResultsView newView = oldView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
+    ReadAction
+      .nonBlocking(() -> (oldView == null ? newView : oldView).hasProblems())
+      .finishOnUiThread(ModalityState.any(), hasProblems -> {
+        if (!hasProblems) {
+          showNoProblemsNotification(scope, newView);
+        }
+        else if (newView != null && !newView.isDisposed() && getCurrentScope() != null) {
+          addView(newView);
+          newView.update();
+        }
+        if (myView != null) {
+          myView.setUpdating(false);
+        }
+      })
+      .expireWith(getProject())
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
 
-      var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
-                                                                                               totalFiles,
-                                                                                               scope.getShortenName()), MessageType.INFO);
-      if (!scope.isIncludeTestSource()) addRepeatWithTestsAction(scope, notification, () -> doInspections(scope));
-      notification.notify(getProject());
+  private void showNoProblemsNotification(@NotNull AnalysisScope scope, InspectionResultsView newView) {
+    int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
 
-      close(true);
-      if (newView != null) {
-        Disposer.dispose(newView);
-      }
-    }
-    else if (newView != null && !newView.isDisposed() && getCurrentScope() != null) {
-      addView(newView);
-      newView.update();
-    }
-    if (myView != null) {
-      myView.setUpdating(false);
+    var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
+                                                                                       totalFiles,
+                                                                                       scope.getShortenName()), MessageType.INFO);
+    if (!scope.isIncludeTestSource()) addRepeatWithTestsAction(scope, notification, () -> doInspections(scope));
+    notification.notify(getProject());
+
+    close(true);
+    if (newView != null) {
+      Disposer.dispose(newView);
     }
   }
 
@@ -319,7 +332,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     BlockingQueue<VirtualFile> filesToInspect = new ArrayBlockingQueue<>(1000);
     // use original progress indicator here since we don't want it to cancel on write action start
     ProgressIndicator iteratingIndicator = new SensitiveProgressWrapper(progressIndicator);
-    Future<?> future = startIterateScopeInBackground(scope, localScopeFiles, headlessEnvironment, filesToInspect, iteratingIndicator);
+    Future<?> future = startIterateScopeInBackground(scope, iteratingIndicator, headlessEnvironment, localScopeFiles, filesToInspect);
 
     PsiManager psiManager = PsiManager.getInstance(getProject());
     Processor<VirtualFile> processor = virtualFile -> {
@@ -335,11 +348,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           return true;
         }
         boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
+        List<GlobalInspectionToolWrapper> globalSimpleWrappers = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow,
+                                                                       wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
+        List<LocalInspectionToolWrapper> localToolWrappers = getWrappersFromTools(localTools, file, includeDoNotShow,
+                                                                      wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, map,
-                    getWrappersFromTools(globalSimpleTools, file, includeDoNotShow,
-                                         wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)),
-                    getWrappersFromTools(localTools, file, includeDoNotShow,
-                                         wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)),
+                    globalSimpleWrappers,
+                    localToolWrappers,
                     inspectInjectedPsi && scope.isAnalyzeInjectedCode());
         if (start != 0) {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
@@ -364,7 +379,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
         InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
         ReadAction.run(() -> BatchModeDescriptorsUtil
-          .addProblemDescriptors(Arrays.asList(descriptors), false, this, null, CONVERT, toolPresentation));
+          .addProblemDescriptors(Arrays.asList(descriptors), false, this, null, toolPresentation, CONVERT));
       });
 
       return true;
@@ -391,8 +406,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
         catch (ProcessCanceledException e) {
           progressIndicator.checkCanceled();
-          // PCE may be thrown from inside wrapper when write action started
-          // go on with the write and then resume processing the rest of the queue
+          // PCE may be thrown from inside wrapper when write action started.
+          // Go on with the write and then resume processing the rest of the queue.
           assert isOfflineInspections || !ApplicationManager.getApplication().isReadAccessAllowed()
             : "Must be outside read action. PCE=\n" + ExceptionUtil.getThrowableText(e);
           assert isOfflineInspections || !ApplicationManager.getApplication().isDispatchThread()
@@ -488,10 +503,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             getProject(),
             () -> {
               tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
-              return -1;
+              return holder.getResultCount();
             });
           InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
-          BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, CONVERT, toolPresentation);
+          BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, toolPresentation, CONVERT);
           return true;
         });
       VirtualFile virtualFile = file.getVirtualFile();
@@ -517,22 +532,23 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private static final VirtualFile TOMBSTONE = new LightVirtualFile("TOMBSTONE");
 
   private @NotNull Future<?> startIterateScopeInBackground(@NotNull AnalysisScope scope,
-                                                           @Nullable Collection<? super VirtualFile> localScopeFiles,
+                                                           @NotNull ProgressIndicator progressIndicator,
                                                            boolean headlessEnvironment,
-                                                           @NotNull BlockingQueue<? super VirtualFile> outFilesToInspect,
-                                                           @NotNull ProgressIndicator progressIndicator) {
+                                                           @Nullable Collection<? super VirtualFile> localScopeFiles,
+                                                           @NotNull BlockingQueue<? super VirtualFile> outFilesToInspect) {
     Task.Backgroundable task = new Task.Backgroundable(getProject(), InspectionsBundle.message("scanning.files.to.inspect.progress.text")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+          Project project = scope.getProject();
+          FileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           scope.accept(file -> {
             ProgressManager.checkCanceled();
             if (!forceInspectAllScope && (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file))) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
-              if (getProject().isDisposed()) throw new ProcessCanceledException();
-              PsiFile psi = PsiManager.getInstance(getProject()).findFile(file);
+              if (project.isDisposed()) throw new ProcessCanceledException();
+              PsiFile psi = PsiManager.getInstance(project).findFile(file);
               Document document = psi == null ? null : shouldProcess(psi, headlessEnvironment, localScopeFiles);
               if (document != null) {
                 return psi;
@@ -634,7 +650,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               getProject(),
               () -> {
                 tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
-                return -1;
+                return toolPresentation.getProblemDescriptors().size();
               });
 
             //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code

@@ -100,7 +100,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.ant.copy(todir: distBinDir.toString()) {
-      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts") {
+        if (!buildContext.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")) {
+          exclude(name: "remote-dev-server.sh")
+        }
+      }
 
       filterset(begintoken: "__", endtoken: "__") {
         filter(token: "product_full", value: fullName)
@@ -323,14 +327,22 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     name.startsWith("jetbrains-") ? name : "jetbrains-" + name
   }
 
-  static void copyFile(Path source, Path target) {
+  static void copyFile(Path source, Path target, CopyOption... options) {
     Path parent = target.parent
-    if (parent != null)
+    if (parent != null) {
       Files.createDirectories(parent)
+    }
 
-    if (Files.isSymbolicLink(source))
-      Files.copy(source, target, LinkOption.NOFOLLOW_LINKS)
-    else
-      Files.copy(source, target)
+    List<CopyOption> optionsList = options.toList()
+
+    if (Files.isSymbolicLink(source)) {
+      // Append 'NOFOLLOW_LINKS' copy option to be able to copy symbolic links.
+      if (!optionsList.contains(LinkOption.NOFOLLOW_LINKS)) {
+        optionsList.add(LinkOption.NOFOLLOW_LINKS)
+      }
+    }
+
+    CopyOption[] copyOptions = optionsList.toArray(new CopyOption[optionsList.size()])
+    Files.copy(source, target, copyOptions)
   }
 }

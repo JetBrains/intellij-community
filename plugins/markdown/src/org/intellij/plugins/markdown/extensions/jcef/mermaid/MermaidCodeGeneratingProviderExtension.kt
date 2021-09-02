@@ -57,12 +57,13 @@ internal class MermaidCodeGeneratingProviderExtension(
 
   override fun onLAFChanged() = Unit
 
-  override val displayName: String =
-    MarkdownBundle.message("markdown.extensions.mermaid.display.name")
+  override val displayName: String
+    get() = MarkdownBundle.message("markdown.extensions.mermaid.display.name")
 
   override val id: String = "MermaidLanguageExtension"
 
-  override val description: String = MarkdownBundle.message("markdown.extensions.mermaid.description")
+  override val description: String
+    get() = MarkdownBundle.message("markdown.extensions.mermaid.description")
 
   override val downloadLink: String = DOWNLOAD_URL
 
