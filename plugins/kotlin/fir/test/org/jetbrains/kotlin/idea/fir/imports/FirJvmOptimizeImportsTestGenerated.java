@@ -281,6 +281,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
             runTest("../idea/tests/testData/editor/optimizeImports/common/Companion.kt");
         }
 
+        @TestMetadata("CompanionExtensionFunctionReference.kt")
+        public void testCompanionExtensionFunctionReference() throws Exception {
+            runTest("../idea/tests/testData/editor/optimizeImports/common/CompanionExtensionFunctionReference.kt");
+        }
+
         @TestMetadata("CompanionFunction.kt")
         public void testCompanionFunction() throws Exception {
             runTest("../idea/tests/testData/editor/optimizeImports/common/CompanionFunction.kt");
