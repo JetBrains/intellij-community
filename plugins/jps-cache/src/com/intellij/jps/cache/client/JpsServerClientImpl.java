@@ -39,6 +39,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.DOWNLOAD_BINARY_SIZE_EVENT_ID;
+import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.DOWNLOAD_CACHE_SIZE_EVENT_ID;
+
 public final class JpsServerClientImpl implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance(JpsServerClientImpl.class.getCanonicalName());
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -74,7 +77,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     LOG.debug("Downloading JPS metadata from: " + downloadUrl);
     File metadataFile;
     try {
-      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, getRequestHeaders());
+      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, getRequestHeaders(), null);
       Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
       metadataFile = first != null ? first.first : null;
       if (metadataFile == null) {
@@ -103,7 +106,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     LOG.debug("Downloading JPS caches from: " + downloadUrl);
     File zipFile;
     try {
-      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, getRequestHeaders());
+      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, getRequestHeaders(), DOWNLOAD_CACHE_SIZE_EVENT_ID);
       downloadIndicatorManager.finished(this);
 
       Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
@@ -138,7 +141,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     List<File> downloadedFiles = new ArrayList<>();
     try {
       // Downloading process
-      List<Pair<File, DownloadableFileDescription>> download = downloader.download(targetDir, getRequestHeaders());
+      List<Pair<File, DownloadableFileDescription>> download = downloader.download(targetDir, getRequestHeaders(), DOWNLOAD_BINARY_SIZE_EVENT_ID);
       downloadIndicatorManager.finished(this);
 
       downloadedFiles = ContainerUtil.map(download, pair -> pair.first);
