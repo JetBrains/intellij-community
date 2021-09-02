@@ -58,6 +58,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
@@ -327,6 +328,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       if (!vmParametersList.hasParameter(launcherModuleName)) {
         vmParametersList.add("--add-modules");
         vmParametersList.add(launcherModuleName);
+
+        PsiJavaModule launcherModule = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> ReadAction.compute(() -> psiFacade.findModule(launcherModuleName, globalSearchScope)));
+        if (launcherModule != null) {
+          JavaParametersUtil.putDependenciesOnModulePath(javaParameters, launcherModule, true);
+        }
       }
     }
 
