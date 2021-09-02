@@ -19,6 +19,7 @@ final class VmOptionsGenerator {
     '-Djdk.attach.allowAttachSelf=true',
     '-Djdk.module.illegalAccess.silent=true',
     '-Dkotlinx.coroutines.debug=off',
+    '-XX:+IgnoreUnrecognizedVMOptions', //todo[kb] remove when we find a way to remove outdated options like -XX:+UseConcMarkSweepGC
     '--add-opens=java.base/java.lang=ALL-UNNAMED',
     '--add-opens=java.base/java.util=ALL-UNNAMED',
     '--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED',
