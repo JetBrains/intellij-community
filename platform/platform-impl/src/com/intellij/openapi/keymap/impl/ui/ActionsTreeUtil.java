@@ -139,7 +139,7 @@ public final class ActionsTreeUtil {
       final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
       if (id != null) {
         if (!Registry.is("keymap.show.alias.actions")) {
-          String binding = getActionBinding(keymap, id);
+          String binding = KeymapManagerEx.getInstanceEx().getActionBinding(id);
           boolean bound = binding != null
                           && actionManager.getAction(binding) != null // do not hide bound action, that miss the 'bound-with'
                           && !hasAssociatedShortcutsInHierarchy(id, keymap); // do not hide bound actions when they are redefined
@@ -326,18 +326,6 @@ public final class ActionsTreeUtil {
     }
 
     return group;
-  }
-
-  @Nullable
-  private static String getActionBinding(final Keymap keymap, final String id) {
-    if (keymap == null) return null;
-
-    Keymap parent = keymap.getParent();
-    String result = KeymapManagerEx.getInstanceEx().getActionBinding(id);
-    if (result == null && parent != null) {
-      result = KeymapManagerEx.getInstanceEx().getActionBinding(id);
-    }
-    return result;
   }
 
   private static void addEditorActions(final Condition<? super AnAction> filtered,
