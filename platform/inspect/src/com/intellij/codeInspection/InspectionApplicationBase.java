@@ -122,7 +122,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
     catch (Throwable e) {
       LOG.error(e);
-      reportError(e.getMessage());
+      e.printStackTrace(System.err);
       gracefulExit();
       return;
     }
@@ -298,6 +298,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         }
         catch (ParsingException e) {
           LOG.error("Error of scope parsing", e);
+          reportError("error of scope parsing" + e.getMessage());
           gracefulExit();
           return null;
         }
