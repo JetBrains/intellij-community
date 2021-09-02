@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.options.FontSize;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.FontSizePopup;
 import com.intellij.ui.components.JBSlider;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
