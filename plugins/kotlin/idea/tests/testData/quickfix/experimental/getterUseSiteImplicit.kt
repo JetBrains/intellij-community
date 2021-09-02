@@ -1,4 +1,4 @@
-// "Move '@SomeOptInAnnotation' annotation from getter to property" "true"
+// "Move 'SomeOptInAnnotation' opt-in requirement from getter to property" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 
