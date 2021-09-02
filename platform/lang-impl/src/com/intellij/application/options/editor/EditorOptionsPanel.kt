@@ -143,7 +143,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         row {
           checkBox(enableWheelFontChange).also { chkEnableWheelFontSizeChange = it.component }
           row {
-            cell {
+            cell(isFullWidth = true) {
               buttonGroup({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it }) {
                 radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.current"), false).enableIf(chkEnableWheelFontSizeChange.selected)
                 radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.all"), true).enableIf(chkEnableWheelFontSizeChange.selected)
