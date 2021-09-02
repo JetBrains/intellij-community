@@ -37,6 +37,16 @@ import java.util.stream.Stream;
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
 
+/**
+ * This is an internal API. Do not use it.
+ * <ul>
+ *   <li>Do not create directly, use {@link DataManager#getDataContext(Component)} instead.</li>
+ *   <li>Do not cast to {@link UserDataHolder}, use
+ *     {@link DataManager#saveInDataContext(DataContext, Key, Object)} and
+ *     {@link DataManager#loadFromDataContext(DataContext, Key)} instead.</li>
+ *   <li>Do not override.</li>
+ * </ul>
+ */
 @ApiStatus.Internal
 public class EdtDataContext implements DataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
   private static final Logger LOG = Logger.getInstance(EdtDataContext.class);
