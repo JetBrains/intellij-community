@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImp
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 
@@ -44,46 +45,74 @@ fun whenResolveTaskStarted(action: () -> Unit, parentDisposable: Disposable) {
 }
 
 @IntellijInternalApi
-fun getProjectDataLoadPromise(): Promise<Project> {
-  return getResolveTaskFinishPromise()
+fun getProjectDataLoadPromise(parentDisposable: Disposable): Promise<Project> {
+  return getResolveTaskFinishPromise(parentDisposable)
     .thenAsync(::getProjectDataLoadPromise)
 }
 
 @IntellijInternalApi
+fun getExecutionTaskFinishPromise(parentDisposable: Disposable): Promise<Project> {
+  return getExternalSystemTaskFinishPromise(parentDisposable) { it.type == ExternalSystemTaskType.EXECUTE_TASK }
+}
+
+@TestOnly
+fun getProjectDataLoadPromise(): Promise<Project> {
+  return getExternalSystemTaskFinishPromise(::isResolveTask)
+    .thenAsync(::getProjectDataLoadPromise)
+}
+
+@TestOnly
 fun getExecutionTaskFinishPromise(): Promise<Project> {
   return getExternalSystemTaskFinishPromise { it.type == ExternalSystemTaskType.EXECUTE_TASK }
 }
 
-private fun getResolveTaskFinishPromise(): Promise<Project> {
-  return getExternalSystemTaskFinishPromise(::isResolveTask)
+private fun getResolveTaskFinishPromise(parentDisposable: Disposable): Promise<Project> {
+  return getExternalSystemTaskFinishPromise(parentDisposable, ::isResolveTask)
 }
 
-private fun getExternalSystemTaskFinishPromise(isRelevantTask: (ExternalSystemTaskId) -> Boolean): Promise<Project> {
+private fun getExternalSystemTaskFinishPromise(
+  parentDisposable: Disposable,
+  isRelevantTask: (ExternalSystemTaskId) -> Boolean
+): Promise<Project> {
+  val disposable = Disposer.newDisposable(parentDisposable, "")
+  return getExternalSystemTaskFinishPromiseImpl(disposable, isRelevantTask)
+}
+
+private fun getExternalSystemTaskFinishPromise(
+  isRelevantTask: (ExternalSystemTaskId) -> Boolean
+): Promise<Project> {
+  val disposable = Disposer.newDisposable("")
+  return getExternalSystemTaskFinishPromiseImpl(disposable, isRelevantTask)
+}
+
+private fun getExternalSystemTaskFinishPromiseImpl(
+  disposable: Disposable,
+  isRelevantTask: (ExternalSystemTaskId) -> Boolean
+): Promise<Project> {
   val promise = AsyncPromise<Project>()
-  val parentDisposable = Disposer.newDisposable()
   ExternalSystemProgressNotificationManager.getInstance()
     .addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onSuccess(id: ExternalSystemTaskId) {
         if (isRelevantTask(id)) {
-          Disposer.dispose(parentDisposable)
+          Disposer.dispose(disposable)
           promise.setResult(id.findProject()!!)
         }
       }
 
       override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
         if (isRelevantTask(id)) {
-          Disposer.dispose(parentDisposable)
+          Disposer.dispose(disposable)
           promise.setError(e)
         }
       }
 
       override fun onCancel(id: ExternalSystemTaskId) {
         if (isRelevantTask(id)) {
-          Disposer.dispose(parentDisposable)
+          Disposer.dispose(disposable)
           promise.cancel()
         }
       }
-    }, parentDisposable)
+    }, disposable)
   return promise
 }
 
