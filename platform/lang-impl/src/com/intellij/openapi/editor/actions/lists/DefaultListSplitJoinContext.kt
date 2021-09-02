@@ -261,6 +261,9 @@ enum class TrailingComma { ADD_IF_NOT_EXISTS, REMOVE_IF_EXISTS, IGNORE }
 abstract class CommaListSplitJoinContext : DefaultListSplitJoinContext() {
   override fun isSeparator(element: PsiElement) = isComma(element)
 
+  override fun getSplitText(data: ListWithElements): String = CodeInsightBundle.message("intention.name.split.comma.values")
+  override fun getJoinText(data: ListWithElements): String = CodeInsightBundle.message("intention.name.join.comma.values")
+  
   private fun addOrRemoveTrailingComma(data: ListWithElements,
                                        replacements: MutableList<Pair<TextRange, String>>,
                                        split: JoinOrSplit,
