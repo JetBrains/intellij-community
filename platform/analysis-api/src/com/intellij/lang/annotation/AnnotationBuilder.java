@@ -214,4 +214,9 @@ interface AnnotationBuilder {
    * Calling this method means you've completed your annotation and it's ready to be shown on screen.
    */
   void create();
+
+  /** @deprecated Use {@link #create()} instead */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  Annotation createAnnotation();
 }
