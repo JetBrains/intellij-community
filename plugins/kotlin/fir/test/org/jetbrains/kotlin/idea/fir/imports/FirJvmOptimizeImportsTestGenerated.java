@@ -543,6 +543,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UsedClass.kt");
             }
 
+            @TestMetadata("UsedClassWithAlias.kt")
+            public void testUsedClassWithAlias() throws Exception {
+                runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UsedClassWithAlias.kt");
+            }
+
             @TestMetadata("UsedConstructor.kt")
             public void testUsedConstructor() throws Exception {
                 runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UsedConstructor.kt");
@@ -581,6 +586,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
             @TestMetadata("UsedStarImport.kt")
             public void testUsedStarImport() throws Exception {
                 runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UsedStarImport.kt");
+            }
+
+            @TestMetadata("UsedTypeQualifierWithAlias.kt")
+            public void testUsedTypeQualifierWithAlias() throws Exception {
+                runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UsedTypeQualifierWithAlias.kt");
             }
         }
 

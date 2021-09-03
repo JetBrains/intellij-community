@@ -548,6 +548,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/common/basic/UsedClass.kt");
             }
 
+            @TestMetadata("UsedClassWithAlias.kt")
+            public void testUsedClassWithAlias() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedClassWithAlias.kt");
+            }
+
             @TestMetadata("UsedConstructor.kt")
             public void testUsedConstructor() throws Exception {
                 runTest("testData/editor/optimizeImports/common/basic/UsedConstructor.kt");
@@ -586,6 +591,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             @TestMetadata("UsedStarImport.kt")
             public void testUsedStarImport() throws Exception {
                 runTest("testData/editor/optimizeImports/common/basic/UsedStarImport.kt");
+            }
+
+            @TestMetadata("UsedTypeQualifierWithAlias.kt")
+            public void testUsedTypeQualifierWithAlias() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedTypeQualifierWithAlias.kt");
             }
         }
 
