@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
@@ -14,7 +15,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
@@ -62,11 +62,11 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} (or any other constructor) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
-    DeprecatedMethodException.report("Use OSProcessHandler(Process, String) instead");
+    PluginException.reportDeprecatedUsage("OSProcessHandler#OSProcessHandler(Process)", "Use `#OSProcessHandler(Process, String)` instead");
   }
 
   /**
