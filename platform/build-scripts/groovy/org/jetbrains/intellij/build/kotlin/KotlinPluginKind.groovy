@@ -27,10 +27,6 @@ enum KotlinPluginKind {
     "kotlin-ultimate.appcode-kmm",
     "CIDR-appcode/appcode-kmm/resources"
   ),
-  AC("AppCodeKotlinPlugin",
-     "kotlin.plugin.version",
-     "kotlin-ultimate.appcode-native",
-     "CIDR-appcode/appcode-kotlin-native/resources"),
   ROBOSCOPE(
     "RoboscopePlugin.zip", "kotlin.plugin.version",
     "util.android-studio.android-studio-roboscope-plugin",

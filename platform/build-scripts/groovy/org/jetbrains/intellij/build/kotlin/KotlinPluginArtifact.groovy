@@ -67,7 +67,6 @@ final class KotlinPluginArtifact {
     def jpsOutPluginXml = jpsOutPluginXml(kind)
 
     switch (kind) {
-      case KotlinPluginKind.AC:
       case KotlinPluginKind.AC_KMM:
         def extendedBuild = sinceBuild.substring(0, sinceBuild.lastIndexOf('.'))
         if (!sinceBuild.matches("\\d+\\.\\d+")) {
@@ -112,7 +111,6 @@ final class KotlinPluginArtifact {
         break
       case KotlinPluginKind.MI:
       case KotlinPluginKind.AC_KMM:
-      case KotlinPluginKind.AC:
       case KotlinPluginKind.ROBOSCOPE:
         break
       default:
