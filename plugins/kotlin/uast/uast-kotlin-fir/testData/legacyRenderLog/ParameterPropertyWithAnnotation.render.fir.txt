@@ -15,9 +15,7 @@ public abstract annotation MyAnnotation5 {
 
 public final class Test1 {
     @org.jetbrains.annotations.NotNull private var bar: int
-    @MyAnnotation
     public final fun getBar() : int = UastEmptyExpression
-    @MyAnnotation
     public final fun setBar(value: int) : void = UastEmptyExpression
     public fun Test1(@org.jetbrains.annotations.NotNull @MyAnnotation bar: int) = UastEmptyExpression
 }
