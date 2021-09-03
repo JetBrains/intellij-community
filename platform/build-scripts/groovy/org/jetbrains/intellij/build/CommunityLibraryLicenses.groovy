@@ -351,6 +351,7 @@ final class CommunityLibraryLicenses {
                        url: "https://github.com/FasterXML/jackson-databind").apache(),
     new LibraryLicense(name: "Jackson Module Kotlin", libraryName: "jackson-module-kotlin",
                        url: "https://github.com/FasterXML/jackson-module-kotlin").apache(),
+    new LibraryLicense(name: "JaCoCo", libraryName: "JaCoCo", url: "http://www.eclemma.org/jacoco/").eplV1(),
     new LibraryLicense(name: "Jakarta ORO", libraryName: "OroMatcher",
                        url: "https://jakarta.apache.org/oro/", licenseUrl: "https://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE").apache(),
     new LibraryLicense(libraryName: "Java Compatibility", license: "GPL 2.0 + Classpath",
