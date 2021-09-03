@@ -12,7 +12,6 @@ import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -284,14 +282,9 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   private void handleSelectionChanged() {
     mySelectedClass = calcSelectedClass();
-    if (mySelectedClass == null) {
-      setOKActionEnabled(false);
-    } else {
-      ReadAction
-        .nonBlocking(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myClassFilter.isAccepted(mySelectedClass)))
-        .finishOnUiThread(getModalityState(), (isAccepted) -> setOKActionEnabled(mySelectedClass != null && isAccepted))
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
+    setOKActionEnabled(mySelectedClass != null && DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+      () -> myClassFilter.isAccepted(mySelectedClass)
+    ));
   }
 
   @Override
