@@ -12,6 +12,7 @@ import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JTextField
 
 class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factory) : ModuleWizardStep() {
 
@@ -24,6 +25,10 @@ class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factor
   override fun updateDataModel() = panelBuilder.apply()
 
   override fun getPreferredFocusedComponent() = panelBuilder.preferredFocusedComponent
+
+  override fun updateStep() {
+    (preferredFocusedComponent as? JTextField)?.selectAll()
+  }
 
   override fun getComponent() =
     panelBuilder.panel { step.setupUI(this) }

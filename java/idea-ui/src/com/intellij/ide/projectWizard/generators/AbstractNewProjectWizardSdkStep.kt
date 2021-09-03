@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ui.configuration.validateSdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 
 abstract class AbstractNewProjectWizardSdkStep(
   parent: NewProjectWizardStep
@@ -34,6 +35,7 @@ abstract class AbstractNewProjectWizardSdkStep(
     with(builder) {
       row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
         sdkComboBox = cell(createSdkComboBox(sdksModel, sdkProperty, context.project, ::sdkTypeFilter))
+          .horizontalAlign(HorizontalAlign.FILL)
           .validationOnApply { validateSdk(sdkProperty, sdksModel) }
           .onApply { context.projectJdk = sdk }
       }

@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -76,7 +77,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
               .horizontalAlign(HorizontalAlign.FILL)
               .validationOnInput { validateModuleName() }
               .validationOnApply { validateModuleName() }
-          }
+          }.bottomGap(BottomGap.SMALL)
           row(UIBundle.message("label.project.wizard.new.project.content.root")) {
             textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
               FileChooserDescriptorFactory.createSingleFolderDescriptor())
@@ -90,7 +91,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
                   override fun keyReleased(e: KeyEvent?) {}
                 })
               }
-          }
+          }.bottomGap(BottomGap.SMALL)
           row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
             textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
               FileChooserDescriptorFactory.createSingleFolderDescriptor())
@@ -104,7 +105,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
                   override fun keyReleased(e: KeyEvent?) {}
                 })
               }
-          }
+          }.bottomGap(BottomGap.SMALL)
         }
       }
     }

@@ -306,7 +306,7 @@
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
-    <newProjectWizard.buildSystem.java implementation="org.jetbrains.idea.maven.wizards.MavenJavaBuildSystemType"/>
+    <newProjectWizard.buildSystem.java implementation="org.jetbrains.idea.maven.wizards.MavenJavaBuildSystemStep$Factory"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator"/>
   </extensions>
 
