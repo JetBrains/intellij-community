@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.*;
@@ -11,6 +12,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
+import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -18,6 +20,7 @@ import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.IntentionName;
@@ -691,7 +694,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo) {
+  public void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo, boolean excludingHierarchy) {
     Project myProject = parameter.getProject();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     BatchSuppressableTool unusedParametersInspection = profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, parameter);
@@ -703,9 +706,35 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       SuppressQuickFix[] batchSuppressActions = unusedParametersInspection.getBatchSuppressActions(parameter);
       Collections.addAll(options, SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions));
     }
-    //need suppress from Unused Parameters but settings from Unused Symbol
-    QuickFixAction.registerQuickFixAction((HighlightInfo)highlightInfo, new SafeDeleteFix(parameter),
-                                          options, HighlightDisplayKey.getDisplayNameByKey(myUnusedSymbolKey));
+    HighlightInfo info = (HighlightInfo)highlightInfo;
+    IntentionAction intentionAction;
+    if (excludingHierarchy) {
+      intentionAction = new AbstractIntentionAction() {
+        @Override
+        public @NotNull String getText() {
+          return JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text");
+        }
+
+        @Override
+        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+          SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME,
+                                           "myCheckParameterExcludingHierarchy",
+                                           JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false,
+              in -> {
+                return in instanceof UnusedDeclarationInspectionBase
+                       ? ((UnusedDeclarationInspectionBase)in).getSharedLocalInspectionTool()
+                       : in;
+              })
+            .applyFix(project, file);
+        }
+      };
+    }
+    else {
+      //need suppress from Unused Parameters but settings from Unused Symbol
+      intentionAction = new SafeDeleteFix(parameter);
+    }
+    info.registerFix(intentionAction, options, HighlightDisplayKey.getDisplayNameByKey(myUnusedSymbolKey), null, null);
+    QuickFixAction.registerQuickFixAction(info, createRenameToIgnoredFix(parameter, true), myUnusedSymbolKey);
   }
 
   @NotNull
@@ -734,8 +763,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement) {
-    return new RenameToIgnoredFix(namedElement);
+  public IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix) {
+    return RenameToIgnoredFix.createRenameToIgnoreFix(namedElement, useElementNameAsSuffix);
   }
 
   @NotNull
