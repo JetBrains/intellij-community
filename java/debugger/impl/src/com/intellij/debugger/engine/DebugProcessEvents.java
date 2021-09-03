@@ -602,7 +602,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
         }
-        catch (Exception e) { // catch everything here to be able vote
+        catch (VMDisconnectedException e) {
+          throw e;
+        }
+        catch (Exception e) { // catch everything else here to be able to vote
           LOG.error(e);
         }
         finally {
