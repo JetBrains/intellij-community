@@ -18,6 +18,16 @@
     <statistic.eventLog.eventLoggerProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider"
       order="first" />
+
+    <registryKey defaultValue="false"
+                 description="When enabled Find Actions will sort actions with ML"
+                 key="search.everywhere.sort.actions.by.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with actions order won't be performed"
+                 key="search.everywhere.force.disable.experiment.action.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML logs and experiments in Search Everywhere will be disabled"
+                 key="search.everywhere.force.disable.logging.ml"/>
   </extensions>
 
   <extensionPoints>
