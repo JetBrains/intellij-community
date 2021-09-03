@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.resolveCandidates
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toCommentedParameterName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
@@ -67,7 +68,7 @@ private fun getArgumentNameHintsForCallCandidate(
 
         resolvedArg.arguments.firstOrNull()?.let { arg ->
             arg.getArgumentExpression()?.let { argExp ->
-                if (!arg.isNamed() && !argExp.isAnnotatedWithComment(resultingDescriptor) && !valueParam.name.isSpecial && argExp.isUnclearExpression()) {
+                if (!arg.isNamed() && !argExp.isAnnotatedWithComment(valueParam, resultingDescriptor) && !valueParam.name.isSpecial && argExp.isUnclearExpression()) {
                     val prefix = if (valueParam.varargElementType != null) "..." else ""
                     val offset = if (arg == valueArgumentList?.arguments?.firstOrNull() && valueParam.varargElementType != null)
                         valueArgumentList.leftParenthesis?.textRange?.endOffset ?: argExp.startOffset
@@ -87,8 +88,8 @@ private fun KtExpression.isUnclearExpression() = when (this) {
     else -> false
 }
 
-private fun KtExpression.isAnnotatedWithComment(descriptor: CallableDescriptor): Boolean =
+private fun KtExpression.isAnnotatedWithComment(valueParameter: ValueParameterDescriptor, descriptor: CallableDescriptor): Boolean =
     (descriptor is JavaMethodDescriptor || descriptor is JavaClassConstructorDescriptor) &&
             prevLeafs
                 .takeWhile { it is PsiWhiteSpace || it is PsiComment }
-                .any { it is PsiComment }
+                .any { it is PsiComment && it.text == valueParameter.toCommentedParameterName() }

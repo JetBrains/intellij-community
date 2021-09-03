@@ -40,9 +40,8 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
         val psiFactory = KtPsiFactory(element)
         for ((argument, parameter) in element.valueArguments.resolve(resolvedCall)) {
             val isVararg = parameter.isVararg
-            val name = if (isVararg) "...${parameter.name}" else parameter.name
             val parent = argument.parent
-            parent.addBefore(psiFactory.createComment("/* $name = */"), argument)
+            parent.addBefore(psiFactory.createComment(parameter.toCommentedParameterName()), argument)
             parent.addBefore(psiFactory.createWhiteSpace(), argument)
             if (isVararg) break
         }
@@ -61,4 +60,9 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
         siblings(forward = false, withSelf = false)
             .takeWhile { it is PsiWhiteSpace || it is PsiComment }
             .any { it is PsiComment && it.elementType == KtTokens.BLOCK_COMMENT }
+
+    companion object {
+        fun ValueParameterDescriptor.toCommentedParameterName(): String =
+            "/* ${if (isVararg) "...$name" else name.asString()} = */"
+    }
 }
