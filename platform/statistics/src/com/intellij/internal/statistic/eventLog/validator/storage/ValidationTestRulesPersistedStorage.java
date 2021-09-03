@@ -6,13 +6,13 @@ import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +78,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
 
   @NotNull
   private Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
-                                                        @Nullable GroupRemoteRule productionRules) {
+                                                        @Nullable EventGroupRemoteDescriptors.GroupRemoteRule productionRules) {
     final GroupRemoteRule rules = merge(groups.rules, productionRules);
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(rules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());

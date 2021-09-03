@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.FUCounterCollectorTestCase
@@ -10,8 +10,8 @@ import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
 

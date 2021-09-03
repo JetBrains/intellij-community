@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventAction
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
@@ -12,6 +11,7 @@ import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow
 import com.intellij.internal.statistic.toolwindow.StatisticsLogFilterModel
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
 
 class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {

@@ -5,15 +5,16 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.intellij.internal.statistic.config.EventLogOptions
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
-import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventJsonDeserializer
 import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
 import com.intellij.internal.statistic.eventLog.MachineId
+import com.intellij.internal.statistic.eventLog.addData
 import com.intellij.internal.statistic.eventLog.connection.EventLogResultDecorator
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode
 import com.intellij.util.io.readText
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import junit.framework.TestCase
 import java.io.File
 import java.nio.file.Paths

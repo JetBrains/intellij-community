@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
-import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
@@ -16,6 +15,7 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import javax.swing.JComponent
