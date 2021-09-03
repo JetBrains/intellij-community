@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class LangFindSettingsImpl extends FindSettingsImpl {
+final class LangFindSettingsImpl extends FindSettingsImpl {
 
   @Override
   public void loadState(@NotNull FindSettingsImpl state) {
