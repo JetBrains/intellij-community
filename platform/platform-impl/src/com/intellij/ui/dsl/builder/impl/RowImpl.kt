@@ -64,6 +64,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   val cells = mutableListOf<CellBaseImpl<*>?>()
 
   private var visibleDependentProperty = ParentDependentProperty(true)
+  private var enabledDependentProperty = ParentDependentProperty(true)
 
   init {
     label?.let { cell(it) }
@@ -103,13 +104,22 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabled(isEnabled: Boolean): RowImpl {
-    cells.forEach {
-      when (it) {
-        is CellImpl<*> -> it.enabledFromParent(isEnabled)
-        is PanelImpl -> it.enabled(isEnabled)
-      }
+    enabledDependentProperty.value = isEnabled
+    if (!enabledDependentProperty.isParentValue) {
+      doEnabled(isEnabled)
     }
-    rowComment?.let { it.isEnabled = isEnabled }
+    return this
+  }
+
+  fun enabledFromParent(isEnabled: Boolean): RowImpl {
+    if (isEnabled) {
+      enabledDependentProperty.parentValue = null
+      doEnabled(enabledDependentProperty.value)
+    }
+    else {
+      enabledDependentProperty.parentValue = false
+      doEnabled(false)
+    }
     return this
   }
 
@@ -351,5 +361,15 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       }
     }
     rowComment?.let { it.isVisible = isVisible }
+  }
+
+  private fun doEnabled(isEnabled: Boolean) {
+    cells.forEach {
+      when (it) {
+        is CellImpl<*> -> it.enabledFromParent(isEnabled)
+        is PanelImpl -> it.enabledFromParent(isEnabled)
+      }
+    }
+    rowComment?.let { it.isEnabled = isEnabled }
   }
 }

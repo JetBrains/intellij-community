@@ -35,23 +35,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
   private val _rows = mutableListOf<RowImpl>()
 
   private var visibleDependentProperty = ParentDependentProperty(true)
-
-  override fun enabled(isEnabled: Boolean): PanelImpl {
-    return enabled(isEnabled, _rows.indices)
-  }
-
-  fun enabled(isEnabled: Boolean, range: IntRange): PanelImpl {
-    for (i in range) {
-      _rows[i].enabled(isEnabled)
-    }
-    return this
-  }
-
-  override fun enabledIf(predicate: ComponentPredicate): PanelImpl {
-    enabled(predicate())
-    predicate.addListener { enabled(it) }
-    return this
-  }
+  private var enabledDependentProperty = ParentDependentProperty(true)
 
   override fun row(label: String, init: Row.() -> Unit): RowImpl {
     return row(Label(label), init)
@@ -205,6 +189,35 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
     return this
   }
 
+  override fun enabled(isEnabled: Boolean): PanelImpl {
+    enabledDependentProperty.value = isEnabled
+    if (!enabledDependentProperty.isParentValue) {
+      doEnabled(isEnabled, _rows.indices)
+    }
+    return this
+  }
+
+  fun enabledFromParent(isEnabled: Boolean) {
+    enabledFromParent(isEnabled, _rows.indices)
+  }
+
+  fun enabledFromParent(isEnabled: Boolean, range: IntRange) {
+    if (isEnabled) {
+      enabledDependentProperty.parentValue = null
+      doEnabled(enabledDependentProperty.value, range)
+    }
+    else {
+      enabledDependentProperty.parentValue = false
+      doEnabled(false, range)
+    }
+  }
+
+  override fun enabledIf(predicate: ComponentPredicate): PanelImpl {
+    enabled(predicate())
+    predicate.addListener { enabled(it) }
+    return this
+  }
+
   override fun visible(isVisible: Boolean): PanelImpl {
     visibleDependentProperty.value = isVisible
     if (!visibleDependentProperty.isParentValue) {
@@ -267,6 +280,12 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
     val result = TitledSeparator(title)
     result.border = null
     return result
+  }
+
+  private fun doEnabled(isEnabled: Boolean, range: IntRange) {
+    for (i in range) {
+      _rows[i].enabledFromParent(isEnabled)
+    }
   }
 
   private fun doVisible(isVisible: Boolean, range: IntRange) {

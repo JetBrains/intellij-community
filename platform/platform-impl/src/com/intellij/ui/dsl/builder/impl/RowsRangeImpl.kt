@@ -16,7 +16,7 @@ internal class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRa
   }
 
   override fun enabled(isEnabled: Boolean): RowsRange {
-    panel.enabled(isEnabled, startIndex..endIndex)
+    panel.enabledFromParent(isEnabled, startIndex..endIndex)
     return this
   }
 

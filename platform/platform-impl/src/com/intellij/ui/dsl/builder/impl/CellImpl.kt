@@ -41,12 +41,7 @@ internal class CellImpl<T : JComponent>(
   private var applyIfEnabled = false
 
   private var visibleDependentProperty = ParentDependentProperty(viewComponent.isVisible)
-
-  /**
-   * Not null if parent is disabled and the cell should not be enabled. While parent is disabled
-   * value contains enable state of the cell, which will be restored when parent becomes enabled
-   */
-  private var parentManagedComponentEnabled: Boolean? = null
+  private var enabledDependentProperty = ParentDependentProperty(viewComponent.isEnabled)
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
     super.horizontalAlign(horizontalAlign)
@@ -75,25 +70,19 @@ internal class CellImpl<T : JComponent>(
 
   fun enabledFromParent(isEnabled: Boolean) {
     if (isEnabled) {
-      parentManagedComponentEnabled?.let {
-        doEnabled(it)
-        parentManagedComponentEnabled = null
-      }
+      enabledDependentProperty.parentValue = null
+      doEnabled(enabledDependentProperty.value)
     }
     else {
-      if (parentManagedComponentEnabled == null) {
-        parentManagedComponentEnabled = viewComponent.isEnabled
-        doEnabled(false)
-      }
+      enabledDependentProperty.parentValue = false
+      doEnabled(false)
     }
   }
 
   override fun enabled(isEnabled: Boolean): CellImpl<T> {
-    if (parentManagedComponentEnabled == null) {
+    enabledDependentProperty.value = isEnabled
+    if (!enabledDependentProperty.isParentValue) {
       doEnabled(isEnabled)
-    }
-    else {
-      parentManagedComponentEnabled = isEnabled
     }
     return this
   }
