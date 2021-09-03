@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.ProjectTopics;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -471,6 +472,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                      "    <plugin>" +
                      "      <groupId>org.apache.maven.plugins</groupId>" +
                      "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version>3.6.0</version>" +
                      "      <configuration>" +
                      "       <release>9</release>" +
                      "      </configuration>" +
@@ -479,8 +481,8 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                      "</build>"
     );
 
-    createProjectSubFile("m1/pom.xml", createPomXml(
-      "<artifactId>m1-pom</artifactId>" +
+    createModulePom("m1",
+      "<artifactId>m1</artifactId>" +
       "<version>1</version>" +
 
       "<parent>" +
@@ -499,11 +501,67 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
       "      </configuration>" +
       "    </plugin>" +
       "  </plugins>" +
-      "</build>"));
+      "</build>");
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1-pom")));
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_1_9.toJavaVersion().toString(),
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+  }
+
+  @Test
+  public void testReleasePropertyNotSupport() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "       <release>9</release>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>"
+    );
+
+    createModulePom("m1",
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <plugins>" +
+      "    <plugin>" +
+      "      <groupId>org.apache.maven.plugins</groupId>" +
+      "      <artifactId>maven-compiler-plugin</artifactId>" +
+      "      <configuration>" +
+      "        <source>11</source>" +
+      "        <target>11</target>" +
+      "      </configuration>" +
+      "    </plugin>" +
+      "  </plugins>" +
+      "</build>");
+
+    importProject();
+
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
   }
 
   private void updateProjectFolders() {

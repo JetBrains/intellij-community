@@ -49,7 +49,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
@@ -58,6 +57,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.search.CachingSpanFilter;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -1468,13 +1468,9 @@ public class MavenUtil {
     return MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirectory);
   }
 
-  @Nullable
-  public static String getMaxLanguageLevel(@Nullable String level1, @Nullable String level2) {
-    LanguageLevel languageLevel1 = LanguageLevel.parse(level1);
-    LanguageLevel languageLevel2 = LanguageLevel.parse(level2);
-    if (languageLevel1 == null || languageLevel2 == null) {
-      return level1 != null ? level1 : level2;
-    }
-    return languageLevel1.isAtLeast(languageLevel2) ? level1 : level2;
+  @NotNull
+  public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
+    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    return plugin != null ? plugin.getVersion() : StringUtils.EMPTY;
   }
 }
