@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -124,7 +125,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                @NotNull WatchesRootNode parent,
                @NotNull XExpression expression,
                @Nullable XStackFrame stackFrame) {
-      super(tree, parent, expression, stackFrame, "result");
+      super(tree, parent, expression, stackFrame, XDebuggerBundle.message("debugger.result.node.name"));
     }
 
     @Override
