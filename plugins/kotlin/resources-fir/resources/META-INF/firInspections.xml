@@ -17,5 +17,14 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.fir.inspections.KotlinHLUnusedImportInspection"
+                     groupPath="Kotlin"
+                     groupName="Redundant constructs"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
