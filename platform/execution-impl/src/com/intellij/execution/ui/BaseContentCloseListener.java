@@ -53,7 +53,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
   @Override
   public void contentRemoved(@NotNull final ContentManagerEvent event) {
     final Content content = event.getContent();
-    if (content == myContent) {
+    if (content == myContent && !Boolean.TRUE.equals(content.getUserData(Content.TEMPORARY_REMOVED_KEY))) {
       Disposer.dispose(this);
     }
   }

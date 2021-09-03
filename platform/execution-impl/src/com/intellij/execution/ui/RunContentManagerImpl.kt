@@ -352,7 +352,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getContentManagerForRunner(executor: Executor, descriptor: RunContentDescriptor?): ContentManager {
-    return getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
+    return descriptor?.attachedContent?.manager ?: getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
   }
 
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
@@ -512,6 +512,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     override fun closeQuery(content: Content, projectClosing: Boolean): Boolean {
       val descriptor = getRunContentDescriptorByContent(content) ?: return true
+      if (Content.TEMPORARY_REMOVED_KEY.get(content, false)) return true
       val processHandler = descriptor.processHandler
       if (processHandler == null || processHandler.isProcessTerminated) {
         return true
