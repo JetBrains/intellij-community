@@ -9,6 +9,7 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -54,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 
 public final class TypedHandler extends TypedActionHandlerBase {
   private static final Set<Character> COMPLEX_CHARS =
@@ -169,19 +169,23 @@ public final class TypedHandler extends TypedActionHandlerBase {
       PsiFile file = editor == originalEditor ? originalFile : Objects.requireNonNull(psiDocumentManager.getPsiFile(editor.getDocument()));
 
       if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
-        boolean handled = callDelegates(delegate -> delegate.checkAutoPopup(charTyped, project, editor, file));
+        boolean handled = callDelegates(TypedHandlerDelegate::checkAutoPopup, charTyped, project, editor, file);
         if (!handled) {
           autoPopupCompletion(editor, charTyped, project, file);
           autoPopupParameterInfo(editor, charTyped, project, file);
         }
       }
-
+      if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+        // delegate must have invalidated injected editor by calling commitDocument() or similar
+        editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
+        file = editor == originalEditor ? originalFile : Objects.requireNonNull(psiDocumentManager.getPsiFile(editor.getDocument()));
+      }
       if (!editor.isInsertMode()) {
         type(originalEditor, project, charTyped);
         return;
       }
 
-      if (callDelegates(delegate -> delegate.beforeSelectionRemoved(charTyped, project, editor, file))) {
+      if (callDelegates(TypedHandlerDelegate::beforeSelectionRemoved, charTyped, project, editor, file)) {
         return;
       }
 
@@ -189,7 +193,8 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
       FileType fileType = getFileType(file, editor);
 
-      if (callDelegates(delegate -> delegate.beforeCharTyped(charTyped, project, editor, file, fileType))) {
+      TypedDelegateFunc func = (delegate, c1, p1, e1, f1) -> delegate.beforeCharTyped(c1, p1, e1, f1, fileType);
+      if (callDelegates(func, charTyped, project, editor, file)) {
         return;
       }
 
@@ -222,7 +227,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
         indentClosingParenth(project, editor);
       }
 
-      if (callDelegates(delegate -> delegate.charTyped(charTyped, project, editor, file))) {
+      if (callDelegates(TypedHandlerDelegate::charTyped, charTyped, project, editor, file)) {
         return;
       }
 
@@ -235,10 +240,20 @@ public final class TypedHandler extends TypedActionHandlerBase {
     });
   }
 
+  @FunctionalInterface
+  interface TypedDelegateFunc {
+    TypedHandlerDelegate.Result call(@NotNull TypedHandlerDelegate delegate, char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  }
+
   // returns true if any delegate requested a STOP
-  private static boolean callDelegates(Function<? super TypedHandlerDelegate, TypedHandlerDelegate.Result> action) {
+  private static boolean callDelegates(@NotNull TypedDelegateFunc action, char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    boolean warned = false;
     for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
-      TypedHandlerDelegate.Result result = action.apply(delegate);
+      TypedHandlerDelegate.Result result = action.call(delegate, charTyped, project, editor, file);
+      if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid() && !warned) {
+        LOG.warn(new IllegalStateException(delegate.getClass() + " has invalidated injected editor on typing char '"+charTyped+"'. Please don't call commitDocument() there or other destructive methods"));
+        warned = true;
+      }
       if (result == TypedHandlerDelegate.Result.STOP) {
         return true;
       }
