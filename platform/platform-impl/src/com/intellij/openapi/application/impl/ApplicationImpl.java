@@ -1131,7 +1131,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public @NotNull AccessToken acquireReadActionLock() {
-    DeprecatedMethodException.report("Use runReadAction() instead");
+    PluginException.reportDeprecatedUsage("Application.acquireReadActionLock", "Use `runReadAction()` instead");
 
     // if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
     return isWriteThread() || myLock.isReadLockedByThisThread() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
@@ -1198,7 +1198,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> clazz) {
-    DeprecatedMethodException.report("Use runWriteAction() instead");
+    PluginException.reportDeprecatedUsage("Application#acquireWriteActionLock", "Use `runWriteAction()` instead");
 
     return new WriteAccessToken(clazz);
   }
