@@ -40,11 +40,7 @@ internal class CellImpl<T : JComponent>(
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
 
-  /**
-   * Not null if parent is hidden and the cell should not be visible. While parent is hidden
-   * value contains visibility of the cell, which will be restored when parent becomes visible
-   */
-  private var parentManagedComponentVisible: Boolean? = null
+  private var visibleDependentProperty = ParentDependentProperty(viewComponent.isVisible)
 
   /**
    * Not null if parent is disabled and the cell should not be enabled. While parent is disabled
@@ -110,25 +106,19 @@ internal class CellImpl<T : JComponent>(
 
   fun visibleFromParent(isVisible: Boolean) {
     if (isVisible) {
-      parentManagedComponentVisible?.let {
-        doVisible(it)
-        parentManagedComponentVisible = null
-      }
+      visibleDependentProperty.parentValue = null
+      doVisible(visibleDependentProperty.value)
     }
     else {
-      if (parentManagedComponentVisible == null) {
-        parentManagedComponentVisible = viewComponent.isVisible
-        doVisible(false)
-      }
+      visibleDependentProperty.parentValue = false
+      doVisible(false)
     }
   }
 
   override fun visible(isVisible: Boolean): CellImpl<T> {
-    if (parentManagedComponentVisible == null) {
+    visibleDependentProperty.value = isVisible
+    if (!visibleDependentProperty.isParentValue) {
       doVisible(isVisible)
-    }
-    else {
-      parentManagedComponentVisible = isVisible
     }
     return this
   }
@@ -223,9 +213,14 @@ internal class CellImpl<T : JComponent>(
   }
 
   private fun doVisible(isVisible: Boolean) {
-    viewComponent.isVisible = isVisible
-    comment?.let { it.isVisible = isVisible }
-    label?.let { it.isVisible = isVisible }
+    if (viewComponent.isVisible != isVisible) {
+      viewComponent.isVisible = isVisible
+      comment?.let { it.isVisible = isVisible }
+      label?.let { it.isVisible = isVisible }
+
+      // Force parent to re-layout
+      viewComponent.parent?.revalidate()
+    }
   }
 
   private fun doEnabled(isEnabled: Boolean) {

@@ -11,7 +11,7 @@ internal class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRa
   var endIndex = 0
 
   override fun visible(isVisible: Boolean): RowsRange {
-    panel.visible(isVisible, startIndex..endIndex)
+    panel.visibleFromParent(isVisible, startIndex..endIndex)
     return this
   }
 

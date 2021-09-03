@@ -13,6 +13,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -49,6 +50,7 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
     result.addTab("Groups", createGroupsPanel())
     result.addTab("Segmented Button", createSegmentedButton())
+    result.addTab("Visible/Enabled", createVisibleEnabled())
 
     return result
   }
@@ -188,6 +190,83 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     property.set(buttons[1])
 
     return result
+  }
+
+  fun createVisibleEnabled(): JPanel {
+    val entities = mutableMapOf<String, Any>()
+
+    return panel {
+      row {
+        label("<html>Example test cases:<br>" +
+              "1. Hide Group, hide/show sub elements from Group<br>" +
+              "  * they shouldn't be visible until Group becomes visible<br>" +
+              "  * after Group becomes shown visible state of sub elements correspondent to checkboxes<br>" +
+              "2. Similar to 1 test case but with enabled state")
+      }
+
+      row {
+        panel {
+          entities["Row 1"] = row("Row 1") {
+            entities["textField1"] = textField()
+              .applyToComponent { text = "textField1" }
+
+          }
+
+          entities["Group"] = group("Group") {
+            entities["Row 2"] = row("Row 2") {
+              entities["textField2"] = textField()
+                .applyToComponent { text = "textField2" }
+            }
+
+            entities["Row 3"] = row("Row 3") {
+              entities["panel"] = panel {
+                row {
+                  label("Panel inside row3")
+                }
+
+                entities["Row 4"] = row("Row 4") {
+                  entities["textField3"] = textField()
+                    .applyToComponent { text = "textField3" }
+                }
+              }
+            }
+          }
+        }.verticalAlign(VerticalAlign.TOP)
+
+        panel {
+          row {
+            label("Visible/Enabled")
+              .bold()
+          }
+          for ((name, entity) in entities.toSortedMap()) {
+            row(name) {
+              checkBox("visible")
+                .applyToComponent {
+                  isSelected = true
+                  addItemListener {
+                    when(entity) {
+                      is Cell<*> -> entity.visible(this.isSelected)
+                      is Row -> entity.visible(this.isSelected)
+                      is Panel -> entity.visible(this.isSelected)
+                    }
+                  }
+                }
+              checkBox("enabled")
+                .applyToComponent {
+                  isSelected = true
+                  addItemListener {
+                    when(entity) {
+                      is Cell<*> -> entity.enabled(this.isSelected)
+                      is Row -> entity.enabled(this.isSelected)
+                      is Panel -> entity.enabled(this.isSelected)
+                    }
+                  }
+                }
+            }
+          }
+        }.horizontalAlign(HorizontalAlign.RIGHT)
+      }
+    }
   }
 
   fun createCommentsPanel(): JPanel {

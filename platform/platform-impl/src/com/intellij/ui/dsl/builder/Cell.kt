@@ -14,6 +14,14 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.HyperlinkEvent
 
+/**
+ * Columns for text components for short width (used instead of deprecated [GrowPolicy.SHORT_TEXT]
+ */
+const val COLUMNS_SHORT = 18
+
+/**
+ * Columns for text components for medium width (used instead of deprecated [GrowPolicy.MEDIUM_TEXT]
+ */
 const val COLUMNS_MEDIUM = 25
 
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"

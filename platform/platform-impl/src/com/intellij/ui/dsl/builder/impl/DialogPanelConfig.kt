@@ -14,11 +14,11 @@ internal class DialogPanelConfig {
   var spacing = createIntelliJSpacingConfiguration()
   val context = Context()
 
-  var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
-  var customValidationRequestors: MutableMap<JComponent, MutableList<(() -> Unit) -> Unit>> = linkedMapOf()
-  val applyCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
-  val resetCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
-  val isModifiedCallbacks: MutableMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
+  val componentValidateCallbacks = linkedMapOf<JComponent, () -> ValidationInfo?>()
+  val customValidationRequestors = linkedMapOf<JComponent, MutableList<(() -> Unit) -> Unit>>()
+  val applyCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
+  val resetCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
+  val isModifiedCallbacks = linkedMapOf<JComponent?, MutableList<() -> Boolean>>()
 
 }
 

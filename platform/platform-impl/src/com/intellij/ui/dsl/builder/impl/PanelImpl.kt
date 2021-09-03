@@ -34,6 +34,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
 
   private val _rows = mutableListOf<RowImpl>()
 
+  private var visibleDependentProperty = ParentDependentProperty(true)
+
   override fun enabled(isEnabled: Boolean): PanelImpl {
     return enabled(isEnabled, _rows.indices)
   }
@@ -204,14 +206,26 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
   }
 
   override fun visible(isVisible: Boolean): PanelImpl {
-    return visible(isVisible, _rows.indices)
-  }
-
-  fun visible(isVisible: Boolean, range: IntRange): PanelImpl {
-    for (i in range) {
-      _rows[i].visible(isVisible)
+    visibleDependentProperty.value = isVisible
+    if (!visibleDependentProperty.isParentValue) {
+      doVisible(isVisible, _rows.indices)
     }
     return this
+  }
+
+  fun visibleFromParent(isVisible: Boolean) {
+    visibleFromParent(isVisible, _rows.indices)
+  }
+
+  fun visibleFromParent(isVisible: Boolean, range: IntRange) {
+    if (isVisible) {
+      visibleDependentProperty.parentValue = null
+      doVisible(visibleDependentProperty.value, range)
+    }
+    else {
+      visibleDependentProperty.parentValue = false
+      doVisible(false, range)
+    }
   }
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
@@ -253,6 +267,12 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
     val result = TitledSeparator(title)
     result.border = null
     return result
+  }
+
+  private fun doVisible(isVisible: Boolean, range: IntRange) {
+    for (i in range) {
+      _rows[i].visibleFromParent(isVisible)
+    }
   }
 }
 

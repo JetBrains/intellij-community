@@ -32,17 +32,13 @@ internal class HideablePanelImpl(dialogPanelConfig: DialogPanelConfig, @NlsConte
     hideableTitledSeparator.expanded = false
   }
 
-  private fun visibleContent(isVisible: Boolean) {
-    visible(isVisible, 1 until rows.size)
-  }
-
   private inner class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
 
     var expanded: Boolean = true
       set(value) {
         field = value
 
-        visibleContent(value)
+        visibleFromParent(value, 1 until rows.size)
         updateIcon()
       }
 

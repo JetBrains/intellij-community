@@ -42,6 +42,10 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   }
 
   fun build() {
+    if (rows.isEmpty()) {
+      return
+    }
+
     preprocess()
 
     val maxColumnsCount = getMaxColumnsCount()

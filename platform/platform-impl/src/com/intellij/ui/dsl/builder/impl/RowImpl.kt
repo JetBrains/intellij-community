@@ -63,6 +63,8 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   val cells = mutableListOf<CellBaseImpl<*>?>()
 
+  private var visibleDependentProperty = ParentDependentProperty(true)
+
   init {
     label?.let { cell(it) }
   }
@@ -118,13 +120,22 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun visible(isVisible: Boolean): RowImpl {
-    cells.forEach {
-      when (it) {
-        is CellImpl<*> -> it.visibleFromParent(isVisible)
-        is PanelImpl -> it.visible(isVisible)
-      }
+    visibleDependentProperty.value = isVisible
+    if (!visibleDependentProperty.isParentValue) {
+      doVisible(isVisible)
     }
-    rowComment?.let { it.isVisible = isVisible }
+    return this
+  }
+
+  fun visibleFromParent(isVisible: Boolean): RowImpl {
+    if (isVisible) {
+      visibleDependentProperty.parentValue = null
+      doVisible(visibleDependentProperty.value)
+    }
+    else {
+      visibleDependentProperty.parentValue = false
+      doVisible(false)
+    }
     return this
   }
 
@@ -330,5 +341,15 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   fun getIndent(): Int {
     return panelContext.indentCount * dialogPanelConfig.spacing.horizontalIndent
+  }
+
+  private fun doVisible(isVisible: Boolean) {
+    for (cell in cells) {
+      when (cell) {
+        is CellImpl<*> -> cell.visibleFromParent(isVisible)
+        is PanelImpl -> cell.visibleFromParent(isVisible)
+      }
+    }
+    rowComment?.let { it.isVisible = isVisible }
   }
 }
