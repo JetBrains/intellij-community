@@ -12,6 +12,7 @@ import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
 import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
+import java.util.concurrent.TimeUnit
 
 class RunToCursorSuggester : FeatureSuggester {
     companion object {
@@ -87,12 +88,11 @@ class RunToCursorSuggester : FeatureSuggester {
     }
 
     override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-//        return super.isSuggestionNeeded(
-//            actionsSummary,
-//            SUGGESTING_ACTION_ID,
-//            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-//        )
-        return false // todo: edit this method when RunToCursor action statistics will be fixed.
+        return super.isSuggestionNeeded(
+            actionsSummary,
+            SUGGESTING_ACTION_ID,
+            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
+        )
     }
 
     override val id: String = "Run to cursor"
