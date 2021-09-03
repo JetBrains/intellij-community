@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.NodeToUpdate;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -136,29 +138,15 @@ final class FilePartNodeRoot extends FilePartNode {
 
   @NotNull
   NodeToUpdate findOrCreateByPath(@NotNull String path, @NotNull NewVirtualFileSystem fs) {
-    NewVirtualFileSystem currentFS = fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs;
-    Pair<NewVirtualFile, String> pair = VfsImplUtil.extractRootFromPath(currentFS, path);
-    List<String> names = splitNames(pair != null ? pair.second : path);
-    NewVirtualFile fsRoot = pair != null ? pair.first : null;
+    List<String> names = splitNames(path);
+    NewVirtualFile fsRoot = null;
 
     VirtualFile NEVER_TRIED_TO_FIND = NullVirtualFile.INSTANCE;
     // we try to never call file.findChild() because it's expensive
     VirtualFile currentFile = NEVER_TRIED_TO_FIND;
     FilePartNode currentNode = this;
     FilePartNode parentNode = this;
-
-    if (fsRoot != null) {
-      FilePartNode child = new FilePartNode(getNameId(fsRoot), fsRoot, currentFS);
-      int index = binarySearchChildByName(fsRoot.getNameSequence());
-      if (index >= 0) {
-        currentNode = currentNode.children[index];
-      }
-      else {
-        currentNode.children = ArrayUtil.insert(currentNode.children, 0, child);
-        currentNode = child;
-      }
-    }
-
+    NewVirtualFileSystem currentFS = fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs;
     for (int i = names.size() - 1; i >= 0; i--) {
       String name = names.get(i);
       if (name.equals(JarFileSystem.JAR_SEPARATOR) && currentFS instanceof LocalFileSystem) {
@@ -232,6 +220,9 @@ final class FilePartNodeRoot extends FilePartNode {
       if (path.charAt(end-1) == '/') {
         end--;
       }
+      if (end == 0 && path.charAt(0) == '/') {
+        end = 1; // here's this weird ROOT file in temp system
+      }
       int startIndex = extractName(path, end);
       assert startIndex != end : "startIndex: "+startIndex+"; end: "+end+"; path:'"+path+"'; toExtract: '"+path.substring(0, end)+"'";
       names.add(path.substring(startIndex, end));
@@ -249,7 +240,8 @@ final class FilePartNodeRoot extends FilePartNode {
                                               @NotNull List<String> names,
                                               int startIndex) {
     VirtualFile file = root;
-    for (int i = names.size() - 1; i >= startIndex; i--) {
+    // start from before-the-last because it's the root, which we already found
+    for (int i = names.size() - 2; i >= startIndex; i--) {
       String name = names.get(i);
       file = findChildThroughJar(file, name, fs);
       if (file == null) break;
@@ -259,6 +251,9 @@ final class FilePartNodeRoot extends FilePartNode {
 
   // returns start index of the name (i.e. path[return..length) is considered a name)
   private static int extractName(@NotNull CharSequence path, int length) {
+    if (length == 1 && path.charAt(0) == '/') {
+      return 0; // in case of TEMP file system there is this weird ROOT file
+    }
     int i = StringUtil.lastIndexOf(path, '/', 0, length);
     if (i != -1 && PathUtilRt.isWindowsUNCRoot(path, i)) {
       // UNC
@@ -273,7 +268,8 @@ final class FilePartNodeRoot extends FilePartNode {
     if (remainingLeaves == 0) {
       VirtualFile file = myFile(node.myFileOrUrl);
       if (file == null) {
-        removeEmptyNodesByPath(VfsUtilCore.urlToPath(myUrl(node.myFileOrUrl)));
+        List<String> parts = splitNames(VfsUtilCore.urlToPath(myUrl(node.myFileOrUrl)));
+        removeEmptyNodesByPath(parts);
       }
       else {
         List<VirtualFile> parts = getHierarchy(file);

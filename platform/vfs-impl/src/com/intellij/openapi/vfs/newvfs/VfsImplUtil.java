@@ -125,13 +125,6 @@ public final class VfsImplUtil {
   }
 
   private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    Pair<NewVirtualFile, String> pair = extractRootFromPath(vfs, path);
-    if (pair == null) return null;
-    Iterable<String> parts = StringUtil.tokenize(pair.second, FILE_SEPARATORS);
-    return new Pair<>(pair.first, parts);
-  }
-
-  public static Pair<NewVirtualFile, String> extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     String normalizedPath = vfs.normalize(path);
     if (StringUtil.isEmptyOrSpaces(normalizedPath)) {
       return null;
@@ -148,7 +141,8 @@ public final class VfsImplUtil {
       return null;
     }
 
-    return Pair.create(root, normalizedPath.substring(basePath.length()));
+    Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
+    return new Pair<>(root, parts);
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
