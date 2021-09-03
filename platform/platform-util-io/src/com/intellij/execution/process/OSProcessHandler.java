@@ -20,7 +20,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,11 +37,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 
   private final boolean myHasErrorStream;
-  @NotNull
   private final ModalityState myModality;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
-  private final Set<? extends File> myFilesToDelete;
+  private final Set<File> myFilesToDelete;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
@@ -55,8 +53,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myModality = getDefaultModality();
   }
 
-  @NotNull
-  public static ModalityState getDefaultModality() {
+  public static @NotNull ModalityState getDefaultModality() {
     Application app = ApplicationManager.getApplication();
     return app == null ? ModalityState.NON_MODAL : app.getDefaultModalityState();
   }
@@ -86,7 +83,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<? extends File> filesToDelete) {
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset);
     setHasPty(isPtyProcess(process));
     myFilesToDelete = filesToDelete;
@@ -94,8 +91,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myModality = getDefaultModality();
   }
 
-  @NotNull
-  private static Process startProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  private static Process startProcess(GeneralCommandLine commandLine) throws ExecutionException {
     try {
       return commandLine.createProcess();
     }
@@ -121,30 +117,37 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   /**
    * Checks if we are going to wait for {@code processHandler} to finish on EDT or under ReadAction. Logs error if we do so.
-   * <br/><br/>
+   * <p>
    * HOW-TO fix an error from this method:
    * <ul>
-   * <li>You are on the pooled thread under {@link com.intellij.openapi.application.ReadAction ReadAction}:
-   * <ul>
-   *     <li>Synchronous (you need to return execution result or derived information to the caller) - get rid the ReadAction or synchronicity.
-   *    *     Move execution part out of the code executed under ReadAction, or make your execution asynchronous - execute on
-   *    *     {@link Task.Backgroundable other thread} and invoke a callback.</li>
-   *     <li>Non-synchronous (you don't need to return something) - execute on another thread. E.g. using {@link Task.Backgroundable}</li>
-   * </ul>
-   * </li>
-   *
-   * <li>You are on EDT:
-   * <ul>
-   *
-   * <li>Outside of {@link com.intellij.openapi.application.WriteAction WriteAction}:
-   *   <ul>
-   *     <li>Synchronous (you need to return execution result or derived information to the caller) - execute under
-   *       {@link ProgressManager#runProcessWithProgressSynchronously(Runnable, String, boolean, com.intellij.openapi.project.Project) modal progress}.</li>
-   *     <li>Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using {@link Task.Backgroundable}</li>
-   *   </ul>
-   * </li>
-   *
-   * <li>Under {@link com.intellij.openapi.application.WriteAction WriteAction}
+   *   <li>
+   *     You are on the pooled thread under {@link com.intellij.openapi.application.ReadAction ReadAction}:
+   *     <ul>
+   *       <li>
+   *         Synchronous (you need to return execution result or derived information to the caller) - get rid the ReadAction or synchronicity.
+   *         Move execution part out of the code executed under ReadAction, or make your execution asynchronous - execute on
+   *         {@link Task.Backgroundable other thread} and invoke a callback.
+   *       </li>
+   *       <li>Non-synchronous (you don't need to return something) - execute on another thread. E.g. using {@link Task.Backgroundable}</li>
+   *     </ul>
+   *   </li>
+   *   <li>
+   *     You are on EDT:
+   *     <ul>
+   *       <li>
+   *         Outside of {@link com.intellij.openapi.application.WriteAction WriteAction}:
+   *         <ul>
+   *           <li>
+   *             Synchronous (you need to return execution result or derived information to the caller) - execute under
+   *             {@link ProgressManager#runProcessWithProgressSynchronously(Runnable, String, boolean, com.intellij.openapi.project.Project) modal progress}.
+   *           </li>
+   *           <li>
+   *             Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using {@link Task.Backgroundable}
+   *           </li>
+   *         </ul>
+   *       </li>
+   *       <li>
+   *         Under {@link com.intellij.openapi.application.WriteAction WriteAction}
    *   <ul>
    *     <li>Synchronous (you need to return execution result or derived information to the caller) - get rid the WriteAction or synchronicity.
    *       Move execution part out of the code executed under WriteAction, or make your execution asynchronous - execute on
@@ -161,7 +164,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     if (application == null || !application.isInternal() || application.isHeadlessEnvironment()) {
       return;
     }
-    @NonNls String message = null;
+    String message = null;
     if (application.isDispatchThread()) {
       message = "Synchronous execution on EDT: ";
     }
@@ -173,7 +176,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
   }
 
-  private static void deleteTempFiles(Set<? extends File> tempFiles) {
+  private static void deleteTempFiles(Set<File> tempFiles) {
     if (tempFiles != null) {
       try {
         for (File file : tempFiles) {
@@ -201,7 +204,8 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   protected void onOSProcessTerminated(int exitCode) {
     if (myModality != ModalityState.NON_MODAL) {
       ProgressManager.getInstance().runProcess(() -> super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
-    } else {
+    }
+    else {
       super.onOSProcessTerminated(exitCode);
     }
     deleteTempFiles(myFilesToDelete);
@@ -213,8 +217,8 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   protected boolean shouldDestroyProcessRecursively() {
-    // Override this method if you want to kill process recursively (whole process try) by default
-    // such behaviour is better than default java one, which doesn't kill children processes
+    // Override this method if you want to kill process recursively (a whole process tree) by default
+    // (such behaviour is better than default Java one, which doesn't kill children processes).
     return myDestroyRecursively;
   }
 
@@ -224,8 +228,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   @Override
   protected void doDestroyProcess() {
-    // Override this method if you want to customize default destroy behaviour, e.g.
-    // if you want use some soft-kill.
+    // Override this method if you want to customize default destroy behaviour, e.g. if you want to use some soft-kill.
     final Process process = getProcess();
     if (shouldDestroyProcessRecursively() && processCanBeKilledByOS(process)) {
       killProcessTree(process);
@@ -245,7 +248,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    *
    * @param process Process
    */
-  protected void killProcessTree(@NotNull final Process process) {
+  protected void killProcessTree(final @NotNull Process process) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       killProcessTreeSync(process);
     }
@@ -289,9 +292,8 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * Rule of thumb: use {@link BaseOutputReader.Options#BLOCKING} for short-living process that you never want to "disconnect" from.
    * See {@link BaseDataReader.SleepingPolicy} for the whole story.
    */
-  @NotNull
   @Override
-  protected BaseOutputReader.Options readerOptions() {
+  protected @NotNull BaseOutputReader.Options readerOptions() {
     return myHasPty ? BaseOutputReader.Options.BLOCKING : super.readerOptions();  // blocking read in case of PTY-based process
   }
 
@@ -313,9 +315,8 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       super(commandLine);
     }
 
-    @NotNull
     @Override
-    protected BaseOutputReader.Options readerOptions() {
+    protected @NotNull BaseOutputReader.Options readerOptions() {
       return BaseOutputReader.Options.forMostlySilentProcess();
     }
   }

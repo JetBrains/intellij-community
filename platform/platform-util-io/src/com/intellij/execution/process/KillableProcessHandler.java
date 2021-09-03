@@ -24,7 +24,6 @@ import java.util.Set;
  * Soft kill works on Unix, and also on Windows if a mediator process was used.
  */
 public class KillableProcessHandler extends OSProcessHandler implements KillableProcess {
-
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
 
   private boolean myShouldKillProcessSoftly = true;
@@ -49,7 +48,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
@@ -57,19 +56,16 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     this(process, commandLine, charset, null);
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableProcessHandler(@NotNull Process process, /*@NotNull*/
-                                String commandLine,
-                                @NotNull Charset charset,
-                                @Nullable Set<? extends File> filesToDelete) {
+  public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     myMediatedProcess = false;
   }
@@ -83,7 +79,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * @return true, if graceful process termination should be attempted first
+   * @return {@code true} if graceful process termination should be attempted first
    */
   public boolean shouldKillProcessSoftly() {
     return myShouldKillProcessSoftly;
@@ -92,7 +88,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * Sets whether the process will be terminated gracefully.
    *
-   * @param shouldKillProcessSoftly true, if graceful process termination should be attempted first (i.e. soft kill)
+   * @param shouldKillProcessSoftly {@code true} if graceful process termination should be attempted first (i.e. "soft kill")
    */
   public void setShouldKillProcessSoftly(boolean shouldKillProcessSoftly) {
     myShouldKillProcessSoftly = shouldKillProcessSoftly;
@@ -153,7 +149,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * This is an experimental API which will be removed in future releases once stabilized.
    * Please do not use this API.
    * @param shouldKillProcessSoftlyWithWinP true to use
-   * @deprecated graceful termination with WinP is enabled by default, please don't use this method
+   * @deprecated graceful termination with WinP is enabled by default; please don't use this method
    */
   @ApiStatus.Experimental
   @Deprecated
@@ -214,8 +210,8 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
           if (message != null && message.contains(".exe terminated with exit code 6,")) {
             // https://github.com/kohsuke/winp/blob/ec4ac6a988f6e3909c57db0abc4b02ff1b1d2e05/native/sendctrlc/main.cpp#L18
             // WinP uses AttachConsole(pid) which might fail if the specified process does not have a console.
-            // In this case the error code returned is ERROR_INVALID_HANDLE (6).
-            // Let's fallback to the default termination without logging an error.
+            // In this case, the error code returned is ERROR_INVALID_HANDLE (6).
+            // Let's fall back to the default termination without logging an error.
             String msg = "Cannot send Ctrl+C to process without a console (fallback to default termination)";
             if (LOG.isDebugEnabled()) {
               LOG.debug(msg + " " + getCommandLine());
