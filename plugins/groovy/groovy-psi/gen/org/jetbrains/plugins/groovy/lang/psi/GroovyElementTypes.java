@@ -211,7 +211,7 @@ public interface GroovyElementTypes {
   IElementType KW_LONG = new GroovyElementType("long");
   IElementType KW_NATIVE = new GroovyElementType("native");
   IElementType KW_NEW = new GroovyElementType("new");
-  IElementType KW_NONSEALED = new GroovyElementType("non-sealed");
+  IElementType KW_NON_SEALED = new GroovyElementType("non-sealed");
   IElementType KW_NULL = new GroovyElementType("null");
   IElementType KW_PACKAGE = new GroovyElementType("package");
   IElementType KW_PERMITS = new GroovyElementType("permits");

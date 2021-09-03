@@ -171,7 +171,7 @@ public interface GroovyTokenTypes {
   IElementType kLONG = KW_LONG;
   IElementType kNATIVE = KW_NATIVE;
   IElementType kNEW = KW_NEW;
-  IElementType kNONSEALED = KW_NONSEALED;
+  IElementType kNON_SEALED = KW_NON_SEALED;
   IElementType kNULL = KW_NULL;
   IElementType kPACKAGE = KW_PACKAGE;
   IElementType kPERMITS = KW_PERMITS;

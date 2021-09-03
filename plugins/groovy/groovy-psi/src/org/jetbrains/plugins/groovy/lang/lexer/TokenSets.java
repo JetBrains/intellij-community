@@ -80,7 +80,7 @@ public interface TokenSets {
     kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY,
     kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE,
     kLONG,
-    kNATIVE, kNEW, kNONSEALED, kNULL,
+    kNATIVE, kNEW, kNON_SEALED, kNULL,
     kPACKAGE, kPERMITS, kPRIVATE, kPROTECTED, kPUBLIC,
     kRETURN,
     kSEALED, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
@@ -108,7 +108,7 @@ public interface TokenSets {
     kVOLATILE,
     kSTRICTFP,
     kSEALED,
-    kNONSEALED,
+    kNON_SEALED,
     kDEF,
     kVAR
   );

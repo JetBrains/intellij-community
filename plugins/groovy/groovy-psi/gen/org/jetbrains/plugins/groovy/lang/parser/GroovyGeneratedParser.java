@@ -4926,7 +4926,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeTokenFast(b, KW_TRANSIENT);
     if (!r) r = consumeTokenFast(b, KW_VOLATILE);
     if (!r) r = consumeTokenFast(b, KW_SEALED);
-    if (!r) r = consumeTokenFast(b, KW_NONSEALED);
+    if (!r) r = consumeTokenFast(b, KW_NON_SEALED);
     if (!r) r = def_modifier(b, l + 1);
     if (!r) r = var_modifier(b, l + 1);
     exit_section_(b, m, null, r);

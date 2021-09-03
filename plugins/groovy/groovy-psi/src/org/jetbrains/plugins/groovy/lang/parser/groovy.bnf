@@ -130,7 +130,7 @@
     KW_NATIVE = 'native'
     KW_NULL = 'null'
     KW_NEW = 'new'
-    KW_NONSEALED = 'non-sealed'
+    KW_NON_SEALED = 'non-sealed'
     KW_PACKAGE = 'package'
     KW_PERMITS = 'permits'
     KW_PRIVATE = 'private'

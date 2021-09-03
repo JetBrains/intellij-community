@@ -160,7 +160,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "native"        { return storeToken(KW_NATIVE); }
   "synchronized"  { return storeToken(KW_SYNCHRONIZED); }
   "sealed"        { return storeToken(KW_SEALED); }
-  "non-sealed"    { return storeToken(KW_NONSEALED); }
+  "non-sealed"    { return storeToken(KW_NON_SEALED); }
   "volatile"      { return storeToken(KW_VOLATILE); }
   "default"       { return storeToken(KW_DEFAULT); }
   "do"            { return storeToken(KW_DO); }

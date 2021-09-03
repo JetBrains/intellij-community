@@ -57,7 +57,7 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.DEF, GrModifierFlags.DEF_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.DEFAULT, GrModifierFlags.DEFAULT_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.SEALED, GrModifierFlags.SEALED_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.NON_SEALED, GrModifierFlags.NONSEALED_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.NON_SEALED, GrModifierFlags.NON_SEALED_MASK);
 
 
     PRIORITY.put(GrModifier.PUBLIC,           0);
@@ -91,7 +91,7 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.DEF, GroovyTokenTypes.kDEF);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.VOLATILE, GroovyTokenTypes.kVOLATILE);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.SEALED, GroovyTokenTypes.kSEALED);
-    NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.NON_SEALED, GroovyTokenTypes.kNONSEALED);
+    NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.NON_SEALED, GroovyTokenTypes.kNON_SEALED);
   }
 
   public GrModifierListImpl(@NotNull ASTNode node) {
