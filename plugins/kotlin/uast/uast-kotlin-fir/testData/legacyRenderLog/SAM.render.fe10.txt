@@ -15,7 +15,7 @@ public final class SAMKt {
     })
     public static final fun getNotSam() : kotlin.jvm.functions.Function0<kotlin.Unit> = UastEmptyExpression
     public static final fun getFoo() : java.lang.Runnable = UastEmptyExpression
-    public static final fun setFoo(@org.jetbrains.annotations.NotNull foo: java.lang.Runnable) : void = UastEmptyExpression
+    public static final fun setFoo(@org.jetbrains.annotations.NotNull value: java.lang.Runnable) : void = UastEmptyExpression
     public static final fun bar() : java.lang.Runnable {
         foo = {
 
