@@ -7,6 +7,16 @@ import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
 
+/**
+ * Columns for text components for short width (used instead of deprecated [GrowPolicy.SHORT_TEXT]
+ */
+const val COLUMNS_SHORT = 18
+
+/**
+ * Columns for text components for medium width (used instead of deprecated [GrowPolicy.MEDIUM_TEXT]
+ */
+const val COLUMNS_MEDIUM = 25
+
 fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
   component.text = binding.get()
   return bind(JTextComponent::getText, JTextComponent::setText, binding)
@@ -44,6 +54,12 @@ fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) ->
   return bindIntText(PropertyBinding(getter, setter))
 }
 
+/**
+ * Minimal width of text field in chars
+ *
+ * @see COLUMNS_SHORT
+ * @see COLUMNS_MEDIUM
+ */
 fun <T : JTextField> Cell<T>.columns(columns: Int): Cell<T> {
   component.columns = columns
   return this
