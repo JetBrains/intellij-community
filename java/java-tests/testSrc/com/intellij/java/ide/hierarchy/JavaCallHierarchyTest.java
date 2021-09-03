@@ -125,4 +125,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   public void testCallersOfSubMethod() throws Exception {
     doJavaCallerTypeHierarchyTest("p.BaseClass", "method", "X.java");
   }
+  public void testEnclosingDeps() throws Exception {
+    doJavaCallerTypeHierarchyTest("DummyImpl", "doSth", "A.java");
+  }
 }
