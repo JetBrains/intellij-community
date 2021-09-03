@@ -46,7 +46,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   protected final @IntentionName String myText;
   private final AnnotationPlace myAnnotationPlace;
   @Nullable private final SmartPsiElementPointer<PsiElement> myTarget;
-  private final boolean myApplicableTargetAnnotation;
+  private final boolean myHasApplicableAnnotations;
 
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
@@ -77,11 +77,11 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, fqn);
     if (target instanceof PsiElement) {
       myTarget = SmartPointerManager.createPointer((PsiElement)target);
-      myApplicableTargetAnnotation = ContainerUtil.exists(target.getApplicableAnnotations(), anno -> anno.hasQualifiedName(myAnnotation));
+      myHasApplicableAnnotations = ContainerUtil.exists(target.getApplicableAnnotations(), anno -> anno.hasQualifiedName(myAnnotation));
     }
     else {
       myTarget = null;
-      myApplicableTargetAnnotation = false;
+      myHasApplicableAnnotations = false;
     }
   }
 
@@ -186,7 +186,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
       return;
     }
     final PsiAnnotationOwner target = (PsiAnnotationOwner)myTarget.getElement();
-    if (target == null || myApplicableTargetAnnotation) {
+    if (target == null || myHasApplicableAnnotations) {
       return;
     }
     final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)startElement;

@@ -226,7 +226,8 @@ public final class AnnotationTargetUtil {
    * @param annotation the qualified name of the annotation to add
    * @return a target annotation owner to add the annotation (either modifier list or type element depending on the annotation target)
    * Returns null if {@code modifierListOwner.getModifierList()} is null.
-   * <p>The method should be called under read action and in smart mode.
+   * <p>The method should be called under read action
+   * and the caller should be prepared for {@link com.intellij.openapi.project.IndexNotReadyException}.
    */
   @Contract(pure = true)
   public static @Nullable PsiAnnotationOwner getTarget(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String annotation) {
