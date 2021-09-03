@@ -14,10 +14,8 @@ class TestStatisticsEventLogger(private val session: String = "testSession",
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
 
-    val event = newLogEvent(session, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, eventId, isState)
-    for (datum in data) {
-      event.event.addData(datum.key, datum.value)
-    }
+    val event = newLogEvent(session, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, eventId, isState, data)
+      .escape()
     logged.add(event)
     return CompletableFuture.completedFuture(null)
   }

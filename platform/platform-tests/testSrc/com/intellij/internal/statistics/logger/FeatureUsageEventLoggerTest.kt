@@ -89,9 +89,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newEvent("group.id", "dialog-id", groupVersion = "2")
-    expected.event.addData("type", "close")
-    expected.event.addData("state", 1)
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2",
+      data = hashMapOf("type" to "close", "state" to 1))
 
     testLogger({ logger -> logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
   }
@@ -102,10 +101,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newEvent("group.id", "dialog-id", groupVersion = "2")
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("type" to "close", "state" to 1))
     expected.event.increment()
-    expected.event.addData("type", "close")
-    expected.event.addData("state", 1)
 
     testLogger(
       { logger ->
@@ -249,10 +246,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["value"] = true
     data["default"] = false
 
-    val expected = newStateEvent("settings", "ui", groupVersion = "3")
-    expected.event.addData("name", "myOption")
-    expected.event.addData("value", true)
-    expected.event.addData("default", false)
+    val expected = newStateEvent("settings", "ui", groupVersion = "3",
+      data = hashMapOf("name" to "myOption", "value" to true, "default" to false))
 
     testLogger({ logger -> logger.logAsync(EventLogGroup("settings", 3), "ui", data, true) }, expected)
   }
@@ -264,10 +259,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["value"] = true
     data["default"] = false
 
-    val expected = newStateEvent("settings", "ui", groupVersion = "5")
-    expected.event.addData("name", "myOption")
-    expected.event.addData("value", true)
-    expected.event.addData("default", false)
+    val expected = newStateEvent("settings", "ui", groupVersion = "5",
+      data = hashMapOf("name" to "myOption", "value" to true, "default" to false))
 
     testLogger(
       { logger ->

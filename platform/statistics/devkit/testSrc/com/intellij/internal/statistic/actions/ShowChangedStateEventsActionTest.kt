@@ -49,10 +49,7 @@ class ShowChangedStateEventsActionTest {
                             groupVersion: String = "42",
                             eventId: String = "event.id",
                             data: Map<String, Any> = emptyMap()): LogEvent {
-    val event = newLogEvent("9bff3d929780", "202.2171", "176", System.currentTimeMillis(), group, groupVersion, "41", eventId)
-    for ((key, value) in data) {
-      event.event.addData(key, value)
-    }
-    return event
+    return newLogEvent("9bff3d929780", "202.2171", "176", System.currentTimeMillis(), group, groupVersion, "41", eventId,
+      eventData = data)
   }
 }

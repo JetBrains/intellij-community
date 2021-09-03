@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.eventLog.LogEventJsonDeserializer
 import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
 import com.intellij.internal.statistic.eventLog.MachineId
-import com.intellij.internal.statistic.eventLog.addData
 import com.intellij.internal.statistic.eventLog.connection.EventLogResultDecorator
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
@@ -36,7 +35,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
     val expected = gson.fromJson(logText, LogEvent::class.java)
-    expected.event.addData("system_machine_id", machineId.id)
+    expected.event.data["system_machine_id"] = machineId.id
     TestCase.assertEquals(expected, events.first())
   }
 
@@ -134,7 +133,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
     val expected = gson.fromJson(logText, LogEvent::class.java)
-    expected.event.addData("system_machine_id", EventLogOptions.MACHINE_ID_DISABLED)
+    expected.event.data["system_machine_id"] = EventLogOptions.MACHINE_ID_DISABLED
     TestCase.assertEquals(expected, events.first())
   }
 
@@ -150,7 +149,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
     val expected = gson.fromJson(logText, LogEvent::class.java)
-    expected.event.addData("system_machine_id", EventLogOptions.MACHINE_ID_UNKNOWN)
+    expected.event.data["system_machine_id"] = machineId.id
     TestCase.assertEquals(expected, events.first())
   }
 
@@ -166,7 +165,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
     val expected = gson.fromJson(logText, LogEvent::class.java)
-    expected.event.addData("system_machine_id", EventLogOptions.MACHINE_ID_DISABLED)
+    expected.event.data["system_machine_id"] = machineId.id
     TestCase.assertEquals(expected, events.first())
   }
 
@@ -182,8 +181,8 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
     val expected = gson.fromJson(logText, LogEvent::class.java)
-    expected.event.addData("system_machine_id", machineId.id)
-    expected.event.addData("system_id_revision", machineId.revision.toLong())
+    expected.event.data["system_machine_id"] = machineId.id
+    expected.event.data["system_id_revision"] = machineId.revision.toLong()
     TestCase.assertEquals(expected, events.first())
   }
 
