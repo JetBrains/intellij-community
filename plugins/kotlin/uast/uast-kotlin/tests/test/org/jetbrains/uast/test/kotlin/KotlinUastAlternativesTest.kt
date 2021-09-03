@@ -31,7 +31,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
             plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UMethod::class.java, UField::class.java)).let {
                 assertEquals(
                     "public final fun getWritebleProp() : int = UastEmptyExpression, " +
-                            "public final fun setWritebleProp(@null writebleProp: int) : void = UastEmptyExpression, " +
+                            "public final fun setWritebleProp(@null value: int) : void = UastEmptyExpression, " +
                             "@org.jetbrains.annotations.NotNull private var writebleProp: int = 0",
                     it.joinToString(transform = UElement::asRenderString)
                 )
@@ -41,7 +41,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
                 assertEquals(
                     "@org.jetbrains.annotations.NotNull private var writebleProp: int = 0, " +
                             "public final fun getWritebleProp() : int = UastEmptyExpression, " +
-                            "public final fun setWritebleProp(@null writebleProp: int) : void = UastEmptyExpression",
+                            "public final fun setWritebleProp(@null value: int) : void = UastEmptyExpression",
                     it.joinToString(transform = UElement::asRenderString)
                 )
             }
@@ -50,7 +50,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
                 assertEquals(
                     "@org.jetbrains.annotations.NotNull private var writebleProp: int = 0, " +
                             "public final fun getWritebleProp() : int = UastEmptyExpression, " +
-                            "public final fun setWritebleProp(@null writebleProp: int) : void = UastEmptyExpression",
+                            "public final fun setWritebleProp(@null value: int) : void = UastEmptyExpression",
                     it.joinToString(transform = UElement::asRenderString)
                 )
             }

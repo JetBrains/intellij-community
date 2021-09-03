@@ -26,7 +26,7 @@ UFile (package = )
         UMethod (name = getNotSam)
         UMethod (name = getFoo)
         UMethod (name = setFoo)
-            UParameter (name = foo)
+            UParameter (name = value)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = bar)
             UBlockExpression
