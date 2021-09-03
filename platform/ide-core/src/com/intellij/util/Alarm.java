@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.concurrent.*;
 
 /**
- * Allows to schedule Runnable instances (requests) to be executed after a specific time interval on a specific thread.
+ * Allows scheduling `Runnable` instances (requests) to be executed after a specific time interval on a specific thread.
  * Use {@link #addRequest} methods to schedule the requests.
  * Two requests scheduled with the same delay are executed sequentially, one after the other.
- * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow to cancel already scheduled requests.
+ * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow canceling already scheduled requests.
  */
 public class Alarm implements Disposable {
   protected static final Logger LOG = Logger.getInstance(Alarm.class);
@@ -41,7 +41,7 @@ public class Alarm implements Disposable {
 
   // requests scheduled to myExecutorService
   private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
-  // requests not yet scheduled to myExecutorService (because e.g. corresponding component isn't active yet)
+  // requests not yet scheduled to myExecutorService (because e.g. the corresponding component isn't active yet)
   private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
@@ -49,6 +49,7 @@ public class Alarm implements Disposable {
   private final Object LOCK = new Object();
   private final ThreadToUse myThreadToUse;
 
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private JComponent myActivationComponent; // accessed in EDT only
 
   @Override
@@ -69,7 +70,7 @@ public class Alarm implements Disposable {
 
   public enum ThreadToUse {
     /**
-     * Run request in Swing EventDispatchThread. This is the default.
+     * Run request in Swing event dispatch thread; this is the default.
      * NB: <i>Requests shouldn't take long to avoid UI freezes.</i>
      */
     SWING_THREAD,
@@ -88,14 +89,14 @@ public class Alarm implements Disposable {
   }
 
   /**
-   * Creates alarm that works in Swing thread
+   * Creates an alarm that works in EDT.
    */
   public Alarm() {
     this(ThreadToUse.SWING_THREAD);
   }
 
   /**
-   * Creates alarm that works in Swing thread
+   * Creates an alarm that works in EDT.
    */
   public Alarm(@NotNull Disposable parentDisposable) {
     this(ThreadToUse.SWING_THREAD, parentDisposable);
@@ -411,8 +412,8 @@ public class Alarm implements Disposable {
     }
 
     /**
-     * @return task if not yet executed
-     * must be called under LOCK
+     * Must be called under `LOCK`.
+     * Returns a task, if not yet executed.
      */
     private @Nullable Runnable cancel() {
       Future<?> future = myFuture;
@@ -449,8 +450,6 @@ public class Alarm implements Disposable {
         flushPending();
       }
     });
-
-
     return this;
   }
 
