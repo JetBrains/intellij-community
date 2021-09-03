@@ -412,13 +412,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
     else {
       XDebuggerTreeNode root = tree.getRoot();
-      List<? extends WatchNode> current = root instanceof WatchesRootNode
-                                          ? ((WatchesRootNode)tree.getRoot()).getWatchChildren() : Collections.emptyList();
-      List<XExpression> list = new SmartList<>();
-      for (WatchNode child : current) {
-        list.add(child.getExpression());
-      }
-      expressions = list;
+      expressions = root instanceof WatchesRootNode ? ((WatchesRootNode)root).getWatchExpressions() : Collections.emptyList();
     }
     return expressions;
   }
@@ -489,19 +483,14 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   public void updateSessionData() {
-    List<XExpression> expressions = new SmartList<>();
-    List<? extends WatchNode> children = myRootNode.getWatchChildren();
-    for (WatchNode child : children) {
-      expressions.add(child.getExpression());
-    }
     XDebugSession session = getSession(getTree());
     if (session != null) {
-      ((XDebugSessionImpl)session).setWatchExpressions(expressions);
+      ((XDebugSessionImpl)session).setWatchExpressions(myRootNode.getWatchExpressions());
     }
     else {
       XDebugSessionData data = getData(XDebugSessionData.DATA_KEY, getTree());
       if (data != null) {
-        data.setWatchExpressions(expressions);
+        data.setWatchExpressions(myRootNode.getWatchExpressions());
       }
     }
   }
