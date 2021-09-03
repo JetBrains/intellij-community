@@ -808,9 +808,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     if (element == null) return;
 
     final String progressTitle = LangBundle.message("psi.viewer.progress.dialog.update.refs");
-    final List<PsiReference> psiReferences = computeSlowOperationsSafeInBgThread(myProject,
-                                                                                 progressTitle,
-                                                                                 () -> doUpdateReferences(element));
+    final Callable<List<PsiReference>> updater =
+      () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> doUpdateReferences(element));
+
+    final List<PsiReference> psiReferences = computeSlowOperationsSafeInBgThread(myProject, progressTitle, updater);
 
     for (PsiReference reference : psiReferences) {
       model.addElement(reference.getClass().getName());
@@ -1027,9 +1028,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;
       final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.get.element.at.offset");
-      final ThrowableComputable<PsiElement, RuntimeException> finder =
-        () -> InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(),
-                                                             offset);
+      final Callable<PsiElement> finder = () -> InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), offset);
 
       final PsiElement element = computeSlowOperationsSafeInBgThread(myProject, progressDialogTitle, finder);
 
@@ -1051,7 +1050,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       final int end = selection.getSelectionEnd() + baseOffset - 1;
 
       final String progressDialogTitle = LangBundle.message("psi.viewer.progress.dialog.get.common.parent");
-      final ThrowableComputable<PsiElement, RuntimeException> finder =
+      final Callable<PsiElement> finder =
         () -> findCommonParent(InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), start),
                                InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), end));
 
@@ -1117,9 +1116,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   private static <T> T computeSlowOperationsSafeInBgThread(@NotNull Project project,
                                                            @NlsContexts.DialogTitle @NotNull String progressDialogTitle,
-                                                           @NotNull ThrowableComputable<T, RuntimeException> computable) {
-    final Callable<T> callable = () ->
-      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(computable);
+                                                           @NotNull Callable<T> callable) {
 
     return ProgressManager.getInstance().run(new Task.WithResult<>(project, progressDialogTitle, true) {
       @Override
