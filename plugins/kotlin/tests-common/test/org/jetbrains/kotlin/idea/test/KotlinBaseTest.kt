@@ -120,9 +120,7 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase() 
         )
 
         private val BOOLEAN_FLAG_PATTERN = Pattern.compile("([+-])(([a-zA-Z_0-9]*)\\.)?([a-zA-Z_0-9]*)")
-        private val CONSTRUCTOR_CALL_NORMALIZATION_MODE_FLAG_PATTERN = Pattern.compile(
-            "CONSTRUCTOR_CALL_NORMALIZATION_MODE=([a-zA-Z_\\-0-9]*)"
-        )
+
         private val ASSERTIONS_MODE_FLAG_PATTERN = Pattern.compile("ASSERTIONS_MODE=([a-zA-Z_0-9-]*)")
         private val STRING_CONCAT = Pattern.compile("STRING_CONCAT=([a-zA-Z_0-9-]*)")
 
@@ -220,13 +218,6 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase() 
                     val flagName = m.group(4)
                     tryApplyBooleanFlag(configuration, flag, flagEnabled, flagNamespace, flagName)
                     continue
-                }
-                m = CONSTRUCTOR_CALL_NORMALIZATION_MODE_FLAG_PATTERN.matcher(flag)
-                if (m.matches()) {
-                    val flagValueString = m.group(1)
-                    val mode = JVMConstructorCallNormalizationMode.fromStringOrNull(flagValueString)
-                        ?: error("Wrong CONSTRUCTOR_CALL_NORMALIZATION_MODE value: $flagValueString")
-                    configuration.put(JVMConfigurationKeys.CONSTRUCTOR_CALL_NORMALIZATION_MODE, mode)
                 }
                 m = ASSERTIONS_MODE_FLAG_PATTERN.matcher(flag)
                 if (m.matches()) {
