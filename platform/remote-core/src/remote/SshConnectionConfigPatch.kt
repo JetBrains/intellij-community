@@ -81,7 +81,6 @@ data class SshConnectionConfigPatch(
     proxyParams = null,
   )
 
-
   fun withHostKeyVerifier(value: HostKeyVerifier): SshConnectionConfigPatch = apply { hostKeyVerifier = value }
   fun withServerAliveInterval(value: Duration): SshConnectionConfigPatch = apply { serverAliveInterval = value }
   fun withProxyParameters(value: ProxyParams): SshConnectionConfigPatch = apply { proxyParams = value }
