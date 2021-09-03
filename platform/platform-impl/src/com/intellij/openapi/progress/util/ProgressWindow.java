@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +27,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.Topic;
@@ -195,7 +195,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public void startBlocking(@NotNull Runnable init) {
-    DeprecatedMethodException.report("Use ProgressManager.run*() instead");
+    PluginException.reportDeprecatedUsage("ProgressWindow#startBlocking(Runnable)", "Use `ProgressManager.run*()` instead");
     CompletableFuture<Object> future = new CompletableFuture<>();
     Disposer.register(this, () -> future.complete(null));
     startBlocking(init, future);
