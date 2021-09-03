@@ -107,4 +107,14 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
   public static void logPluginError(@NotNull Logger logger, @NotNull @NonNls String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
     logger.error(createByClass(errorMessage, cause, pluginClass));
   }
+
+  public static void reportDeprecatedUsage(@NotNull String signature, @NotNull String details) {
+    String message = "'" + signature + "' is deprecated and going to be removed soon. " + details;
+    Logger.getInstance(PluginException.class).error(message);
+  }
+
+  public static void reportDeprecatedDefault(@NotNull Class<?> violator, @NotNull String methodName, @NotNull String details) {
+    String message = "The default implementation of method '" + methodName + "' is deprecated, you need to override it in '" + violator + "'. " + details;
+    Logger.getInstance(violator).error(createByClass(message, null, violator));
+  }
 }
