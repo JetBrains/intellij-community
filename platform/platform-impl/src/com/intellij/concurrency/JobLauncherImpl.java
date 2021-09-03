@@ -324,6 +324,7 @@ public final class JobLauncherImpl extends JobLauncher {
     progress.checkCanceled(); // do not start up expensive threads if there's no need to
     int size = things.size();
     boolean isQueueBounded = things.contains(tombStone);
+    // start up (CPU cores) parallel tasks but no more than (queue size)
     int n = Math.max(1, Math.min(isQueueBounded ? size-1 : Integer.MAX_VALUE, JobSchedulerImpl.getJobPoolParallelism() - 1));
     List<ForkJoinTask<Boolean>> tasks = new ArrayList<>(n-1);
     List<T> firstElements = new ArrayList<>(n);
@@ -338,15 +339,15 @@ public final class JobLauncherImpl extends JobLauncher {
         LOG.error(e);
       }
     }
-    for (int i = 0; i < n-1; i++) {
+    for (int i = 1; i < n; i++) {
       tasks.add(ForkJoinPool.commonPool().submit(new MyProcessQueueTask(i, i < firstElements.size() ? firstElements.get(i) : null)));
     }
-    MyProcessQueueTask lastTask = new MyProcessQueueTask(n - 1, n - 1 < firstElements.size() ? firstElements.get(n - 1) : null);
-    // execute the last task directly in this thread to avoid thread starvation
+    MyProcessQueueTask firstTask = new MyProcessQueueTask(0, ContainerUtil.getFirstItem(firstElements));
+    // execute the first task directly in this thread to avoid thread starvation
     boolean result = false;
     Throwable exception = null;
     try {
-      result = lastTask.call();
+      result = firstTask.call();
     }
     catch (Throwable e) {
       exception = e;
