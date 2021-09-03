@@ -11,8 +11,8 @@ import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
-import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector
-import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.SUGGESTION_FOUND
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics.Companion.SUGGESTION_FOUND
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
 import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
@@ -27,7 +27,6 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     private val suggestionPresenter: SuggestionPresenter =
         NotificationSuggestionPresenter()
     private val settings = FeatureSuggesterSettings.instance()
-    private val statisticsCollector = FeatureSuggestersStatisticsCollector()
 
     init {
         initFocusListener()
@@ -50,7 +49,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     private fun processSuggester(suggester: FeatureSuggester) {
         val suggestion = suggester.getSuggestion(actionsHistory)
         if (suggestion is PopupSuggestion) {
-            statisticsCollector.sendStatistics(SUGGESTION_FOUND, suggester.id)
+            FeatureSuggesterStatistics.sendStatistics(SUGGESTION_FOUND, suggester.id)
             if (suggester.isSuggestionNeeded(settings.suggestingIntervalDays)) {
                 suggestionPresenter.showSuggestion(project, suggestion)
                 fireSuggestionFound(suggestion)

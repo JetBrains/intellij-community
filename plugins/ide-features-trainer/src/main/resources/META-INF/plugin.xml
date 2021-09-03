@@ -67,7 +67,8 @@
                 implementation="org.jetbrains.plugins.feature.suggester.listeners.PsiActionsListener"/>
         <editorFactoryDocumentListener
                 implementation="org.jetbrains.plugins.feature.suggester.listeners.DocumentActionsListener"/>
-        <statistics.counterUsagesCollector groupId="feature_suggester" version="2"/>
+        <statistics.counterUsagesCollector
+                implementationClass="org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics"/>
         <statistics.validation.customValidationRule
                 implementation="org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterIdRuleValidator"/>
         <registryKey defaultValue="true" description="Send statistics about IDE Feature Suggester plugin usage"
