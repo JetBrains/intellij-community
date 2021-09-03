@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
@@ -73,11 +74,9 @@ public class Alarm implements Disposable {
      */
     SWING_THREAD,
 
-    /**
-     * @deprecated Use {@link #POOLED_THREAD} instead
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+    /** @deprecated Use {@link #POOLED_THREAD} instead */
+    @Deprecated(forRemoval = true)
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
     SHARED_THREAD,
 
     /**
@@ -124,7 +123,7 @@ public class Alarm implements Disposable {
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
     if (threadToUse == ThreadToUse.SHARED_THREAD) {
-      DeprecatedMethodException.report("Please use POOLED_THREAD instead");
+      PluginException.reportDeprecatedUsage("Alarm.ThreadToUse#SHARED_THREAD", "Please use `POOLED_THREAD` instead");
     }
 
     myExecutorService = threadToUse == ThreadToUse.SWING_THREAD ?
@@ -436,11 +435,11 @@ public class Alarm implements Disposable {
     }
   }
 
-  /**
-   * @deprecated use {@link #Alarm(JComponent, Disposable)} instead
-   */
-  @Deprecated
+  /** @deprecated use {@link #Alarm(JComponent, Disposable)} instead */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public @NotNull Alarm setActivationComponent(@NotNull JComponent component) {
+    PluginException.reportDeprecatedUsage("Alarm#setActivationComponent", "Please use `#Alarm(JComponent, Disposable)` instead");
     ApplicationManager.getApplication().assertIsDispatchThread();
     myActivationComponent = component;
     //noinspection ResultOfObjectAllocationIgnored

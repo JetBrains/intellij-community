@@ -1,4 +1,4 @@
- // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
  import com.intellij.diagnostic.PerformanceWatcher;
@@ -30,11 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
   public void testAlarmRequestsShouldExecuteSequentiallyEvenInPooledThread() throws Exception {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    assertRequestsExecuteSequentially(alarm);
-  }
-
-  public void testAlarmRequestsShouldExecuteSequentiallyAbsolutelyEveryWhere() throws Exception {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);
   }
 
