@@ -145,7 +145,7 @@
       "height": 9,
       "stripeWidth": 1,
       "stripeIndent": 4,
-      "withToEdge": 12,
+      "withToEdge": 10,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
     },
 

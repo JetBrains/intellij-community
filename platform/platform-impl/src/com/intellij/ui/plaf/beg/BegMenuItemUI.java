@@ -81,10 +81,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     }
 
     selectionBackground = UIUtil.getListSelectionBackground(true);
-
-    if (IdeaPopupMenuUI.isPartOfPopupMenu(menuItem)) {
-      arrowIcon = null;
-    }
   }
 
   private static boolean isSelected(JMenuItem item) {
@@ -94,12 +90,19 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     return model.isArmed() || (item instanceof JMenu) && model.isSelected();
   }
 
+  private void checkArrowIcon() {
+    if (arrowIcon != null && IdeaPopupMenuUI.isPartOfPopupMenu(menuItem)) {
+      arrowIcon = null;
+    }
+  }
+
   private void checkEmptyIcon(JComponent comp) {
     myMaxGutterIconWidth = getAllowedIcon() == null && IdeaPopupMenuUI.hideEmptyIcon(comp) ? 0 : myMaxGutterIconWidth2;
   }
 
   @Override
   public void paint(Graphics g, JComponent comp) {
+    checkArrowIcon();
     UISettings.setupAntialiasing(g);
     JMenuItem jmenuitem = (JMenuItem)comp;
     ButtonModel buttonmodel = jmenuitem.getModel();
@@ -395,6 +398,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
   @Override
   public Dimension getPreferredSize(JComponent comp) {
+    checkArrowIcon();
     JMenuItem jmenuitem = (JMenuItem)comp;
     Icon icon1 = getIcon();
     Icon icon2 = getAllowedIcon();
