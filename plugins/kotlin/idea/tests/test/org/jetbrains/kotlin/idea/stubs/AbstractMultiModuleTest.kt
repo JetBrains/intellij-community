@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
@@ -92,11 +93,7 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         }
 
         val virtualTempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpRootDir)!!
-        object : WriteCommandAction.Simple<Unit>(project) {
-            override fun run() {
-                virtualTempDir.refresh(false, isTestRoot)
-            }
-        }.execute().throwException()
+        virtualTempDir.refresh(false, isTestRoot)
         PsiTestUtil.addSourceRoot(module, virtualTempDir, isTestRoot)
     }
 

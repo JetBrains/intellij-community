@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.Result
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -41,7 +38,6 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
@@ -613,13 +609,11 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     @Test
     fun testJDKImport() {
         val mockJdkPath = "${PathManager.getHomePath()}/community/java/mockJDK-1.8"
-        object : WriteAction<Unit>() {
-            override fun run(result: Result<in Unit>) {
-                val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
-                getProjectJdkTableSafe().addJdk(jdk)
-                ProjectRootManager.getInstance(myProject).projectSdk = jdk
-            }
-        }.execute()
+        runWriteActionAndWait {
+            val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
+            getProjectJdkTableSafe().addJdk(jdk)
+            ProjectRootManager.getInstance(myProject).projectSdk = jdk
+        }
 
         try {
             configureByFiles()
@@ -630,13 +624,11 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
             assertEquals("myJDK", moduleSDK.name)
             assertEquals(mockJdkPath, moduleSDK.homePath)
         } finally {
-            object : WriteAction<Unit>() {
-                override fun run(result: Result<in Unit>) {
-                    val jdkTable = getProjectJdkTableSafe()
-                    jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
-                    ProjectRootManager.getInstance(myProject).projectSdk = null
-                }
-            }.execute()
+            runWriteActionAndWait {
+                val jdkTable = getProjectJdkTableSafe()
+                jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
+                ProjectRootManager.getInstance(myProject).projectSdk = null
+            }
         }
     }
 
