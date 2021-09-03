@@ -112,7 +112,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         StoreUtil.saveDocumentsAndProjectSettings(project);
       }
 
-      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText());
+      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText()) {
+        @Override
+        public void onSuccess() {
+          super.onSuccess();
+          AbstractCommonUpdateAction.this.onSuccess();
+        }
+      };
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         task.run(new EmptyProgressIndicator());
@@ -124,6 +130,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     catch (ProcessCanceledException ignored) {
     }
   }
+
+  protected void onSuccess() {}
 
   private static boolean someSessionWasCanceled(List<? extends UpdateSession> updateSessions) {
     for (UpdateSession updateSession : updateSessions) {
