@@ -101,15 +101,17 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public static CompletableFuture<StackFrameDescriptorImpl> createAsync(@NotNull StackFrameProxyImpl frame,
                                                                         @NotNull MethodsTracker tracker) {
-    try {
       return frame.locationAsync()
         .thenCompose(DebuggerUtilsAsync::method)
-        .thenApply(method -> new StackFrameDescriptorImpl(frame, method, tracker));
-    }
-    catch (EvaluateException e) {
-      LOG.error(e);
-      return CompletableFuture.completedFuture(new StackFrameDescriptorImpl(frame, tracker));
-    }
+        .thenApply(method -> new StackFrameDescriptorImpl(frame, method, tracker))
+        .exceptionally(throwable -> {
+          Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
+          if (exception instanceof EvaluateException) {
+            LOG.error(exception);
+            return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
+          }
+          throw (RuntimeException)throwable;
+        });
   }
 
   public int getUiIndex() {

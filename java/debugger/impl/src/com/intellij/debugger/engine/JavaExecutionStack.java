@@ -17,6 +17,7 @@ import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
@@ -162,8 +163,9 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @NotNull
   private CompletableFuture<List<XStackFrame>> createStackFramesAsync(@NotNull StackFrameProxyImpl stackFrameProxy) {
-    // TODO: quickfix for a deadlock for now
-    if (true) return CompletableFuture.completedFuture(createStackFrames(stackFrameProxy));
+    if (!Registry.is("debugger.async.frames")) {
+      return CompletableFuture.completedFuture(createStackFrames(stackFrameProxy));
+    }
 
     return StackFrameDescriptorImpl.createAsync(stackFrameProxy, myTracker)
       .thenApply(descriptor -> {
