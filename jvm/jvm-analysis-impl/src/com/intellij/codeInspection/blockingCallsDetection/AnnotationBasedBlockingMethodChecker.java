@@ -14,9 +14,11 @@ import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodI
 
 public final class AnnotationBasedBlockingMethodChecker implements BlockingMethodChecker {
   private final List<String> myBlockingAnnotations;
+  private final List<String> myNonBlockingAnnotations;
 
-  public AnnotationBasedBlockingMethodChecker(List<String> blockingAnnotations) {
+  public AnnotationBasedBlockingMethodChecker(List<String> blockingAnnotations, List<String> nonBlockingAnnotations) {
     myBlockingAnnotations = blockingAnnotations;
+    myNonBlockingAnnotations = nonBlockingAnnotations;
   }
 
   @Override
@@ -30,5 +32,10 @@ public final class AnnotationBasedBlockingMethodChecker implements BlockingMetho
   @Override
   public boolean isMethodBlocking(@NotNull PsiMethod method) {
     return AnnotationUtil.findAnnotation(method, myBlockingAnnotations, false) != null;
+  }
+
+  @Override
+  public boolean isMethodNonBlocking(@NotNull PsiMethod method) {
+    return AnnotationUtil.findAnnotation(method, myNonBlockingAnnotations, false) != null;
   }
 }

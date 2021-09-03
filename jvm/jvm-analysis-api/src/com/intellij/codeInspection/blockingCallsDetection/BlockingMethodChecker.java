@@ -23,6 +23,10 @@ public interface BlockingMethodChecker {
 
   boolean isMethodBlocking(@NotNull PsiMethod method);
 
+  default boolean isMethodNonBlocking(@NotNull PsiMethod method) {
+    return false;
+  }
+
   /**
    * @param element PsiElement (e.g. method call or reference) which is located in "non-blocking" code fragment
    * @return empty array if cannot provide any fixes, non-empty array of quick fixes otherwise
