@@ -170,19 +170,21 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
       mySelection = Ints.asList(Arrays.copyOf(selection, shownPanelsCount));
 
       List<Integer> currentSelection = mySelection;
+      loadRefs(currentSelection);
+    }
+
+    private void loadRefs(@NotNull List<Integer> currentSelection) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<Collection<VcsRef>> result = new ArrayList<>();
         for (Integer row : currentSelection) {
           result.add(myGraphTable.getModel().getRefsAtRow(row));
         }
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (currentSelection == mySelection) {
-            forEachPanelIndexed((i, panel) -> {
-              panel.setRefs(result.get(i));
-              return Unit.INSTANCE;
-            });
-          }
-        }, o -> Disposer.isDisposed(myGraphTable));
+          forEachPanelIndexed((i, panel) -> {
+            panel.setRefs(result.get(i));
+            return Unit.INSTANCE;
+          });
+        }, o -> Disposer.isDisposed(myGraphTable) || currentSelection != mySelection);
       });
     }
 
