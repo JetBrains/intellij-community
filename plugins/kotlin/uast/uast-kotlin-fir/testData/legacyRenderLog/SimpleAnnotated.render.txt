@@ -4,7 +4,6 @@ public final class SimpleAnnotated {
     public final fun method() : void {
         println("Hello, world!")
     }
-    @kotlin.SinceKotlin(version = "1.0")
     public final fun getProperty() : java.lang.String = UastEmptyExpression
     public fun SimpleAnnotated() = UastEmptyExpression
 }
