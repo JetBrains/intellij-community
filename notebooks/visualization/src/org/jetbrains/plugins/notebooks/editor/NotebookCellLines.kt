@@ -87,6 +87,9 @@ interface NotebookCellLines {
       editor.notebookCellLinesProvider?.create(editor.document)
       ?: error("Can't get for $editor with document ${editor.document}")
 
+    fun hasSupport(editor: Editor): Boolean =
+      editor.notebookCellLinesProvider != null
+
     /** It's uneasy to change a registry value inside tests. */   // TODO Lies! See SshX11ForwardingTest.
     @TestOnly
     var overriddenBinarySearchThreshold: Int? = null

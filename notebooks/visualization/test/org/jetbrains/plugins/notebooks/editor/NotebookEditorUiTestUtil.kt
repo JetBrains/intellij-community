@@ -9,25 +9,32 @@ import java.util.regex.Pattern
 
 
 private const val caretToken = "<caret>"
+private const val primaryCaretToken = "<primaryCaret>"
 private const val selectionBegin = "<selection>"
 private const val selectionEnd = "</selection>"
 private const val foldBegin = "<fold>"
 private const val foldEnd = "</fold>"
 
 
-data class CaretWithSelection(val caret: Int, val selection: TextRange) {
-  constructor(caret: Int) : this(caret, TextRange(caret, caret))
+data class CaretWithSelection(val caret: Int, val selection: TextRange, val isPrimary: Boolean = false) {
+  constructor(caret: Int, isPrimary: Boolean = false) : this(caret, TextRange(caret, caret), isPrimary)
 }
 
 data class ExtractedInfo(val text: String, val carets: List<CaretWithSelection>, val folds: List<TextRange>) {
   fun setCaretsInEditor(editor: Editor) {
-    editor.caretModel.setCaretsAndSelections(carets.map { caret ->
-      CaretState(editor.offsetToLogicalPosition(caret.caret),
-                 editor.offsetToLogicalPosition(caret.selection.startOffset),
-                 editor.offsetToLogicalPosition(caret.selection.endOffset))
-    })
+    require(carets.size <= editor.caretModel.maxCaretCount)
 
-    for((editorCaret, caret) in editor.caretModel.allCarets.zip(carets)) {
+    editor.caretModel.setCaretsAndSelections(carets.filter { !it.isPrimary }.map { caret ->
+      CaretState(editor.offsetToLogicalPosition(caret.caret),
+        editor.offsetToLogicalPosition(caret.selection.startOffset),
+        editor.offsetToLogicalPosition(caret.selection.endOffset))
+    })
+    carets.singleOrNull { it.isPrimary }?.let { c ->
+      val caret = editor.caretModel.addCaret(editor.offsetToLogicalPosition(c.caret), true)!!
+      caret.setSelection(c.selection.startOffset, c.selection.endOffset)
+    }
+
+    for ((editorCaret, caret) in editor.caretModel.allCarets.zip(carets)) {
       require(editorCaret.offset == caret.caret)
       val errorMsg = { "can't set selection ${caret} to ${editorCaret.offset}, may be folded region exists" }
       require(editorCaret.selectionStart == caret.selection.startOffset, errorMsg)
@@ -57,7 +64,7 @@ fun extractTextAndCaretOffset(text: String): Pair<String, Int?> {
 }
 
 fun extractCaretsAndFoldings(text: String): ExtractedInfo {
-  val tagTokens = listOf(caretToken, selectionBegin, selectionEnd, foldBegin, foldEnd)
+  val tagTokens = listOf(caretToken, primaryCaretToken, selectionBegin, selectionEnd, foldBegin, foldEnd)
   val (textWithoutTags, tags) = extractCarets(text, findAllTags(text, tagTokens))
   return ExtractedInfo(textWithoutTags, parseCaretsInfo(tags), parseFoldings(tags))
 }
@@ -149,7 +156,7 @@ private fun extractCarets(text: String, ranges: List<TextRange>): Pair<String, L
 }
 
 private fun parseCaretsInfo(tags: List<Pair<String, Int>>): List<CaretWithSelection> {
-  val caretsTags = tags.filter { it.first in setOf(caretToken, selectionBegin, selectionEnd) }
+  val caretsTags = tags.filter { it.first in setOf(caretToken, primaryCaretToken, selectionBegin, selectionEnd) }
   val result = SmartList<CaretWithSelection>()
 
   var tagNo = 0
@@ -161,6 +168,7 @@ private fun parseCaretsInfo(tags: List<Pair<String, Int>>): List<CaretWithSelect
   while (tagNo < caretsTags.size) {
     when {
       matchSeq(caretToken) -> result.add(CaretWithSelection(next().second))
+      matchSeq(primaryCaretToken) -> result.add(CaretWithSelection(next().second, isPrimary = true))
       matchSeq(selectionBegin, selectionEnd) -> {
         val (_, openPos) = next()
         val (_, closePos) = next()
@@ -171,6 +179,12 @@ private fun parseCaretsInfo(tags: List<Pair<String, Int>>): List<CaretWithSelect
         val (_, caretPos) = next()
         val (_, closePos) = next()
         result.add(CaretWithSelection(caretPos, TextRange(openPos, closePos)))
+      }
+      matchSeq(selectionBegin, primaryCaretToken, selectionEnd) -> {
+        val (_, openPos) = next()
+        val (_, caretPos) = next()
+        val (_, closePos) = next()
+        result.add(CaretWithSelection(caretPos, TextRange(openPos, closePos), isPrimary = true))
       }
       else -> error("can't match end of carets sequence ${caretsTags.drop(tagNo).joinToString(",")}")
     }
