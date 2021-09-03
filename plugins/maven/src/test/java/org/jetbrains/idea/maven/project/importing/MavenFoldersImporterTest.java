@@ -421,6 +421,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                      "    <plugin>" +
                      "      <groupId>org.apache.maven.plugins</groupId>" +
                      "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version>3.6.0</version>" +
                      "      <configuration>" +
                      "       <source>7</source>" +
                      "      </configuration>" +
@@ -429,8 +430,8 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                      "</build>"
     );
 
-    createProjectSubFile("m1/pom.xml", createPomXml(
-      "<artifactId>m1-pom</artifactId>" +
+    createModulePom("m1",
+      "<artifactId>m1</artifactId>" +
       "<version>1</version>" +
 
       "<parent>" +
@@ -449,11 +450,13 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
       "      </configuration>" +
       "    </plugin>" +
       "  </plugins>" +
-      "</build>"));
+      "</build>");
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1-pom")));
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
   }
 
   @Test 
