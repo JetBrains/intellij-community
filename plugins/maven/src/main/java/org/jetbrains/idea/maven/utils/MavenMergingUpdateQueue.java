@@ -43,7 +43,15 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
 
   @Override
   public void queue(@NotNull Update update) {
-    if (MavenUtil.isNoBackgroundMode()) {
+    boolean passThrough = false;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      passThrough = isPassThrough();
+    }
+    else if (MavenUtil.isNoBackgroundMode()) {
+      passThrough = true;
+    }
+
+    if (passThrough) {
       update.run();
       return;
     }
