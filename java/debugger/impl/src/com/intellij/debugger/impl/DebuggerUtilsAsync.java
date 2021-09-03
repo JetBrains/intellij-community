@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
@@ -501,7 +502,10 @@ public final class DebuggerUtilsAsync {
   }
 
   public static <T> T logError(@Nullable Throwable throwable) {
-    DebuggerUtilsImpl.logError(unwrap(throwable));
+    Throwable e = unwrap(throwable);
+    if (!(e instanceof CancellationException)) {
+      DebuggerUtilsImpl.logError(e);
+    }
     return null;
   }
 

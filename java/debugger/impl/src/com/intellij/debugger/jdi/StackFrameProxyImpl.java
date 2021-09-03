@@ -73,10 +73,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
           myIsObsolete = ThreeState.YES;
           return true;
         }
-        else {
-          DebuggerUtilsAsync.logError(throwable);
-          throw (RuntimeException)throwable;
-        }
+        throw (RuntimeException)throwable;
       });
   }
 
@@ -174,7 +171,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
           if (DebuggerUtilsAsync.unwrap(throwable) instanceof ObjectCollectedException) {
             throw new CompletionException(EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.thread.collected")));
           }
-          DebuggerUtilsAsync.logError(throwable);
           throw (RuntimeException)throwable;
         });
     }
@@ -255,8 +251,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
         catch (InvalidStackFrameException e) {
           return locationAsync();
         }
-      })
-      .exceptionally(DebuggerUtilsAsync::logError);
+      });
   }
 
   @NotNull

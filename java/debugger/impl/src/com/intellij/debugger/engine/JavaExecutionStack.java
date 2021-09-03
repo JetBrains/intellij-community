@@ -324,7 +324,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
           myDebugProcess.getManagerThread().schedule(
             new AppendFrameCommand(suspendContext, myStackFramesIterator, myContainer, myAdded, mySkip, relatedStack));
-        });
+        }).exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
       }
       else {
         myContainer.addStackFrames(Collections.emptyList(), true);

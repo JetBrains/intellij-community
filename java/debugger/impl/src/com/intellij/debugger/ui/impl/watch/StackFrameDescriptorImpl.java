@@ -240,12 +240,14 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   private void calcIconLater(DescriptorLabelListener descriptorLabelListener) {
     try {
-      myFrame.isObsolete().thenAccept(res -> {
-        if (res) {
-          myIcon = AllIcons.Debugger.Db_obsolete;
-          descriptorLabelListener.labelChanged();
-        }
-      });
+      myFrame.isObsolete()
+        .thenAccept(res -> {
+          if (res) {
+            myIcon = AllIcons.Debugger.Db_obsolete;
+            descriptorLabelListener.labelChanged();
+          }
+        })
+        .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
     }
     catch (EvaluateException ignored) {
     }
