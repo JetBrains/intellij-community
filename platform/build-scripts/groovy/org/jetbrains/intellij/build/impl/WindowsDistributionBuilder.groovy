@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
@@ -61,8 +61,10 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     customizer.copyAdditionalFiles(buildContext, winDistPath)
     List<String> extensions = ["exe", "dll"]
     for (String extension : extensions) {
-      new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension(extension))?.each {
-        buildContext.signExeFile(it.absolutePath)
+      new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension(extension))?.each { file ->
+        buildContext.executeStep("Signing $file", BuildOptions.WIN_SIGN_STEP) {
+          buildContext.signExeFile(file.absolutePath)
+        }
       }
     }
   }

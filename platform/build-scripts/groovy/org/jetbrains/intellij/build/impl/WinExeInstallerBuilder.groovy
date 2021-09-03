@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
@@ -151,8 +152,9 @@ class WinExeInstallerBuilder {
     if (!new File(installerPath).exists()) {
       buildContext.messages.error("Windows installer wasn't created.")
     }
-
-    buildContext.signExeFile(installerPath)
+    buildContext.executeStep("Signing $installerPath", BuildOptions.WIN_SIGN_STEP) {
+      buildContext.signExeFile(installerPath)
+    }
     buildContext.notifyArtifactBuilt(installerPath)
     return installerPath
   }
