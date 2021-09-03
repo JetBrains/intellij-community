@@ -15,8 +15,5 @@ UFile (package = ) [public final class SimpleAnnotated {...]
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                     USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
                     ULiteralExpression (value = "Hello, world!") ["Hello, world!"] : PsiType:String
-        UMethod (name = getProperty) [@kotlin.SinceKotlin(version = "1.0")...public final fun getProperty() : java.lang.String = UastEmptyExpression]
-            UAnnotation (fqName = kotlin.SinceKotlin) [@kotlin.SinceKotlin(version = "1.0")]
-                UNamedExpression (name = version) [version = "1.0"]
-                    ULiteralExpression (value = "1.0") ["1.0"] : PsiType:String
+        UMethod (name = getProperty) [public final fun getProperty() : java.lang.String = UastEmptyExpression]
         UMethod (name = SimpleAnnotated) [public fun SimpleAnnotated() = UastEmptyExpression]
