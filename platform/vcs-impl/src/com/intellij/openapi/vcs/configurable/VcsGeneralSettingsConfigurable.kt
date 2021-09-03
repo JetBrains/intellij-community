@@ -8,7 +8,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.openapi.options.ConfigurableEP
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -37,7 +36,7 @@ private val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcSettingsProviderE
 class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeConfigurable<UnnamedConfigurable>(
   message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
   "project.propVCSSupport.Confirmation"
-), NoScroll, Configurable.WithEpDependencies {
+), Configurable.WithEpDependencies {
 
   override fun createConfigurables(): List<UnnamedConfigurable> =
     VCS_SETTINGS_EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
