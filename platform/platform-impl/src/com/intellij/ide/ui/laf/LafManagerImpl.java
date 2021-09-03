@@ -1225,6 +1225,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           Component invoker = ((JPopupMenu)contents).getInvoker();
           if (invoker instanceof ActionMenu) {
             y -= topBorder / 2;
+            if (SystemInfoRt.isMac) {
+              y += JBUI.scale(1);
+            }
           }
           else {
             y -= topBorder;

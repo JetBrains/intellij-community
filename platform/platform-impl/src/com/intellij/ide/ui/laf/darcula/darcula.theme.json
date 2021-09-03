@@ -300,9 +300,9 @@
 
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-      "borderInsets": "8,1,8,1",
-      "borderCornerRadiusX": 14,
-      "borderCornerRadiusY": 12,
+      "borderInsets": "6,1,6,1",
+      "borderCornerRadiusX": 16,
+      "borderCornerRadiusY": 16,
       "leftBorderWith": 10,
       "rightBorderWith": 0,
       "translucentBackground": "#3c3f41",
