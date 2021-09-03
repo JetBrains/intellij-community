@@ -285,6 +285,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             runTest("testData/refactoring/introduceVariable/NameSuggestionCheckVisibility.kt");
         }
 
+        @TestMetadata("NameSuggestionTypePriority.kt")
+        public void testNameSuggestionTypePriority() throws Exception {
+            runTest("testData/refactoring/introduceVariable/NameSuggestionTypePriority.kt");
+        }
+
         @TestMetadata("noConflictWithInnerVariable.kt")
         public void testNoConflictWithInnerVariable() throws Exception {
             runTest("testData/refactoring/introduceVariable/noConflictWithInnerVariable.kt");

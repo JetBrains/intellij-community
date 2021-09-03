@@ -4,7 +4,7 @@ class Bar(var baz: Int)
 
 fun test() {
     val foo = Foo(Bar(1))
-    val message = foo.bar
-    println(message)
-    message.baz = message.baz + 1
+    val bar = foo.bar
+    println(bar)
+    bar.baz = bar.baz + 1
 }

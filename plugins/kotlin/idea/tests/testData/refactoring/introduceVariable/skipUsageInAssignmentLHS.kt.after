@@ -3,7 +3,7 @@ class Foo(var bar: Int)
 
 fun test() {
     val foo = Foo(1)
-    val message = foo.bar
-    println(message)
-    foo.bar = message + 1
+    val bar = foo.bar
+    println(bar)
+    foo.bar = bar + 1
 }

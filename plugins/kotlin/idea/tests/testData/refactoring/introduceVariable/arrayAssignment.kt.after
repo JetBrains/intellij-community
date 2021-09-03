@@ -3,7 +3,7 @@ class Foo(var bar: IntArray)
 
 fun test() {
     val foo = Foo(IntArray(1) { 1 })
-    val message = foo.bar
-    println(message)
-    message[0] = message[0] + 1
+    val bar = foo.bar
+    println(bar)
+    bar[0] = bar[0] + 1
 }

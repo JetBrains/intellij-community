@@ -1,0 +1,6 @@
+fun main() {
+    val question = Question()
+    val questions = listOf(question)
+}
+
+class Question

@@ -373,8 +373,8 @@ object KotlinNameSuggester {
     ) {
         if (expression == null) return
 
-        addNamesByValueArgument(expression, bindingContext, validator)
         addNamesByExpressionPSI(expression, validator)
+        addNamesByValueArgument(expression, bindingContext, validator)
     }
 
     private fun MutableCollection<String>.addNamesByValueArgument(
