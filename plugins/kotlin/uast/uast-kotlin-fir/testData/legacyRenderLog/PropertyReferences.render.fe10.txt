@@ -20,7 +20,7 @@ public final class A {
     @org.jetbrains.annotations.NotNull private var privateProp: int = 0
     @org.jetbrains.annotations.NotNull private var mutableProp: int
     public final fun getMutableProp() : int = UastEmptyExpression
-    public final fun setMutableProp(@null mutableProp: int) : void = UastEmptyExpression
+    public final fun setMutableProp(@null value: int) : void = UastEmptyExpression
     public final fun add(@org.jetbrains.annotations.NotNull x: int) : int {
         var result: int = privateProp
         privateProp = x
