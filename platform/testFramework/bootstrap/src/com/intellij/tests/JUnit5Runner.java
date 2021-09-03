@@ -132,7 +132,7 @@ public class JUnit5Runner {
     @Override
     public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
       final Throwable throwable = testExecutionResult.getThrowable().orElse(null);
-      if (IgnoreException.isIgnoringThrowable(throwable)) {
+      if (throwable != null && IgnoreException.isIgnoringThrowable(throwable)) {
         String message = throwable.getMessage();
         executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, message != null ? message : "");
       }
