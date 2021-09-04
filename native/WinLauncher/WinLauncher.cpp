@@ -917,10 +917,33 @@ int CheckSingleInstance()
 
     SendCommandLineToFirstInstance(response_id);
     CloseHandle(hFileMapping);
-    CloseHandle(hEvent);
 
-    // Lock wait for the response
-    WaitForSingleObject(hResponseEvent, INFINITE);
+    // It is theoretically possible for this code to spin forever in a loop.
+    //
+    // There's a race condition when the process we talked to in SendCommandLineToFirstInstance was terminated, another
+    // one started, took over the file mapping, but have no idea about our command (because we only send it once).
+    //
+    // For now, this problem is unresolved, though it should very rarely happen in practice.
+    const DWORD waitTimeoutMs = 1000;
+    while (WaitForSingleObject(hResponseEvent, waitTimeoutMs) == WAIT_TIMEOUT)
+    {
+      // Check if the file mapping still exists outside the current process:
+      hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
+      if (!hFileMapping)
+      {
+        // Means the mapping was abandoned by the initial process we observed. So, we should take over.
+        hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
+          mappingName.c_str());
+        CloseHandle(hResultFileMapping);
+        CloseHandle(hResponseEvent);
+        return -1;
+      }
+
+      // Ok, the mapping still exists, so the process is still alive. Proceed to spin.
+      CloseHandle(hFileMapping);
+    }
+
+    CloseHandle(hEvent);
     CloseHandle(hResponseEvent);
 
     // Read the exitCode
