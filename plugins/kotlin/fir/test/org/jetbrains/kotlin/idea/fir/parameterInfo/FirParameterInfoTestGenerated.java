@@ -436,6 +436,36 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         public void testUpdateOnTyping() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/UpdateOnTyping.kt");
         }
+
+        @TestMetadata("Vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/Vararg.kt");
+        }
+
+        @TestMetadata("VarargFirstArgTrailingComma.kt")
+        public void testVarargFirstArgTrailingComma() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/VarargFirstArgTrailingComma.kt");
+        }
+
+        @TestMetadata("VarargMultipleArgsTrailingComma.kt")
+        public void testVarargMultipleArgsTrailingComma() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/VarargMultipleArgsTrailingComma.kt");
+        }
+
+        @TestMetadata("VarargNamedArg.kt")
+        public void testVarargNamedArg() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/VarargNamedArg.kt");
+        }
+
+        @TestMetadata("VarargSpreadArg.kt")
+        public void testVarargSpreadArg() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/VarargSpreadArg.kt");
+        }
+
+        @TestMetadata("VarargUpdateOnTyping.kt")
+        public void testVarargUpdateOnTyping() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/VarargUpdateOnTyping.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
