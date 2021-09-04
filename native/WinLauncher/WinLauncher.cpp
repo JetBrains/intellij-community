@@ -529,9 +529,11 @@ bool LoadVMOptions() {
     lines.push_back(std::string("-Djb.vmOptionsFile=") + vmOptionsFile);
   }
   else {
-    wchar_t *title = NULL;
-    if (LoadStringW(hInst, IDS_ERROR_LAUNCHING_APP, (LPWSTR)(&title), 0) != 0) {
-      MessageBoxW(NULL, L"Cannot find VM options file", title, MB_OK);
+    wchar_t *titleBuf = NULL;
+    int len = LoadStringW(hInst, IDS_ERROR_LAUNCHING_APP, (LPWSTR)(&titleBuf), 0);
+    if (len != 0) {
+      std::wstring title(titleBuf, len);
+      MessageBoxW(NULL, L"Cannot find VM options file", title.c_str(), MB_OK);
     }
   }
 
