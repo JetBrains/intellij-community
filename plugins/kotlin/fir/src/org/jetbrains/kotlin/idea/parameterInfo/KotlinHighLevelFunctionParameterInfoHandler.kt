@@ -191,6 +191,23 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     }
                 }
 
+                // Determine the parameter to be highlighted.
+                val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
+                val highlightParameterIndex = when {
+                    currentArgumentIndex < arguments.size -> argumentToParameterIndex[arguments[currentArgumentIndex]]
+                    afterTrailingComma -> {
+                        // If last argument is for a vararg parameter, then the argument about to be entered at the cursor should also be
+                        // for that same vararg parameter.
+                        val parameterForLastArgument = argumentMapping[arguments.last()]
+                        if (parameterForLastArgument?.isVararg == true) {
+                            parameterToIndex[parameterForLastArgument]
+                        } else {
+                            null
+                        }
+                    }
+                    else -> null
+                }
+
                 var hasTypeMismatchBeforeCurrent = false
                 for ((index, argument) in arguments.withIndex()) {
                     if (index >= currentArgumentIndex) break
@@ -216,7 +233,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     valueParameters.size,
                     parameterIndexToText,
                     isCallResolvedToCandidate,
-                    hasTypeMismatchBeforeCurrent
+                    hasTypeMismatchBeforeCurrent,
+                    highlightParameterIndex,
                 )
             }
         }
@@ -315,7 +333,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         val callInfo = itemToShow.callInfo ?: return false
         val (callElement, valueArguments, arguments, argumentToParameterIndex, valueParameterCount, parameterIndexToText,
-            isCallResolvedToCandidate, hasTypeMismatchBeforeCurrent) = callInfo
+            isCallResolvedToCandidate, hasTypeMismatchBeforeCurrent, highlightParameterIndex) = callInfo
 
         val supportsMixedNamedArgumentsInTheirOwnPosition =
             callElement.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
@@ -333,6 +351,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         var highlightStartOffset = -1
         var highlightEndOffset = -1
         var isDisabledBeforeHighlight = false
+        var hasUnmappedArgument = false
         var hasUnmappedArgumentBeforeCurrent = false
         val usedParameterIndices = HashSet<Int>()
         val text = buildString {
@@ -383,6 +402,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 for (valueArgument in valueArguments) {
                     val parameterIndex = argumentToParameterIndex[valueArgument.getArgumentExpression()]
                     if (parameterIndex == null) {
+                        hasUnmappedArgument = true
                         if (argumentIndex < currentArgumentIndex) {
                             hasUnmappedArgumentBeforeCurrent = true
                         }
@@ -399,7 +419,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                         namedMode = true
                     }
 
-                    val shouldHighlight = argumentIndex == currentArgumentIndex
+                    val shouldHighlight = parameterIndex == highlightParameterIndex
                     appendParameter(parameterIndex, shouldHighlight, valueArgument.isNamed())
                 }
             } else {
@@ -407,6 +427,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 for (argument in arguments) {
                     val parameterIndex = argumentToParameterIndex[argument]
                     if (parameterIndex == null) {
+                        hasUnmappedArgument = true
                         if (argumentIndex <= currentArgumentIndex) {
                             hasUnmappedArgumentBeforeCurrent = true
                         }
@@ -415,7 +436,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     }
                     if (!usedParameterIndices.add(parameterIndex)) continue
 
-                    val shouldHighlight = argumentIndex == currentArgumentIndex
+                    val shouldHighlight = parameterIndex == highlightParameterIndex
                     appendParameter(parameterIndex, shouldHighlight)
                 }
             }
@@ -447,7 +468,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val allParametersUsed = usedParameterIndices.size == valueParameterCount
         val supportsTrailingCommas = callElement.languageVersionSettings.supportsFeature(LanguageFeature.TrailingCommas)
         val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
-        val tooManyArgs = allParametersUsed && ((!supportsTrailingCommas && afterTrailingComma) || arguments.size > valueParameterCount)
+        val isInPositionToEnterArgument = !supportsTrailingCommas && afterTrailingComma
+        val tooManyArgs = allParametersUsed && (isInPositionToEnterArgument || hasUnmappedArgument)
 
         val isDisabled = tooManyArgs || hasTypeMismatchBeforeCurrent || hasUnmappedArgumentBeforeCurrent
 
@@ -473,6 +495,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val parameterIndexToText: Map<Int, String>,
         val isCallResolvedToCandidate: Boolean,
         val hasTypeMismatchBeforeCurrent: Boolean,
+        val highlightParameterIndex: Int?,
     )
 
     data class CandidateInfo(
