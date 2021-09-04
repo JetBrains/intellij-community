@@ -917,10 +917,49 @@ int CheckSingleInstance()
 
     SendCommandLineToFirstInstance(response_id);
     CloseHandle(hFileMapping);
-    CloseHandle(hEvent);
 
     // Lock wait for the response
-    WaitForSingleObject(hResponseEvent, INFINITE);
+    const DWORD waitTimeoutMs = 1000;
+    int retriesRemaining = 60;
+
+    // What could cause us to reach the 60-retry limit (about a minute), and what will happen afterwards?
+    //
+    // 1. There was a rare race condition when the process we talked to in SendCommandLineToFirstInstance was
+    //    terminated, another one started, took over the file mapping, but have no idea about our command.
+    //
+    //    Then, after 60 retries, we'll give up and report a non-zero exit code. To the user, it'll look like a
+    //    non-started IDE.
+    //
+    // 2. The process we were talking to was frozen for more than a minute, but is still alive.
+    //
+    //    We will report a non-zero exit code, but the main process will still process our command at a later point of
+    //    time.
+    //
+    // 3. Any other reason our message was unprocessed by the target process during the 60 tries (e.g. it was
+    //    terminating and terminated exactly after 60th try).
+    //
+    //    We will report a non-zero exit code and exit. This is still better than waiting forever, because an invisible
+    //    IDE process waiting forever may cause problems with updates, uninstallation, system resources etc.
+
+    while (WaitForSingleObject(hResponseEvent, waitTimeoutMs) == WAIT_TIMEOUT && retriesRemaining-- > 0)
+    {
+      // Check if the file mapping still exists outside the current process:
+      hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
+      if (!hFileMapping)
+      {
+        // Means the mapping was abandoned by the initial process we observed. So, we should take over.
+        hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
+          mappingName.c_str());
+        CloseHandle(hResultFileMapping);
+        CloseHandle(hResponseEvent);
+        return -1;
+      }
+
+      // Ok, the mapping still exists, so the process is still alive. Proceed to spin.
+      CloseHandle(hFileMapping);
+    }
+
+    CloseHandle(hEvent);
     CloseHandle(hResponseEvent);
 
     // Read the exitCode
