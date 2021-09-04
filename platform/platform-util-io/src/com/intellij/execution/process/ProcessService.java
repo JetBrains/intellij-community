@@ -3,6 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,13 @@ public interface ProcessService {
 
   boolean sendWinProcessCtrlC(@NotNull Process process);
 
+  /**
+   * pid is not enough to emulate CTRL+C on Windows, {@link java.lang.Process#getOutputStream} is also needed
+   *
+   * @deprecated use {@link #sendWinProcessCtrlC(Process)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   boolean sendWinProcessCtrlC(int pid);
 
   void killWinProcessRecursively(@NotNull Process process);
