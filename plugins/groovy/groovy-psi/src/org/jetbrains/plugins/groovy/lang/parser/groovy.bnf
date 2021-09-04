@@ -1153,35 +1153,23 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) <<disableNlBeforeClosure>> ex
 }
 
 // region Switch expression
-switch_expression ::= 'switch' '(' expression ')' (mb_nl ('{' mb_nl (case_expr_sections+) '}'))
-{
-  pin = 1
-}
-private case_expr_sections ::= !'}' (case_expr_section) { pin = 1 recoverWhile = case_expr_section_recovery }
+switch_expression ::= 'switch' '(' expression ')' mb_nl ('{' mb_nl general_case_expr_section* '}') { pin = 1 }
+private general_case_expr_section ::= !'}' (case_expr_section | default_expr_section) { pin = 1 recoverWhile = case_expr_section_recovery }
 private case_expr_section_recovery ::= !('}' | 'case' | 'default')
-private case_expr_section ::= case_expr_colon_section
-                            | default_case_expr_colon_section
-                            | case_expr_arrow_section
-                            | default_case_expr_arrow_section
 
-case_expr_colon_section ::= colon_case_label (mb_nl colon_case_label)* (mb_nl <<insideSwitchExpression case_level_item>>*)
+case_expr_section ::= 'case' expression_list switch_expr_remainder { pin = 1 }
+default_expr_section ::= 'default' switch_expr_remainder { pin = 1 }
+private switch_expr_remainder ::= case_arrow_expr_remainder | case_colon_expr_remainder
+private case_arrow_expr_remainder ::= '->' mb_nl arrow_switch_item mb_separators { pin = 1 }
+private case_colon_expr_remainder ::= ':' mb_nl (<<insideSwitchExpression case_level_item>>)* { pin = 1 }
+
+private arrow_switch_item ::= switch_expression_block | expression_or_application
+switch_expression_block ::= '{' mb_nl <<insideSwitchExpression block_levels>> '}'
 {
   pin = 1
+  consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
-default_case_expr_colon_section ::= colon_default_label mb_nl case_level_item+
-{
-  elementType = case_expr_colon_section
-  pin = 1
-}
-colon_case_label ::= 'case' expression_list ':' { pin = 3 }
-colon_default_label ::= 'default' ':' { elementType = colon_case_label pin = 2 }
-
-case_expr_arrow_section ::= arrow_case_label (mb_nl arrow_switch_item) mb_nl
-default_case_expr_arrow_section ::= arrow_default_label mb_nl arrow_switch_item
-private arrow_switch_item ::= (block_expr_arrow_body | expression) // todo: parse block lazy
-block_expr_arrow_body ::= '{' mb_nl <<insideSwitchExpression block_levels>> '}' { pin = 1 }
-arrow_case_label ::= 'case' expression_list '->' { pin = 3 }
-arrow_default_label ::= 'default' '->' { elementType = arrow_case_label pin = 2}
 // endregion
 
 

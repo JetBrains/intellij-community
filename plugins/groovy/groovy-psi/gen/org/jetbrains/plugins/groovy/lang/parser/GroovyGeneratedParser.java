@@ -61,6 +61,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     else if (t == OPEN_BLOCK) {
       r = open_block(b, l + 1);
     }
+    else if (t == SWITCH_EXPRESSION_BLOCK) {
+      r = switch_expression_block(b, l + 1);
+    }
     else if (t == TYPE_ELEMENT) {
       r = type_element(b, l + 1);
     }
@@ -1213,38 +1216,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'case' expression_list '->'
-  public static boolean arrow_case_label(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arrow_case_label")) return false;
-    if (!nextTokenIs(b, KW_CASE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, KW_CASE);
-    r = r && expression_list(b, l + 1);
-    r = r && consumeToken(b, T_ARROW);
-    exit_section_(b, m, ARROW_CASE_LABEL, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // 'default' '->'
-  public static boolean arrow_default_label(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arrow_default_label")) return false;
-    if (!nextTokenIs(b, KW_DEFAULT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 2, KW_DEFAULT, T_ARROW);
-    exit_section_(b, m, ARROW_CASE_LABEL, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // block_expr_arrow_body | expression
+  // switch_expression_block | expression_or_application
   static boolean arrow_switch_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arrow_switch_item")) return false;
     boolean r;
-    r = block_expr_arrow_body(b, l + 1);
-    if (!r) r = expression(b, l + 1, -1);
+    r = switch_expression_block(b, l + 1);
+    if (!r) r = expression_or_application(b, l + 1);
     return r;
   }
 
@@ -1409,22 +1386,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = capital_type_element(b, l + 1);
     if (!r) r = clear_variants_and_fail(b, l + 1);
     return r;
-  }
-
-  /* ********************************************************** */
-  // '{' mb_nl <<insideSwitchExpression block_levels>> '}'
-  public static boolean block_expr_arrow_body(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_expr_arrow_body")) return false;
-    if (!nextTokenIs(b, T_LBRACE)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, BLOCK_EXPR_ARROW_BODY, null);
-    r = consumeToken(b, T_LBRACE);
-    p = r; // pin = 1
-    r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, insideSwitchExpression(b, l + 1, GroovyGeneratedParser::block_levels)) && r;
-    r = p && consumeToken(b, T_RBRACE) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
   }
 
   /* ********************************************************** */
@@ -1799,103 +1760,65 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // arrow_case_label (mb_nl arrow_switch_item) mb_nl
-  public static boolean case_expr_arrow_section(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_arrow_section")) return false;
-    if (!nextTokenIs(b, KW_CASE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = arrow_case_label(b, l + 1);
-    r = r && case_expr_arrow_section_1(b, l + 1);
-    r = r && mb_nl(b, l + 1);
-    exit_section_(b, m, CASE_EXPR_ARROW_SECTION, r);
-    return r;
-  }
-
-  // mb_nl arrow_switch_item
-  private static boolean case_expr_arrow_section_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_arrow_section_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = mb_nl(b, l + 1);
-    r = r && arrow_switch_item(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // colon_case_label (mb_nl colon_case_label)* (mb_nl <<insideSwitchExpression case_level_item>>*)
-  public static boolean case_expr_colon_section(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_colon_section")) return false;
-    if (!nextTokenIs(b, KW_CASE)) return false;
+  // '->' mb_nl arrow_switch_item mb_separators
+  static boolean case_arrow_expr_remainder(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_arrow_expr_remainder")) return false;
+    if (!nextTokenIs(b, T_ARROW)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, CASE_EXPR_COLON_SECTION, null);
-    r = colon_case_label(b, l + 1);
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, T_ARROW);
     p = r; // pin = 1
-    r = r && report_error_(b, case_expr_colon_section_1(b, l + 1));
-    r = p && case_expr_colon_section_2(b, l + 1) && r;
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && report_error_(b, arrow_switch_item(b, l + 1)) && r;
+    r = p && mb_separators(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // (mb_nl colon_case_label)*
-  private static boolean case_expr_colon_section_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_colon_section_1")) return false;
+  /* ********************************************************** */
+  // ':' mb_nl (<<insideSwitchExpression case_level_item>>)*
+  static boolean case_colon_expr_remainder(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_colon_expr_remainder")) return false;
+    if (!nextTokenIs(b, T_COLON)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, T_COLON);
+    p = r; // pin = 1
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && case_colon_expr_remainder_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // (<<insideSwitchExpression case_level_item>>)*
+  private static boolean case_colon_expr_remainder_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_colon_expr_remainder_2")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!case_expr_colon_section_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "case_expr_colon_section_1", c)) break;
+      if (!case_colon_expr_remainder_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "case_colon_expr_remainder_2", c)) break;
     }
     return true;
   }
 
-  // mb_nl colon_case_label
-  private static boolean case_expr_colon_section_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_colon_section_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = mb_nl(b, l + 1);
-    r = r && colon_case_label(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // mb_nl <<insideSwitchExpression case_level_item>>*
-  private static boolean case_expr_colon_section_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_colon_section_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = mb_nl(b, l + 1);
-    r = r && case_expr_colon_section_2_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // <<insideSwitchExpression case_level_item>>*
-  private static boolean case_expr_colon_section_2_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_colon_section_2_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!insideSwitchExpression(b, l + 1, GroovyGeneratedParser::case_level_item)) break;
-      if (!empty_element_parsed_guard_(b, "case_expr_colon_section_2_1", c)) break;
-    }
-    return true;
+  // <<insideSwitchExpression case_level_item>>
+  private static boolean case_colon_expr_remainder_2_0(PsiBuilder b, int l) {
+    return insideSwitchExpression(b, l + 1, GroovyGeneratedParser::case_level_item);
   }
 
   /* ********************************************************** */
-  // case_expr_colon_section
-  //                             | default_case_expr_colon_section
-  //                             | case_expr_arrow_section
-  //                             | default_case_expr_arrow_section
-  static boolean case_expr_section(PsiBuilder b, int l) {
+  // 'case' expression_list switch_expr_remainder
+  public static boolean case_expr_section(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_expr_section")) return false;
-    if (!nextTokenIs(b, "", KW_CASE, KW_DEFAULT)) return false;
-    boolean r;
-    r = case_expr_colon_section(b, l + 1);
-    if (!r) r = default_case_expr_colon_section(b, l + 1);
-    if (!r) r = case_expr_arrow_section(b, l + 1);
-    if (!r) r = default_case_expr_arrow_section(b, l + 1);
-    return r;
+    if (!nextTokenIs(b, KW_CASE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, CASE_EXPR_SECTION, null);
+    r = consumeToken(b, KW_CASE);
+    p = r; // pin = 1
+    r = r && report_error_(b, expression_list(b, l + 1));
+    r = p && switch_expr_remainder(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -1916,39 +1839,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_RBRACE);
     if (!r) r = consumeToken(b, KW_CASE);
     if (!r) r = consumeToken(b, KW_DEFAULT);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // !'}' (case_expr_section)
-  static boolean case_expr_sections(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_sections")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = case_expr_sections_0(b, l + 1);
-    p = r; // pin = 1
-    r = r && case_expr_sections_1(b, l + 1);
-    exit_section_(b, l, m, r, p, GroovyGeneratedParser::case_expr_section_recovery);
-    return r || p;
-  }
-
-  // !'}'
-  private static boolean case_expr_sections_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_sections_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NOT_);
-    r = !consumeToken(b, T_RBRACE);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (case_expr_section)
-  private static boolean case_expr_sections_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_expr_sections_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = case_expr_section(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2852,32 +2742,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'case' expression_list ':'
-  public static boolean colon_case_label(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "colon_case_label")) return false;
-    if (!nextTokenIs(b, KW_CASE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, KW_CASE);
-    r = r && expression_list(b, l + 1);
-    r = r && consumeToken(b, T_COLON);
-    exit_section_(b, m, COLON_CASE_LABEL, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // 'default' ':'
-  public static boolean colon_default_label(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "colon_default_label")) return false;
-    if (!nextTokenIs(b, KW_DEFAULT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 2, KW_DEFAULT, T_COLON);
-    exit_section_(b, m, COLON_CASE_LABEL, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // <<a_b_a <<item>> fast_comma>>
   static boolean comma_list(PsiBuilder b, int l, Parser _item) {
     return a_b_a(b, l + 1, _item, GroovyGeneratedParser::fast_comma);
@@ -3156,50 +3020,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // arrow_default_label mb_nl arrow_switch_item
-  public static boolean default_case_expr_arrow_section(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "default_case_expr_arrow_section")) return false;
-    if (!nextTokenIs(b, KW_DEFAULT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = arrow_default_label(b, l + 1);
-    r = r && mb_nl(b, l + 1);
-    r = r && arrow_switch_item(b, l + 1);
-    exit_section_(b, m, DEFAULT_CASE_EXPR_ARROW_SECTION, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // colon_default_label mb_nl case_level_item+
-  public static boolean default_case_expr_colon_section(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "default_case_expr_colon_section")) return false;
-    if (!nextTokenIs(b, KW_DEFAULT)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, CASE_EXPR_COLON_SECTION, null);
-    r = colon_default_label(b, l + 1);
-    p = r; // pin = 1
-    r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && default_case_expr_colon_section_2(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // case_level_item+
-  private static boolean default_case_expr_colon_section_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "default_case_expr_colon_section_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = case_level_item(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!case_level_item(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "default_case_expr_colon_section_2", c)) break;
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // default_label mb_nl case_level_item+
   public static boolean default_case_section(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "default_case_section")) return false;
@@ -3227,6 +3047,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     }
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // 'default' switch_expr_remainder
+  public static boolean default_expr_section(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "default_expr_section")) return false;
+    if (!nextTokenIs(b, KW_DEFAULT)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, DEFAULT_EXPR_SECTION, null);
+    r = consumeToken(b, KW_DEFAULT);
+    p = r; // pin = 1
+    r = r && switch_expr_remainder(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -4399,6 +4233,38 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = r && tuple_initializer(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // !'}' (case_expr_section | default_expr_section)
+  static boolean general_case_expr_section(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "general_case_expr_section")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = general_case_expr_section_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && general_case_expr_section_1(b, l + 1);
+    exit_section_(b, l, m, r, p, GroovyGeneratedParser::case_expr_section_recovery);
+    return r || p;
+  }
+
+  // !'}'
+  private static boolean general_case_expr_section_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "general_case_expr_section_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, T_RBRACE);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // case_expr_section | default_expr_section
+  private static boolean general_case_expr_section_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "general_case_expr_section_1")) return false;
+    boolean r;
+    r = case_expr_section(b, l + 1);
+    if (!r) r = default_expr_section(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */
@@ -7101,6 +6967,33 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // case_arrow_expr_remainder | case_colon_expr_remainder
+  static boolean switch_expr_remainder(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expr_remainder")) return false;
+    if (!nextTokenIs(b, "", T_ARROW, T_COLON)) return false;
+    boolean r;
+    r = case_arrow_expr_remainder(b, l + 1);
+    if (!r) r = case_colon_expr_remainder(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '{' mb_nl <<insideSwitchExpression block_levels>> '}'
+  public static boolean switch_expression_block(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_block")) return false;
+    if (!nextTokenIsFast(b, T_LBRACE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, SWITCH_EXPRESSION_BLOCK, null);
+    r = consumeTokenFast(b, T_LBRACE);
+    p = r; // pin = 1
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && report_error_(b, insideSwitchExpression(b, l + 1, GroovyGeneratedParser::block_levels)) && r;
+    r = p && consumeToken(b, T_RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // 'switch' '(' expression ')' (mb_nl switch_body)
   public static boolean switch_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_statement")) return false;
@@ -8429,7 +8322,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // 'switch' '(' expression ')' (mb_nl ('{' mb_nl (case_expr_sections+) '}'))
+  // 'switch' '(' expression ')' mb_nl ('{' mb_nl general_case_expr_section* '}')
   public static boolean switch_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_expression")) return false;
     if (!nextTokenIsSmart(b, KW_SWITCH)) return false;
@@ -8439,48 +8332,34 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, expression(b, l + 1, -1));
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
-    r = p && switch_expression_4(b, l + 1) && r;
+    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
+    r = p && switch_expression_5(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // mb_nl ('{' mb_nl (case_expr_sections+) '}')
-  private static boolean switch_expression_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switch_expression_4")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = mb_nl(b, l + 1);
-    r = r && switch_expression_4_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '{' mb_nl (case_expr_sections+) '}'
-  private static boolean switch_expression_4_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switch_expression_4_1")) return false;
+  // '{' mb_nl general_case_expr_section* '}'
+  private static boolean switch_expression_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_5")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_LBRACE);
     r = r && mb_nl(b, l + 1);
-    r = r && switch_expression_4_1_2(b, l + 1);
+    r = r && switch_expression_5_2(b, l + 1);
     r = r && consumeToken(b, T_RBRACE);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // case_expr_sections+
-  private static boolean switch_expression_4_1_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switch_expression_4_1_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = case_expr_sections(b, l + 1);
-    while (r) {
+  // general_case_expr_section*
+  private static boolean switch_expression_5_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_5_2")) return false;
+    while (true) {
       int c = current_position_(b);
-      if (!case_expr_sections(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "switch_expression_4_1_2", c)) break;
+      if (!general_case_expr_section(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "switch_expression_5_2", c)) break;
     }
-    exit_section_(b, m, null, r);
-    return r;
+    return true;
   }
 
   // mb_nl ('||') mb_nl <<disableNlBeforeClosure>>
