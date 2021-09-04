@@ -912,13 +912,14 @@ int CheckSingleInstance()
     // Creating mapping for exitCode transmission
     HANDLE hResultFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, resultFileName.c_str());
 
+    std::string responseEventName = std::string("IntelliJLauncherEvent.") + std::to_string(static_cast<long long>(response_id));
+    HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, responseEventName.c_str());
+
     SendCommandLineToFirstInstance(response_id);
     CloseHandle(hFileMapping);
     CloseHandle(hEvent);
 
     // Lock wait for the response
-    std::string responseEventName = std::string("IntelliJLauncherEvent.") + std::to_string(static_cast<long long>(response_id));
-    HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, responseEventName.c_str());
     WaitForSingleObject(hResponseEvent, INFINITE);
     CloseHandle(hResponseEvent);
 
