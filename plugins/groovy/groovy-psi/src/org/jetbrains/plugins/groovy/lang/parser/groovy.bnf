@@ -1140,7 +1140,7 @@ bor_expression ::= expression mb_nl ('|') mb_nl <<disableNlBeforeClosure>> expre
 land_expression ::= expression mb_nl ('&&') mb_nl <<disableNlBeforeClosure>> expression
 lor_expression ::= expression mb_nl ('||') mb_nl <<disableNlBeforeClosure>> expression
 
-private conditionals ::= ternary_expression | elvis_expression
+private conditionals ::= ternary_expression | elvis_expression | switch_expression
 ternary_expression ::= expression mb_nl (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
@@ -1148,6 +1148,40 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) <<disableNlBeforeClosure>> ex
 {
   rightAssociative = true
 }
+
+// region Switch expression
+switch_expression ::= 'switch' '(' expression ')' (mb_nl switch_expression_body)
+{
+  pin = 1
+}
+private switch_expression_body ::= '{' mb_nl (case_expr_sections+) '}' // todo: add {pin = 1} here, which is currently impossible due to a bug
+private case_expr_sections ::= !'}' (case_expr_section) { pin = 1 recoverWhile = case_expr_section_recovery }
+private case_expr_section_recovery ::= !('}' | 'case' | 'default')
+private case_expr_section ::= case_expr_colon_section
+                    | default_case_expr_colon_section
+                    | case_expr_arrow_section
+                    | default_case_expr_arrow_section
+
+case_expr_colon_section ::= colon_case_label (mb_nl colon_case_label)* (mb_nl case_level_item*)
+{
+  pin = 1
+}
+default_case_expr_colon_section ::= colon_default_label mb_nl case_level_item+
+{
+  elementType = case_expr_colon_section
+  pin = 1
+}
+colon_case_label ::= 'case' expression_list ':' { pin = 3 }
+colon_default_label ::= 'default' ':' { elementType = colon_case_label pin = 2 }
+
+case_expr_arrow_section ::= arrow_case_label (mb_nl arrow_switch_item) mb_nl
+default_case_expr_arrow_section ::= arrow_default_label mb_nl arrow_switch_item
+private arrow_switch_item ::= (block_expr_arrow_body | expression) // todo: parse block lazy
+block_expr_arrow_body ::= '{' mb_nl block_levels '}' { pin = 1 }
+arrow_case_label ::= 'case' expression_list '->' { pin = 3 }
+arrow_default_label ::= 'default' '->' { elementType = arrow_case_label pin = 2}
+// endregion
+
 
 private priority15 ::= assignment_expression | tuple_assignment_expression
 assignment_expression ::= expression mb_nl assignment_expression_rvalue { rightAssociative = true }
