@@ -177,6 +177,7 @@ public interface GroovyElementTypes {
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("WHILE_STATEMENT");
   GroovyElementType WILDCARD_TYPE_ELEMENT = new GroovyElementType("WILDCARD_TYPE_ELEMENT");
   GroovyElementType XOR_EXPRESSION = new GroovyElementType("XOR_EXPRESSION");
+  GroovyElementType YIELD_STATEMENT = new GroovyElementType("YIELD_STATEMENT");
 
   IElementType DOLLAR_SLASHY_BEGIN = new GroovyElementType("$/ regex begin");
   IElementType DOLLAR_SLASHY_CONTENT = new GroovyElementType("$/ regex content");
@@ -244,6 +245,7 @@ public interface GroovyElementTypes {
   IElementType KW_VOID = new GroovyElementType("void");
   IElementType KW_VOLATILE = new GroovyElementType("volatile");
   IElementType KW_WHILE = new GroovyElementType("while");
+  IElementType KW_YIELD = new GroovyElementType("yield");
   IElementType ML_COMMENT = new GroovyElementType("block comment");
   IElementType NL = new GroovyElementType("new line");
   IElementType NUM_BIG_DECIMAL = new GroovyElementType("BigDecimal");

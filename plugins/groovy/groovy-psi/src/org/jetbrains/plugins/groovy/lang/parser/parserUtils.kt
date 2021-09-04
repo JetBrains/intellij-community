@@ -65,6 +65,7 @@ private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.w
 private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closure.parameter")
 private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.parse.nl.before.closure.argument")
 private val insideParentheses: Key<Boolean> = Key.create("groovy.parse.inside.parentheses")
+private val insideSwitchExpression: Key<Boolean> = Key.create("groovy.parse.inside.switch.expression")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -544,3 +545,9 @@ fun insideParentheses(builder: PsiBuilder, level: Int, parser: Parser): Boolean 
 }
 
 fun insideParentheses(builder: PsiBuilder, level: Int): Boolean = builder[insideParentheses]
+
+fun insideSwitchExpression(builder: PsiBuilder, level: Int, parser: Parser): Boolean = builder.withKey(insideSwitchExpression, true) {
+  parser.parse(builder, level)
+}
+
+fun insideSwitchExpression(builder: PsiBuilder, level: Int): Boolean = builder[insideSwitchExpression]

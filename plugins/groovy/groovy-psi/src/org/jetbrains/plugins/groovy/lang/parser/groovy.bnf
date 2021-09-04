@@ -152,6 +152,7 @@
     KW_TRY = 'try'
     KW_VOLATILE = 'volatile'
     KW_WHILE = 'while'
+    KW_YIELD = 'yield'
 
     NUM_INT = 'Integer'
     NUM_LONG = 'Long'
@@ -257,7 +258,7 @@ private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
 private var_modifier ::= 'var' &(weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple)  { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
-private weak_keyword ::= 'var' | clear_variants_and_fail
+private weak_keyword ::= 'var' | 'yield' | clear_variants_and_fail
 
 // region Annotations
 annotation ::= '@' annotation_reference after_annotation_reference
@@ -711,6 +712,7 @@ statement ::= if_statement
             | synchronized_statement
             | return_statement
             | break_statement
+            | yield_statement
             | continue_statement
             | assert_statement
             | throw_statement
@@ -822,6 +824,7 @@ return_statement ::= 'return' expression?
 
 break_statement ::= 'break' IDENTIFIER?
 continue_statement ::= 'continue' IDENTIFIER?
+yield_statement ::= <<insideSwitchExpression>> 'yield' expression { pin = 2 }
 
 throw_statement ::= 'throw' expression
 {
@@ -1150,19 +1153,18 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) <<disableNlBeforeClosure>> ex
 }
 
 // region Switch expression
-switch_expression ::= 'switch' '(' expression ')' (mb_nl switch_expression_body)
+switch_expression ::= 'switch' '(' expression ')' (mb_nl ('{' mb_nl (case_expr_sections+) '}'))
 {
   pin = 1
 }
-private switch_expression_body ::= '{' mb_nl (case_expr_sections+) '}' // todo: add {pin = 1} here, which is currently impossible due to a bug
 private case_expr_sections ::= !'}' (case_expr_section) { pin = 1 recoverWhile = case_expr_section_recovery }
 private case_expr_section_recovery ::= !('}' | 'case' | 'default')
 private case_expr_section ::= case_expr_colon_section
-                    | default_case_expr_colon_section
-                    | case_expr_arrow_section
-                    | default_case_expr_arrow_section
+                            | default_case_expr_colon_section
+                            | case_expr_arrow_section
+                            | default_case_expr_arrow_section
 
-case_expr_colon_section ::= colon_case_label (mb_nl colon_case_label)* (mb_nl case_level_item*)
+case_expr_colon_section ::= colon_case_label (mb_nl colon_case_label)* (mb_nl <<insideSwitchExpression case_level_item>>*)
 {
   pin = 1
 }
@@ -1177,7 +1179,7 @@ colon_default_label ::= 'default' ':' { elementType = colon_case_label pin = 2 }
 case_expr_arrow_section ::= arrow_case_label (mb_nl arrow_switch_item) mb_nl
 default_case_expr_arrow_section ::= arrow_default_label mb_nl arrow_switch_item
 private arrow_switch_item ::= (block_expr_arrow_body | expression) // todo: parse block lazy
-block_expr_arrow_body ::= '{' mb_nl block_levels '}' { pin = 1 }
+block_expr_arrow_body ::= '{' mb_nl <<insideSwitchExpression block_levels>> '}' { pin = 1 }
 arrow_case_label ::= 'case' expression_list '->' { pin = 3 }
 arrow_default_label ::= 'default' '->' { elementType = arrow_case_label pin = 2}
 // endregion

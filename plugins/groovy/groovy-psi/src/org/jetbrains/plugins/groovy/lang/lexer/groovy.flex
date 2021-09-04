@@ -177,6 +177,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "return"        { return storeToken(KW_RETURN); }
   "break"         { return storeToken(KW_BREAK); }
   "continue"      { return storeToken(KW_CONTINUE); }
+  "yield"         { return storeToken(KW_YIELD); }
   "throw"         { return storeToken(KW_THROW); }
   "assert"        { return storeToken(KW_ASSERT); }
   "case"          { return storeToken(KW_CASE); }
