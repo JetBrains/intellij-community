@@ -274,6 +274,7 @@
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.roots.VcsRootScanner$DetectRootsStartupActivity"/>
+    <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyFileDocumentManagerListener"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
     <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
