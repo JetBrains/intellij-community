@@ -82,7 +82,7 @@ class SimplifyCallChainFix(
         if (!firstCallHasArguments && !secondCallHasArguments) {
             commentSaver.restore(result)
         }
-        if (lambdaExpression != null) {
+        if (lambdaExpression != null || additionalArgument != null) {
             val callExpression = when (result) {
                 is KtQualifiedExpression -> result.callExpression
                 is KtCallExpression -> result
