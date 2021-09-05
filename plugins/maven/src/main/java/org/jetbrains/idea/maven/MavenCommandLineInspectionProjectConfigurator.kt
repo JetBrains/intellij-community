@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
+import kotlin.io.path.pathString
 
 private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "maven.create.dummy.module.on.first.import"
 private val LOG = Logger.getInstance(MavenCommandLineInspectionProjectConfigurator::class.java)
@@ -30,8 +31,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
   }
 
   override fun configureProject(project: Project, context: ConfiguratorContext) {
-    val basePath = project.basePath ?: return
-
+    val basePath = context.projectPath.pathString
     val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
 
