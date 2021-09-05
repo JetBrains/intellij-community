@@ -23,6 +23,7 @@ import javax.swing.event.HyperlinkEvent
 internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
+  val parent: RowImpl,
   val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
@@ -40,8 +41,8 @@ internal class CellImpl<T : JComponent>(
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
 
-  private var visibleDependentProperty = ParentDependentProperty(viewComponent.isVisible)
-  private var enabledDependentProperty = ParentDependentProperty(viewComponent.isEnabled)
+  private var visible = viewComponent.isVisible
+  private var enabled = viewComponent.isEnabled
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
     super.horizontalAlign(horizontalAlign)
@@ -68,21 +69,14 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  fun enabledFromParent(isEnabled: Boolean) {
-    if (isEnabled) {
-      enabledDependentProperty.parentValue = null
-      doEnabled(enabledDependentProperty.value)
-    }
-    else {
-      enabledDependentProperty.parentValue = false
-      doEnabled(false)
-    }
+  fun enabledFromParent(parentEnabled: Boolean) {
+    doEnabled(parentEnabled && enabled)
   }
 
   override fun enabled(isEnabled: Boolean): CellImpl<T> {
-    enabledDependentProperty.value = isEnabled
-    if (!enabledDependentProperty.isParentValue) {
-      doEnabled(isEnabled)
+    enabled = isEnabled
+    if (parent.isEnabled()) {
+      doEnabled(enabled)
     }
     return this
   }
@@ -93,21 +87,14 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  fun visibleFromParent(isVisible: Boolean) {
-    if (isVisible) {
-      visibleDependentProperty.parentValue = null
-      doVisible(visibleDependentProperty.value)
-    }
-    else {
-      visibleDependentProperty.parentValue = false
-      doVisible(false)
-    }
+  fun visibleFromParent(parentVisible: Boolean) {
+    doVisible(parentVisible && visible)
   }
 
   override fun visible(isVisible: Boolean): CellImpl<T> {
-    visibleDependentProperty.value = isVisible
-    if (!visibleDependentProperty.isParentValue) {
-      doVisible(isVisible)
+    visible = isVisible
+    if (parent.isVisible()) {
+      doVisible(visible)
     }
     return this
   }

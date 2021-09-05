@@ -9,24 +9,30 @@ import kotlin.test.assertEquals
 class BuilderTest {
 
   @Test
-  fun testEnabledVisible() {
-    fun setState(entity: Any, value: Boolean) {
+  fun testEnabled() {
+    testEnabledVisible({ entity, value ->
       when (entity) {
-        is Panel -> {
-          entity.enabled(value)
-          entity.visible(value)
-        }
-        is Row -> {
-          entity.enabled(value)
-          entity.visible(value)
-        }
-        is Cell<*> -> {
-          entity.enabled(value)
-          entity.visible(value)
-        }
+        is Panel -> entity.enabled(value)
+        is Row -> entity.enabled(value)
+        is Cell<*> -> entity.enabled(value)
+        else -> Unit
       }
-    }
+    }, { jComponent -> jComponent.isEnabled })
+  }
 
+  @Test
+  fun testVisible() {
+    testEnabledVisible({ entity, value ->
+      when (entity) {
+        is Panel -> entity.visible(value)
+        is Row -> entity.visible(value)
+        is Cell<*> -> entity.visible(value)
+        else -> Unit
+      }
+    }, { jComponent -> jComponent.isVisible })
+  }
+
+  private fun testEnabledVisible(setState: (entity: Any, value: Boolean) -> Unit, getState: (JComponent) -> Boolean) {
     val iterationCount = 100
     val entities = mutableListOf<Any>()
     lateinit var cell: Cell<JComponent>
@@ -52,8 +58,7 @@ class BuilderTest {
       states[index] = state
       setState(entities[index], state)
       val expectedComponentState = states.all { it }
-      assertEquals(expectedComponentState, cell.component.isVisible)
-      assertEquals(expectedComponentState, cell.component.isEnabled)
+      assertEquals(expectedComponentState, getState(cell.component))
     }
 
     // Return all states to true
@@ -61,8 +66,7 @@ class BuilderTest {
       states[i] = true
       setState(entities[i], true)
       val expectedComponentState = states.all { it }
-      assertEquals(expectedComponentState, cell.component.isVisible)
-      assertEquals(expectedComponentState, cell.component.isEnabled)
+      assertEquals(expectedComponentState, getState(cell.component))
     }
   }
 }

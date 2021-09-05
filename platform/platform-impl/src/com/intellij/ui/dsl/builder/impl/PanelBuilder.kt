@@ -131,7 +131,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         val cell = row.cells[i]
         if (cell is CellImpl<*>) {
           cell.label?.let {
-            val labelCell = CellImpl(dialogPanelConfig, it)
+            val labelCell = CellImpl(dialogPanelConfig, it, row)
               .gap(RightGap.SMALL)
             row.cells.add(i, labelCell)
 

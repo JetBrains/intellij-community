@@ -11,8 +11,10 @@ import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
-internal class HideablePanelImpl(dialogPanelConfig: DialogPanelConfig, @NlsContexts.BorderTitle title: String) :
-  PanelImpl(dialogPanelConfig), HideablePanel {
+internal class HideablePanelImpl(dialogPanelConfig: DialogPanelConfig,
+                                 parent: RowImpl,
+                                 @NlsContexts.BorderTitle title: String) :
+  PanelImpl(dialogPanelConfig, parent), HideablePanel {
 
   private val hideableTitledSeparator = HideableTitledSeparator(title)
 

@@ -40,6 +40,7 @@ import javax.swing.event.HyperlinkEvent
 @ApiStatus.Internal
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        private val panelContext: PanelContext,
+                       private val parent: PanelImpl,
                        val label: JLabel? = null) : Row {
 
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
@@ -63,8 +64,8 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   val cells = mutableListOf<CellBaseImpl<*>?>()
 
-  private var visibleDependentProperty = ParentDependentProperty(true)
-  private var enabledDependentProperty = ParentDependentProperty(true)
+  private var visible = true
+  private var enabled = true
 
   init {
     label?.let { cell(it) }
@@ -81,7 +82,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
-    val result = CellImpl(dialogPanelConfig, component)
+    val result = CellImpl(dialogPanelConfig, component, this)
     cells.add(result)
 
     if (component is JRadioButton) {
@@ -104,23 +105,20 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabled(isEnabled: Boolean): RowImpl {
-    enabledDependentProperty.value = isEnabled
-    if (!enabledDependentProperty.isParentValue) {
-      doEnabled(isEnabled)
+    enabled = isEnabled
+    if (parent.isEnabled()) {
+      doEnabled(enabled)
     }
     return this
   }
 
-  fun enabledFromParent(isEnabled: Boolean): RowImpl {
-    if (isEnabled) {
-      enabledDependentProperty.parentValue = null
-      doEnabled(enabledDependentProperty.value)
-    }
-    else {
-      enabledDependentProperty.parentValue = false
-      doEnabled(false)
-    }
+  fun enabledFromParent(parentEnabled: Boolean): RowImpl {
+    doEnabled(parentEnabled && enabled)
     return this
+  }
+
+  fun isEnabled(): Boolean {
+    return enabled && parent.isEnabled()
   }
 
   override fun enabledIf(predicate: ComponentPredicate): RowImpl {
@@ -130,23 +128,20 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun visible(isVisible: Boolean): RowImpl {
-    visibleDependentProperty.value = isVisible
-    if (!visibleDependentProperty.isParentValue) {
-      doVisible(isVisible)
+    visible = isVisible
+    if (parent.isVisible()) {
+      doVisible(visible)
     }
     return this
   }
 
-  fun visibleFromParent(isVisible: Boolean): RowImpl {
-    if (isVisible) {
-      visibleDependentProperty.parentValue = null
-      doVisible(visibleDependentProperty.value)
-    }
-    else {
-      visibleDependentProperty.parentValue = false
-      doVisible(false)
-    }
+  fun visibleFromParent(parentVisible: Boolean): RowImpl {
+    doVisible(parentVisible && visible)
     return this
+  }
+
+  fun isVisible(): Boolean {
+    return visible && parent.isVisible()
   }
 
   override fun topGap(topGap: TopGap): RowImpl {
@@ -160,7 +155,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
-    val result = PanelImpl(dialogPanelConfig)
+    val result = PanelImpl(dialogPanelConfig, this)
     result.init()
     cells.add(result)
     return result

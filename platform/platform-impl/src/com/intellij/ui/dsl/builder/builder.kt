@@ -17,7 +17,7 @@ internal annotation class LayoutDslMarker
 @ApiStatus.Experimental
 fun panel(init: Panel.() -> Unit): DialogPanel {
   val dialogPanelConfig = DialogPanelConfig()
-  val panel = PanelImpl(dialogPanelConfig)
+  val panel = PanelImpl(dialogPanelConfig, null)
   panel.init()
 
   val layout = GridLayout()

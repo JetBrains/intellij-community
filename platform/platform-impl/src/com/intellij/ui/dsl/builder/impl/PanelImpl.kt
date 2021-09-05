@@ -19,7 +19,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
-internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBaseImpl<Panel>(), Panel {
+internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
@@ -34,15 +34,15 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
 
   private val _rows = mutableListOf<RowImpl>()
 
-  private var visibleDependentProperty = ParentDependentProperty(true)
-  private var enabledDependentProperty = ParentDependentProperty(true)
+  private var visible = true
+  private var enabled = true
 
   override fun row(label: String, init: Row.() -> Unit): RowImpl {
     return row(Label(label), init)
   }
 
   override fun row(label: JLabel?, init: Row.() -> Unit): RowImpl {
-    val result = RowImpl(dialogPanelConfig, panelContext, label)
+    val result = RowImpl(dialogPanelConfig, panelContext, this, label)
     result.init()
     _rows.add(result)
 
@@ -83,9 +83,10 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
-    val result = PanelImpl(dialogPanelConfig)
-    result.init()
-    row { }.cell(result)
+    lateinit var result: PanelImpl
+    row {
+      result = panel(init) as PanelImpl
+    }
     return result
   }
 
@@ -129,14 +130,16 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
   }
 
   override fun hideableGroup(title: String, indent: Boolean, init: Panel.() -> Unit): HideablePanelImpl {
-    val result = HideablePanelImpl(dialogPanelConfig, title)
+    val row = row { }
+    val result = HideablePanelImpl(dialogPanelConfig, row, title)
     if (indent) {
       result.indent(init)
-    } else {
+    }
+    else {
       result.init()
     }
     result.collapse()
-    row { }.cell(result)
+    row.cell(result)
     return result
   }
 
@@ -190,26 +193,23 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
   }
 
   override fun enabled(isEnabled: Boolean): PanelImpl {
-    enabledDependentProperty.value = isEnabled
-    if (!enabledDependentProperty.isParentValue) {
-      doEnabled(isEnabled, _rows.indices)
+    enabled = isEnabled
+    if (parent == null || parent.isEnabled()) {
+      doEnabled(enabled, _rows.indices)
     }
     return this
   }
 
-  fun enabledFromParent(isEnabled: Boolean) {
-    enabledFromParent(isEnabled, _rows.indices)
+  fun enabledFromParent(parentEnabled: Boolean) {
+    enabledFromParent(parentEnabled, _rows.indices)
   }
 
-  fun enabledFromParent(isEnabled: Boolean, range: IntRange) {
-    if (isEnabled) {
-      enabledDependentProperty.parentValue = null
-      doEnabled(enabledDependentProperty.value, range)
-    }
-    else {
-      enabledDependentProperty.parentValue = false
-      doEnabled(false, range)
-    }
+  fun enabledFromParent(parentEnabled: Boolean, range: IntRange) {
+    doEnabled(parentEnabled && enabled, range)
+  }
+
+  fun isEnabled(): Boolean {
+    return enabled && (parent == null || parent.isEnabled())
   }
 
   override fun enabledIf(predicate: ComponentPredicate): PanelImpl {
@@ -219,26 +219,23 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) 
   }
 
   override fun visible(isVisible: Boolean): PanelImpl {
-    visibleDependentProperty.value = isVisible
-    if (!visibleDependentProperty.isParentValue) {
-      doVisible(isVisible, _rows.indices)
+    visible = isVisible
+    if (parent == null || parent.isVisible()) {
+      doVisible(visible, _rows.indices)
     }
     return this
   }
 
-  fun visibleFromParent(isVisible: Boolean) {
-    visibleFromParent(isVisible, _rows.indices)
+  fun visibleFromParent(parentVisible: Boolean) {
+    visibleFromParent(parentVisible, _rows.indices)
   }
 
-  fun visibleFromParent(isVisible: Boolean, range: IntRange) {
-    if (isVisible) {
-      visibleDependentProperty.parentValue = null
-      doVisible(visibleDependentProperty.value, range)
-    }
-    else {
-      visibleDependentProperty.parentValue = false
-      doVisible(false, range)
-    }
+  fun visibleFromParent(parentVisible: Boolean, range: IntRange) {
+    doVisible(parentVisible && visible, range)
+  }
+
+  fun isVisible(): Boolean {
+    return visible && (parent == null || parent.isVisible())
   }
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
