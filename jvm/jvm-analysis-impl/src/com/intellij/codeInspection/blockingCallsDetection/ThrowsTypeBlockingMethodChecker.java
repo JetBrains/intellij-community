@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -21,8 +20,8 @@ final class ThrowsTypeBlockingMethodChecker implements BlockingMethodChecker {
   }
 
   @Override
-  public boolean isMethodBlocking(@NotNull PsiMethod method) {
-    return StreamEx.of(method.getThrowsList().getReferencedTypes())
+  public boolean isMethodBlocking(@NotNull MethodContext context) {
+    return StreamEx.of(context.getMethod().getThrowsList().getReferencedTypes())
       .cross(BLOCKING_EXCEPTION_TYPES)
       .anyMatch(entry -> InheritanceUtil.isInheritor(entry.getKey(), entry.getValue()));
   }

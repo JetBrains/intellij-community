@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -25,8 +26,10 @@ import org.jetbrains.uast.UCallExpression;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.*;
+
+import static java.util.Collections.emptyList;
 
 public final class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUastLocalInspectionTool {
 
@@ -52,29 +55,42 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    List<NonBlockingContextChecker> nonBlockingContextCheckers = getNonBlockingContextCheckers(holder.getFile());
+    Collection<String> nonBlockingAnnotations = union(myNonBlockingAnnotations, DEFAULT_NONBLOCKING_ANNOTATIONS);
+    Collection<String> blockingAnnotations = union(myBlockingAnnotations, DEFAULT_BLOCKING_ANNOTATIONS);
+
+    List<NonBlockingContextChecker> nonBlockingContextCheckers =
+      getNonBlockingContextCheckers(holder.getFile(), blockingAnnotations, nonBlockingAnnotations);
     if (nonBlockingContextCheckers.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    List<BlockingMethodChecker> blockingMethodCheckers = getBlockingMethodCheckers(holder.getFile());
+    List<BlockingMethodChecker> blockingMethodCheckers =
+      getBlockingMethodCheckers(holder.getFile(), blockingAnnotations, nonBlockingAnnotations);
     if (blockingMethodCheckers.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new BlockingMethodInNonBlockingContextVisitor(holder, blockingMethodCheckers, nonBlockingContextCheckers);
   }
 
-  @NotNull
-  private List<NonBlockingContextChecker> getNonBlockingContextCheckers(@NotNull PsiFile file) {
+  private static @NotNull List<NonBlockingContextChecker> getNonBlockingContextCheckers(@NotNull PsiFile file,
+                                                                                        @NotNull Collection<String> blockingAnnotations,
+                                                                                        @NotNull Collection<String> nonBlockingAnnotations) {
     List<NonBlockingContextChecker> nonBlockingContextCheckers = new ArrayList<>(NonBlockingContextChecker.EP_NAME.getExtensionList());
-    nonBlockingContextCheckers.add(new AnnotationBasedNonBlockingContextChecker(myNonBlockingAnnotations));
+    nonBlockingContextCheckers.add(new AnnotationBasedNonBlockingContextChecker(blockingAnnotations, nonBlockingAnnotations));
     nonBlockingContextCheckers.removeIf(checker -> !checker.isApplicable(file));
     return nonBlockingContextCheckers;
   }
 
-  @NotNull
-  private List<BlockingMethodChecker> getBlockingMethodCheckers(@NotNull PsiFile file) {
+  private static @NotNull List<BlockingMethodChecker> getBlockingMethodCheckers(@NotNull PsiFile file,
+                                                                                @NotNull Collection<String> blockingAnnotations,
+                                                                                @NotNull Collection<String> nonBlockingAnnotations) {
     List<BlockingMethodChecker> blockingMethodCheckers = new ArrayList<>(BlockingMethodChecker.EP_NAME.getExtensionList());
-    blockingMethodCheckers.add(new AnnotationBasedBlockingMethodChecker(myBlockingAnnotations, myNonBlockingAnnotations));
+    blockingMethodCheckers.add(new AnnotationBasedBlockingMethodChecker(blockingAnnotations, nonBlockingAnnotations));
     blockingMethodCheckers.removeIf(checker -> !checker.isApplicable(file));
     return blockingMethodCheckers;
+  }
+
+  private static Collection<String> union(Collection<String> annotations, Collection<String> defaultAnnotations) {
+    Set<String> result = new HashSet<>(defaultAnnotations);
+    result.addAll(annotations != null ? annotations : emptyList());
+    return result;
   }
 
   private final class OptionsPanel extends JPanel {
@@ -123,15 +139,15 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
   private static class BlockingMethodInNonBlockingContextVisitor extends PsiElementVisitor {
     private final ProblemsHolder myHolder;
-    private final List<? extends BlockingMethodChecker> myBlockingMethodCheckers;
-    private final List<? extends NonBlockingContextChecker> myNonBlockingContextCheckers;
+    private final List<BlockingMethodChecker> myBlockingMethodCheckers;
+    private final List<NonBlockingContextChecker> myNonBlockingContextCheckers;
 
     BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
-                                              List<? extends BlockingMethodChecker> blockingMethodCheckers,
-                                              List<? extends NonBlockingContextChecker> nonBlockingContextCheckers) {
+                                              List<BlockingMethodChecker> blockingMethodCheckers,
+                                              List<NonBlockingContextChecker> nonBlockingContextCheckers) {
       myHolder = holder;
-      this.myBlockingMethodCheckers = blockingMethodCheckers;
-      this.myNonBlockingContextCheckers = nonBlockingContextCheckers;
+      myBlockingMethodCheckers = blockingMethodCheckers;
+      myNonBlockingContextCheckers = nonBlockingContextCheckers;
     }
 
     @Override
@@ -145,10 +161,8 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       PsiMethod referencedMethod = callExpression.resolve();
       if (referencedMethod == null) return;
 
-      if (!isMethodOrSupersBlocking(referencedMethod, myBlockingMethodCheckers)) return;
-
-      // if some implementation believes this method is non-blocking then we don't report it
-      if (isMethodNonBlocking(referencedMethod, myBlockingMethodCheckers)) return;
+      MethodContext methodContext = new MethodContext(referencedMethod, myBlockingMethodCheckers);
+      if (!isMethodOrSupersBlocking(methodContext)) return;
 
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
@@ -162,25 +176,15 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     }
   }
 
-  private static boolean isMethodOrSupersBlocking(PsiMethod referencedMethod,
-                                                  List<? extends BlockingMethodChecker> blockingMethodCheckers) {
-    return StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods())
-      .anyMatch(method -> isMethodBlocking(method, blockingMethodCheckers));
+  private static boolean isMethodOrSupersBlocking(MethodContext methodContext) {
+    return StreamEx.of(methodContext.getMethod()).append(methodContext.getMethod().findDeepestSuperMethods())
+      .anyMatch(method -> isMethodBlocking(methodContext));
   }
 
-  private static boolean isMethodBlocking(PsiMethod method,
-                                          List<? extends BlockingMethodChecker> blockingMethodCheckers) {
-    return blockingMethodCheckers.stream().anyMatch(extension -> {
-      ProgressIndicatorProvider.checkCanceled();
-      return extension.isMethodBlocking(method);
-    });
-  }
-
-  private static boolean isMethodNonBlocking(PsiMethod method,
-                                             List<? extends BlockingMethodChecker> blockingMethodCheckers) {
-    return blockingMethodCheckers.stream().anyMatch(extension -> {
-      ProgressIndicatorProvider.checkCanceled();
-      return extension.isMethodNonBlocking(method);
+  private static boolean isMethodBlocking(MethodContext methodContext) {
+    return methodContext.getCheckers().stream().anyMatch(extension -> {
+      ProgressManager.checkCanceled();
+      return extension.isMethodBlocking(methodContext);
     });
   }
 

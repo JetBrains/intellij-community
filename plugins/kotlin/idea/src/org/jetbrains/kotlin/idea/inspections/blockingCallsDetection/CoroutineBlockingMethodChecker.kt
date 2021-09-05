@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
 
 import com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker
+import com.intellij.codeInspection.blockingCallsDetection.MethodContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
@@ -23,10 +24,8 @@ internal class CoroutineBlockingMethodChecker : BlockingMethodChecker {
         return languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
     }
 
-    override fun isMethodBlocking(method: PsiMethod): Boolean = false
-
-    override fun isMethodNonBlocking(method: PsiMethod): Boolean {
-        val uMethod = method.toUElement()
+    override fun isMethodNonBlocking(context: MethodContext): Boolean {
+        val uMethod = context.method.toUElement()
         val sourcePsi = uMethod?.sourcePsi ?: return false
         return sourcePsi is KtNamedFunction && sourcePsi.modifierList?.hasSuspendModifier() == true
     }
