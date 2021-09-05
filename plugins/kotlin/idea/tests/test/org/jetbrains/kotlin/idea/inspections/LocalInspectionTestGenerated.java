@@ -5610,6 +5610,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/inconsistentCommentForJavaParameter")
+    public static class InconsistentCommentForJavaParameter extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/javaCollectionsStaticMethod")
     public static class JavaCollectionsStaticMethod extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

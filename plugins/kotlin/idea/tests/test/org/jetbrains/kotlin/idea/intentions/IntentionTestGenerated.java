@@ -1636,6 +1636,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments.kt");
         }
 
+        @TestMetadata("methodCallWithComments2.kt")
+        public void testMethodCallWithComments2() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments2.kt");
+        }
+
         @TestMetadata("methodCallWithLambdaArgument.kt")
         public void testMethodCallWithLambdaArgument() throws Exception {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgument.kt");

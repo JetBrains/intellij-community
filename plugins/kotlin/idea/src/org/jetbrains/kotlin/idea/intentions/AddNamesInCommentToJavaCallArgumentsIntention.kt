@@ -28,7 +28,7 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
 ) {
     override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean {
         val arguments = element.valueArguments.filterNot { it is KtLambdaArgument }
-        if (arguments.isEmpty() || arguments.any { it.isNamed() || it.hasBlockComment() }) return false
+        if (arguments.isEmpty() || arguments.any { it.isNamed() || it.hasBlockCommentWithName() }) return false
         val resolvedCall = element.resolveToCall() ?: return false
         val descriptor = resolvedCall.candidateDescriptor
         if (descriptor !is JavaMethodDescriptor && descriptor !is JavaClassConstructorDescriptor) return false
@@ -39,30 +39,33 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
         val resolvedCall = element.resolveToCall() ?: return
         val psiFactory = KtPsiFactory(element)
         for ((argument, parameter) in element.valueArguments.resolve(resolvedCall)) {
-            val isVararg = parameter.isVararg
             val parent = argument.parent
             parent.addBefore(psiFactory.createComment(parameter.toCommentedParameterName()), argument)
             parent.addBefore(psiFactory.createWhiteSpace(), argument)
-            if (isVararg) break
+            if (parameter.isVararg) break
         }
     }
-
-    private fun List<KtValueArgument>.resolve(
-        resolvedCall: ResolvedCall<out CallableDescriptor>
-    ): List<Pair<KtValueArgument, ValueParameterDescriptor>> =
-        mapNotNull {
-            if (it is KtLambdaArgument) return@mapNotNull null
-            val parameter = resolvedCall.getArgumentMapping(it).safeAs<ArgumentMatch>()?.valueParameter ?: return@mapNotNull null
-            it to parameter
-        }
-
-    private fun KtValueArgument.hasBlockComment(): Boolean =
-        siblings(forward = false, withSelf = false)
-            .takeWhile { it is PsiWhiteSpace || it is PsiComment }
-            .any { it is PsiComment && it.elementType == KtTokens.BLOCK_COMMENT }
 
     companion object {
         fun ValueParameterDescriptor.toCommentedParameterName(): String =
             "/* ${if (isVararg) "...$name" else name.asString()} = */"
+
+        fun KtValueArgument.hasBlockCommentWithName(): Boolean =
+            blockCommentWithName() != null
+
+        fun KtValueArgument.blockCommentWithName(): PsiComment? =
+            siblings(forward = false, withSelf = false)
+                .takeWhile { it is PsiWhiteSpace || it is PsiComment }
+                .filterIsInstance<PsiComment>()
+                .firstOrNull { it.elementType == KtTokens.BLOCK_COMMENT && it.text.endsWith("= */") }
+
+        fun List<KtValueArgument>.resolve(
+            resolvedCall: ResolvedCall<out CallableDescriptor>
+        ): List<Pair<KtValueArgument, ValueParameterDescriptor>> =
+            mapNotNull {
+                if (it is KtLambdaArgument) return@mapNotNull null
+                val parameter = resolvedCall.getArgumentMapping(it).safeAs<ArgumentMatch>()?.valueParameter ?: return@mapNotNull null
+                it to parameter
+            }
     }
 }
