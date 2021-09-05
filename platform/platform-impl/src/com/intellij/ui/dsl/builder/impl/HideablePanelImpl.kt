@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.dsl.builder.HideablePanel
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
@@ -13,10 +14,19 @@ import java.awt.event.MouseEvent
 
 internal class HideablePanelImpl(dialogPanelConfig: DialogPanelConfig,
                                  parent: RowImpl,
-                                 @NlsContexts.BorderTitle title: String) :
+                                 @NlsContexts.BorderTitle title: String,
+                                 init: Panel.() -> Unit) :
   PanelImpl(dialogPanelConfig, parent), HideablePanel {
 
+  override var expanded: Boolean = true
+    set(value) {
+      field = value
+      expandablePanel.visible(value)
+      hideableTitledSeparator.updateIcon()
+    }
+
   private val hideableTitledSeparator = HideableTitledSeparator(title)
+  private val expandablePanel: Panel
 
   init {
     val hideableTitledSeparator = this.hideableTitledSeparator
@@ -24,25 +34,12 @@ internal class HideablePanelImpl(dialogPanelConfig: DialogPanelConfig,
       cell(hideableTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
     }
     row.internalTopGap = dialogPanelConfig.spacing.groupTopGap
-  }
-
-  override fun expand() {
-    hideableTitledSeparator.expanded = true
-  }
-
-  override fun collapse() {
-    hideableTitledSeparator.expanded = false
+    expandablePanel = panel {
+      init()
+    }
   }
 
   private inner class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
-
-    var expanded: Boolean = true
-      set(value) {
-        field = value
-
-        visibleFromParent(value, 1 until rows.size)
-        updateIcon()
-      }
 
     init {
       updateIcon()
@@ -54,7 +51,7 @@ internal class HideablePanelImpl(dialogPanelConfig: DialogPanelConfig,
       })
     }
 
-    private fun updateIcon() {
+    fun updateIcon() {
       val icon = if (expanded) AllIcons.General.ArrowDown else AllIcons.General.ArrowRight
       label.icon = icon
       label.disabledIcon = IconLoader.getTransparentIcon(icon, 0.5f)

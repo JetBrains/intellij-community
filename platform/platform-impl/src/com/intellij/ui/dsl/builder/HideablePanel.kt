@@ -3,8 +3,6 @@ package com.intellij.ui.dsl.builder
 
 interface HideablePanel : Panel {
 
-  fun expand()
-
-  fun collapse()
+  var expanded: Boolean
 
 }

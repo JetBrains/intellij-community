@@ -131,14 +131,16 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
 
   override fun hideableGroup(title: String, indent: Boolean, init: Panel.() -> Unit): HideablePanelImpl {
     val row = row { }
-    val result = HideablePanelImpl(dialogPanelConfig, row, title)
-    if (indent) {
-      result.indent(init)
+    val result = HideablePanelImpl(dialogPanelConfig, row, title) {
+      if (indent) {
+        indent(init)
+      }
+      else {
+        init()
+      }
     }
-    else {
-      result.init()
-    }
-    result.collapse()
+
+    result.expanded = false
     row.cell(result)
     return result
   }

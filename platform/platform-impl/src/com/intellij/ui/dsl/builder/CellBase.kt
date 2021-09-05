@@ -28,12 +28,14 @@ private annotation class CellBaseMarker
 interface CellBase<out T : CellBase<T>> {
 
   /**
-   * Sets visibility for all components inside cell. Invisible state for all components is kept until the cell becomes visible again
+   * Sets visibility of the cell and all children recursively.
+   * The cell is invisible while there is an invisible parent
    */
   fun visible(isVisible: Boolean): CellBase<T>
 
   /**
-   * Sets enabled state for all components inside cell. Disabled state for all components is kept until the cell becomes enabled again
+   * Sets enabled state of the cell and all children recursively.
+   * The cell is disabled while there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): CellBase<T>
 

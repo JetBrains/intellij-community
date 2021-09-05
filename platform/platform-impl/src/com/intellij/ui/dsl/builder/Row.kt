@@ -88,14 +88,14 @@ interface Row {
   fun placeholder(): Placeholder
 
   /**
-   * Sets visibility for all components inside row including comment [Row.comment].
-   * See also [CellBase.visible] description
+   * Sets visibility of the row including comment [Row.comment] and all children recursively.
+   * The row is invisible while there is an invisible parent
    */
   fun visible(isVisible: Boolean): Row
 
   /**
-   * Sets enabled state for all components inside row including comment [Row.comment].
-   * See also [CellBase.enabled] description
+   * Sets enabled state of the row including comment [Row.comment] and all children recursively.
+   * The row is disabled while there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): Row
 
