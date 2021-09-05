@@ -11,6 +11,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +67,7 @@ public final class NativeFileType implements INativeFileType {
       throw new IllegalArgumentException("Non-local file: " + file + "; FS=" + file.getFileSystem());
     }
 
+    String filePath = file.getPresentableUrl();
     List<String> commands = new ArrayList<>();
     if (SystemInfo.isWindows) {
       //noinspection SpellCheckingInspection
@@ -76,10 +80,21 @@ public final class NativeFileType implements INativeFileType {
     else if (SystemInfo.hasXdgOpen()) {
       commands.add("xdg-open");
     }
+    else if (SystemInfo.isWsl()) {
+      List<String> windowsPathTranslationCommand = List.of("wslpath", "-w", filePath);
+      try {
+        filePath = new String(new GeneralCommandLine(windowsPathTranslationCommand).createProcess().getInputStream().readAllBytes(),
+                              StandardCharsets.UTF_8);
+      }
+      catch (Exception e) {
+        return false;
+      }
+      commands.add("wslview");
+    }
     else {
       return false;
     }
-    commands.add(file.getPresentableUrl());
+    commands.add(filePath);
 
     try {
       new GeneralCommandLine(commands).createProcess();

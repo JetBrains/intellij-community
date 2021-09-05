@@ -10,7 +10,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
@@ -80,6 +85,21 @@ public final class SystemInfo {
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = PathExecLazyValue.create("xdg-open");
   public static boolean hasXdgOpen() {
     return isXWindow && ourHasXdgOpen.getValue();
+  }
+
+  public static boolean isWsl() {
+    Path path = Paths.get("/proc/version");
+    if (Files.exists(path)) {
+      try {
+        return isXWindow && Files.readAllLines(path).stream().anyMatch(line -> line.toLowerCase(Locale.ROOT).contains("microsoft"));
+      }
+      catch (IOException e) {
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
   }
 
   private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
