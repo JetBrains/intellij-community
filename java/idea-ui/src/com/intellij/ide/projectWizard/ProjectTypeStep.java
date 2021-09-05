@@ -105,10 +105,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private ModuleWizardStep mySettingsStep;
   private String myCurrentCard;
   private TemplatesGroup myLastSelectedGroup;
+  boolean isCreatingModule;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
     myWizard = wizard;
+
+    isCreatingModule = wizard.isCreatingModule();
 
     myTemplatesMap = isNewWizard() ? MultiMap.createLinked() : MultiMap.createConcurrent();
     final List<TemplatesGroup> groups = fillTemplatesMap(context);
@@ -342,8 +345,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return groups;
   }
 
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  private boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") && !isCreatingModule;
   }
 
   @TestOnly
@@ -777,7 +780,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId, data);
   }
 
-  private static class ProjectTypeListRenderer extends GroupedItemsListRenderer<TemplatesGroup> {
+  private class ProjectTypeListRenderer extends GroupedItemsListRenderer<TemplatesGroup> {
     ProjectTypeListRenderer(java.util.List<TemplatesGroup> groups) {
       super(new ListItemDescriptorAdapter<>() {
         @Nullable
@@ -839,7 +842,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     @NotNull
-    private static SeparatorWithText createSeparatorComponent() {
+    private SeparatorWithText createSeparatorComponent() {
       return new SeparatorWithText() {
         @Override
         protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) { }

@@ -61,20 +61,23 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   };
 
-  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent) {
+  private boolean myCreatingModule;
+
+  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent, @Nullable Project project) {
     super(dialogParent, true);
     mySteps = new ArrayList<>();
-    initWizard(title);
+    initWizard(title, project != null);
   }
 
   public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable final Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
-    initWizard(title);
+    initWizard(title, project != null);
   }
 
-  private void initWizard(final @NlsContexts.DialogTitle String title) {
+  private void initWizard(final @NlsContexts.DialogTitle String title, boolean isCreatingModule) {
     setTitle(title);
+    myCreatingModule = isCreatingModule;
     myCurrentStep = 0;
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
@@ -117,7 +120,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
     int inset = isNewWizard() ? 15 : 0;
-    panel.setBorder(Experiments.getInstance().isFeatureEnabled("new.project.wizard")
+    panel.setBorder(isNewWizard()
                       ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
                     : BorderFactory.createEmptyBorder(8, inset, 0, inset));
 
@@ -536,13 +539,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myPreviousButton.setEnabled(!firstStep);
-    if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
+    if (isNewWizard()) {
       myPreviousButton.setVisible(!firstStep);
     }
   }
 
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  private boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") && !myCreatingModule;
   }
 
   protected boolean isFirstStep() {
