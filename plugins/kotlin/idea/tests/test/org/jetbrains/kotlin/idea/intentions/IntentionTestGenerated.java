@@ -14129,6 +14129,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeArgumentName/arrayLiteralForVararg.kt");
         }
 
+        @TestMetadata("arrayLiteralForVararg2.kt")
+        public void testArrayLiteralForVararg2() throws Exception {
+            runTest("testData/intentions/removeArgumentName/arrayLiteralForVararg2.kt");
+        }
+
         @TestMetadata("namedArgumentBefore.kt")
         public void testNamedArgumentBefore() throws Exception {
             runTest("testData/intentions/removeArgumentName/namedArgumentBefore.kt");
