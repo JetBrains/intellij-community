@@ -128,6 +128,7 @@ public final class PluginManagerConfigurable
   private boolean myInstalledSearchSetState = true;
 
   private String myLaterSearchQuery;
+  private boolean myShowMarketplaceTab;
 
   public PluginManagerConfigurable(@Nullable Project project) {
     myPluginModel = new MyPluginModel(project);
@@ -1696,7 +1697,11 @@ public final class PluginManagerConfigurable
     }
 
     return () -> {
-      boolean marketplace = option != null && option.startsWith(SearchWords.TAG.getValue());
+      boolean marketplace = (option != null && option.startsWith(SearchWords.TAG.getValue()));
+      if (myShowMarketplaceTab) {
+        marketplace = true;
+        myShowMarketplaceTab = false;
+      }
       updateSelectionTab(marketplace ? MARKETPLACE_TAB : INSTALLED_TAB);
 
       PluginsTab tab = marketplace ? myMarketplaceTab : myInstalledTab;
@@ -1706,6 +1711,11 @@ public final class PluginManagerConfigurable
         tab.showSearchPanel(option);
       }
     };
+  }
+
+  public void openMarketplaceTab(@NotNull String option) {
+    myLaterSearchQuery = option;
+    myShowMarketplaceTab = true;
   }
 
   private final class InstallFromDiskAction extends DumbAwareAction {

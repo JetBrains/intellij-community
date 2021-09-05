@@ -3,7 +3,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
-import com.intellij.ide.*;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -44,6 +44,7 @@ import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -124,10 +125,14 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       layout.setHGap(0);
       myPanel.setLayout(layout);
 
-      ProjectTypeListWithSearch<TemplatesGroup>
-        listWithFilter  = new ProjectTypeListWithSearch<>(myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName());
+      String emptyCard = "emptyCard";
+      ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
+        myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> showCard(emptyCard));
+
       listWithFilter.setMinimumSize(JBUI.size(40, -1));
       myProjectTypePanel.add(listWithFilter);
+
+      myOptionsPanel.add(new JBPanelWithEmptyText().withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure")), emptyCard);
 
       listWithFilter.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
       mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0));
