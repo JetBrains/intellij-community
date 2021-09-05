@@ -19,6 +19,7 @@ import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -82,7 +83,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
-    myHelpButton = new JButton(CommonBundle.getHelpButtonText());
+    myHelpButton = isNewWizard() ? createHelpButton(JBUI.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);
@@ -136,7 +137,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       int index = 0;
       JPanel leftPanel = new JPanel();
-      if (ApplicationInfo.contextHelpAvailable() && !isNewWizard()) {
+      if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
         TouchbarDataKeys.putDialogButtonDescriptor(myHelpButton, index++);
       }
