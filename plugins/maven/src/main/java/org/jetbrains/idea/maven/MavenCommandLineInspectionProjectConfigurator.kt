@@ -40,34 +40,24 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val isMavenProjectLinked = mavenProjectAware.isLinkedProject(project, basePath)
 
-    LOG.info("maven project is linked: $isMavenProjectLinked")
-
-    LOG.info("mavenProjectsManager isMavenized: ${mavenProjectsManager.isMavenizedProject}")
-    LOG.info("mavenProjectsManager has projects: ${mavenProjectsManager.hasProjects()}")
+    LOG.info("maven project: ${project.name} is linked: $isMavenProjectLinked")
 
     if (!isMavenProjectLinked) {
-
       ApplicationManager.getApplication().invokeAndWait {
         mavenProjectAware.linkAndLoadProject(project, basePath)
         mavenProjectsManager.waitForResolvingCompletion()
         mavenProjectsManager.waitForPluginsResolvingCompletion()
       }
-
-      LOG.info("mavenProjectsManager isMavenized after link and load project: ${mavenProjectsManager.isMavenizedProject}")
-      LOG.info("mavenProjectsManager has projects after link and load project: ${mavenProjectsManager.hasProjects()}")
     }
 
     val mavenProjectsTree = mavenProjectsManager.projectsTreeForTests
     for (mavenProject in mavenProjectsTree.projects) {
       val hasReadingProblems = mavenProject.hasReadingProblems()
-      LOG.info("maven project: ${mavenProject.name} has read problems: $hasReadingProblems")
       if (hasReadingProblems) {
-        LOG.info("Failed to import project ${mavenProject.name}: " + mavenProject.problems)
         throw IllegalStateException("Maven project ${mavenProject.name} has import problems:" + mavenProject.problems)
       }
 
       val hasUnresolvedArtifacts = mavenProject.hasUnresolvedArtifacts()
-      LOG.info("maven project: ${mavenProject.name} has unresolved artifacts: $hasUnresolvedArtifacts")
       if (hasUnresolvedArtifacts) {
         val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.isResolved } +
                                   mavenProject.externalAnnotationProcessors.filterNot { it.isResolved }
@@ -75,7 +65,6 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
       }
 
       val hasUnresolvedPlugins = mavenProject.hasUnresolvedPlugins()
-      LOG.info("maven project: ${mavenProject.name} has unresolved plugins: $hasUnresolvedPlugins")
       if (hasUnresolvedPlugins) {
         val unresolvedPlugins = mavenProject.declaredPlugins.filterNot { plugin ->
           MavenArtifactUtil.hasArtifactFile(mavenProject.localRepository, plugin.mavenId)
