@@ -160,14 +160,14 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                             myFixture.editor,
                             TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.getInstance().referenceSearchFlags
                         )
-                    }!!
+                    }
                 }
 
                 isFindFileUsages -> myFixture.file
 
                 else -> myFixture.elementAtCaret
             }
-            UsefulTestCase.assertInstanceOf(caretElement, caretElementClass)
+            UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
             val containingFile = caretElement.containingFile
             val isLibraryElement = containingFile != null && ProjectRootsUtil.isLibraryFile(project, containingFile.virtualFile)
