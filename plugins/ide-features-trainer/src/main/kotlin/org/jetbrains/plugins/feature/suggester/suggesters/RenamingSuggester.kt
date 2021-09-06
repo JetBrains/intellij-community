@@ -19,7 +19,7 @@ class RenamingSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use safe renaming: Shift + F6?"
         const val SUGGESTING_ACTION_ID = "Rename"
-        const val SUGGESTING_TIP_FILENAME = "neue-Rename.html"
+        const val SUGGESTING_TIP_FILENAME = "Rename.html"
         const val NUMBER_OF_RENAMES_TO_GET_SUGGESTION = 3
     }
 

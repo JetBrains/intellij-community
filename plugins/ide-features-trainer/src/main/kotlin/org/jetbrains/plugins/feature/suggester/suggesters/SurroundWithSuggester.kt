@@ -21,7 +21,7 @@ class SurroundWithSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use Surround With action?"
         const val SUGGESTING_ACTION_ID = "SurroundWith"
-        const val SUGGESTING_TIP_FILENAME = "neue-SurroundWith.html"
+        const val SUGGESTING_TIP_FILENAME = "SurroundWith.html"
         const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 8000L
     }
 

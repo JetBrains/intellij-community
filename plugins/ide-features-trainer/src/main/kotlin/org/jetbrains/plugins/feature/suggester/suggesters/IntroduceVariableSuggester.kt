@@ -25,7 +25,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not use the Introduce Variable refactoring?"
         const val SUGGESTING_ACTION_ID = "IntroduceVariable"
-        const val SUGGESTING_TIP_FILENAME = "neue-IntroduceVariable.html"
+        const val SUGGESTING_TIP_FILENAME = "IntroduceVariable.html"
     }
 
     private val actionsSummary = actionsLocalSummary()

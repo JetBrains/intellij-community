@@ -21,7 +21,7 @@ class CompletionPopupSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "You may use shortcut to call completion popup."
         const val SUGGESTING_ACTION_ID = "CodeCompletion"
-        const val SUGGESTING_TIP_FILENAME = "neue-CodeCompletion.html"
+        const val SUGGESTING_TIP_FILENAME = "CodeCompletion.html"
         const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 5000L
     }
 

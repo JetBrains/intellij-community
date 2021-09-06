@@ -21,7 +21,7 @@ class FileStructureSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Finding a definition can be faster using the File Structure action."
         const val SUGGESTING_ACTION_ID = "FileStructurePopup"
-        const val SUGGESTING_TIP_FILENAME = "neue-FileStructurePopup.html"
+        const val SUGGESTING_TIP_FILENAME = "FileStructurePopup.html"
     }
 
     private val actionsSummary = actionsLocalSummary()
