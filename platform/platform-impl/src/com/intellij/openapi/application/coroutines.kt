@@ -8,9 +8,7 @@ import com.intellij.openapi.application.rw.ReadAction
 import com.intellij.openapi.progress.Progress
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
@@ -123,5 +121,23 @@ private class SmartRunnable<T>(action: (ctx: CoroutineContext) -> T, continuatio
     val continuation = myContinuation ?: return
     val action = myAction ?: return
     continuation.resumeWith(kotlin.runCatching { action.invoke(continuation.context) })
+  }
+}
+
+/**
+ * Please don't use unless you know what you are doing.
+ * The code in this context can only perform pure UI operations,
+ * it must not access any PSI, VFS, project model, or indexes.
+ *
+ * @return a special coroutine dispatcher that's equivalent to using no modality state at all in `invokeLater`.
+ */
+@Suppress("unused") // unused receiver
+val Dispatchers.EDT: CoroutineDispatcher
+  get() = EdtCoroutineDispatcher
+
+private object EdtCoroutineDispatcher : CoroutineDispatcher() {
+
+  override fun dispatch(context: CoroutineContext, block: Runnable) {
+    ApplicationManager.getApplication().invokeLater(block, ModalityState.any())
   }
 }

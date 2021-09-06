@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -248,12 +249,3 @@ internal class InSmartMode(private val project: Project) : ContextConstraint {
 internal enum class ExecutionThread {
   EDT, WT
 }
-
-/**
- * Please don't use unless absolutely needed.
- * The code in this context can only perform purely UI operations,
- * it shouldn't access any PSI, VFS, or project model.
- *
- * @return a special dispatching context that's equivalent to using no modality state at all in invokeLater.
- */
-fun uiContext(): ContinuationInterceptor = AppUIExecutor.onUiThread(ModalityState.any()).later().coroutineDispatchingContext()
