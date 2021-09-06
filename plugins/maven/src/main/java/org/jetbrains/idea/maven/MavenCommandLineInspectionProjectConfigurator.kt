@@ -50,8 +50,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
       }
     }
 
-    val mavenProjectsTree = mavenProjectsManager.projectsTreeForTests
-    for (mavenProject in mavenProjectsTree.projects) {
+    for (mavenProject in mavenProjectsManager.projects) {
       val hasReadingProblems = mavenProject.hasReadingProblems()
       if (hasReadingProblems) {
         throw IllegalStateException("Maven project ${mavenProject.name} has import problems:" + mavenProject.problems)
