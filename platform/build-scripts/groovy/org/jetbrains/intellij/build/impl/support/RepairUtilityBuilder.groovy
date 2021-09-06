@@ -101,7 +101,7 @@ class RepairUtilityBuilder {
   }
 
   private static Path repairUtilityProjectHome(BuildContext buildContext) {
-    Path projectHome = buildContext.paths.projectHomeDir.resolve('build/support/repair-utility')
+    Path projectHome = buildContext.paths.communityHomeDir.parent.resolve('build/support/repair-utility')
     if (!Files.exists(projectHome)) {
       buildContext.messages.warning("$projectHome doesn't exist")
       projectHome = null
