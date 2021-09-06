@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.*;
 
@@ -73,8 +73,9 @@ public abstract class ConfigurationFactory {
    * you may use any unique ID; if a new {@link ConfigurationType} has a single {@link ConfigurationFactory}, use {@link SimpleConfigurationType} instead.
    */
   public @NotNull @NonNls String getId() {
-    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getId",
-      "The default implementation delegates to 'getName' which may be localized but return value of this method must not depend on current localization.");
+    PluginException.reportDeprecatedDefault(
+      getClass(), "getId",
+      "The default implementation delegates to 'getName' which may be localized, but return value of this method must not depend on current localization.");
     return getName();
   }
 
