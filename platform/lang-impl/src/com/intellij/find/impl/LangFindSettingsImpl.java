@@ -42,7 +42,7 @@ final class LangFindSettingsImpl extends FindSettingsImpl {
     }
 
     for (String ext : ArrayUtil.reverseArray(ArrayUtil.toStringArray(extensions))) {
-      recentFileMasks.add("*." + ext);
+      FindInProjectSettingsBase.addRecentStringToList("*." + ext, recentFileMasks);
     }
   }
 

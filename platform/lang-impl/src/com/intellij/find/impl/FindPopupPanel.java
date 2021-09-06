@@ -1070,12 +1070,14 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       myCbFileFilter.putClientProperty("dontRequestFocus", null);
     }
     myFileMaskField.removeAllItems();
-    @NlsSafe String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
+    FindSettings findSettings = FindSettings.getInstance();
+    @NlsSafe String[] fileMasks = findSettings.getRecentFileMasks();
     for (int i = fileMasks.length - 1; i >= 0; i--) {
       myFileMaskField.addItem(fileMasks[i]);
     }
     if (fileMasks.length > 0) {
-      myFileMaskField.setSelectedItem(fileMasks[0]);
+      String fileMask = findSettings.getFileMask();
+      myFileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[0]);
     }
     myFileMaskField.setEnabled(isThereFileFilter);
     String toSearch = myModel.getStringToFind();
