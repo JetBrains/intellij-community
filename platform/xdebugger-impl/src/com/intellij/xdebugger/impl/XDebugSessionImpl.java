@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -58,6 +59,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance(XDebugSessionImpl.class);
@@ -80,7 +82,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private @Nls final String mySessionName;
   private @Nullable XDebugSessionTab mySessionTab;
   private @NotNull final XDebugSessionData mySessionData;
-  private XBreakpoint<?> myActiveNonLineBreakpoint;
+  private final AtomicReference<Pair<XBreakpoint<?>, XSourcePosition>> myActiveNonLineBreakpoint = new AtomicReference<>();
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private final Project myProject;
   private final @Nullable ExecutionEnvironment myEnvironment;
@@ -666,12 +668,13 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public XBreakpoint<?> getActiveNonLineBreakpoint() {
-    if (myActiveNonLineBreakpoint != null) {
-      XSourcePosition breakpointPosition = myActiveNonLineBreakpoint.getSourcePosition();
+    Pair<XBreakpoint<?>, XSourcePosition> pair = myActiveNonLineBreakpoint.get();
+    if (pair != null) {
+      XSourcePosition breakpointPosition = pair.getSecond();
       XSourcePosition position = getTopFramePosition();
       if (breakpointPosition == null ||
           (position != null && !(breakpointPosition.getFile().equals(position.getFile()) && breakpointPosition.getLine() == position.getLine()))) {
-        return myActiveNonLineBreakpoint;
+        return pair.getFirst();
       }
     }
     return null;
@@ -773,8 +776,13 @@ public final class XDebugSessionImpl implements XDebugSession {
       .createNotification(XDebuggerBundle.message("xdebugger.breakpoint.reached"), MessageType.INFO)
       .notify(getProject());
 
-    myActiveNonLineBreakpoint =
-      (!(breakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)breakpoint).getType().canBeHitInOtherPlaces()) ? breakpoint : null;
+    if (!(breakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)breakpoint).getType().canBeHitInOtherPlaces()) {
+      // precompute source position for faster access later
+      myActiveNonLineBreakpoint.set(Pair.create(breakpoint, breakpoint.getSourcePosition()));
+    }
+    else {
+      myActiveNonLineBreakpoint.set(null);
+    }
 
     // set this session active on breakpoint, update execution position will be called inside positionReached
     myDebuggerManager.setCurrentSession(this);
@@ -1047,7 +1055,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public void clearActiveNonLineBreakpoint(boolean updateExecutionPointIcon) {
-    myActiveNonLineBreakpoint = null;
+    myActiveNonLineBreakpoint.set(null);
     if (updateExecutionPointIcon) {
       myDebuggerManager.updateExecutionPoint(getPositionIconRenderer(isTopFrameSelected()));
     }
