@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,6 @@ final class DocumentationHtmlFactory extends JBHtmlEditorKit.JBHtmlFactory {
 
   DocumentationHtmlFactory(@NotNull Component referenceComponent) {
     myReferenceComponent = referenceComponent;
-    setAdditionalIconResolver(DocumentationHtmlFactory::moduleIcon);
   }
 
   @Override
@@ -32,8 +32,19 @@ final class DocumentationHtmlFactory extends JBHtmlEditorKit.JBHtmlFactory {
     return view;
   }
 
+  @Override
+  protected @Nullable Icon getIcon(@NotNull String src) {
+    Icon icon = moduleIcon(src);
+    if (icon != null) {
+      return icon;
+    }
+    return super.getIcon(src);
+  }
+
   private static @Nullable Icon moduleIcon(@NotNull String src) {
     ModuleType<?> moduleType = ModuleTypeManager.getInstance().findByID(src);
-    return moduleType == null ? null : moduleType.getIcon();
+    return moduleType == null || moduleType instanceof UnknownModuleType
+           ? null
+           : moduleType.getIcon();
   }
 }
