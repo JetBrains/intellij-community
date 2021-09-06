@@ -7,7 +7,6 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -20,11 +19,7 @@ final class DocumentationScrollPane extends JBScrollPane {
   DocumentationScrollPane() {
     super(VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
     setBorder(JBUI.Borders.empty());
-  }
-
-  @Override
-  public Border getViewportBorder() {
-    return null;
+    setViewportBorder(null);
   }
 
   static @NotNull Map<KeyStroke, ActionListener> keyboardActions(@NotNull JScrollPane target) {
