@@ -866,7 +866,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       String title = occurrencesInfo.myChainMethodName != null && occurrences.length == 1
                      ? JavaRefactoringBundle.message("replace.lambda.chain.detected")
                      : RefactoringBundle.message("replace.multiple.occurrences.found");
-      OccurrencesChooser.<PsiExpression>simpleChooser(editor).showChooser(callback, occurrencesMap, title);
+      new OccurrencesChooser<PsiExpression>(editor) {
+        @Override
+        protected TextRange getOccurrenceRange(PsiExpression occurrence) {
+          RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
+          if (rangeMarker != null) {
+            return new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+          }
+          return occurrence.getTextRange();
+        }
+      }.showChooser(callback, occurrencesMap, title);
     }
     return callback.wasSucceed;
   }
