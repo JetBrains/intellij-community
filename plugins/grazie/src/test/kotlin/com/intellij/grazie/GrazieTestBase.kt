@@ -6,6 +6,7 @@ import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.filterFor
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
@@ -63,7 +64,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     return texts.flatMap { myFixture.configureByText("${it.hashCode()}.txt", it).filterFor<PsiPlainText>() }
   }
 
-  fun check(tokens: Collection<PsiElement>): List<LanguageToolChecker.Problem> {
+  fun check(tokens: Collection<PsiElement>): List<TextProblem> {
     return tokens.flatMap {
       val text = TextExtractor.findTextAt(it, TextContent.TextDomain.ALL)
       if (text == null) emptyList() else LanguageToolChecker.checkText(text)

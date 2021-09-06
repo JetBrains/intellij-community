@@ -40,7 +40,7 @@ class LanguageToolChecker : TextChecker() {
     return warnings.filterNot { extracted.hasUnknownFragmentsIn(it.patternRange) }
   }
 
-  class Problem(private val match: RuleMatch, lang: Lang, text: TextContent)
+  private class Problem(private val match: RuleMatch, lang: Lang, text: TextContent)
     : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
 
     override fun getShortMessage(): String =
@@ -88,14 +88,14 @@ class LanguageToolChecker : TextChecker() {
     }
 
     @VisibleForTesting
-    fun checkText(text: TextContent): List<Problem> {
+    fun checkText(text: TextContent): List<TextProblem> {
       val str = text.toString()
       if (str.isBlank()) return emptyList()
 
       val lang = LangDetector.getLang(str) ?: return emptyList()
 
       return try {
-        ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+        ClassLoaderUtil.computeWithClassLoader<List<TextProblem>, Throwable>(GraziePlugin.classLoader) {
           val tool = LangTool.getTool(lang)
           val sentences = tool.sentenceTokenize(str)
           if (sentences.any { it.length > 1000 }) emptyList()
