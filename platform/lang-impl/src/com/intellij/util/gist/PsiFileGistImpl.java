@@ -69,13 +69,13 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
     if (shouldUseMemoryStorage(file)) {
       return CachedValuesManager.getManager(file.getProject()).getCachedValue(
         file, myCacheKey, () -> {
-          Data data = myCalculator.calcData(file.getProject(), file.getViewProvider().getVirtualFile());
+          Data data = myCalculator.calcData(file.getProject(), getVirtualFile(file));
           return CachedValueProvider.Result.create(data, file, ourReindexTracker);
         }, false);
     }
 
     file.putUserData(myCacheKey, null);
-    return myPersistence.getFileData(file.getProject(), file.getVirtualFile());
+    return myPersistence.getFileData(file.getProject(), getVirtualFile(file));
   }
 
   @Override
@@ -90,11 +90,15 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   }
 
   private static boolean shouldUseMemoryStorage(PsiFile file) {
-    if (!(file.getVirtualFile() instanceof NewVirtualFile)) return true;
+    if (!(getVirtualFile(file) instanceof NewVirtualFile)) return true;
 
     PsiDocumentManager pdm = PsiDocumentManager.getInstance(file.getProject());
     Document document = pdm.getCachedDocument(file);
     return document != null && (pdm.isUncommited(document) || FileDocumentManager.getInstance().isDocumentUnsaved(document));
+  }
+
+  private static @NotNull VirtualFile getVirtualFile(@NotNull PsiFile file) {
+    return file.getViewProvider().getVirtualFile();
   }
 
   private static PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
