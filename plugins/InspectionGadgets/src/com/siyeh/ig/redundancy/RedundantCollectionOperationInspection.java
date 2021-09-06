@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -512,7 +513,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
         }
         PsiCodeBlock block = PsiTreeUtil.getParentOfType(localVariable, PsiCodeBlock.class);
         List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(localVariable, block);
-        if (!references.isEmpty() && references.stream().allMatch(RedundantAsListForIterationHandler::isAllowedContext)) {
+        if (!references.isEmpty() && ContainerUtil.and(references, RedundantAsListForIterationHandler::isAllowedContext)) {
           return new RedundantAsListForIterationHandler();
         }
       }
