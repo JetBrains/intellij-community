@@ -44,10 +44,7 @@ import training.ui.LearningUiManager
 import training.ui.LearningUiUtil
 import training.ui.UISettings
 import training.util.learningToolWindow
-import java.awt.Component
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.Window
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.lang.reflect.Modifier
@@ -57,8 +54,10 @@ import javax.swing.JList
 import javax.swing.KeyStroke
 
 object LessonUtil {
-  val productName: String
-    get() = ApplicationNamesInfo.getInstance().fullProductName
+  val productName: String get() {
+    val name = ApplicationNamesInfo.getInstance().fullProductName
+    return if (name == "DataSpell") "JetBrains DataSpell" else name
+    }
 
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManager.getInstance(project)
@@ -211,12 +210,19 @@ object LessonUtil {
     return x != 0
   }
 
-  fun LessonContext.highlightBreakpointGutter(logicalPosition: () -> LogicalPosition) {
+
+  val breakpointXRange: (width: Int) -> IntRange = { IntRange(20, it - 27) }
+
+  fun LessonContext.highlightBreakpointGutter(xRange: (width: Int) -> IntRange = breakpointXRange,
+                                              logicalPosition: () -> LogicalPosition
+
+  ) {
     task {
       triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
-        return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
+        val range = xRange(ui.width)
+        return@l Rectangle(range.first, y, range.last - range.first + 1, editor.lineHeight)
       }
     }
   }
@@ -277,6 +283,18 @@ object LessonUtil {
       else -> return false
     }
     return true
+  }
+
+  inline fun<reified T: Component> findUiParent(start: Component, predicate: (Component) -> Boolean): T? {
+    if (start is T && predicate(start)) return start
+    var ui: Container? = start.parent
+    while (ui != null) {
+      if (ui is T && predicate(ui)) {
+        return ui
+      }
+      ui = ui.parent
+    }
+    return null
   }
 }
 
@@ -385,7 +403,7 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
     }
     ApplicationManager.getApplication().executeOnPooledThread {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, ActionButton::class.java, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
           ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
         }
       taskInvokeLater {
@@ -423,7 +441,7 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
     if (clearPreviousHighlights) LearningUiHighlightingManager.clearHighlights()
     invokeInBackground {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, componentClass, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(project, componentClass, seconds01) { ui ->
           finderFunction(ui)
         }
 

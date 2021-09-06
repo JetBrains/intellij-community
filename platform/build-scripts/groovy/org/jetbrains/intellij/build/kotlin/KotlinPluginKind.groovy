@@ -60,7 +60,7 @@ enum KotlinPluginKind {
   }
 
   KotlinPluginKind(String name, String versionPropertyName) {
-    this(name + ".zip", "kotlin.idea", "community/plugins/kotlin/resources-descriptors",
+    this(name + ".zip", "kotlin.plugin", "community/plugins/kotlin/plugin/resources",
          [Couple.of("${name}_zip/${name}.zip" as String, "kotlin-plugin-${getVersionFromProperty(versionPropertyName)}.zip" as String)],
          versionPropertyName
     )

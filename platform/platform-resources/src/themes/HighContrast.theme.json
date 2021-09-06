@@ -271,7 +271,7 @@
 
     "PopupMenu": {
       "borderWidth": 1,
-      "borderInsets": "4,1,4,1"
+      "borderInsets": "8,1,8,1"
     },
 
     "ProgressBar": {

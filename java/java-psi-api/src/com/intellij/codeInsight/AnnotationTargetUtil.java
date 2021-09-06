@@ -8,6 +8,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -225,7 +226,10 @@ public final class AnnotationTargetUtil {
    * @param annotation the qualified name of the annotation to add
    * @return a target annotation owner to add the annotation (either modifier list or type element depending on the annotation target)
    * Returns null if {@code modifierListOwner.getModifierList()} is null.
+   * <p>The method should be called under read action
+   * and the caller should be prepared for {@link com.intellij.openapi.project.IndexNotReadyException}.
    */
+  @Contract(pure = true)
   public static @Nullable PsiAnnotationOwner getTarget(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String annotation) {
     PsiModifierList list = modifierListOwner.getModifierList();
     if (list == null) return null;

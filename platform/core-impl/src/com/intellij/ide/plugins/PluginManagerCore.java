@@ -5,7 +5,9 @@ import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.*;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -337,7 +339,14 @@ public final class PluginManagerCore {
   }
 
   public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
-    return isDevelopedByJetBrains(plugin.getVendor()) || isDevelopedByJetBrains(plugin.getOrganization());
+    String vendor = plugin.getVendor();
+    if (vendor == null &&
+        !(plugin.getPluginClassLoader() instanceof PluginClassLoader) &&
+        plugin instanceof IdeaPluginDescriptorImpl && !((IdeaPluginDescriptorImpl)plugin).isUseIdeaClassLoader &&
+        ApplicationInfoEx.getInstanceEx().isVendorJetBrains()) {
+      return true;
+    }
+    return isDevelopedByJetBrains(vendor) || isDevelopedByJetBrains(vendor);
   }
 
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {

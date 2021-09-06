@@ -3,6 +3,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ public final class LangDataValidators extends DataValidators {
     registry.register(LangDataKeys.PSI_ELEMENT_ARRAY, arrayValidator(psiValidator));
 
     Validator<Module> moduleValidator = (data, dataId, source) -> !data.isDisposed();
-    registry.register(LangDataKeys.MODULE, moduleValidator);
+    registry.register(PlatformCoreDataKeys.MODULE, moduleValidator);
     registry.register(LangDataKeys.MODULE_CONTEXT, moduleValidator);
     registry.register(LangDataKeys.MODULE_CONTEXT_ARRAY, arrayValidator(moduleValidator));
   }

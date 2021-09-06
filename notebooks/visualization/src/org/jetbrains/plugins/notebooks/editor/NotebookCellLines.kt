@@ -32,10 +32,18 @@ interface NotebookCellLines {
     override fun compareTo(other: Marker): Int = offset - other.offset
   }
 
+  enum class MarkersAtLines(val hasTopLine: Boolean, val hasBottomLine: Boolean) {
+    NO(false, false),
+    TOP(true, false),
+    BOTTOM(false, true),
+    TOP_AND_BOTTOM(true, true)
+  }
+
   data class Interval(
     val ordinal: Int,
     val type: CellType,
-    val lines: IntRange
+    val lines: IntRange,
+    val markers: MarkersAtLines,
   ) : Comparable<Interval> {
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
   }
@@ -66,8 +74,6 @@ interface NotebookCellLines {
 
   fun getIterator(interval: Interval): ListIterator<Interval>
 
-  fun markersIterator(startOffset: Int = 0): ListIterator<Marker>
-
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
 
   val intervalsCount: Int
@@ -80,6 +86,9 @@ interface NotebookCellLines {
     fun get(editor: Editor): NotebookCellLines =
       editor.notebookCellLinesProvider?.create(editor.document)
       ?: error("Can't get for $editor with document ${editor.document}")
+
+    fun hasSupport(editor: Editor): Boolean =
+      editor.notebookCellLinesProvider != null
 
     /** It's uneasy to change a registry value inside tests. */   // TODO Lies! See SshX11ForwardingTest.
     @TestOnly

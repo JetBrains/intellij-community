@@ -101,7 +101,7 @@ public final class RunContentBuilder extends RunTab {
 
         @Override
         public @NotNull List<AnAction> getContentActions() {
-          return List.of(myUi.getOptions().getLayoutActions(), PinToolwindowTabAction.getPinAction());
+          return List.of(myUi.getOptions().getLayoutActions());
         }
       };
       if (myUi instanceof RunnerLayoutUiImpl) {

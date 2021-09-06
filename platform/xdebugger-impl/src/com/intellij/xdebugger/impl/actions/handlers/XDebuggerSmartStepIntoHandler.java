@@ -124,7 +124,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                                                XSourcePosition position,
                                                                final XDebugSession session,
                                                                Editor editor) {
-    if (Registry.is("debugger.smart.step.inplace") && variants.stream().allMatch(v -> v.getHighlightRange() != null)) {
+    if (Registry.is("debugger.smart.step.inplace") && ContainerUtil.and(variants, v -> v.getHighlightRange() != null)) {
       try {
         inplaceChoose(handler, variants, session, editor);
         return;

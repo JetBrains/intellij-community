@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.impl;
 
@@ -617,7 +617,7 @@ public final class FindInProjectUtil {
   public static void initFileFilter(@NotNull final JComboBox<? super String> fileFilter, @NotNull final JCheckBox useFileFilter) {
     fileFilter.setEditable(true);
     String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
-    for(int i=fileMasks.length-1; i >= 0; i--) {
+    for (int i = fileMasks.length - 1; i >= 0; i--) {
       fileFilter.addItem(fileMasks[i]);
     }
     fileFilter.setEnabled(false);

@@ -13,10 +13,8 @@ import com.intellij.util.containers.ContainerUtil
  * calculates all markers and intervals from scratch for each document update
  */
 class NonIncrementalCellLines private constructor(private val document: Document,
-                                                  private val cellLinesLexer: NotebookCellLinesLexer,
-                                                  private val intervalsGenerator: (Document, List<NotebookCellLines.Marker>) -> List<NotebookCellLines.Interval>) : NotebookCellLines {
+                                                  private val intervalsGenerator: (Document) -> List<NotebookCellLines.Interval>) : NotebookCellLines {
 
-  private var markers: List<NotebookCellLines.Marker> = emptyList()
   private var intervals: List<NotebookCellLines.Interval> = emptyList()
   private val documentListener = createDocumentListener()
   override val intervalListeners = EventDispatcher.create(NotebookCellLines.IntervalListener::class.java)
@@ -46,15 +44,8 @@ class NonIncrementalCellLines private constructor(private val document: Document
     return intervals.listIterator(ordinal)
   }
 
-  override fun markersIterator(startOffset: Int): ListIterator<NotebookCellLines.Marker> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    val ordinal = markers.find { startOffset == it.offset || startOffset < it.offset + it.length }?.ordinal ?: markers.size
-    return markers.listIterator(ordinal)
-  }
-
   private fun updateIntervalsAndMarkers() {
-    markers = cellLinesLexer.markerSequence(document.charsSequence, 0, 0).toList()
-    intervals = intervalsGenerator(document, markers)
+    intervals = intervalsGenerator(document)
   }
 
   private fun notifyChanged(oldCells: List<NotebookCellLines.Interval>,
@@ -103,10 +94,9 @@ class NonIncrementalCellLines private constructor(private val document: Document
   companion object {
     private val map = ContainerUtil.createConcurrentWeakMap<Document, NotebookCellLines>()
 
-    fun get(document: Document, lexerProvider: NotebookCellLinesLexer,
-            intervalsGenerator: (Document, List<NotebookCellLines.Marker>) -> List<NotebookCellLines.Interval>): NotebookCellLines =
+    fun get(document: Document, intervalsGenerator: (Document) -> List<NotebookCellLines.Interval>): NotebookCellLines =
       map.computeIfAbsent(document) {
-        NonIncrementalCellLines(document, lexerProvider, intervalsGenerator)
+        NonIncrementalCellLines(document, intervalsGenerator)
       }
   }
 }
@@ -124,8 +114,17 @@ private fun getAffectedCells(intervals: List<NotebookCellLines.Interval>,
     if (document.getLineEndOffset(line) == textRange.startOffset) line + 1 else line
   }
 
-  val endLine = document.getLineNumber(textRange.endOffset).let { line ->
-    if (document.getLineStartOffset(line) == textRange.endOffset) line - 1 else line
+  val endLine = run {
+    val line = document.getLineNumber(textRange.endOffset)
+    val isAtStartOfLine = document.getLineStartOffset(line) == textRange.endOffset
+    // for example: "CELL2" => "cell1\nCELL2"
+    // CELL2 wasn't modified, but textRange.endOffset = 6 and getLineNumber(6) == 1.
+    // so line number should be decreased by 1
+    val isAtTheDocumentEnd = document.textLength == textRange.endOffset
+    // RMarkdown may contain empty md cell after last \n symbol.
+    // for example, "```{r}\ncode\n```\n" has code cell at lines 0..2 and empty markdown cell at line 3
+    // empty cell has text length==0 and should be marked as affected cell - it begins and ends at textRange.endOffset
+    if (isAtStartOfLine && !isAtTheDocumentEnd) line - 1 else line
   }
 
   return intervals.dropWhile {

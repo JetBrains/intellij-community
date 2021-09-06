@@ -1,6 +1,6 @@
 import datetime
 from _typeshed.wsgi import StartResponse, WSGIEnvironment
-from typing import Any, Dict, Iterable, List, NoReturn, Optional, Protocol, Text, Tuple, Type, Union
+from typing import Any, Iterable, NoReturn, Protocol, Text, Tuple, Type
 
 from werkzeug.wrappers import Response
 
@@ -9,21 +9,21 @@ class _EnvironContainer(Protocol):
     def environ(self) -> WSGIEnvironment: ...
 
 class HTTPException(Exception):
-    code: Optional[int]
-    description: Optional[Text]
-    response: Optional[Response]
-    def __init__(self, description: Optional[Text] = ..., response: Optional[Response] = ...) -> None: ...
+    code: int | None
+    description: Text | None
+    response: Response | None
+    def __init__(self, description: Text | None = ..., response: Response | None = ...) -> None: ...
     @classmethod
-    def wrap(cls, exception: Type[Exception], name: Optional[str] = ...) -> Any: ...
+    def wrap(cls, exception: Type[Exception], name: str | None = ...) -> Any: ...
     @property
     def name(self) -> str: ...
-    def get_description(self, environ: Optional[WSGIEnvironment] = ...) -> Text: ...
-    def get_body(self, environ: Optional[WSGIEnvironment] = ...) -> Text: ...
-    def get_headers(self, environ: Optional[WSGIEnvironment] = ...) -> List[Tuple[str, str]]: ...
-    def get_response(self, environ: Optional[Union[WSGIEnvironment, _EnvironContainer]] = ...) -> Response: ...
+    def get_description(self, environ: WSGIEnvironment | None = ...) -> Text: ...
+    def get_body(self, environ: WSGIEnvironment | None = ...) -> Text: ...
+    def get_headers(self, environ: WSGIEnvironment | None = ...) -> list[Tuple[str, str]]: ...
+    def get_response(self, environ: WSGIEnvironment | _EnvironContainer | None = ...) -> Response: ...
     def __call__(self, environ: WSGIEnvironment, start_response: StartResponse) -> Iterable[bytes]: ...
 
-default_exceptions: Dict[int, Type[HTTPException]]
+default_exceptions: dict[int, Type[HTTPException]]
 
 class BadRequest(HTTPException):
     code: int
@@ -36,12 +36,12 @@ class BadHost(BadRequest): ...
 class Unauthorized(HTTPException):
     code: int
     description: Text
-    www_authenticate: Optional[Iterable[object]]
+    www_authenticate: Iterable[object] | None
     def __init__(
         self,
-        description: Optional[Text] = ...,
-        response: Optional[Response] = ...,
-        www_authenticate: Union[None, Tuple[object, ...], List[object], object] = ...,
+        description: Text | None = ...,
+        response: Response | None = ...,
+        www_authenticate: None | Tuple[object, ...] | list[object] | object = ...,
     ) -> None: ...
 
 class Forbidden(HTTPException):
@@ -56,7 +56,7 @@ class MethodNotAllowed(HTTPException):
     code: int
     description: Text
     valid_methods: Any
-    def __init__(self, valid_methods: Optional[Any] = ..., description: Optional[Any] = ...): ...
+    def __init__(self, valid_methods: Any | None = ..., description: Any | None = ...): ...
 
 class NotAcceptable(HTTPException):
     code: int
@@ -99,7 +99,7 @@ class RequestedRangeNotSatisfiable(HTTPException):
     description: Text
     length: Any
     units: str
-    def __init__(self, length: Optional[Any] = ..., units: str = ..., description: Optional[Any] = ...): ...
+    def __init__(self, length: Any | None = ..., units: str = ..., description: Any | None = ...): ...
 
 class ExpectationFailed(HTTPException):
     code: int
@@ -126,12 +126,9 @@ class PreconditionRequired(HTTPException):
     description: Text
 
 class _RetryAfter(HTTPException):
-    retry_after: Union[None, int, datetime.datetime]
+    retry_after: None | int | datetime.datetime
     def __init__(
-        self,
-        description: Optional[Text] = ...,
-        response: Optional[Response] = ...,
-        retry_after: Union[None, int, datetime.datetime] = ...,
+        self, description: Text | None = ..., response: Response | None = ..., retry_after: None | int | datetime.datetime = ...
     ) -> None: ...
 
 class TooManyRequests(_RetryAfter):
@@ -148,7 +145,7 @@ class UnavailableForLegalReasons(HTTPException):
 
 class InternalServerError(HTTPException):
     def __init__(
-        self, description: Optional[Text] = ..., response: Optional[Response] = ..., original_exception: Optional[Exception] = ...
+        self, description: Text | None = ..., response: Response | None = ..., original_exception: Exception | None = ...
     ) -> None: ...
     code: int
     description: Text
@@ -175,9 +172,9 @@ class HTTPVersionNotSupported(HTTPException):
 
 class Aborter:
     mapping: Any
-    def __init__(self, mapping: Optional[Any] = ..., extra: Optional[Any] = ...) -> None: ...
-    def __call__(self, code: Union[int, Response], *args: Any, **kwargs: Any) -> NoReturn: ...
+    def __init__(self, mapping: Any | None = ..., extra: Any | None = ...) -> None: ...
+    def __call__(self, code: int | Response, *args: Any, **kwargs: Any) -> NoReturn: ...
 
-def abort(status: Union[int, Response], *args: Any, **kwargs: Any) -> NoReturn: ...
+def abort(status: int | Response, *args: Any, **kwargs: Any) -> NoReturn: ...
 
 class BadRequestKeyError(BadRequest, KeyError): ...

@@ -32,10 +32,8 @@ import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.types.KotlinType
@@ -258,6 +256,24 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
 
         private val UNRESOLVED_KEY = Key<Unit>("KotlinHighlightVisitor.UNRESOLVED_KEY")
 
+        private val DO_NOT_HIGHLIGHT_KEY = Key<Unit>("DO_NOT_HIGHLIGHT_KEY")
+
+        @JvmStatic
+        fun KtElement.suppressHighlight() {
+            putUserData(DO_NOT_HIGHLIGHT_KEY, Unit)
+            forEachDescendantOfType<KtElement> {
+                it.putUserData(DO_NOT_HIGHLIGHT_KEY, Unit)
+            }
+        }
+
+        @JvmStatic
+        fun KtElement.unsuppressHighlight() {
+            putUserData(DO_NOT_HIGHLIGHT_KEY, null)
+            forEachDescendantOfType<KtElement> {
+                it.putUserData(DO_NOT_HIGHLIGHT_KEY, null)
+            }
+        }
+
         fun getAfterAnalysisVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) = arrayOf(
             PropertiesHighlightingVisitor(holder, bindingContext),
             FunctionsHighlightingVisitor(holder, bindingContext),
@@ -285,6 +301,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             calculatingInProgress: Boolean = false
         ) {
             if (diagnostics.isEmpty()) return
+            element.getUserData(DO_NOT_HIGHLIGHT_KEY)?.let { return }
 
             assertBelongsToTheSameElement(element, diagnostics)
 

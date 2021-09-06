@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AnnotationPresentationInfo(
     val ranges: List<TextRange>,
@@ -74,11 +76,16 @@ class AnnotationPresentationInfo(
             QuickFixAction.registerQuickFixAction(info, it, keyForSuppressOptions)
         }
 
-        if (diagnostic.severity == Severity.WARNING) {
-            if (fixes.isEmpty()) {
-                // if there are no quick fixes we need to register an EmptyIntentionAction to enable 'suppress' actions
-                QuickFixAction.registerQuickFixAction(info, EmptyIntentionAction(diagnostic.factory.name), keyForSuppressOptions)
-            }
+        if (diagnostic.severity == Severity.WARNING && fixes.isEmpty()) {
+            info.registerFix(
+                EmptyIntentionAction(diagnostic.factory.name),
+                info.problemGroup.safeAs<SuppressableProblemGroup>()?.let { group ->
+                    group.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
+                },
+                KotlinIdeaAnalysisBundle.message("kotlin.suppress.options"),
+                null,
+                keyForSuppressOptions
+            )
         }
     }
 

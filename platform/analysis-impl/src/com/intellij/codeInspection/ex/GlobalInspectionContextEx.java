@@ -192,7 +192,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
           try {
             if (presentation instanceof AggregateResultsExporter) {
               presentation.updateContent();
-              if (presentation.hasReportedProblems()) {
+              if (presentation.hasReportedProblems().toBoolean()) {
                 toolsWithResultsToAggregate.add(sameTools);
                 break;
               }
@@ -202,7 +202,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
             }
             else {
               presentation.updateContent();
-              if (presentation.hasReportedProblems()) {
+              if (presentation.hasReportedProblems().toBoolean()) {
                 globalToolsWithProblems.add(sameTools);
                 LOG.assertTrue(!hasProblems, toolName);
                 break;

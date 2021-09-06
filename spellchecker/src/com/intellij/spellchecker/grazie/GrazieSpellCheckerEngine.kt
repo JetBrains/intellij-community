@@ -1,19 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.grazie
 
-import com.intellij.grazie.speller.GrazieSpeller
-import com.intellij.grazie.speller.GrazieSplittingSpeller
-import com.intellij.grazie.speller.Speller
-import com.intellij.grazie.speller.dictionary.Dictionary.Aggregated
-import com.intellij.grazie.speller.dictionary.transformation.TransformedDictionary
-import com.intellij.grazie.speller.dictionary.transformation.TransformingDictionary
-import com.intellij.grazie.speller.dictionary.transformation.WordTransformation
-import com.intellij.grazie.speller.language.English
-import com.intellij.grazie.speller.suggestion.filter.ChainSuggestionFilter
-import com.intellij.grazie.speller.suggestion.filter.feature.CasingSuggestionFilter
-import com.intellij.grazie.speller.suggestion.filter.feature.ListSuggestionFilter
-import com.intellij.grazie.speller.utils.DictionaryResources
-import com.intellij.grazie.speller.utils.spitter.CamelCaseSplitter
+import ai.grazie.spell.GrazieSpeller
+import ai.grazie.spell.GrazieSplittingSpeller
+import ai.grazie.spell.language.English
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.spellchecker.dictionary.Dictionary
@@ -23,8 +13,9 @@ import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.Transformation
 import com.intellij.spellchecker.grazie.async.GrazieAsyncSpeller
 import com.intellij.spellchecker.grazie.async.WordListLoader
+import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
-import java.util.*
+import com.intellij.util.containers.SLRUCache
 
 internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
   override fun getTransformation(): Transformation = Transformation()
@@ -33,34 +24,23 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
 
   private val adapter = WordListAdapter()
 
-  private val transformation = WordTransformation.LowerCase(Locale.ENGLISH)
-
-  private val mySpeller: Speller = GrazieAsyncSpeller(project) {
+  private val mySpeller: GrazieAsyncSpeller = GrazieAsyncSpeller(project) {
     GrazieSplittingSpeller(
       GrazieSpeller(
         GrazieSpeller.UserConfig(
-          dictionaries = GrazieSpeller.UserConfig.Dictionaries(
-            transformation = transformation,
-            suggested = Aggregated(
-              //transform main dictionary -- add lower-cased versions for misspelled check
-              TransformedDictionary(English.Lists.suggested, transformation),
-              //add splits to support camel-cased words
-              DictionaryResources.getSplitsDictionary(English.Lists.suggested, transformation, CamelCaseSplitter),
-              //Should not be transformed, since it is already in lower case
-              TransformingDictionary(adapter, transformation)
-            ),
-            splitter = CamelCaseSplitter
-          ),
-          model = GrazieSpeller.UserConfig.Model(
-            filter = ChainSuggestionFilter(
-              ListSuggestionFilter(English.Lists.excluded),
-              CasingSuggestionFilter(Locale.ENGLISH, 1)
-            )
+          GrazieSpeller.UserConfig.Dictionary(
+            dictionary = ExtendedWordListWithFrequency(English.hunspell, adapter),
+            isAlien = { word -> English.isAlien(word) && adapter.isAlien(word) }
           )
         )
       ),
-      GrazieSplittingSpeller.UserConfig(splitter = CamelCaseSplitter)
+      GrazieSplittingSpeller.UserConfig()
     )
+  }
+
+  private data class SuggestionsRequest(val word: String, val maxSuggestions: Int)
+  private val suggestionsCache = SLRUCache.create<SuggestionsRequest, List<String>>(1024, 1024) { request ->
+    mySpeller.suggest(request.word, request.maxSuggestions).take(request.maxSuggestions)
   }
 
   override fun isDictionaryLoad(name: String) = adapter.containsSource(name)
@@ -82,11 +62,17 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
   override fun isCorrect(word: String): Boolean {
     if (mySpeller.isAlien(word)) return true
 
-    return mySpeller.isMisspelled(word).not()
+    return mySpeller.isMisspelled(word, false).not()
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
-    return mySpeller.suggest(word, maxSuggestions).take(maxSuggestions).toList()
+    if (mySpeller.isCreated) {
+      return synchronized(mySpeller) {
+        suggestionsCache.get(SuggestionsRequest(word, maxSuggestions))
+      }
+    }
+
+    return emptyList()
   }
 
   override fun reset() {

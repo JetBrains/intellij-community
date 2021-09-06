@@ -803,7 +803,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (CommonDataKeys.EDITOR.is(dataId)) {
       return editor;
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
@@ -1578,4 +1578,3 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return getEditor().getDocument().getText();
   }
 }
-

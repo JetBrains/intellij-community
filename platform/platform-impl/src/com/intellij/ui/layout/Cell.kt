@@ -587,7 +587,7 @@ abstract class Cell : BaseBuilder {
         JBPopupFactory.getInstance()
           .createActionGroupPopup(null, DefaultActionGroup(*actions), DataContext { dataId ->
             when (dataId) {
-              PlatformDataKeys.CONTEXT_COMPONENT.name -> label
+              PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> label
               else -> null
             }
           }, true, null, 10)
@@ -671,7 +671,7 @@ abstract class Cell : BaseBuilder {
   }
 }
 
-private fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
+internal fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

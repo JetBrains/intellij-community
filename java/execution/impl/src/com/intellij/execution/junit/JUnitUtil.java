@@ -373,12 +373,14 @@ public final class JUnitUtil {
     return getTestCaseClassOrNull(scope, module.getProject());
   }
 
+  @NotNull
   public static PsiClass getTestCaseClass(final Module module) throws NoJUnitException {
     if (module == null) throw new NoJUnitException();
     final GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, true);
     return getTestCaseClass(scope, module.getProject());
   }
 
+  @NotNull
   public static PsiClass getTestCaseClass(final SourceScope scope) throws NoJUnitException {
     if (scope == null) throw new NoJUnitException();
     return getTestCaseClass(scope.getLibrariesScope(), scope.getProject());
@@ -392,14 +394,15 @@ public final class JUnitUtil {
     }
   }
 
-  private static PsiClass getTestCaseClass(final GlobalSearchScope scope, final Project project) throws NoJUnitException {
+  @NotNull
+  private static PsiClass getTestCaseClass(@NotNull final GlobalSearchScope scope, @NotNull final Project project) throws NoJUnitException {
     PsiClass testCaseClass = getTestCaseClassOrNull(scope, project);
     if (testCaseClass == null) throw new NoJUnitException(scope.getDisplayName());
     return testCaseClass;
   }
 
   @Nullable
-  private static PsiClass getTestCaseClassOrNull(final GlobalSearchScope scope, final Project project) {
+  private static PsiClass getTestCaseClassOrNull(@NotNull final GlobalSearchScope scope, @NotNull final Project project) {
     return JavaPsiFacade.getInstance(project).findClass(TEST_CASE_CLASS, scope);
   }
 

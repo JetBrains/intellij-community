@@ -20,7 +20,8 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
 
     productLayout.mainModules = ["intellij.pycharm.community.main"]
     productLayout.productApiModules = ["intellij.xml.dom"]
-    productLayout.productImplementationModules = NotebookProperties.NOTEBOOK_IMPLEMENTATION_MODULES + [
+    productLayout.productImplementationModules = [
+      "intellij.notebooks.visualization",
       "intellij.xml.dom.impl",
       "intellij.platform.main",
       "intellij.pycharm.community"

@@ -47,12 +47,12 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   }
 
   @Nullable
-  private static String getDoc(PsiElement element, boolean html) {
+  private static @Nls String getDoc(PsiElement element, boolean html) {
     return getMavenElementDescription(element, DescKind.TYPE_NAME_VALUE, html);
   }
 
   @Override
-  public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
+  public @Nls String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
     return getMavenElementDescription(element, location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false);
   }
 

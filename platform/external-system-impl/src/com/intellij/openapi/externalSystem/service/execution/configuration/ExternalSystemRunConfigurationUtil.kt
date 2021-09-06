@@ -7,14 +7,14 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.ui.*
 import com.intellij.ide.macro.MacrosDialog
+import com.intellij.ide.wizard.getCanonicalPath
+import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineField
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionComboBox
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
-import com.intellij.openapi.externalSystem.service.ui.getModelPath
-import com.intellij.openapi.externalSystem.service.ui.getUiPath
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
@@ -274,10 +274,10 @@ fun <C : RunConfigurationBase<*>> createPathFragment(
       }
     },
     pathFragmentInfo.fileChooserDescriptor
-  ) { getUiPath(it.path) },
+  ) { getPresentablePath(it.path) },
   pathFragmentInfo,
-  { getPath()?.let(::getUiPath) },
-  { setPath(it?.let(::getModelPath)) }
+  { getPath()?.let(::getPresentablePath) },
+  { setPath(it?.let(::getCanonicalPath)) }
 )
 
 fun <S, C> createLabeledTextSettingsEditorFragment(

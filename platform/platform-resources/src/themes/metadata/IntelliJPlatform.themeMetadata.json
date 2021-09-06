@@ -977,6 +977,10 @@
       "description": "Inactive tool window header"
     },
     {
+      "key": "ToolWindow.Header.padding",
+      "since": "2021.3"
+    },
+    {
       "key": "ToolWindow.HeaderCloseButton.background"
     },
     {
@@ -1016,6 +1020,14 @@
     {
       "key": "ToolWindow.HeaderTab.underlinedTabInactiveBackground",
       "since": "2019.2"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.padding",
+      "since": "2021.3"
+    },
+    {
+      "key": "ToolWindow.Background",
+      "since": "2021.3"
     },
     {
       "key": "Tooltip.separatorColor",

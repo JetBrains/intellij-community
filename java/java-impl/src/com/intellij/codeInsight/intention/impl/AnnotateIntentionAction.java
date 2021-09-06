@@ -4,12 +4,15 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.externalAnnotation.AnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -21,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +109,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     assert owner != null;
-    ExternalAnnotationsManager.AnnotationPlace place = ExternalAnnotationsManager.getInstance(project).chooseAnnotationsPlaceNoUi(owner);
+    AnnotationPlace place = ExternalAnnotationsManager.getInstance(project).chooseAnnotationsPlaceNoUi(owner);
     if (mySingleAnnotationName != null) {
       getProviderFor(file, owner, mySingleAnnotationName)
         .ifPresent(provider -> provider.createFix(owner, place).invoke(project, editor, file));
@@ -117,7 +121,9 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
       new BaseListPopupStep<>(JavaBundle.message("annotate.intention.chooser.title"), annotations) {
         @Override
         public PopupStep onChosen(final AnnotationProvider selectedValue, final boolean finalChoice) {
-          return doFinalStep(() -> selectedValue.createFix(owner, place).invoke(project, editor, file));
+          return doFinalStep(() -> ReadAction.nonBlocking(() -> selectedValue.createFix(owner, place))
+                .finishOnUiThread(ModalityState.current(), fix -> fix.invoke(project, editor, file))
+                .submit(AppExecutorUtil.getAppExecutorService()));
         }
 
         @Override

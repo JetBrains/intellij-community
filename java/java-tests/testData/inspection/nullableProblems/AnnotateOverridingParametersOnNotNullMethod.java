@@ -8,8 +8,8 @@ interface MakeNonNull {
 class MakeNonNullImpl implements MakeNonNull {
   @NotNull
   @Override
-  public String getSnapshot(Integer <warning descr="Not annotated parameter overrides @NotNull parameter">arg</warning>) {
-    return "1";
+  public String getSnapshot(Integer arg) {
+    return arg.toString();
   }
 }
 

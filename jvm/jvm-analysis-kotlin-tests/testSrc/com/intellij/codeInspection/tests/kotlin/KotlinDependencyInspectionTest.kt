@@ -1,55 +1,41 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.DependencyInspectionTestBase
-import com.intellij.packageDependencies.DependencyRule
-import com.intellij.packageDependencies.DependencyValidationManager
-import com.intellij.psi.search.scope.packageSet.NamedScope
-import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
 class KotlinDependencyInspectionTest : DependencyInspectionTestBase() {
-  override val fileExt: String = "kt"
-
-  override fun setUp() {
-    super.setUp()
-    myFixture.addFileToProject("$clientFileNameImport.kt", """
-      package com.jetbrains.test.client
+  fun `test illegal imported dependency Java API`() = dependencyViolationTest(javaFoo, "ImportClientJava.kt", """
+      package pkg.client
       
-      import <error descr="$errorMessage">com.jetbrains.test.api.Foo</error>
+      import <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'ImportClientJava'.' is violated">pkg.api.JavaFoo</error>
       
       fun main() {
-        <error descr="$errorMessage">Foo()</error>
+        <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'ImportClientJava'.' is violated">JavaFoo()</error>
       }
     """.trimIndent())
-    myFixture.addFileToProject("$clientFileNameFq.kt", """
-      package com.jetbrains.test.client
+
+  fun `test illegal imported dependency Kotlin API`() = dependencyViolationTest(kotlinFoo, "ImportClientKotlin.kt", """
+      package pkg.client
+      
+      import <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'ImportClientKotlin'.' is violated">pkg.api.KotlinFoo</error>
       
       fun main() {
-        <error descr="$errorMessage">com.jetbrains.test.api.Foo()</error>
+        <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'ImportClientKotlin'.' is violated">KotlinFoo()</error>
       }
     """.trimIndent())
-    myFixture.addFileToProject("$apiFileName.kt", """
-      package com.jetbrains.test.api
+
+  fun `test illegal fully qualified dependency Java API`() = dependencyViolationTest(javaFoo, "FqClientJava.kt", """
+      package pkg.client
       
-      class Foo()
+      fun main() {
+        <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'FqClientJava'.' is violated">pkg.api.JavaFoo()</error>
+      }
     """.trimIndent())
-    val importFileScope = NamedScope(clientFileName, PackageSetFactory.getInstance().compile("file:$clientFileNameImport.kt"))
-    val fqFileScope = NamedScope(clientFileName, PackageSetFactory.getInstance().compile("file:$clientFileNameFq.kt"))
-    val libraryScope = NamedScope(apiFileName, PackageSetFactory.getInstance().compile("file:$apiFileName.kt"))
-    DependencyValidationManager.getInstance(project).apply {
-      addRule(DependencyRule(importFileScope, libraryScope, true))
-      addRule(DependencyRule(fqFileScope, libraryScope, true))
-    }
-  }
 
-  fun `test illegal imported dependency`() = testHighlighting(clientFileNameImport)
-
-  fun `test illegal fully qualified dependency`() = testHighlighting(clientFileNameFq)
-
-  companion object {
-    const val clientFileName: String = "ClientFile"
-    const val clientFileNameImport: String = "${clientFileName}Import"
-    const val clientFileNameFq: String = "${clientFileName}Fq"
-    const val apiFileName: String = "ApiFile"
-    const val errorMessage = "Dependency rule 'Deny usages of scope '$apiFileName' in scope '$clientFileName'.' is violated"
-  }
+  fun `test illegal fully qualified dependency Kotlin API`() = dependencyViolationTest(kotlinFoo, "FqClientKotlin.kt", """
+      package pkg.client
+      
+      fun main() {
+        <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'FqClientKotlin'.' is violated">pkg.api.KotlinFoo()</error>
+      }
+    """.trimIndent())
 }

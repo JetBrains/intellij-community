@@ -35,17 +35,12 @@ class NotebookCellLinesImpl private constructor(private val document: Document,
   override var modificationStamp: Long = 0
     private set
 
-  override fun markersIterator(startOffset: Int): ListIterator<Marker> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    return markerCache.listIterator(getMarkerUpperBound(startOffset))
-  }
-
   override fun intervalsIterator(startLine: Int): ListIterator<Interval> {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     var fromIndex =
       if (intervalCache.size < BINARY_SEARCH_THRESHOLD) 0
       else Collections
-        .binarySearch(intervalCache, Interval(-1, CellType.RAW, startLine..startLine))
+        .binarySearch(intervalCache, Interval(-1, CellType.RAW, startLine..startLine, MarkersAtLines.NO))
         .let { if (it < 0) -it - 2 else it - 1 }
         .coerceAtLeast(0)
     while (fromIndex < intervalCache.size && intervalCache[fromIndex].lines.last < startLine) {
@@ -439,5 +434,5 @@ private fun adjustedMarkers(markers: List<Marker>,
 }
 
 private fun markersToInterval(document: Document) = { a: Marker, b: Marker ->
-  Interval(a.ordinal, a.type, document.getLineNumber(a.offset)..document.getLineNumber(max(0, b.offset - 1)))
+  Interval(a.ordinal, a.type, document.getLineNumber(a.offset)..document.getLineNumber(max(0, b.offset - 1)), MarkersAtLines.TOP)
 }

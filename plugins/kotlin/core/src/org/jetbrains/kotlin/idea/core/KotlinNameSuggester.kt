@@ -2,9 +2,16 @@
 
 package org.jetbrains.kotlin.idea.core
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
+import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
+import org.jetbrains.kotlin.idea.util.application.executeInBackgroundWithProgress
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -32,32 +39,41 @@ object KotlinNameSuggester {
         validator: (String) -> Boolean,
         defaultName: String?
     ): Collection<String> {
-        val result = LinkedHashSet<String>()
+        return executeInBackgroundWithProgress(expression.project) {
+            LinkedHashSet<String>().apply {
+                addNamesByExpression(expression, bindingContext, validator)
 
-        result.addNamesByExpression(expression, bindingContext, validator)
+                (type ?: bindingContext?.getType(expression))?.let {
+                    addNamesByType(it, validator)
+                }
 
-        (type ?: bindingContext?.getType(expression))?.let {
-            result.addNamesByType(it, validator)
+                if (isEmpty()) {
+                    addName(defaultName, validator)
+                }
+            }.toList()
         }
-
-        if (result.isEmpty()) {
-            result.addName(defaultName, validator)
-        }
-
-        return result
     }
 
-    fun suggestNamesByType(type: KotlinType, validator: (String) -> Boolean, defaultName: String? = null): List<String> {
-        val result = ArrayList<String>()
-
-        result.addNamesByType(type, validator)
-
-        if (result.isEmpty()) {
-            result.addName(defaultName, validator)
+    fun suggestNamesByType(type: KotlinType, validator: (String) -> Boolean, defaultName: String? = null): List<String> =
+        executeInBackgroundWithProgress(null) {
+            ArrayList<String>().apply {
+                addNamesByType(type, validator)
+                if (isEmpty()) {
+                    ProgressManager.checkCanceled()
+                    addName(defaultName, validator)
+                }
+            }
         }
 
-        return result
-    }
+    private fun executeInBackgroundWithProgress(project: Project?, blockToExecute: () -> List<String>): List<String> =
+        if (isDispatchThread() && !ApplicationManager.getApplication().isWriteAccessAllowed) {
+            executeInBackgroundWithProgress(
+                project,
+                KotlinIdeaCoreBundle.message("progress.title.calculating.names")
+            ) { runReadAction { blockToExecute() } }
+        } else {
+            blockToExecute()
+        }
 
     fun suggestNamesByExpressionOnly(
         expression: KtExpression,

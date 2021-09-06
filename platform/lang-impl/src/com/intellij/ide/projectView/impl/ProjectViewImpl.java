@@ -94,7 +94,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.SLOW_DATA_PROVIDERS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.ui.treeStructure.Tree.MOUSE_PRESSED_NON_FOCUSED;
 
@@ -1262,17 +1261,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public Object getData(@NotNull String dataId) {
       final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
 
-      if (SLOW_DATA_PROVIDERS.is(dataId) && currentProjectViewPane != null) {
-        DataProvider selectionProvider = currentProjectViewPane.selectionProvider();
-        return selectionProvider == null ? null : List.of(selectionProvider);
-      }
-
       if (currentProjectViewPane != null) {
         final Object paneSpecificData = currentProjectViewPane.getData(dataId);
         if (paneSpecificData != null) return paneSpecificData;
       }
 
-      if (LangDataKeys.MODULE.is(dataId)) {
+      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
         VirtualFile[] virtualFiles = (VirtualFile[])getData(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
         if (virtualFiles == null || virtualFiles.length <= 1) return null;
         final Set<Module> modules = new HashSet<>();
@@ -1293,7 +1287,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (LangDataKeys.IDE_VIEW.is(dataId)) {
         return myIdeView;
       }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HelpID.PROJECT_VIEWS;
       }
       if (QuickActionProvider.KEY.is(dataId)) {

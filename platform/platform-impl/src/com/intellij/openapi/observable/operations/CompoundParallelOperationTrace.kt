@@ -1,16 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.observable.operations
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.observable.operations.ParallelOperationTrace.Listener
-import com.intellij.util.EventDispatcher
 
-class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) : ParallelOperationTrace {
+class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) : AbstractObservableOperationTrace() {
 
   private val traces = LinkedHashMap<Id, Int>()
-
-  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   override fun isOperationCompleted(): Boolean {
     synchronized(this) {
@@ -26,7 +21,7 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
     }
     if (isOperationCompletedBeforeStart) {
       debug("Operation is started")
-      eventDispatcher.multicaster.onOperationStart()
+      fireOperationStarted()
     }
   }
 
@@ -38,7 +33,7 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
     }
     if (isOperationCompletedAfterFinish) {
       debug("Operation is finished")
-      eventDispatcher.multicaster.onOperationFinish()
+      fireOperationFinished()
     }
   }
 
@@ -56,14 +51,6 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
       else -> traces[taskId] = taskCounter - 1
     }
     return taskCounter == 1
-  }
-
-  override fun subscribe(listener: Listener) {
-    eventDispatcher.addListener(listener)
-  }
-
-  override fun subscribe(listener: Listener, parentDisposable: Disposable) {
-    eventDispatcher.addListener(listener, parentDisposable)
   }
 
   private fun debug(message: String) {

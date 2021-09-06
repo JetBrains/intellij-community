@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -103,6 +104,34 @@ public final class TypeConstraints {
     type = normalizeType(type);
     TypeConstraint.Exact exact = createExact(type);
     if (exact != null && exact.canBeInstantiated()) return exact;
+    return BOTTOM;
+  }
+
+  /**
+   * Creates an exact final class that has no corresponding PsiClass (e.g. a class of lambda expression)
+   *
+   * @param id an element that uniquely identifies this subclass
+   * @param superType direct supertype
+   * @return a type that represents a final subclass that has no corresponding PsiClass.
+   * {@link #BOTTOM} if creation of such a subclass is impossible
+   */
+  public static TypeConstraint exactSubtype(@NotNull PsiElement id, @NotNull PsiType superType) {
+    superType = normalizeType(superType);
+    if (superType instanceof PsiClassType) {
+      TypeConstraint.Exact exact = createExact(superType);
+      if (exact != null && !exact.isFinal()) {
+        return new ExactSubclass(id, exact);
+      }
+    }
+    if (superType instanceof PsiIntersectionType) {
+      List<TypeConstraint.Exact> supers = new ArrayList<>();
+      for (PsiType conjunct : ((PsiIntersectionType)superType).getConjuncts()) {
+        TypeConstraint.Exact exact = createExact(conjunct);
+        if (exact == null || exact.isFinal()) return BOTTOM;
+        supers.add(exact);
+      }
+      return new ExactSubclass(id, supers.toArray(new TypeConstraint.Exact[0]));
+    }
     return BOTTOM;
   }
 
@@ -301,6 +330,11 @@ public final class TypeConstraints {
       if (other instanceof ExactClass) {
         return InheritanceUtil.isInheritor(((ExactClass)other).myClass, myReference);
       }
+      if (other instanceof ExactSubclass) {
+        for (Exact superClass : ((ExactSubclass)other).mySupers) {
+          if (isAssignableFrom(superClass)) return true;
+        }
+      }
       return false;
     }
 
@@ -423,6 +457,11 @@ public final class TypeConstraints {
       if (other instanceof ExactClass) {
         return InheritanceUtil.isInheritorOrSelf(((ExactClass)other).myClass, myClass, true);
       }
+      if (other instanceof ExactSubclass) {
+        for (Exact superClass : ((ExactSubclass)other).mySupers) {
+          if (isAssignableFrom(superClass)) return true;
+        }
+      }
       return false;
     }
 
@@ -448,7 +487,77 @@ public final class TypeConstraints {
                otherClass.isInheritor(myClass, true) ||
                myClass.isInheritor(otherClass, true);
       }
+      if (other instanceof ExactSubclass) {
+        for (Exact superClass : ((ExactSubclass)other).mySupers) {
+          if (isConvertibleFrom(superClass)) return true;
+        }
+      }
       return false;
+    }
+  }
+
+  /**
+   * Some unknown subclass that has given list of supertypes
+   */
+  private static final class ExactSubclass implements TypeConstraint.Exact {
+    private final @NotNull Exact @NotNull[] mySupers;
+    private final @NotNull Object myId;
+
+    ExactSubclass(@NotNull Object id, @NotNull Exact @NotNull ... supers) {
+      assert supers.length != 0;
+      for (Exact superClass : supers) {
+        if (!(superClass instanceof ExactClass ||
+              superClass instanceof ArraySuperInterface ||
+              superClass instanceof Unresolved ||
+              superClass == EXACTLY_OBJECT)) {
+          throw new IllegalArgumentException("Unexpected supertype: "+superClass);
+        }
+      }
+      mySupers = supers;
+      myId = id;
+    }
+
+    @Override
+    public boolean isFinal() {
+      return true;
+    }
+
+    @Override
+    public StreamEx<Exact> superTypes() {
+      return StreamEx.of(mySupers).flatMap(Exact::superTypes).distinct();
+    }
+
+    @Override
+    public boolean isAssignableFrom(@NotNull Exact other) {
+      return equals(other);
+    }
+
+    @Override
+    public boolean isConvertibleFrom(@NotNull Exact other) {
+      return equals(other) || other.isAssignableFrom(this);
+    }
+
+    @Override
+    public String toShortString() {
+      return "? extends " + StreamEx.of(mySupers).map(Exact::toShortString).joining(" & ");
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(mySupers) * 31 + myId.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (obj == null || obj.getClass() != this.getClass()) return false;
+      ExactSubclass subclass = (ExactSubclass)obj;
+      return subclass.myId.equals(myId) && Arrays.equals(subclass.mySupers, mySupers);
+    }
+
+    @Override
+    public String toString() {
+      return "? extends " + StreamEx.of(mySupers).map(Exact::toString).joining(" & ");
     }
   }
 
@@ -504,9 +613,7 @@ public final class TypeConstraints {
         return myComponent.isConvertibleFrom(((ExactArray)other).myComponent);
       }
       if (other instanceof ArraySuperInterface) return true;
-      if (other instanceof ExactClass) {
-        return JAVA_LANG_OBJECT.equals(((ExactClass)other).myClass.getQualifiedName());
-      }
+      if (other == EXACTLY_OBJECT) return true;
       return false;
     }
 

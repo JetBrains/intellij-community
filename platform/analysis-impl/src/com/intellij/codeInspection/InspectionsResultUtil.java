@@ -123,15 +123,14 @@ public final class InspectionsResultUtil {
   public static void writeInspectionResult(@NotNull Project project, @NotNull String shortName,
                                            @NotNull Collection<? extends InspectionToolWrapper<?, ?>> wrappers,
                                            @NotNull Path outputDirectory,
-                                           @NotNull Function<? super InspectionToolWrapper<?, ?>, ? extends InspectionToolResultExporter> f) throws IOException {
+                                           @NotNull Function<? super InspectionToolWrapper<?, ?>, ? extends InspectionToolResultExporter> presentationGetter) throws IOException {
     //dummy entry points tool
     if (wrappers.isEmpty()) return;
-    try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(project, outputDirectory, shortName,
-                                                              GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+    try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(project, outputDirectory, shortName, GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
          XmlWriterWrapper aggregateWriter = new XmlWriterWrapper(project, outputDirectory, shortName + AGGREGATE, ROOT)) {
       reportWriter.checkOpen();
       for (InspectionToolWrapper<?, ?> wrapper : wrappers) {
-        InspectionToolResultExporter presentation = f.apply(wrapper);
+        InspectionToolResultExporter presentation = presentationGetter.apply(wrapper);
         presentation.exportResults(reportWriter::writeElement, presentation::isExcluded, presentation::isExcluded);
         if (presentation instanceof AggregateResultsExporter) {
           ((AggregateResultsExporter)presentation).exportAggregateResults(aggregateWriter::writeElement);

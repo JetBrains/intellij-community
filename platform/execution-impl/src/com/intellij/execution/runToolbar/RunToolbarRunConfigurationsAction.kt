@@ -3,18 +3,37 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
-class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
+open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
+ companion object {
+
+   fun doRightClick(dataContext: DataContext) {
+     ActionManager.getInstance().getAction("RunToolbarSlotContextMenuGroup")?.let {
+       if(it is ActionGroup) {
+         SwingUtilities.invokeLater {
+           val popup = JBPopupFactory.getInstance().createActionGroupPopup(
+             null, it, dataContext, false, false, false, null, 5, null)
+
+           popup.showInBestPositionFor(dataContext)
+         }
+       }
+     }
+   }
+ }
+
+  override fun addEditRunConfigurationItem(): Boolean {
+    return true
+  }
 
   override fun createFinalAction(configuration: RunnerAndConfigurationSettings, project: Project): AnAction {
     return RunToolbarSelectConfigAction(configuration, project)
@@ -28,19 +47,27 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
     }
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return false
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isVisible = e.project?.let {
-      !e.isActiveProcess() && e.presentation.isVisible && if (e.isItRunToolbarMainSlot()) {
-        val slotManager = RunToolbarSlotManager.getInstance(it)
-        (e.isOpened() && !e.isActiveProcess() || !slotManager.getState().isActive())
-      } else true
-
+      !e.isActiveProcess() && e.presentation.isVisible
     } ?: false
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : RunConfigurationsComboBoxButton(presentation) {
+
+
       override fun getPreferredSize(): Dimension? {
         val d = super.getPreferredSize()
         d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
@@ -55,6 +82,13 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
         return JBUI.insets(0, 8, 0, 8)
       }
 
+      override fun doRightClick() {
+        doRightClick(dataContext)
+      }
+
+      override fun doShiftClick() {
+        dataContext.editConfiguration()
+      }
     }
   }
 
@@ -79,6 +113,7 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
     override fun actionPerformed(e: AnActionEvent) {
       e.project?.let {
         e.setConfiguration(configuration)
+        RunToolbarSlotManager.getInstance(it).saveSlotsConfiguration()
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
                            configuration,
                            project,

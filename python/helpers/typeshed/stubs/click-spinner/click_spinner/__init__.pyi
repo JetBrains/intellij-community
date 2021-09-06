@@ -1,6 +1,6 @@
 import threading
 from types import TracebackType
-from typing import Iterator, Optional, Type
+from typing import Iterator, Type
 from typing_extensions import Literal, Protocol
 
 __version__: str
@@ -16,15 +16,15 @@ class Spinner(object):
     beep: bool
     force: bool
     stream: _Stream
-    stop_running: Optional[threading.Event]
-    spin_thread: Optional[threading.Thread]
+    stop_running: threading.Event | None
+    spin_thread: threading.Thread | None
     def __init__(self, beep: bool, disable: bool, force: bool, stream: _Stream) -> None: ...
     def start(self) -> None: ...
     def stop(self) -> None: ...
     def init_spin(self) -> None: ...
     def __enter__(self) -> Spinner: ...
     def __exit__(
-        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> Literal[False]: ...
 
 def spinner(beep: bool, disable: bool, force: bool, stream: _Stream) -> Spinner: ...

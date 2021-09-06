@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiExpression;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -34,6 +37,11 @@ public class FieldReferringObject implements ReferringObject {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
         return myReference;
+      }
+
+      @Override
+      public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
+        throw new NeedMarkException(myReference);
       }
     };
   }

@@ -103,6 +103,12 @@ public abstract class CommandProcessor {
   public abstract void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files);
 
   /**
+   * Global commands will be merged during {@code action} execution
+   */
+  @ApiStatus.Experimental
+  public abstract void allowMergeGlobalCommands(@NotNull Runnable action);
+
+  /**
    * @deprecated use {@link CommandListener#TOPIC}
    */
   @Deprecated

@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.components.JBPanel;
@@ -63,7 +63,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
       return ContainerUtil.map(hashes,
                                commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myUi.getHelpId();
     }
     else if (History.KEY.is(dataId)) {

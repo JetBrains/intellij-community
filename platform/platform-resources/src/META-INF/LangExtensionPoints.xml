@@ -159,6 +159,7 @@
 
     <extensionPoint name="searchEverywhereContributor" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory" dynamic="true"/>
     <extensionPoint name="searchEverywhereResultsEqualityProvider" interface="com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider"/>
+    <extensionPoint name="searchEverywhereMlService" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService" />
 
     <extensionPoint name="runAnything.executionProvider" interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider" dynamic="true"/>
     <extensionPoint name="runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler" dynamic="true"/>
@@ -498,6 +499,7 @@
 
     <extensionPoint name="problemFileHighlightFilter" interface="com.intellij.openapi.util.Condition" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="problemHighlightFilter" interface="com.intellij.codeInsight.daemon.ProblemHighlightFilter" dynamic="true"/>
+    <extensionPoint name="problemsViewPanelProvider" interface="com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="uiDebuggerExtension" interface="com.intellij.ui.debugger.UiDebuggerExtension"/>
 

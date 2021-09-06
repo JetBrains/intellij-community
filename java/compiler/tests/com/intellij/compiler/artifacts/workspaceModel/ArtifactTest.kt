@@ -477,8 +477,44 @@ class ArtifactTest : ArtifactsTestCase() {
       anotherModifiableArtifact.setProperties(MockArtifactPropertiesProvider.getInstance(), null)
       anotherModifiableModel.commit()
 
-      val properties = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactPropertiesEntity::class.java).toList()
+      val properties = WorkspaceModel.getInstance(project)
+        .entityStorage
+        .current
+        .entities(ArtifactPropertiesEntity::class.java)
+        .filter { it.providerType == MockArtifactPropertiesProvider.getInstance().id }
+        .toList()
       assertEmpty(properties)
+    }
+  }
+
+  fun `test default properties are added`() = runWriteAction {
+    runWithRegisteredExtension(MockArtifactPropertiesProvider(), ArtifactPropertiesProvider.EP_NAME) {
+      val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+      val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
+      modifiableModel.commit()
+
+      val defaultProperties = artifact.getProperties(MockArtifactPropertiesProvider.getInstance())
+      TestCase.assertNotNull(defaultProperties)
+    }
+  }
+
+  fun `test default properties are added with modification`() = runWriteAction {
+    runWithRegisteredExtension(MockArtifactPropertiesProvider(), ArtifactPropertiesProvider.EP_NAME) {
+      val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+      val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
+      modifiableModel.commit()
+
+      val defaultProperties = artifact.getProperties(MockArtifactPropertiesProvider.getInstance())
+      TestCase.assertNotNull(defaultProperties)
+
+      val modifiableModel1 = ArtifactManager.getInstance(project).createModifiableModel()
+      val modifiableArtifact = modifiableModel1.getOrCreateModifiableArtifact(artifact)
+      modifiableArtifact.setProperties(MockArtifactPropertiesProvider.getInstance(), MockArtifactProperties().also { it.data = "123" })
+      modifiableModel1.commit()
+
+      val defaultProperties2 = artifact.getProperties(MockArtifactPropertiesProvider.getInstance())
+      TestCase.assertNotNull(defaultProperties2)
+      assertEquals("123", (defaultProperties2 as MockArtifactProperties).data)
     }
   }
 

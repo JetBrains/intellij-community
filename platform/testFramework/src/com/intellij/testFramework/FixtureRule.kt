@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.sanitizeFileName
@@ -420,7 +421,7 @@ suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
  * Copy files from [projectPaths] directories to a temp directory, load project from it and pass it to [checkProject].
  */
 fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
-  @Suppress("RedundantSuspendModifier")
+  @Suppress("RedundantSuspendModifier", "BlockingMethodInNonBlockingContext")
   suspend fun copyProjectFiles(targetDir: VirtualFile): Path {
     val projectDir = VfsUtil.virtualToIoFile(targetDir)
     var projectFileName: String? = null
@@ -467,21 +468,14 @@ class DisposableRule : ExternalResource() {
   }
 }
 
-class SystemPropertyRule(private val name: String, private val value: String = "true") : ExternalResource() {
+class SystemPropertyRule(private val name: String, private val value: String) : ExternalResource() {
   private var oldValue: String? = null
 
   public override fun before() {
-    oldValue = System.getProperty(name)
-    System.setProperty(name, value)
+    oldValue = System.setProperty(name, value)
   }
 
   public override fun after() {
-    val oldValue = oldValue
-    if (oldValue == null) {
-      System.clearProperty(name)
-    }
-    else {
-      System.setProperty(name, oldValue)
-    }
+    SystemProperties.setProperty(name, oldValue)
   }
 }

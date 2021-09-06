@@ -2,20 +2,21 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataContextUtils;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -63,7 +64,7 @@ public final class Utils extends DataContextUtils {
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
-    Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof EdtDataContext) {
       return new PreCachedDataContext(component);
     }
@@ -136,7 +137,7 @@ public final class Utils extends DataContextUtils {
                                                                @NotNull String place,
                                                                boolean isContextMenu,
                                                                @Nullable Runnable onProcessed,
-                                                               @Nullable JComponent sourceComponent) {
+                                                               @Nullable JComponent menuItem) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
@@ -153,7 +154,7 @@ public final class Utils extends DataContextUtils {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      try (AccessToken ignore = cancelOnUserActivityInside(promise, sourceComponent)) {
+      try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -188,13 +189,16 @@ public final class Utils extends DataContextUtils {
   }
 
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
-                                                                 @Nullable JComponent sourceComponent) {
+                                                                 @Nullable Component contextComponent,
+                                                                 @Nullable Component menuItem) {
+    Window window = contextComponent == null ? null : SwingUtilities.getWindowAncestor(contextComponent);
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
       if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
-          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION ||
+          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION &&
+           window != null && window == SwingUtilities.getWindowAncestor(((FocusEvent)event).getComponent()) ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED && UIUtil.getDeepestComponentAt(
-            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != sourceComponent ) {
+            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != menuItem ) {
         ActionUpdater.cancelPromise(promise, event);
       }
       return null;
@@ -457,6 +461,7 @@ public final class Utils extends DataContextUtils {
     if (async) {
       ActionUpdater.cancelAllUpdates("'" + place + "' invoked");
       AsyncPromise<T> promise = ActionUpdater.newPromise(place);
+      ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
@@ -477,9 +482,15 @@ public final class Utils extends DataContextUtils {
             }
           };
           boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
+          ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+          ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator() : new SensitiveProgressWrapper(parentIndicator);
+          promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(!inReadAction ? runnable : () ->
-              ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable), new EmptyProgressIndicator());
+              ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+                applicationEx,
+                () -> ActionUpdater.cancelPromise(promise, "nested write-action requested"),
+                () -> applicationEx.tryRunReadAction(runnable)), indicator);
             return ref.get();
           });
           queue.offer(ActionUpdater.getActionUpdater(sessionRef.get())::applyPresentationChanges);
@@ -492,6 +503,7 @@ public final class Utils extends DataContextUtils {
       result = runLoopAndWaitForFuture(promise, null, false, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
+        if (parentIndicator != null) parentIndicator.checkCanceled();
       });
     }
     else {
@@ -512,6 +524,8 @@ public final class Utils extends DataContextUtils {
     while (!promise.isDone()) {
       try {
         pumpRunnable.run();
+      }
+      catch (ProcessCanceledException ignore) {
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -546,7 +560,6 @@ public final class Utils extends DataContextUtils {
     Utils.ProcessCanceledWithReasonException lastCancellation = null;
     int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
     for (int i = 0; i < retries; i++) {
-      if (expire.getAsBoolean()) return;
       try {
         runnable.run();
         return;
@@ -562,6 +575,7 @@ public final class Utils extends DataContextUtils {
       catch (Throwable ex) {
         ExceptionUtil.rethrow(ex);
       }
+      if (expire.getAsBoolean()) return;
     }
     if (retries > 1) {
       LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);

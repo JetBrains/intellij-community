@@ -28,6 +28,10 @@ public final class ExperimentalUI {
     return isEnabled("ide.experimental.ui.editor.tabs");
   }
 
+  public static boolean isNewVcsBranchPopup() {
+    return isEnabled("ide.experimental.ui.vcs.branch.popup");
+  }
+
   private static boolean isEnabled(@NonNls @NotNull String key) {
     return ApplicationManager.getApplication().isEAP()
            && (isNewUI() || is(key));

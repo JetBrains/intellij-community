@@ -8,10 +8,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootManagerEx;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -84,14 +81,19 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
     removeLibrary(library, LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()));
   }
 
-  private static void removeLibrary(Library library, LibraryTable libraryTable) {
+  private void removeLibrary(Library library, LibraryTable libraryTable) {
+    ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+    LibraryOrderEntry libraryOrderEntry = OrderEntryUtil.findLibraryOrderEntry(rootModel, library);
+    rootModel.removeOrderEntry(libraryOrderEntry);
+    rootModel.commit();
+
     LibraryTable.ModifiableModel libraryTableModifiableModel = libraryTable.getModifiableModel();
     libraryTableModifiableModel.removeLibrary(library);
     libraryTableModifiableModel.commit();
   }
 
   public void testIndexingGlobalLibrary() throws Exception {
-    doTest(this::createGlobalLibrary, EntityIndexingServiceTest::removeGlobalLibrary,
+    doTest(this::createGlobalLibrary, this::removeGlobalLibrary,
            IndexableEntityProviderMethods.INSTANCE::createIterators);
   }
 
@@ -100,7 +102,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
     return createLibrary(LibraryTablesRegistrar.getInstance().getLibraryTable());
   }
 
-  private static void removeGlobalLibrary(Library library) {
+  private void removeGlobalLibrary(Library library) {
     removeLibrary(library, LibraryTablesRegistrar.getInstance().getLibraryTable());
   }
 

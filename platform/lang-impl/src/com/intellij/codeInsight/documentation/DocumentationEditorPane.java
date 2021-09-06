@@ -11,14 +11,12 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.Highlighter;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
@@ -32,6 +30,7 @@ class DocumentationEditorPane extends JEditorPane {
 
   private final Map<KeyStroke, ActionListener> myKeyboardActions;
   private final Supplier<? extends @Nullable PsiElement> myElementSupplier;
+  private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
 
   DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
@@ -52,6 +51,17 @@ class DocumentationEditorPane extends JEditorPane {
     setBackground(EditorColorsUtil.getGlobalOrDefaultColor(DocumentationComponent.COLOR_KEY));
     setEditorKit(new DocumentationHtmlEditorKit(this));
     setBorder(JBUI.Borders.empty());
+  }
+
+  @Override
+  public @Nls String getText() {
+    return myText;
+  }
+
+  @Override
+  public void setText(@Nls String t) {
+    myText = t;
+    super.setText(t);
   }
 
   @Override
@@ -79,6 +89,50 @@ class DocumentationEditorPane extends JEditorPane {
     if (doc instanceof StyledDocument) {
       doc.putProperty("imageCache", new DocumentationImageProvider(this, myElementSupplier));
     }
+  }
+
+  int getPreferredWidth() {
+    int definitionPreferredWidth = definitionPreferredWidth();
+    return definitionPreferredWidth < 0 ? getPreferredSize().width
+                                        : Math.max(definitionPreferredWidth, getMinimumSize().width);
+  }
+
+  private int definitionPreferredWidth() {
+    View definition = findDefinition(getUI().getRootView(this));
+    if (definition == null) {
+      return -1;
+    }
+
+    // Heuristics to calculate popup width based on the amount of the content.
+    // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
+    // 200 chars and less is 300px, 1000 chars and more is 500px.
+    // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
+    int textLength = definition.getDocument().getLength();
+    final int contentLengthPreferredSize;
+    if (textLength < 200) {
+      contentLengthPreferredSize = JBUIScale.scale(300);
+    }
+    else if (textLength > 200 && textLength < 1000) {
+      contentLengthPreferredSize = JBUIScale.scale(300) + JBUIScale.scale(1) * (textLength - 200) * (500 - 300) / (1000 - 200);
+    }
+    else {
+      contentLengthPreferredSize = JBUIScale.scale(500);
+    }
+    int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
+    return Math.max(contentLengthPreferredSize, defaultPreferredSize);
+  }
+
+  private static @Nullable View findDefinition(@NotNull View view) {
+    if ("definition".equals(view.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
+      return view;
+    }
+    for (int i = 0; i < view.getViewCount(); i++) {
+      View definition = findDefinition(view.getView(i));
+      if (definition != null) {
+        return definition;
+      }
+    }
+    return null;
   }
 
   void applyFontProps(@NotNull FontSize size) {

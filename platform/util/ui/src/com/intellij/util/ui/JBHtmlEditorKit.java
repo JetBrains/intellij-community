@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,12 +22,15 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Base64;
+import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
+
   static {
     ourCommonStyle = StartupUiUtil.createStyleSheet(
       "code { font-size: 100%; }" +  // small by Swing's default
@@ -43,6 +47,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     );
     StartupUiUtil.configureHtmlKitStylesheet();
   }
+
   private static final ViewFactory ourViewFactory = new JBHtmlFactory();
   private static final StyleSheet ourCommonStyle;
   private static final StyleSheet ourNoGapsBetweenParagraphsStyle;
@@ -83,7 +88,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
         if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
           setUnderlined(true, element);
-        } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+        }
+        else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
           setUnderlined(false, element);
         }
       }
@@ -93,11 +99,36 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         Object attribute = attributes.getAttribute(HTML.Tag.A);
         if (attribute instanceof MutableAttributeSet) {
           MutableAttributeSet a = (MutableAttributeSet)attribute;
+
+          Object href = a.getAttribute(HTML.Attribute.HREF);
+          Pair<Integer, Integer> aRange = findRangeOfParentTagWithGivenAttribute(element, href, HTML.Tag.A, HTML.Attribute.HREF);
+
           a.addAttribute(CSS.Attribute.TEXT_DECORATION, underlined ? "underline" : "none");
-          ((StyledDocument)element.getDocument()).setCharacterAttributes(element.getStartOffset(),
-                                                                         element.getEndOffset() - element.getStartOffset(),
-                                                                         a, false);
+          ((StyledDocument)element.getDocument()).setCharacterAttributes(aRange.first, aRange.second - aRange.first, a, false);
         }
+      }
+
+      /**
+       * There was a bug that if the anchor tag contained some span block, e.g.
+       * {@code <a><span>Objects.</span><span>equals()</span></a>} then only one block
+       * was underlined on mouse hover.
+       *
+       * <p>That was due to the receiver of the {@code HyperlinkEvent} was only one of child blocks
+       * and we need to properly find the range occupied by the whole parent.</p>
+       */
+      private @NotNull Pair<Integer, Integer> findRangeOfParentTagWithGivenAttribute(
+        @NotNull Element element,
+        Object elementAttributeValue,
+        @NotNull HTML.Tag tag,
+        @NotNull HTML.Attribute attribute
+      ) {
+        HtmlIteratorWrapper anchorTagIterator = new HtmlIteratorWrapper(((HTMLDocument)element.getDocument()).getIterator(tag));
+        return StreamSupport.stream(anchorTagIterator.spliterator(), false)
+          .filter(it -> Objects.equals(it.getAttributes().getAttribute(attribute), elementAttributeValue))
+          .filter(it -> it.getStartOffset() <= element.getStartOffset() && element.getStartOffset() <= it.getEndOffset())
+          .map(it -> new Pair<>(it.getStartOffset(), it.getEndOffset()))
+          .findFirst()
+          .orElse(new Pair<>(element.getStartOffset(), element.getEndOffset()));
       }
     };
   }
@@ -202,7 +233,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private static class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
-      mouseMoved(new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiersEx(), -1, -1, e.getClickCount(), e.isPopupTrigger(), e.getButton()));
+      mouseMoved(new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiersEx(), -1, -1, e.getClickCount(), e.isPopupTrigger(),
+                                e.getButton()));
     }
   }
 
@@ -265,13 +297,16 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         if (width < 0 && height < 0) {
           this.width = myBufferedImage.getWidth();
           this.height = myBufferedImage.getHeight();
-        } else if (width < 0) {
+        }
+        else if (width < 0) {
           this.width = height * getAspectRatio();
           this.height = height;
-        } else if (height < 0) {
+        }
+        else if (height < 0) {
           this.width = width;
           this.height = width / getAspectRatio();
-        } else {
+        }
+        else {
           this.width = width;
           this.height = height;
         }
@@ -355,7 +390,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
       @Override
       public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
-        Rectangle alloc = (Rectangle) a;
+        Rectangle alloc = (Rectangle)a;
         if (x < alloc.x + alloc.width) {
           bias[0] = Position.Bias.Forward;
           return getStartOffset();
@@ -462,7 +497,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       private final ParserCallback delegate;
       private int depth;
 
-      private CallbackWrapper(ParserCallback delegate) {this.delegate = delegate;}
+      private CallbackWrapper(ParserCallback delegate) { this.delegate = delegate; }
 
       @Override
       public void flush() throws BadLocationException {
@@ -522,5 +557,70 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
      * Resolves a font for a piece of text, given its CSS attributes. {@code defaultFont} is the result of default resolution algorithm.
      */
     @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet);
+  }
+
+
+  /**
+   * Implements {@code java.lang.Iterable} for {@code HTMLDocument.Iterator}
+   */
+  public static final class HtmlIteratorWrapper implements Iterable<HTMLDocument.Iterator> {
+
+    private final @NotNull HTMLDocument.Iterator myDelegate;
+
+    public HtmlIteratorWrapper(@NotNull HTMLDocument.Iterator delegate) {
+      myDelegate = delegate;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<HTMLDocument.Iterator> iterator() {
+      return new Iterator<>() {
+        @Override
+        public boolean hasNext() {
+          return myDelegate.isValid();
+        }
+
+        @Override
+        public HTMLDocument.Iterator next() {
+          final AttributeSet attributeSet = myDelegate.getAttributes();
+          final int startOffset = myDelegate.getStartOffset();
+          final int endOffset = myDelegate.getEndOffset();
+          final HTML.Tag tag = myDelegate.getTag();
+          HTMLDocument.Iterator current = new HTMLDocument.Iterator() {
+            @Override
+            public AttributeSet getAttributes() {
+              return attributeSet;
+            }
+
+            @Override
+            public int getStartOffset() {
+              return startOffset;
+            }
+
+            @Override
+            public int getEndOffset() {
+              return endOffset;
+            }
+
+            @Override
+            public HTML.Tag getTag() {
+              return tag;
+            }
+
+            @Override
+            public void next() {
+              throw new IllegalStateException("Must not be called");
+            }
+
+            @Override
+            public boolean isValid() {
+              throw new IllegalStateException("Must not be called");
+            }
+          };
+          myDelegate.next();
+          return current;
+        }
+      };
+    }
   }
 }

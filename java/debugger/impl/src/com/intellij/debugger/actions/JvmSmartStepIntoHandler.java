@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -14,6 +14,9 @@ import org.jetbrains.concurrency.Promises;
 
 import java.util.List;
 
+/**
+ * Allows to support smart step into in non-java languages
+ */
 public abstract class JvmSmartStepIntoHandler {
   public static final ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
 

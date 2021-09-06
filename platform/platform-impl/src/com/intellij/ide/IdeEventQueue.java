@@ -430,10 +430,16 @@ public final class IdeEventQueue extends EventQueue {
       Runnable runnable = extractRunnable(e);
       Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
-        Application application = ApplicationManager.getApplication();
-        ProgressManager progressManager = application != null && !application.isDisposed() ?
-                                          ProgressManager.getInstance() :
-                                          null;
+        ProgressManager progressManager = null;
+        Application app = ApplicationManager.getApplication();
+        if (app != null && !app.isDisposed()) {
+          try {
+            progressManager = ProgressManager.getInstance();
+          }
+          catch (RuntimeException ex) {
+            LOG.warn("app services aren't yet initialized", ex);
+          }
+        }
 
         try (AccessToken ignored = startActivity(finalE1)) {
           if (progressManager != null) {
@@ -696,10 +702,6 @@ public final class IdeEventQueue extends EventQueue {
 
     myEventCount++;
 
-    if (e instanceof WindowEvent) {
-      processAppActivationEvent((WindowEvent)e);
-    }
-
     myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
 
     if (e instanceof KeyEvent) {
@@ -724,6 +726,10 @@ public final class IdeEventQueue extends EventQueue {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
       }
       return;
+    }
+
+    if (e instanceof WindowEvent) {
+      processAppActivationEvent((WindowEvent)e);
     }
 
     if (dispatchByCustomDispatchers(e)) {

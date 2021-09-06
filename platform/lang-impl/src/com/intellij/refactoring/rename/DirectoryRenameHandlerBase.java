@@ -4,7 +4,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -48,7 +48,7 @@ public abstract class DirectoryRenameHandlerBase implements RenameHandler, Title
 
   protected PsiDirectory adjustForRename(DataContext dataContext, PsiElement element) {
     if (element instanceof PsiDirectoryContainer) {
-      final Module module = LangDataKeys.MODULE.getData(dataContext);
+      final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
       if (module != null) {
         PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
         Optional<PsiDirectory> directoryWithPackage = Arrays.stream(directories).filter(this::isSuitableDirectory).findFirst();

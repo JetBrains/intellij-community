@@ -394,7 +394,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
         return VirtualFile.EMPTY_ARRAY;
       }
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "find.todoList";
     }
     else if (TODO_PANEL_DATA_KEY.is(dataId)) {

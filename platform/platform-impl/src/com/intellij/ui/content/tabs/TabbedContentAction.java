@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.tabs;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class TabbedContentAction extends AnAction implements DumbAware {
@@ -161,6 +164,48 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getPreviousContentActionName());
+    }
+  }
+
+  @ApiStatus.Experimental
+  public static class SplitTabAction extends TabbedContentAction {
+    public SplitTabAction(@NotNull ContentManager manager) {
+      super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT), manager);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+      Content content = myManager.getSelectedContent();
+      if (content != null) {
+        decorator.splitWithContent(content);
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myManager.getContents().length > 1);
+      e.getPresentation().setText(ActionsBundle.actionText(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
+    }
+  }
+
+  @ApiStatus.Experimental
+  public static class UnsplitTabAction extends TabbedContentAction {
+    public UnsplitTabAction(@NotNull ContentManager manager) {
+      super(manager, ActionManager.getInstance().getAction("Unsplit"), manager);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+      decorator.unsplit(myManager.getSelectedContent());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+      e.getPresentation().setEnabledAndVisible(decorator != null && !decorator.getMode().isTopLevel());
+      e.getPresentation().setText(ActionsBundle.actionText("Unsplit"));
     }
   }
 }

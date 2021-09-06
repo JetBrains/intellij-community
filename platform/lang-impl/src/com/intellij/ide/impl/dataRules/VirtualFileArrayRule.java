@@ -2,7 +2,10 @@
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -50,7 +53,7 @@ public class VirtualFileArrayRule implements GetDataRule {
       result = addFiles(null, fileSystemTree.getSelectedFiles());
     }
     else {
-      Project project = PlatformDataKeys.PROJECT_CONTEXT.getData(dataProvider);
+      Project project = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataProvider);
       if (project != null && !project.isDisposed()) {
         result = addFiles(null, ProjectRootManager.getInstance(project).getContentRoots());
       }

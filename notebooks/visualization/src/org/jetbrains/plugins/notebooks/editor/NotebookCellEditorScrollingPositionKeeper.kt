@@ -18,7 +18,7 @@ interface NotebookCellEditorScrollingPositionKeeper {
   /**
    * Attaches scrolling position to the [targetLine] if provided otherwise to the selected cell
    */
-  fun savePosition(targetLine: Int?)
+  fun savePosition(targetLine: Int?, additionalShift: Int = 0)
 
   /**
    * Keeps target cell(s) on the visible part of the editor

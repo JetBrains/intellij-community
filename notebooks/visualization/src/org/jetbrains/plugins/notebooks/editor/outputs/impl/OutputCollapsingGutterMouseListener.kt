@@ -10,9 +10,11 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.notebooks.editor.NotebookCellInlayManager
+import org.jetbrains.plugins.notebooks.editor.notebookAppearance
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Point
@@ -91,13 +93,22 @@ private class OutputCollapsingGutterMouseListener : EditorMouseListener, EditorM
   }
 
   private fun isAtCollapseVerticalStripe(editor: EditorEx, point: Point): Boolean =
-    CollapsingComponent.collapseRectHorizontalLeft(editor).let {
-      point.x in it until it + CollapsingComponent.COLLAPSING_RECT_WIDTH
+    if ((editor as EditorImpl).isMirrored) {
+      val margin = editor.notebookAppearance.LINE_NUMBERS_MARGIN
+      CollapsingComponent.collapseRectHorizontalLeft(editor).let {
+        point.x in it + margin until it + CollapsingComponent.COLLAPSING_RECT_WIDTH + margin
+      }
+    }
+    else {
+      CollapsingComponent.collapseRectHorizontalLeft(editor).let {
+        point.x in it until it + CollapsingComponent.COLLAPSING_RECT_WIDTH
+      }
     }
 
   private fun getCollapsingComponent(editor: EditorEx, point: Point): CollapsingComponent? {
+    val surroundingX = if ((editor as EditorImpl).isMirrored) 80 else 0
     val surroundingComponent: SurroundingComponent =
-      editor.contentComponent.getComponentAt(0, point.y)
+      editor.contentComponent.getComponentAt(surroundingX, point.y)
         .castSafelyTo<JComponent>()
         ?.takeIf { it.componentCount > 0 }
         ?.getComponent(0)

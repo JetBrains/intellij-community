@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk;
 import com.intellij.ide.macro.Macro;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -33,7 +33,7 @@ public class InterpreterDirectoryMacro extends Macro {
   @Nullable
   @Override
   public String expand(@NotNull DataContext dataContext) {
-    Module module = LangDataKeys.MODULE.getData(dataContext);
+    Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module == null) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) {

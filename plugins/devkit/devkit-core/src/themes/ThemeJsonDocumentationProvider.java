@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.ide.ui.UIThemeMetadata;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -79,7 +80,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
         final PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createTypeByFQClassName(source);
 
         StringBuilder typeBuilder = new StringBuilder();
-        JavaDocInfoGenerator.generateType(typeBuilder, type, element);
+        JavaDocInfoGeneratorFactory.create(element.getProject(), null, false).generateType(typeBuilder, type, element);
         return typeBuilder.toString(); //NON-NLS
       });
     }

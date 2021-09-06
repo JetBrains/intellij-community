@@ -4,19 +4,16 @@ package com.intellij.execution.segmentedVcsWidget // Copyright 2000-2020 JetBrai
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NotNull
+import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.SwingUtilities
 
 class SegmentedVcsControlAction : SegmentedBarActionComponent(ActionPlaces.RUN_TOOLBAR) {
   init {
     ActionManager.getInstance().getAction("SegmentedVcsActionsBarGroup")?.let {
       if(it is ActionGroup) {
-        SwingUtilities.invokeLater {
           actionGroup = it
-        }
       }
     }
   }
@@ -26,8 +23,8 @@ class SegmentedVcsControlAction : SegmentedBarActionComponent(ActionPlaces.RUN_T
     e.presentation.isVisible = actionGroup != null
   }
   override fun createCustomComponent(presentation: Presentation, place_: String): JComponent {
-    return JPanel(MigLayout("novisualpadding, ins 1 2 1 2")).apply{
-      add(super.createCustomComponent(presentation, place_), "gap 0")
+    return JPanel(BorderLayout()).apply{
+      add(super.createCustomComponent(presentation, place_), BorderLayout.CENTER)
     }
   }
 

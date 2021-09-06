@@ -34,7 +34,7 @@ public class PydevDocumentationProvider extends AbstractDocumentationProvider {
   }
 
   @Nullable
-  public static String createDoc(final PsiElement element, final PsiElement originalElement) {
+  public static @Nls String createDoc(final PsiElement element, final PsiElement originalElement) {
     final PyReferenceExpression expression = PsiTreeUtil.getNonStrictParentOfType(originalElement, PyReferenceExpression.class);
     // Indicates that we are inside console, not a lookup element!
     if (expression == null){

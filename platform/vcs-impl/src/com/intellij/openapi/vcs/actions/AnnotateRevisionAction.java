@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -42,7 +42,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
+    if (Boolean.TRUE.equals(e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

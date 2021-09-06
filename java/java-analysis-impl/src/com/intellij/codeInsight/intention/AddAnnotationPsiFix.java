@@ -45,6 +45,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   final PsiNameValuePair[] myPairs; // not used when registering local quick fix
   protected final @IntentionName String myText;
   private final AnnotationPlace myAnnotationPlace;
+  @Nullable private final SmartPsiElementPointer<PsiElement> myTarget;
+  private final boolean myHasApplicableAnnotations;
 
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
@@ -72,6 +74,15 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     myAnnotationsToRemove = annotationsToRemove;
     myText = calcText(modifierListOwner, myAnnotation);
     myAnnotationPlace = place;
+    PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, fqn);
+    if (target instanceof PsiElement) {
+      myTarget = SmartPointerManager.createPointer((PsiElement)target);
+      myHasApplicableAnnotations = ContainerUtil.exists(target.getApplicableAnnotations(), anno -> anno.hasQualifiedName(myAnnotation));
+    }
+    else {
+      myTarget = null;
+      myHasApplicableAnnotations = false;
+    }
   }
 
   public static @IntentionName String calcText(PsiModifierListOwner modifierListOwner, @Nullable String annotation) {
@@ -171,32 +182,34 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
                      @NotNull PsiFile file,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiModifierListOwner myModifierListOwner = (PsiModifierListOwner)startElement;
-
-    PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(myModifierListOwner, myAnnotation);
-    if (target == null || ContainerUtil.exists(target.getApplicableAnnotations(), anno -> anno.hasQualifiedName(myAnnotation))) {
+    if (myTarget == null) {
       return;
     }
+    final PsiAnnotationOwner target = (PsiAnnotationOwner)myTarget.getElement();
+    if (target == null || myHasApplicableAnnotations) {
+      return;
+    }
+    final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)startElement;
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
-    AnnotationPlace place = myAnnotationPlace == AnnotationPlace.NEED_ASK_USER ?
-                                                       annotationsManager.chooseAnnotationsPlace(myModifierListOwner) : myAnnotationPlace;
+    final AnnotationPlace place = myAnnotationPlace == AnnotationPlace.NEED_ASK_USER ?
+                                  annotationsManager.chooseAnnotationsPlace(modifierListOwner) : myAnnotationPlace;
     switch (place) {
       case NOWHERE:
         return;
       case EXTERNAL:
         for (String fqn : myAnnotationsToRemove) {
-          annotationsManager.deannotate(myModifierListOwner, fqn);
+          annotationsManager.deannotate(modifierListOwner, fqn);
         }
         try {
-          annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file, myPairs);
+          annotationsManager.annotateExternally(modifierListOwner, myAnnotation, file, myPairs);
         }
         catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {
         }
         break;
       case IN_CODE:
-        final PsiFile containingFile = myModifierListOwner.getContainingFile();
+        final PsiFile containingFile = modifierListOwner.getContainingFile();
         Runnable command = () -> {
-          removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
+          removePhysicalAnnotations(modifierListOwner, myAnnotationsToRemove);
 
           PsiAnnotation inserted = addPhysicalAnnotationTo(myAnnotation, myPairs, target);
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
@@ -207,7 +220,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
         }
         else {
           WriteCommandAction.runWriteCommandAction(project, null, null, command, containingFile);
-        } 
+        }
 
         if (containingFile != file) {
           UndoUtil.markPsiFileForUndo(file);
@@ -251,15 +264,15 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   /**
    * Add new physical (non-external) annotation to the annotation owner. Annotation will not be added if it already exists
    * on the same annotation owner (externally or explicitly) or if there's a {@link PsiTypeElement} that follows the owner,
-   * and its innermost component type has the annotation with the same fully-qualified name. 
+   * and its innermost component type has the annotation with the same fully-qualified name.
    * E.g. the method like {@code java.lang.@Foo String[] getStringArray()} will not be annotated with another {@code @Foo}
-   * annotation. 
+   * annotation.
    *
    * @param fqn fully-qualified annotation name
-   * @param pairs name/value pairs for the new annotation (not changed by this method, 
+   * @param pairs name/value pairs for the new annotation (not changed by this method,
    *              could be result of {@link PsiAnnotationParameterList#getAttributes()} of existing annotation).
    * @param owner an owner object to add the annotation to ({@link PsiModifierList} or {@link PsiType}).
-   * @return added physical annotation; null if annotation already exists (in this case, no changes are performed) 
+   * @return added physical annotation; null if annotation already exists (in this case, no changes are performed)
    */
   @Nullable
   public static PsiAnnotation addPhysicalAnnotationIfAbsent(@NotNull String fqn,

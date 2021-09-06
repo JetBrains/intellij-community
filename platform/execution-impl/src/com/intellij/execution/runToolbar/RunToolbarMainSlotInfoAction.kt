@@ -2,6 +2,7 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomAction
@@ -31,15 +32,18 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.INFO
+  }
+
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
-      val state = manager.getState()
-      if(!e.isItRunToolbarMainSlot() || !state.isActive() || e.isOpened() || state.isSingleMain())  return@let false
+
 
       val activeProcesses = manager.activeProcesses
 
-      manager.getMainOrFirstActiveProcess()?.let{
+      manager.getMainOrFirstActiveProcess()?.let {
         e.presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
       }
 
@@ -50,6 +54,12 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
         true
       } ?: false
     } ?: false
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
 
@@ -94,12 +104,21 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
               doClick()
             }
           }
+          else if (SwingUtilities.isRightMouseButton(e)) {
+            doRightClick()
+          }
         }
       })
     }
 
+    fun doRightClick() {
+      RunToolbarRunConfigurationsAction.doRightClick(ActionToolbar.getDataContextFor(this))
+    }
+
     private fun doClick() {
-      listeners.forEach { it.actionPerformedHandler() }
+      val list = mutableListOf<PopupControllerComponentListener>()
+      list.addAll(listeners)
+      list.forEach { it.actionPerformedHandler() }
     }
 
     private fun doShiftClick() {

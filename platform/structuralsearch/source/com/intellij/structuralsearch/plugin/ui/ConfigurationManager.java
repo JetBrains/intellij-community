@@ -2,10 +2,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
@@ -308,7 +305,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     );
   }
 
-  @State(name = "StructuralSearch", storages = @Storage("structuralSearch.xml"))
+  @State(name = "StructuralSearch", storages = @Storage("structuralSearch.xml"), category = SettingsCategory.CODE)
   private static class ConfigurationManagerState implements PersistentStateComponent<Element> {
 
     public final Map<String, Configuration> configurations = new LinkedHashMap<>();

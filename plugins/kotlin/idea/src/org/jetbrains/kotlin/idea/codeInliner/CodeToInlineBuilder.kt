@@ -233,6 +233,10 @@ class CodeToInlineBuilder(
             val typeArguments = InsertExplicitTypeArgumentsIntention.createTypeArguments(it, bindingContext)!!
             codeToInline.addPreCommitAction(it) { callExpression ->
                 callExpression.addAfter(typeArguments, callExpression.calleeExpression)
+                callExpression.typeArguments.forEach { typeArgument ->
+                    val reference = typeArgument.typeReference?.typeElement?.safeAs<KtUserType>()?.referenceExpression
+                    reference?.putCopyableUserData(CodeToInline.TYPE_PARAMETER_USAGE_KEY, Name.identifier(reference.text))
+                }
             }
         }
     }

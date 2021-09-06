@@ -7,7 +7,7 @@ import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.text.JBDateFormat
 import javax.swing.JComponent
@@ -51,7 +51,7 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
             { settings.isPrettyFormattingAllowed },
             { settings.isPrettyFormattingAllowed = it })
           .comment(IdeBundle.message("date.format.relative"))
-      }
+      }.topGap(TopGap.SMALL)
     }
   }
 

@@ -96,6 +96,10 @@ public class IdeUiService {
     return VirtualFile.EMPTY_ARRAY;
   }
 
+  public VirtualFile chooseFile(FileChooserDescriptor descriptor, JComponent component, Project project, VirtualFile dir) {
+    return null;
+  }
+
   public SSLContext getSslContext() {
     return null;
   }
@@ -116,8 +120,18 @@ public class IdeUiService {
     return new ArrayList<>();
   }
 
+  public void prepareURL(String url) throws IOException {
+
+  }
+
+
+
 
   public static IdeUiService getInstance() {
     return ApplicationManager.getApplication().getService(IdeUiService.class);
+  }
+
+  public boolean showErrorDialog(String title, String message) {
+    return false;
   }
 }

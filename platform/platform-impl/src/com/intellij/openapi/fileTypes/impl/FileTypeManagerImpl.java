@@ -11,6 +11,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +50,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC)
+@State(
+  name = "FileTypeManager",
+  storages = @Storage("filetypes.xml"),
+  additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC,
+  category = SettingsCategory.CODE)
+
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
   static final ExtensionPointName<FileTypeBean> EP_NAME = new ExtensionPointName<>("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
@@ -674,14 +680,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      // should run detectors for 'DetectedByContentFileType' type and if failed, return text
-      FileType detected = myDetectionService.getOrDetectFromContent(file, content);
+      FileType detected = detectFileTypeByFile(file, content);
       if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
         return DetectedByContentFileType.INSTANCE;
       }
       return detected;
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+  }
+
+  @NotNull
+  protected FileType detectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
+    // should run detectors for 'DetectedByContentFileType' type and if failed, return text
+    return myDetectionService.getOrDetectFromContent(file, content);
   }
 
   @Override
@@ -1321,7 +1332,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
       else {
         result = myConflictingMappingTracker.warnAndResolveConflict(newMatcher, oldFtd, newFtd);
-        LOG.debug(newMatcher + " had a conflict between " + oldFtd + " and " + newFtd + " and the winner is ... ... ... " + result);
+        if (oldFtd != null) {
+          LOG.debug(newMatcher + " had a conflict between " + oldFtd + " and " + newFtd + " and the winner is ... ... ... " + result);
+        }
       }
       if (!result.approved) {
         notificationsShown.add(result);

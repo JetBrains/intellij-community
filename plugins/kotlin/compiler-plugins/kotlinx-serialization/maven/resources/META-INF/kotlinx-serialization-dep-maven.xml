@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.maven.compilerPlugin.kotlinxSerialization.KotlinSerializationMavenImportHandler"/>
-  </extensions>
-</idea-plugin>

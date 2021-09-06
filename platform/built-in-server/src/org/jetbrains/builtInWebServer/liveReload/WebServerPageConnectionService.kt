@@ -72,7 +72,7 @@ class WebServerPageConnectionService {
   /**
    * @return suffix to add to requested file in response
    */
-  fun fileRequested(request: FullHttpRequest, fileSupplier: Supplier<out VirtualFile?>): CharSequence? {
+  fun fileRequested(request: FullHttpRequest, onlyIfHtmlFile: Boolean, fileSupplier: Supplier<out VirtualFile?>): CharSequence? {
     var reloadRequest = ReloadMode.DISABLED
     val uri = request.uri()
     if (uri != null && uri.contains(RELOAD_URL_PARAM)) {
@@ -90,7 +90,7 @@ class WebServerPageConnectionService {
       LOGGER.warn("VirtualFile for $uri isn't resolved, reload on save can't be started")
       return null
     }
-    if (!WebBrowserXmlService.getInstance().isHtmlFile(file)) return null
+    if (onlyIfHtmlFile && !WebBrowserXmlService.getInstance().isHtmlFile(file)) return null
     val clientId = myState.pageRequested(uri, file, reloadRequest)
 
     val optionalConsoleLog =

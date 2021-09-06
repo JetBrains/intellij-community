@@ -23,6 +23,7 @@ public final class MarkdownParserManager {
   private static final AtomicReference<ParsingInfo> ourLastParsingResult = new AtomicReference<>();
 
   static {
+    //FIXME: Move to dedicated component
     ApplicationManager.getApplication().getMessageBus().connect()
       .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override

@@ -473,13 +473,10 @@ public class WSLDistribution {
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
-
   public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    if (wslPath.startsWith(getMntRoot())) {
-      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
-      if (windowsPath != null) {
-        return windowsPath;
-      }
+    String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+    if (windowsPath != null) {
+      return windowsPath;
     }
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
@@ -545,7 +542,7 @@ public class WSLDistribution {
 
   @Override
   public String toString() {
-    return "WSLDistribution{myDescriptor=" + myDescriptor + '}';
+    return myDescriptor.getMsId();
   }
 
   private static void prependCommand(@NotNull List<? super String> command, String @NotNull ... commandToPrepend) {

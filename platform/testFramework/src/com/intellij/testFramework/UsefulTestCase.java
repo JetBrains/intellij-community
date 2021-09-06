@@ -17,11 +17,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
@@ -62,10 +64,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
@@ -432,8 +431,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @see #disposeOnTearDown(Disposable)
    * @see #tearDown()
    */
-  @NotNull
-  public Disposable getTestRootDisposable() {
+  public @NotNull Disposable getTestRootDisposable() {
     Disposable disposable = myTestRootDisposable;
     if (disposable == null) {
       myTestRootDisposable = disposable = new TestDisposable();
@@ -554,6 +552,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
+    var testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
       TestLoggerFactory.onTestStarted();
@@ -565,8 +564,12 @@ public abstract class UsefulTestCase extends TestCase {
         success = true;
         throw e;
       }
+      catch (Throwable t) {
+        TestLoggerFactory.logTestFailure(t);
+        throw t;
+      }
       finally {
-        TestLoggerFactory.onTestFinished(success);
+        TestLoggerFactory.onTestFinished(success, testDescription);
       }
     };
   }
@@ -586,8 +589,7 @@ public abstract class UsefulTestCase extends TestCase {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 
-  @NotNull
-  public static String toString(@NotNull Iterable<?> collection) {
+  public static @NotNull String toString(@NotNull Iterable<?> collection) {
     if (!collection.iterator().hasNext()) {
       return "<empty>";
     }
@@ -745,8 +747,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameElements(toString(collection), copy, expected);
   }
 
-  @NotNull
-  public static String toString(Object @NotNull [] collection, @NotNull String separator) {
+  public static @NotNull String toString(Object @NotNull [] collection, @NotNull String separator) {
     return toString(Arrays.asList(collection), separator);
   }
 
@@ -761,8 +762,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameElements(collection, expected);
   }
 
-  @NotNull
-  public static String toString(@NotNull Collection<?> collection, @NotNull String separator) {
+  public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
     List<String> list = ContainerUtil.map2List(collection, String::valueOf);
     Collections.sort(list);
     StringBuilder builder = new StringBuilder();
@@ -842,8 +842,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @Contract("null, _ -> fail")
-  @NotNull
-  public static <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
+  public static @NotNull <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
     Assert.assertNotNull("Expected instance of: " + aClass.getName() + " actual: " + null, o);
     Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));
     @SuppressWarnings("unchecked") T t = (T)o;
@@ -912,8 +911,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @NotNull
-  protected <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
+  protected @NotNull <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
     Disposer.register(getTestRootDisposable(), disposable);
     return disposable;
   }
@@ -936,18 +934,15 @@ public abstract class UsefulTestCase extends TestCase {
     assertFalse("File should not exist " + file, file.exists());
   }
 
-  @NotNull
-  protected String getTestName(boolean lowercaseFirstLetter) {
+  protected @NotNull String getTestName(boolean lowercaseFirstLetter) {
     return getTestName(getName(), lowercaseFirstLetter);
   }
 
-  @NotNull
-  public static String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
+  public static @NotNull String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
-  @NotNull
-  protected String getTestDirectoryName() {
+  protected @NotNull String getTestDirectoryName() {
     final String testName = getTestName(true);
     return testName.replaceAll("_.*", "");
   }
@@ -1212,8 +1207,7 @@ public abstract class UsefulTestCase extends TestCase {
     return false;
   }
 
-  @NotNull
-  protected String getHomePath() {
+  protected @NotNull String getHomePath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
   }
 
@@ -1228,7 +1222,7 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  public static VirtualFile refreshAndFindFile(@NotNull final File file) {
+  public static VirtualFile refreshAndFindFile(final @NotNull File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
@@ -1267,6 +1261,25 @@ public abstract class UsefulTestCase extends TestCase {
     public String toString() {
       String testName = getTestName(false);
       return UsefulTestCase.this.getClass() + (StringUtil.isEmpty(testName) ? "" : ".test" + testName);
+    }
+  }
+
+  protected void setRegistryPropertyForTest(@NotNull String property, @NotNull String value) {
+    Registry.get(property).setValue(value);
+    Disposer.register(getTestRootDisposable(), () -> Registry.get(property).resetToDefault());
+  }
+
+  protected void allowAccessToDirsIfExists(@NotNull String @NotNull ... dirNames) {
+    for (String dirName : dirNames) {
+      final Path usrShareDir = Paths.get(dirName);
+      if (Files.exists(usrShareDir)) {
+        final String absolutePath = usrShareDir.toAbsolutePath().toString();
+        LOG.debug(usrShareDir.toString(), " exists, adding to the list of allowed root: ", absolutePath);
+        VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
+      }
+      else {
+        LOG.debug(usrShareDir.toString(), " does not exists");
+      }
     }
   }
 }

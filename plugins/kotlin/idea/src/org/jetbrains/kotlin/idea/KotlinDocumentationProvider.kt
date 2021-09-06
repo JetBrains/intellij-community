@@ -84,7 +84,7 @@ class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNameP
             return name
         return buildString {
             val ref = classifier.fqNameUnsafe.toString()
-            DocumentationManagerUtil.createHyperlink(this, ref, name, true)
+            DocumentationManagerUtil.createHyperlink(this, ref, name, true, false)
         }
     }
 }
@@ -444,7 +444,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                 if (containingDeclaration != null) {
                     val fqName = containingDeclaration.fqNameSafe
                     if (!fqName.isRoot) {
-                        DocumentationManagerUtil.createHyperlink(this, fqName.asString(), fqName.asString(), false)
+                        DocumentationManagerUtil.createHyperlink(this, fqName.asString(), fqName.asString(), false, true)
                     }
                     val fileName =
                         descriptor
@@ -475,7 +475,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
             val psi = declarationDescriptor.findPsi() as? KtFunction ?: return ""
             val lightElement =
                 LightClassUtil.getLightClassMethod(psi) // Light method for super's scan in javadoc info gen
-            val javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(psi.project, lightElement)
+            val javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(psi.project, lightElement, false)
             val builder = StringBuilder()
             if (javaDocInfoGenerator.generateDocInfoCore(builder, false)) {
                 val renderedJava = builder.toString()

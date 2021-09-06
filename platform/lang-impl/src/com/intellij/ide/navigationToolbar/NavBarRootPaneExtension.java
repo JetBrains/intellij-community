@@ -8,6 +8,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -33,7 +34,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private final Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
-  private static Boolean myNavToolbarGroupExist;
+  private Boolean myNavToolbarGroupExist;
   private JScrollPane myScrollPane;
 
   public NavBarRootPaneExtension(@NotNull Project project) {
@@ -70,7 +71,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return  b;
   }
 
-  public static boolean runToolbarExists() {
+  private boolean runToolbarExists() {
     if (myNavToolbarGroupExist == null) {
       final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
       myNavToolbarGroupExist = correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||

@@ -51,7 +51,6 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
@@ -60,9 +59,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TextUI;
-import javax.swing.text.View;
-import javax.swing.text.html.HTML;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -108,7 +104,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private final JScrollPane myScrollPane;
   private final DocumentationHintEditorPane myEditorPane;
-  private @Nls String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private final DocumentationLinkHandler myLinkHandler;
@@ -143,7 +138,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       DocumentationScrollPane.keyboardActions(myScrollPane),
       this::getElement
     );
-    myText = "";
     myScrollPane.setViewportView(myEditorPane);
     myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener(myEditorPane::applyFontProps));
 
@@ -492,7 +486,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = false;
     if (myManager == null) return;
 
-    myText = text;
+    myEditorPane.setText(text);
     setElement(element);
     if (element != null && element.getElement() != null) {
       myManager.updateToolWindowTabName(element.getElement());
@@ -521,7 +515,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myLinkHandler.highlightLink(-1);
 
-    myEditorPane.setText(myText);
     myEditorPane.applyFontProps(getQuickDocFontSize());
 
     showHint();
@@ -566,30 +559,30 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setHintSize() {
-    Dimension hintSize;
-    if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
-      hintSize = getOptimalSize();
-    }
-    else {
-      if (myManuallyResized) {
-        hintSize = myHint.getSize();
-        JBInsets.removeFrom(hintSize, myHint.getContent().getInsets());
-      }
-      else {
-        hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
-      }
-      if (hintSize == null) {
-        hintSize = new Dimension(MIN_DEFAULT);
-      }
-      else {
-        hintSize.width = Math.max(hintSize.width, MIN_DEFAULT.width);
-        hintSize.height = Math.max(hintSize.height, MIN_DEFAULT.height);
-      }
-    }
+    Dimension hintSize = myManuallyResized ? ensureMinimum(myHint.getContentSize())
+                                           : getDefaultHintSize();
     myHint.setSize(hintSize);
   }
 
-  public Dimension getOptimalSize() {
+  private @NotNull Dimension getDefaultHintSize() {
+    if (myHint.getDimensionServiceKey() == null) {
+      return getOptimalSize();
+    }
+    Dimension storedSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+    if (storedSize != null) {
+      return ensureMinimum(storedSize);
+    }
+    return new Dimension(MIN_DEFAULT);
+  }
+
+  private static @NotNull Dimension ensureMinimum(@NotNull Dimension hintSize) {
+    return new Dimension(
+      Math.max(hintSize.width, MIN_DEFAULT.width),
+      Math.max(hintSize.height, MIN_DEFAULT.height)
+    );
+  }
+
+  private @NotNull Dimension getOptimalSize() {
     int width = getPreferredWidth();
     int height = getPreferredHeight(width);
     return new Dimension(width, height);
@@ -600,13 +593,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     int minWidth = JBUIScale.scale(300);
     int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : JBUIScale.scale(MAX_DEFAULT.width);
 
-    int width = definitionPreferredWidth();
-    if (width < 0) { // no definition found
-      width = myEditorPane.getPreferredSize().width;
-    }
-    else {
-      width = Math.max(width, myEditorPane.getMinimumSize().width);
-    }
+    int width = myEditorPane.getPreferredWidth();
     Insets insets = getInsets();
     return MathUtil.clamp(width, minWidth, maxWidth) + insets.left + insets.right;
   }
@@ -614,7 +601,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   @Override
   public int getPreferredHeight(int width) {
     myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
-    myEditorPane.setText(myText);
     Dimension preferredSize = myEditorPane.getPreferredSize();
 
     int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
@@ -659,45 +645,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private int definitionPreferredWidth() {
-    TextUI ui = myEditorPane.getUI();
-    View view = ui.getRootView(myEditorPane);
-    View definition = findDefinition(view);
-
-    if (definition == null) {
-      return -1;
-    }
-    int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
-
-    // Heuristics to calculate popup width based on the amount of the content.
-    // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
-    // 200 chars and less is 300px, 1000 chars and more is 500px.
-    // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
-    int textLength = definition.getDocument().getLength();
-    final int contentLengthPreferredSize;
-    if (textLength < 200) {
-      contentLengthPreferredSize = JBUIScale.scale(300);
-    }
-    else if (textLength > 200 && textLength < 1000) {
-      contentLengthPreferredSize = JBUIScale.scale(300) + JBUIScale.scale(1) * (textLength - 200) * (500 - 300) / (1000 - 200);
-    }
-    else {
-      contentLengthPreferredSize = JBUIScale.scale(500);
-    }
-    return Math.max(contentLengthPreferredSize, defaultPreferredSize);
-  }
-
-  private static View findDefinition(View view) {
-    if ("definition".equals(view.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
-      return view;
-    }
-    for (int i = 0; i < view.getViewCount(); i++) {
-      View definition = findDefinition(view.getView(i));
-      if (definition != null) return definition;
-    }
-    return null;
-  }
-
   private void goBack() {
     if (myBackStack.isEmpty()) return;
     Context context = myBackStack.pop();
@@ -714,7 +661,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, myExternalUrl, myProvider, rect, myLinkHandler.getHighlightedLink());
+    return new Context(myElement, myEditorPane.getText(), myExternalUrl, myProvider, rect, myLinkHandler.getHighlightedLink());
   }
 
   private void restoreContext(@NotNull Context context) {
@@ -756,7 +703,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
     }
@@ -776,7 +723,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
     }
@@ -796,7 +743,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private final class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
+  protected final class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
 
     private EditDocumentationSourceAction() {
       super(true);
@@ -865,11 +812,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public @Nls String getText() {
-    return myText;
+    return myEditorPane.getText();
   }
 
   public @Nls String getDecoratedText() {
-    return myText;
+    return myEditorPane.getText();
   }
 
   @Override
@@ -926,7 +873,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  protected class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
     }
@@ -944,7 +891,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
       super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
     }
@@ -967,7 +914,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
       super(CodeInsightBundle.messagePointer("javadoc.restore.size"));
     }

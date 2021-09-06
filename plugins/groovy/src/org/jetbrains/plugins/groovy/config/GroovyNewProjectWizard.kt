@@ -4,11 +4,12 @@ package org.jetbrains.plugins.groovy.config
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
-import com.intellij.ide.*
-import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
+import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
-import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
+import com.intellij.ide.wizard.NewProjectWizardLanguageStep
+import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
@@ -25,13 +26,12 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions.FileSetVersionsCallback
-import com.intellij.util.ui.update.LazyUiDisposable
 import org.jetbrains.plugins.groovy.GroovyBundle
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager
@@ -40,153 +40,151 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JTextField
 import javax.swing.SwingUtilities
 
-class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
-  override val language: String = "Groovy"
-  override var settingsFactory = { GroovyModuleSettings() }
+class GroovyNewProjectWizard : NewProjectWizard {
+  override val name: String = "Groovy"
 
-  override fun settingsList(settings: GroovyModuleSettings): List<SettingsComponent> {
-    val sdkCombo = JdkComboBox(null, ProjectSdksModel().also { it.syncSdks() }, { it is JavaSdkType }, null, null, null)
-      .apply { minimumSize = Dimension(0, 0) }
-      .also { combo -> combo.addItemListener { settings.javaSdk = combo.selectedJdk } }
-    lateinit var disposableComponent: Disposable
-    val panel = panel {
-      row {
-        buttonGroup {
-          createDownloadableLibraryPanel(settings)
-          val innerDisposableComponent = createFileSystemLibraryPanel(settings)
-          disposableComponent = innerDisposableComponent
+  override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
+
+  class Step(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardChildStep<NewProjectWizardLanguageStep>(parent) {
+    var javaSdk: Sdk? = null
+    var useMavenLibrary: Boolean = false
+    var useLocalLibrary: Boolean = false
+    var mavenVersion: FrameworkLibraryVersion? = null
+    var sdkPath: String = ""
+
+    override fun setupUI(builder: LayoutBuilder) {
+      with(builder) {
+        row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+          val sdkCombo = JdkComboBox(null, ProjectSdksModel().also { it.syncSdks() }, { it is JavaSdkType }, null, null, null)
+            .apply { minimumSize = Dimension(0, 0) }
+            .also { combo -> combo.addItemListener { javaSdk = combo.selectedJdk } }
+          sdkCombo()
+        }
+        nestedPanel {
+          row(GroovyBundle.message("label.groovy.sdk")) {
+            buttonGroup {
+              createDownloadableLibraryPanel()
+              val disposable = createFileSystemLibraryPanel()
+              Disposer.register(context.disposable, disposable)
+            }
+          }
         }
       }
     }
 
-    object : LazyUiDisposable<Disposable>(null, panel, disposableComponent) {
-      override fun initialize(parent: Disposable, child: Disposable, project: Project?) {
-      }
-    }
-
-    return listOf(LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo),
-                  LabelAndComponent(JBLabel(GroovyBundle.message("label.groovy.sdk")), panel {}),
-                  JustComponent(panel))
-  }
-
-  private fun Row.createDownloadableLibraryPanel(settings: GroovyModuleSettings) {
-    lateinit var checkbox: JBRadioButton
-    twoColumnRow(
-      { checkbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"), settings::useMavenLibrary).component.apply { isSelected = true } },
-      {
-        val groovyLibraryType = LibraryType.EP_NAME.findExtensionOrFail(GroovyDownloadableLibraryType::class.java)
-        val downloadableLibraryDescription = groovyLibraryType.libraryDescription
-        comboBox(
-          DefaultComboBoxModel(emptyArray()),
-          { settings.mavenVersion }, { settings.mavenVersion = it },
-          SimpleListCellRenderer.create(GroovyBundle.message("combo.box.null.value.placeholder")) { it?.versionString ?: "<unknown>" }
-        ).applyToComponent {
-          downloadableLibraryDescription.fetchVersions(object : FileSetVersionsCallback<FrameworkLibraryVersion>() {
-            override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
-              versions.sortedWith(::moveUnstablesToTheEnd).forEach(::addItem)
-            }
-          })
-        }.enableIf(checkbox.selected)
-      })
-  }
-
-  private fun Row.createFileSystemLibraryPanel(settings: GroovyModuleSettings): Disposable {
-    lateinit var checkbox: JBRadioButton
-    lateinit var disposable: Disposable
-    twoColumnRow(
-      { checkbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), settings::useLocalLibrary).component },
-      {
-        // todo: color text field in red if selected path does not correspond to a groovy sdk home
-        val groovyLibraryDescription = GroovyLibraryDescription()
-        val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
-        val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
-        val textWithBrowse = TextFieldWithBrowseButton()
-          .apply {
-            setText(pathToGroovyHome?.path)
-            addActionListener(object : BrowseFolderActionListener<JTextField>(
-              GroovyBundle.message("dialog.title.select.groovy.sdk"),
-              null,
-              this,
-              null,
-              fileChooserDescriptor,
-              TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
-              override fun getInitialFile() = pathToGroovyHome
+    private fun Row.createDownloadableLibraryPanel() {
+      lateinit var checkbox: JBRadioButton
+      row {
+        cell {
+          checkbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"),
+            ::useMavenLibrary).component.apply { isSelected = true }
+        }
+        cell {
+          val groovyLibraryType = LibraryType.EP_NAME.findExtensionOrFail(GroovyDownloadableLibraryType::class.java)
+          val downloadableLibraryDescription = groovyLibraryType.libraryDescription
+          comboBox(
+            DefaultComboBoxModel(emptyArray()),
+            { mavenVersion }, { mavenVersion = it },
+            SimpleListCellRenderer.create(GroovyBundle.message("combo.box.null.value.placeholder")) { it?.versionString ?: "<unknown>" }
+          ).applyToComponent {
+            downloadableLibraryDescription.fetchVersions(object : FileSetVersionsCallback<FrameworkLibraryVersion>() {
+              override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
+                versions.sortedWith(::moveUnstablesToTheEnd).forEach(::addItem)
+              }
             })
-            FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null)
-          }
-          .let(::component)
-          .constraints(growX)
-          .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, settings::sdkPath.toBinding())
-          .enableIf(checkbox.selected)
-
-        disposable = textWithBrowse.component
+          }.enableIf(checkbox.selected)
+        }
       }
-    )
-    return disposable
-  }
-
-  override fun setupProject(project: Project, settings: GroovyModuleSettings, context: WizardContext) {
-    val builder = context.projectBuilder as? ModuleBuilder ?: return
-    val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
-      contentEntryPath = project.basePath
-      name = project.name
-      moduleJdk = settings.javaSdk
     }
 
-    val librariesContainer = LibrariesContainerFactory.createContainer(context.project)
+    private fun Row.createFileSystemLibraryPanel(): Disposable {
+      lateinit var checkbox: JBRadioButton
+      lateinit var disposable: Disposable
+      row {
+        cell { checkbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), ::useLocalLibrary).component }
+        cell {
+          // todo: color text field in red if selected path does not correspond to a groovy sdk home
+          val groovyLibraryDescription = GroovyLibraryDescription()
+          val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
+          val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
+          val textWithBrowse = TextFieldWithBrowseButton()
+            .apply {
+              setText(pathToGroovyHome?.path)
+              addActionListener(object : BrowseFolderActionListener<JTextField>(
+                GroovyBundle.message("dialog.title.select.groovy.sdk"),
+                null,
+                this,
+                null,
+                fileChooserDescriptor,
+                TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+                override fun getInitialFile() = pathToGroovyHome
+              })
+              FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null)
+            }
+            .let(::component)
+            .constraints(growX)
+            .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, ::sdkPath.toBinding())
+            .enableIf(checkbox.selected)
 
-    val compositionSettings = generateCompositionSettings(settings, project, librariesContainer)
-
-    builder.addModuleConfigurationUpdater(object : ModuleConfigurationUpdater() {
-      override fun update(module: Module, rootModel: ModifiableRootModel) {
-        groovyModuleBuilder.setupRootModel(rootModel)
-        compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
+          disposable = textWithBrowse.component
+        }
       }
-    })
-  }
-}
+      return disposable
+    }
 
-private fun generateCompositionSettings(settings: GroovyModuleSettings,
-                                        project: Project,
-                                        container: LibrariesContainer): LibraryCompositionSettings {
-  val libraryDescription = GroovyLibraryDescription()
-  // compositionSettings implements Disposable, but it is done that way because of the field with the type Library.
-  // this field in our usage is always null, so there is no need to dispose compositionSettings
-  val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
-                                                       FrameworkLibraryVersionFilter.ALL, listOf(settings.mavenVersion))
-  if (settings.useMavenLibrary && settings.mavenVersion != null) {
-    compositionSettings.setDownloadLibraries(true)
-    compositionSettings.downloadFiles(null)
-  }
-  else if (settings.useLocalLibrary) {
-    val virtualFile = VfsUtil.findFile(Path.of(settings.sdkPath), false) ?: return compositionSettings
-    val newLibraryConfiguration =
-      libraryDescription.createLibraryConfiguration(getCurrentKeyboardFocusManager().activeWindow, virtualFile)
-      ?: return compositionSettings
-    val libraryEditor = NewLibraryEditor(newLibraryConfiguration.libraryType, newLibraryConfiguration.properties)
-    libraryEditor.name = container.suggestUniqueLibraryName(newLibraryConfiguration.defaultLibraryName)
-    newLibraryConfiguration.addRoots(libraryEditor)
-    compositionSettings.setNewLibraryEditor(libraryEditor)
-  }
-  return compositionSettings
-}
+    override fun setupProject(project: Project) {
+      val builder = context.projectBuilder as? ModuleBuilder ?: return
+      val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
+        contentEntryPath = project.basePath
+        name = project.name
+        moduleJdk = javaSdk
+      }
 
-private fun moveUnstablesToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
-  val leftVersion = left.versionString
-  val rightVersion = right.versionString
-  val leftUnstable = GroovyConfigUtils.isUnstable(leftVersion)
-  val rightUnstable = GroovyConfigUtils.isUnstable(rightVersion)
-  return when {
-    leftUnstable == rightUnstable -> -GroovyConfigUtils.compareSdkVersions(leftVersion, rightVersion)
-    leftUnstable -> 1
-    else -> -1
-  }
-}
+      val librariesContainer = LibrariesContainerFactory.createContainer(context.project)
 
-class GroovyModuleSettings {
-  var javaSdk: Sdk? = null
-  var useMavenLibrary: Boolean = false
-  var useLocalLibrary: Boolean = false
-  var mavenVersion: FrameworkLibraryVersion? = null
-  var sdkPath: String = ""
+      val compositionSettings = generateCompositionSettings(project, librariesContainer)
+
+      builder.addModuleConfigurationUpdater(object : ModuleConfigurationUpdater() {
+        override fun update(module: Module, rootModel: ModifiableRootModel) {
+          groovyModuleBuilder.setupRootModel(rootModel)
+          compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
+        }
+      })
+    }
+
+    private fun generateCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings {
+      val libraryDescription = GroovyLibraryDescription()
+      // compositionSettings implements Disposable, but it is done that way because of the field with the type Library.
+      // this field in our usage is always null, so there is no need to dispose compositionSettings
+      val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
+        FrameworkLibraryVersionFilter.ALL, listOf(mavenVersion))
+      if (useMavenLibrary && mavenVersion != null) {
+        compositionSettings.setDownloadLibraries(true)
+        compositionSettings.downloadFiles(null)
+      }
+      else if (useLocalLibrary) {
+        val virtualFile = VfsUtil.findFile(Path.of(sdkPath), false) ?: return compositionSettings
+        val newLibraryConfiguration =
+          libraryDescription.createLibraryConfiguration(getCurrentKeyboardFocusManager().activeWindow, virtualFile)
+          ?: return compositionSettings
+        val libraryEditor = NewLibraryEditor(newLibraryConfiguration.libraryType, newLibraryConfiguration.properties)
+        libraryEditor.name = container.suggestUniqueLibraryName(newLibraryConfiguration.defaultLibraryName)
+        newLibraryConfiguration.addRoots(libraryEditor)
+        compositionSettings.setNewLibraryEditor(libraryEditor)
+      }
+      return compositionSettings
+    }
+
+    private fun moveUnstablesToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
+      val leftVersion = left.versionString
+      val rightVersion = right.versionString
+      val leftUnstable = GroovyConfigUtils.isUnstable(leftVersion)
+      val rightUnstable = GroovyConfigUtils.isUnstable(rightVersion)
+      return when {
+        leftUnstable == rightUnstable -> -GroovyConfigUtils.compareSdkVersions(leftVersion, rightVersion)
+        leftUnstable -> 1
+        else -> -1
+      }
+    }
+  }
 }

@@ -11,8 +11,8 @@ class ClearScratchAction : ScratchAction(
     AllIcons.Actions.GC
 ) {
     override fun actionPerformed(e: AnActionEvent) {
-        val findScratchFileEditorWithPreview = e.currentScratchEditor ?: return
+        val scratchEditor = e.currentScratchEditor ?: return
 
-        findScratchFileEditorWithPreview.clearOutputHandlers()
+        scratchEditor.clearOutputHandlers()
     }
 }

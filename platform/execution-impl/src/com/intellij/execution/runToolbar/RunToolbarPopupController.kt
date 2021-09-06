@@ -58,7 +58,7 @@ class RunToolbarPopupController(val project: Project,
     pane = slotPane
 
     if (manager.slotsCount() == 0) {
-      manager.addNewSlot()
+      manager.addAndSaveSlot()
     }
 
     fun getTrackerRelativePoint(): RelativePoint {

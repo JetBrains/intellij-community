@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("TestOnlyProblems")
+@file:Suppress("TestOnlyProblems", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -159,8 +159,9 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors:
         val lightServices = scanResult.getClassesWithAnnotation(Service::class.java.name)
         for (lightService in lightServices) {
           if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole" ||
-              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService") {
-            // wants EDT in constructor
+              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService" ||
+              lightService.name == "com.intellij.javascript.web.webTypes.WebTypesNpmLoader") {
+            // wants EDT/read action in constructor
              continue
           }
 

@@ -96,7 +96,7 @@ public abstract class JavaCoverageClassesEnumerator {
                              final String rootPackageVMName,
                              final boolean isTestSource,
                              final Set<VirtualFile> productionRootsSet) {
-    final VirtualFile[] roots = getRoots(module, isTestSource);
+    final VirtualFile[] roots = getRoots(myCoverageManager, module, isTestSource);
     if (roots == null) return;
 
     for (VirtualFile output : roots) {
@@ -167,8 +167,8 @@ public abstract class JavaCoverageClassesEnumerator {
     return false;
   }
 
-  private VirtualFile[] getRoots(final Module module, final boolean isTestSource) {
-    return myCoverageManager.doInReadActionIfProjectOpen(() -> {
+  public static VirtualFile[] getRoots(final CoverageDataManager manager, final Module module, final boolean isTestSource) {
+    return manager.doInReadActionIfProjectOpen(() -> {
       OrderEnumerator enumerator = OrderEnumerator.orderEntries(module)
         .withoutSdk()
         .withoutLibraries()

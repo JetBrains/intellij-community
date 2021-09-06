@@ -55,7 +55,7 @@ final class ShDocumentationProvider implements DocumentationProvider {
   };
 
   @Override
-  public @Nls String generateDoc(PsiElement o, PsiElement originalElement) {
+  public @NlsSafe String generateDoc(PsiElement o, PsiElement originalElement) {
     if (!wordWithDocumentation(o)) return null;
 
     DOCUMENTATION_PROVIDER_USED_EVENT_ID.log();

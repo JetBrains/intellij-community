@@ -20,17 +20,22 @@
     </group>
 
     <group id="RunToolbarMainActionsGroup" popup="false">
-      <action class="com.intellij.execution.runToolbar.RunToolbarMainSlotActive"/>
+      <action id="RunToolbarMainSlotActive" class="com.intellij.execution.runToolbar.RunToolbarMainSlotActive"/>
       <action id="RunToolbarShowHidePopupAction" class="com.intellij.execution.runToolbar.RunToolbarShowHidePopupAction" icon="AllIcons.Toolbar.Expand"/>
       <action id="RunToolbarMainSlotInfoAction" class="com.intellij.execution.runToolbar.RunToolbarMainSlotInfoAction"/>
-      <reference id="RunToolbarRunConfigurationsAction"/>
+      <action id="RunToolbarMainRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarMainRunConfigurationsAction"/>
       <reference id="RunToolbarRerunAction"/>
       <reference id="RunToolbarAdditionalProcessActions"/>
       <group id="RunToolbarProcessMainActionGroup"/>
       <reference id="RunToolbarStopAction"/>
       <action id="RunToolbarMainMultipleStopAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleStopAction" icon="AllIcons.Actions.Suspend"/>
       <group id="RunToolbarMainMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup"/>
+    </group>
 
+    <group id="RunToolbarSlotContextMenuGroup" popup="true">
+      <action id="RunToolbarMoveToTopAction" class="com.intellij.execution.runToolbar.RunToolbarMoveToTopAction" icon="AllIcons.Toolbar.Pin"/>
+      <action id="RunToolbarEditConfigurationAction" class="com.intellij.execution.runToolbar.RunToolbarEditConfigurationAction"/>
+      <action id="RunToolbarRemoveSlotAction" class="com.intellij.execution.runToolbar.RunToolbarRemoveSlotAction"/>
     </group>
 
   </actions>
@@ -38,6 +43,7 @@
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSlotManager"/>
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSettings"/>
+    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
   </extensions>
   <project-components>
     <component>

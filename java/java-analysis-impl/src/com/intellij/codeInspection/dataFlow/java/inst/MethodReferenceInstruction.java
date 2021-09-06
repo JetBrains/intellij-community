@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java.inst;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
@@ -33,7 +32,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     final DfaValue qualifier = stateBefore.pop();
     JavaDfaHelpers.dropLocality(qualifier, stateBefore);
     handleMethodReference(qualifier, expression, interpreter, stateBefore);
-    pushResult(interpreter, stateBefore, typedObject(expression.getFunctionalInterfaceType(), Nullability.NOT_NULL));
+    pushResult(interpreter, stateBefore, JavaDfaHelpers.getFunctionDfType(expression));
     return nextStates(interpreter, stateBefore);
   }
 
@@ -47,7 +46,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
 
   private static void handleMethodReference(DfaValue qualifier,
                                             PsiMethodReferenceExpression methodRef,
-                                            DataFlowInterpreter runner,
+                                            DataFlowInterpreter interpreter,
                                             DfaMemoryState state) {
     PsiType functionalInterfaceType = methodRef.getFunctionalInterfaceType();
     if (functionalInterfaceType == null) return;
@@ -58,26 +57,26 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     if (method == null || !JavaMethodContractUtil.isPure(method)) return;
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    DfaCallArguments callArguments = getMethodReferenceCallArguments(methodRef, qualifier, runner, sam, method, substitutor);
-    CheckNotNullInstruction.dereference(runner, state, callArguments.getQualifier(), NullabilityProblemKind.callMethodRefNPE.problem(methodRef, null));
+    DfaCallArguments callArguments = getMethodReferenceCallArguments(methodRef, qualifier, interpreter, sam, method, substitutor);
+    CheckNotNullInstruction.dereference(interpreter, state, callArguments.getQualifier(), NullabilityProblemKind.callMethodRefNPE.problem(methodRef, null));
     if (contracts.isEmpty()) return;
     PsiType returnType = substitutor.substitute(method.getReturnType());
-    DfaValue defaultResult = runner.getFactory().fromDfType(typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method)));
+    DfaValue defaultResult = interpreter.getFactory().fromDfType(typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method)));
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments, defaultResult));
     JavaMethodReferenceReturnAnchor anchor = new JavaMethodReferenceReturnAnchor(methodRef);
     DfaValue[] args = callArguments.toArray();
     for (MethodContract contract : contracts) {
       Set<DfaMemoryState> results = new HashSet<>();
-      currentStates = MethodCallInstruction.addContractResults(contract, currentStates, runner.getFactory(), results);
+      currentStates = MethodCallInstruction.addContractResults(contract, currentStates, interpreter.getFactory(), results);
       for (DfaMemoryState result : results) {
         ContractValue.flushContractTempVariables(result);
         DfaValue value = result.pop();
-        runner.getListener().beforePush(args, value, anchor, result);
+        interpreter.getListener().beforePush(args, value, anchor, result);
         result.push(value);
       }
     }
     for (DfaCallState currentState: currentStates) {
-      runner.getListener().beforePush(args, defaultResult, anchor, currentState.getMemoryState());
+      interpreter.getListener().beforePush(args, defaultResult, anchor, currentState.getMemoryState());
       currentState.getMemoryState().push(defaultResult);
       ContractValue.flushContractTempVariables(currentState.getMemoryState());
     }
@@ -85,7 +84,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
 
   private static @NotNull DfaCallArguments getMethodReferenceCallArguments(PsiMethodReferenceExpression methodRef,
                                                                            DfaValue qualifier,
-                                                                           DataFlowInterpreter runner,
+                                                                           DataFlowInterpreter interpreter,
                                                                            PsiMethod sam,
                                                                            PsiMethod method,
                                                                            PsiSubstitutor substitutor) {
@@ -94,9 +93,9 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     boolean instanceBound = !isStatic && !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
     PsiParameter[] parameters = method.getParameterList().getParameters();
     DfaValue[] arguments = new DfaValue[parameters.length];
-    Arrays.fill(arguments, runner.getFactory().getUnknown());
+    Arrays.fill(arguments, interpreter.getFactory().getUnknown());
     for (int i = 0; i < samParameters.length; i++) {
-      DfaValue value = runner.getFactory().fromDfType(
+      DfaValue value = interpreter.getFactory().fromDfType(
         typedObject(substitutor.substitute(samParameters[i].getType()), DfaPsiUtil.getFunctionalParameterNullability(methodRef, i)));
       if (i == 0 && !isStatic && !instanceBound) {
         qualifier = value;
@@ -104,8 +103,9 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
       else {
         int idx = i - ((isStatic || instanceBound) ? 0 : 1);
         if (idx >= arguments.length) break;
-        if (!(parameters[idx].getType() instanceof PsiEllipsisType)) {
-          arguments[idx] = value;
+        PsiType parameterType = parameters[idx].getType();
+        if (!(parameterType instanceof PsiEllipsisType)) {
+          arguments[idx] = DfaUtil.boxUnbox(value, parameterType);
         }
       }
     }

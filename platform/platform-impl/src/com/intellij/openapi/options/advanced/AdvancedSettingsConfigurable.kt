@@ -16,12 +16,12 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.dsl.*
-import com.intellij.ui.dsl.Cell
-import com.intellij.ui.dsl.Row
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.dsl.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
@@ -34,7 +34,7 @@ import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable {
 
-  private class SettingsGroup(val groupRow: Row,
+  private class SettingsGroup(val groupPanel: Panel,
                               val title: String,
                               val settingsRows: Collection<SettingsRow>)
 
@@ -52,7 +52,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private lateinit var nothingFoundRow: Row
   private var onlyShowModified = false
 
-  private val searchAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
+  private val searchAlarm = Alarm()
 
   private val searchField = SearchTextField().apply {
     textEditor.emptyText.text = ApplicationBundle.message("search.advanced.settings")
@@ -111,7 +111,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
               if (label == null) {
                 advancedSetting.cellBuilder.comment(it)
               } else {
-                settingRow.comment(it)
+                settingRow.rowComment(it)
               }
             }
 
@@ -196,7 +196,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private fun applyFilter(searchText: String?, onlyShowModified: Boolean) {
     if (searchText.isNullOrBlank() && !onlyShowModified) {
       for (groupPanel in settingsGroups) {
-        groupPanel.groupRow.visible(true)
+        groupPanel.groupPanel.visible(true)
         for (settingsRow in groupPanel.settingsRows) {
           settingsRow.setVisible(true)
           updateMatchText(settingsRow.component, settingsRow.text, null)
@@ -212,7 +212,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     var matchCount = 0
 
     for (settingsGroup in settingsGroups) {
-      settingsGroup.groupRow.visible(true)
+      settingsGroup.groupPanel.visible(true)
       var groupVisible = false
       if (!onlyShowModified && isMatch(filterWords, settingsGroup.title)) {
         matchCount++
@@ -239,7 +239,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       }
 
       if (!groupVisible) {
-        settingsGroup.groupRow.visible(false)
+        settingsGroup.groupPanel.visible(false)
       }
     }
 

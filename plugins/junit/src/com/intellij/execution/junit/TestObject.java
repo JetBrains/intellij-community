@@ -58,6 +58,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
@@ -78,6 +79,10 @@ import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
+  private static final String LAUNCHER_MODULE_NAME = "org.junit.platform.launcher";
+  private static final String JUPITER_ENGINE_NAME  = "org.junit.jupiter.engine";
+  private static final String VINTAGE_ENGINE_NAME  = "org.junit.vintage.engine";
+
   protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
   private static final @NonNls String DEBUG_RT_PATH = "idea.junit_rt.path";
@@ -323,10 +328,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (isModularized) { //for modularized junit ensure launcher is included in the module graph
       ParamsGroup group = getOrCreateJigsawOptions(javaParameters);
       ParametersList vmParametersList = group.getParametersList();
-      String launcherModuleName = "org.junit.platform.launcher";
-      if (!vmParametersList.hasParameter(launcherModuleName)) {
+      if (!vmParametersList.hasParameter(LAUNCHER_MODULE_NAME)) {
         vmParametersList.add("--add-modules");
-        vmParametersList.add(launcherModuleName);
+        vmParametersList.add(LAUNCHER_MODULE_NAME);
+
+        ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, LAUNCHER_MODULE_NAME);
       }
     }
 
@@ -340,23 +346,33 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
       PsiClass testAnnotation = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.compute(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope)));
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
-      if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope) &&
-          !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope)) {
-        downloadDependenciesWhenRequired(project, additionalDependencies,
-                                         new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
+      if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
+        if (!hasPackageWithDirectories(psiFacade, JUPITER_ENGINE_NAME, globalSearchScope)) {
+          downloadDependenciesWhenRequired(project, additionalDependencies,
+                                           new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
+        }
+        else if (isModularized) {
+          ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, JUPITER_ENGINE_NAME);
+        }
       }
 
-      if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
-          hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-        PsiClass junit4RunnerClass = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.compute(() -> psiFacade.findClass("junit.runner.Version", globalSearchScope)));
-        if (junit4RunnerClass != null && isAcceptableVintageVersion()) {
-          String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
-                           ? jupiterVersion
-                           : "4.12." + StringUtil.getShortName(launcherVersion);
-          downloadDependenciesWhenRequired(project, additionalDependencies,
-                                           //don't include potentially incompatible hamcrest/junit dependency
-                                           new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version, false, ContainerUtil.emptyList()));
+      if (!hasPackageWithDirectories(psiFacade, VINTAGE_ENGINE_NAME, globalSearchScope)) {
+        if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
+          PsiClass junit4RunnerClass = dumbService.computeWithAlternativeResolveEnabled(
+            () -> ReadAction.compute(() -> psiFacade.findClass("junit.runner.Version", globalSearchScope)));
+          if (junit4RunnerClass != null && isAcceptableVintageVersion()) {
+            String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
+                             ? jupiterVersion
+                             : "4.12." + StringUtil.getShortName(launcherVersion);
+            downloadDependenciesWhenRequired(project, additionalDependencies,
+                                             //don't include potentially incompatible hamcrest/junit dependency
+                                             new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version, false,
+                                                                             ContainerUtil.emptyList()));
+          }
         }
+      }
+      else if (isModularized) {
+        ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, VINTAGE_ENGINE_NAME);
       }
     }
 
@@ -365,6 +381,18 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     for (int i = additionalDependencies.size() - 1; i >= 0; i--) {
       targetList.addFirst(additionalDependencies.get(i));
     }
+  }
+
+  private static void ensureSpecifiedModuleOnModulePath(JavaParameters javaParameters,
+                                                        GlobalSearchScope globalSearchScope,
+                                                        JavaPsiFacade psiFacade,
+                                                        String moduleName) {
+    ReadAction.run(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      PsiJavaModule launcherModule = psiFacade.findModule(moduleName, globalSearchScope);
+      if (launcherModule != null) {
+        JavaParametersUtil.putDependenciesOnModulePath(javaParameters, launcherModule, true);
+      }
+    }));
   }
 
   /**

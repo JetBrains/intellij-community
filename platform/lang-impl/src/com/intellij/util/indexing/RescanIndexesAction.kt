@@ -21,8 +21,7 @@ internal class RescanIndexesAction : RecoveryAction {
   override val actionKey: String
     get() = "rescan"
 
-  override fun perform(project: Project?): List<CacheInconsistencyProblem> {
-    project!!
+  override fun performSync(project: Project): List<CacheInconsistencyProblem> {
     val historyFuture = CompletableFuture<ProjectIndexingHistory>()
     val updater = object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
       override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistory {
@@ -45,8 +44,6 @@ internal class RescanIndexesAction : RecoveryAction {
       return listOf(ExceptionalCompletionProblem(e))
     }
   }
-
-  override fun canBeApplied(project: Project?): Boolean = project != null
 
   private fun ProjectIndexingHistory.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
     scanningStatistics.filter { it.numberOfFilesForIndexing != 0 }.map {

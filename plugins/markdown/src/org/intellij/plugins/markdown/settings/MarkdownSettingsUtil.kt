@@ -4,7 +4,8 @@ package org.intellij.plugins.markdown.settings
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.util.download.DownloadableFileService
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
@@ -21,24 +22,17 @@ internal object MarkdownSettingsUtil {
       extension.directory.delete()
     }
     val result = downloader.createDownloader(listOf(description), extension.downloadFilename)
-      .downloadFilesWithProgress(
-        extension.directory.absolutePath,
-        null,
-        parentComponent
-      )?.also {
-        extension.afterDownload()
-      }
+      .downloadFilesWithProgress(extension.directory.absolutePath, null, parentComponent)
+      ?.also { extension.afterDownload() }
     return result != null
   }
 
-  fun downloadExtension(extension: MarkdownExtensionWithExternalFiles, enableAfterDownload: Boolean = false): Boolean {
+  fun downloadExtension(extension: MarkdownExtensionWithExternalFiles, project: Project? = null, enableAfterDownload: Boolean = false): Boolean {
     if (downloadExtensionFiles(extension)) {
       if (enableAfterDownload) {
-        MarkdownApplicationSettings.getInstance().enableExtension(extension.id)
-        // FIXME: Should be triggered inside settings on change
-        ApplicationManager.getApplication().messageBus
-          .syncPublisher(MarkdownApplicationSettings.SettingsChangedListener.TOPIC)
-          .settingsChanged(MarkdownApplicationSettings.getInstance())
+        MarkdownSettings.getInstance(currentOrDefaultProject(project)).update {
+          it.extensionsEnabledState[extension.id] = true
+        }
       }
       Notifications.Bus.notify(
         Notification(

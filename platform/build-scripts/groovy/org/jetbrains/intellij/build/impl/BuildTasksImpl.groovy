@@ -385,9 +385,11 @@ idea.fatal.error.notification=disabled
     Path src = buildContext.paths.communityHomeDir.resolve("bin/log.xml")
     Path dst = buildContext.paths.distAllDir.resolve("bin/log.xml")
     Files.createDirectories(dst.parent)
-    Files.newBufferedWriter(dst).withCloseable {
-      src.filterLine { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(it)
-    }
+
+    String text = Files.readAllLines(src)
+      .findAll { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }
+      .join("\n")
+    Files.writeString(dst, text)
   }
 
   private static @NotNull BuildTaskRunnable<Path> createDistributionForOsTask(@NotNull String taskName,
@@ -686,7 +688,7 @@ idea.fatal.error.notification=disabled
     Files.createDirectories(destProjectorLibDir)
 
     def libNamesToCopy = new ArrayList<String>()
-    libNamesToCopy.addAll("projector-server", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
+    libNamesToCopy.addAll("projector-server", "projector-server-core", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
 
     ArrayList<File> projectorLibsToCopy = new ArrayList<>()
     ArrayList<String> failedLibs = new ArrayList<>()

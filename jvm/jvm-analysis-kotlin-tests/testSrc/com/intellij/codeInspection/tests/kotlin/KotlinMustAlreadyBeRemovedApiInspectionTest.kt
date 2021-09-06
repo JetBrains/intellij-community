@@ -10,7 +10,7 @@ private const val inspectionPath = "/codeInspection/mustAlreadyBeRemovedApi"
 class KotlinMustAlreadyBeRemovedApiInspectionTest : MustAlreadyBeRemovedApiInspectionTestBase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "kt"
-
-  fun `test APIs must have been removed`() = testHighlighting("outdatedApi")
+  fun `test APIs must have been removed`() {
+    myFixture.testHighlighting("outdatedApi.kt")
+  }
 }

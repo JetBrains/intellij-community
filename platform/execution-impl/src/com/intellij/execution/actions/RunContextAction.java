@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -15,11 +15,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,20 +45,34 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   @Override
-  protected void perform(RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
+  protected void perform(final RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
     final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
     if (configuration == null) {
-      configuration = context.getConfiguration();
-      if (configuration == null) {
+      RunnerAndConfigurationSettings contextConfiguration = context.getConfiguration();
+      if (contextConfiguration == null) {
         return;
       }
-      runManager.setTemporaryConfiguration(configuration);
+      runManager.setTemporaryConfiguration(contextConfiguration);
+      perform(runManager, contextConfiguration, context);
     }
-    else if (configuration != findExisting(context)) {
-      RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
-      runManager.setTemporaryConfiguration(configuration);
+    else  {
+      ReadAction
+        .nonBlocking(() -> findExisting(context))
+        .finishOnUiThread(ModalityState.defaultModalityState(), (existingContext) -> {
+          if (configuration != existingContext) {
+            RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
+            runManager.setTemporaryConfiguration(configuration);
+            perform(runManager, configuration, context);
+          } else {
+            perform(runManager, configuration, context);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
-    if (Registry.is("select.run.configuration.from.context")) {
+  }
+
+  private void perform(RunManagerEx runManager, RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
+    if (runManager.shouldSetRunConfigurationFromContext()) {
       runManager.setSelectedConfiguration(configuration);
     }
 

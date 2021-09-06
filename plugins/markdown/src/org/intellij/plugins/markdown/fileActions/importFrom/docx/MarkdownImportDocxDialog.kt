@@ -2,11 +2,8 @@
 package org.intellij.plugins.markdown.fileActions.importFrom.docx
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionsBaseDialog
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils

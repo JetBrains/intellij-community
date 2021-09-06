@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,24 +117,8 @@ public abstract class DebuggerAction extends AnAction {
     return disposable;
   }
 
-  public static boolean isFirstStart(final AnActionEvent event) {
-    //noinspection HardCodedStringLiteral
-    String key = "initalized";
-    if(event.getPresentation().getClientProperty(key) != null) return false;
-
-    event.getPresentation().putClientProperty(key, key);
-    return true;
-  }
-
-  public static void enableAction(final AnActionEvent event, final boolean enable) {
-    SwingUtilities.invokeLater(() -> {
-      event.getPresentation().setEnabled(enable);
-      event.getPresentation().setVisible(true);
-    });
-  }
-
   public static void refreshViews(final AnActionEvent e) {
-    refreshViews(getSession(e));
+    refreshViews(DebuggerUIUtil.getSession(e));
   }
 
   public static void refreshViews(@Nullable XDebugSession session) {
@@ -149,19 +132,7 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   public static boolean isInJavaSession(AnActionEvent e) {
-    XDebugSession session = getSession(e);
+    XDebugSession session = DebuggerUIUtil.getSession(e);
     return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
-  }
-
-  @Nullable
-  public static XDebugSession getSession(AnActionEvent e) {
-    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
-    if (session == null) {
-      Project project = e.getProject();
-      if (project != null) {
-        session = XDebuggerManager.getInstance(project).getCurrentSession();
-      }
-    }
-    return session;
   }
 }

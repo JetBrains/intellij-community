@@ -107,7 +107,7 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
         immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(currentScope, PsiSwitchLabelStatementBase.class);
       }
 
-      while (immediateSwitchLabel != null && isFallthrough(immediateSwitchLabel) && isSpecialCaseLabel(immediateSwitchLabel)) {
+      while (immediateSwitchLabel != null && isFallthrough(immediateSwitchLabel) && isCaseNull(immediateSwitchLabel)) {
         immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiSwitchLabelStatementBase.class);
       }
 
@@ -136,18 +136,12 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
     }
   }
 
-  private static boolean isSpecialCaseLabel(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
-    return isCase(switchCaseLabel, JavaTokenType.NULL_KEYWORD) ||
-           isCase(switchCaseLabel, JavaTokenType.DEFAULT_KEYWORD) ||
-           switchCaseLabel.isDefaultCase();
-  }
+  private static boolean isCaseNull(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
+    if (switchCaseLabel.getCaseLabelElementList() == null) return false;
 
-  private static boolean isCase(@NotNull PsiSwitchLabelStatementBase item, @NotNull IElementType keyword) {
-    if (item.getCaseLabelElementList() == null) return false;
-
-    final PsiCaseLabelElement[] elements = item.getCaseLabelElementList().getElements();
+    final PsiCaseLabelElement[] elements = switchCaseLabel.getCaseLabelElementList().getElements();
     if (elements.length != 1) return false;
 
-    return elements[0].getNode().getFirstChildNode().getElementType() == keyword;
+    return elements[0].getNode().getFirstChildNode().getElementType() == JavaTokenType.NULL_KEYWORD;
   }
 }

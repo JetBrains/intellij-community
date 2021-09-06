@@ -630,8 +630,8 @@ final class ActionUpdater {
     }
     boolean nestedWA = reason instanceof String && ((String)reason).startsWith("nested write-action");
     if (nestedWA) {
-      LOG.error(new IllegalStateException(
-        "An action must not request write-action during actions update. See CustomComponentAction.createCustomComponent javadoc."));
+      LOG.error(new AssertionError("An action must not request write-action during actions update. " +
+                                   "See CustomComponentAction.createCustomComponent javadoc, if caused by a custom component."));
     }
     if (!nestedWA && promise instanceof AsyncPromise) {
       ((AsyncPromise<?>)promise).setError(new Utils.ProcessCanceledWithReasonException(reason));

@@ -26,13 +26,15 @@ abstract class TargetEnvironment(
     /**
      * Request for any not used random path.
      */
-    data class Temporary @JvmOverloads constructor(
+    class Temporary @JvmOverloads constructor(
       /** Any string. An environment implementation may reuse previously created directories for the same hint. */
       val hint: String? = null,
 
       /** If null, use `/tmp` or something similar, autodetected. */
       val parentDirectory: String? = null
-    ) : TargetPath()
+    ) : TargetPath() {
+      override fun toString(): String = "Temporary(hint=$hint, parentDirectory=$parentDirectory)"
+    }
   }
 
   data class UploadRoot @JvmOverloads constructor(

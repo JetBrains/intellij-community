@@ -10,8 +10,6 @@ private const val inspectionPath = "/codeInspection/testfailedline"
 class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "kt"
-
   fun testMainTest() {
     doTest(
       fileName = "MainTest",

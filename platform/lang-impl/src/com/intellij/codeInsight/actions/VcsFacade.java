@@ -65,7 +65,7 @@ public class VcsFacade {
 
   public boolean hasChanges(@NotNull Module module) {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    for (VirtualFile root : rootManager.getSourceRoots()) {
+    for (VirtualFile root : rootManager.getContentRoots()) {
       if (hasChanges(root, module.getProject())) {
         return true;
       }

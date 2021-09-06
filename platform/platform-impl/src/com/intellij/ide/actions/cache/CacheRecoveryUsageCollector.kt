@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 
 internal class CacheRecoveryUsageCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("cache.recovery.actions", 1)
+    private val GROUP = EventLogGroup("cache.recovery.actions", 2)
 
     private val ACTION_ID_FIELD =
       EventFields.String("action-id",
@@ -17,7 +17,9 @@ internal class CacheRecoveryUsageCollector : CounterUsagesCollector() {
           "hammer",
           "reindex",
           "drop-shared-index",
-          "rescan"
+          "rescan",
+          "stop",
+          "reload-workspace-model"
         )
       )
 
@@ -36,6 +38,14 @@ internal class CacheRecoveryUsageCollector : CounterUsagesCollector() {
         project,
         ACTION_ID_FIELD with recoveryAction.actionKey,
         FROM_GUIDE_FIELD with fromGuide
+      )
+    }
+
+    fun recordGuideStoppedEvent(project: Project) {
+      EVENT_ID.log(
+        project,
+        ACTION_ID_FIELD with "stop",
+        FROM_GUIDE_FIELD with true
       )
     }
   }

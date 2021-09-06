@@ -116,8 +116,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     updateComponentsAndResize();
 
-    setAutoRequestFocus(false);
-
     // at this point a window insets may be unavailable,
     // so we need resize window when it is shown
     UiNotifyConnector.doWhenFirstShown(this, this::pack);

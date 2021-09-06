@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -56,23 +57,14 @@ public final class TestScaleHelper {
   }
 
   public static void setRegistryProperty(@NotNull String key, @NotNull String value) {
-    final RegistryValue prop = Registry.get(key);
+    RegistryValue prop = Registry.get(key);
     if (originalRegProps.get(key) == null) originalRegProps.put(key, prop.asString());
     prop.setValue(value);
   }
 
   public static void setSystemProperty(@NotNull String name, @Nullable String value) {
     if (originalSysProps.get(name) == null) originalSysProps.put(name, System.getProperty(name));
-    _setProperty(name, value);
-  }
-
-  private static void _setProperty(String name, String value) {
-    if (value != null) {
-      System.setProperty(name, value);
-    }
-    else {
-      System.clearProperty(name);
-    }
+    SystemProperties.setProperty(name, value);
   }
 
   public static void restoreProperties() {
@@ -82,7 +74,7 @@ public final class TestScaleHelper {
 
   public static void restoreSystemProperties() {
     for (Map.Entry<String, String> entry : originalSysProps.entrySet()) {
-      _setProperty(entry.getKey(), entry.getValue());
+      SystemProperties.setProperty(entry.getKey(), entry.getValue());
     }
   }
 

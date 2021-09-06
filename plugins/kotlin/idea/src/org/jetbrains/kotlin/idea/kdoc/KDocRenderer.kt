@@ -66,7 +66,7 @@ object KDocRenderer {
     }
 
     private fun KDocLink.createHyperlink(to: StringBuilder) {
-        DocumentationManagerUtil.createHyperlink(to, getLinkText(), getLinkText(), false)
+        DocumentationManagerUtil.createHyperlink(to, getLinkText(), getLinkText(), false, true)
     }
 
     private fun KDocLink.getTargetElement(): PsiElement? {
@@ -130,7 +130,7 @@ object KDocRenderer {
                 val tag = iterator.next()
                 val subjectName = tag.getSubjectName()
                 if (subjectName != null) {
-                    DocumentationManagerUtil.createHyperlink(this, subjectName, subjectName, false)
+                    DocumentationManagerUtil.createHyperlink(this, subjectName, subjectName, false, true)
                 } else {
                     append(tag.getContent())
                 }
@@ -150,7 +150,7 @@ object KDocRenderer {
                 val subjectName = getSubjectName()
                 if (subjectName != null) {
                     append("<p><code>")
-                    DocumentationManagerUtil.createHyperlink(this@renderSection, subjectName, subjectName, false)
+                    DocumentationManagerUtil.createHyperlink(this@renderSection, subjectName, subjectName, false, true)
                     append("</code> - ${markdownToHtml(getContent().trimStart())}")
                 }
             }
@@ -272,7 +272,7 @@ object KDocRenderer {
                     if (linkLabelContent != null) {
                         val label = linkLabelContent.joinToString(separator = "") { it.text }
                         val linkText = node.child(MarkdownElementTypes.LINK_TEXT)?.toHtml() ?: label
-                        DocumentationManagerUtil.createHyperlink(sb, label, linkText, true)
+                        DocumentationManagerUtil.createHyperlink(sb, label, linkText, true, true)
                     } else {
                         sb.append(node.text)
                     }

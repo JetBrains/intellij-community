@@ -3,13 +3,22 @@ package org.jetbrains.plugins.notebooks.editor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
+import com.intellij.ui.JBColor
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import java.awt.Color
 import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.Rectangle
 import javax.swing.JComponent
 import kotlin.math.max
@@ -56,12 +65,27 @@ inline fun paintNotebookCellBackgroundGutter(
   val stripe = appearance.getCellStripeColor(editor, interval)
   val stripeHover = appearance.getCellStripeHoverColor(editor, interval)
   val borderWidth = appearance.getLeftBorderWidth()
-  g.color = appearance.getCodeCellBackground(editor.colorsScheme)
-  if (editor.editorKind != EditorKind.DIFF) {
+  val isDiff = editor.editorKind == EditorKind.DIFF
+  if (!isDiff){
+    g.color = appearance.getCodeCellBackground(editor.colorsScheme)
     g.fillRect(r.width - borderWidth, top, borderWidth, height)
+    actionBetweenBackgroundAndStripe()
   }
-  actionBetweenBackgroundAndStripe()
-  if (editor.editorKind == EditorKind.DIFF) return
+  else {
+    val key = EditorColors.TEARLINE_COLOR
+    val color: Color? = editor.colorsScheme.getColor(key)
+    g.color = color ?: JBColor.black
+
+    val sw: Double = if (JreHiDpiUtil.isJreHiDPIEnabled() || JBUIScale.scale(1.toFloat()) * editor.scale < 2) 1.toDouble() else 2.toDouble()
+    val ctx: ScaleContext = ScaleContext.create(editor.component)
+    val strokeWidth = PaintUtil.alignToInt(sw, ctx,
+      if (PaintUtil.devValue(1.0, ctx) > 2) PaintUtil.RoundingMode.FLOOR else PaintUtil.RoundingMode.ROUND, null)
+
+    val tearLineX = (r.width - 1).toDouble()
+    LinePainter2D.paint(g as Graphics2D, tearLineX, (r.y - 1000).toDouble(), tearLineX, (r.y + r.height + 1000).toDouble(),
+      LinePainter2D.StrokeType.CENTERED, strokeWidth)
+    return
+  }
   if (stripe != null) {
     appearance.paintCellStripe(g, r, stripe, top, height)
   }
@@ -110,6 +134,35 @@ fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }
 
+val NotebookCellLines.Interval.firstContentLine: Int
+  get() =
+    if (markers.hasTopLine) lines.first + 1
+    else lines.first
+
+fun makeMarkersFromIntervals(document: Document, intervals: Iterator<NotebookCellLines.Interval>): List<NotebookCellLines.Marker> {
+  val markers = ArrayList<NotebookCellLines.Marker>()
+
+  fun addMarker(line: Int, type: NotebookCellLines.CellType) {
+    val startOffset = document.getLineStartOffset(line)
+    val endOffset =
+      if (line + 1 < document.lineCount) document.getLineStartOffset(line + 1)
+      else document.getLineEndOffset(line)
+    val length = endOffset - startOffset
+    markers.add(NotebookCellLines.Marker(markers.size, type, startOffset, length))
+  }
+
+  for (interval in intervals) {
+    if (interval.markers.hasTopLine) {
+      addMarker(interval.lines.first, interval.type)
+    }
+    if (interval.markers.hasBottomLine) {
+      addMarker(interval.lines.last, interval.type)
+    }
+  }
+
+  return markers
+}
+
 fun groupNeighborCells(cells: List<NotebookCellLines.Interval>): List<List<NotebookCellLines.Interval>> {
   val groups = SmartList<SmartList<NotebookCellLines.Interval>>()
   for (cell in cells) {
@@ -136,6 +189,12 @@ fun MutableList<IntRange>.mergeAndJoinIntersections(other: List<IntRange>) {
       }
     }
   }
+}
+
+fun isLineVisible(editor: EditorImpl, line: Int): Boolean {
+  val lineY = editor.logicalPositionToXY(LogicalPosition(line, 0)).y
+  val viewArea = editor.scrollingModel.visibleAreaOnScrollingFinished
+  return viewArea.y <= lineY && lineY <= viewArea.y + viewArea.height
 }
 
 class SwingClientProperty<T, R: T?>(name: String) {

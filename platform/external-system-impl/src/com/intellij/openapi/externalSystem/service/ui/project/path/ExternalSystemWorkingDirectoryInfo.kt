@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui.project.path
 
+import com.intellij.ide.wizard.getCanonicalPath
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.service.ui.getModelPath
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -28,11 +28,11 @@ class ExternalSystemWorkingDirectoryInfo(project: Project, externalSystemId: Pro
       val localSettings = ExternalSystemApiUtil.getLocalSettings<AbstractExternalSystemLocalSettings<*>>(project, externalSystemId)
       val uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId)
       for ((parent, children) in localSettings.availableProjects) {
-        val parentPath = getModelPath(parent.path)
+        val parentPath = getCanonicalPath(parent.path)
         val parentName = uiAware.getProjectRepresentationName(project, parentPath, null)
         add(ExternalProject(parentName, parentPath))
         for (child in children) {
-          val childPath = getModelPath(child.path)
+          val childPath = getCanonicalPath(child.path)
           if (parentPath == childPath) continue
           val childName = uiAware.getProjectRepresentationName(project, childPath, parentPath)
           add(ExternalProject(childName, childPath))

@@ -18,7 +18,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +39,7 @@ public final class ModuleFileDirMacro extends Macro {
 
   @Override
   public String expand(@NotNull DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     final String path = module != null ? module.getModuleFilePath() : null;
     if (path == null) {
       return null;

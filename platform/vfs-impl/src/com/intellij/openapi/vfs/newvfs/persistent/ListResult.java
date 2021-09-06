@@ -21,14 +21,16 @@ import java.util.Objects;
 final class ListResult {
   private final int modStamp;
   final List<ChildInfo> children;  // sorted by `#getId`
+  private int myParentId;
 
-  ListResult(@NotNull List<ChildInfo> children) {
-    this(FSRecords.getLocalModCount(), children);
+  ListResult(@NotNull List<ChildInfo> children, int parentId) {
+    this(FSRecords.getModCount(parentId), children, parentId);
   }
 
-  private ListResult(int modStamp, List<ChildInfo> children) {
+  private ListResult(int modStamp, List<ChildInfo> children, int parentId) {
     this.modStamp = modStamp;
     this.children = children;
+    myParentId = parentId;
     Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || app.isInternal()) {
       assertSortedById(children);
@@ -64,7 +66,7 @@ final class ListResult {
         newChildren.add(children.get(j));
       }
     }
-    return new ListResult(modStamp, newChildren);
+    return new ListResult(modStamp, newChildren, myParentId);
   }
 
   @Contract(pure=true)
@@ -84,7 +86,7 @@ final class ListResult {
         newChildren.add(children.get(j));
       }
     }
-    return new ListResult(modStamp, newChildren);
+    return new ListResult(modStamp, newChildren, myParentId);
   }
 
   // Returns entries from this list plus `otherList';
@@ -92,7 +94,7 @@ final class ListResult {
   // (to avoid duplicating ids: preserve old id but supply new name).
   @Contract(pure=true)
   @NotNull ListResult merge(@NotNull List<ChildInfo> newChildren, boolean isCaseSensitive) {
-    ListResult newList = new ListResult(newChildren);  // assume the list is sorted
+    ListResult newList = new ListResult(newChildren, myParentId);  // assume the list is sorted
     if (children.isEmpty()) return newList;
     List<ChildInfo> oldChildren = children;
     // Both `newChildren` and `oldChildren` are sorted by id, but not `nameId`, so plain O(N) merging is not possible.
@@ -162,7 +164,7 @@ final class ListResult {
       result.sort(ChildInfo.BY_ID);
     }
     List<ChildInfo> newRes = nameToIndex.isEmpty() ? newChildren : result;
-    return new ListResult(modStamp, newRes);
+    return new ListResult(modStamp, newRes, myParentId);
   }
 
   @Contract(pure=true)
@@ -190,11 +192,11 @@ final class ListResult {
     for (int i=index1; i<children.size(); i++) {
       newChildren.add(children.get(i));
     }
-    return new ListResult(modStamp, newChildren);
+    return new ListResult(modStamp, newChildren, myParentId);
   }
 
   boolean childrenWereChangedSinceLastList() {
-    return modStamp != FSRecords.getLocalModCount();
+    return modStamp != FSRecords.getModCount(myParentId);
   }
 
   @Override

@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
@@ -318,7 +320,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   // open for Rider
   open fun openProject(projectFile: Path, openProjectOptions: OpenProjectTask): CompletableFuture<Project?> {
-    if (ProjectUtil.isValidProjectPath(projectFile)) {
+    if (isValidProjectPath(projectFile)) {
       ProjectUtil.findAndFocusExistingProjectForPath(projectFile)?.let {
         return CompletableFuture.completedFuture(it)
       }
@@ -470,19 +472,21 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return ProjectUtil.getBaseDir()
   }
 
-  // open for rider
-  protected open fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): CompletableFuture<Boolean> {
+  // open for Rider
+  protected open fun isValidProjectPath(file: Path) = ProjectUtil.isValidProjectPath(file)
+
+  protected fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): CompletableFuture<Boolean> {
     val reversedList = ArrayList<Pair<Path, RecentProjectMetaInfo>>(openPaths.size)
     for (entry in openPaths.reversed()) {
       val path = Path.of(entry.key)
-      if (entry.value.frame == null || !ProjectUtil.isValidProjectPath(path)) {
+      if (entry.value.frame == null || !isValidProjectPath(path)) {
         return CompletableFuture.completedFuture(false)
       }
 
       reversedList.add(Pair(path, entry.value))
     }
 
-    // ok, no non-existent project paths and every info has frame
+    // ok, no non-existent project paths and every info has a frame
     val first = openPaths.first().value
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(openPaths.size)
     return CompletableFuture.runAsync({
@@ -499,10 +503,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         else {
           MyProjectUiFrameManager(ideFrame)
         }
-        taskList.add(Pair(path, OpenProjectTask(forceOpenInNewFrame = true,
+        taskList.add(Pair(path, OpenProjectTask(
+          forceOpenInNewFrame = true,
           showWelcomeScreen = false,
           frameManager = frameManager,
-          projectWorkspaceId = info.projectWorkspaceId)))
+          projectWorkspaceId = info.projectWorkspaceId,
+        )))
       }
     }, ApplicationManager.getApplication()::invokeLater)
       .thenApplyAsync({

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -25,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
@@ -158,6 +159,23 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());
   }
 
+
+  public void testRunAllInPackageJUnit5() throws ExecutionException, IOException {
+    
+    VirtualFile module1Content = findFile("module7");
+    createModule(module1Content, true, "JUnit5");
+    Module module = getModule(3);
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("tests1");
+    JUnitConfiguration configuration = createConfiguration(psiPackage, module);
+    configuration.setSearchScope(TestSearchScope.SINGLE_MODULE);
+    JavaParameters parameters = checkCanRun(configuration);
+    List<String> lines = extractAllInPackageTests(parameters, psiPackage);
+    assertEquals(Arrays.asList("", //category
+                               "" //filters
+                 ), 
+                               lines);
+  }
+
   public void testRunningAllInPackage() throws IOException, ExecutionException {
     Module module1 = getModule1();
     GlobalSearchScope module1AndLibraries = GlobalSearchScope.moduleWithLibrariesScope(module1);
@@ -199,7 +217,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(root);
     context.put(LangDataKeys.PSI_ELEMENT_ARRAY, new PsiElement[] {psiDirectory});
     context.put(CommonDataKeys.PROJECT, myProject);
-    context.put(LangDataKeys.MODULE, module1);
+    context.put(PlatformCoreDataKeys.MODULE, module1);
     assertFalse(new AllInPackageConfigurationProducer().isConfigurationFromContext(allInProjectConfiguration, ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN)));
   }
 

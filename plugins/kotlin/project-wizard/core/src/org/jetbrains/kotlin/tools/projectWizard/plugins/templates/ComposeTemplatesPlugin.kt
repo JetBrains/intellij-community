@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeJvmDesktopTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeMppModuleTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeWebModuleTemplate
 
 class ComposeTemplatesPlugin(context: Context) : TemplatePlugin(context) {
     override val path = pluginPath
@@ -24,7 +25,8 @@ class ComposeTemplatesPlugin(context: Context) : TemplatePlugin(context) {
             withAction {
                 TemplatesPlugin.addTemplate.execute(ComposeJvmDesktopTemplate()) andThen
                         TemplatesPlugin.addTemplate.execute(ComposeJvmDesktopTemplate()) andThen
-                        TemplatesPlugin.addTemplate.execute(ComposeMppModuleTemplate())
+                        TemplatesPlugin.addTemplate.execute(ComposeMppModuleTemplate()) andThen
+                        TemplatesPlugin.addTemplate.execute(ComposeWebModuleTemplate)
             }
         }
     }

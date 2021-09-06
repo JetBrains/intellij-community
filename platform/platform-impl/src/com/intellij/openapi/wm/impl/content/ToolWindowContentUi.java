@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.*;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
@@ -64,6 +63,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   private final TabbedContentAction.CloseAllAction closeAllAction;
   private final TabbedContentAction.MyNextTabAction nextTabAction;
   private final TabbedContentAction.MyPreviousTabAction previousTabAction;
+  private final TabbedContentAction.SplitTabAction splitTabAction;
+  private final TabbedContentAction.UnsplitTabAction unsplitTabAction;
 
   private final ShowContentAction showContent;
 
@@ -117,7 +118,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         ensureSelectedContentVisible();
         rebuild();
 
-        if (contentManager.getContentCount() == 0 && window.isToHideOnEmptyContent()) {
+        if (contentManager.isEmpty() && window.isToHideOnEmptyContent()) {
           window.hide(null);
         }
       }
@@ -137,6 +138,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     closeAllAction = new TabbedContentAction.CloseAllAction(contentManager);
     nextTabAction = new TabbedContentAction.MyNextTabAction(contentManager);
     previousTabAction = new TabbedContentAction.MyPreviousTabAction(contentManager);
+    splitTabAction = new TabbedContentAction.SplitTabAction(contentManager);
+    unsplitTabAction = new TabbedContentAction.UnsplitTabAction(contentManager);
     showContent = new ShowContentAction(window, contentComponent, contentManager);
   }
 
@@ -419,7 +422,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       private boolean isToolWindowDrag(MouseEvent e) {
         if (!Registry.is("ide.new.tool.window.dnd")) return false;
         Component realMouseTarget = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
-        Component decorator = ComponentUtil.findParentByCondition(realMouseTarget, c -> c instanceof InternalDecoratorImpl);
+        Component decorator = InternalDecoratorImpl.findTopLevelDecorator(realMouseTarget);
         if (decorator == null || ui.window.getType() == ToolWindowType.FLOATING || ui.window.getType() == ToolWindowType.WINDOWED) return false;
         if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM) return true;
         if (SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() > ToolWindowsPane.getHeaderResizeArea()) return true;//it's drag, not resize!
@@ -500,6 +503,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     group.add(nextTabAction);
     group.add(previousTabAction);
+    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false)) {
+      group.add(splitTabAction);
+      group.add(unsplitTabAction);
+    }
     group.add(showContent);
 
     if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
@@ -603,7 +610,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
     else if (MorePopupAware.KEY.is(dataId)) {
       ContentLayout layout = getCurrentLayout();
-      return  (layout instanceof TabContentLayout) ? layout : null;
+      return  (layout instanceof MorePopupAware) ? layout : null;
     }
     else if (SELECTED_CONTENT_TAB_LABEL.is(dataId) && type == ToolWindowContentUiType.TABBED) {
       return tabsLayout.findTabLabelByContent(contentManager.getSelectedContent());
@@ -669,7 +676,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
   }
 
-  private final class TabPanel extends JPanel implements UISettingsListener {
+  public final class TabPanel extends JPanel implements UISettingsListener {
     private TabPanel() {
       super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
 

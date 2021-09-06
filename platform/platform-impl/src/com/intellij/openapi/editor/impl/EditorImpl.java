@@ -14,10 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +50,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -144,7 +140,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
+  private static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -266,7 +262,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private Color myForcedBackground;
   @Nullable private Dimension myPreferredSize;
 
-  private final Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myMouseSelectionStateAlarm = new Alarm();
   private Runnable myMouseSelectionStateResetRunnable;
 
   private boolean myEmbeddedIntoDialogWrapper;
@@ -517,7 +513,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
       MacGestureSupportInstaller.installOnComponent(getComponent());
     }
 
@@ -1526,9 +1523,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * This method is used to scale editors elements such as gutter icons, folding elements, and others
    */
   public float getScale() {
-    if (!Registry.is("editor.scale.gutter.icons")) return 1f;
+    if (!Registry.is("editor.scale.gutter.icons")) return 1.0f;
     float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
-    return normLineHeight / JBUIScale.scale(16f);
+    return normLineHeight / JBUIScale.scale(16.0f);
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
@@ -3461,15 +3458,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDropHandler = dropHandler;
   }
 
-  /**
-   * @deprecated use {@link #setHighlightingPredicate(Predicate)} instead
-   */
-  @Deprecated
-  public void setHighlightingFilter(@Nullable Condition<? super RangeHighlighter> filter) {
-    setHighlightingPredicate(filter == null ? null : highlighter -> filter.value(highlighter));
-    DeprecatedMethodException.report("Use setHighlightingPredicate() instead");
-  }
-
   public void setHighlightingPredicate(@Nullable Predicate<? super RangeHighlighter> filter) {
     if (myHighlightingFilter == filter) return;
     Predicate<? super RangeHighlighter> oldFilter = myHighlightingFilter;
@@ -3687,6 +3675,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       composedText = strBuf.toString();
+      composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
     }
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {
@@ -3781,9 +3770,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (composedTextIndex < text.getEndIndex()) {
             createComposedString(composedTextIndex, text);
 
-            runUndoTransparent(() -> EditorModificationUtil.insertStringAtCaret(EditorImpl.this, composedText, false, false));
-
-            composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
+            runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedText, false, false));
           }
         }
       }

@@ -75,6 +75,8 @@
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.serializable.class.without.serialversionuid.display.name"
                      implementationClass="com.intellij.codeInspection.SerializableHasSerialVersionUidFieldInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
+    <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
+                    serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>

@@ -33,7 +33,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt DOWN",                 "ShowContent", "MethodDown", "ShowSearchHistory"},
     { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
     { "alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
-    { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
+    { "alt INSERT",               "Console.TableResult.AddRow", "FileChooser.NewFolder", "Generate", "NewElement"},
     { "control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
     { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
@@ -89,7 +89,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt B",              "NotebookInsertCellBelowAction", "tasks.open.in.browser", "sql.SelectInDatabaseView"},
     { "shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
     { "shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
-    { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
+    { "shift ctrl C",             "Console.TableResult.CopyAggregatorResult", "CopyPaths", "DatabaseView.CopyDdlAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff", "Console.TableResult.CompareCells"},
     { "shift control ENTER",      "EditorCompleteStatement", "Console.Jpa.GenerateSql", "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift control F10",        "Console.Open", "RunClass", "RunTargetAction"},
@@ -161,7 +161,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control UP",               "EditorLookupUp", "JupyterSelectCellAboveAction", "MethodUp"},
     { "control ENTER",            "Generate", "NotebookRunCellAction", "NewElement", "PyExecuteCellAction"},
     { "control F5",               "Refresh", "Rerun"},
-    { "control N",                "Generate", "NewElement"},
+    { "control N",                "Console.TableResult.AddRow", "Generate", "NewElement"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
     { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
@@ -237,7 +237,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
-    { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction", "Terminal.CopySelectedText", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
+    { "shift ctrl C",             "Console.TableResult.CopyAggregatorResult", "CopyPaths", "DatabaseView.CopyDdlAction", "Terminal.CopySelectedText", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     { "shift ctrl V",             "PasteMultiple", "Terminal.Paste"},
     });
     put("Default for GNOME", new String[][] {
@@ -312,7 +312,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt F9",             "ChooseDebugConfiguration", "ValidateXml", "ValidateJsp"},
     { "shift alt D",              "ToggleFloatingMode", "hg4idea.QFold"},
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
-    { "shift ctrl C",             "CommentByLineComment", "DatabaseView.CopyDdlAction"},
+    { "shift ctrl C",             "CommentByLineComment", "Console.TableResult.CopyAggregatorResult", "DatabaseView.CopyDdlAction"},
     { "shift control H",          "ChangesView.ShelveSilently", "ReplaceInPath"},
     { "shift control K",          "HippieCompletion", "Vcs.Push"},
     { "shift control M",          "RInsertPipeAction", "ShowBookmarks"},

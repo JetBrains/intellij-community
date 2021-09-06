@@ -97,6 +97,8 @@ fun isOnlyKotlinSearch(searchScope: SearchScope): Boolean {
 }
 
 fun PsiElement.codeUsageScope(): SearchScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(this)
+// TODO: improve scope calculations
+fun PsiElement.codeUsageScopeRestrictedToKotlinSources(): SearchScope = codeUsageScope().restrictToKotlinSources()
 
 fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     name: String,

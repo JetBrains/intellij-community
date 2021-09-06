@@ -43,6 +43,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -1410,7 +1411,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
-    DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink);
+    DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink, false);
   }
 
   @Override
@@ -1765,11 +1766,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @NlsSafe @Nullable String externalUrl,
     @Nullable DocumentationProvider provider
   ) {
+    return decorate(text, getLocationText(element), getExternalText(element, externalUrl, provider));
+  }
+
+  @Internal
+  @Contract(pure = true)
+  public static @Nls String decorate(@Nls @NotNull String text, @Nullable HtmlChunk location, @Nullable HtmlChunk links) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
     text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + SECTIONS_END, "");
-    //noinspection HardCodedStringLiteral
-    text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + "<p>" + SECTIONS_END, "");
+    text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
     boolean hasContent = text.contains(CONTENT_START);
     if (!hasContent) {
       if (!text.contains(DEFINITION_START)) {
@@ -1793,14 +1799,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (!text.contains(DEFINITION_START)) {
       text = text.replace("class='content'", "class='content-only'");
     }
-    String location = getLocationText(element);
     if (location != null) {
-      //noinspection HardCodedStringLiteral
-      text = text + getBottom(hasContent) + location + "</div>";
+      text += getBottom(hasContent).child(location);
     }
-    String links = getExternalText(element, externalUrl, provider);
     if (links != null) {
-      text = text + getBottom(location != null) + links;
+      text += getBottom(location != null).child(links);
     }
     //workaround for Swing html renderer not removing empty paragraphs before non-inline tags
     text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p))", "$1");
@@ -1808,7 +1811,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return text;
   }
 
-  private @Nls @Nullable String getExternalText(
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  private @Nullable HtmlChunk getExternalText(
     @Nullable PsiElement element,
     @NlsSafe @Nullable String externalUrl,
     @Nullable DocumentationProvider provider
@@ -1825,34 +1830,33 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       List<String> urls = provider.getUrlFor(element, originalElement);
       if (urls != null) {
         boolean hasBadUrl = false;
-        @Nls StringBuilder result = new StringBuilder();
+        var result = new HtmlBuilder();
         for (String url : urls) {
-          String link = getLink(title, url);
+          HtmlChunk link = getLink(title, url);
           if (link == null) {
             hasBadUrl = true;
             break;
           }
-
-          if (result.length() > 0) result.append("<p>");
+          if (!result.isEmpty()) result.append(HtmlChunk.p());
           result.append(link);
         }
-        if (!hasBadUrl) return result.toString();
+        if (!hasBadUrl) return result.toFragment();
       }
       else {
         return null;
       }
     }
     else {
-      String link = getLink(title, externalUrl);
+      HtmlChunk link = getLink(title, externalUrl);
       if (link != null) return link;
     }
 
     String linkText = CodeInsightBundle.message("html.external.documentation.component.header", title, title == null ? 0 : 1);
-    return HtmlChunk.link("external_doc", linkText)
-      .child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow")).toString();
+    return HtmlChunk.link("external_doc", linkText).child(EXTERNAL_LINK_ICON);
   }
 
-  private static @Nls String getLink(@Nls String title, @NlsSafe String url) {
+  @Internal
+  public static @Nullable HtmlChunk getLink(@Nls String title, @NlsSafe String url) {
     String hostname = getHostname(url);
     if (hostname == null) {
       return null;
@@ -1864,7 +1868,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     else {
       linkText = CodeInsightBundle.message("link.text.element.documentation.on.url", title, hostname);
     }
-    return HtmlChunk.link(url, linkText).toString();
+    return HtmlChunk.link(url, linkText);
   }
 
   static boolean shouldShowExternalDocumentationLink(DocumentationProvider provider,
@@ -1904,9 +1908,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return -1;
   }
 
-  @NotNull
-  private static String getBottom(boolean hasContent) {
-    return "<div class='" + (hasContent ? "bottom" : "bottom-no-content") + "'>";
+  private static @NotNull HtmlChunk.Element getBottom(boolean hasContent) {
+    return HtmlChunk.div().setClass(hasContent ? "bottom" : "bottom-no-content");
   }
 
   private static final Pattern EXTERNAL_LINK_PATTERN = Pattern.compile("(<a\\s*href=[\"']http[^>]*>)([^>]*)(</a>)");
@@ -1917,7 +1920,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return EXTERNAL_LINK_PATTERN.matcher(text).replaceAll(EXTERNAL_LINK_REPLACEMENT);
   }
 
-  private static @NlsSafe String getLocationText(@Nullable PsiElement element) {
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  private static @Nullable HtmlChunk getLocationText(@Nullable PsiElement element) {
     if (element != null) {
       PsiFile file = element.getContainingFile();
       VirtualFile vfile = file == null ? null : file.getVirtualFile();
@@ -1934,13 +1939,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       if (module != null && !ModuleType.isInternal(module)) {
         if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
-        return "<icon src='" + ModuleType.get(module).getId() + "'>&nbsp;" + module.getName().replace("<", "&lt;");
+        return HtmlChunk.fragment(
+          HtmlChunk.tag("icon").attr("src", ModuleType.get(module).getId()),
+          HtmlChunk.nbsp(),
+          HtmlChunk.text(module.getName())
+        );
       }
       else {
         List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
         for (OrderEntry order : entries) {
           if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-            return "<icon src='AllIcons.Nodes.PpLibFolder" + "'>&nbsp;" + order.getPresentableName().replace("<", "&lt;");
+            return HtmlChunk.fragment(
+              HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
+              HtmlChunk.nbsp(),
+              HtmlChunk.text(order.getPresentableName())
+            );
           }
         }
       }

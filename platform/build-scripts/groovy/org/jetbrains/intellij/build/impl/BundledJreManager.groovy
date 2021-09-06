@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -53,7 +54,7 @@ class BundledJreManager {
 
     Path destinationDir = targetDir.resolve("jbr")
     buildContext.messages.block("Extracting $archive into $destinationDir") {
-      destinationDir.deleteDir()
+      FileUtil.delete(destinationDir)
       untar(archive, destinationDir.toString())
       fixJbrPermissions(destinationDir, os == OsFamily.WINDOWS)
     }

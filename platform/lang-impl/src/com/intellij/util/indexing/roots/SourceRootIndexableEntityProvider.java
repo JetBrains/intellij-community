@@ -4,7 +4,6 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity;
@@ -17,43 +16,52 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class SourceRootIndexableEntityProvider implements IndexableEntityProvider {
+class SourceRootIndexableEntityProvider implements IndexableEntityProvider.ModuleEntityDependent<SourceRootEntity>,
+                                                   IndexableEntityProvider.Existing<SourceRootEntity> {
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull WorkspaceEntity entity,
+  public @NotNull Class<SourceRootEntity> getEntityClass() {
+    return SourceRootEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableFilesIterator> getIteratorsForExistingModule(@NotNull ModuleEntity entity,
+                                                                                             @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                             @NotNull Project project) {
+
+    List<VirtualFile> roots = collectRoots(entity.getSourceRoots());
+    return IndexableEntityProviderMethods.INSTANCE.createIterators(entity, roots, project);
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull SourceRootEntity entity,
                                                                                       @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project)
-    throws IndexableEntityResolvingException {
-    if (entity instanceof SourceRootEntity) {
-      SourceRootEntity sourceRootEntity = (SourceRootEntity)entity;
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(sourceRootEntity.getContentRoot().getModule(),
-                                                                     getVirtualFile(sourceRootEntity),
-                                                                     project);
+                                                                                      @NotNull Project project) {
+    return IndexableEntityProviderMethods.INSTANCE.createIterators(entity.getContentRoot().getModule(),
+                                                                   getVirtualFile(entity),
+                                                                   project);
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull SourceRootEntity oldEntity,
+                                                                                         @NotNull SourceRootEntity newEntity,
+                                                                                         @NotNull WorkspaceEntityStorage storage,
+                                                                                         @NotNull Project project) {
+    if (!(newEntity.getUrl().equals(oldEntity.getUrl())) || !newEntity.getRootType().equals(oldEntity.getRootType())) {
+      return IndexableEntityProviderMethods.INSTANCE.createIterators(newEntity.getContentRoot().getModule(),
+                                                                     getVirtualFile(newEntity), project);
     }
     return Collections.emptyList();
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull WorkspaceEntity oldEntity,
-                                                                                         @NotNull WorkspaceEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project)
-    throws IndexableEntityResolvingException {
-    if (newEntity instanceof ModuleEntity) {
-      List<VirtualFile> newRoots = collectRoots(((ModuleEntity)newEntity).getSourceRoots());
-      List<VirtualFile> oldRoots = collectRoots(((ModuleEntity)oldEntity).getSourceRoots());
-      return IndexableEntityProviderMethods.INSTANCE.createIterators((ModuleEntity)newEntity, newRoots, oldRoots, project);
-    }
-    else if (newEntity instanceof SourceRootEntity) {
-      SourceRootEntity newSourceRoot = (SourceRootEntity)newEntity;
-      SourceRootEntity oldSourceRoot = (SourceRootEntity)oldEntity;
-
-      if (!(newSourceRoot.getUrl().equals(oldSourceRoot.getUrl())) || !newSourceRoot.getRootType().equals(oldSourceRoot.getRootType())) {
-        return IndexableEntityProviderMethods.INSTANCE.createIterators(newSourceRoot.getContentRoot().getModule(),
-                                                                       getVirtualFile(newSourceRoot), project);
-      }
-    }
-    return Collections.emptyList();
+  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedModuleEntityIterator(@NotNull ModuleEntity oldEntity,
+                                                                                               @NotNull ModuleEntity newEntity,
+                                                                                               @NotNull WorkspaceEntityStorage storage,
+                                                                                               @NotNull Project project) {
+    List<VirtualFile> newRoots = collectRoots(newEntity.getSourceRoots());
+    List<VirtualFile> oldRoots = collectRoots(oldEntity.getSourceRoots());
+    return IndexableEntityProviderMethods.INSTANCE.createIterators(newEntity, newRoots, oldRoots, project);
   }
 
   @NotNull

@@ -4,17 +4,16 @@ package com.intellij.codeInspection.tests.kotlin;
 import com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
-import java.util.Collections;
+import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATIONS;
+import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATIONS;
 
 public class BlockingCallDetectionKtTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     BlockingMethodInNonBlockingContextInspection myInspection = new BlockingMethodInNonBlockingContextInspection();
-    myInspection.myBlockingAnnotations =
-      Collections.singletonList(BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATION);
-    myInspection.myNonBlockingAnnotations =
-      Collections.singletonList(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION);
+    myInspection.myBlockingAnnotations = DEFAULT_BLOCKING_ANNOTATIONS;
+    myInspection.myNonBlockingAnnotations = DEFAULT_NONBLOCKING_ANNOTATIONS;
     myFixture.enableInspections(myInspection);
   }
 
@@ -28,7 +27,7 @@ public class BlockingCallDetectionKtTest extends JavaCodeInsightFixtureTestCase 
                                "import org.jetbrains.annotations.NonBlocking\n" +
                                "@NonBlocking\n" +
                                "fun nonBlockingFunction() {\n" +
-                               "  <warning descr=\"Inappropriate blocking method call\">blockingFunction</warning>();\n" +
+                               "  <warning descr=\"Possibly blocking call in non-blocking context could lead to thread starvation\">blockingFunction</warning>();\n" +
                                "}\n" +
                                "@Blocking\n" +
                                "fun blockingFunction() {}");
@@ -43,7 +42,7 @@ public class BlockingCallDetectionKtTest extends JavaCodeInsightFixtureTestCase 
                                "import org.jetbrains.annotations.NonBlocking\n" +
                                "@NonBlocking\n" +
                                "fun nonBlockingFunction() {\n" +
-                               "  Thread.<warning descr=\"Inappropriate blocking method call\">sleep</warning>(111);}");
+                               "  Thread.<warning descr=\"Possibly blocking call in non-blocking context could lead to thread starvation\">sleep</warning>(111);}");
     myFixture.testHighlighting(true, false, true, "TestKotlinThrowsTypeDetection.kt");
   }
 }

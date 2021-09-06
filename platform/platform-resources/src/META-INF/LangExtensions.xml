@@ -975,6 +975,9 @@
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator"/>
 
+    <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingPanelProvider" />
+    <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewProjectErrorsPanelProvider" />
+
     <!--<projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>-->
     <projectService serviceInterface="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProviderBase"
                     serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>
@@ -1275,9 +1278,6 @@
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.ActionsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.OptionEqualityProvider"/>
 
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider" order="first"/>
-    <applicationService serviceImplementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService"/>
-
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingContextRecentDirectoryCache"/>
     <actionConfigurationCustomizer implementation="com.intellij.ide.actions.runAnything.RunAnythingAction$ShortcutTracker"/>
@@ -1405,6 +1405,8 @@
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after aditionalFiles"/>
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 
+    <registryKey defaultValue="false" description="Use IndexableEntityProviders to iterate project for indexing"
+                 key="indexing.enable.entity.provider.based.indexing"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>

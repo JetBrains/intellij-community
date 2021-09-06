@@ -2,16 +2,23 @@
 package org.jetbrains.intellij.build.pycharm
 
 import com.intellij.openapi.application.PathManager
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.testFramework.runTestBuild
-import org.junit.Ignore
 import org.junit.Test
 
 class PyCharmCommunityBuildTest {
   @Test
-  @Ignore
   fun testBuild() {
     val homePath = PathManager.getHomePathFor(javaClass)!!
-    runTestBuild(homePath, PyCharmCommunityProperties(homePath), ProprietaryBuildTools.DUMMY)
+    val communityHomePath = "$homePath/community"
+    runTestBuild(
+      homePath = communityHomePath, communityHomePath = communityHomePath,
+      productProperties = PyCharmCommunityProperties(communityHomePath),
+      buildTools = ProprietaryBuildTools.DUMMY
+    ) {
+      it.projectClassesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
+                                         ?: "$homePath/out/classes"
+    }
   }
 }

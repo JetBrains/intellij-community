@@ -2,13 +2,16 @@
 package com.intellij.ide.actions.cache
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.psi.util.CachedValueProvider
 
 internal class CallSaulAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) = service<Saul>().sortThingsOut(e.project)
+  override fun actionPerformed(e: AnActionEvent) = service<Saul>().sortThingsOut(e.project!!)
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
 }
 
 internal class CacheRecoveryActionGroup: ComputableActionGroup() {
@@ -25,13 +28,13 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
     val recoveryAction = this
     return object: DumbAwareAction(recoveryAction.presentableName) {
       override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project
-        CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, false, project)
-        recoveryAction.perform(project)
+        val project = e.project!!
+        recoveryAction.performUnderProgress(project, false)
       }
 
       override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = recoveryAction.canBeApplied(e.project)
+        val project = e.project
+        e.presentation.isEnabledAndVisible = project != null && recoveryAction.canBeApplied(project)
       }
     }
   }

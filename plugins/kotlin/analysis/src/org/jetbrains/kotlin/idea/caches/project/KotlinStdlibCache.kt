@@ -13,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
-import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriorityWithPCE
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -75,14 +74,12 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
     }
 
     private fun libraryScopeContainsIndexedFilesForNames(libraryInfo: LibraryInfo, names: Collection<FqName>) =
-        runInReadActionWithWriteActionPriorityWithPCE {
-            names.any { name ->
-                FileBasedIndex.getInstance().getContainingFiles(
-                    KotlinStdlibIndex.KEY,
-                    name,
-                    LibraryScope(project, libraryInfo.library.rootProvider.getFiles(OrderRootType.CLASSES).toSet())
-                ).isNotEmpty()
-            }
+        names.any { name ->
+            FileBasedIndex.getInstance().getContainingFiles(
+                KotlinStdlibIndex.KEY,
+                name,
+                LibraryScope(project, libraryInfo.library.rootProvider.getFiles(OrderRootType.CLASSES).toSet())
+            ).isNotEmpty()
         }
 
     private fun libraryScopeContainsIndexedFilesForName(libraryInfo: LibraryInfo, name: FqName) =

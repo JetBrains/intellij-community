@@ -10,13 +10,20 @@ public class DocumentationManagerUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral", "UnusedParameters"})
-  protected void createHyperlinkImpl(StringBuilder buffer, PsiElement refElement, String refText, String label, boolean plainLink) {
+  protected void createHyperlinkImpl(
+    StringBuilder buffer,
+    PsiElement refElement,
+    String refText,
+    String label,
+    boolean plainLink,
+    boolean isRendered
+  ) {
     buffer.append("<a href=\"");
     buffer.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL); // :-)
     buffer.append(refText);
     buffer.append("\">");
     if (!plainLink) {
-      buffer.append("<code>");
+      buffer.append(isRendered ? "<code style='font-size:96%;'>" : "<code>");
     }
     buffer.append(label);
     if (!plainLink) {
@@ -26,7 +33,21 @@ public class DocumentationManagerUtil {
   }
 
   public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
-    getInstance().createHyperlinkImpl(buffer, null, refText, label, plainLink);
+    getInstance().createHyperlinkImpl(buffer, null, refText, label, plainLink, false);
+  }
+
+  public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink, boolean isRendered) {
+    getInstance().createHyperlinkImpl(buffer, null, refText, label, plainLink, isRendered);
+  }
+
+  public static void createHyperlink(
+    StringBuilder buffer,
+    PsiElement refElement,
+    String refText,
+    String label,
+    boolean plainLink
+  ) {
+    getInstance().createHyperlinkImpl(buffer, refElement, refText, label, plainLink, false);
   }
 
   /**
@@ -38,7 +59,14 @@ public class DocumentationManagerUtil {
    * @param label      the label for the hyperlink
    * @param plainLink  if false, the label of the link is wrapped in the &lt;code&gt; tag.
    */
-  public static void createHyperlink(StringBuilder buffer, PsiElement refElement, String refText, String label, boolean plainLink) {
-    getInstance().createHyperlinkImpl(buffer, refElement, refText, label, plainLink);
+  public static void createHyperlink(
+    StringBuilder buffer,
+    PsiElement refElement,
+    String refText,
+    String label,
+    boolean plainLink,
+    boolean isRendered
+  ) {
+    getInstance().createHyperlinkImpl(buffer, refElement, refText, label, plainLink, isRendered);
   }
 }

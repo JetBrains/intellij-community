@@ -3850,16 +3850,16 @@ public class PyTypeTest extends PyTestCase {
   public void testDataclassesReplace() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doMultiFileTest("Foo",
-                            "import dataclasses as dc\n" +
-                            "\n" +
-                            "@dc.dataclass\n" +
-                            "class Foo:\n" +
-                            "    x: int\n" +
-                            "    y: int\n" +
-                            "\n" +
-                            "foo = Foo(1, 2)\n" +
-                            "expr = dc.replace(foo, x=3)")
+      () -> doTest("Foo",
+                   "import dataclasses as dc\n" +
+                   "\n" +
+                   "@dc.dataclass\n" +
+                   "class Foo:\n" +
+                   "    x: int\n" +
+                   "    y: int\n" +
+                   "\n" +
+                   "foo = Foo(1, 2)\n" +
+                   "expr = dc.replace(foo, x=3)")
     );
   }
 

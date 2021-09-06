@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
@@ -124,6 +125,32 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testOverlappingRanges(){
+    doTest()
+  }
+
+  fun testConditionalYield(){
+    doTest()
+  }
+
+  fun testYieldWithDuplicate(){
+    doTest()
+  }
+
+  fun testDisabledOnSwitchRules(){
+    assertThrows(RefactoringErrorHintException::class.java, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression")) {
+      doTest()
+    }
+  }
+
+  fun testNormalizedOnSwitchRule(){
+    doTest()
+  }
+
+  fun testExpressionStatementInSwitchExpression(){
+    doTest()
+  }
+
+  fun testExpressionStatementInSwitchStatement(){
     doTest()
   }
 

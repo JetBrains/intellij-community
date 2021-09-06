@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
@@ -41,19 +40,21 @@ import java.util.function.Predicate;
 public class NewProjectWizard extends AbstractProjectWizard {
 
   private final StepSequence mySequence = new StepSequence();
+  private boolean myCreatingModule;
 
   public NewProjectWizard(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
     super(IdeCoreBundle.message(project == null ? "title.new.project" : "title.add.module"), project, defaultPath);
-    init(modulesProvider);
+    init(modulesProvider, project != null);
   }
 
   public NewProjectWizard(Project project, Component dialogParent, ModulesProvider modulesProvider, String defaultModuleName) {
     super(IdeCoreBundle.message("title.add.module"), project, dialogParent);
     myWizardContext.setDefaultModuleName(defaultModuleName);
-    init(modulesProvider);
+    init(modulesProvider, project != null);
   }
 
-  protected void init(@NotNull ModulesProvider modulesProvider) {
+  protected void init(@NotNull ModulesProvider modulesProvider, boolean isCreatingModule) {
+    myCreatingModule = isCreatingModule;
     myWizardContext.setModulesProvider(modulesProvider);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     Disposer.register(getDisposable(), projectTypeStep);
@@ -63,7 +64,7 @@ public class NewProjectWizard extends AbstractProjectWizard {
       chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
       mySequence.addCommonStep(chooseTemplateStep);
     }
-    //hacky: new wizard module ID should starts with newWizard, to be removed later, on migrating on new API.
+    //hacky: new wizard module ID should start with newWizard, to be removed later, on migrating on new API.
     Predicate<Set<String>> predicate = strings -> !isNewWizard() ||
                                                   !ContainerUtil.exists(strings, type -> type.startsWith("newWizard"));
     mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), predicate);
@@ -76,8 +77,12 @@ public class NewProjectWizard extends AbstractProjectWizard {
     super.init();
   }
 
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  private boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") && !myCreatingModule;
+  }
+
+  public boolean isCreatingModule() {
+    return myCreatingModule;
   }
 
   @Override

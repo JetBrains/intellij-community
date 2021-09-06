@@ -130,7 +130,7 @@ class NotebookIntervalPointerTest {
   }
 
   private fun makeInterval(ordinal: Int, lines: IntRange) =
-    Interval(ordinal, NotebookCellLines.CellType.RAW, lines)
+    Interval(ordinal, NotebookCellLines.CellType.RAW, lines, NotebookCellLines.MarkersAtLines.NO)
 
   private fun makeIntervals(vararg lines: IntRange): List<Interval> =
     lines.withIndex().map { (index, lines) -> makeInterval(index, lines) }
@@ -183,8 +183,6 @@ private class MockNotebookCellLines(val intervals: MutableList<Interval> = mutab
   override fun getIterator(ordinal: Int): ListIterator<Interval> = intervals.listIterator(ordinal)
 
   override fun getIterator(interval: Interval): ListIterator<Interval> = getIterator(interval.ordinal)
-
-  override fun markersIterator(startOffset: Int): ListIterator<NotebookCellLines.Marker> = TODO("stub")
 
   override fun intervalsIterator(startLine: Int): ListIterator<Interval> = TODO("stub")
 

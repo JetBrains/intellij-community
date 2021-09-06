@@ -4,6 +4,7 @@ package com.intellij.ide.ui
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -18,7 +19,6 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
-import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
@@ -33,7 +33,7 @@ import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
-@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], useLoadedStateAsExisting = false)
+@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], useLoadedStateAsExisting = false, category = SettingsCategory.UI)
 class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponentWithModificationTracker<UISettingsState> {
   constructor() : this(ApplicationManager.getApplication().getService(NotRoamableUiSettings::class.java))
 

@@ -15,7 +15,6 @@ import org.jdom.JDOMException
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import java.nio.file.Files
@@ -45,19 +44,6 @@ final class BuildUtils {
   static void addToJpsClassPath(String path, AntBuilder ant) {
     //we need to add path to classloader of BuilderService to ensure that classes from that path will be returned by JpsServiceManager.getExtensions
     addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
-  }
-
-  static void addBuildStepsToSkip(Collection<String> newSteps) {
-    def stepsToSkip = new HashSet<String>(newSteps)
-
-    def existingStepsToSkipString = System.getProperty(BuildOptions.BUILD_STEPS_TO_SKIP_PROPERTY)
-    if (existingStepsToSkipString != null && existingStepsToSkipString.length() > 0) {
-      stepsToSkip.addAll(existingStepsToSkipString.split(","))
-    }
-
-    def stepsToSkipString = stepsToSkip.toSorted().join(",")
-    println("Setting system property '${BuildOptions.BUILD_STEPS_TO_SKIP_PROPERTY}' to '$stepsToSkipString'")
-    System.setProperty(BuildOptions.BUILD_STEPS_TO_SKIP_PROPERTY, stepsToSkipString)
   }
 
   @CompileDynamic
@@ -185,7 +171,14 @@ final class BuildUtils {
 
   static List<File> getPluginJars(String pluginPath) {
     File libFile = new File(pluginPath, "lib")
-    return libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }.collect { jarName ->
+    if (!libFile.exists()) {
+      throw new FileNotFoundException("$libFile")
+    }
+    def list = libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }
+    if (libFile == null) {
+      throw new IllegalStateException("Cannot list $libFile")
+    }
+    return list.collect { jarName ->
       new File(libFile, jarName)
     }
   }

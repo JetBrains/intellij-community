@@ -16,6 +16,7 @@ import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
@@ -169,7 +170,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return aClass == null || isSerializable(aClass, null);
   }
 
-  private static boolean isWriteObjectMethod(@NotNull UMethod method, RefClass refClass) {
+  private static boolean isWriteObjectMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     final String name = method.getName();
     if (!"writeObject".equals(name)) return false;
     List<UParameter> parameters = method.getUastParameters();
@@ -180,7 +181,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isReadObjectMethod(@NotNull UMethod method, RefClass refClass) {
+  private static boolean isReadObjectMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     final String name = method.getName();
     if (!"readObject".equals(name)) return false;
     List<UParameter> parameters = method.getUastParameters();
@@ -218,18 +219,22 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   private static boolean isSerializable(@NotNull UClass aClass, @Nullable RefClass refClass) {
-    PsiClass psi = aClass.getPsi();
-    final PsiClass serializableClass = JavaPsiFacade.getInstance(psi.getProject()).findClass("java.io.Serializable", psi.getResolveScope());
+    return isSerializable(aClass, refClass, "java.io.Serializable");
+  }
+
+  private static boolean isExternalizable(@NotNull UClass aClass, @Nullable RefClass refClass) {
+    return isSerializable(aClass, refClass, "java.io.Externalizable");
+  }
+
+  private static boolean isSerializable(@NotNull UClass aClass, @Nullable RefClass refClass, @NotNull String fqn) {
+    PsiClass psiClass = aClass.getJavaPsi();
+    Project project = psiClass.getProject();
+    final PsiClass serializableClass = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
+      () -> JavaPsiFacade.getInstance(project).findClass(fqn, psiClass.getResolveScope()));
     return serializableClass != null && isSerializable(aClass, refClass, serializableClass);
   }
 
-  private static boolean isExternalizable(@NotNull UClass aClass, RefClass refClass) {
-    PsiClass psi = aClass.getPsi();
-    final PsiClass externalizableClass = JavaPsiFacade.getInstance(psi.getProject()).findClass("java.io.Externalizable", psi.getResolveScope());
-    return externalizableClass != null && isSerializable(aClass, refClass, externalizableClass);
-  }
-
-  private static boolean isSerializable(UClass aClass, RefClass refClass, PsiClass serializableClass) {
+  private static boolean isSerializable(@Nullable UClass aClass, @Nullable RefClass refClass, @NotNull PsiClass serializableClass) {
     if (aClass == null) return false;
     if (aClass.getJavaPsi().isInheritor(serializableClass, true)) return true;
     if (refClass != null) {
@@ -439,6 +444,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
               }
               UMethod uMethod = (UMethod)refMethod.getUastElement();
               if (uMethod != null && (isSerializablePatternMethod(uMethod, refMethod.getOwnerClass()) ||
+                                      // todo this method potentially leads to INRE. Perhaps, it should be reconsidered/deleted (IJ-CR-5556)
                                       belongsToRepeatableAnnotationContainer(uMethod, refMethod.getOwnerClass()))) {
                 getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
               }

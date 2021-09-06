@@ -101,8 +101,8 @@ public abstract class Instruction {
    * @param memState resulting memory state
    * @return an array of a single instruction state that refers to the next instruction and the supplied memory state
    */
-  protected final @NotNull DfaInstructionState @NotNull [] nextStates(@NotNull DataFlowInterpreter runner, @NotNull DfaMemoryState memState) {
-    return new DfaInstructionState[]{nextState(runner, memState)};
+  protected final @NotNull DfaInstructionState @NotNull [] nextStates(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState memState) {
+    return new DfaInstructionState[]{nextState(interpreter, memState)};
   }
 
   /**
@@ -111,7 +111,7 @@ public abstract class Instruction {
    * @param memState resulting memory state
    * @return an instruction state that refers to the next instruction and the supplied memory state
    */
-  protected final @NotNull DfaInstructionState nextState(@NotNull DataFlowInterpreter runner, @NotNull DfaMemoryState memState) {
-    return new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState);
+  protected final @NotNull DfaInstructionState nextState(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState memState) {
+    return new DfaInstructionState(interpreter.getInstruction(getIndex() + 1), memState);
   }
 }

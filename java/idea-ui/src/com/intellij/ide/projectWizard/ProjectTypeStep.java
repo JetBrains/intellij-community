@@ -3,14 +3,14 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
-import com.intellij.ide.*;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
-import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.ide.wizard.*;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -44,6 +44,7 @@ import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -104,10 +105,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private ModuleWizardStep mySettingsStep;
   private String myCurrentCard;
   private TemplatesGroup myLastSelectedGroup;
+  boolean isCreatingModule;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
     myWizard = wizard;
+
+    isCreatingModule = wizard.isCreatingModule();
 
     myTemplatesMap = isNewWizard() ? MultiMap.createLinked() : MultiMap.createConcurrent();
     final List<TemplatesGroup> groups = fillTemplatesMap(context);
@@ -124,10 +128,14 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       layout.setHGap(0);
       myPanel.setLayout(layout);
 
-      ProjectTypeListWithSearch<TemplatesGroup>
-        listWithFilter  = new ProjectTypeListWithSearch<>(myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName());
+      String emptyCard = "emptyCard";
+      ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
+        myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> showCard(emptyCard));
+
       listWithFilter.setMinimumSize(JBUI.size(40, -1));
       myProjectTypePanel.add(listWithFilter);
+
+      myOptionsPanel.add(new JBPanelWithEmptyText().withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure")), emptyCard);
 
       listWithFilter.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
       mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0));
@@ -337,8 +345,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return groups;
   }
 
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  private boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") && !isCreatingModule;
   }
 
   @TestOnly
@@ -772,7 +780,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId, data);
   }
 
-  private static class ProjectTypeListRenderer extends GroupedItemsListRenderer<TemplatesGroup> {
+  private class ProjectTypeListRenderer extends GroupedItemsListRenderer<TemplatesGroup> {
     ProjectTypeListRenderer(java.util.List<TemplatesGroup> groups) {
       super(new ListItemDescriptorAdapter<>() {
         @Nullable
@@ -834,11 +842,19 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     @NotNull
-    private static SeparatorWithText createSeparatorComponent() {
+    private SeparatorWithText createSeparatorComponent() {
       return new SeparatorWithText() {
         @Override
         protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) { }
       };
+    }
+
+    @Override
+    protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+      super.setComponentIcon(icon, disabledIcon);
+      if (icon == null) {
+        myTextLabel.setIconTextGap(0);
+      }
     }
   }
 }

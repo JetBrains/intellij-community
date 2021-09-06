@@ -9,6 +9,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public final class MarkdownPreviewSettings {
   public static final MarkdownPreviewSettings DEFAULT = new MarkdownPreviewSettings();
 

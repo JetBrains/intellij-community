@@ -18,20 +18,18 @@ public class SourceToSinkFlowInspectionTest extends LightJavaCodeInsightFixtureT
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass(
-      "  package org.checkerframework.checker.tainting.qual;\n" +
-      "      import java.lang.annotation.ElementType;\n" +
-      "      import java.lang.annotation.Target;\n" +
-      "      @Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})\n" +
-      "      public @interface Tainted {\n" +
-      "      }");
-    myFixture.addClass(
-      "      package org.checkerframework.checker.tainting.qual;\n" +
-      "      import java.lang.annotation.ElementType;\n" +
-      "      import java.lang.annotation.Target;\n" +
-      "      @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})\n" +
-      "      public @interface Untainted {\n" +
-      "      }");
+    myFixture.addClass("      package org.checkerframework.checker.tainting.qual;\n" +
+                       "      import java.lang.annotation.ElementType;\n" +
+                       "      import java.lang.annotation.Target;\n" +
+                       "      @Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})\n" +
+                       "      public @interface Tainted {\n" +
+                       "      }");
+    myFixture.addClass("      package org.checkerframework.checker.tainting.qual;\n" +
+                       "      import java.lang.annotation.ElementType;\n" +
+                       "      import java.lang.annotation.Target;\n" +
+                       "      @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})\n" +
+                       "      public @interface Untainted {\n" +
+                       "      }");
     myFixture.enableInspections(new SourceToSinkFlowInspection());
   }
 
@@ -40,7 +38,11 @@ public class SourceToSinkFlowInspectionTest extends LightJavaCodeInsightFixtureT
     return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/sourceToSinkFlow";
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     myFixture.testHighlighting("Simple.java");
+  }
+
+  public void testLocalInference() {
+    myFixture.testHighlighting("LocalInference.java");
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -614,8 +615,44 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
   @Test
   public void testMultipleCases() {
-    runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(getFrameworkId(), PyTestConfiguration.class));
+    runPythonTest(new CreateConfigurationMultipleCasesTask<>(getFrameworkId(), PyTestConfiguration.class));
+  }
+
+  /**
+   * PY-49932
+   */
+  @Test
+  public void testFilesSameName() {
+    runPythonTest(new CreateConfigurationTestTask<>(getFrameworkId(), PyTestConfiguration.class) {
+      private static final String FOLDER_NAME = "same_names";
+
+      @Override
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
+        WriteAction.runAndWait(() -> {
+          var manager = ModuleRootManager.getInstance(myFixture.getModule());
+          var model = manager.getModifiableModel();
+          var testRoot = myFixture.findFileInTempDir(FOLDER_NAME);
+          model.getContentEntries()[0].addSourceFolder(testRoot, true);
+          model.commit();
+        });
+        super.runTestOn(sdkHome, existingSdk);
+      }
+
+      @Override
+      protected void checkConfiguration(@NotNull final PyTestConfiguration configuration, @NotNull final PsiElement elementToRightClickOn) {
+        assertEquals("Wrong target fore newly created element", "true.test_something.test_test", configuration.getTarget().getTarget());
+        System.out.println(configuration);
+      }
+
+      @NotNull
+      @Override
+      protected List<PsiElement> getPsiElementsToRightClickOn() {
+        var file = (PyFile)myFixture.configureByFile(FOLDER_NAME + "/true/test_something.py");
+        PyFunction test = file.findTopLevelFunction("test_test");
+        assert test != null : "No test_test found";
+        return Collections.singletonList(test);
+      }
+    });
   }
 
   /**
@@ -624,8 +661,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    */
   @Test
   public void testConfigurationByContext() {
-    runPythonTest(
-      new CreateConfigurationTestTask<>(getFrameworkId(), PyTestConfiguration.class) {
+    runPythonTest(new CreateConfigurationTestTask<>(getFrameworkId(), PyTestConfiguration.class) {
 
 
         @NotNull

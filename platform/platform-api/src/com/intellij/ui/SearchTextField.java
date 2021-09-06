@@ -44,7 +44,6 @@ public class SearchTextField extends JPanel {
   private JBPopup myPopup;
   private String myHistoryPropertyName;
   private final boolean historyPopupEnabled;
-  private boolean init = true;
 
   public SearchTextField() {
     this(true);
@@ -153,7 +152,6 @@ public class SearchTextField extends JPanel {
     DumbAwareAction.create(event -> {
       showPopup();
     }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
-    init = false;
   }
 
   @Override
@@ -229,7 +227,6 @@ public class SearchTextField extends JPanel {
   public void addCurrentTextToHistory() {
     if (myModel.addElement(getText()) && myHistoryPropertyName != null) {
       PropertiesComponent.getInstance().setValue(myHistoryPropertyName, StringUtil.join(getHistory(), "\n"));
-      reInitPopup();
     }
   }
 
@@ -344,7 +341,7 @@ public class SearchTextField extends JPanel {
 
     public void fireContentsChanged() {
       fireContentsChanged(this, -1, -1);
-      reInitPopup();
+      updatePopup();
     }
 
     public void setItems(List<String> aList) {
@@ -365,31 +362,35 @@ public class SearchTextField extends JPanel {
       final String value = (String)list.getSelectedValue();
       getTextEditor().setText(value != null ? value : "");
       addCurrentTextToHistory();
-      reInitPopup();
     };
   }
 
   protected void showPopup() {
     addCurrentTextToHistory();
-    if ((myPopup == null || !myPopup.isVisible()) && historyPopupEnabled) {
-      reInitPopup();
-      if (isShowing()) {
-        myPopup.showUnderneathOf(getPopupLocationComponent());
-      }
+    if (myPopup != null && myPopup.isVisible()) return;
+    if (historyPopupEnabled) {
+      doShowPopup();
     }
   }
 
-  private void reInitPopup() {
-    if(!init) {
+  private void updatePopup() {
+    if (myPopup != null && myPopup.isVisible()) {
       hidePopup();
+      doShowPopup();
+    }
+  }
+
+  private void doShowPopup() {
+    if (ApplicationManager.getApplication() != null &&
+        JBPopupFactory.getInstance() != null &&
+        isShowing()) {
       final JList<String> list = new JBList<>(myModel);
       final Runnable chooseRunnable = createItemChosenCallback(list);
-      if (ApplicationManager.getApplication() != null && JBPopupFactory.getInstance() != null) {
-        myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-          .setMovable(false)
-          .setRequestFocus(true)
-          .setItemChoosenCallback(chooseRunnable).createPopup();
-      }
+      myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+        .setMovable(false)
+        .setRequestFocus(true)
+        .setItemChoosenCallback(chooseRunnable).createPopup();
+      myPopup.showUnderneathOf(getPopupLocationComponent());
     }
   }
 

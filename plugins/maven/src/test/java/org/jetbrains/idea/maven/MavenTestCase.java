@@ -97,6 +97,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
       getMavenGeneralSettings().setMavenHome(home);
     }
 
+    getMavenGeneralSettings().setAlwaysUpdateSnapshots(true);
+
     EdtTestUtil.runInEdtAndWait(() -> {
       restoreSettingsFile();
 

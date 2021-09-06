@@ -4,9 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowManager
@@ -54,16 +52,19 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
 
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     updatePresentation(e)
-    e.presentation.isEnabledAndVisible =  e.presentation.isEnabledAndVisible && shouldBeShown(e)
-   }
 
-  private fun shouldBeShown(e: AnActionEvent): Boolean {
-    return if(e.isItRunToolbarMainSlot()) e.project?.let {
-      RunToolbarSlotManager.getInstance(it).getState().isSingleMain() || (e.isOpened() && e.isActiveProcess())
-    } ?: false else true
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun createComboBoxButton(presentation: Presentation): ComboBoxButton {
@@ -80,6 +81,15 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
             it.show()
           }
         }
+      }
+
+
+      override fun doRightClick() {
+        RunToolbarRunConfigurationsAction.doRightClick(dataContext)
+      }
+
+      override fun doShiftClick() {
+        dataContext.editConfiguration()
       }
 
       override fun isArrowVisible(presentation: Presentation): Boolean {

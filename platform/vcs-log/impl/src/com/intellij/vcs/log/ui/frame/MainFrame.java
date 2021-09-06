@@ -35,7 +35,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
@@ -96,7 +96,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
                                           () -> logUi.getRefresher().onRefresh(), logUi::requestMore, disposable);
-    PopupHandler.installPopupMenu(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
+    PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.POPUP_ACTION_GROUP, ActionPlaces.VCS_LOG_TABLE_PLACE);
 
     myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, logUi.getColorManager(), this) {
       @Override
@@ -200,35 +200,35 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull
   private JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
+    toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP));
     if (BekUtil.isBekEnabled()) {
-      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionPlaces.PRESENTATION_SETTINGS_ACTION_GROUP);
+      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
       if (BekUtil.isLinearBekEnabled()) {
         toolbarGroup.add(new IntelliSortChooserPopupAction(), constraint);
         // can not register both of the actions in xml file, choosing to register an action for the "outer world"
         // I can of course if linear bek is enabled replace the action on start but why bother
       }
       else {
-        toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_INTELLI_SORT_ACTION),
+        toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_INTELLI_SORT_ACTION),
                          constraint);
       }
     }
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TEXT_FILTER_SETTINGS_ACTION_GROUP));
+    mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP));
     mainGroup.add(new Separator());
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
     toolbar.setTargetComponent(this);
 
     Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
 
     DefaultActionGroup rightCornerGroup =
-      new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
-    ActionToolbar rightCornerToolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE,
+      new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
+    ActionToolbar rightCornerToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE,
                                                                                        rightCornerGroup, true);
     rightCornerToolbar.setTargetComponent(this);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
@@ -267,7 +267,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return new QuickActionProvider() {
         @Override
         public @NotNull List<AnAction> getActions(boolean originalProvider) {
-          AnAction textFilterAction = EmptyAction.wrap(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER));
+          AnAction textFilterAction = EmptyAction.wrap(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER));
           textFilterAction.getTemplatePresentation().setText(VcsLogBundle.message("vcs.log.text.filter.action.text"));
           List<AnAction> actions = new ArrayList<>();
           actions.add(textFilterAction);

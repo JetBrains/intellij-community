@@ -33,6 +33,8 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.j2k.idea" />
     <orderEntry type="module" module-name="kotlin.j2k.new" />
@@ -79,7 +81,6 @@
     <orderEntry type="module" module-name="kotlin.junit" />
     <orderEntry type="module" module-name="kotlin.grazie" />
     <orderEntry type="module" module-name="kotlin.ml-completion" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea.tests" />
     <orderEntry type="module" module-name="kotlin.groovy" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
@@ -91,5 +92,14 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" />
+    <orderEntry type="module" module-name="kotlin.copyright.tests" />
+    <orderEntry type="module" module-name="kotlin.core.tests" />
+    <orderEntry type="module" module-name="kotlin.i18n.tests" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" />
+    <orderEntry type="module" module-name="kotlin.native.tests" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-native.tests" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" />
   </component>
 </module>

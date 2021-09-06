@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
@@ -733,6 +734,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       super.configureList();
       //noinspection unchecked
       list.setCellRenderer(new MyDelegateRenderer());
+      list.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
     }
 
     protected void customizeListRendererComponent(JComponent component) {

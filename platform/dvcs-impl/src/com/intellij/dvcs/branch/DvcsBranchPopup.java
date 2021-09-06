@@ -18,7 +18,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,16 +53,23 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     myVcsSettings = vcsSettings;
     myMultiRootBranchConfig = multiRootBranchConfig;
     myInSpecificRepository = myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC;
-    String title = myInSpecificRepository ?
-                   DvcsBundle.message("branch.popup.vcs.name.branches", myVcs.getDisplayName()) :
-                   DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", myVcs.getDisplayName(),
-                                      DvcsUtil.getShortRepositoryName(currentRepository));
+    String title = buildTitle(currentRepository);
     myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition, createActions(), dimensionKey, dataContext);
     initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {
       myPopup.addToolbarAction(new TrackReposSynchronouslyAction(myVcsSettings), true);
     }
+  }
+
+  @Nullable
+  private @Nls String buildTitle(@NotNull Repo currentRepository) {
+    if (ExperimentalUI.isNewVcsBranchPopup()) return null;
+
+    String vcsName = myVcs.getDisplayName();
+    return myInSpecificRepository ?
+           DvcsBundle.message("branch.popup.vcs.name.branches", vcsName) :
+           DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", vcsName, DvcsUtil.getShortRepositoryName(currentRepository));
   }
 
   @NotNull

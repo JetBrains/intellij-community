@@ -275,7 +275,7 @@ public abstract class FileBasedIndex {
    * which optimized to perform several queries for different indexes.
    */
   @ApiStatus.Experimental
-  public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+  public boolean processFilesContainingAllKeys(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                @NotNull GlobalSearchScope filter,
                                                @NotNull Processor<? super VirtualFile> processor) {
     throw new UnsupportedOperationException();

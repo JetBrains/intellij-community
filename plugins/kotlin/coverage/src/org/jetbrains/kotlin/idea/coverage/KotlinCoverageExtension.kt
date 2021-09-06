@@ -2,14 +2,10 @@
 
 package org.jetbrains.kotlin.idea.coverage
 
-import com.intellij.coverage.CoverageSuitesBundle
-import com.intellij.coverage.JavaCoverageAnnotator
-import com.intellij.coverage.JavaCoverageEngineExtension
-import com.intellij.coverage.PackageAnnotator
+import com.intellij.coverage.*
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -31,7 +27,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
 
     override fun suggestQualifiedName(sourceFile: PsiFile, classes: Array<out PsiClass>, names: MutableSet<String>): Boolean {
         if (sourceFile is KtFile) {
-            val qNames = collectGeneratedClassQualifiedNames(findOutputRoot(sourceFile), sourceFile)
+            val qNames = collectGeneratedClassQualifiedNames(findOutputRoots(sourceFile), sourceFile)
             if (qNames != null) {
                 names.addAll(qNames)
                 return true
@@ -49,7 +45,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         }
         LOG.info("Retrieving coverage for " + element.name)
 
-        val qualifiedNames = collectGeneratedClassQualifiedNames(findOutputRoot(element), element)
+        val qualifiedNames = collectGeneratedClassQualifiedNames(findOutputRoots(element), element)
         return if (qualifiedNames == null) null else totalCoverageForQualifiedNames(coverageAnnotator, qualifiedNames)
     }
 
@@ -73,18 +69,21 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
                 return false
             }
 
-            runReadAction {
-                val outputRoot = findOutputRoot(srcFile)
-                val existingClassFiles = getClassesGeneratedFromFile(outputRoot, srcFile)
+            return runReadAction {
+                val outputRoots = findOutputRoots(srcFile) ?: return@runReadAction false
+                val existingClassFiles = getClassesGeneratedFromFile(outputRoots, srcFile)
                 existingClassFiles.mapTo(classFiles) { File(it.path) }
+                true
             }
-            return true
         }
         return false
     }
 
     companion object {
         private val LOG = Logger.getInstance(KotlinCoverageExtension::class.java)
+
+        fun collectGeneratedClassQualifiedNames(outputRoots: Array<VirtualFile>?, file: KtFile): List<String>? =
+            outputRoots?.flatMap { collectGeneratedClassQualifiedNames(it, file) ?: emptyList() }
 
         fun collectGeneratedClassQualifiedNames(outputRoot: VirtualFile?, file: KtFile): List<String>? {
             val existingClassFiles = getClassesGeneratedFromFile(outputRoot, file)
@@ -121,6 +120,10 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
             return result
         }
 
+
+        private fun getClassesGeneratedFromFile(outputRoots: Array<VirtualFile>, file: KtFile): List<VirtualFile> =
+            outputRoots.flatMap { getClassesGeneratedFromFile(it, file) }
+
         private fun getClassesGeneratedFromFile(outputRoot: VirtualFile?, file: KtFile): List<VirtualFile> {
             val relativePath = file.packageFqName.asString().replace('.', '/')
             val packageOutputDir = outputRoot?.findFileByRelativePath(relativePath) ?: return listOf()
@@ -135,15 +138,11 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
             }
         }
 
-        private fun findOutputRoot(file: KtFile): VirtualFile? {
+        private fun findOutputRoots(file: KtFile): Array<VirtualFile>? {
             val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
             val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
             val inTests = fileIndex.isInTestSourceContentKotlinAware(file.virtualFile)
-            val compilerOutputExtension = CompilerModuleExtension.getInstance(module)
-            return if (inTests)
-                compilerOutputExtension!!.compilerOutputPathForTests
-            else
-                compilerOutputExtension!!.compilerOutputPath
+            return JavaCoverageClassesEnumerator.getRoots(CoverageDataManager.getInstance(file.project), module, inTests)
         }
 
         private fun collectClassFilePrefixes(file: KtFile): Collection<String> {

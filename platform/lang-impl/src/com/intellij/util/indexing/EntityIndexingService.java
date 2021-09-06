@@ -18,5 +18,5 @@ public interface EntityIndexingService {
     return ApplicationManager.getApplication().getService(EntityIndexingService.class);
   }
 
-  void indexChanges(@NotNull Project project, @NotNull List<RootsChangeIndexingInfo> changes);
+  void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeIndexingInfo> changes);
 }

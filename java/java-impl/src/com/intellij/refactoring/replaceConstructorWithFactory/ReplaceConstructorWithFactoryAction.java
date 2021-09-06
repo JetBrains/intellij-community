@@ -1,19 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceConstructorWithFactoryAction extends BaseRefactoringIntentionAction {
+import javax.swing.*;
+
+public class ReplaceConstructorWithFactoryAction extends PsiElementBaseIntentionAction implements Iconable {
 
   @NotNull
   @Override
@@ -42,7 +46,12 @@ public class ReplaceConstructorWithFactoryAction extends BaseRefactoringIntentio
     final ReplaceConstructorWithFactoryHandler handler = new ReplaceConstructorWithFactoryHandler();
     handler.invoke(constructor, editor, project);
   }
-  
+
+  @Override
+  public Icon getIcon(int flags) {
+    return AllIcons.Actions.RefactoringBulb;
+  }
+
   private static boolean isNotEnumClass(@Nullable PsiClass psiClass) {
     return psiClass != null && !psiClass.isEnum();
   }

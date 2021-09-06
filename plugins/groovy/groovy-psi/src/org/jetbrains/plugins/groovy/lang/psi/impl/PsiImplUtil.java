@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -797,7 +798,7 @@ public final class PsiImplUtil {
 
   public static void appendTypeString(StringBuilder buffer, final PsiType type, PsiElement context) {
     if (type != null) {
-      JavaDocInfoGenerator.generateType(buffer, type, context);
+      JavaDocInfoGeneratorFactory.create(context.getProject(), null, false).generateType(buffer, type, context);
     }
     else {
       buffer.append(GrModifier.DEF);

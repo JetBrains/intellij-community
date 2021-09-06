@@ -39,6 +39,8 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     get() = format
 
   override fun exportFile(project: Project, mdFile: VirtualFile, outputFile: String) {
+    saveSettings(project)
+
     val preview = MarkdownFileEditorUtils.findMarkdownPreviewEditor(project, mdFile, true) ?: return
     val htmlPanel = preview.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER) ?: return
 
@@ -97,10 +99,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
         childComponent.history = resDirRecent
       }
 
-      val savedSettings = service<MarkdownHtmlExportSettings>().getResourceSavingSettings()
-      childComponent.text = savedSettings.resourceDir.ifEmpty {
-        FileUtil.join(suggestedTargetFile.parent, suggestedTargetFile.nameWithoutExtension, "images")
-      }
+      childComponent.text = FileUtil.join(suggestedTargetFile.parent, suggestedTargetFile.nameWithoutExtension)
 
       addBrowseFolderListener(
         MarkdownBundle.message("markdown.import.export.dialog.target.directory"),

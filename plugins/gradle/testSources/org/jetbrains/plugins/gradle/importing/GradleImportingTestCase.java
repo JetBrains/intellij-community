@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.testFramework.UsefulTestCaseKt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -103,12 +102,14 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   public void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
     myProjectSettings = new GradleProjectSettings().withQualifiedModuleNames();
+
     super.setUp();
+
     WriteAction.runAndWait(this::configureJDKTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
 
     ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestRootDisposable());
-    UsefulTestCaseKt.setRegistryPropertyForTest(this, "unknown.sdk.auto", false);
+    setRegistryPropertyForTest("unknown.sdk.auto", "false");
     TestUnknownSdkResolver.INSTANCE.setUnknownSdkFixMode(TestUnknownSdkResolver.TestUnknownSdkFixMode.REAL_LOCAL_FIX);
 
     cleanScriptsCacheIfNeeded();

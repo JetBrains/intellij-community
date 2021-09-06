@@ -177,7 +177,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   protected final BatchSession<Boolean, Boolean> myFileTypesChanged = new BatchSession<>(true) {
     @Override
     protected boolean fireRootsChanged(@NotNull Boolean aBoolean) {
-      return ProjectRootManagerImpl.this.fireRootsChanged(true, null);
+      return ProjectRootManagerImpl.this.fireRootsChanged(true, Collections.emptyList());
     }
 
     @Override
@@ -453,8 +453,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @ApiStatus.Internal
   protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
 
-  private boolean fireRootsChanged(boolean fileTypes,
-                                   List<RootsChangeIndexingInfo> indexingInfos) {
+  private boolean fireRootsChanged(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
     if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -471,8 +470,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @ApiStatus.Internal
-  protected void fireRootsChangedEvent(boolean fileTypes,
-                                       @Nullable List<RootsChangeIndexingInfo> indexingInfos) { }
+  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) { }
 
   @ApiStatus.Internal
   protected OrderRootsCache getOrderRootsCache(@NotNull Project project) {

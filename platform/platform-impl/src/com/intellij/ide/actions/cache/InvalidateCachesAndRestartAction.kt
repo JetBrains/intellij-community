@@ -15,10 +15,8 @@ internal class InvalidateCachesAndRestartAction : RecoveryAction {
   override val actionKey: String
     get() = "hammer"
 
-  override fun perform(project: Project?): List<CacheInconsistencyProblem> = invokeAndWaitIfNeeded {
+  override fun performSync(project: Project): List<CacheInconsistencyProblem> = invokeAndWaitIfNeeded {
     InvalidateCacheService.invalidateCachesAndRestart(project)
     emptyList()
   }
-
-  override fun canBeApplied(project: Project?): Boolean = true
 }

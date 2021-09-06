@@ -4,6 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.PROP_ACTIVE_ENVIRONMENT
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.updatePresentation
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomAction
@@ -21,7 +22,7 @@ import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import javax.swing.*
 
-class RunToolbarMainSlotActive : SegmentedCustomAction() {
+class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   companion object {
      val ARROW_DATA = Key<Pair<Icon, @NlsActions.ActionText String>?>("ARROW_DATA")
   }
@@ -30,17 +31,22 @@ class RunToolbarMainSlotActive : SegmentedCustomAction() {
 
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun update(e: AnActionEvent) {
     updatePresentation(e)
-    e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && e.project?.let { project ->
-      val manager = RunToolbarSlotManager.getInstance(project)
-      manager.getState().isSingleMain() || e.isOpened()
-    } ?: false
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
 
     val a = JPanel()
     MigLayout("ins 0, fill, gap 0", "[200]")
     a.add(JLabel(), "pushx")
-
 
     e.presentation.putClientProperty(ARROW_DATA, e.arrowData())
   }
@@ -95,15 +101,25 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
               doClick()
             }
           }
+          else if (SwingUtilities.isRightMouseButton(e)) {
+            doRightClick()
+          }
         }
       })
     }
 
+  fun doRightClick() {
+    RunToolbarRunConfigurationsAction.doRightClick(ActionToolbar.getDataContextFor(this))
+  }
+
   private fun doClick() {
-    listeners.forEach { it.actionPerformedHandler() }
+    val list = mutableListOf<PopupControllerComponentListener>()
+    list.addAll(listeners)
+    list.forEach { it.actionPerformedHandler() }
   }
 
   private fun doShiftClick() {
+    ActionToolbar.getDataContextFor(this).editConfiguration()
   }
 
   private val listeners = mutableListOf<PopupControllerComponentListener>()

@@ -67,7 +67,7 @@ public class OptimizeImportsAction extends AnAction {
       return;
     }
     else {
-      Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
+      Project projectContext = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext);
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
       if (projectContext != null || moduleContext != null) {
@@ -199,7 +199,7 @@ public class OptimizeImportsAction extends AnAction {
       // skip. Both directories and single files are supported.
     }
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
-             PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
+             PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) {
         return false;

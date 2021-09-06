@@ -57,7 +57,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.apache.lucene.search.Query;
+import org.apache.commons.lang.StringUtils;
+import org.apache.lucene.search.CachingSpanFilter;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -904,7 +905,7 @@ public class MavenUtil {
 
   public static String getMirroredUrl(final File settingsFile, String url, String id) {
     try {
-      Element mirrorParent = getElementWithRegardToNamespace(JDOMUtil.load(settingsFile), "mirrors");
+      Element mirrorParent = getElementWithRegardToNamespace(getDomRootElement(settingsFile), "mirrors");
       if (mirrorParent == null) {
         return url;
       }
@@ -965,7 +966,12 @@ public class MavenUtil {
 
   @Nullable
   private static Element getRepositoryElement(File file) throws JDOMException, IOException {
-    return getElementWithRegardToNamespace(JDOMUtil.load(file), "localRepository");
+    return getElementWithRegardToNamespace(getDomRootElement(file), "localRepository");
+  }
+
+  private static Element getDomRootElement(File file) throws IOException, JDOMException {
+    InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
+    return JDOMUtil.load(reader);
   }
 
   @Nullable
@@ -1454,11 +1460,17 @@ public class MavenUtil {
   }
 
   public static File getMavenPluginParentFile() {
-    File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+    File luceneLib = new File(PathUtil.getJarPathForClass(CachingSpanFilter.class));
     return luceneLib.getParentFile().getParentFile();
   }
 
   public static MavenDistribution getEffectiveMavenHome(Project project, String workingDirectory) {
     return MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirectory);
+  }
+
+  @NotNull
+  public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
+    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    return plugin != null ? plugin.getVersion() : StringUtils.EMPTY;
   }
 }

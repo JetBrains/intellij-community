@@ -177,7 +177,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    * There are valid cases where we need to register a lot of extensions programmatically,
    * e.g. see SqlDialectTemplateRegistrar, so, special method for bulk insertion is introduced.
    */
-  public final synchronized void registerExtensions(@NotNull List<? extends T> extensions) {
+  public final void registerExtensions(@NotNull List<? extends T> extensions) {
     for (ExtensionComponentAdapter adapter : adapters) {
       if (adapter instanceof ObjectComponentAdapter) {
         if (ContainerUtil.containsIdentity(extensions, adapter)) {
@@ -187,6 +187,12 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
     }
 
+    List<ExtensionComponentAdapter> newAdapters = doRegisterExtensions(extensions);
+    // do not call notifyListeners under lock
+    notifyListeners(false, newAdapters, listeners);
+  }
+
+  private synchronized @NotNull List<ExtensionComponentAdapter> doRegisterExtensions(@NotNull List<? extends T> extensions) {
     List<ExtensionComponentAdapter> newAdapters = new ArrayList<>(extensions.size());
     for (T extension : extensions) {
       newAdapters.add(new ObjectComponentAdapter<>(extension, getPluginDescriptor(), LoadingOrder.ANY));
@@ -202,8 +208,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       adapters = list;
     }
     clearCache();
-
-    notifyListeners(false, newAdapters, listeners);
+    return newAdapters;
   }
 
   private static int findInsertionIndexForAnyOrder(@NotNull List<? extends ExtensionComponentAdapter> adapters) {
@@ -799,11 +804,15 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   @Override
-  public final synchronized void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
-                                                           boolean invokeForLoadedExtensions,
-                                                           @Nullable Disposable parentDisposable) {
+  public final void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
+                                              boolean invokeForLoadedExtensions,
+                                              @Nullable Disposable parentDisposable) {
     boolean isAdded = addListener(listener);
-    if (isAdded && invokeForLoadedExtensions) {
+    if (!isAdded) {
+      return;
+    }
+
+    if (invokeForLoadedExtensions) {
       //noinspection unchecked
       notifyListeners(false, adapters, new ExtensionPointListener[]{listener});
     }
@@ -819,7 +828,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   // true if added
-  private boolean addListener(@NotNull ExtensionPointListener<T> listener) {
+  private synchronized boolean addListener(@NotNull ExtensionPointListener<T> listener) {
     if (ArrayUtilRt.indexOf(listeners, listener, 0, listeners.length) != -1) {
       return false;
     }

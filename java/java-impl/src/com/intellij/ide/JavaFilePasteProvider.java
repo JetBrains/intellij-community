@@ -129,7 +129,7 @@ public class JavaFilePasteProvider implements PasteProvider {
   private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @NotNull String pasteText) {
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
       "A.java", JavaLanguage.INSTANCE, StringUtil.convertLineSeparators(pasteText), false, false);
-    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_15_PREVIEW); // to parse records
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_16_PREVIEW); // to parse records
     return psiFile instanceof PsiJavaFile ? ((PsiJavaFile)psiFile).getClasses() : PsiClass.EMPTY_ARRAY;
   }
 }

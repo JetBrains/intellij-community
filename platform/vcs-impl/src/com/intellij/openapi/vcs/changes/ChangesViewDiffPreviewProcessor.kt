@@ -76,8 +76,7 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
   }
 
   override fun getSelectedChanges(): Stream<Wrapper> =
-    if (changesView.isSelectionEmpty) allChanges
-    else wrap(project, StreamEx.of(changesView.selectedChangesNodes.iterator()), StreamEx.of(changesView.selectedUnversionedFiles.iterator()))
+    wrap(project, StreamEx.of(changesView.selectedChangesNodes.iterator()), StreamEx.of(changesView.selectedUnversionedFiles.iterator()))
 
   override fun getAllChanges(): Stream<Wrapper> = wrap(project, StreamEx.of(changesView.changesNodes.iterator()), changesView.unversionedFiles)
 

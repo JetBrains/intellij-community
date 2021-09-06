@@ -23,8 +23,12 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 open class HighlightingPanel(project: Project, state: ProblemsViewState)
-  : ProblemsViewPanel(project, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
+  : ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
     FileEditorManagerListener, PowerSaveMode.Listener {
+
+  companion object {
+    const val ID = "CurrentFile"
+  }
 
   private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, stateForComponent(this), this)
   private var previousStatus: Status? = null

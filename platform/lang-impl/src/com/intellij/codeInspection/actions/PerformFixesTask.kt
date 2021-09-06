@@ -2,13 +2,12 @@
 package com.intellij.codeInspection.actions
 
 import com.intellij.codeInspection.CommonProblemDescriptor
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.QuickFix
 import com.intellij.openapi.project.Project
 
 open class PerformFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, quickFixClass: Class<*>?) :
   AbstractPerformFixesTask(project, descriptors.toTypedArray(), quickFixClass) {
 
-  override fun collectFix(fix: QuickFix<CommonProblemDescriptor>, descriptor: ProblemDescriptor, project: Project) =
+  override fun <D : CommonProblemDescriptor> collectFix(fix: QuickFix<D>, descriptor: D, project: Project) =
     fix.applyFix(project, descriptor)
 }

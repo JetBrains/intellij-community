@@ -876,9 +876,14 @@
     <actionPromoter implementation="com.intellij.ide.actions.WindowActionPromoter"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsGlobalSummaryManager"/>
 
+    <projectService serviceInterface="com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider"
+                    serviceImplementation="com.intellij.internal.statistic.local.FileTypeUsageLocalSummary"
+                    testServiceImplementation="com.intellij.internal.statistic.local.TestFileTypeUsageSummaryProvider"/>
+
     <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModelCache"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
+    <recoveryAction implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRecoveryAction"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
 
@@ -891,6 +896,18 @@
 
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.lists.JoinLinesIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.lists.SplitLineIntention</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
@@ -1238,10 +1255,10 @@
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
 
-    <moduleType implementationClass="com.intellij.ide.NewProjectModuleType" id="newWizard.newProjectType" order="first"/>
-    <moduleType implementationClass="com.intellij.ide.NewWizardEmptyModuleType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewProjectModuleType" id="newWizard.newProjectType" order="first"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewWizardEmptyModuleType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
 
-    <newProjectWizard implementation="com.intellij.ide.HTMLNewProjectWizard"/>
+    <newProjectWizard implementation="com.intellij.ide.wizard.HTMLNewProjectWizard"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
@@ -1259,6 +1276,7 @@
     <advancedSetting id="ide.max.recent.files" default="50" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentFilesLimit"/>
     <advancedSetting id="ide.max.recent.locations" default="25" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentLocationsLimit"/>
     <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
@@ -1274,6 +1292,8 @@
     <advancedSetting id="editor.open.tabs.in.main.window" default="false" groupKey="group.advanced.settings.editor.tabs" service="com.intellij.ide.ui.UISettings" property="openTabsInMainWindow"/>
     <advancedSetting id="terminal.buffer.max.lines.count" default="5000" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"

@@ -113,6 +113,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final boolean myTraceIndexUpdates;
 
   private volatile RegisteredIndexes myRegisteredIndexes;
+  private volatile @Nullable String myShutdownReason;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
 
@@ -134,7 +135,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private @Nullable Runnable myShutDownTask;
   private @Nullable ScheduledFuture<?> myFlushingFuture;
-  private @Nullable ScheduledFuture<?> myHealthСheсkFuture;
+  private @Nullable ScheduledFuture<?> myHealthCheckFuture;
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
@@ -361,7 +362,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void setUpHealthCheck() {
-    myHealthСheсkFuture = AppExecutorUtil
+    myHealthCheckFuture = AppExecutorUtil
       .getAppScheduledExecutorService()
       .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
         myIndexableFilesFilterHolder.runHealthCheck();
@@ -373,7 +374,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     public void run() {
       FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
       if (fileBasedIndex instanceof FileBasedIndexImpl) {
-        ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false);
+        ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false, "IDE shutdown");
       }
     }
   }
@@ -418,6 +419,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       LOG.assertTrue(myRegisteredIndexes == null);
       myStorageBufferingHandler.resetState();
       myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
+      myShutdownReason = null;
     }
   }
 
@@ -591,7 +593,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void performShutdown(boolean keepConnection) {
+  void performShutdown(boolean keepConnection, @NotNull String reason) {
+    myShutdownReason = keepConnection ? reason : null;
     RegisteredIndexes registeredIndexes = myRegisteredIndexes;
     if (registeredIndexes == null || !registeredIndexes.performShutdown()) {
       return; // already shut down
@@ -608,9 +611,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         myFlushingFuture.cancel(false);
         myFlushingFuture = null;
       }
-      if (myHealthСheсkFuture != null) {
-        myHealthСheсkFuture.cancel(false);
-        myHealthСheсkFuture = null;
+      if (myHealthCheckFuture != null) {
+        myHealthCheckFuture.cancel(false);
+        myHealthCheckFuture = null;
       }
     }
     finally {
@@ -768,6 +771,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                     @Nullable Project project,
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
+    String shutdownReason = myShutdownReason;
+    if (shutdownReason != null) {
+      LOG.info("FileBasedIndex is currently shutdown because: " + shutdownReason);
+      return false;
+    }
     ProgressManager.checkCanceled();
     SlowOperations.assertSlowOperationsAreAllowed();
     getChangedFilesCollector().ensureUpToDate();

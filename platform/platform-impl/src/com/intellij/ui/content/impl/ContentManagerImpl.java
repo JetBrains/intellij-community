@@ -40,6 +40,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private ContentUI myUI;
   private final List<Content> myContents = new ArrayList<>();
+  private final List<ContentManager> myNestedManagers = new SmartList<>();
   private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
   private final List<Content> mySelection = new ArrayList<>();
   private final boolean myCanCloseContents;
@@ -94,6 +95,17 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (ui instanceof Disposable) {
       Disposer.register(this, (Disposable)ui);
     }
+  }
+
+  public void addNestedManager(@NotNull ContentManager manager) {
+    myNestedManagers.add(manager);
+    Disposer.register(this, manager);
+    Disposer.register(manager, new Disposable() {
+      @Override
+      public void dispose() {
+        myNestedManagers.remove(manager);
+      }
+    });
   }
 
   @Override
@@ -182,8 +194,19 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Disposer.register(this, content);
   }
 
+  //protected ContentManager getManager(@NotNull Content content) {
+  //  for (ContentManager nestedManager : myNestedManagers) {
+  //    if (nestedManager.getIndexOfContent(content) != -1) return nestedManager;
+  //  }
+  //  return this;
+  //}
+
   @Override
   public boolean removeContent(@NotNull Content content, boolean dispose) {
+    //ContentManager manager = getManager(content);
+    //if (manager != this) {
+    //  return manager.removeContent(content, dispose);
+    //}
     boolean wasFocused = UIUtil.isFocusAncestor(content.getComponent());
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
@@ -301,6 +324,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   public int getContentCount() {
     return myContents.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    boolean empty = ContentManager.super.isEmpty();
+    if (!empty) return false;
+    for (ContentManager manager : myNestedManagers) {
+      if (!manager.isEmpty()) return false;
+    }
+    return true;
   }
 
   @Override
@@ -618,6 +651,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myDisposed = true;
 
     myContents.clear();
+    myNestedManagers.clear();
     mySelection.clear();
     myContentWithChangedComponent.clear();
     myUI = null;

@@ -223,7 +223,7 @@ public abstract class NlsInfo implements RestrictionInfo {
       if (info != NlsUnspecified.UNKNOWN) {
         return info;
       }
-      info = fromMetaAnnotation(annotation);
+      info = fromMetaAnnotation(annotation.resolve());
       if (info != NlsUnspecified.UNKNOWN) {
         return info;
       }
@@ -248,10 +248,15 @@ public abstract class NlsInfo implements RestrictionInfo {
       }
       UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
       if (uAnnotation != null) {
-        info = fromMetaAnnotation(uAnnotation);
-        if (info != NlsUnspecified.UNKNOWN) {
-          return info;
+        info = fromMetaAnnotation(uAnnotation.resolve());
+      } else {
+        String name = annotation.getQualifiedName();
+        if (name != null) {
+          info = fromMetaAnnotation(JavaPsiFacade.getInstance(annotation.getProject()).findClass(name, annotation.getResolveScope()));
         }
+      }
+      if (info != NlsUnspecified.UNKNOWN) {
+        return info;
       }
     }
     if (owner instanceof PsiModifierList) {
@@ -267,8 +272,7 @@ public abstract class NlsInfo implements RestrictionInfo {
     return NlsUnspecified.UNKNOWN;
   }
 
-  private static @NotNull NlsInfo fromMetaAnnotation(@NotNull UAnnotation annotation) {
-    PsiClass annotationClass = annotation.resolve();
+  private static @NotNull NlsInfo fromMetaAnnotation(@Nullable PsiClass annotationClass) {
     if (annotationClass == null) return NlsUnspecified.UNKNOWN;
     NlsInfo baseInfo = NlsUnspecified.UNKNOWN;
     String prefix = "";
@@ -286,7 +290,7 @@ public abstract class NlsInfo implements RestrictionInfo {
       }
     }
     if (baseInfo instanceof Localized) {
-      return ((Localized)baseInfo).withPrefixAndSuffix(prefix, suffix).withAnnotation(annotation);
+      return ((Localized)baseInfo).withPrefixAndSuffix(prefix, suffix).withAnnotation(annotationClass.getQualifiedName());
     }
     return baseInfo;
   }
@@ -425,8 +429,7 @@ public abstract class NlsInfo implements RestrictionInfo {
       return new Localized(myCapitalization, prefix, suffix, myAnnotationName);
     }
 
-    private @NotNull Localized withAnnotation(@NotNull UAnnotation annotation) {
-      String qualifiedName = annotation.getQualifiedName();
+    private @NotNull Localized withAnnotation(@Nullable String qualifiedName) {
       if (Objects.equals(qualifiedName, myAnnotationName)) {
         return this;
       }

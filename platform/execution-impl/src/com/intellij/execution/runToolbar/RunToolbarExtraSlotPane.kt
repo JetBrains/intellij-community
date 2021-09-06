@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
@@ -20,7 +21,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.math.absoluteValue
 
-class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, val cancel: () -> Unit) {
+class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, val cancel: () -> Unit): ActiveListener {
   private val manager = RunToolbarSlotManager.getInstance(project)
   val slotPane = JPanel(VerticalLayout(JBUI.scale(3))).apply {
     isOpaque = false
@@ -48,11 +49,28 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
     }
   }
 
+  init {
+    manager.addListener(this)
+  }
+
+  override fun enabled() {
+    manager.addListener(managerListener)
+  }
+
+  override fun disabled() {
+    manager.removeListener(managerListener)
+  }
+
+  private fun updateImmediately() {
+  //  components.map { it.bar }.forEach { it.updateActionsImmediately(true) }
+  }
+
+  private var added = false
   val details = JLabel(LangBundle.message("run.toolbar.add.slot.details"))
   private val pane = object : JPanel(VerticalLayout(JBUI.scale(2))) {
     override fun addNotify() {
-      manager.addListener(managerListener)
       build()
+      added = true
       super.addNotify()
       SwingUtilities.invokeLater {
         pack()
@@ -60,14 +78,14 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
     }
 
     override fun removeNotify() {
-      manager.removeListener(managerListener)
+      added = false
       super.removeNotify()
     }
   }.apply {
     border = JBUI.Borders.empty(3, 0, 0, 3)
     add(slotPane)
 
-    val bottomPane = JPanel(MigLayout("ins 0, novisualpadding, gap 0, wrap 2, hidemode 3")).apply {
+    val bottomPane = JPanel(MigLayout("fillx, ins 0, novisualpadding, gap 0, hidemode 3", "[][]push[]")).apply {
       isOpaque = false
       border = JBUI.Borders.empty(5, 0, 7, 5)
 
@@ -78,15 +96,23 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
 
         addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent) {
-            manager.addNewSlot()
+            manager.addAndSaveSlot()
           }
         })
       })
       add(HyperlinkLabel(LangBundle.message("run.toolbar.add.slot")).apply {
         addHyperlinkListener {
-          manager.addNewSlot()
+          manager.addAndSaveSlot()
         }
         border = JBUI.Borders.empty()
+      })
+
+      add(JLabel(AllIcons.General.GearPlain).apply {
+        addMouseListener(object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, RunToolbarSettingsConfigurable::class.java)
+          }
+        })
       })
 
       //add(details, "skip")
@@ -98,7 +124,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
 
   private fun rebuild() {
     build()
-    if(manager.slotsCount() > 0) {
+    if(manager.slotsCount() > 0 && added) {
       pack()
     }
   }
@@ -120,6 +146,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
       val diff = count - components.size
       repeat(diff.absoluteValue) { if(diff > 0) addNewSlot() else removeComponent(components[it])}
     }
+    updateImmediately()
   }
 
   private fun addSingleSlot() {
@@ -178,6 +205,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
   private fun createComponent(): SlotComponent {
     val group = DefaultActionGroup()
     val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.RUN_TOOLBAR, group)
+
     val component = SlotComponent(bar, JLabel(AllIcons.Toolbar.RemoveSlot).apply {
       val d = preferredSize
       d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH

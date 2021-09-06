@@ -249,7 +249,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       else if (renderer instanceof CompletableFuture) {
         //noinspection unchecked
-        return (CompletableFuture<NodeRenderer>)renderer;
+        CompletableFuture<NodeRenderer> future = (CompletableFuture<NodeRenderer>)renderer;
+        LOG.assertTrue(!future.isDone(), "Completed future for " + type);
+        return future;
       }
       CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getApplicableRenderers(myRenderers, type)
         .handle((renderers, throwable) -> {

@@ -84,7 +84,7 @@ public final class StartupUtil {
   private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
   private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
-  private static final String PROJECTOR_LAUNCHER_CLASS_NAME = "org.jetbrains.projector.server.ProjectorLauncher";
+  private static final String PROJECTOR_LAUNCHER_CLASS_NAME = "org.jetbrains.projector.server.ProjectorLauncher$Starter";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
@@ -136,11 +136,11 @@ public final class StartupUtil {
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
-    if (args.length > 0 && args[0].startsWith(Main.CWM_HOST_COMMAND_PREFIX)) {
+    if (args.length > 0 && (Main.CWM_HOST_COMMAND.equals(args[0]) || Main.CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
       activity = activity.endAndStart("Cwm Host init");
       try {
         Class<?> projectorMainClass = StartupUtil.class.getClassLoader().loadClass(PROJECTOR_LAUNCHER_CLASS_NAME);
-        MethodHandles.lookup().findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
+        MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
       } catch (RuntimeException e) {
         throw e;
       } catch (Throwable e) {
@@ -219,7 +219,7 @@ public final class StartupUtil {
 
     forkJoinPool.execute(() -> {
       setupSystemLibraries();
-      logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance());
+      logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args);
       loadSystemLibraries(log);
     });
 
@@ -837,7 +837,9 @@ public final class StartupUtil {
     activity.end();
   }
 
-  private static void logEssentialInfoAboutIde(Logger log, ApplicationInfo appInfo) {
+  private static void logEssentialInfoAboutIde(Logger log,
+                                               ApplicationInfo appInfo,
+                                               String [] args) {
     Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
 
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
@@ -847,9 +849,13 @@ public final class StartupUtil {
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
 
-    List<String> arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-    if (arguments != null) {
-      log.info("JVM Args: " + String.join(" ", arguments));
+    List<String> jvmArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    if (jvmArguments != null) {
+      log.info("JVM Args: " + String.join(" ", jvmArguments));
+    }
+
+    if (args != null) {
+      log.info("Program Args: " + String.join(" ", args));
     }
 
     String extDirs = System.getProperty("java.ext.dirs");

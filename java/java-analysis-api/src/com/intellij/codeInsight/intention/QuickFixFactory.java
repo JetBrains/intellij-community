@@ -390,7 +390,9 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
 
-  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
+  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter,
+                                                       @NotNull Object highlightInfo,
+                                                       boolean excludingHierarchy);
 
   @NotNull
   public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName);
@@ -402,7 +404,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field);
 
   @NotNull
-  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement);
+  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix);
 
   @NotNull
   public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();

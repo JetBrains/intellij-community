@@ -19,6 +19,7 @@ import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -61,25 +62,28 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   };
 
-  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent) {
+  private boolean myCreatingModule;
+
+  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent, @Nullable Project project) {
     super(dialogParent, true);
     mySteps = new ArrayList<>();
-    initWizard(title);
+    initWizard(title, project != null);
   }
 
   public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable final Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
-    initWizard(title);
+    initWizard(title, project != null);
   }
 
-  private void initWizard(final @NlsContexts.DialogTitle String title) {
+  private void initWizard(final @NlsContexts.DialogTitle String title, boolean isCreatingModule) {
     setTitle(title);
+    myCreatingModule = isCreatingModule;
     myCurrentStep = 0;
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
-    myHelpButton = new JButton(CommonBundle.getHelpButtonText());
+    myHelpButton = isNewWizard() ? createHelpButton(JBUI.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);
@@ -117,7 +121,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
     int inset = isNewWizard() ? 15 : 0;
-    panel.setBorder(BorderFactory.createEmptyBorder(8, inset, 0, inset));
+    panel.setBorder(isNewWizard()
+                      ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
+                    : BorderFactory.createEmptyBorder(8, inset, 0, inset));
 
     JPanel buttonPanel = new JPanel();
 
@@ -131,7 +137,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       int index = 0;
       JPanel leftPanel = new JPanel();
-      if (ApplicationInfo.contextHelpAvailable() && !isNewWizard()) {
+      if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
         TouchbarDataKeys.putDialogButtonDescriptor(myHelpButton, index++);
       }
@@ -534,10 +540,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myPreviousButton.setEnabled(!firstStep);
+    if (isNewWizard()) {
+      myPreviousButton.setVisible(!firstStep);
+    }
   }
 
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  private boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") && !myCreatingModule;
   }
 
   protected boolean isFirstStep() {

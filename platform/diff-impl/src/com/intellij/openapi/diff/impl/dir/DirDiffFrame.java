@@ -2,7 +2,7 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -29,7 +29,7 @@ public class DirDiffFrame extends FrameWrapper {
     }
     closeOnEsc();
     DataManager.registerDataProvider(myPanel.getPanel(), dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return "reference.dialogs.diff.folder";
       }
       return null;

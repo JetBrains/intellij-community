@@ -2,19 +2,15 @@
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate;
-import com.intellij.openapi.externalSystem.model.project.ProjectId;
-import com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Objects;
-
 @ApiStatus.Experimental
-public class JpsDependencyContributor implements ExternalProjectsWorkspaceImpl.Contributor {
+public class JpsDependencyContributor implements ExternalSystemWorkspaceContributor {
 
   @Override
   public @Nullable ProjectCoordinate findProjectId(Module module,

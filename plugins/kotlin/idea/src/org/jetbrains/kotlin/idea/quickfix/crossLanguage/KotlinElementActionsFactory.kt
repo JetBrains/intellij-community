@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
@@ -261,7 +261,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
         val targetContainer = targetClass.toKtClassOrFile()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
 
-        val writable = JvmModifier.FINAL !in request.modifiers
+        val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
 
         val action = AddFieldActionCreateCallableFromUsageFix(
             targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = false
