@@ -81,7 +81,6 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
       javaClass = pointer.getElement();
     }
 
-    //noinspection ConstantConditions / false positive
     if (javaClass == null) return;
 
     JavaPsiClassReferenceElement item = JavaClassNameCompletionContributor.createClassLookupItem(javaClass, true);
