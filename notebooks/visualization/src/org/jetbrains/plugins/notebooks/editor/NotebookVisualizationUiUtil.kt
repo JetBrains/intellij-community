@@ -139,6 +139,11 @@ val NotebookCellLines.Interval.firstContentLine: Int
     if (markers.hasTopLine) lines.first + 1
     else lines.first
 
+val NotebookCellLines.Interval.lastContentLine: Int
+  get() =
+    if (markers.hasBottomLine) lines.last - 1
+    else lines.last
+
 fun makeMarkersFromIntervals(document: Document, intervals: Iterator<NotebookCellLines.Interval>): List<NotebookCellLines.Marker> {
   val markers = ArrayList<NotebookCellLines.Marker>()
 
