@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -130,7 +130,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * The default implementation is temporary, and shall be dropped in future.
    */
   default @Nullable VirtualFile getFile() {
-    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getFile", "A proper @NotNull implementation required");
+    PluginException.reportDeprecatedDefault(getClass(), "getFile", "A proper @NotNull implementation required");
     return FILE_KEY.get(this);
   }
 }
