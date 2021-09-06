@@ -12,7 +12,7 @@ class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependenci
 
     override fun isModified(): Boolean {
         return settings.suggestingIntervalDays != panel.getSuggestingIntervalDays() ||
-                suggesterIdToName.keys.any { settings.isEnabled(it) != panel.isSelected(it) }
+            suggesterIdToName.keys.any { settings.isEnabled(it) != panel.isSelected(it) }
     }
 
     override fun apply() {

@@ -139,8 +139,8 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
         if (extractedExprData == null) return false
         with(extractedExprData!!) {
             return variableEditingFinished && declaration != null &&
-                    action.newChild.text == getVariableName(declaration!!) &&
-                    changedStatement === getTopmostStatementWithText(action.newChild, "")
+                action.newChild.text == getVariableName(declaration!!) &&
+                changedStatement === getTopmostStatementWithText(action.newChild, "")
         }
     }
 

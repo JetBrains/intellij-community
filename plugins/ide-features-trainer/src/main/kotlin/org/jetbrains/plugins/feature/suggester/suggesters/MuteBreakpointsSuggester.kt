@@ -34,8 +34,8 @@ class MuteBreakpointsSuggester : AbstractFeatureSuggester() {
 
         val isOutOfDate: Boolean
             get() = lastPauseTimeMillis != 0L &&
-                    lastBreakpointRemovedTimeMillis != 0L &&
-                    abs(lastBreakpointRemovedTimeMillis - lastPauseTimeMillis) > MAX_TIME_MILLIS_BETWEEN_ACTIONS
+                lastBreakpointRemovedTimeMillis != 0L &&
+                abs(lastBreakpointRemovedTimeMillis - lastPauseTimeMillis) > MAX_TIME_MILLIS_BETWEEN_ACTIONS
 
         fun applyPausedOnBreakpoint(position: XSourcePosition, timeMillis: Long) {
             lastBreakpointPosition = position

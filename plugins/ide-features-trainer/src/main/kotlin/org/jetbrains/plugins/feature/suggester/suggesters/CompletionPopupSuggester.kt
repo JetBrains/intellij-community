@@ -108,7 +108,7 @@ class CompletionPopupSuggester : AbstractFeatureSuggester() {
     private fun LanguageSupport.isInsideCommentOrLiteral(psiFile: PsiFile, offset: Int): Boolean {
         val curElement = psiFile.findElementAt(offset) ?: return false
         return curElement.getParentByPredicate(::isLiteralExpression) != null ||
-                curElement.getParentOfType<PsiComment>() != null
+            curElement.getParentOfType<PsiComment>() != null
     }
 
     companion object {

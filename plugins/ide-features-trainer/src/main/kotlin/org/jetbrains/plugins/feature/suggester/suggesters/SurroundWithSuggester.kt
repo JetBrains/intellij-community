@@ -158,7 +158,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
         }
         val statements = langSupport.getStatementsOfBlock(surroundingStatement!!)
         return statements.isNotEmpty() &&
-                statements.first().text == firstStatementInBlockText
+            statements.first().text == firstStatementInBlockText
     }
 
     private fun LanguageSupport.getStatementsOfBlock(psiElement: PsiElement): List<PsiElement> {

@@ -86,17 +86,17 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
     private fun ChangesHistory<CommentData>.isLinesCommentedInARow(): Boolean {
         val comments = asIterable()
         return !(
-                comments.map(CommentData::lineNumber)
-                    .sorted()
+            comments.map(CommentData::lineNumber)
+                .sorted()
+                .zipWithNext { first, second -> second - first }
+                .any { it != 1 } ||
+                comments.map { it.documentRef.get() }
+                    .zipWithNext { first, second -> first != null && first === second }
+                    .any { !it } ||
+                comments.map(CommentData::timeMillis)
                     .zipWithNext { first, second -> second - first }
-                    .any { it != 1 } ||
-                        comments.map { it.documentRef.get() }
-                            .zipWithNext { first, second -> first != null && first === second }
-                            .any { !it } ||
-                        comments.map(CommentData::timeMillis)
-                            .zipWithNext { first, second -> second - first }
-                            .any { it > maxTimeMillisBetweenComments }
-                )
+                    .any { it > maxTimeMillisBetweenComments }
+            )
     }
 
     private fun Document.getLineByOffset(offset: Int): DocumentLine {
