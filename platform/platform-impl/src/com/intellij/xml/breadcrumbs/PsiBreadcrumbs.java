@@ -36,6 +36,7 @@ final class PsiBreadcrumbs extends Breadcrumbs {
 
   void updateBorder(int offset) {
     // do not use scaling here because this border is used to align breadcrumbs with a gutter
+    //noinspection UseDPIAwareBorders
     setBorder(new EmptyBorder(0, offset, 0, 0));
   }
 
