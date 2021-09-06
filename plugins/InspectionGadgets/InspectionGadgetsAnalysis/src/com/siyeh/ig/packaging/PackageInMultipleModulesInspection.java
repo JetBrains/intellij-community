@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,13 +53,26 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
       final RefModule module = refClass.getModule();
       modules.add(module);
     }
-    if (modules.size() <= 1) {
+    final int moduleCount = modules.size();
+    if (moduleCount <= 1) {
       return null;
     }
-    final String errorString =
-      InspectionGadgetsBundle.message(
-        "package.in.multiple.modules.problem.descriptor",
-        refEntity.getQualifiedName());
+    final List<RefModule> moduleList = new ArrayList<>(modules);
+    final String errorString;
+    if (moduleCount == 2) {
+      errorString = InspectionGadgetsBundle.message(
+        "package.in.multiple.modules.problem.descriptor2", refEntity.getQualifiedName(), moduleList.get(0), moduleList.get(1));
+    }
+    else if (moduleCount == 3) {
+      errorString = InspectionGadgetsBundle.message(
+        "package.in.multiple.modules.problem.descriptor3", refEntity.getQualifiedName(),
+        moduleList.get(0), moduleList.get(1), moduleList.get(2));
+    }
+    else {
+      errorString = InspectionGadgetsBundle.message(
+        "package.in.multiple.modules.problem.descriptor.many", refEntity.getQualifiedName(),
+        moduleList.get(0), moduleList.get(1), moduleCount - 2);
+    }
 
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(errorString)};
