@@ -578,9 +578,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     PsiElement originalElement = getContextElement(editor, file);
 
-    CancellablePromise<PsiElement> elementPromise =
-      ReadAction.nonBlocking(() -> findTargetElementFromContext(editor, finalFile, originalElement)).coalesceBy(this)
-        .submit(AppExecutorUtil.getAppExecutorService());
+    int offset = editor.getCaretModel().getOffset();
+    CancellablePromise<PsiElement> elementPromise = ReadAction.nonBlocking(
+      () -> findTargetElementFromContext(editor, offset, finalFile)
+    ).coalesceBy(this).submit(AppExecutorUtil.getAppExecutorService());
     CompletableFuture<PsiElement> elementFuture = Promises.asCompletableFuture(elementPromise);
 
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
@@ -635,8 +636,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return findTargetElement(editor, file, getContextElement(editor, file));
   }
 
-  private static PsiElement getContextElement(Editor editor, PsiFile file) {
-    return file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
+  private static @Nullable PsiElement getContextElement(Editor editor, PsiFile file) {
+    return getContextElement(file, editor.getCaretModel().getOffset());
+  }
+
+  private static @Nullable PsiElement getContextElement(@Nullable PsiFile file, int offset) {
+    return file != null ? file.findElementAt(offset) : null;
   }
 
   protected void doShowJavaDocInfo(@NotNull PsiElement element,
@@ -874,11 +879,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  @Nullable
-  private PsiElement findTargetElementFromContext(@NotNull Editor editor, @Nullable PsiFile file, @Nullable PsiElement originalElement) {
-    PsiElement element = assertSameProject(findTargetElement(editor, file));
+  private @Nullable PsiElement findTargetElementFromContext(@NotNull Editor editor, int offset, @Nullable PsiFile file) {
+    var elementAndContext = findTargetElementAndContext(editor, offset, file);
+    return elementAndContext == null ? null : elementAndContext.first;
+  }
+
+  @Internal
+  public @Nullable Pair<@NotNull PsiElement, @Nullable PsiElement> findTargetElementAndContext(
+    @NotNull Editor editor,
+    int offset,
+    @Nullable PsiFile file
+  ) {
+    PsiElement originalElement = getContextElement(file, offset);
+    PsiElement element = assertSameProject(findTargetElement(editor, offset, file, originalElement));
     if (element == null) {
-      PsiElement list = ParameterInfoControllerBase.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
+      PsiElement list = ParameterInfoControllerBase.findArgumentList(file, offset, -1);
       if (list != null && LookupManager.getInstance(myProject).getActiveLookup() == null) {
         element = list;
       }
@@ -896,7 +911,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       if (element == null) return null;
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
-    return element;
+    return Pair.create(element, originalElement);
   }
 
   @Nullable
