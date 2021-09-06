@@ -8,11 +8,16 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.kind.*
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import java.util.*
 
 data class ModuleRootOriginImpl(override val module: Module,
                            override val roots: List<VirtualFile>) : ModuleRootOrigin
 
+/**
+ * Used only with [com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl], when
+ * [com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor.Companion.indexProjectBasedOnIndexableEntityProviders] == false
+ */
 class LibraryOriginImpl(override val library: Library, val roots: List<VirtualFile>) : LibraryOrigin {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -22,6 +27,17 @@ class LibraryOriginImpl(override val library: Library, val roots: List<VirtualFi
   }
 
   override fun hashCode(): Int = Objects.hash(roots)
+}
+
+class LibraryIdOriginImpl(override val library: Library, private val libraryId: LibraryId) : LibraryOrigin {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    return libraryId == (other as LibraryIdOriginImpl).libraryId
+  }
+
+  override fun hashCode(): Int = Objects.hash(libraryId)
 }
 
 data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary) : SyntheticLibraryOrigin

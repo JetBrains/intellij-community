@@ -115,7 +115,7 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
     if (table != null) {
       Library library = table.getLibraryByName(libraryId.getName());
       if (library != null) {
-        return IndexableEntityProviderMethods.INSTANCE.createIterators(library);
+        return IndexableEntityProviderMethods.INSTANCE.createIterators(library, libraryId);
       }
     }
     return Collections.emptyList();

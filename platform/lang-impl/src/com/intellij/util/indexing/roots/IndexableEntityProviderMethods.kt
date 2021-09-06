@@ -11,10 +11,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.ModuleIndexableFilesIteratorImpl.Companion.getMergedIterators
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 object IndexableEntityProviderMethods {
@@ -30,7 +31,7 @@ object IndexableEntityProviderMethods {
   }
 
   fun findLibraryForEntity(entity: LibraryEntity,
-                           storageAfter: WorkspaceEntityStorage): Library? =
+                           storageAfter: WorkspaceEntityStorage): LibraryBridge? =
     storageAfter.libraryMap.getDataByEntity(entity)
 
   fun createIterators(entity: ModuleEntity, roots: List<VirtualFile>, project: Project): Collection<IndexableFilesIterator> {
@@ -79,8 +80,10 @@ object IndexableEntityProviderMethods {
     }
   }
 
-  fun createIterators(library: Library): Collection<IndexableFilesIterator> {
-    return listOf(LibraryIndexableFilesIteratorImpl(library))
+  fun createIterators(library: LibraryBridge): Collection<IndexableFilesIterator> = createIterators(library, library.libraryId)
+
+  fun createIterators(library: Library, libraryId: LibraryId): Collection<IndexableFilesIterator> {
+    return listOf(LibraryBridgeIndexableFilesIteratorImpl(library, libraryId))
   }
 
   fun createIterators(sdk: Sdk): Collection<IndexableFilesIterator> {

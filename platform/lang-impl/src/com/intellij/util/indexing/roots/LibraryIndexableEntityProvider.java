@@ -2,8 +2,8 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
@@ -44,7 +44,7 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
     if (entity != null &&
         ProjectRootsChangeListener.Companion.shouldFireRootsChanged$intellij_platform_lang_impl(entity, project)) {
       WorkspaceEntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-      Library library = IndexableEntityProviderMethods.INSTANCE.findLibraryForEntity(entity, entityStorage);
+      LibraryBridge library = IndexableEntityProviderMethods.INSTANCE.findLibraryForEntity(entity, entityStorage);
       if (library != null) {
         return IndexableEntityProviderMethods.INSTANCE.createIterators(library);
       }
