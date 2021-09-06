@@ -248,8 +248,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     //add them later for new wizard, after sorting
-    builders.removeIf(it -> it instanceof NewProjectModuleBuilder);
-    builders.removeIf(it -> it instanceof NewWizardEmptyModuleBuilder);
+    builders.removeIf(
+      it -> it instanceof NewProjectBuilder ||
+            it instanceof NewEmptyProjectBuilder ||
+            it instanceof NewModuleBuilder);
 
     Map<String, TemplatesGroup> groupMap = new HashMap<>();
     for (ModuleBuilder builder : builders) {
@@ -338,8 +340,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     if (isNewWizard()) {
-      groups.add(0, new TemplatesGroup(NewWizardEmptyModuleType.Companion.getINSTANCE().createModuleBuilder()));
-      groups.add(0, new TemplatesGroup(NewProjectModuleType.Companion.getINSTANCE().createModuleBuilder()));
+      if (context.isCreatingNewProject()) {
+        groups.add(0, new TemplatesGroup(NewEmptyProjectType.INSTANCE.createModuleBuilder()));
+        groups.add(0, new TemplatesGroup(NewProjectType.INSTANCE.createModuleBuilder()));
+      }
+      else {
+        groups.add(0, new TemplatesGroup(NewModuleType.INSTANCE.createModuleBuilder()));
+      }
     }
 
     return groups;
@@ -812,7 +819,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
           if (index < 1) return false;
           TemplatesGroup upper = groups.get(index - 1);
           if (isNewWizard()) {
-            return upper.getModuleBuilder() instanceof NewWizardEmptyModuleBuilder;
+            ModuleBuilder builder = upper.getModuleBuilder();
+            return builder instanceof NewEmptyProjectBuilder || builder instanceof NewModuleBuilder;
           }
 
           if (upper.getParentGroup() == null && value.getParentGroup() == null) return true;

@@ -5,9 +5,10 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.project.Project
 
-abstract class NewWizardModuleBuilder(private val factory: NewProjectWizardStep.Factory) : ModuleBuilder() {
+abstract class AbstractNewProjectWizardBuilder(private val factory: NewProjectWizardStep.Factory) : ModuleBuilder() {
   private var step: NewModuleStep? = null
 
   final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep {
@@ -15,9 +16,9 @@ abstract class NewWizardModuleBuilder(private val factory: NewProjectWizardStep.
       .also { step = it }
   }
 
-  override fun createProject(name: String?, path: String?): Project? {
-    return super.createProject(name, path)
-      ?.also { step!!.setupProject(it) }
+  override fun commitModule(project: Project, model: ModifiableModuleModel?): Nothing? {
+    step!!.setupProject(project)
+    return null
   }
 
   override fun cleanup() {

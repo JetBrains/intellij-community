@@ -18,6 +18,8 @@ class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factor
 
   private val step by lazy { factory.createStep(context) }
 
+  fun setupProject(project: Project) = step.setupProject(project)
+
   private val panelBuilder = NewProjectWizardPanelBuilder(context)
 
   override fun validate() = panelBuilder.validate()
@@ -57,9 +59,5 @@ class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factor
 
   private fun JComponent.setMinimumWidth(width: Int) {
     minimumSize = minimumSize.apply { this.width = width }
-  }
-
-  fun setupProject(project: Project) {
-    step.setupProject(project)
   }
 }

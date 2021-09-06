@@ -4,6 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
+import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -94,7 +95,7 @@ class NewProjectWizardBaseStep(
 
   private fun getBuilderId(): String? {
     val projectBuilder = context.projectBuilder
-    if (projectBuilder is NewWizardModuleBuilder) {
+    if (projectBuilder is ModuleBuilder) {
       return projectBuilder.builderId
     }
     return null

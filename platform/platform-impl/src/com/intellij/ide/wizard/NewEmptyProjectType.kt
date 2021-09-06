@@ -7,13 +7,14 @@ import com.intellij.ui.UIBundle
 import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
-class NewWizardEmptyModuleType : ModuleType<NewWizardEmptyModuleBuilder>("newWizard.emptyProjectType") {
-  override fun createModuleBuilder() = NewWizardEmptyModuleBuilder()
-  override fun getName() = UIBundle.message("label.project.wizard.empty.project.generator.name")
+class NewEmptyProjectType : ModuleType<NewEmptyProjectBuilder>("newWizard.emptyProjectType") {
+  override fun createModuleBuilder() = NewEmptyProjectBuilder()
   override fun getDescription() = UIBundle.message("label.project.wizard.empty.project.generator.description")
+  override fun getName() = UIBundle.message("label.project.wizard.empty.project.generator.name")
   override fun getNodeIcon(isOpened: Boolean): Icon = EmptyIcon.ICON_0
 
   companion object {
-    val INSTANCE: ModuleType<*> = ModuleTypeManager.getInstance().findByID("newWizard.emptyProjectType") as ModuleType
+    @JvmField
+    val INSTANCE = ModuleTypeManager.getInstance().findByID("newWizard.emptyProjectType") as ModuleType
   }
 }

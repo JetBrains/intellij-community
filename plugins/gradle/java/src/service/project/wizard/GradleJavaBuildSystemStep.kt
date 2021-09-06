@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.layout.*
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.lang.JavaVersion
 import icons.GradleIcons
 import org.gradle.util.GradleVersion
@@ -102,8 +103,11 @@ class GradleJavaBuildSystemStep(
 
   override fun setupProject(project: Project) {
     val builder = InternalGradleModuleBuilder().apply {
-      isCreatingNewProject = true
       moduleJdk = parentStep.sdk
+      name = parentStep.name
+      contentEntryPath = parentStep.projectPath.systemIndependentPath
+
+      isCreatingNewProject = context.isCreatingNewProject
 
       parentProject = parentData
       projectId = ProjectId(groupId, artifactId, version)

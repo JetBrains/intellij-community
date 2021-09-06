@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.*
+import com.intellij.util.io.systemIndependentPath
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
@@ -66,6 +67,8 @@ class MavenJavaBuildSystemStep(
   override fun setupProject(project: Project) {
     val builder = InternalMavenModuleBuilder().apply {
       moduleJdk = parentStep.sdk
+      name = parentStep.name
+      contentEntryPath = parentStep.projectPath.systemIndependentPath
 
       parentProject = parentData
       aggregatorProject = parentData
