@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static com.intellij.ui.scroll.MouseWheelSmoothScroll.*;
 import static com.intellij.ui.scroll.SmoothScrollUtil.*;
@@ -23,23 +24,23 @@ import static java.lang.Math.max;
 public final class TouchScroll {
   private final InertialAnimator horizontal = new InertialAnimator(), vertical = new InertialAnimator();
   private final FlingManager horizontalFling = new FlingManager(), verticalFling = new FlingManager();
-  private final @NotNull BooleanSupplier myScrollEnabled;
+  private final @NotNull Supplier<Boolean> myScrollEnabled;
 
   public static TouchScroll create() {
     return create(() -> true);
   }
 
-  public static TouchScroll create(@NotNull BooleanSupplier isScrollEnabled) {
+  public static TouchScroll create(@NotNull Supplier<Boolean> isScrollEnabled) {
     return new TouchScroll(isScrollEnabled);
   }
 
-  private TouchScroll(@NotNull BooleanSupplier isEnabledChecker) {
+  private TouchScroll(@NotNull Supplier<Boolean> isEnabledChecker) {
     myScrollEnabled = Objects.requireNonNull(isEnabledChecker);
   }
 
 
   public void processMouseWheelEvent(@NotNull MouseWheelEvent e, @Nullable Consumer<? super MouseWheelEvent> alternative) {
-    JScrollBar bar = !myScrollEnabled.getAsBoolean() ? null : getEventScrollBar(e);
+    JScrollBar bar = !myScrollEnabled.get() ? null : getEventScrollBar(e);
     if (bar == null) {
       if (alternative != null) alternative.accept(e);
       return;
