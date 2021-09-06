@@ -11,11 +11,9 @@ data class MirrorOfStandaloneCoroutine(
 )
 
 data class MirrorOfCoroutineContext(
-    val that: ObjectReference,
     val name: String?,
     val id: Long?,
     val dispatcher: String?,
-    val job: ObjectReference?
 )
 
 data class MirrorOfCoroutineOwner(val that: ObjectReference, val coroutineInfo: MirrorOfCoroutineInfo?)
@@ -25,9 +23,8 @@ data class MirrorOfDebugProbesImpl(val that: ObjectReference, val instance: Obje
 data class MirrorOfWeakReference(val that: ObjectReference, val reference: ObjectReference?)
 
 data class MirrorOfCoroutineInfo(
-    val that: ObjectReference,
-    val sequenceNumber: Long?,
     val context: MirrorOfCoroutineContext?,
+    val sequenceNumber: Long?,
     val state: String?,
     val lastObservedThread: ThreadReference?,
     val lastObservedFrame: ObjectReference?,
