@@ -28,6 +28,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,14 +41,14 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public final class InternalDecoratorImpl extends InternalDecorator implements Queryable, DataProvider, ComponentWithMnemonics {
   @ApiStatus.Internal
   public static final Key<Boolean> SHARED_ACCESS_KEY = Key.create("sharedAccess");
+  @ApiStatus.Internal
+  static final Key<Boolean> HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create("HideCommonToolWindowButtons");
 
   public enum Mode {
     SINGLE, VERTICAL_SPLIT, HORIZONTAL_SPLIT, FIRST_CELL, SECOND_CELL;
@@ -121,6 +122,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     if (mode == myMode) return;
     myMode = mode;
     removeAll();
+    setBorder(null);
     switch (mode) {
       case SINGLE:
       case FIRST_CELL:
@@ -221,7 +223,8 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   @Override
   public String toString() {
-    return toolWindow.getId();
+    return toolWindow.getId() + ": " + StringUtil.trimMiddle(Arrays.toString(Arrays.stream(getContentManager().getContents()).map(
+      content -> content.getDisplayName()).toArray()), 40);
   }
 
   @NotNull
@@ -462,6 +465,29 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   }
 
   @Override
+  public void reshape(int x, int y, int w, int h) {
+    super.reshape(x, y, w, h);
+    InternalDecoratorImpl topLevelDecorator = findTopLevelDecorator(this);
+    if (topLevelDecorator == null || !topLevelDecorator.isShowing()) {
+      putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null);
+      UIUtil.putClientProperty(this, HIDE_COMMON_TOOLWINDOW_BUTTONS, null);
+    } else {
+      Object hideLabel = SwingUtilities.convertPoint(this, x, y, topLevelDecorator).equals(new Point()) ? null : "true";
+      putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL,
+                        hideLabel);
+      Point topScreenLocation = topLevelDecorator.getLocationOnScreen();
+      topScreenLocation.x += topLevelDecorator.getWidth();
+      Point screenLocation = getLocationOnScreen();
+      screenLocation.x += w;
+      Boolean hideButtons = topScreenLocation.equals(screenLocation) ? null : Boolean.TRUE;
+      UIUtil.putClientProperty(this,
+                               HIDE_COMMON_TOOLWINDOW_BUTTONS,
+                               hideButtons);
+    }
+    myContentUi.update();
+  }
+
+  @Override
   public void removeNotify() {
     super.removeNotify();
 
@@ -606,9 +632,13 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   @Nullable
   public static InternalDecoratorImpl findTopLevelDecorator(Component component) {
-    return (InternalDecoratorImpl)ComponentUtil.findParentByCondition(component,
-                                                                      c -> c instanceof InternalDecoratorImpl &&
-                                                                           ((InternalDecoratorImpl)c).getMode().isTopLevel());
+    Component parent = component != null ? component.getParent() : null;
+    InternalDecoratorImpl candidate = null;
+    while (parent != null) {
+      if (parent instanceof InternalDecoratorImpl) candidate = (InternalDecoratorImpl)parent;
+      parent = parent.getParent();
+    }
+    return candidate;
   }
 
   public static InternalDecoratorImpl findNearestDecorator(Component component) {

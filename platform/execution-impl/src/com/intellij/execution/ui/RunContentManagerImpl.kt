@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.content.*
+import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
@@ -358,6 +359,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
     val contentManager = getContentManagerByToolWindowId(id)
     if (contentManager != null) {
+      if (contentManager is ContentManagerImpl && contentManager.contentCount == 0 && !contentManager.isEmpty) {
+        val activeNestedManager = contentManager.activeNestedManager
+        if (activeNestedManager != null) return activeNestedManager
+      }
       return contentManager
     }
 
