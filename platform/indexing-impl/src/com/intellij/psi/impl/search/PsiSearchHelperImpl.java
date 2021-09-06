@@ -986,7 +986,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
                                                        @NotNull Map<VirtualFile, Collection<T>> containerNameFiles,
                                                        @NotNull Map<VirtualFile, Collection<T>> restFiles) {
-    int totalSize = 0;
     for (Map.Entry<TextIndexQuery, Collection<T>> entry : singles.entrySet()) {
       ProgressManager.checkCanceled();
       TextIndexQuery key = entry.getKey();
@@ -1040,9 +1039,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
         });
       }
-      totalSize += allFilesForKeys.size();
     }
-    return totalSize;
+    return targetFiles.size() + nearDirectoryFiles.size() + containerNameFiles.size() + restFiles.size();
   }
 
   @Nullable("null means we did not find common container files")
