@@ -14133,6 +14133,54 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/removeAllArgumentNames")
+    public static class RemoveAllArgumentNames extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("collectionLiteralIsLast.kt")
+        public void testCollectionLiteralIsLast() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/collectionLiteralIsLast.kt");
+        }
+
+        @TestMetadata("collectionLiteralIsNotLast.kt")
+        public void testCollectionLiteralIsNotLast() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/collectionLiteralIsNotLast.kt");
+        }
+
+        @TestMetadata("noNamedArguments.kt")
+        public void testNoNamedArguments() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/noNamedArguments.kt");
+        }
+
+        @TestMetadata("notOwnPosition.kt")
+        public void testNotOwnPosition() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/notOwnPosition.kt");
+        }
+
+        @TestMetadata("oneNamedArgument.kt")
+        public void testOneNamedArgument() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/oneNamedArgument.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/simple.kt");
+        }
+
+        @TestMetadata("varargIsLast.kt")
+        public void testVarargIsLast() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/varargIsLast.kt");
+        }
+
+        @TestMetadata("varargIsNotLast.kt")
+        public void testVarargIsNotLast() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/varargIsNotLast.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeArgumentName")
     public static class RemoveArgumentName extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

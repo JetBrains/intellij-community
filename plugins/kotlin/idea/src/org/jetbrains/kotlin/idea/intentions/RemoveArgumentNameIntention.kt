@@ -30,20 +30,26 @@ class RemoveArgumentNameIntention : SelfTargetingRangeIntention<KtValueArgument>
     }
 
     override fun applyTo(element: KtValueArgument, editor: Editor?) {
-        val argumentExpr = element.getArgumentExpression() ?: return
-        val argumentList = element.parent as? KtValueArgumentList ?: return
-        val resolvedCall = (argumentList.parent as? KtCallElement)?.resolveToCall() ?: return
-        val psiFactory = KtPsiFactory(element)
-        if (argumentExpr is KtCollectionLiteralExpression && resolvedCall.getParameterForArgument(element)?.isVararg == true) {
-            argumentExpr.getInnerExpressions()
-                .map { psiFactory.createArgument(it) }
-                .reversed()
-                .forEach { argumentList.addArgumentAfter(it, element) }
+        removeName(element)
+    }
 
-            argumentList.removeArgument(element)
-        } else {
-            val newArgument = psiFactory.createArgument(argumentExpr, null, element.getSpreadElement() != null)
-            element.replace(newArgument)
+    companion object {
+        fun removeName(element: KtValueArgument) {
+            val argumentExpr = element.getArgumentExpression() ?: return
+            val argumentList = element.parent as? KtValueArgumentList ?: return
+            val resolvedCall = (argumentList.parent as? KtCallElement)?.resolveToCall() ?: return
+            val psiFactory = KtPsiFactory(element)
+            if (argumentExpr is KtCollectionLiteralExpression && resolvedCall.getParameterForArgument(element)?.isVararg == true) {
+                argumentExpr.getInnerExpressions()
+                    .map { psiFactory.createArgument(it) }
+                    .reversed()
+                    .forEach { argumentList.addArgumentAfter(it, element) }
+
+                argumentList.removeArgument(element)
+            } else {
+                val newArgument = psiFactory.createArgument(argumentExpr, null, element.getSpreadElement() != null)
+                element.replace(newArgument)
+            }
         }
     }
 }
