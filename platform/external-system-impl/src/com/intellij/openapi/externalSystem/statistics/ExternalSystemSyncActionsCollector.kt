@@ -57,16 +57,21 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
     private val ourErrorsRateThrottle = EventsRateThrottle(100, 5L * 60 * 1000) // 100 errors per 5 minutes
 
+    @JvmStatic
     fun logSyncStarted(project: Project?, activityId: Long) =  syncStartedEvent.log(project, activityId)
+    @JvmStatic
     fun logSyncFinished(project: Project?, activityId: Long, success: Boolean) =  syncFinishedEvent.log(project, activityId, success)
 
+    @JvmStatic
     fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase) = phaseStartedEvent.log(project, activityId, phase)
+    @JvmStatic
     fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long) =
       phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs))
 
+    @JvmStatic
     fun logError(project: Project?, activityId: Long, throwable: Throwable) {
       val description = ThrowableDescription(throwable)
-      val data: MutableList<EventPair<*>> = ArrayList()
+      val data = ArrayList<EventPair<*>>()
       data.add(activityIdField.with(activityId))
 
       val pluginId = PluginUtil.getInstance().findPluginId(throwable)
