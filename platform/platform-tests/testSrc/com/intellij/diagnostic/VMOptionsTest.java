@@ -84,6 +84,16 @@ public class VMOptionsTest {
   }
 
   @Test
+  public void writingAtNonExistentDirectory() throws IOException {
+    Path anotherFile = tempDir.getRootPath().resolve("non-existent").resolve("file");
+    System.setProperty("jb.vmOptionsFile", anotherFile.toString());
+
+    VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
+
+    assertThat(anotherFile).hasContent("-Xmx1024m");
+  }
+
+  @Test
   public void writingPreservingLocation() throws IOException {
     Files.write(myFile, List.of("-someOption", "-Xmx512m", "-XX:MaxMetaspaceSize=128m", "-anotherOption"), VMOptions.getFileCharset());
 
