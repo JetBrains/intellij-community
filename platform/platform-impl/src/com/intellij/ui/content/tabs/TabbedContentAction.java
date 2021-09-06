@@ -170,7 +170,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
   @ApiStatus.Experimental
   public static class SplitTabAction extends TabbedContentAction {
     public SplitTabAction(@NotNull ContentManager manager) {
-      super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT), manager);
+      super(manager, new EmptyAction(ActionsBundle.actionText("MoveTabRight"), null, null), manager);
     }
 
     @Override
