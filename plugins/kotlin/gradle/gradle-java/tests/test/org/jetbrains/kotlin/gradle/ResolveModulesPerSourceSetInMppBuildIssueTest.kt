@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSetInMppBuildIssue
@@ -47,7 +47,7 @@ class ResolveModulesPerSourceSetInMppBuildIssueTest : LightPlatformTestCase() {
         val testProjectRefresher = TestProjectRefresher()
         ResolveModulesPerSourceSetInMppBuildIssue(testProjectRefresher)
             .quickFixes.single()
-            .runQuickFix(project, DataProvider {})
+            .runQuickFix(project, DataContext {})
             .get()
 
         assertTrue(
