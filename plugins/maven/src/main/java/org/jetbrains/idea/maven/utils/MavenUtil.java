@@ -72,9 +72,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.xml.sax.Attributes;
@@ -1472,5 +1470,10 @@ public class MavenUtil {
   public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
     return plugin != null ? plugin.getVersion() : StringUtils.EMPTY;
+  }
+
+  public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
+    return MavenServerManager.WRAPPED_MAVEN.equals(settings.getMavenHome()) ||
+           StringUtil.equals(settings.getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
   }
 }

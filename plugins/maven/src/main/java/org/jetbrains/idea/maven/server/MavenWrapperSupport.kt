@@ -213,7 +213,8 @@ internal class MavenWrapperSupport {
       return null
     }
 
-    private fun getWrapperProperties(baseDir: VirtualFile?) =
+    @JvmStatic
+    fun getWrapperProperties(baseDir: VirtualFile?) =
       baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties")
   }
 }

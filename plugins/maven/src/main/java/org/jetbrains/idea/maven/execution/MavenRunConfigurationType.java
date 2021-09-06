@@ -19,8 +19,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,7 +216,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
       runConfiguration.setBeforeRunTasks(Collections.emptyList());
     }
     MavenGeneralSettings generalSettingsToRun =
-      generalSettings != null ? generalSettings : MavenWorkspaceSettingsComponent.getInstance(project).getSettings().generalSettings;
+      generalSettings != null ? generalSettings : MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettingsToRun);
     MavenRunnerSettings runnerSettingsToRun =
