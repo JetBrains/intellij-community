@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,18 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
     JavaResolveResult result = ref.advancedResolve(true);
 
     PsiElement element = result.getElement();
-    return element == null || element instanceof PsiClass;
+    if (element != null && !(element instanceof PsiClass)) return false;
+    if (element != null) {
+      PsiMethod[] constructors = ((PsiClass)element).getConstructors();
+      if (constructors.length > 0) {
+        PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+        if (ContainerUtil.and(constructors, m -> !helper.isAccessible(m, ref, (PsiClass)element))) {
+          // All constructors aren't accessible
+          return false;
+        }
+      }
+    }
+    return true;
   };
 
   protected NewExpressionPostfixTemplate() {
