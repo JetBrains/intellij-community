@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +23,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class JBHtmlEditorKit extends HTMLEditorKit {
@@ -269,16 +271,22 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       else if ("icon".equals(elem.getName())) {
         Object src = attrs.getAttribute(HTML.Attribute.SRC);
         if (src instanceof String) {
-          Icon icon = IconLoader.findIcon((String)src, JBHtmlEditorKit.class, true, false);
-          if (icon == null) {
-            icon = myAdditionalIconResolver.apply((String)src);
-          }
+          Icon icon = getIcon((String)src);
           if (icon != null) {
             return new MyIconView(elem, icon);
           }
         }
       }
       return super.create(elem);
+    }
+
+    @Internal
+    protected @Nullable Icon getIcon(@NotNull String src) {
+      Icon icon = IconLoader.findIcon(src, JBHtmlEditorKit.class, true, false);
+      if (icon == null) {
+        icon = myAdditionalIconResolver.apply(src);
+      }
+      return icon;
     }
 
     private static final class MyBufferedImageView extends View {
