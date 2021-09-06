@@ -27,7 +27,6 @@ import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 public class JBHtmlEditorKit extends HTMLEditorKit {
@@ -241,11 +240,6 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   public static class JBHtmlFactory extends HTMLFactory {
-    private Function<? super String, ? extends Icon> myAdditionalIconResolver;
-
-    public void setAdditionalIconResolver(Function<? super String, ? extends Icon> resolver) {
-      myAdditionalIconResolver = resolver;
-    }
 
     @Override
     public View create(Element elem) {
@@ -282,11 +276,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
     @Internal
     protected @Nullable Icon getIcon(@NotNull String src) {
-      Icon icon = IconLoader.findIcon(src, JBHtmlEditorKit.class, true, false);
-      if (icon == null) {
-        icon = myAdditionalIconResolver.apply(src);
-      }
-      return icon;
+      return IconLoader.findIcon(src, JBHtmlEditorKit.class, true, false);
     }
 
     private static final class MyBufferedImageView extends View {
