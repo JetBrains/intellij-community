@@ -16,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -705,9 +706,9 @@ public class SwitchBlockHighlightingModel {
     private void checkSealedClassCompleteness(@NotNull PsiClass selectorClass,
                                               @NotNull List<PsiCaseLabelElement> elements,
                                               @NotNull List<HighlightInfo> results) {
-      List<PsiClass> directInheritedClasses;
+      Set<PsiClass> directInheritedClasses;
       if (elements.isEmpty()) {
-        directInheritedClasses = Collections.emptyList();
+        directInheritedClasses = Collections.emptySet();
       }
       else {
         Map<PsiClass, PsiPattern> patternClasses = new HashMap<>();
@@ -719,11 +720,11 @@ public class SwitchBlockHighlightingModel {
             patternClasses.put(patternClass, patternLabelElement);
           }
         }
-        directInheritedClasses = new ArrayList<>(
+        directInheritedClasses = new SmartHashSet<>(
           DirectClassInheritorsSearch.search(selectorClass, selectorClass.getUseScope(), false).findAll());
         while (!patternClasses.isEmpty() && !directInheritedClasses.isEmpty()) {
           Iterator<PsiClass> inheritedClassesIterator = directInheritedClasses.iterator();
-          List<PsiClass> newDirectInheritedClasses = new SmartList<>();
+          Set<PsiClass> newDirectInheritedClasses = new SmartHashSet<>();
           while (inheritedClassesIterator.hasNext()) {
             PsiClass nextInheritedClass = inheritedClassesIterator.next();
             PsiPattern removedPattern = patternClasses.remove(nextInheritedClass);
