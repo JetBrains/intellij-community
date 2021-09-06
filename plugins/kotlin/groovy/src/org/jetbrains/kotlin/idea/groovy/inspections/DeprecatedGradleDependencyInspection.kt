@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.configuration.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.configuration.parseExternalLibraryName
 import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix
-import org.jetbrains.kotlin.idea.inspections.gradle.KotlinGradleInspectionVisitor
 import org.jetbrains.kotlin.idea.versions.DEPRECATED_LIBRARIES_INFORMATION
 import org.jetbrains.kotlin.idea.versions.DeprecatedLibInfo
 import org.jetbrains.kotlin.idea.versions.LibInfo
