@@ -37,7 +37,6 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
         if (steps.size > 4) {
           comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()))
             .bindItem(stepProperty)
-            .columns(COLUMNS_SHORT)
         }
         else {
           segmentedButton(steps.map { it.key }, stepProperty) { it }
