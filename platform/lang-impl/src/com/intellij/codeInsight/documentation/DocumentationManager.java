@@ -981,23 +981,33 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
       if (item != null) {
-        int offset = editor.getCaretModel().getOffset();
-        if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
-        PsiReference ref = TargetElementUtil.findReference(editor, offset);
-        PsiElement contextElement = file == null ? null : ObjectUtils.coalesce(file.findElementAt(offset), file);
-        PsiElement targetElement = ref != null ? ref.getElement() : contextElement;
-        if (targetElement != null) {
-          PsiUtilCore.ensureValid(targetElement);
-        }
-
-        DocumentationProvider documentationProvider = getProviderFromElement(file);
-        PsiManager psiManager = PsiManager.getInstance(myProject);
-        PsiElement fromProvider = targetElement == null ? null :
-                                  documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
-        return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
+        return getElementFromLookup(myProject, editor, file, item);
       }
     }
     return null;
+  }
+
+  @Internal
+  public static @Nullable PsiElement getElementFromLookup(
+    @NotNull Project project,
+    @NotNull Editor editor,
+    @Nullable PsiFile file,
+    @NotNull LookupElement item
+  ) {
+    int offset = editor.getCaretModel().getOffset();
+    if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
+    PsiReference ref = TargetElementUtil.findReference(editor, offset);
+    PsiElement contextElement = file == null ? null : ObjectUtils.coalesce(file.findElementAt(offset), file);
+    PsiElement targetElement = ref != null ? ref.getElement() : contextElement;
+    if (targetElement != null) {
+      PsiUtilCore.ensureValid(targetElement);
+    }
+
+    DocumentationProvider documentationProvider = getProviderFromElement(file);
+    PsiManager psiManager = PsiManager.getInstance(project);
+    PsiElement fromProvider = targetElement == null ? null :
+                              documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+    return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
   }
 
   public @NlsSafe String generateDocumentation(@NotNull PsiElement element, @Nullable PsiElement originalElement, boolean onHover) {
