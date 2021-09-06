@@ -35,13 +35,18 @@ public class RunContextAction extends BaseRunConfigurationAction {
   private final Executor myExecutor;
 
   public RunContextAction(@NotNull Executor executor) {
-    super(ExecutionBundle.messagePointer("perform.action.with.context.configuration.action.name", executor.getStartActionText()), Presentation.NULL_STRING, IconLoader.createLazy(() -> executor.getIcon()));
+    super(ExecutionBundle.messagePointer("perform.action.with.context.configuration.action.name", executor.getStartActionText()),
+          Presentation.NULL_STRING, IconLoader.createLazy(() -> executor.getIcon()));
     myExecutor = executor;
   }
 
   @Override
   protected void perform(ConfigurationContext context) {
-    perform(findExisting(context), context);
+    final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
+    ReadAction
+      .nonBlocking(() -> findExisting(context))
+      .finishOnUiThread(ModalityState.defaultModalityState(), existingConfiguration -> perform(runManager, existingConfiguration, context))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override
@@ -55,15 +60,16 @@ public class RunContextAction extends BaseRunConfigurationAction {
       runManager.setTemporaryConfiguration(contextConfiguration);
       perform(runManager, contextConfiguration, context);
     }
-    else  {
+    else {
       ReadAction
         .nonBlocking(() -> findExisting(context))
-        .finishOnUiThread(ModalityState.defaultModalityState(), (existingContext) -> {
-          if (configuration != existingContext) {
+        .finishOnUiThread(ModalityState.defaultModalityState(), existingConfiguration -> {
+          if (configuration != existingConfiguration) {
             RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
             runManager.setTemporaryConfiguration(configuration);
             perform(runManager, configuration, context);
-          } else {
+          }
+          else {
             perform(runManager, configuration, context);
           }
         })
@@ -143,7 +149,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   @NotNull
-  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
+  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context,
+                                              @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
     return new AnAction(
       CommonBundle.message("action.text.run.all"),
       ExecutionBundle.message("run.all.configurations.available.in.this.context"),
