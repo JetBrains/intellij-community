@@ -71,27 +71,29 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
     override fun setupUI(builder: Panel) {
       with(builder) {
         hideableGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
-          row(UIBundle.message("label.project.wizard.new.project.module.name")) {
-            textField()
-              .bindText(moduleNameProperty)
-              .horizontalAlign(HorizontalAlign.FILL)
-              .validationOnInput { validateModuleName() }
-              .validationOnApply { validateModuleName() }
-          }.bottomGap(BottomGap.SMALL)
-          row(UIBundle.message("label.project.wizard.new.project.content.root")) {
-            textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
-              FileChooserDescriptorFactory.createSingleFolderDescriptor())
-              .bindText(contentRootProperty)
-              .horizontalAlign(HorizontalAlign.FILL)
-              .validationOnApply { validateContentRoot() }
-              .apply {
-                component.textField.addKeyListener(object : KeyListener {
-                  override fun keyTyped(e: KeyEvent?) {}
-                  override fun keyPressed(e: KeyEvent?) { userDefinedContentRoot = true }
-                  override fun keyReleased(e: KeyEvent?) {}
-                })
-              }
-          }.bottomGap(BottomGap.SMALL)
+          if (context.isCreatingNewProject) {
+            row(UIBundle.message("label.project.wizard.new.project.module.name")) {
+              textField()
+                .bindText(moduleNameProperty)
+                .horizontalAlign(HorizontalAlign.FILL)
+                .validationOnInput { validateModuleName() }
+                .validationOnApply { validateModuleName() }
+            }.bottomGap(BottomGap.SMALL)
+            row(UIBundle.message("label.project.wizard.new.project.content.root")) {
+              textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
+                FileChooserDescriptorFactory.createSingleFolderDescriptor())
+                .bindText(contentRootProperty)
+                .horizontalAlign(HorizontalAlign.FILL)
+                .validationOnApply { validateContentRoot() }
+                .apply {
+                  component.textField.addKeyListener(object : KeyListener {
+                    override fun keyTyped(e: KeyEvent?) {}
+                    override fun keyPressed(e: KeyEvent?) { userDefinedContentRoot = true }
+                    override fun keyReleased(e: KeyEvent?) {}
+                  })
+                }
+            }.bottomGap(BottomGap.SMALL)
+          }
           row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
             textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
               FileChooserDescriptorFactory.createSingleFolderDescriptor())
