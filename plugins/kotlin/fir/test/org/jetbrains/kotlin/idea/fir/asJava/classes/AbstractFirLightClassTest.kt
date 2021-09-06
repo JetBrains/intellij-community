@@ -60,7 +60,7 @@ abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase
                 },
                 { it }
             )
-        }!!
+        }
 
         KotlinTestUtils.assertEqualsToFile(KotlinTestUtils.replaceExtension(testData, "java"), actual)
     }
