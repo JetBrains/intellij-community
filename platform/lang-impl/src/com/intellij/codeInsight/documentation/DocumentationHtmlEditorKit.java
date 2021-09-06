@@ -16,17 +16,17 @@ import static com.intellij.codeInsight.documentation.DocumentationComponent.SECT
 
 final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
 
-  private final @NotNull Component myReferenceComponent;
+  private final @NotNull DocumentationHtmlFactory myHtmlFactory;
 
   DocumentationHtmlEditorKit(@NotNull Component referenceComponent) {
     super(true, true);
-    myReferenceComponent = referenceComponent;
+    myHtmlFactory = new DocumentationHtmlFactory(referenceComponent);
     prepareCSS(this);
   }
 
   @Override
   public ViewFactory getViewFactory() {
-    return new DocumentationHtmlFactory(myReferenceComponent);
+    return myHtmlFactory;
   }
 
   private static void prepareCSS(@NotNull JBHtmlEditorKit editorKit) {
