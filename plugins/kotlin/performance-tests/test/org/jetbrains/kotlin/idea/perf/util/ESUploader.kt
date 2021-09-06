@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.perf.util
 
 import khttp.structures.authorization.BasicAuthorization
-import java.io.FileInputStream
-import java.util.*
 
 object ESUploader {
     var host: String? = null
@@ -40,7 +38,12 @@ object ESUploader {
             headers = mapOf("Content-Type" to "application/json"),
             data = json
         )
-        logMessage { "${response.statusCode} -> ${response.jsonObject}" }
+        val responseJson = try {
+            response.jsonObject
+        } catch (e: Throwable) {
+            throw IllegalStateException("Non-json response: ${response.text}")
+        }
+        logMessage { "${response.statusCode} -> ${responseJson}" }
         if (response.statusCode != 200 && response.statusCode != 201) {
             throw IllegalStateException("Error code ${response.statusCode} -> ${response.text}")
         }
