@@ -7,6 +7,7 @@ import com.intellij.ui.dsl.checkConstraints
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
+import javax.swing.JComponent
 
 /**
  * Layout manager represented as a table, where some cells can be merged in one cell (resulting cell occupies several columns and rows)
@@ -98,5 +99,9 @@ class GridLayout : LayoutManager2 {
 
   override fun invalidateLayout(target: Container?) {
     // Nothing to do
+  }
+
+  fun getConstraints(component: JComponent): Constraints? {
+    return _rootGrid.getConstraints(component)
   }
 }

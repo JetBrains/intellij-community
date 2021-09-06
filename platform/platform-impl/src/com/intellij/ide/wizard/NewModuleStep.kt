@@ -5,11 +5,9 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.migLayout.patched.*
+import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import net.miginfocom.layout.BoundSize
-import net.miginfocom.layout.CC
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextField
@@ -38,23 +36,20 @@ class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factor
       .also { fixUiShiftingWhenChoosingMultiStep(it) }
 
   private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {
-    /* todo fix it
     val labels = UIUtil.uiTraverser(panel)
       .filterIsInstance<JLabel>()
-      .filter { it.parent is DialogPanel }
-      .filter { it.getGapBefore() == null }
+      .filter { isRowLabel(it) }
     val width = labels.maxOf { it.preferredSize.width }
     labels.forEach { it.setMinimumWidth(width) }
-    */
   }
 
-  private fun JComponent.getConstraints(): CC? {
-    val layout = parent.layout as? MigLayout ?: return null
-    return layout.getComponentConstraints()[this]
-  }
-
-  private fun JComponent.getGapBefore(): BoundSize? {
-    return getConstraints()?.horizontal?.gapBefore
+  private fun isRowLabel(label: JLabel): Boolean {
+    val layout = (label.parent as? DialogPanel)?.layout as? GridLayout
+    if (layout == null) {
+      return false
+    }
+    val constraints = layout.getConstraints(label)
+    return constraints!= null && constraints.x == 0 && constraints.gaps.left == 0
   }
 
   private fun JComponent.setMinimumWidth(width: Int) {

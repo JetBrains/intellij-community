@@ -257,6 +257,26 @@ internal class GridImpl : Grid {
     }
   }
 
+  fun getConstraints(component: JComponent): Constraints? {
+    for (cell in cells) {
+      when(cell) {
+        is ComponentCell -> {
+          if (cell.component == component) {
+            return cell.constraints
+          }
+        }
+
+        is GridCell -> {
+          val constraints = cell.content.getConstraints(component)
+          if (constraints != null) {
+            return constraints
+          }
+        }
+      }
+    }
+    return null
+  }
+
   /**
    * Calculate bounds for [layoutCellData]
    */
