@@ -130,6 +130,18 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
                                configuration: ConfigurationData) {
     if (projectData == null) return
 
+    val activator = ExternalProjectsManagerImpl.getInstance(project).taskActivator
+    val taskActivationEntry = ExternalSystemTaskActivator.TaskActivationEntry(GradleConstants.SYSTEM_ID,
+      ExternalSystemTaskActivator.Phase.AFTER_SYNC,
+      projectData.linkedExternalProjectPath,
+      "processIdeaSettings")
+
+    activator.removeTask(taskActivationEntry)
+    if (configuration.find("requiresPostprocessing") as? Boolean != true) {
+      return
+    }
+
+    activator.addTask(taskActivationEntry)
     val f =  File(projectData.linkedExternalProjectPath).toPath()
     val extProjectDir = if (f.isDirectory()) { f } else { f.parent }
 
