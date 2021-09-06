@@ -6,31 +6,28 @@ import com.intellij.psi.PsiComment
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
-import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.history.ChangesHistory
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import java.lang.ref.WeakReference
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
-class LineCommentingSuggester : FeatureSuggester {
+class LineCommentingSuggester : AbstractFeatureSuggester() {
+    override val id: String = "Comment with line comment"
+    override val suggestingActionDisplayName: String = "Comment with line comment"
 
-    companion object {
-        const val POPUP_MESSAGE = "Try the Comment Line feature to do it faster."
-        const val SUGGESTING_ACTION_ID = "CommentByLineComment"
-        const val SUGGESTING_TIP_FILENAME = "CommentCode.html"
-        const val NUMBER_OF_COMMENTS_TO_GET_SUGGESTION = 3
-        const val MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS = 5000
-    }
+    override val message = "Try the Comment Line feature to do it faster."
+    override val suggestingActionId = "CommentByLineComment"
+    override val suggestingTipFileName = "CommentCode.html"
+
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private data class DocumentLine(val startOffset: Int, val endOffset: Int, val text: String)
     private data class CommentData(val lineNumber: Int, val documentRef: WeakReference<Document>, val timeMillis: Long)
 
     override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
-    private val actionsSummary = actionsLocalSummary()
+    private val maxTimeMillisBetweenComments = 5000L
+    private val numberOfCommentsToGetSuggestion = 3
     private val commentsHistory = ChangesHistory<CommentData>(NUMBER_OF_COMMENTS_TO_GET_SUGGESTION)
     private var firstSlashAddedAction: EditorTextInsertedAction? = null
 
@@ -51,27 +48,15 @@ class LineCommentingSuggester : FeatureSuggester {
                 commentsHistory.add(commentData)
                 firstSlashAddedAction = null
 
-                if (commentsHistory.size == NUMBER_OF_COMMENTS_TO_GET_SUGGESTION &&
+                if (commentsHistory.size == numberOfCommentsToGetSuggestion &&
                     commentsHistory.isLinesCommentedInARow()
                 ) {
                     commentsHistory.clear()
-                    return createTipSuggestion(
-                        createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                        suggestingActionDisplayName,
-                        SUGGESTING_TIP_FILENAME
-                    )
+                    return createSuggestion()
                 }
             }
         }
         return NoSuggestion
-    }
-
-    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
     }
 
     private fun isCommentSymbolAdded(action: EditorTextInsertedAction, symbol: Char): Boolean {
@@ -101,17 +86,17 @@ class LineCommentingSuggester : FeatureSuggester {
     private fun ChangesHistory<CommentData>.isLinesCommentedInARow(): Boolean {
         val comments = asIterable()
         return !(
-            comments.map(CommentData::lineNumber)
-                .sorted()
-                .zipWithNext { first, second -> second - first }
-                .any { it != 1 } ||
-                comments.map { it.documentRef.get() }
-                    .zipWithNext { first, second -> first != null && first === second }
-                    .any { !it } ||
-                comments.map(CommentData::timeMillis)
+                comments.map(CommentData::lineNumber)
+                    .sorted()
                     .zipWithNext { first, second -> second - first }
-                    .any { it > MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS }
-            )
+                    .any { it != 1 } ||
+                        comments.map { it.documentRef.get() }
+                            .zipWithNext { first, second -> first != null && first === second }
+                            .any { !it } ||
+                        comments.map(CommentData::timeMillis)
+                            .zipWithNext { first, second -> second - first }
+                            .any { it > maxTimeMillisBetweenComments }
+                )
     }
 
     private fun Document.getLineByOffset(offset: Int): DocumentLine {
@@ -124,8 +109,4 @@ class LineCommentingSuggester : FeatureSuggester {
             text = getText(TextRange(startOffset, endOffset))
         )
     }
-
-    override val id: String = "Comment with line comment"
-
-    override val suggestingActionDisplayName: String = "Comment with line comment"
 }

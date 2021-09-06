@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters.surroundWith
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
 
 abstract class SurroundWithSuggesterTest : FeatureSuggesterTest() {
+    override val testingSuggesterId = "Surround with"
 
     abstract fun `testSurround one statement with IF and get suggestion`()
 

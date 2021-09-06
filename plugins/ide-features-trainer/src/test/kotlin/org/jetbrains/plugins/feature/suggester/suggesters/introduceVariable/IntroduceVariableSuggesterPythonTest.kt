@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.introduceVariable
 
 import com.intellij.openapi.application.invokeLater
-import org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester.Companion.SUGGESTING_ACTION_ID
 
 /**
  * Note: when user is declaring variable and it's name starts with any language keyword suggestion will not be thrown
@@ -20,7 +18,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         type(" eee")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -33,7 +31,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         type("value")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -46,7 +44,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         type("val")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -59,7 +57,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         type("str")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -72,7 +70,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         type("output")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -98,7 +96,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         type("out")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -112,7 +110,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         type("str")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 }

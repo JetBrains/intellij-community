@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters.replaceCompletion
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
 
 abstract class ReplaceCompletionSuggesterTest : FeatureSuggesterTest() {
+    override val testingSuggesterId = "Completion with replace"
 
     abstract fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`()
 

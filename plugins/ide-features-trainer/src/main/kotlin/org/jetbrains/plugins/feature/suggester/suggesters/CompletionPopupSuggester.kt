@@ -8,22 +8,20 @@ import org.jetbrains.plugins.feature.suggester.actions.BeforeCompletionChooseIte
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorEscapeAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
-import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
-import java.util.concurrent.TimeUnit
 
-class CompletionPopupSuggester : FeatureSuggester {
-    companion object {
-        const val POPUP_MESSAGE = "You may use shortcut to call completion popup."
-        const val SUGGESTING_ACTION_ID = "CodeCompletion"
-        const val SUGGESTING_TIP_FILENAME = "CodeCompletion.html"
-        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 5000L
-    }
+class CompletionPopupSuggester : AbstractFeatureSuggester() {
+    override val id = "Completion"
+    override val suggestingActionDisplayName = "Show completion popup"
+
+    override val message = "You may use shortcut to call completion popup."
+    override val suggestingActionId = "CodeCompletion"
+    override val suggestingTipFileName = "CodeCompletion.html"
+
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private object State {
         var dotOffset: Int = -1
@@ -60,9 +58,6 @@ class CompletionPopupSuggester : FeatureSuggester {
             lastChangeTimeMillis = 0L
         }
     }
-
-    private val actionsSummary = actionsLocalSummary()
-    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val action = actions.lastOrNull() ?: return NoSuggestion
@@ -110,29 +105,13 @@ class CompletionPopupSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
-    }
-
     private fun LanguageSupport.isInsideCommentOrLiteral(psiFile: PsiFile, offset: Int): Boolean {
         val curElement = psiFile.findElementAt(offset) ?: return false
         return curElement.getParentByPredicate(::isLiteralExpression) != null ||
                 curElement.getParentOfType<PsiComment>() != null
     }
 
-    private fun createSuggestion(): Suggestion {
-        return createTipSuggestion(
-            createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-            suggestingActionDisplayName,
-            SUGGESTING_TIP_FILENAME
-        )
+    companion object {
+        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 5000L
     }
-
-    override val id: String = "Completion"
-
-    override val suggestingActionDisplayName: String = "Show completion popup"
 }

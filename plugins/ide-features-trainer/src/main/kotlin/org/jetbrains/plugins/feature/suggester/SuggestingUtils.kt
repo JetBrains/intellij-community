@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -68,31 +69,16 @@ internal fun actionsLocalSummary(): ActionsLocalSummary {
     return ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
 }
 
-internal fun createTipSuggestion(
-    popupMessage: String,
-    suggesterId: String,
-    suggestingTipFilename: String
-): Suggestion {
-    return if (isRedoOrUndoRunning()) {
-        NoSuggestion
+internal fun getShortcutText(actionId: String): String {
+    val shortcut = KeymapUtil.getShortcutText(actionId)
+    return if (shortcut == "<no shortcut>") {
+        "You can bind this action to convenient shortcut."
     } else {
-        TipSuggestion(popupMessage, suggesterId, suggestingTipFilename)
+        "Shortcut: $shortcut"
     }
 }
 
-internal fun createDocumentationSuggestion(
-    popupMessage: String,
-    suggesterId: String,
-    suggestingDocUrl: String
-): Suggestion {
-    return if (isRedoOrUndoRunning()) {
-        NoSuggestion
-    } else {
-        DocumentationSuggestion(popupMessage, suggesterId, suggestingDocUrl)
-    }
-}
-
-private fun isRedoOrUndoRunning(): Boolean {
+internal fun isRedoOrUndoRunning(): Boolean {
     val commandName = CommandProcessor.getInstance().currentCommandName
     return commandName != null && (commandName.startsWith("Redo") || commandName.startsWith("Undo"))
 }

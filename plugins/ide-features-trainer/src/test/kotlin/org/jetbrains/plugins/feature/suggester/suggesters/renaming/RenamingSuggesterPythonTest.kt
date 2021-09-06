@@ -21,7 +21,7 @@ class RenamingSuggesterPythonTest : RenamingSuggesterTest() {
         myFixture.type("1")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -36,7 +36,7 @@ class RenamingSuggesterPythonTest : RenamingSuggesterTest() {
         deleteSymbolAtCaret()
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -61,7 +61,7 @@ class RenamingSuggesterPythonTest : RenamingSuggesterTest() {
         myFixture.type("e")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -84,7 +84,7 @@ class RenamingSuggesterPythonTest : RenamingSuggesterTest() {
         pasteFromClipboard()
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -97,7 +97,7 @@ class RenamingSuggesterPythonTest : RenamingSuggesterTest() {
         deleteSymbolAtCaret()
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -112,7 +112,7 @@ class RenamingSuggesterPythonTest : RenamingSuggesterTest() {
         myFixture.type("aa")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -125,7 +125,7 @@ class RenamingSuggesterPythonTest : RenamingSuggesterTest() {
         myFixture.type("abc")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 

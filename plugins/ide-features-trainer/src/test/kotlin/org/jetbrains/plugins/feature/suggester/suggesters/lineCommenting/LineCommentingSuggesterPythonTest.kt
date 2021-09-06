@@ -4,12 +4,11 @@ import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
-import org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester.Companion.SUGGESTING_ACTION_ID
 
 class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
 
     override val testingCodeFileName = "PythonCodeExample.py"
+    override val testingSuggesterId = "Comment with line comment"
 
     fun `testComment 3 lines in a row and get suggestion`() {
         moveCaretToLogicalPosition(3, 0)
@@ -20,7 +19,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         type("#")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -33,7 +32,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         type("#")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 

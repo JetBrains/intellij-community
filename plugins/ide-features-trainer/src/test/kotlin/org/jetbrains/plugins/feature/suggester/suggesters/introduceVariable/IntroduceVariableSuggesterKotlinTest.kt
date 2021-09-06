@@ -3,8 +3,6 @@ package org.jetbrains.plugins.feature.suggester.suggesters.introduceVariable
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester.Companion.SUGGESTING_ACTION_ID
 
 /**
  * Note: when user is declaring variable and it's name starts with any language keyword suggestion will not be thrown
@@ -22,7 +20,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         type(" flag")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -35,7 +33,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         type("temp")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -48,7 +46,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         type("abcbcd")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -61,7 +59,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         type("serr")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -74,7 +72,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         type("bool")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -100,7 +98,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         type("output")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 

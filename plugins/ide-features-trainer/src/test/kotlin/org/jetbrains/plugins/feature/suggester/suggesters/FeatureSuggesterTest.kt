@@ -24,6 +24,7 @@ import java.awt.event.FocusListener
 abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
 
     protected abstract val testingCodeFileName: String
+    protected abstract val testingSuggesterId: String
 
     protected lateinit var expectedSuggestion: Suggestion
 
@@ -50,12 +51,9 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
             )
     }
 
-    fun assertSuggestedCorrectly(actionId: String, suggestionMessage: String) {
+    fun assertSuggestedCorrectly() {
         TestCase.assertTrue(expectedSuggestion is PopupSuggestion)
-        TestCase.assertEquals(
-            FeatureSuggester.createMessageWithShortcut(actionId, suggestionMessage),
-            (expectedSuggestion as PopupSuggestion).message
-        )
+        TestCase.assertEquals(testingSuggesterId, (expectedSuggestion as PopupSuggestion).suggesterId)
     }
 
     fun moveCaretRelatively(columnShift: Int, lineShift: Int, withSelection: Boolean = false) {

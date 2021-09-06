@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters.unwrap
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
 
 abstract class UnwrapSuggesterTest : FeatureSuggesterTest() {
+    override val testingSuggesterId = "Unwrap"
 
     abstract fun `testUnwrap IF statement and get suggestion`()
 

@@ -10,20 +10,18 @@ import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.actions.PsiAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
-import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
-import java.util.concurrent.TimeUnit
 
-class SurroundWithSuggester : FeatureSuggester {
-    companion object {
-        const val POPUP_MESSAGE = "Why not to use Surround With action?"
-        const val SUGGESTING_ACTION_ID = "SurroundWith"
-        const val SUGGESTING_TIP_FILENAME = "SurroundWith.html"
-        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 8000L
-    }
+class SurroundWithSuggester : AbstractFeatureSuggester() {
+    override val id: String = "Surround with"
+    override val suggestingActionDisplayName: String = "Surround with"
+
+    override val message = "Why not to use Surround With action?"
+    override val suggestingActionId = "SurroundWith"
+    override val suggestingTipFileName = "SurroundWith.html"
+
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private object State {
         var surroundingStatement: PsiElement? = null
@@ -63,9 +61,6 @@ class SurroundWithSuggester : FeatureSuggester {
             lastChangeTimeMillis = 0L
         }
     }
-
-    private val actionsSummary = actionsLocalSummary()
-    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     @Suppress("NestedBlockDepth")
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
@@ -117,11 +112,7 @@ class SurroundWithSuggester : FeatureSuggester {
                             State.applyBraceAddition(action.timeMillis, "}")
                             if (State.isStatementsSurrounded(langSupport)) {
                                 State.reset()
-                                return createTipSuggestion(
-                                    createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                                    suggestingActionDisplayName,
-                                    SUGGESTING_TIP_FILENAME
-                                )
+                                return createSuggestion()
                             }
                         }
                         State.reset()
@@ -131,14 +122,6 @@ class SurroundWithSuggester : FeatureSuggester {
             else -> NoSuggestion
         }
         return NoSuggestion
-    }
-
-    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
     }
 
     private fun State.tryToUpdateSurroundingStatement(langSupport: LanguageSupport, action: PsiAction) {
@@ -191,7 +174,7 @@ class SurroundWithSuggester : FeatureSuggester {
         return isIfStatement(psiElement) || isForStatement(psiElement) || isWhileStatement(psiElement)
     }
 
-    override val id: String = "Surround with"
-
-    override val suggestingActionDisplayName: String = "Surround with"
+    companion object {
+        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 8000L
+    }
 }

@@ -3,8 +3,6 @@ package org.jetbrains.plugins.feature.suggester.suggesters.unwrap
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.suggesters.UnwrapSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.UnwrapSuggester.Companion.SUGGESTING_ACTION_ID
 
 class UnwrapSuggesterJSTest : UnwrapSuggesterTest() {
 
@@ -17,7 +15,7 @@ class UnwrapSuggesterJSTest : UnwrapSuggesterTest() {
         deleteSymbolAtCaret()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -33,7 +31,7 @@ class UnwrapSuggesterJSTest : UnwrapSuggesterTest() {
         deleteSymbolAtCaret()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -44,7 +42,7 @@ class UnwrapSuggesterJSTest : UnwrapSuggesterTest() {
         deleteSymbolAtCaret()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -55,7 +53,7 @@ class UnwrapSuggesterJSTest : UnwrapSuggesterTest() {
         deleteSymbolAtCaret()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -66,7 +64,7 @@ class UnwrapSuggesterJSTest : UnwrapSuggesterTest() {
         deleteSymbolAtCaret()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 

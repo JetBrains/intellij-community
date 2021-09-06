@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters.fileStructure
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
 
 abstract class FileStructureSuggesterTest : FeatureSuggesterTest() {
+    override val testingSuggesterId: String = "File structure"
 
     abstract fun `testFind field and get suggestion`()
 

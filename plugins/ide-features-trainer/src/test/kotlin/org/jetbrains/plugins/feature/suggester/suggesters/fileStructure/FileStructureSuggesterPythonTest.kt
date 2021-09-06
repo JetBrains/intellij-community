@@ -3,8 +3,6 @@ package org.jetbrains.plugins.feature.suggester.suggesters.fileStructure
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.suggesters.FileStructureSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.FileStructureSuggester.Companion.SUGGESTING_ACTION_ID
 
 class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
 
@@ -16,7 +14,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         focusEditor()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -26,7 +24,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         focusEditor()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -36,7 +34,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         focusEditor()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -46,7 +44,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         focusEditor()
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 

@@ -10,26 +10,21 @@ import org.jetbrains.plugins.feature.suggester.actions.BreakpointRemovedAction
 import org.jetbrains.plugins.feature.suggester.actions.DebugProcessStartedAction
 import org.jetbrains.plugins.feature.suggester.actions.DebugProcessStoppedAction
 import org.jetbrains.plugins.feature.suggester.actions.DebugSessionPausedAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
-import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.findBreakpointOnPosition
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
-class MuteBreakpointsSuggester : FeatureSuggester {
-    companion object {
-        const val POPUP_MESSAGE =
-            "You may mute all breakpoints instead of deleting them."
-        const val SUGGESTING_ACTION_ID = "XDebugger.MuteBreakpoints"
-        const val SUGGESTING_DOC_URL = "https://www.jetbrains.com/help/idea/using-breakpoints.html#mute"
-        const val COUNT_OF_REMOVED_BREAKPOINTS_TO_GET_SUGGESTION = 3
-        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 5000L
-    }
+class MuteBreakpointsSuggester : AbstractFeatureSuggester() {
+    override val id: String = "Mute breakpoints"
+    override val suggestingActionDisplayName: String = "Mute breakpoints"
 
-    private val actionsSummary = actionsLocalSummary()
+    override val message = "You may mute all breakpoints instead of deleting them."
+    override val suggestingActionId = "XDebugger.MuteBreakpoints"
+    override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/using-breakpoints.html#mute"
+
     override val languages = listOf(Language.ANY.id)
+
+    private val countOfRemovedBreakpointsToGetSuggestion = 3
 
     private object State {
         var lastBreakpointPosition: XSourcePosition? = null
@@ -39,8 +34,8 @@ class MuteBreakpointsSuggester : FeatureSuggester {
 
         val isOutOfDate: Boolean
             get() = lastPauseTimeMillis != 0L &&
-                lastBreakpointRemovedTimeMillis != 0L &&
-                abs(lastBreakpointRemovedTimeMillis - lastPauseTimeMillis) > MAX_TIME_MILLIS_BETWEEN_ACTIONS
+                    lastBreakpointRemovedTimeMillis != 0L &&
+                    abs(lastBreakpointRemovedTimeMillis - lastPauseTimeMillis) > MAX_TIME_MILLIS_BETWEEN_ACTIONS
 
         fun applyPausedOnBreakpoint(position: XSourcePosition, timeMillis: Long) {
             lastBreakpointPosition = position
@@ -80,13 +75,9 @@ class MuteBreakpointsSuggester : FeatureSuggester {
             is BreakpointRemovedAction -> {
                 if (isOnTheSameLine(action.position, State.lastBreakpointPosition)) {
                     State.applyBreakpointRemoving(action.timeMillis)
-                    if (State.curCountOfRemovedBreakpoints >= COUNT_OF_REMOVED_BREAKPOINTS_TO_GET_SUGGESTION) {
+                    if (State.curCountOfRemovedBreakpoints >= countOfRemovedBreakpointsToGetSuggestion) {
                         State.reset()
-                        return createDocumentationSuggestion(
-                            createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                            suggestingActionDisplayName,
-                            SUGGESTING_DOC_URL
-                        )
+                        return createSuggestion()
                     }
                 } else {
                     State.reset()
@@ -99,15 +90,7 @@ class MuteBreakpointsSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
+    companion object {
+        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 5000L
     }
-
-    override val id: String = "Mute breakpoints"
-
-    override val suggestingActionDisplayName: String = "Mute breakpoints"
 }

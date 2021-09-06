@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters.introduceVariable
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
 
 abstract class IntroduceVariableSuggesterTest : FeatureSuggesterTest() {
+    override val testingSuggesterId: String = "Introduce variable"
 
     abstract fun `testIntroduce expression from IF and get suggestion`()
 

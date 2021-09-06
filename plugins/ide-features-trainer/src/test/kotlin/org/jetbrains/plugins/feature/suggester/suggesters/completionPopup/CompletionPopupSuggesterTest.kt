@@ -1,13 +1,12 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.completionPopup
 
 import com.intellij.openapi.application.invokeLater
-import org.jetbrains.plugins.feature.suggester.suggesters.CompletionPopupSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.CompletionPopupSuggester.Companion.SUGGESTING_ACTION_ID
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
 
 class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
 
     override val testingCodeFileName: String = "JavaCodeExample.java"
+    override val testingSuggesterId: String = "Completion"
 
     fun `testDelete and type dot, complete method call and get suggestion`() {
         moveCaretToLogicalPosition(12, 20)
@@ -17,7 +16,7 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
         chooseCompletionItem(variants[0])
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -29,7 +28,7 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
         chooseCompletionItem(variants[0])
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -43,7 +42,7 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
         chooseCompletionItem(variants[0])
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 }

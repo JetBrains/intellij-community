@@ -7,21 +7,19 @@ import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.TextFragment
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
-import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
-import java.util.concurrent.TimeUnit
 
-class UnwrapSuggester : FeatureSuggester {
-    companion object {
-        const val POPUP_MESSAGE = "Why not to use Unwrap action?"
-        const val SUGGESTING_ACTION_ID = "Unwrap"
-        const val SUGGESTING_DOC_URL =
-            "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"
-        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 7000L
-    }
+class UnwrapSuggester : AbstractFeatureSuggester() {
+    override val id: String = "Unwrap"
+    override val suggestingActionDisplayName: String = "Unwrap"
+
+    override val message = "Why not to use Unwrap action?"
+    override val suggestingActionId = "Unwrap"
+    override val suggestingDocUrl =
+        "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"
+
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private object State {
         var surroundingStatementStartOffset: Int = -1
@@ -42,9 +40,6 @@ class UnwrapSuggester : FeatureSuggester {
         }
     }
 
-    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
-
-    private val actionsSummary = actionsLocalSummary()
     private val surroundingStatementStartRegex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
@@ -131,22 +126,6 @@ class UnwrapSuggester : FeatureSuggester {
         return !isOutOfDate(action.timeMillis) && action.caretOffset == closeBraceOffset
     }
 
-    private fun createSuggestion(): Suggestion {
-        return createDocumentationSuggestion(
-            createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-            suggestingActionDisplayName,
-            SUGGESTING_DOC_URL
-        )
-    }
-
-    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
-    }
-
     private val TextFragment.contentStartOffset: Int
         get() {
             val countOfStartDelimiters = text.indexOfFirst { it != ' ' && it != '\n' }
@@ -157,7 +136,7 @@ class UnwrapSuggester : FeatureSuggester {
         return isIfStatement(psiElement) || isForStatement(psiElement) || isWhileStatement(psiElement)
     }
 
-    override val id: String = "Unwrap"
-
-    override val suggestingActionDisplayName: String = "Unwrap"
+    companion object {
+        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 7000L
+    }
 }

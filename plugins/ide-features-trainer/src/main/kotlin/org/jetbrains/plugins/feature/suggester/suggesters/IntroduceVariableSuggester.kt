@@ -11,24 +11,21 @@ import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAc
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
 import org.jetbrains.plugins.feature.suggester.asString
-import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.awt.datatransfer.DataFlavor
-import java.util.concurrent.TimeUnit
 
-class IntroduceVariableSuggester : FeatureSuggester {
-    companion object {
-        const val POPUP_MESSAGE = "Why not use the Introduce Variable refactoring?"
-        const val SUGGESTING_ACTION_ID = "IntroduceVariable"
-        const val SUGGESTING_TIP_FILENAME = "IntroduceVariable.html"
-    }
+class IntroduceVariableSuggester : AbstractFeatureSuggester() {
+    override val id: String = "Introduce variable"
+    override val suggestingActionDisplayName: String = "Introduce variable"
 
-    private val actionsSummary = actionsLocalSummary()
+    override val message = "Why not use the Introduce Variable refactoring?"
+    override val suggestingActionId = "IntroduceVariable"
+    override val suggestingTipFileName = "IntroduceVariable.html"
+
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private data class ExtractedExpressionData(var exprText: String, var changedStatement: PsiElement) {
         val changedStatementText: String
@@ -45,8 +42,6 @@ class IntroduceVariableSuggester : FeatureSuggester {
             return declaration?.text
         }
     }
-
-    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private var extractedExprData: ExtractedExpressionData? = null
 
@@ -80,11 +75,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
                         }
                         langSupport.isVariableInserted(this) -> {
                             extractedExprData = null
-                            return createTipSuggestion(
-                                createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                                suggestingActionDisplayName,
-                                SUGGESTING_TIP_FILENAME
-                            )
+                            return createSuggestion()
                         }
                     }
                 }
@@ -113,14 +104,6 @@ class IntroduceVariableSuggester : FeatureSuggester {
             else -> NoSuggestion
         }
         return NoSuggestion
-    }
-
-    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
     }
 
     private fun getCopiedContent(text: String): String? {
@@ -171,8 +154,4 @@ class IntroduceVariableSuggester : FeatureSuggester {
             statement
         }
     }
-
-    override val id: String = "Introduce variable"
-
-    override val suggestingActionDisplayName: String = "Introduce variable"
 }

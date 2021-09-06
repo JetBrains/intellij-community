@@ -19,7 +19,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         myFixture.type("1")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -32,7 +32,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         deleteSymbolAtCaret()
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -54,7 +54,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         myFixture.type("bde")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -73,7 +73,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         pasteFromClipboard()
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -86,7 +86,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         myFixture.type("nyFun")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -101,7 +101,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         myFixture.type("aa")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -114,7 +114,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         myFixture.type("ument")
 
         invokeLater {
-            assertSuggestedCorrectly(expectedSuggestion)
+            assertSuggestedCorrectly()
         }
     }
 

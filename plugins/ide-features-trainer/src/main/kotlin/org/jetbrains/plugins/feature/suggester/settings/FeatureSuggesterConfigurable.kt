@@ -6,7 +6,7 @@ import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 import javax.swing.JComponent
 
 class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependencies {
-    private val suggestingActionNames = FeatureSuggester.getSuggestingActionNames()
+    private val suggestingActionNames = FeatureSuggester.suggesters.map(FeatureSuggester::suggestingActionDisplayName)
     private val settings = FeatureSuggesterSettings.instance()
     private val panel = FeatureSuggestersPanel(suggestingActionNames, settings)
 

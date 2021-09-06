@@ -10,21 +10,17 @@ import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.EditorFindAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
-import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
-import java.util.concurrent.TimeUnit
 
-class FileStructureSuggester : FeatureSuggester {
-    companion object {
-        const val POPUP_MESSAGE = "Finding a definition can be faster using the File Structure action."
-        const val SUGGESTING_ACTION_ID = "FileStructurePopup"
-        const val SUGGESTING_TIP_FILENAME = "FileStructurePopup.html"
-    }
+class FileStructureSuggester : AbstractFeatureSuggester() {
+    override val id: String = "File structure"
+    override val suggestingActionDisplayName: String = "File structure"
 
-    private val actionsSummary = actionsLocalSummary()
+    override val message = "Finding a definition can be faster using the File Structure action."
+    override val suggestingActionId = "FileStructurePopup"
+    override val suggestingTipFileName = "FileStructurePopup.html"
+
     override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
@@ -45,25 +41,13 @@ class FileStructureSuggester : FeatureSuggester {
                 if (definition is PsiNamedElement && langSupport.isFileStructureElement(definition) &&
                     definition.name?.contains(textToFind, !findModel.isCaseSensitive) == true
                 ) {
-                    return createTipSuggestion(
-                        createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                        suggestingActionDisplayName,
-                        SUGGESTING_TIP_FILENAME
-                    )
+                    return createSuggestion()
                 }
             }
             else -> NoSuggestion
         }
 
         return NoSuggestion
-    }
-
-    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
     }
 
     private fun LanguageSupport.getDefinitionOnCaret(psiFile: PsiFile, caretOffset: Int): PsiElement? {
@@ -83,8 +67,4 @@ class FileStructureSuggester : FeatureSuggester {
         findModel.copyFrom(findManager.findInFileModel)
         return findModel
     }
-
-    override val id: String = "File structure"
-
-    override val suggestingActionDisplayName: String = "File structure"
 }

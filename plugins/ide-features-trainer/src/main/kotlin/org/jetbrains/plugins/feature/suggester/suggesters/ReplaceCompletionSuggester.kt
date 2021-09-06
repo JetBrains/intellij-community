@@ -14,21 +14,20 @@ import org.jetbrains.plugins.feature.suggester.actions.EditorCodeCompletionActio
 import org.jetbrains.plugins.feature.suggester.actions.EditorEscapeAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextRemovedAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
-import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
-import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
-import java.util.concurrent.TimeUnit
 
-class ReplaceCompletionSuggester : FeatureSuggester {
-    companion object {
-        const val POPUP_MESSAGE = "In completion popup you may use shortcut to replace current expression."
-        const val SUGGESTING_ACTION_ID = "EditorChooseLookupItemReplace"
-        const val SUGGESTING_DOC_URL = "https://www.jetbrains.com/help/idea/auto-completing-code.html#accept"
-    }
+class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
+    override val id: String = "Completion with replace"
+    override val suggestingActionDisplayName: String = "Choose lookup item and replace"
+
+    override val message = "In completion popup you may use shortcut to replace current expression."
+    override val suggestingActionId = "EditorChooseLookupItemReplace"
+    override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/auto-completing-code.html#accept"
+
+    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private data class EditedStatementData(val dotOffset: Int) {
         var isCompletionStarted: Boolean = false
@@ -56,9 +55,6 @@ class ReplaceCompletionSuggester : FeatureSuggester {
             return deletedText.length >= textToDelete.length * 2
         }
     }
-
-    private val actionsSummary = actionsLocalSummary()
-    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
     private var editedStatementData: EditedStatementData? = null
 
@@ -120,11 +116,7 @@ class ReplaceCompletionSuggester : FeatureSuggester {
                     )
                 ) {
                     editedStatementData = null
-                    return createDocumentationSuggestion(
-                        createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                        suggestingActionDisplayName,
-                        SUGGESTING_DOC_URL
-                    )
+                    return createSuggestion()
                 }
             }
             is EditorEscapeAction -> {
@@ -133,14 +125,6 @@ class ReplaceCompletionSuggester : FeatureSuggester {
         }
 
         return NoSuggestion
-    }
-
-    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
     }
 
     @Suppress("DuplicatedCode")
@@ -154,8 +138,4 @@ class ReplaceCompletionSuggester : FeatureSuggester {
             null
         }
     }
-
-    override val id: String = "Completion with replace"
-
-    override val suggestingActionDisplayName: String = "Choose lookup item and replace"
 }

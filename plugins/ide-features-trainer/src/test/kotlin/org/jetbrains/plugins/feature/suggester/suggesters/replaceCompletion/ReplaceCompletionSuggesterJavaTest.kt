@@ -3,8 +3,6 @@ package org.jetbrains.plugins.feature.suggester.suggesters.replaceCompletion
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.suggesters.ReplaceCompletionSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.ReplaceCompletionSuggester.Companion.SUGGESTING_ACTION_ID
 
 class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
 
@@ -18,7 +16,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         repeat(5) { typeDelete() }
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -34,7 +32,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         )
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -51,7 +49,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         )
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -62,7 +60,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         repeat(21) { typeDelete() }
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -73,7 +71,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         repeat(15) { typeDelete() }
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -86,7 +84,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         repeat(22) { typeDelete() }
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 

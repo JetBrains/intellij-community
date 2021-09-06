@@ -3,13 +3,12 @@ package org.jetbrains.plugins.feature.suggester.suggesters.copyPaste
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.suggesters.CopyPasteSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.CopyPasteSuggester.Companion.SUGGESTING_ACTION_ID
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
 
 class CopyPasteSuggesterTest : FeatureSuggesterTest() {
 
     override val testingCodeFileName: String = "PythonCodeExample.py"
+    override val testingSuggesterId: String = "Paste from history"
 
     fun `testCopy text that contained in clipboard at first index and get suggestion`() {
         copyBetweenLogicalPositions(lineStartIndex = 6, columnStartIndex = 14, lineEndIndex = 6, columnEndIndex = 0)
@@ -17,7 +16,7 @@ class CopyPasteSuggesterTest : FeatureSuggesterTest() {
         copyBetweenLogicalPositions(lineStartIndex = 6, columnStartIndex = 14, lineEndIndex = 6, columnEndIndex = 0)
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -28,7 +27,7 @@ class CopyPasteSuggesterTest : FeatureSuggesterTest() {
         copyBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 23, lineEndIndex = 9, columnEndIndex = 0)
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 

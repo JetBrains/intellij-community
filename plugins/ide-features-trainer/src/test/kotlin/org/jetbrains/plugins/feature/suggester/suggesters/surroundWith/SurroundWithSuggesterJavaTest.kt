@@ -3,8 +3,6 @@ package org.jetbrains.plugins.feature.suggester.suggesters.surroundWith
 import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester.Companion.POPUP_MESSAGE
-import org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester.Companion.SUGGESTING_ACTION_ID
 
 class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
 
@@ -17,7 +15,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -28,7 +26,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -39,7 +37,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -50,7 +48,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -61,7 +59,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -72,7 +70,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
@@ -83,7 +81,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         type("}")
 
         invokeLater {
-            assertSuggestedCorrectly(SUGGESTING_ACTION_ID, POPUP_MESSAGE)
+            assertSuggestedCorrectly()
         }
     }
 
