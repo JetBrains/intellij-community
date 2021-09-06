@@ -10,10 +10,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -132,12 +135,16 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       g.fillRect(0, 0, j1, k1);
       if (isSelected(jmenuitem)) {
         g.setColor(selectionBackground);
-        if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
+        if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
           g.fillRect(k, 0, j1 - k, k1);
         }
-        else{
+        else if (IdeaPopupMenuUI.isPartOfPopupMenu(comp) && Registry.is("popup.menu.roundSelection.enabled", false)) {
+          GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+          g.fillRoundRect(4, 1, j1 - 8, k1 - 2, 8, 8);
+          config.restore();
+        }
+        else {
           g.fillRect(0, 0, j1, k1);
-          g.setColor(selectionBackground);
         }
       }
       g.setColor(color2);

@@ -3,10 +3,13 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -197,6 +200,11 @@ public class IdeaMenuUI extends BasicMenuUI{
     g.setColor(selectionBackground);
     if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
       g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
+    }
+    else if (IdeaPopupMenuUI.isPartOfPopupMenu(comp) && Registry.is("popup.menu.roundSelection.enabled", false)) {
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+      g.fillRoundRect(4, 1, jMenu.getWidth() - 8, jMenu.getHeight() - 2, 8, 8);
+      config.restore();
     }
     else {
       g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
