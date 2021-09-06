@@ -52,17 +52,25 @@ class XDebugSessionTab3(
   override fun getWatchesContentId() = debuggerContentId
   override fun getFramesContentId() = debuggerContentId
 
+  private fun getWatchesViewImpl(session: XDebugSessionImpl, watchesIsVariables: Boolean): XWatchesViewImpl {
+    val useSplitterView = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider != null
+    return if (useSplitterView)
+      XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)
+    else
+      return XWatchesViewImpl(session, watchesIsVariables, true, false)
+  }
+
   override fun addVariablesAndWatches(session: XDebugSessionImpl) {
     val variablesView: XVariablesView?
     val watchesView: XVariablesView?
     if (isWatchesInVariables) {
-      variablesView = XWatchesViewImpl(session, true, true, false)
+      variablesView = getWatchesViewImpl(session, watchesIsVariables = true)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       myWatchesView = variablesView
     } else {
       variablesView = XVariablesView(session)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
-      watchesView = XWatchesViewImpl(session, false, true, false)
+      watchesView = getWatchesViewImpl(session, watchesIsVariables = false)
       registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
       myWatchesView = watchesView
 

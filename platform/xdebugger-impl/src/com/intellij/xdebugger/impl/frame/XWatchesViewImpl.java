@@ -27,6 +27,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -131,6 +132,14 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @Override
+  BorderLayoutPanel constructPanel(@NotNull JComponent localsPanelComponent) {
+    var variablesPanel = super.constructPanel(localsPanelComponent);
+    var top = createTopPanel();
+    if (top == null)
+      return variablesPanel;
+    return variablesPanel.addToTop(top);
+  }
+
   JComponent createTopPanel() {
     if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
