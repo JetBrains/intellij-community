@@ -5,7 +5,9 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -22,7 +24,9 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
   private val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
 
-  override fun shouldOrderByMl(): Boolean = experiment.shouldOrderByMl()
+  override fun shouldOrderByMl(tabId: String): Boolean {
+    return service<SearchEverywhereMlSettings>().isSortingByMlEnabled(tabId) || experiment.shouldOrderByMl()
+  }
 
   override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {
     val session = getCurrentSession() ?: return -1.0

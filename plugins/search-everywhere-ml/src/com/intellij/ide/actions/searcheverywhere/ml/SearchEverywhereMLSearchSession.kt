@@ -5,7 +5,9 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
+import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
@@ -88,7 +90,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   }
 
   private fun orderedByMl(experimentStrategy: SearchEverywhereMlExperiment, tabId: String): Boolean {
-    return isMLSupportedTab(tabId) && experimentStrategy.shouldOrderByMl()
+    return service<SearchEverywhereMlSettings>().isSortingByMlEnabled(tabId) || experimentStrategy.shouldOrderByMl()
   }
 
   fun isMLSupportedTab(tabId: String): Boolean {

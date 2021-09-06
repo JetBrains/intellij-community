@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml;
 
+import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,12 +23,11 @@ public class SearchEverywhereMlExperiment {
   }
 
   public boolean isAllowed() {
-    if (isOrderByMlEnabled()) return true;
-    return !isDisableLoggingAndExperiments();
+    final SearchEverywhereMlSettings settings = ApplicationManager.getApplication().getService(SearchEverywhereMlSettings.class);
+    return settings.isSortingByMlEnabledInAnyTab() || !isDisableLoggingAndExperiments();
   }
 
   public boolean shouldOrderByMl() {
-    if (isOrderByMlEnabled()) return true;
     if (isDisableLoggingAndExperiments() || isDisableExperiments()) return false;
     return myPerformExperiment;
   }
@@ -38,10 +38,6 @@ public class SearchEverywhereMlExperiment {
 
   private static boolean isDisableExperiments() {
     return Registry.is("search.everywhere.force.disable.experiment.action.ml");
-  }
-
-  private static boolean isOrderByMlEnabled() {
-    return Registry.is("search.everywhere.sort.actions.by.ml");
   }
 
   public int getExperimentGroup() {
