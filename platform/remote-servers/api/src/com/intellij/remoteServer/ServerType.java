@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
@@ -11,7 +12,6 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
-import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +49,10 @@ public abstract class ServerType<C extends ServerConfiguration> {
    */
   @NotNull @NonNls
   public String getDeploymentConfigurationFactoryId() {
-    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getDeploymentConfigurationFactoryId",
-      "The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized but return value of this method must not be localized.");
+    PluginException.reportDeprecatedDefault(
+      getClass(), "getDeploymentConfigurationFactoryId",
+      "The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized," +
+      " but return value of this method must not be localized.");
     return getDeploymentConfigurationTypePresentableName();
   }
 
