@@ -231,10 +231,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     promise.onSuccess(c -> {
       processScopes(model, c)
         .onSuccess(__ -> {
-          SwingUtilities.invokeLater(() -> {
-            getComboBox().setModel(model);
-            selectItem(selection);
-          });
+          getComboBox().setModel(model);
+          selectItem(selection);
         });
     });
   }
