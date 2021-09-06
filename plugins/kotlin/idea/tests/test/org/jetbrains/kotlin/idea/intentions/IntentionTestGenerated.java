@@ -14266,6 +14266,89 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/removeAllArgumentNames")
+    public static class RemoveAllArgumentNames extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("collectionLiteralIsLast.kt")
+        public void testCollectionLiteralIsLast() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/collectionLiteralIsLast.kt");
+        }
+
+        @TestMetadata("collectionLiteralIsNotLast.kt")
+        public void testCollectionLiteralIsNotLast() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/collectionLiteralIsNotLast.kt");
+        }
+
+        @TestMetadata("collectionLiteralIsNotLast2.kt")
+        public void testCollectionLiteralIsNotLast2() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/collectionLiteralIsNotLast2.kt");
+        }
+
+        @TestMetadata("defaultArguments.kt")
+        public void testDefaultArguments() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/defaultArguments.kt");
+        }
+
+        @TestMetadata("defaultArguments2.kt")
+        public void testDefaultArguments2() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/defaultArguments2.kt");
+        }
+
+        @TestMetadata("defaultArguments3.kt")
+        public void testDefaultArguments3() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/defaultArguments3.kt");
+        }
+
+        @TestMetadata("defaultArguments4.kt")
+        public void testDefaultArguments4() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/defaultArguments4.kt");
+        }
+
+        @TestMetadata("noNamedArguments.kt")
+        public void testNoNamedArguments() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/noNamedArguments.kt");
+        }
+
+        @TestMetadata("notOwnPosition.kt")
+        public void testNotOwnPosition() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/notOwnPosition.kt");
+        }
+
+        @TestMetadata("oneNamedArgument.kt")
+        public void testOneNamedArgument() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/oneNamedArgument.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/simple.kt");
+        }
+
+        @TestMetadata("varargIsLast.kt")
+        public void testVarargIsLast() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/varargIsLast.kt");
+        }
+
+        @TestMetadata("varargIsNotLast.kt")
+        public void testVarargIsNotLast() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/varargIsNotLast.kt");
+        }
+
+        @TestMetadata("varargIsNotLast2.kt")
+        public void testVarargIsNotLast2() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/varargIsNotLast2.kt");
+        }
+
+        @TestMetadata("varargIsNotLast3.kt")
+        public void testVarargIsNotLast3() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/varargIsNotLast3.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeArgumentName")
     public static class RemoveArgumentName extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
