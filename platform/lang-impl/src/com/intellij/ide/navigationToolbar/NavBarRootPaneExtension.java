@@ -95,10 +95,15 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         public Insets getInsets() {
           return NavBarUIManager.getUI().getWrapperPanelInsets(super.getInsets());
         }
+
+        @Override
+        public void addNotify() {
+          super.addNotify();
+          toggleRunPanel(isShowToolPanel(UISettings.getInstance()));
+        }
       };
 
       addNavigationBarPanel(myWrapperPanel);
-      toggleRunPanel(isShowToolPanel(UISettings.getInstance()));
     }
     return myWrapperPanel;
   }
