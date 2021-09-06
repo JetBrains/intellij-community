@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -498,7 +499,7 @@ public final class DebuggerUtilsAsync {
   }
 
   public static Throwable unwrap(@Nullable Throwable throwable) {
-    return throwable instanceof CompletionException ? throwable.getCause() : throwable;
+    return throwable instanceof CompletionException || throwable instanceof ExecutionException ? throwable.getCause() : throwable;
   }
 
   public static <T> T logError(@Nullable Throwable throwable) {
