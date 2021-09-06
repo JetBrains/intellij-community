@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
@@ -277,9 +277,8 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   /**
    * Used by speedsearch, copy-to-clipboard and default renderer.
    */
-  @Nls
-  public String getTextPresentation() {
-    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getTextPresentation", "A proper implementation required");
+  public @Nls String getTextPresentation() {
+    PluginException.reportDeprecatedDefault(getClass(), "getTextPresentation", "A proper implementation required");
     return userObject == null ? "" : userObject.toString(); //NON-NLS
   }
 
