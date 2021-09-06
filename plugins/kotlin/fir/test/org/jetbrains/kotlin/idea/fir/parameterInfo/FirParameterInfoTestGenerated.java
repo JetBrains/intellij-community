@@ -97,6 +97,21 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/functionCall/Conflicting.kt");
         }
 
+        @TestMetadata("DataClassComponentFunction.kt")
+        public void testDataClassComponentFunction() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/DataClassComponentFunction.kt");
+        }
+
+        @TestMetadata("DataClassCopy.kt")
+        public void testDataClassCopy() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/DataClassCopy.kt");
+        }
+
+        @TestMetadata("DefaultConstructor.kt")
+        public void testDefaultConstructor() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/DefaultConstructor.kt");
+        }
+
         @TestMetadata("DefaultValuesFromLib.kt")
         public void testDefaultValuesFromLib() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/DefaultValuesFromLib.kt");
@@ -115,6 +130,16 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("deprecatedSinceKotlinNotApplicable.kt")
         public void testDeprecatedSinceKotlinNotApplicable() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/deprecatedSinceKotlinNotApplicable.kt");
+        }
+
+        @TestMetadata("EnumValueOf.kt")
+        public void testEnumValueOf() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/EnumValueOf.kt");
+        }
+
+        @TestMetadata("EnumValues.kt")
+        public void testEnumValues() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/EnumValues.kt");
         }
 
         @TestMetadata("ExtensionOnCapturedScopeChange.kt")

@@ -97,6 +97,21 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/Conflicting.kt");
         }
 
+        @TestMetadata("DataClassComponentFunction.kt")
+        public void testDataClassComponentFunction() throws Exception {
+            runTest("testData/parameterInfo/functionCall/DataClassComponentFunction.kt");
+        }
+
+        @TestMetadata("DataClassCopy.kt")
+        public void testDataClassCopy() throws Exception {
+            runTest("testData/parameterInfo/functionCall/DataClassCopy.kt");
+        }
+
+        @TestMetadata("DefaultConstructor.kt")
+        public void testDefaultConstructor() throws Exception {
+            runTest("testData/parameterInfo/functionCall/DefaultConstructor.kt");
+        }
+
         @TestMetadata("DefaultValuesFromLib.kt")
         public void testDefaultValuesFromLib() throws Exception {
             runTest("testData/parameterInfo/functionCall/DefaultValuesFromLib.kt");
@@ -115,6 +130,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("deprecatedSinceKotlinNotApplicable.kt")
         public void testDeprecatedSinceKotlinNotApplicable() throws Exception {
             runTest("testData/parameterInfo/functionCall/deprecatedSinceKotlinNotApplicable.kt");
+        }
+
+        @TestMetadata("EnumValueOf.kt")
+        public void testEnumValueOf() throws Exception {
+            runTest("testData/parameterInfo/functionCall/EnumValueOf.kt");
+        }
+
+        @TestMetadata("EnumValues.kt")
+        public void testEnumValues() throws Exception {
+            runTest("testData/parameterInfo/functionCall/EnumValues.kt");
         }
 
         @TestMetadata("ExtensionOnCapturedScopeChange.kt")
