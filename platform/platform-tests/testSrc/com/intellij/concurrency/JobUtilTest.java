@@ -17,20 +17,26 @@ package com.intellij.concurrency;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -384,6 +390,94 @@ public class JobUtilTest extends LightPlatformTestCase {
       future.get();
       assertEquals(N, COUNT.get());
     }
+  }
+
+  // create bounded queue and spawn producer which fills this queue with elements
+  // spawn consumer which calls JobLauncherImpl.processQueue() for that queue,
+  // stress EDT with periodic write actions and check that processQueue() doesn't lose elements due to
+  // constant PCEs and multiple restarts
+  public void testProcessInOrderWorksEvenWhenReadActionIsHardToGetStress() throws Exception {
+    String TOMB_STONE = "TOMB_STONE";
+    // schedule huge number of write actions interrupting processQueue
+    Future<?> interrupts = EdtScheduledExecutorService.getInstance().scheduleWithFixedDelay(() ->
+        WriteAction.run(() -> { }), 1, 1, TimeUnit.MICROSECONDS);
+    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+      BlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
+      int N_ELEMENTS = 10000;
+      COUNT.set(0);
+      Future<?> supplyFuture = supplyElementsInBatchesInBackground(queue, N_ELEMENTS, TOMB_STONE);
+      Queue<String> failedQueue = new LinkedBlockingQueue<>();
+      Future<?> background = AppExecutorUtil.getAppExecutorService().submit(() -> processQueueInBackground(TOMB_STONE, queue, failedQueue));
+      while (!background.isDone() && !t.timedOut()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      supplyFuture.get();
+      assertEquals(COUNT.get(), N_ELEMENTS);
+    }
+    interrupts.cancel(true);
+    while (!interrupts.isDone() && !t.timedOut()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
+  private static void processQueueInBackground(String TOMB_STONE, BlockingQueue<String> queue, Queue<String> failedQueue) {
+    while (true) {
+      Disposable disposable = Disposer.newDisposable();
+      ProgressIndicator wrapper = new DaemonProgressIndicator();
+      try {
+        // avoid "attach listener"/"write action" race
+        ReadAction.run(() -> {
+          wrapper.start();
+          ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
+          // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
+          if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+            throw new ProcessCanceledException();
+          }
+        });
+        // use wrapper here to cancel early when write action start but do not affect the original indicator
+        ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(queue, failedQueue, wrapper, TOMB_STONE, __ -> {
+          ReadAction.run(() -> {
+            ProgressManager.checkCanceled();
+            //TimeoutUtil.sleep(1);
+            ProgressManager.checkCanceled();
+            COUNT.incrementAndGet();
+          });
+          return true;
+        });
+        break;
+      }
+      catch (ProcessCanceledException e) {
+        // wait for write action to complete
+        ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
+      }
+      finally {
+        Disposer.dispose(disposable);
+      }
+    }
+  }
+
+  private static Future<?> supplyElementsInBatchesInBackground(@NotNull BlockingQueue<? super String> queue,
+                                                               int nElements,
+                                                               String TOMB_STONE) {
+    return AppExecutorUtil.getAppExecutorService().submit(() -> {
+      int batch = 10;
+      for (int i=0; i<nElements; i+=batch) {
+        try {
+          for (String s : Collections.nCopies(batch, "")) {
+            queue.put(s);
+          }
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      try {
+        queue.put(TOMB_STONE);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished()

@@ -264,7 +264,7 @@ public final class JobLauncherImpl extends JobLauncher {
                                   @NotNull Queue<@NotNull T> failedToProcess,
                                   @NotNull ProgressIndicator progress,
                                   @NotNull T tombStone,
-                                  @NotNull Processor<? super T> thingProcessor) {
+                                  @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
     // spawn up to (JobSchedulerImpl.getJobPoolParallelism() - 1) tasks,
     // each one trying to dequeue as many elements off `things` as possible and handing them to `thingProcessor`, until `tombStone` is hit
     final class MyProcessQueueTask implements Callable<Boolean> {
@@ -283,7 +283,6 @@ public final class JobLauncherImpl extends JobLauncher {
           try {
             T element = myFirstTask;
             while (true) {
-              ProgressManager.checkCanceled();
               if (element == null) element = failedToProcess.poll();
               if (element == null) element = things.take();
 
@@ -294,6 +293,7 @@ public final class JobLauncherImpl extends JobLauncher {
                 break;
               }
               try {
+                ProgressManager.checkCanceled();
                 if (!thingProcessor.process(element)) {
                   break;
                 }
