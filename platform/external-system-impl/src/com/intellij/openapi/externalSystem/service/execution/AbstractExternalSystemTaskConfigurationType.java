@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -19,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,8 +76,10 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   @NonNls
   @NotNull
   protected String getConfigurationFactoryId() {
-    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getConfigurationFactoryId",
-      "The default implementation delegates to 'ProjectSystemId::getReadableName' which is supposed to be localized but return value of this method must not be localized.");
+    PluginException.reportDeprecatedDefault(
+      getClass(), "getConfigurationFactoryId",
+      "The default implementation delegates to 'ProjectSystemId::getReadableName' which is supposed to be localized," +
+      " but return value of this method must not be localized.");
     return myExternalSystemId.getReadableName();
   }
 
