@@ -51,7 +51,12 @@ public final class SelectInContextImpl extends FileSelectInContext {
     FileEditor editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
     VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    SelectInContext result = createEditorContext(project, editor, virtualFile);
+    SelectInContext result = event.getData(SelectInContext.DATA_KEY);
+    if (result != null) {
+      return result;
+    }
+
+    result = createEditorContext(project, editor, virtualFile);
     if (result != null) {
       return result;
     }
@@ -59,11 +64,6 @@ public final class SelectInContextImpl extends FileSelectInContext {
     JComponent sourceComponent = getEventComponent(event);
     if (sourceComponent == null) {
       return null;
-    }
-
-    result = event.getData(SelectInContext.DATA_KEY);
-    if (result != null) {
-      return result;
     }
 
     result = createPsiContext(event);
@@ -161,7 +161,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
   }
 
   @Nullable
-  private static SelectInContext createFileSystemItemContext(PsiElement psiElement) {
+  public static SelectInContext createFileSystemItemContext(PsiElement psiElement) {
     PsiFileSystemItem fsItem = ObjectUtils.tryCast(psiElement, PsiFileSystemItem.class);
     VirtualFile vfile = fsItem == null ? null : fsItem.getVirtualFile();
     return vfile == null ? null : new FileSelectInContext(psiElement.getProject(), vfile) {
