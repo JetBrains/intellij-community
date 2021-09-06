@@ -110,8 +110,6 @@ internal class ToolboxRestService : RestService() {
   override fun getServiceName() = "toolbox"
 
   override fun isSupported(request: FullHttpRequest): Boolean {
-    val token = System.getProperty("toolbox.notification.token") ?: return false
-    if (request.headers()["Authorization"] != "toolbox $token") return false
     val requestUri = request.uri().substringBefore('?')
     if (findToolboxHandlerByUri(requestUri) == null) return false
     return super.isSupported(request)
@@ -121,6 +119,13 @@ internal class ToolboxRestService : RestService() {
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val channel = context.channel()
+
+    //we do authentication check here to avoid WEB-52152
+    val token = System.getProperty("toolbox.notification.token")
+    if (token == null || request.headers()["Authorization"] != "toolbox $token") {
+      sendStatus(HttpResponseStatus.NOT_FOUND, false, channel)
+      return null
+    }
 
     val (toolboxRequest : ToolboxInnerHandler, heartbeatDelay) = try {
       val requestJson = createJsonReader(request).use { JsonParser.parseReader(it) }
