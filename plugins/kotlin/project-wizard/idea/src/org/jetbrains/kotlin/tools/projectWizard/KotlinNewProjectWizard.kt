@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.generators.AbstractNewProjectWizardSdkStep
 import com.intellij.ide.wizard.*
+import com.intellij.openapi.module.StdModuleTypes
 
 class KotlinNewProjectWizard : NewProjectWizard {
     override val name: String = "Kotlin"
@@ -25,5 +26,8 @@ class KotlinNewProjectWizard : NewProjectWizard {
         override val buildSystem by ::step
     }
 
-    class SdkStep(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardSdkStep(parent)
+    class SdkStep(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardSdkStep<NewProjectWizardLanguageStep>(parent) {
+        override val sdkLabel: String = JavaUiBundle.message("label.project.wizard.new.project.jdk")
+        override val sdkPropertyId: String = StdModuleTypes.JAVA.id
+    }
 }

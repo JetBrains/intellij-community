@@ -3,10 +3,10 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.*
+import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.ide.wizard.NewProjectWizardLanguageStep
 
 class JavaNewProjectWizard : NewProjectWizard {
   override val name: String = "Java"
@@ -29,7 +29,10 @@ class JavaNewProjectWizard : NewProjectWizard {
     override val buildSystem by ::step
   }
 
-  class SdkStep(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardSdkStep(parent) {
+  class SdkStep(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardSdkStep<NewProjectWizardLanguageStep>(parent) {
+    override val sdkLabel: String = JavaUiBundle.message("label.project.wizard.new.project.jdk")
+    override val sdkPropertyId: String = StdModuleTypes.JAVA.id
+
     override fun sdkTypeFilter(type: SdkTypeId): Boolean {
       return type is JavaSdkType && type !is DependentSdkType
     }
