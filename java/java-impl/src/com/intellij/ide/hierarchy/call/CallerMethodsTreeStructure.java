@@ -77,7 +77,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
           if (PsiUtil.isInsideJavadocComment(reference.getElement())) {
             return true;
           }
-          PsiElement receiverClass = null;
+          PsiClass receiverClass = null;
           if (reference instanceof PsiQualifiedReference) {
             PsiElement qualifier = ((PsiQualifiedReference)reference).getQualifier();
             if (qualifier instanceof PsiExpression) {
@@ -92,10 +92,10 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
             }
           }
 
-          if (receiverClass instanceof PsiClass
+          if (receiverClass != null
               && enclosingClass != null
-              && !InheritanceUtil.isInheritorOrSelf(enclosingClass, (PsiClass)receiverClass, true)
-              && !InheritanceUtil.isInheritorOrSelf((PsiClass)receiverClass, enclosingClass,true)
+              && !InheritanceUtil.isInheritorOrSelf(enclosingClass, receiverClass, true)
+              && !InheritanceUtil.isInheritorOrSelf(receiverClass, enclosingClass, true)
           ) {
             // ignore impossible candidates. E.g. when A < B,A < C and we invoked call hierarchy for method in C we should filter out methods in B because B and C are assignment-incompatible
             return true;
