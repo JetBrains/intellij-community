@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl.support
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.system.CpuArch
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -31,7 +32,7 @@ import java.nio.file.StandardCopyOption
 @CompileStatic
 class RepairUtilityBuilder {
   private static Map<Binary, Path> BINARIES_CACHE
-  static final Collection<Binary> BINARIES = Collections.unmodifiableList([
+  private static final Collection<Binary> BINARIES = Collections.unmodifiableList([
     new Binary(OsFamily.LINUX, JvmArchitecture.x64, 'bin/repair-linux-amd64', 'bin/repair'),
     new Binary(OsFamily.WINDOWS, JvmArchitecture.x64, 'bin/repair.exe', 'bin/repair.exe'),
     new Binary(OsFamily.MACOS, JvmArchitecture.x64, 'bin/repair-darwin-amd64', 'bin/repair'),
@@ -58,7 +59,7 @@ class RepairUtilityBuilder {
         BINARIES_CACHE = buildBinaries(buildContext)
       }
       if (BINARIES_CACHE.isEmpty()) return
-      Binary binary = binaryFor(buildContext, os, arch)
+      Binary binary = findBinary(buildContext, os, arch)
       Path path = BINARIES_CACHE[binary]
       if (path == null) buildContext.messages.error("No binary was built for $os and $arch")
       Path repairUtilityTarget = distributionDir.resolve(binary.relativeTargetPath)
@@ -78,7 +79,7 @@ class RepairUtilityBuilder {
       OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
                            SystemInfoRt.isMac ? OsFamily.MACOS :
                            SystemInfoRt.isLinux ? OsFamily.LINUX : null
-      Binary binary = binaryFor(buildContext, currentOs, CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64)
+      Binary binary = findBinary(buildContext, currentOs, CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64)
       def binaryPath = repairUtilityProjectHome(buildContext).resolve(binary.relativeSourcePath)
       def tmpDir = buildContext.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
       Files.createDirectories(tmpDir)
@@ -94,7 +95,20 @@ class RepairUtilityBuilder {
     }
   }
 
-  private static Binary binaryFor(BuildContext buildContext, OsFamily os, JvmArchitecture arch) {
+  @Nullable
+  static synchronized Binary binaryFor(BuildContext buildContext, OsFamily os, JvmArchitecture arch) {
+    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      if (BINARIES_CACHE == null) {
+        BINARIES_CACHE = buildBinaries(buildContext)
+      }
+      if (!BINARIES_CACHE.isEmpty()) {
+        findBinary(buildContext, os, arch)
+      }
+    }
+    return null
+  }
+
+  private static Binary findBinary(BuildContext buildContext, OsFamily os, JvmArchitecture arch) {
     def binary = BINARIES.find { it.os == os && it.arch == arch }
     if (binary == null) buildContext.messages.error("Unsupported binary: $os $arch")
     return binary

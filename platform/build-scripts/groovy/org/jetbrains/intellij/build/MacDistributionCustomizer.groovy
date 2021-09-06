@@ -89,16 +89,10 @@ abstract class MacDistributionCustomizer {
    */
   List<String> getBinariesToSign(BuildContext context, JvmArchitecture arch) {
     List<String> binaries = []
-    if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-      def binary = RepairUtilityBuilder.BINARIES.find {
-        it.os == OsFamily.MACOS && it.arch == arch
-      }
-      if (binary == null) {
-        context.messages.error("No binary found for $OsFamily.MACOS and $arch")
-      }
+    def binary = RepairUtilityBuilder.binaryFor(context, OsFamily.MACOS, arch)
+    if (binary != null) {
       binaries += binary.relativeTargetPath
     }
-    return binaries
   }
 
   /**
