@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,15 +15,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-final class DocumentationScrollPane extends JBScrollPane {
+@Internal
+public final class DocumentationScrollPane extends JBScrollPane {
 
-  DocumentationScrollPane() {
+  public DocumentationScrollPane() {
     super(VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
     setBorder(JBUI.Borders.empty());
     setViewportBorder(null);
   }
 
-  static @NotNull Map<KeyStroke, ActionListener> keyboardActions(@NotNull JScrollPane target) {
+  public static @NotNull Map<KeyStroke, ActionListener> keyboardActions(@NotNull JScrollPane target) {
     if (ScreenReader.isActive()) {
       // With screen readers, we want the default keyboard behavior inside
       // the document text editor, i.e. the caret moves with cursor keys, etc.

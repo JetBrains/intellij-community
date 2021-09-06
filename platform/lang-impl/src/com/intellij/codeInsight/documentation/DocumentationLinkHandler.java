@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EventListeners;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -15,7 +16,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
-final class DocumentationLinkHandler {
+@Internal
+public final class DocumentationLinkHandler {
 
   private final @NotNull DocumentationEditorPane myEditorPane;
   private final @NotNull Consumer<? super @NotNull String> myUrlConsumer;
@@ -32,12 +34,12 @@ final class DocumentationLinkHandler {
   }
 
   @RequiresEdt
-  int getHighlightedLink() {
+  public int getHighlightedLink() {
     return myHighlightedLink;
   }
 
   @RequiresEdt
-  void highlightLink(int n) {
+  public void highlightLink(int n) {
     myHighlightedLink = n;
     myEditorPane.highlightLink(n);
   }

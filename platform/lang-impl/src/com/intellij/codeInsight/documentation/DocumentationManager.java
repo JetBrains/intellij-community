@@ -1689,7 +1689,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  private static @Nls @Nullable String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
+  @Internal
+  public static @Nls @Nullable String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
     VirtualFile file = PsiUtilCore.getVirtualFile(psiFile);
     File ioFile = file == null || !file.isInLocalFileSystem() ? null : VfsUtilCore.virtualToIoFile(file);
     BasicFileAttributes attr = null;

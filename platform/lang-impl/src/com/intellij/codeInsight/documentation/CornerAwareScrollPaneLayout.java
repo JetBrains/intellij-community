@@ -2,16 +2,18 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-final class CornerAwareScrollPaneLayout extends JBScrollPane.Layout {
+@Internal
+public final class CornerAwareScrollPaneLayout extends JBScrollPane.Layout {
 
   private final @NotNull Component myCorner;
 
-  CornerAwareScrollPaneLayout(@NotNull Component corner) {
+  public CornerAwareScrollPaneLayout(@NotNull Component corner) {
     myCorner = corner;
   }
 

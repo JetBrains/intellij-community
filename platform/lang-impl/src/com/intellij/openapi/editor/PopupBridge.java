@@ -29,7 +29,7 @@ public final class PopupBridge {
     return popup;
   }
 
-  void performWhenAvailable(@NotNull Consumer<? super @NotNull AbstractPopup> consumer) {
+  public void performWhenAvailable(@NotNull Consumer<? super @NotNull AbstractPopup> consumer) {
     if (popup == null) {
       consumers.add(consumer);
     }

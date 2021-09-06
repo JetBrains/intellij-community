@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.util.ui.JBHtmlEditorKit;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,8 @@ import javax.swing.text.View;
 import javax.swing.text.html.ImageView;
 import java.awt.*;
 
-final class DocumentationHtmlFactory extends JBHtmlEditorKit.JBHtmlFactory {
+@Internal
+public final class DocumentationHtmlFactory extends JBHtmlEditorKit.JBHtmlFactory {
 
   private final @NotNull Component myReferenceComponent;
 

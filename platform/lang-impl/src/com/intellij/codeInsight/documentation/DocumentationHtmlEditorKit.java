@@ -6,15 +6,16 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.text.ViewFactory;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 
 import static com.intellij.codeInsight.documentation.DocumentationComponent.SECTION_COLOR;
 
-final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
+@Internal
+public final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
 
   private final @NotNull DocumentationHtmlFactory myHtmlFactory;
 
@@ -25,7 +26,7 @@ final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
   }
 
   @Override
-  public ViewFactory getViewFactory() {
+  public DocumentationHtmlFactory getViewFactory() {
     return myHtmlFactory;
   }
 

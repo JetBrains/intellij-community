@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,11 +20,12 @@ import java.awt.event.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
-final class DocumentationHintEditorPane extends DocumentationEditorPane {
+@Internal
+public final class DocumentationHintEditorPane extends DocumentationEditorPane {
 
   private final Project myProject;
 
-  DocumentationHintEditorPane(
+  public DocumentationHintEditorPane(
     @NotNull Project project,
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
     @NotNull Supplier<? extends @Nullable PsiElement> elementSupplier
@@ -32,7 +34,7 @@ final class DocumentationHintEditorPane extends DocumentationEditorPane {
     myProject = project;
   }
 
-  void setHint(@NotNull JBPopup hint) {
+  public void setHint(@NotNull JBPopup hint) {
     myHint = hint;
     FocusListener focusAdapter = new FocusAdapter() {
       @Override

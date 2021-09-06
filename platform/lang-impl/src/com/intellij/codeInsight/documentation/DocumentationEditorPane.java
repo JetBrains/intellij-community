@@ -11,6 +11,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,13 +27,14 @@ import java.awt.event.KeyEvent;
 import java.util.Map;
 import java.util.function.Supplier;
 
-class DocumentationEditorPane extends JEditorPane {
+@Internal
+public class DocumentationEditorPane extends JEditorPane {
 
   private final Map<KeyStroke, ActionListener> myKeyboardActions;
   private final Supplier<? extends @Nullable PsiElement> myElementSupplier;
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
 
-  DocumentationEditorPane(
+  public DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
     @NotNull Supplier<? extends @Nullable PsiElement> elementSupplier
   ) {
@@ -135,7 +137,8 @@ class DocumentationEditorPane extends JEditorPane {
     return null;
   }
 
-  void applyFontProps(@NotNull FontSize size) {
+  @Internal
+  public void applyFontProps(@NotNull FontSize size) {
     Document document = getDocument();
     if (!(document instanceof StyledDocument)) {
       return;
