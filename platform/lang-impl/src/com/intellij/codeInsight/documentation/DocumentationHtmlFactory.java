@@ -5,7 +5,9 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.html.ImageView;
@@ -17,10 +19,7 @@ final class DocumentationHtmlFactory extends JBHtmlEditorKit.JBHtmlFactory {
 
   DocumentationHtmlFactory(@NotNull Component referenceComponent) {
     myReferenceComponent = referenceComponent;
-    setAdditionalIconResolver(src -> {
-      ModuleType<?> id = ModuleTypeManager.getInstance().findByID(src);
-      return id == null ? null : id.getIcon();
-    });
+    setAdditionalIconResolver(DocumentationHtmlFactory::moduleIcon);
   }
 
   @Override
@@ -31,5 +30,10 @@ final class DocumentationHtmlFactory extends JBHtmlEditorKit.JBHtmlFactory {
       return new DocumentationScalingImageView(elem, myReferenceComponent);
     }
     return view;
+  }
+
+  private static @Nullable Icon moduleIcon(@NotNull String src) {
+    ModuleType<?> moduleType = ModuleTypeManager.getInstance().findByID(src);
+    return moduleType == null ? null : moduleType.getIcon();
   }
 }
