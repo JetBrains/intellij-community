@@ -5,11 +5,13 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.SdkListItem
 import com.intellij.openapi.roots.ui.configuration.createSdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.validateSdk
@@ -28,14 +30,31 @@ abstract class AbstractNewProjectWizardSdkStep(
   final override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
   final override val sdk by sdkProperty
 
-  private val sdksModel = ProjectSdksModel()
+  protected val sdksModel = ProjectSdksModel()
 
-  protected abstract fun sdkTypeFilter(type: SdkTypeId): Boolean
+  protected open val sdkPropertyId: String = StdModuleTypes.JAVA.id
+
+  protected open fun sdkTypeFilter(type: SdkTypeId): Boolean = true
+  protected open fun sdkFilter(sdk: Sdk): Boolean = sdkTypeFilter(sdk.sdkType)
+  protected open fun suggestedSdkItemFilter(item: SdkListItem.SuggestedItem): Boolean = true
+  protected open fun creationSdkTypeFilter(type: SdkTypeId): Boolean = sdkTypeFilter(type)
+  protected open fun onNewSdkAdded(sdk: Sdk) {}
 
   override fun setupUI(builder: Panel) {
     with(builder) {
       row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-        sdkComboBox = cell(createSdkComboBox(sdksModel, sdkProperty, context.project, ::sdkTypeFilter))
+        val comboBox = createSdkComboBox(
+          context.project,
+          sdksModel,
+          sdkProperty,
+          sdkPropertyId,
+          ::sdkTypeFilter,
+          ::sdkFilter,
+          ::suggestedSdkItemFilter,
+          ::creationSdkTypeFilter,
+          ::onNewSdkAdded
+        )
+        sdkComboBox = cell(comboBox)
           .columns(COLUMNS_MEDIUM)
           .validationOnApply { validateSdk(sdkProperty, sdksModel) }
           .onApply { context.projectJdk = sdk }
