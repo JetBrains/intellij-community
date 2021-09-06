@@ -67,18 +67,21 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static final CallMatcher ITERABLE_ITERATOR = instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "iterator").parameterCount(0);
   private static final CallMatcher MAP_KEY_SET = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet").parameterCount(0);
   private static final CallMatcher MAP_VALUES = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "values").parameterCount(0);
+  private static final CallMatcher MAP_PUT_ALL = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "putAll").parameterCount(1);
+  private static final CallMatcher MAP_OF = staticCall(CommonClassNames.JAVA_UTIL_MAP, "of").parameterCount(2);
 
   private static final CallMapper<RedundantCollectionOperationHandler> HANDLERS =
     new CallMapper<RedundantCollectionOperationHandler>()
       .register(TO_ARRAY, AsListToArrayHandler::handler)
-      .register(CONTAINS_ALL, ContainsAllSingletonHandler::handler)
+      .register(CONTAINS_ALL, call -> createHandler(call, SINGLETON, "contains"))
       .register(CONTAINS, SingletonContainsHandler::handler)
       .register(CONTAINS, MapKeySetContainsHandler::handler)
       .register(anyOf(CONTAINS, CONTAINS_KEY), ContainsBeforeAddRemoveHandler::handler)
       .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler)
       .register(AS_LIST, RedundantAsListForIterationHandler::handler)
       .register(AS_LIST, RedundantSortAsListHandler::handler)
-      .register(ITERABLE_ITERATOR, RedundantEmptyIteratorHandler::handler);
+      .register(ITERABLE_ITERATOR, RedundantEmptyIteratorHandler::handler)
+      .register(MAP_PUT_ALL, call -> createHandler(call, MAP_OF, "put"));
 
   @NotNull
   @Override
@@ -365,30 +368,28 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
   }
 
-  private static class ContainsAllSingletonHandler implements RedundantCollectionOperationHandler {
-    @Override
-    public @NotNull @NlsSafe String getReplacement() {
-      return "contains()";
-    }
+  private static RedundantCollectionOperationHandler createHandler(PsiMethodCallExpression call,
+                                                                   CallMatcher matcher,
+                                                                   String replacementMethod) {
+    PsiExpression arg = call.getArgumentList().getExpressions()[0];
+    PsiMethodCallExpression argCall = tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiMethodCallExpression.class);
+    if (!matcher.test(argCall)) return null;
+    return new RedundantCollectionOperationHandler() {
+      @Override
+      public @NotNull @NlsSafe String getReplacement() {
+        return replacementMethod + "()";
+      }
 
-    @Override
-    public void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
-      PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
-      if (arg == null) return;
-      PsiMethodCallExpression singleton = tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiMethodCallExpression.class);
-      if (singleton == null) return;
-      PsiExpression singletonArg = ArrayUtil.getFirstElement(singleton.getArgumentList().getExpressions());
-      if (singletonArg == null) return;
-      ExpressionUtils.bindCallTo(call, "contains");
-      new CommentTracker().replaceAndRestoreComments(arg, singletonArg);
-    }
-
-    public static RedundantCollectionOperationHandler handler(PsiMethodCallExpression call) {
-      PsiExpression containsAllArg = call.getArgumentList().getExpressions()[0];
-      PsiMethodCallExpression maybeSingleton = tryCast(PsiUtil.skipParenthesizedExprDown(containsAllArg), PsiMethodCallExpression.class);
-      if (!SINGLETON.test(maybeSingleton)) return null;
-      return new ContainsAllSingletonHandler();
-    }
+      @Override
+      public void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+        PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
+        if (arg == null) return;
+        PsiMethodCallExpression argCall = tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiMethodCallExpression.class);
+        if (argCall == null) return;
+        ExpressionUtils.bindCallTo(call, replacementMethod);
+        new CommentTracker().replaceAndRestoreComments(call.getArgumentList(), argCall.getArgumentList());
+      }
+    };
   }
 
   private static class SingletonContainsHandler implements RedundantCollectionOperationHandler {
