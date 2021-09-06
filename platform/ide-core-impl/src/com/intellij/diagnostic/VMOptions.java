@@ -220,6 +220,7 @@ public final class VMOptions {
     }
 
     if (modified) {
+      Files.createDirectories(file.getParent());
       Files.write(file, lines, getFileCharset());
     }
   }
