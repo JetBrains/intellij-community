@@ -36,7 +36,7 @@ public final class LangFindSettingsImpl extends FindSettingsImpl {
       extensions.add("css");
     }
     for (String ext : ContainerUtil.reverse(new ArrayList<>(extensions))) {
-      recentFileMasks.add("*." + ext);
+      FindInProjectSettingsBase.addRecentStringToList("*." + ext, recentFileMasks);
     }
   }
 }
