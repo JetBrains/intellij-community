@@ -58,7 +58,7 @@ class NotificationSuggestionPresenter :
         return object : AnAction("Do not suggest this action anymore") {
             override fun actionPerformed(e: AnActionEvent) {
                 val settings = FeatureSuggesterSettings.instance()
-                settings.disableSuggester(suggestion.suggesterId)
+                settings.setEnabled(suggestion.suggesterId, false)
                 notification.hideBalloon()
                 FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggestion.suggesterId)
             }

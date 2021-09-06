@@ -19,13 +19,14 @@ private typealias ActionListener = (ActionEvent) -> Unit
 
 @Suppress("MagicNumber", "DialogTitleCapitalization")
 class FeatureSuggestersPanel(
-    suggestingActionNames: Iterable<String>,
+    suggesterIdToName: Map<String, String>,
     private val settings: FeatureSuggesterSettings
 ) : JPanel() {
     private val toggleAllCheckBox =
         ThreeStateCheckBox("Show suggestions for actions that I have not performed in more than ", State.SELECTED)
     private val suggestingIntervalField = JTextField(3)
-    private val actionPanels: List<SuggestingActionPanel> = suggestingActionNames.map(::SuggestingActionPanel)
+    private val actionPanels: List<SuggestingActionPanel> =
+        suggesterIdToName.map { SuggestingActionPanel(it.key, it.value) }
 
     init {
         layout = BorderLayout()
@@ -88,7 +89,7 @@ class FeatureSuggestersPanel(
     }
 
     private fun configureActionPanels() {
-        val listener = createActionPanelListener()
+        val listener: ActionListener = { doWithActionPanels() }
         actionPanels.forEach {
             with(it) {
                 alignmentX = 0f
@@ -98,57 +99,40 @@ class FeatureSuggestersPanel(
         }
     }
 
-    private fun createActionPanelListener(): ActionListener {
-        return {
-            var anySelected = false
-            var anyNotSelected = false
-            actionPanels.forEach {
-                if (it.selected()) {
-                    anySelected = true
-                } else {
-                    anyNotSelected = true
-                }
+    private fun doWithActionPanels(action: (SuggestingActionPanel) -> Unit = {}) {
+        var anySelected = false
+        var anyNotSelected = false
+        actionPanels.forEach {
+            action(it)
+            if (it.selected()) {
+                anySelected = true
+            } else {
+                anyNotSelected = true
             }
-            if (anySelected && anyNotSelected) {
-                toggleAllCheckBox.state = State.DONT_CARE
-            } else if (anySelected) {
-                toggleAllCheckBox.isSelected = true
-                suggestingIntervalField.isEnabled = true
-            } else if (anyNotSelected) {
-                toggleAllCheckBox.isSelected = false
-                suggestingIntervalField.isEnabled = false
-            }
+        }
+        if (anySelected && anyNotSelected) {
+            toggleAllCheckBox.state = State.DONT_CARE
+            suggestingIntervalField.isEnabled = true
+        } else if (anySelected) {
+            toggleAllCheckBox.isSelected = true
+            suggestingIntervalField.isEnabled = true
+        } else if (anyNotSelected) {
+            toggleAllCheckBox.isSelected = false
+            suggestingIntervalField.isEnabled = false
         }
     }
 
     fun loadFromSettings() {
         suggestingIntervalField.text = settings.suggestingIntervalDays.toString()
-        if (settings.isAllEnabled()) {
-            toggleAllCheckBox.isSelected = true
-            actionPanels.forEach { it.select(true) }
-        } else {
-            var somethingIsSelected = false
-            actionPanels.forEach {
-                val selected = settings.isEnabled(it.actionDisplayName)
-                if (selected) somethingIsSelected = true
-                it.select(selected)
-            }
-            if (somethingIsSelected) {
-                toggleAllCheckBox.state = State.DONT_CARE
-            } else {
-                toggleAllCheckBox.state = State.NOT_SELECTED
-                suggestingIntervalField.isEnabled = false
-            }
+        doWithActionPanels { panel ->
+            val enabled = settings.isEnabled(panel.suggesterId)
+            panel.select(enabled)
         }
     }
 
-    fun isAllSelected(): Boolean {
-        return toggleAllCheckBox.isSelected
-    }
-
-    fun isSelected(suggestingActionName: String): Boolean {
-        val panel = actionPanels.find { it.actionDisplayName == suggestingActionName }
-            ?: throw IllegalArgumentException("Unknown action name: $suggestingActionName")
+    fun isSelected(suggesterId: String): Boolean {
+        val panel = actionPanels.find { it.suggesterId == suggesterId }
+            ?: throw IllegalArgumentException("Unknown action name: $suggesterId")
         return panel.selected()
     }
 
@@ -161,7 +145,7 @@ class FeatureSuggestersPanel(
         }
     }
 
-    private class SuggestingActionPanel(val actionDisplayName: String) : JPanel() {
+    private class SuggestingActionPanel(val suggesterId: String, actionDisplayName: String) : JPanel() {
         private val checkBox = JCheckBox(actionDisplayName)
 
         init {

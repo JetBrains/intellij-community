@@ -6,24 +6,19 @@ import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 import javax.swing.JComponent
 
 class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependencies {
-    private val suggestingActionNames = FeatureSuggester.suggesters.map(FeatureSuggester::suggestingActionDisplayName)
+    private val suggesterIdToName = FeatureSuggester.suggesters.associate { it.id to it.suggestingActionDisplayName }
     private val settings = FeatureSuggesterSettings.instance()
-    private val panel = FeatureSuggestersPanel(suggestingActionNames, settings)
+    private val panel = FeatureSuggestersPanel(suggesterIdToName, settings)
 
     override fun isModified(): Boolean {
         return settings.suggestingIntervalDays != panel.getSuggestingIntervalDays() ||
-            suggestingActionNames.any { settings.isEnabled(it) != panel.isSelected(it) }
+                suggesterIdToName.keys.any { settings.isEnabled(it) != panel.isSelected(it) }
     }
 
     override fun apply() {
-        settings.reset()
         settings.suggestingIntervalDays = panel.getSuggestingIntervalDays()
-        if (!panel.isAllSelected()) {
-            suggestingActionNames.forEach {
-                if (!panel.isSelected(it)) {
-                    settings.disableSuggester(it)
-                }
-            }
+        suggesterIdToName.keys.forEach { suggesterId ->
+            settings.setEnabled(suggesterId, panel.isSelected(suggesterId))
         }
     }
 
@@ -39,5 +34,5 @@ class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependenci
         return mutableListOf(FeatureSuggester.EP_NAME)
     }
 
-    override fun getDisplayName(): String = "Feature Suggesters"
+    override fun getDisplayName(): String = "Feature Suggester"
 }

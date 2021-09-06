@@ -85,6 +85,6 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     }
 
     private fun FeatureSuggester.isEnabled(): Boolean {
-        return FeatureSuggesterSettings.instance().isEnabled(suggestingActionDisplayName)
+        return FeatureSuggesterSettings.instance().isEnabled(id)
     }
 }
