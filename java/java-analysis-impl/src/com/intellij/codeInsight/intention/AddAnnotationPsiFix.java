@@ -45,7 +45,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   final PsiNameValuePair[] myPairs; // not used when registering local quick fix
   protected final @IntentionName String myText;
   private final AnnotationPlace myAnnotationPlace;
-  @Nullable private final SmartPsiElementPointer<PsiElement> myTarget;
+  private final boolean myExistsTypeUseTarget;
   private final boolean myHasApplicableAnnotations;
 
   public AddAnnotationPsiFix(@NotNull String fqn,
@@ -74,15 +74,14 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     myAnnotationsToRemove = annotationsToRemove;
     myText = calcText(modifierListOwner, myAnnotation);
     myAnnotationPlace = place;
-    PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, fqn);
-    if (target instanceof PsiElement) {
-      myTarget = SmartPointerManager.createPointer((PsiElement)target);
-      myHasApplicableAnnotations = ContainerUtil.exists(target.getApplicableAnnotations(), anno -> anno.hasQualifiedName(myAnnotation));
-    }
-    else {
-      myTarget = null;
-      myHasApplicableAnnotations = false;
-    }
+
+    PsiClass annotationClass = JavaPsiFacade.getInstance(modifierListOwner.getProject())
+      .findClass(myAnnotation, modifierListOwner.getResolveScope());
+    myExistsTypeUseTarget = annotationClass != null &&
+                           AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null;
+    PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, myExistsTypeUseTarget);
+    myHasApplicableAnnotations =
+      target != null && ContainerUtil.exists(target.getApplicableAnnotations(), anno -> anno.hasQualifiedName(myAnnotation));
   }
 
   public static @IntentionName String calcText(PsiModifierListOwner modifierListOwner, @Nullable String annotation) {
@@ -182,14 +181,11 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
                      @NotNull PsiFile file,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (myTarget == null) {
-      return;
-    }
-    final PsiAnnotationOwner target = (PsiAnnotationOwner)myTarget.getElement();
+    final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)startElement;
+    final PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, myExistsTypeUseTarget);
     if (target == null || myHasApplicableAnnotations) {
       return;
     }
-    final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)startElement;
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final AnnotationPlace place = myAnnotationPlace == AnnotationPlace.NEED_ASK_USER ?
                                   annotationsManager.chooseAnnotationsPlace(modifierListOwner) : myAnnotationPlace;

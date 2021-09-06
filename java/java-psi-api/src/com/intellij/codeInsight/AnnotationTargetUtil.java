@@ -235,9 +235,22 @@ public final class AnnotationTargetUtil {
     if (list == null) return null;
     PsiClass annotationClass = JavaPsiFacade.getInstance(modifierListOwner.getProject())
       .findClass(annotation, modifierListOwner.getResolveScope());
-    if (annotationClass != null && findAnnotationTarget(annotationClass, TargetType.TYPE_USE) != null &&
-        // External annotations for types are not supported
-        !(modifierListOwner instanceof PsiCompiledElement)) {
+    return getTarget(modifierListOwner, annotationClass != null && findAnnotationTarget(annotationClass, TargetType.TYPE_USE) != null);
+  }
+
+  /**
+   * @param modifierListOwner modifier list owner
+   * @param existsTypeUseTarget true, if annotation contains a type use target
+   * @return a target annotation owner to add the annotation (either modifier list or type element depending on the annotation target)
+   * Returns null if {@code modifierListOwner.getModifierList()} is null.
+   * <p>The method should be called under read action
+   * and the caller should be prepared for {@link com.intellij.openapi.project.IndexNotReadyException}.
+   */
+  @Contract(pure = true)
+  public static @Nullable PsiAnnotationOwner getTarget(@NotNull PsiModifierListOwner modifierListOwner, boolean existsTypeUseTarget) {
+    PsiModifierList list = modifierListOwner.getModifierList();
+    if (list == null) return null;
+    if (existsTypeUseTarget && !(modifierListOwner instanceof PsiCompiledElement)) {
       PsiElement parent = list.getParent();
       PsiTypeElement type = null;
       if (parent instanceof PsiMethod) {
