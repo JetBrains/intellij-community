@@ -26,7 +26,7 @@ public interface BeforeRunTaskImporter {
    * Checks that this importer can create/update before run tasks for configuration with given type.
    * Possible type names are specified only by reply part on external build tool side.
    *
-   * @param typeName is run configuration type name.
+   * @param typeName is before run task type name.
    * @see ConfigurationData
    * @see ProjectKeys#CONFIGURATION
    */
@@ -36,11 +36,11 @@ public interface BeforeRunTaskImporter {
    * Given a map of before run configuration settings,
    * optionally create relevant BeforeRunTask if it is missing from beforeRunTasks list.
    *
-   * @param project          is a project into which this run configuration will be added.
-   * @param modelsProvider   is a IDE project structure modifiable model.
-   * @param runConfiguration is a run configuration before which before run tasks will be executed.
-   * @param beforeRunTasks   is a list of before run tasks which are already processed by other importers for {@code runConfiguration}.
-   * @param cfg              is a map of before run configuration settings.
+   * @param project           is a project into which this run configuration will be added.
+   * @param modelsProvider    is a IDE project structure modifiable model.
+   * @param runConfiguration  is a run configuration before which before run tasks will be executed.
+   * @param beforeRunTasks    is a list of before run tasks which are already processed by other importers for {@code runConfiguration}.
+   * @param configurationData is a map of before run configuration settings.
    * @return updated {@code beforeRunTasks} list.
    */
   List<BeforeRunTask> process(
@@ -48,5 +48,5 @@ public interface BeforeRunTaskImporter {
     @NotNull IdeModifiableModelsProvider modelsProvider,
     @NotNull RunConfiguration runConfiguration,
     @NotNull List<BeforeRunTask> beforeRunTasks,
-    @NotNull Map<String, Object> cfg);
+    @NotNull Map<String, Object> configurationData);
 }

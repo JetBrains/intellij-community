@@ -24,13 +24,13 @@ class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
                        modelsProvider: IdeModifiableModelsProvider,
                        runConfiguration: RunConfiguration,
                        beforeRunTasks: MutableList<BeforeRunTask<*>>,
-                       cfg: MutableMap<String, Any>): MutableList<BeforeRunTask<*>> {
+                       configurationData: MutableMap<String, Any>): MutableList<BeforeRunTask<*>> {
 
     val taskProvider = BeforeRunTaskProvider.getProvider(project, GradleBeforeRunTaskProvider.ID) ?: return beforeRunTasks
     val task = taskProvider.createTask(runConfiguration) ?: return beforeRunTasks
     task.taskExecutionSettings.apply {
-      consumeIfCast(cfg["taskName"], String::class.java) { taskNames = listOf(it) }
-      consumeIfCast(cfg["projectPath"], String::class.java) { externalProjectPath = it }
+      consumeIfCast(configurationData["taskName"], String::class.java) { taskNames = listOf(it) }
+      consumeIfCast(configurationData["projectPath"], String::class.java) { externalProjectPath = it }
     }
     task.isEnabled = true
 
