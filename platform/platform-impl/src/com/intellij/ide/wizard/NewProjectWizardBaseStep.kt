@@ -79,10 +79,12 @@ class NewProjectWizardBaseStep(
           .validationOnApply { validateLocation() }
           .validationOnInput { validateLocation() }
       }.bottomGap(BottomGap.SMALL)
-      row("") {
-        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
-          .bindSelected(gitProperty)
-      }.bottomGap(BottomGap.SMALL)
+      if (context.isCreatingNewProject) {
+        row("") {
+          checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
+            .bindSelected(gitProperty)
+        }.bottomGap(BottomGap.SMALL)
+      }
 
       childStep?.setupUI(this)
 
