@@ -95,7 +95,7 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
       else {
         LibraryEntity libraryEntity = storageAfter.resolve(libraryId);
         if (libraryEntity != null) {
-          return LibraryIndexableEntityProvider.createIterators(libraryEntity, project);
+          return LibraryIndexableEntityProvider.createIterators(libraryEntity, project, false);
         }
       }
     }

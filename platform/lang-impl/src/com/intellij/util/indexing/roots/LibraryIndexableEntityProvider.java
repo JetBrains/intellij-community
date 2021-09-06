@@ -27,7 +27,7 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
   public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull LibraryEntity entity,
                                                                                       @NotNull WorkspaceEntityStorage storage,
                                                                                       @NotNull Project project) {
-    return createIterators(entity, project);
+    return createIterators(entity, project, true);
   }
 
   @Override
@@ -35,14 +35,16 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
                                                                                          @NotNull LibraryEntity newEntity,
                                                                                          @NotNull WorkspaceEntityStorage storage,
                                                                                          @NotNull Project project) {
-    return createIterators(newEntity, project);
+    return createIterators(newEntity, project, true);
   }
 
   @NotNull
   static Collection<? extends IndexableFilesIterator> createIterators(@Nullable LibraryEntity entity,
-                                                                      @NotNull Project project) {
+                                                                      @NotNull Project project,
+                                                                      boolean checkLibraryIsInDependencies) {
     if (entity != null &&
-        ProjectRootsChangeListener.Companion.shouldFireRootsChanged$intellij_platform_lang_impl(entity, project)) {
+        (!checkLibraryIsInDependencies ||
+         ProjectRootsChangeListener.Companion.shouldFireRootsChanged$intellij_platform_lang_impl(entity, project))) {
       WorkspaceEntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
       LibraryBridge library = IndexableEntityProviderMethods.INSTANCE.findLibraryForEntity(entity, entityStorage);
       if (library != null) {
