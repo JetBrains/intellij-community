@@ -4,11 +4,11 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
 
 interface NewProjectWizardSdkData {
 
-  val sdkComboBox: CellBuilder<JdkComboBox>
+  val sdkComboBox: Cell<JdkComboBox>
 
   val sdkProperty: GraphProperty<Sdk?>
 

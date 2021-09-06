@@ -34,6 +34,11 @@ fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>
 fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>,
                     project: Project?, sdkTypeFilter: (SdkTypeId) -> Boolean
 ): CellBuilder<JdkComboBox> {
+  return component(createSdkComboBox(sdkModel, sdkProperty, project, sdkTypeFilter))
+}
+
+fun createSdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>,
+                      project: Project?, sdkTypeFilter: (SdkTypeId) -> Boolean): JdkComboBox {
   sdkModel.reset(project)
 
   val sdkComboBox = JdkComboBox(project, sdkModel, sdkTypeFilter, JdkComboBox.getSdkFilter(sdkTypeFilter), sdkTypeFilter, null)
@@ -53,7 +58,7 @@ fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>
   val lastUsedSdk = stateComponent.getValue(selectedJdkProperty)
   ProjectWizardUtil.preselectJdkForNewModule(project, lastUsedSdk, sdkComboBox, sdkTypeFilter)
 
-  return this.component(sdkComboBox)
+  return sdkComboBox
 }
 
 private fun getTargetJdk(sdkComboBox: JdkComboBox, project: Project?): Sdk? {

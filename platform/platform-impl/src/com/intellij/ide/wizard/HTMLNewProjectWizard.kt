@@ -2,7 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.project.Project
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.PlatformUtils
 
 class HTMLNewProjectWizard : NewProjectWizard {
@@ -13,7 +13,7 @@ class HTMLNewProjectWizard : NewProjectWizard {
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
   class Step(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardChildStep<NewProjectWizardLanguageStep>(parent) {
-    override fun setupUI(builder: LayoutBuilder) {}
+    override fun setupUI(builder: Panel) {}
 
     override fun setupProject(project: Project) {
       TODO("Not yet implemented")

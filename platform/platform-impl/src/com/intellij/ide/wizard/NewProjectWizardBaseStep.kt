@@ -18,6 +18,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import java.io.File
 import java.nio.file.InvalidPathException
@@ -55,32 +57,35 @@ class NewProjectWizardBaseStep(
     return moduleManager.modules.toList()
   }
 
-  override fun setupUI(builder: LayoutBuilder) {
+  override fun setupUI(builder: Panel) {
     with(builder) {
       row(UIBundle.message("label.project.wizard.new.project.name")) {
-        textField(nameProperty)
-          .withValidationOnApply { validateName() }
-          .withValidationOnInput { validateName() }
-          .growPolicy(GrowPolicy.SHORT_TEXT)
-          .focused()
+        textField()
+          .bindText(nameProperty)
+          .validationOnApply { validateName() }
+          .validationOnInput { validateName() }
+          .columns(COLUMNS_SHORT)
         installNameGenerators(getBuilderId(), nameProperty)
-      }.largeGapAfter()
+      }.bottomGap(BottomGap.SMALL)
       row(UIBundle.message("label.project.wizard.new.project.location")) {
         val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
         val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
         val uiPathProperty = pathProperty.transform(::getPresentablePath, ::getCanonicalPath)
-        textFieldWithBrowseButton(uiPathProperty, title, context.project, fileChooserDescriptor, fileChosen)
-          .withValidationOnApply { validateLocation() }
-          .withValidationOnInput { validateLocation() }
-      }.largeGapAfter()
+        textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
+          .bindText(uiPathProperty)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .validationOnApply { validateLocation() }
+          .validationOnInput { validateLocation() }
+      }.bottomGap(BottomGap.SMALL)
       row("") {
-        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), gitProperty)
-      }.largeGapAfter()
+        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
+          .bindSelected(gitProperty)
+      }.bottomGap(BottomGap.SMALL)
 
       childStep?.setupUI(this)
 
-      onGlobalApply {
+      onApply {
         context.projectName = name
         context.setProjectFileDirectory(projectPath, false)
       }

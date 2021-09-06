@@ -31,12 +31,14 @@ class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factor
       .also { fixUiShiftingWhenChoosingMultiStep(it) }
 
   private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {
+    /* todo fix it
     val labels = UIUtil.uiTraverser(panel)
       .filterIsInstance<JLabel>()
       .filter { it.parent is DialogPanel }
       .filter { it.getGapBefore() == null }
     val width = labels.maxOf { it.preferredSize.width }
     labels.forEach { it.setMinimumWidth(width) }
+    */
   }
 
   private fun JComponent.getConstraints(): CC? {

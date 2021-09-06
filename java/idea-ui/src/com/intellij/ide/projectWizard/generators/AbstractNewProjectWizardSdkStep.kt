@@ -10,17 +10,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.createSdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateSdk
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
 
 abstract class AbstractNewProjectWizardSdkStep(
   parent: NewProjectWizardStep
 ) : AbstractNewProjectWizardChildStep<NewProjectWizardStep>(parent), NewProjectWizardSdkData {
 
-  final override lateinit var sdkComboBox: CellBuilder<JdkComboBox>
+  final override lateinit var sdkComboBox: Cell<JdkComboBox>
 
   final override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
   final override val sdk by sdkProperty
@@ -29,11 +30,11 @@ abstract class AbstractNewProjectWizardSdkStep(
 
   protected abstract fun sdkTypeFilter(type: SdkTypeId): Boolean
 
-  override fun setupUI(builder: LayoutBuilder) {
+  override fun setupUI(builder: Panel) {
     with(builder) {
       row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-        sdkComboBox = sdkComboBox(sdksModel, sdkProperty, context.project, ::sdkTypeFilter)
-          .withValidationOnApply { validateSdk(sdkProperty, sdksModel) }
+        sdkComboBox = cell(createSdkComboBox(sdksModel, sdkProperty, context.project, ::sdkTypeFilter))
+          .validationOnApply { validateSdk(sdkProperty, sdksModel) }
           .onApply { context.projectJdk = sdk }
       }
     }

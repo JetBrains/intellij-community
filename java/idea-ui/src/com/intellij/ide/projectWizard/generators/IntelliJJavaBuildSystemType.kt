@@ -4,8 +4,8 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
+import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -15,6 +15,9 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
@@ -64,19 +67,22 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
       moduleFileLocationProperty.dependsOn(moduleNameProperty, pathFromModuleName)
     }
 
-    override fun setupUI(builder: LayoutBuilder) {
+    override fun setupUI(builder: Panel) {
       with(builder) {
-        hideableRow(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
+        hideableGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
           row(UIBundle.message("label.project.wizard.new.project.module.name")) {
-            textField(moduleNameProperty)
-              .withValidationOnInput { validateModuleName() }
-              .withValidationOnApply { validateModuleName() }
+            textField()
+              .bindText(moduleNameProperty)
+              .horizontalAlign(HorizontalAlign.FILL)
+              .validationOnInput { validateModuleName() }
+              .validationOnApply { validateModuleName() }
           }
           row(UIBundle.message("label.project.wizard.new.project.content.root")) {
-            textFieldWithBrowseButton(contentRootProperty,
-              UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
+            textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
               FileChooserDescriptorFactory.createSingleFolderDescriptor())
-              .withValidationOnApply { validateContentRoot() }
+              .bindText(contentRootProperty)
+              .horizontalAlign(HorizontalAlign.FILL)
+              .validationOnApply { validateContentRoot() }
               .apply {
                 component.textField.addKeyListener(object : KeyListener {
                   override fun keyTyped(e: KeyEvent?) {}
@@ -86,10 +92,11 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
               }
           }
           row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
-            textFieldWithBrowseButton(moduleFileLocationProperty,
-              UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
+            textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
               FileChooserDescriptorFactory.createSingleFolderDescriptor())
-              .withValidationOnApply { validateModuleFileLocation() }
+              .bindText(moduleFileLocationProperty)
+              .horizontalAlign(HorizontalAlign.FILL)
+              .validationOnApply { validateModuleFileLocation() }
               .apply {
                 component.textField.addKeyListener(object : KeyListener {
                   override fun keyTyped(e: KeyEvent?) {}
@@ -115,7 +122,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
         }
         if (module != null) return error(JavaUiBundle.message("module.name.location.dialog.message.module.already.exist.in.project", moduleName))
       }
-      return null;
+      return null
     }
 
     private fun ValidationInfoBuilder.validateContentRoot(): ValidationInfo? {

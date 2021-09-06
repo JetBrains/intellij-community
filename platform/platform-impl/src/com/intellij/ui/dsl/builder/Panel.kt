@@ -110,7 +110,7 @@ inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsC
 
 inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, @NlsContexts.BorderTitle title: String? = null,
                                                crossinline init: Panel.() -> Unit) {
-  buttonGroup(binding, T::class.javaPrimitiveType ?: T::class.java, title) {
+  buttonGroup(binding, T::class.java, title) {
     init()
   }
 }

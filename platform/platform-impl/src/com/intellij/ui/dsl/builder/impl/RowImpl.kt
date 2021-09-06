@@ -172,12 +172,12 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun radioButton(text: String, value: Any): Cell<JBRadioButton> {
     val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button with value")
-    val valueType = value::class.javaPrimitiveType ?: value::class.java
-    if (valueType != group.type) {
+    if (value::class.java != group.type) {
       throw UiDslException("Value $value is incompatible with button group binding class ${group.type.simpleName}")
     }
     val binding = group.binding
     val result = radioButton(text)
+    result.component.isSelected = binding.get() == value
     val component = result.component
     result.onApply { if (component.isSelected) group.set(value) }
     result.onReset { component.isSelected = binding.get() == value }

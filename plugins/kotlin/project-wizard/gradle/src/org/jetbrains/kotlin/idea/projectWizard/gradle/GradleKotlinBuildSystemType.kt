@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.projectWizard.gradle
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.openapi.project.Project
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -17,16 +19,20 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType {
         var groupId: String = ""
         var artifactId: String = ""
 
-        override fun setupUI(builder: LayoutBuilder) {
+        override fun setupUI(builder: Panel) {
             with(builder) {
-                hideableRow(GradleBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
+                hideableGroup(GradleBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                     row(GradleBundle.message("label.project.wizard.new.project.group.id")) {
-                        textField(::groupId)
+                        textField()
+                            .bindText(::groupId)
+                            .horizontalAlign(HorizontalAlign.FILL)
                     }
                     row(GradleBundle.message("label.project.wizard.new.project.artifact.id")) {
-                        textField(::artifactId)
+                        textField()
+                            .bindText(::artifactId)
+                            .horizontalAlign(HorizontalAlign.FILL)
                     }
-                }.largeGapAfter()
+                }
             }
         }
 

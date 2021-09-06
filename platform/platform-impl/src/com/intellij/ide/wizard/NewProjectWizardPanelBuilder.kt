@@ -4,10 +4,9 @@ package com.intellij.ide.wizard
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Key
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
-import com.intellij.ui.layout.panel as dialogPanel
 
 @ApiStatus.Internal
 internal class NewProjectWizardPanelBuilder(private val context: WizardContext) {
@@ -17,8 +16,8 @@ internal class NewProjectWizardPanelBuilder(private val context: WizardContext) 
   val preferredFocusedComponent: JComponent?
     get() = straightPanels.firstNotNullOfOrNull { it.preferredFocusedComponent }
 
-  fun panel(init: LayoutBuilder.() -> Unit) =
-    dialogPanel(init = init)
+  fun panel(init: Panel.() -> Unit) =
+    com.intellij.ui.dsl.builder.panel(init)
       .also { panels.add(it) }
       .apply { registerValidators(context.disposable) }
 

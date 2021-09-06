@@ -157,6 +157,19 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T> {
+    val origin = component.origin
+    dialogPanelConfig.validateCallbacks.add { callback(ValidationInfoBuilder(origin), component) }
+    return this
+  }
+
+  override fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+    val origin = component.origin
+    dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
+    property?.let { dialogPanelConfig.customValidationRequestors.getOrPut(origin, { SmartList() }).add(it::afterPropagation) }
+    return this
+  }
+
   override fun onApply(callback: () -> Unit): CellImpl<T> {
     dialogPanelConfig.applyCallbacks.register(component, callback)
     return this
@@ -179,13 +192,6 @@ internal class CellImpl<T : JComponent>(
 
   private fun shouldSaveOnApply(): Boolean {
     return !(applyIfEnabled && !viewComponent.isEnabled)
-  }
-
-  fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
-    val origin = component.origin
-    dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
-    property?.let { dialogPanelConfig.customValidationRequestors.getOrPut(origin, { SmartList() }).add(it::afterPropagation) }
-    return this
   }
 
   private fun doVisible(isVisible: Boolean) {

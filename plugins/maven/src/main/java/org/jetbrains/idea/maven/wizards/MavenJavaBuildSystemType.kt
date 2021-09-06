@@ -6,7 +6,9 @@ import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.idea.maven.model.MavenId
 
 class MavenJavaBuildSystemType : JavaBuildSystemType {
@@ -19,14 +21,18 @@ class MavenJavaBuildSystemType : JavaBuildSystemType {
     var artifactId: String = ""
     var version: String = "1.0-SNAPSHOT"
 
-    override fun setupUI(builder: LayoutBuilder) {
+    override fun setupUI(builder: Panel) {
       with(builder) {
-        hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
+        hideableGroup(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
           row(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) {
-            textField(::groupId)
+            textField()
+              .bindText(::groupId)
+              .horizontalAlign(HorizontalAlign.FILL)
           }
           row(MavenWizardBundle.message("label.project.wizard.new.project.artifact.id")) {
-            textField(::artifactId)
+            textField()
+              .bindText(::artifactId)
+              .horizontalAlign(HorizontalAlign.FILL)
           }
         }
       }

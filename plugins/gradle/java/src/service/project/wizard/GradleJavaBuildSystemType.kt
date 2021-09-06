@@ -21,6 +21,11 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.lang.JavaVersion
@@ -90,35 +95,39 @@ class GradleJavaBuildSystemType : JavaBuildSystemType {
       return if (parent.isPresent) parent.location else context.projectFileDirectory
     }
 
-    override fun setupUI(builder: LayoutBuilder) {
+    override fun setupUI(builder: Panel) {
       with(builder) {
         parentStep.sdkComboBox
-          .withValidationOnApply { validateGradleVersion() }
+          .validationOnApply { validateGradleVersion() }
         if (!context.isCreatingNewProject) {
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
             val presentationName = Function<DataView<ProjectData>, String> { it.presentationName }
             val parentComboBoxModel = SortedComboBoxModel(Comparator.comparing(presentationName, String.CASE_INSENSITIVE_ORDER))
             parentComboBoxModel.add(EMPTY_VIEW)
             parentComboBoxModel.addAll(parents)
-            comboBox(parentComboBoxModel, parentProperty, renderer = getParentRenderer())
-          }.largeGapAfter()
+            comboBox(parentComboBoxModel, renderer = getParentRenderer())
+              .bindItem(parentProperty)
+          }.bottomGap(BottomGap.SMALL)
         }
-        hideableRow(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
+        hideableGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
-            textField(groupIdProperty)
-              .growPolicy(GrowPolicy.SHORT_TEXT)
+            textField()
+              .bindText(groupIdProperty)
+              .horizontalAlign(HorizontalAlign.FILL)
           }
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
-            textField(artifactIdProperty)
-              .growPolicy(GrowPolicy.SHORT_TEXT)
-              .withValidationOnApply { validateArtifactId() }
-              .withValidationOnInput { validateArtifactId() }
+            textField()
+              .bindText(artifactIdProperty)
+              .horizontalAlign(HorizontalAlign.FILL)
+              .validationOnApply { validateArtifactId() }
+              .validationOnInput { validateArtifactId() }
           }
           row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
-            textField(versionProperty)
-              .growPolicy(GrowPolicy.SHORT_TEXT)
-          }
-        }.largeGapAfter()
+            textField()
+              .bindText(versionProperty)
+              .horizontalAlign(HorizontalAlign.FILL)
+          }.bottomGap(BottomGap.SMALL)
+        }
       }
     }
 

@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -76,6 +77,10 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
   fun graphProperty(property: GraphProperty<*>): Cell<T>
+
+  fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   fun onApply(callback: () -> Unit): Cell<T>
 
