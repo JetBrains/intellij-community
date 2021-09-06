@@ -68,6 +68,14 @@ public final class GistManagerImpl extends GistManager {
     return new PsiFileGistImpl<>(id, version, externalizer, calculator);
   }
 
+  @Override
+  public @NotNull <Data> PsiFileGist<Data> newPsiFileProjectIndependentGist(@NotNull String id,
+                                                                            int version,
+                                                                            @NotNull DataExternalizer<Data> externalizer,
+                                                                            @NotNull NullableFunction<? super PsiFile, ? extends Data> calcData) {
+    return new PsiFileProjectIndependentGist<>(id, version, externalizer, calcData);
+  }
+
   int getReindexCount() {
     return myReindexCount.get();
   }
