@@ -34,7 +34,7 @@ abstract class AbstractFirClassLoadingTest : AbstractUltraLightClassLoadingTest(
         val renderedClasses = executeOnPooledThreadInReadAction {
             val lightClasses = UltraLightChecker.allClasses(file).mapNotNull { classFabric.getLightClass(it) }
             renderLightClasses(testDataPath, lightClasses)
-        }!!
+        }
 
         KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedClasses)
     }
