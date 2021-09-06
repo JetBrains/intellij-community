@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.statistics
 
-import com.intellij.featureStatistics.fusCollectors.EventsIdentityThrottle
 import com.intellij.featureStatistics.fusCollectors.EventsRateThrottle
 import com.intellij.featureStatistics.fusCollectors.ThrowableDescription
 import com.intellij.ide.plugins.PluginUtil
@@ -57,7 +56,6 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
                                                        errorSizeField)
 
     private val ourErrorsRateThrottle = EventsRateThrottle(100, 5L * 60 * 1000) // 100 errors per 5 minutes
-    private val ourErrorsIdentityThrottle = EventsIdentityThrottle(50, 60L * 60 * 1000) // 1 unique error per 1 hour
 
     fun logSyncStarted(project: Project?, activityId: Long) =  syncStartedEvent.log(project, activityId)
     fun logSyncFinished(project: Project?, activityId: Long, success: Boolean) =  syncFinishedEvent.log(project, activityId, success)
@@ -78,10 +76,6 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
         val frames = description.getLastFrames(50)
         val framesHash = frames.hashCode()
         data.add(errorHashField.with(framesHash))
-        if (ourErrorsIdentityThrottle.tryPass(framesHash, System.currentTimeMillis())) {
-          data.add(errorFramesField.with(frames))
-          data.add(errorSizeField.with(description.size))
-        }
       }
       else {
         data.add(tooManyErrorsField.with(true))
