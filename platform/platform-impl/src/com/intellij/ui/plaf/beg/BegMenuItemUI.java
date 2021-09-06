@@ -146,23 +146,23 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       if (isSelected(jmenuitem)) {
         g.setColor(selectionForeground);
       }
-      else{
+      else {
         g.setColor(jmenuitem.getForeground());
       }
       if (useCheckAndArrow()) {
         IconUtil.paintSelectionAwareIcon(icon2, jmenuitem, g, h.x, h.y, isSelected(jmenuitem));
       }
       g.setColor(color2);
-      if (menuItem.isArmed()){
+      if (menuItem.isArmed()) {
         drawIconBorder(g);
       }
     }
-    if (icon1 != null){
+    if (icon1 != null) {
       if (!buttonmodel.isEnabled()){
         icon1 = jmenuitem.getDisabledIcon();
       }
       else
-        if (buttonmodel.isPressed() && buttonmodel.isArmed()){
+        if (buttonmodel.isPressed() && buttonmodel.isArmed()) {
           icon1 = jmenuitem.getPressedIcon();
           if (icon1 == null){
             icon1 = jmenuitem.getIcon();
@@ -172,8 +172,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         IconUtil.paintSelectionAwareIcon(icon1, jmenuitem, g, l.x, l.y, isSelected(jmenuitem));
       }
     }
-    if (s1 != null && s1.length() > 0){
-      if (buttonmodel.isEnabled()){
+    if (s1 != null && s1.length() > 0) {
+      if (buttonmodel.isEnabled()) {
         if (isSelected(jmenuitem)) {
           g.setColor(selectionForeground);
         }
@@ -196,7 +196,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         }
       }
     }
-    if (keyStrokeText != null && !keyStrokeText.isEmpty()){
+    if (keyStrokeText != null && !keyStrokeText.isEmpty()) {
       g.setFont(acceleratorFont);
       if (buttonmodel.isEnabled()){
         if (UIUtil.isUnderAquaBasedLookAndFeel() && isSelected(jmenuitem)) {
@@ -210,21 +210,21 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
             g.setColor(acceleratorForeground);
           }
         }
-        BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x, c.y + fontmetrics.getAscent());
+        BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x, c.y + fontmetrics1.getAscent());
       }
       else
-        if (disabledForeground != null){
+        if (disabledForeground != null) {
           g.setColor(disabledForeground);
-          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x, c.y + fontmetrics.getAscent());
+          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x, c.y + fontmetrics1.getAscent());
         }
-        else{
+        else {
           g.setColor(jmenuitem.getBackground().brighter());
-          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x, c.y + fontmetrics.getAscent());
+          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x, c.y + fontmetrics1.getAscent());
           g.setColor(jmenuitem.getBackground().darker());
-          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x - 1, (c.y + fontmetrics.getAscent()) - 1);
+          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, c.x - 1, (c.y + fontmetrics1.getAscent()) - 1);
         }
     }
-    if (arrowIcon != null){
+    if (arrowIcon != null) {
       if (isSelected(jmenuitem)) {
         g.setColor(selectionForeground);
       }
