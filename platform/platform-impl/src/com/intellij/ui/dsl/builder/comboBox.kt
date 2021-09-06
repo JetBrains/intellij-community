@@ -6,28 +6,28 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.layout.*
 import kotlin.reflect.KMutableProperty0
 
-fun <T> Cell<ComboBox<T>>.bindItem(binding: PropertyBinding<T?>): Cell<ComboBox<T>> {
+fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C> {
   component.selectedItem = binding.get()
   return bind({ component -> component.selectedItem as T? },
     { component, value -> component.setSelectedItem(value) },
     binding)
 }
 
-fun <T> Cell<ComboBox<T>>.bindItem(property: GraphProperty<T>): Cell<ComboBox<T>> {
+fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: GraphProperty<T>): Cell<C> {
   component.selectedItem = property.get()
   return graphProperty(property)
     .applyToComponent { bind(property) }
 }
 
-inline fun <reified T : Any> Cell<ComboBox<T>>.bindItem(prop: KMutableProperty0<T>): Cell<ComboBox<T>> {
+inline fun <reified T : Any, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T>): Cell<C> {
   return bindItem(prop.toBinding().toNullable())
 }
 
-fun <T> Cell<ComboBox<T>>.bindItem(getter: () -> T?, setter: (T?) -> Unit): Cell<ComboBox<T>> {
+fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit): Cell<C> {
   return bindItem(PropertyBinding(getter, setter))
 }
 
-fun <T> Cell<ComboBox<T>>.columns(columns: Int): Cell<ComboBox<T>> {
+fun <T, C : ComboBox<T>> Cell<C>.columns(columns: Int): Cell<C> {
   // See JTextField.getColumnWidth implementation
   val columnWidth = component.getFontMetrics(component.font).charWidth('m')
   val insets = component.insets

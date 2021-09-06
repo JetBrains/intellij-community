@@ -63,9 +63,9 @@ class NewProjectWizardBaseStep(
       row(UIBundle.message("label.project.wizard.new.project.name")) {
         textField()
           .bindText(nameProperty)
+          .columns(COLUMNS_MEDIUM)
           .validationOnApply { validateName() }
           .validationOnInput { validateName() }
-          .columns(COLUMNS_SHORT)
         installNameGenerators(getBuilderId(), nameProperty)
       }.bottomGap(BottomGap.SMALL)
       row(UIBundle.message("label.project.wizard.new.project.location")) {

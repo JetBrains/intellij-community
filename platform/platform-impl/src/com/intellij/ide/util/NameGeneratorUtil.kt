@@ -4,6 +4,7 @@ package com.intellij.ide.util
 import com.intellij.ide.util.projectWizard.ModuleNameGenerator
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 
 fun Cell.installNameGenerators(place: String?, nameProperty: GraphProperty<String>) {
@@ -20,6 +21,7 @@ fun Row.installNameGenerators(place: String?, nameProperty: GraphProperty<String
     val nameGeneratorUi = nameGenerator.getUi(place, nameProperty::set)
     if (nameGeneratorUi != null) {
       cell(nameGeneratorUi)
+        .horizontalAlign(HorizontalAlign.FILL)
     }
   }
 }

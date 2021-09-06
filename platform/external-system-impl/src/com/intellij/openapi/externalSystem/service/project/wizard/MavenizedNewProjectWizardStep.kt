@@ -14,11 +14,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
 import com.intellij.util.io.systemIndependentPath
 import java.util.Comparator.comparing
@@ -71,27 +67,28 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, P>(
           parentComboBoxModel.addAll(parents)
           comboBox(parentComboBoxModel, ParentRenderer())
             .bindItem(parentProperty)
+            .columns(COLUMNS_MEDIUM)
         }.bottomGap(BottomGap.SMALL)
       }
       hideableGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
           textField()
             .bindText(groupIdProperty)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .columns(COLUMNS_MEDIUM)
             .validationOnApply { validateGroupId() }
             .validationOnInput { validateGroupId() }
         }.bottomGap(BottomGap.SMALL)
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
           textField()
             .bindText(artifactIdProperty)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .columns(COLUMNS_MEDIUM)
             .validationOnApply { validateArtifactId() }
             .validationOnInput { validateArtifactId() }
         }.bottomGap(BottomGap.SMALL)
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
           textField()
             .bindText(versionProperty)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .columns(COLUMNS_MEDIUM)
             .validationOnApply { validateVersion() }
             .validationOnInput { validateVersion() }
         }.bottomGap(BottomGap.SMALL)
