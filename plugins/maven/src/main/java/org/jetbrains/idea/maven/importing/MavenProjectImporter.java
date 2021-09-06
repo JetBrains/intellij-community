@@ -270,10 +270,14 @@ public class MavenProjectImporter {
       if (!importers.isEmpty()) {
         IdeModifiableModelsProvider provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
         try {
+          List<MavenModuleImporter> toRun = new ArrayList<>(importers.size());
           for (MavenModuleImporter importer : importers) {
-            importer.setModifiableModelsProvider(provider);
+            if (!importer.isModuleDisposed()) {
+              importer.setModifiableModelsProvider(provider);
+              toRun.add(importer);
+            }
           }
-          configFacets(postTasks, importers);
+          configFacets(postTasks, toRun);
         } finally {
           MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
             ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {

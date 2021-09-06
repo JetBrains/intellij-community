@@ -470,4 +470,8 @@ public final class MavenModuleImporter {
   private static boolean isPreviewText(Element child) {
     return JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY.equals(child.getTextTrim());
   }
+
+  public boolean isModuleDisposed() {
+    return myModule.isDisposed();
+  }
 }
