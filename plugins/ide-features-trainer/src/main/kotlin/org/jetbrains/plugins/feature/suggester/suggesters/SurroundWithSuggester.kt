@@ -21,7 +21,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
     override val suggestingActionId = "SurroundWith"
     override val suggestingTipFileName = "SurroundWith.html"
 
-    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+    override val languages = listOf("JAVA", "kotlin")
 
     private object State {
         var surroundingStatement: PsiElement? = null
