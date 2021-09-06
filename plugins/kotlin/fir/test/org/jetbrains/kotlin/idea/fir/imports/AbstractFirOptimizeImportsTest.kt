@@ -25,7 +25,7 @@ abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
     override fun doTest(file: KtFile): String? {
         val optimizer = executeOnPooledThreadInReadAction {
             KotlinFirImportOptimizer().processFile(file)
-        }!!
+        }
 
         project.executeWriteCommand("") {
             optimizer.run()

@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.fir.shortenRefs
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.AbstractImportsTest
+import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -19,11 +19,9 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
 
         val selection = runReadAction { TextRange(selectionModel.selectionStart, selectionModel.selectionEnd) }
 
-        val shortenings = executeOnPooledThread {
-            runReadAction {
-                analyse(file) {
-                    collectPossibleReferenceShortenings(file, selection)
-                }
+        val shortenings = executeOnPooledThreadInReadAction {
+            analyse(file) {
+                collectPossibleReferenceShortenings(file, selection)
             }
         }
 
@@ -46,6 +44,3 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override val nameCountToUseStarImportDefault: Int
         get() = Integer.MAX_VALUE
 }
-
-private fun <R> executeOnPooledThread(action: () -> R): R =
-    ApplicationManager.getApplication().executeOnPooledThread<R> { action() }.get()
