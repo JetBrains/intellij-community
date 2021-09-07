@@ -4014,7 +4014,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area). Also, don't move caret when context menu for an inlay is invoked.
-      boolean moveCaret = eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
+      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && !ExperimentalUI.isNewUI()) ||
                   isInsideGutterWhitespaceArea(e) ||
                   eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
       if (moveCaret) {
@@ -4077,9 +4077,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        // Move the caret to the end of the selection, that is, the beginning of the next line.
-        // This is more consistent with the caret placement on "Extend line selection" and on dragging through the line numbers area.
-        selectLineAtCaret(true);
+        if (ExperimentalUI.isNewUI()) {
+          //do nothing here and set/unset a breakpoint if possible in XLineBreakpointManager
+          return false;
+        } else {
+          // Move the caret to the end of the selection, that is, the beginning of the next line.
+          // This is more consistent with the caret placement on "Extend line selection" and on dragging through the line numbers area.
+          selectLineAtCaret(true);
+        }
         return isNavigation;
       }
 
