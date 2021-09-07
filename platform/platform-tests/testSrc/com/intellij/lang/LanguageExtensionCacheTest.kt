@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
 import com.intellij.codeInsight.completion.CompletionExtension
@@ -10,16 +10,14 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.KeyedLazyInstance
-import java.util.*
 
 class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val myExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testLangExt")
@@ -98,8 +96,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
         return "blah-blah" + System.identityHashCode(this)
       }
     }
-    FileTypeManager.getInstance().registerFileType(plainTextDialectFileType)
-    Disposer.register(parentDisposable, Disposable { FileTypeManagerEx.getInstanceEx().unregisterFileType(plainTextDialectFileType) })
+    (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(plainTextDialectFileType, listOf(), parentDisposable)
     return plainTextDialectFileType.language
   }
 

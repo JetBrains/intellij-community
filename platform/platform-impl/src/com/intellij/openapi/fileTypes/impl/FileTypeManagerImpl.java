@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -85,6 +86,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
   private final FileTypeAssocTable<FileTypeBean> myPendingAssociations = new FileTypeAssocTable<>();
   private final ReadWriteLock myPendingInitializationLock = new ReentrantReadWriteLock();
+
+  private @Nullable Consumer<ConflictingFileTypeMappingTracker.ResolveConflictResult> myConflictResultConsumer;
 
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
   @NonNls private static final String ELEMENT_IGNORE_FILES = "ignoreFiles";
@@ -201,7 +204,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (extension.implementationClass != null) {
           FileType fileType = findFileTypeByName(extension.name);
           if (fileType != null) {
-            unregisterFileType(fileType);
+            doUnregisterFileType(fileType);
           }
         }
         else {
@@ -270,15 +273,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
   }
 
-  @NotNull
-  private List<ConflictingFileTypeMappingTracker.ResolveConflictResult> initStandardFileTypes() {
+  private void initStandardFileTypes() {
     instantiatePendingFileTypes();
 
     loadFileTypeBeans();
 
-    List<ConflictingFileTypeMappingTracker.ResolveConflictResult> notificationsShown = new ArrayList<>();
+    //noinspection deprecation
     FileTypeFactory.FILE_TYPE_FACTORY_EP.processWithPluginDescriptor((factory, pluginDescriptor) -> {
-      FileTypeConsumer consumer = new PluginFileTypeConsumer(pluginDescriptor, notificationsShown);
+      FileTypeConsumer consumer = new PluginFileTypeConsumer(pluginDescriptor);
       try {
         factory.createFileTypes(consumer);
       }
@@ -292,9 +294,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     for (StandardFileType pair : myStandardFileTypes.values()) {
       if (mySchemeManager.findSchemeByName(pair.fileType.getName()) == null) {
-        List<ConflictingFileTypeMappingTracker.ResolveConflictResult> conflicts =
-          registerFileTypeWithoutNotification(pair.fileType, pair.pluginDescriptor, pair.matchers, true);
-        notificationsShown.addAll(conflicts);
+        registerFileTypeWithoutNotification(pair.fileType, pair.pluginDescriptor, pair.matchers, true);
       }
     }
 
@@ -333,7 +333,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     catch (Exception e) {
       LOG.error(e);
     }
-    return notificationsShown;
   }
 
   @TestOnly
@@ -564,13 +563,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public void initializeComponent() {
-    doInitializeComponent();
-  }
+    initStandardFileTypes();
 
-  @VisibleForTesting
-  @NotNull
-  List<ConflictingFileTypeMappingTracker.ResolveConflictResult> doInitializeComponent() {
-    List<ConflictingFileTypeMappingTracker.ResolveConflictResult> conflicts = initStandardFileTypes();
     if (!myUnresolvedMappings.isEmpty()) {
       instantiatePendingFileTypes();
     }
@@ -605,7 +599,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (isAtLeastOneStandardFileTypeHasBeenRead) {
       restoreStandardFileExtensions();
     }
-    return conflicts;
   }
 
   private void tryToResolveMapping(@NotNull String typeName, @NotNull FileNameMatcher matcher) {
@@ -790,14 +783,26 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  @Deprecated
-  public void registerFileType(@NotNull FileType fileType) {
-    registerFileType(fileType, ArrayUtilRt.EMPTY_STRING_ARRAY);
+  @SuppressWarnings("removal")
+  public void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions) {
+    PluginException.reportDeprecatedUsage("FileTypeManager#registerFileType", "Use `com.intellij.fileType` extension or `FileTypeFactory` instead.");
+    List<FileNameMatcher> matchers = new ArrayList<>();
+    if (defaultAssociatedExtensions != null) {
+      for (String extension : defaultAssociatedExtensions) {
+        matchers.add(new ExtensionFileNameMatcher(extension));
+      }
+    }
+    doRegisterFileType(type, matchers);
   }
 
-  @Override
-  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations) {
-    DeprecatedMethodException.report("Use fileType extension instead.");
+  @TestOnly
+  public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations, @NotNull Disposable disposable) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
+    doRegisterFileType(type, defaultAssociations);
+    Disposer.register(disposable, () -> doUnregisterFileType(type));
+  }
+
+  private void doRegisterFileType(FileType type, List<FileNameMatcher> defaultAssociations) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       registerFileTypeWithoutNotification(type, detectPluginDescriptor(type).pluginDescriptor, defaultAssociations, true);
@@ -805,8 +810,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
   }
 
-  @Override
+  @TestOnly
   public void unregisterFileType(@NotNull FileType fileType) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
+    doUnregisterFileType(fileType);
+  }
+
+  private void doUnregisterFileType(FileType fileType) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       unregisterFileTypeWithoutNotification(fileType);
@@ -1300,12 +1310,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
    * Registers a standard file type. Doesn't notifyListeners any change events.
    * returns list of shown conflict notifications.
    */
-  @NotNull
-  private List<ConflictingFileTypeMappingTracker.ResolveConflictResult> registerFileTypeWithoutNotification(@NotNull FileType newFileType,
-                                                                                                            @NotNull PluginDescriptor newPluginDescriptor,
-                                                                                                            @NotNull List<? extends FileNameMatcher> newMatchers,
-                                                                                                            boolean addScheme) {
-    List<ConflictingFileTypeMappingTracker.ResolveConflictResult> notificationsShown = new ArrayList<>();
+  private void registerFileTypeWithoutNotification(@NotNull FileType newFileType,
+                                                   @NotNull PluginDescriptor newPluginDescriptor,
+                                                   @NotNull List<? extends FileNameMatcher> newMatchers,
+                                                   boolean addScheme) {
     FileTypeWithDescriptor newFtd = new FileTypeWithDescriptor(newFileType, newPluginDescriptor);
     if (addScheme) {
       FileTypeWithDescriptor oldFileType = mySchemeManager.findSchemeByName(newFileType.getName());
@@ -1336,8 +1344,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           LOG.debug(newMatcher + " had a conflict between " + oldFtd + " and " + newFtd + " and the winner is ... ... ... " + result);
         }
       }
-      if (!result.approved) {
-        notificationsShown.add(result);
+      if (!result.approved && myConflictResultConsumer != null) {
+        myConflictResultConsumer.accept(result);
       }
       FileTypeWithDescriptor resolvedFtd = result.resolved;
       FileType oldFileType = oldFtd == null ? null : oldFtd.fileType;
@@ -1357,8 +1365,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (newFileType instanceof FileTypeIdentifiableByVirtualFile) {
       mySpecialFileTypes = ArrayUtil.append(mySpecialFileTypes, (FileTypeIdentifiableByVirtualFile)newFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
-
-    return notificationsShown;
   }
 
   private void checkFileTypeNamesUniqueness(@NotNull FileTypeWithDescriptor newFtd) {
@@ -1643,12 +1649,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private class PluginFileTypeConsumer implements FileTypeConsumer {
     private final PluginDescriptor myPluginDescriptor;
-    private final List<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> myNotificationsShown;
 
-    PluginFileTypeConsumer(@NotNull PluginDescriptor pluginDescriptor,
-                           @NotNull List<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> notificationsShown) {
+    PluginFileTypeConsumer(@NotNull PluginDescriptor pluginDescriptor) {
       myPluginDescriptor = pluginDescriptor;
-      myNotificationsShown = notificationsShown;
     }
 
     @Override
@@ -1690,13 +1693,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       StandardFileType type = myStandardFileTypes.get(typeName);
       if (type == null) {
         myStandardFileTypes.put(typeName, new StandardFileType(fileType, pluginDescriptor, fileNameMatchers));
-        List<ConflictingFileTypeMappingTracker.ResolveConflictResult> conflicts =
-          registerFileTypeWithoutNotification(fileType, pluginDescriptor, fileNameMatchers, true);
-        myNotificationsShown.addAll(conflicts);
+        registerFileTypeWithoutNotification(fileType, pluginDescriptor, fileNameMatchers, true);
       }
       else {
         type.matchers.addAll(fileNameMatchers);
       }
     }
+  }
+
+  @TestOnly
+  public void setConflictResultConsumer(@Nullable Consumer<ConflictingFileTypeMappingTracker.ResolveConflictResult> consumer) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
+    myConflictResultConsumer = consumer;
   }
 }

@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,32 +41,10 @@ public abstract class FileTypeManager extends FileTypeRegistry {
     return instance;
   }
 
-  /**
-   * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations);
-
-  /**
-   * Registers a file type.
-   *
-   * @param type                        The file type to register.
-   * @param defaultAssociatedExtensions The list of extensions which cause the file to be
-   *                                    treated as the specified file type. The extensions should not start with '.'.
-   * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final void registerFileType(@NotNull FileType type, @NonNls String @Nullable ... defaultAssociatedExtensions) {
-    List<FileNameMatcher> matchers = new ArrayList<>();
-    if (defaultAssociatedExtensions != null) {
-      for (String extension : defaultAssociatedExtensions) {
-        matchers.add(new ExtensionFileNameMatcher(extension));
-      }
-    }
-    registerFileType(type, matchers);
-  }
+  /** @deprecated use {@code com.intellij.fileType} extension point instead */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public abstract void registerFileType(@NotNull FileType type, @NonNls String @Nullable ... defaultAssociatedExtensions);
 
   /**
    * Checks if the specified file is ignored by the IDE. Ignored files are not visible in

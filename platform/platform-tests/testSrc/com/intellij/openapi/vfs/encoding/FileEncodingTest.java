@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.lang.Language;
@@ -58,10 +58,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -1045,33 +1042,27 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     }
 
     FileType foo = new MyFT();
-    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
-    try {
-      fileTypeManager.registerFileType(foo);
+    ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).registerFileType(foo, List.of(), getTestRootDisposable());
 
-      VirtualFile file = createTempFile("my", NO_BOM, StringUtil.repeat("c", 20), US_ASCII);
-      FileEditorManager.getInstance(getProject()).openFile(file, false);
+    VirtualFile file = createTempFile("my", NO_BOM, StringUtil.repeat("c", 20), US_ASCII);
+    FileEditorManager.getInstance(getProject()).openFile(file, false);
 
-      Document document = getDocument(file);
-      assertEquals(foo, file.getFileType());
-      file.setCharset(null);
-      detectThreads.clear();
+    Document document = getDocument(file);
+    assertEquals(foo, file.getFileType());
+    file.setCharset(null);
+    detectThreads.clear();
 
-      for (int i=0; i<1000; i++) {
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, " "));
-      }
-
-      EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-      encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
-      UIUtil.dispatchAllInvocationEvents();
-
-      Thread thread = assertOneElement(detectThreads);
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      assertNotEquals(Thread.currentThread(), thread);
+    for (int i=0; i<1000; i++) {
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, " "));
     }
-    finally {
-      fileTypeManager.unregisterFileType(foo);
-    }
+
+    EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+    encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
+    UIUtil.dispatchAllInvocationEvents();
+
+    Thread thread = assertOneElement(detectThreads);
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertNotEquals(Thread.currentThread(), thread);
   }
 
   public void testSetMappingMustResetEncodingOfNotYetLoadedFiles() {
@@ -1183,15 +1174,10 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     };
     FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
-    fileTypeManager.registerFileType(fileType, Collections.singletonList(new ExtensionFileNameMatcher(ext)));
+    fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable());
     VirtualFile file = createTempFile(ext, NO_BOM, "some", StandardCharsets.UTF_8);
-    try {
-      assertEquals(fileType, file.getFileType());
-      assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
-    }
-    finally {
-      fileTypeManager.unregisterFileType(fileType);
-    }
+    assertEquals(fileType, file.getFileType());
+    assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
   }
 
   public void testDetectedCharsetOverridesFileEncodingProvider() throws IOException {

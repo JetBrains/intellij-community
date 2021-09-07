@@ -12,11 +12,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class MockFileTypeManager extends FileTypeManager {
-  @Override
-  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations) {
-    throw new UnsupportedOperationException();
-  }
-
   @NotNull
   @Override
   public FileType getFileTypeByFileName(@NotNull @NonNls String fileName) {
@@ -38,6 +33,11 @@ public class MockFileTypeManager extends FileTypeManager {
   @Override
   public FileType @NotNull [] getRegisteredFileTypes() {
     return new FileType[] {MockLanguageFileType.INSTANCE};
+  }
+
+  @Override
+  @SuppressWarnings("removal")
+  public void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions) {
   }
 
   @Override

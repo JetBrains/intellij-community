@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.fileTypes.*;
@@ -24,15 +24,6 @@ public class MockFileTypeManager extends FileTypeManagerEx {
 
   @Override
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
-
-  }
-
-  @Override
-  public void registerFileType(@NotNull FileType fileType) {
-  }
-
-  @Override
-  public void unregisterFileType(@NotNull FileType fileType) {
   }
 
   @Override
@@ -60,7 +51,8 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations) {
+  @SuppressWarnings("removal")
+  public void registerFileType(@NotNull FileType type, @NonNls String @Nullable ... defaultAssociatedExtensions) {
   }
 
   @Override
