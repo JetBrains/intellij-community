@@ -51,7 +51,6 @@ interface ModifiableModelsProviderProxy {
 class ModifiableModelsProviderProxyImpl(private val project: Project,
                                         val diff : WorkspaceEntityStorageBuilder) : ModifiableModelsProviderProxy {
 
-
   override val moduleModelProxy by lazy { ModuleModelProxyImpl(diff, project) }
   private val substitutionWorkspace by lazy {
     ReadAction.compute(
@@ -278,6 +277,8 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
 
 
 class ModifiableModelsProviderProxyWrapper(private val delegate: IdeModifiableModelsProvider) : ModifiableModelsProviderProxy {
+
+  constructor(project: Project) : this(ProjectDataManager.getInstance().createModifiableModelsProvider(project))
 
   override val moduleModelProxy: ModuleModelProxy
     get() = ModuleModelProxyWrapper(delegate.modifiableModuleModel)

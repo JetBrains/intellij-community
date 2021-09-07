@@ -113,7 +113,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       MavenRootModelAdapter adapter =
         new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                       getModule("project"),
-                                                                      new ModifiableModelsProviderProxyImpl(myProject)));
+                                                                      new ModifiableModelsProviderProxyWrapper(myProject)));
       adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE);
       adapter.addExcludedFolder(dir2.getPath());
       adapter.getRootModel().commit();

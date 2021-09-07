@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -54,7 +53,7 @@ public class MavenFoldersImporter {
         if (mavenProject == null) continue;
 
         MavenRootModelAdapter a = new MavenRootModelAdapter(
-          new MavenRootModelAdapterLegacyImpl(mavenProject, each, new ModifiableModelsProviderProxyImpl(project)));
+          new MavenRootModelAdapterLegacyImpl(mavenProject, each, new ModifiableModelsProviderProxyWrapper(project)));
         new MavenFoldersImporter(mavenProject, settings, a).config(updateTargetFoldersOnly);
 
         ModifiableRootModel model = a.getRootModel();
