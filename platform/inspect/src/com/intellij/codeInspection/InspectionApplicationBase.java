@@ -122,12 +122,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     try {
       execute();
     }
-    catch (QodanaException e) {
-      LOG.error(e);
-      reportError(e.getMessage());
-      gracefulExit();
-      return;
-    }
     catch (Throwable e) {
       LOG.error(e);
       reportError(e);
@@ -239,7 +233,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     StringBuilder convertErrorBuffer = new StringBuilder();
     if (conversionService != null &&
         conversionService.convertSilently(projectPath, createConversionListener(convertErrorBuffer)).openingIsCanceled()) {
-      throw new QodanaException(convertErrorBuffer.toString());
+      onFailure(convertErrorBuffer.toString());
+      return null;
     }
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getExtensionList()) {
@@ -265,7 +260,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     );
     Project project = projectRef.get();
     if (project == null) {
-      throw new QodanaException(InspectionsBundle.message("inspection.application.unable.open.project"));
+      onFailure(InspectionsBundle.message("inspection.application.unable.open.project"));
+      return null;
     }
     waitAllStartupActivitiesPassed(project);
 
@@ -538,7 +534,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         isMappingLoaded.blockingGet(60000);
       }
       catch (TimeoutException | ExecutionException e) {
-        throw new QodanaException(InspectionsBundle.message("inspection.application.cannot.initialize.vcs.mapping"));
+        onFailure(InspectionsBundle.message("inspection.application.cannot.initialize.vcs.mapping"));
       }
     }
     runAnalysisAfterShelvingSync(
@@ -691,7 +687,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {
       })) {
-        throw new QodanaException(InspectionsBundle.message("inspection.application.cannot.configure.project.to.run.inspections"));
+        onFailure(InspectionsBundle.message("inspection.application.cannot.configure.project.to.run.inspections"));
       }
       context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
       reportMessage(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
@@ -805,7 +801,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (profileName != null && !profileName.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByName(project, profileName);
       if (inspectionProfile == null) {
-        throw new QodanaException(InspectionsBundle.message("inspection.application.profile.was.not.found.by.name.0.1", profileName, configSource));
+        onFailure(InspectionsBundle.message("inspection.application.profile.was.not.found.by.name.0.1", profileName, configSource));
       }
       return inspectionProfile;
     }
@@ -813,7 +809,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (profilePath != null && !profilePath.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
       if (inspectionProfile == null) {
-        throw new QodanaException(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));
+        onFailure(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));
       }
       return inspectionProfile;
     }
@@ -905,9 +901,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public void reportError(@NotNull Throwable e) {
-    StringWriter sw = new StringWriter();
-    e.printStackTrace(new PrintWriter(sw));
-    reportError(sw.toString());
+    reportError(e.getMessage());
+  }
+
+  public void onFailure(@NotNull String message) {
+    reportError(message);
+    gracefulExit();
   }
 
   @Override
