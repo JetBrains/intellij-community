@@ -5,9 +5,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level
 import org.apache.log4j.PatternLayout
@@ -23,8 +20,6 @@ import java.nio.file.Paths
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
 
-private const val SERVER_PORT = 20854
-
 val skippedPluginModules = hashSetOf(
   // skip intellij.cwm.plugin - quiche downloading should be implemented as a maven lib
   "intellij.cwm.plugin",
@@ -34,8 +29,10 @@ val skippedPluginModules = hashSetOf(
 
 val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
 
-internal class DevIdeaBuildServer {
+class DevIdeaBuildServer {
   companion object {
+    const val SERVER_PORT = 20854
+
     @JvmStatic
     fun main(args: Array<String>) {
       // avoiding "log4j:WARN No appenders could be found"
@@ -84,44 +81,9 @@ private fun start() {
   httpServer.stop(10)
 }
 
-@Serializable
-data class Configuration(val products: Map<String, ProductConfiguration>)
-
-@Serializable
-data class ProductConfiguration(val modules: List<String>, @SerialName("class") val className: String)
-
-class BuildServer(val homePath: Path) {
-  private val outDir: Path = homePath.resolve("out/classes/production").toRealPath()
-  private val configuration: Configuration
-
-  private val platformPrefixToPluginBuilder = HashMap<String, IdeBuilder>()
-
-  init {
-    val jsonFormat = Json { isLenient = true }
-    configuration = jsonFormat.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve("build/dev-build-server.json")))
-  }
-
-  @Synchronized
-  fun checkOrCreateIdeBuilder(platformPrefix: String): IdeBuilder {
-    var ideBuilder = platformPrefixToPluginBuilder.get(platformPrefix)
-    if (ideBuilder != null) {
-      ideBuilder.checkChanged()
-      return ideBuilder
-    }
-
-    val productConfiguration = configuration.products.get(platformPrefix)
-                               ?: throw ConfigurationException("No production configuration for platform prefix `$platformPrefix`, " +
-                                                               "please add to `dev-build-server.json` if needed")
-
-    ideBuilder = initialBuild(productConfiguration, homePath, outDir)
-    platformPrefixToPluginBuilder.put(platformPrefix, ideBuilder)
-    return ideBuilder
-  }
-}
-
 private fun createHttpServer(buildServer: BuildServer): HttpServer {
   val httpServer = HttpServer.create()
-  httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 4)
+  httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), DevIdeaBuildServer.SERVER_PORT), 4)
   httpServer.createContext("/build", HttpHandler { exchange ->
     val platformPrefix = parseQuery(exchange.requestURI).get("platformPrefix")?.first() ?: "idea"
     var statusMessage: String
@@ -181,4 +143,4 @@ private fun getHomePath(): Path {
   return homePath
 }
 
-private class ConfigurationException(message: String) : RuntimeException(message)
+internal class ConfigurationException(message: String) : RuntimeException(message)
