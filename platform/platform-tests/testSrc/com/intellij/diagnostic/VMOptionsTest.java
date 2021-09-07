@@ -85,7 +85,7 @@ public class VMOptionsTest {
 
   @Test
   public void writingAtNonExistentDirectory() throws IOException {
-    Path anotherFile = tempDir.getRootPath().resolve("non-existent").resolve("file");
+    Path anotherFile = tempDir.getRootPath().resolve("non-existent/file");
     System.setProperty("jb.vmOptionsFile", anotherFile.toString());
 
     VMOptions.setOption(VMOptions.MemoryKind.HEAP, 1024);
