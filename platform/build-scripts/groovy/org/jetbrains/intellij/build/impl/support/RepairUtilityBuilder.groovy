@@ -102,7 +102,7 @@ class RepairUtilityBuilder {
         BINARIES_CACHE = buildBinaries(buildContext)
       }
       if (!BINARIES_CACHE.isEmpty()) {
-        findBinary(buildContext, os, arch)
+        return findBinary(buildContext, os, arch)
       }
     }
     return null
