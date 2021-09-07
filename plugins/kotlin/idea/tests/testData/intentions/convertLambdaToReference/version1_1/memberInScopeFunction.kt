@@ -1,5 +1,5 @@
+// LANGUAGE_VERSION: 1.1
 // WITH_RUNTIME
-// AFTER-WARNING: Parameter 'f' is never used
 fun foo(f: () -> Unit) {}
 
 class Bar {
@@ -9,7 +9,7 @@ class Bar {
 class Test {
     fun test() {
         with(Bar()) {
-            foo(::bar)
+            foo { <caret>bar() }
         }
     }
 }
