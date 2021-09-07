@@ -91,7 +91,8 @@ public final class GistManagerImpl extends GistManager {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Invalidating gist " + file);
     }
-    invalidateData(); // should be more granular in future
+    file.putUserDataIfAbsent(VirtualFileGistImpl.GIST_INVALIDATION_COUNT_KEY, new AtomicInteger()).incrementAndGet();
+    invalidateDependentCaches();
   }
 
   private void invalidateGists() {
