@@ -151,7 +151,7 @@ public class AdvHighlighting14Test extends LightJavaCodeInsightFixtureTestCase {
     doTest(BASE_PATH + "/packageClassClashNoClassInDir", BASE_PATH + "/packageClassClashNoClassInDir/pkg/sub.java");
   }
 
-  public void testDefaultPackageAndClassConflict() throws Exception {
+  public void testDefaultPackageAndClassConflict() {
     myFixture.configureByFile(BASE_PATH + "/lang.java");
     myFixture.checkHighlighting(false, false, false);
   }
