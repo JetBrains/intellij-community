@@ -64,6 +64,11 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun focused(): CellImpl<T> {
+    dialogPanelConfig.preferredFocusedComponent = component
+    return this
+  }
+
   override fun applyToComponent(task: T.() -> Unit): CellImpl<T> {
     component.task()
     return this

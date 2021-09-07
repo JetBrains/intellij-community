@@ -29,9 +29,7 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
 }
 
 private fun initPanel(dialogPanelConfig: DialogPanelConfig, panel: DialogPanel) {
-  /* todo
   panel.preferredFocusedComponent = dialogPanelConfig.preferredFocusedComponent
-  */
   panel.validateCallbacks = dialogPanelConfig.validateCallbacks
   panel.componentValidateCallbacks = dialogPanelConfig.componentValidateCallbacks
   panel.customValidationRequestors = dialogPanelConfig.customValidationRequestors

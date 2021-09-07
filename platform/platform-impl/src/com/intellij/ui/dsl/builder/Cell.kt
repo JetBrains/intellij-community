@@ -30,6 +30,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   val component: T
 
+  fun focused(): Cell<T>
+
   fun applyToComponent(task: T.() -> Unit): Cell<T>
 
   override fun enabled(isEnabled: Boolean): Cell<T>
