@@ -31,7 +31,6 @@
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.10-release-941/kotlin-reflect-1.5.10-release-941.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-plugin.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.5.10-release-941/kotlin-compiler-for-ide-1.5.10-release-941.jar" path-in-jar="/" />
           <element id="directory" name="META-INF">
             <element id="directory" name="extensions">
               <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.5.10-release-941/kotlin-compiler-for-ide-1.5.10-release-941.jar" path-in-jar="/META-INF/extensions/" />
@@ -122,6 +121,9 @@
         </element>
         <element id="archive" name="kotlin-common.jar">
           <element id="module-output" name="kotlin.common" />
+        </element>
+        <element id="archive" name="kotlin-compiler-for-ide.jar">
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.5.10-release-941/kotlin-compiler-for-ide-1.5.10-release-941.jar" path-in-jar="/" />
         </element>
       </element>
     </root>
