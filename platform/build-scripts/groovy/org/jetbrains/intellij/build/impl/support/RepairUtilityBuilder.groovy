@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.BuildHelper
 
 import java.nio.file.Files
@@ -130,8 +131,15 @@ class RepairUtilityBuilder {
         return [:] as Map<Binary, Path>
       }
       else {
-        BuildHelper.runProcess(buildContext, ['docker', '--version'])
-        BuildHelper.runProcess(buildContext, ['bash', 'build.sh'], projectHome)
+        try {
+          BuildHelper.runProcess(buildContext, ['docker', '--version'])
+          BuildHelper.runProcess(buildContext, ['bash', 'build.sh'], projectHome)
+        }
+        catch (Throwable e) {
+          if (TeamCityHelper.isUnderTeamCity) throw e
+          e.printStackTrace(System.err)
+          return [:] as Map<Binary, Path>
+        }
         Map<Binary, Path> binaries = BINARIES.collectEntries {
           [(it): projectHome.resolve(it.relativeSourcePath)]
         }
