@@ -268,6 +268,21 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     }
 
     override fun getType(ktExpression: KtExpression, source: UElement): PsiType? {
+        return when (ktExpression) {
+            is KtArrayAccessExpression -> {
+                getExpressionType(ktExpression, source) ?: run {
+                    // for unknown reason in assignment position there is no `EXPRESSION_TYPE_INFO` so we getting it from the array type
+                    val arrayExpression = ktExpression.arrayExpression ?: return null
+                    val arrayType = arrayExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, arrayExpression]?.type ?: return null
+                    return arrayType.arguments.firstOrNull()?.type
+                        ?.toPsiType(source, arrayExpression, arrayExpression.typeOwnerKind, boxed = false)
+                }
+            }
+            else -> getExpressionType(ktExpression, source)
+        }
+    }
+
+    private fun getExpressionType(ktExpression: KtExpression, source: UElement): PsiType? {
         val ktType = ktExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktExpression]?.type ?: return null
         return ktType.toPsiType(source, ktExpression, ktExpression.typeOwnerKind, boxed = false)
     }
