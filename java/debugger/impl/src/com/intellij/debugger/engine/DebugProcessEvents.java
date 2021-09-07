@@ -559,7 +559,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
         LOG.error("Timeout while preloading thread data", ThreadDumper.dumpThreadsToString());
       }
       catch (Exception e) {
-        DebuggerUtilsAsync.logError(e);
+        Throwable throwable = DebuggerUtilsAsync.unwrap(e);
+        if (!(throwable instanceof IncompatibleThreadStateException)) {
+          DebuggerUtilsAsync.logError(e);
+        }
       }
     }
   }
