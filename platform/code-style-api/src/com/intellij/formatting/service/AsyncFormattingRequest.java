@@ -4,9 +4,13 @@ package com.intellij.formatting.service;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -18,6 +22,13 @@ public interface AsyncFormattingRequest {
    * @return The document text to be formatted.
    */
   @NotNull String getDocumentText();
+
+  /**
+   * @return The file in the local file system with the same content as returned by {@link #getDocumentText()} method. If
+   * originally the document isn't associated with a physical file, a temporary file is created. The method returns {@code null} if the
+   * file can't be created. The error message is logged.
+   */
+  @Nullable File getIOFile();
 
   /**
    * @return A list of formatting ranges. It must be used by {@code asyncFormat()} implementation if {@code
