@@ -21,26 +21,27 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.NotNull
 import java.awt.BorderLayout
 import java.awt.Graphics
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-interface VcsInitListener {
+interface NewToolbarPaneListener {
+  companion object {
+    val TOPIC: Topic<NewToolbarPaneListener> = Topic(NewToolbarPaneListener::class.java, Topic.BroadcastDirection.NONE, true)
+  }
+
   fun stateChanged()
 }
 
-class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExtension(), @NotNull Disposable {
+class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExtension(), Disposable {
   companion object {
-    val VCS_INIT_TOPIC: Topic<VcsInitListener> = Topic(VcsInitListener::class.java, Topic.BroadcastDirection.TO_CHILDREN, true)
     private const val NEW_TOOLBAR_KEY = "NEW_TOOLBAR_KEY"
     const val navBarKey = "ide.new.navbar"
-  }
 
-  val logger = Logger.getInstance(NewToolbarRootPaneExtension::class.java)
-  var inited = false
+    private val logger = Logger.getInstance(NewToolbarRootPaneExtension::class.java)
+  }
 
   private val myPanelWrapper = JPanel(BorderLayout())
   private val myPanel: JPanel = object : JPanel(
@@ -65,8 +66,8 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
     Disposer.register(myProject, this)
     Registry.get(navBarKey).addListener(registryListener, this)
 
-    val appMessageBus = myProject.messageBus.connect(this)
-    appMessageBus.subscribe(VCS_INIT_TOPIC, object : VcsInitListener {
+    val messageBus = myProject.messageBus.connect(this)
+    messageBus.subscribe(NewToolbarPaneListener.TOPIC, object : NewToolbarPaneListener {
       override fun stateChanged() {
         myPanel.revalidate()
         myPanel.repaint()

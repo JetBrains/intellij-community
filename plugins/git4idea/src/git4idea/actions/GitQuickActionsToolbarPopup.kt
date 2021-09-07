@@ -1,12 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions
 
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.icons.AllIcons
+import com.intellij.ide.navigationToolbar.experimental.NewToolbarPaneListener
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup
@@ -75,5 +79,13 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
 
   companion object {
     private val KEY_ICON_WITH_TEXT = Key.create<Boolean>("KEY_ICON_WITH_TEXT")
+  }
+
+  class MyGitRepositoryListener(val project: Project) : VcsRepositoryMappingListener {
+    override fun mappingChanged() {
+      invokeLater {
+        project.messageBus.syncPublisher(NewToolbarPaneListener.TOPIC).stateChanged()
+      }
+    }
   }
 }

@@ -669,5 +669,7 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.index.CommitModeListener" topic="com.intellij.vcs.commit.CommitModeManager$CommitModeListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
   </projectListeners>
 </idea-plugin>
