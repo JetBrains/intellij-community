@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.kotlin.expressions.FirKotlinUBinaryExpression
 import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
 import org.jetbrains.uast.kotlin.psi.*
 
@@ -135,7 +134,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                     if (expression.operationToken == KtTokens.ELVIS) {
                         expr<UExpressionList>(build(::createElvisExpression))
                     } else {
-                        expr<UBinaryExpression>(build(::FirKotlinUBinaryExpression))
+                        expr<UBinaryExpression>(build(::KotlinUBinaryExpression))
                     }
                 }
                 is KtPrefixExpression -> expr<UPrefixExpression>(build(::KotlinUPrefixExpression))

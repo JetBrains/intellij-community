@@ -48,6 +48,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement>
 
+    fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator
+
     fun resolveCall(ktElement: KtElement): PsiMethod?
 
     fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod?

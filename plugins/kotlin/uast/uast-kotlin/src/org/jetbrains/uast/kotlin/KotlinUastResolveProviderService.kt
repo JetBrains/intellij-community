@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -154,6 +155,19 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 parent
             )
         }
+    }
+
+    override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
+        val other = UastBinaryOperator.OTHER
+        val ref = ktBinaryExpression.operationReference
+        val resolvedCall = ktBinaryExpression.operationReference.getResolvedCall(ref.analyze()) ?: return other
+        val resultingDescriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return other
+        val applicableOperator = KotlinUBinaryExpression.BITWISE_OPERATORS[resultingDescriptor.name.asString()] ?: return other
+
+        val containingClass = resultingDescriptor.containingDeclaration as? ClassDescriptor ?: return other
+        return if (containingClass.typeConstructor.supertypes.any {
+                it.constructor.declarationDescriptor?.fqNameSafe?.asString() == "kotlin.Number"
+            }) applicableOperator else other
     }
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
