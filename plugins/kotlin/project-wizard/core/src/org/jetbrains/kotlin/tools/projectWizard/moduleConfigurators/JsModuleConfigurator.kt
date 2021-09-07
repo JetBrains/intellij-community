@@ -73,8 +73,8 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler"),
             GenerationPhase.PROJECT_GENERATION
         ) {
-            defaultValue = value(JsCompiler.LEGACY)
-            filter = filter@{ reference, compilerCandidate ->
+            defaultValue = value(JsCompiler.BOTH)
+            filter = { reference, compilerCandidate ->
                 when {
                     reference !is ModuleConfiguratorSettingReference<*, *> -> false
                     reference.module?.let { settingValue(it, kind) } == JsTargetKind.LIBRARY -> true

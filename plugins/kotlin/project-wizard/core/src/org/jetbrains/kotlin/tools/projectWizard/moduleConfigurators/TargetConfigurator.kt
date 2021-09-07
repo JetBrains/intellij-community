@@ -82,9 +82,9 @@ enum class JsTargetKind(override val text: String) : DisplayableSettingItem {
 }
 
 enum class JsCompiler(override val text: String) : DisplayableSettingItem {
-    IR("IR"),
-    LEGACY("LEGACY"),
-    BOTH("BOTH")
+    IR(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.ir")),
+    LEGACY(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.legacy")),
+    BOTH(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.both"))
 }
 
 abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleConfiguratorWithTests {
