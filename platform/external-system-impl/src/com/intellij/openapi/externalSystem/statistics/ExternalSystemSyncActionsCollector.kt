@@ -17,14 +17,24 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES }
 
+/**
+ * Collect gradle import stats.
+ *
+ * This collector is an internal implementation aimed gather data on
+ * the Gradle synchronization duration. Phases are also
+ * specific to Gradle build system.
+ */
+@ApiStatus.Internal
 class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.import", 1)
+    private val GROUP = EventLogGroup("build.gradle.import", 2)
 
     val activityIdField = EventFields.Long("ide_activity_id")
     val importPhaseField = EventFields.Enum<Phase>("phase")
