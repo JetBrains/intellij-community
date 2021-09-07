@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInsight.Nullability
+import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil
+import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
@@ -54,6 +57,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private var broken: Boolean = false
     private val trapTracker = TrapTracker(factory, context)
     private val stringType = PsiType.getJavaLangString(context.manager, context.resolveScope)
+    private val project = factory.project
 
     fun buildFlow(): ControlFlow? {
         processExpression(context)
@@ -889,27 +893,42 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         val target = expr.mainReference.resolve()
-        if (target is KtObjectDeclaration) {
-            pushUnknown()
-            return
-        }
-        if (target is KtEnumEntry) {
+        val value: DfType? = getReferenceValue(target)
+        if (value != null) {
             if (qualifierOnStack) {
                 addInstruction(PopInstruction())
             }
-            val enumClass = target.containingClass()?.toLightClass()
-            if (enumClass != null) {
-                val enumConstant = enumClass.fields.firstOrNull { f -> f is PsiEnumConstant && f.name == target.name }
-                if (enumConstant != null) {
-                    val dfType = DfTypes.referenceConstant(enumConstant, TypeConstraints.exactClass(enumClass).instanceOf())
-                    addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
-                    return
+            addInstruction(PushValueInstruction(value, KotlinExpressionAnchor(expr)))
+        } else {
+            addCall(expr, 0, qualifierOnStack)
+        }
+    }
+
+    private fun getReferenceValue(target: PsiElement?): DfType? {
+        return when (target) {
+            is KtObjectDeclaration -> {
+                DfType.TOP // TODO
+            }
+            is PsiClass -> DfType.TOP
+            is PsiVariable -> {
+                val constantValue = target.computeConstantValue()
+                if (constantValue != null && constantValue !is Boolean) {
+                    DfTypes.constant(constantValue, target.type)
+                } else {
+                    DfTypes.typedObject(target.type, DfaPsiUtil.getElementNullability(null, target))
                 }
             }
-            pushUnknown()
-            return
+            is KtEnumEntry -> {
+                val enumClass = target.containingClass()?.toLightClass()
+                val enumConstant = enumClass?.fields?.firstOrNull { f -> f is PsiEnumConstant && f.name == target.name }
+                if (enumConstant != null) {
+                    DfTypes.referenceConstant(enumConstant, TypeConstraints.exactClass(enumClass).instanceOf())
+                } else {
+                    DfType.TOP
+                }
+            }
+            else -> null
         }
-        addCall(expr, 0, qualifierOnStack)
     }
 
     private fun processConstantExpression(expr: KtConstantExpression) {

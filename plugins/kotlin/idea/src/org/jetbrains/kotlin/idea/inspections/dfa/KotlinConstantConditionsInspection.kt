@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
+import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
@@ -104,6 +105,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 // like if (x == 0) x++, warning would be somewhat annoying
                 return true
             }
+            val bindingContext = expression.analyze()
+            if (ConstantExpressionEvaluator.getConstant(expression, bindingContext) != null) return true
             if (expression is KtSimpleNameExpression &&
                 (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)) {
                 // zero value is passed as argument to another method or used for array access. Often, such a warning is annoying
