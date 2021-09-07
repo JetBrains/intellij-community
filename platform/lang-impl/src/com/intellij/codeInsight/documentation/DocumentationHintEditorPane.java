@@ -46,7 +46,10 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
       }
     };
     addFocusListener(focusAdapter);
-    Disposer.register(hint, () -> removeFocusListener(focusAdapter));
+    Disposer.register(hint, () -> {
+      myHint = null;
+      removeFocusListener(focusAdapter);
+    });
   }
 
   private JBPopup myHint; // lateinit
