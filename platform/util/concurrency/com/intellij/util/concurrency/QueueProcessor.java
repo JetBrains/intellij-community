@@ -243,15 +243,15 @@ public final class QueueProcessor<T> {
       throw e;
     }
     catch (Throwable e) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw e;
-      }
       try {
         LOG.error(e);
       }
       catch (Throwable e2) {
         //noinspection CallToPrintStackTrace
         e2.printStackTrace();
+      }
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw e;
       }
     }
   }

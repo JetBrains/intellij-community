@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
@@ -418,7 +419,20 @@ public class Alarm implements Disposable {
     private @Nullable Runnable cancel() {
       Future<?> future = myFuture;
       if (future != null) {
-        future.cancel(false);
+        if (!future.cancel(false) && !future.isCancelled()) {
+          // the future already completed. manifest its errors if any
+          try {
+            future.get();
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause != null && !(cause instanceof ControlFlowException)) {
+              LOG.error(cause);
+            }
+          }
+        }
         myFuture = null;
       }
       Runnable task = myTask;
