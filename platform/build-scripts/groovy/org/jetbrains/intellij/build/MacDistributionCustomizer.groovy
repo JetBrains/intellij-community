@@ -93,6 +93,7 @@ abstract class MacDistributionCustomizer {
     if (binary != null) {
       binaries += binary.relativeTargetPath
     }
+    return binaries
   }
 
   /**
