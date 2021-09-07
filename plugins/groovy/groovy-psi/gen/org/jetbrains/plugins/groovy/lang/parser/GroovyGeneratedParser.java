@@ -6780,14 +6780,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // case_arrow_remainder | case_colon_remainder
-  public static boolean switch_expr_remainder(PsiBuilder b, int l) {
+  static boolean switch_expr_remainder(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_expr_remainder")) return false;
-    if (!nextTokenIs(b, "<switch expr remainder>", T_ARROW, T_COLON)) return false;
+    if (!nextTokenIs(b, "", T_ARROW, T_COLON)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, SWITCH_EXPR_REMAINDER, "<switch expr remainder>");
     r = case_arrow_remainder(b, l + 1);
     if (!r) r = case_colon_remainder(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

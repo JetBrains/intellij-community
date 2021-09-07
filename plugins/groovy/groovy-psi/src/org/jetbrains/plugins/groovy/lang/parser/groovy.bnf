@@ -1145,7 +1145,7 @@ private case_section_recovery ::= !('}' | 'case' | 'default')
 
 case_section ::= 'case' expression_list switch_expr_remainder { pin = 1 }
 default_section ::= 'default' switch_expr_remainder { elementType = case_section pin = 1 }
-switch_expr_remainder ::= case_arrow_remainder | case_colon_remainder
+private switch_expr_remainder ::= case_arrow_remainder | case_colon_remainder
 private case_arrow_remainder ::= '->' mb_nl block_level_item mb_separators { pin = 1 }
 private case_colon_remainder ::= ':' mb_nl case_level_item* { pin = 1 }
 // endregion

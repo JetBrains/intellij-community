@@ -148,7 +148,6 @@ public interface GroovyElementTypes {
   GroovyElementType STRING_CONTENT = new GroovyElementType("STRING_CONTENT");
   GroovyElementType STRING_INJECTION = new GroovyElementType("STRING_INJECTION");
   GroovyElementType SWITCH_EXPRESSION = new GroovyElementType("SWITCH_EXPRESSION");
-  GroovyElementType SWITCH_EXPR_REMAINDER = new GroovyElementType("SWITCH_EXPR_REMAINDER");
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("SWITCH_STATEMENT");
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("SYNCHRONIZED_STATEMENT");
   GroovyElementType TERNARY_EXPRESSION = new GroovyElementType("TERNARY_EXPRESSION");

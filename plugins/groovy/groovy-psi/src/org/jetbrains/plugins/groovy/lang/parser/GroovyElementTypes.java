@@ -85,6 +85,7 @@ public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyS
   IElementType IF_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IF_STATEMENT;
   IElementType SWITCH_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SWITCH_STATEMENT;
   IElementType CASE_SECTION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CASE_SECTION;
+  IElementType EXPRESSION_LIST = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.EXPRESSION_LIST;
 
   IElementType CASE_LABEL = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CASE_LABEL;
   //for clauses

@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumen
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrSpreadArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSectionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
@@ -106,7 +105,6 @@ public final class GroovyPsiCreator {
     if (elem == FINALLY_CLAUSE) return new GrFinallyClauseImpl(node);
     if (elem == SYNCHRONIZED_STATEMENT) return new GrSynchronizedStatementImpl(node);
     if (elem == SWITCH_STATEMENT) return new GrSwitchStatementImpl(node);
-    if (elem == CASE_LABEL) return new GrCaseLabelImpl(node);
     if (elem == CASE_SECTION) return new GrCaseSectionImpl(node);
     if (elem == VARIABLE_DECLARATION) return new GrVariableDeclarationImpl(node);
     if (elem == TUPLE) return new GrTupleImpl(node);

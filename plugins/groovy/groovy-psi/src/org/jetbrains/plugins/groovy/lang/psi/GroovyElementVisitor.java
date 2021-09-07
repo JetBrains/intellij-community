@@ -19,7 +19,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadAr
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
@@ -406,10 +409,6 @@ public abstract class GroovyElementVisitor {
 
   public void visitCaseSection(@NotNull GrCaseSection caseSection) {
     visitElement(caseSection);
-  }
-
-  public void visitCaseLabel(@NotNull GrCaseLabel caseLabel) {
-    visitElement(caseLabel);
   }
 
   public void visitForInClause(@NotNull GrForInClause forInClause) {
