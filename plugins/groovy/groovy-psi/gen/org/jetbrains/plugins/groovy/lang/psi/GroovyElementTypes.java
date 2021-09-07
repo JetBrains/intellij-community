@@ -70,8 +70,6 @@ public interface GroovyElementTypes {
   GroovyElementType BOR_EXPRESSION = new GroovyElementType("BOR_EXPRESSION");
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("BREAK_STATEMENT");
   GroovyElementType BUILT_IN_TYPE_EXPRESSION = new GroovyElementType("BUILT_IN_TYPE_EXPRESSION");
-  GroovyElementType CASE_EXPR_SECTION = new GroovyElementType("CASE_EXPR_SECTION");
-  GroovyElementType CASE_LABEL = new GroovyElementType("CASE_LABEL");
   GroovyElementType CASE_SECTION = new GroovyElementType("CASE_SECTION");
   GroovyElementType CAST_EXPRESSION = new GroovyElementType("CAST_EXPRESSION");
   GroovyElementType CATCH_CLAUSE = new GroovyElementType("CATCH_CLAUSE");
@@ -85,7 +83,6 @@ public interface GroovyElementTypes {
   GrConstructorBlockElementType CONSTRUCTOR_BLOCK = new GrConstructorBlockElementType("CONSTRUCTOR_BLOCK");
   GroovyElementType CONSTRUCTOR_CALL_EXPRESSION = new GroovyElementType("CONSTRUCTOR_CALL_EXPRESSION");
   GroovyElementType CONTINUE_STATEMENT = new GroovyElementType("CONTINUE_STATEMENT");
-  GroovyElementType DEFAULT_EXPR_SECTION = new GroovyElementType("DEFAULT_EXPR_SECTION");
   GroovyElementType DISJUNCTION_TYPE_ELEMENT = new GroovyElementType("DISJUNCTION_TYPE_ELEMENT");
   GroovyElementType DOLLAR_SLASHY_LITERAL = new GroovyElementType("DOLLAR_SLASHY_LITERAL");
   GroovyElementType DO_WHILE_STATEMENT = new GroovyElementType("DO_WHILE_STATEMENT");
@@ -151,7 +148,7 @@ public interface GroovyElementTypes {
   GroovyElementType STRING_CONTENT = new GroovyElementType("STRING_CONTENT");
   GroovyElementType STRING_INJECTION = new GroovyElementType("STRING_INJECTION");
   GroovyElementType SWITCH_EXPRESSION = new GroovyElementType("SWITCH_EXPRESSION");
-  GroovyElementType SWITCH_EXPRESSION_BLOCK = new GroovyElementType("SWITCH_EXPRESSION_BLOCK");
+  GroovyElementType SWITCH_EXPR_REMAINDER = new GroovyElementType("SWITCH_EXPR_REMAINDER");
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("SWITCH_STATEMENT");
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("SYNCHRONIZED_STATEMENT");
   GroovyElementType TERNARY_EXPRESSION = new GroovyElementType("TERNARY_EXPRESSION");
