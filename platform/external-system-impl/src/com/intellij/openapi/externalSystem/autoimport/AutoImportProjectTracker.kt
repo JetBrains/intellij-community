@@ -85,14 +85,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     })
   }
 
-  override fun scheduleProjectNotificationUpdate() {
-    LOG.debug("Schedule notification status update")
-    dispatcher.queue(PriorityEatUpdate(2) {
-      updateProjectNotification()
-    })
-  }
-
-  fun scheduleChangeProcessing() {
+  override fun scheduleChangeProcessing() {
     LOG.debug("Schedule change processing")
     dispatcher.queue(PriorityEatUpdate(1) {
       processChanges()
@@ -206,6 +199,11 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   override fun markDirty(id: ExternalSystemProjectId) {
     val projectData = projectDataMap(id) { get(it) } ?: return
     projectData.status.markDirty(currentTime())
+  }
+
+  override fun markDirtyAllProjects() {
+    val modificationTimeStamp = currentTime()
+    projectDataMap.forEach { it.value.status.markDirty(modificationTimeStamp) }
   }
 
   private fun projectDataMap(
