@@ -228,8 +228,6 @@ public class ArrayRenderer extends NodeRendererImpl{
   }
 
   private void finish(ChildrenBuilder builder, int arrayLength, int added, boolean hiddenNulls, int end, int idx) {
-    builder.addChildren(Collections.emptyList(), true);
-
     if (added == 0) {
       if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
         builder
@@ -251,6 +249,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         builder.tooManyChildren(end - idx);
       }
     }
+    builder.addChildren(Collections.emptyList(), true);
   }
 
   private static final class ArrayValuesCache {
