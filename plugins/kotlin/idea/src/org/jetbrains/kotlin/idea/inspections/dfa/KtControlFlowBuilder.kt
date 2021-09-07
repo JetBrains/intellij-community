@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
@@ -531,14 +533,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun findSpecialField(type: KotlinType?): SpecialField? {
         type ?: return null
         return when {
-            KotlinBuiltIns.isArray(type) || KotlinBuiltIns.isPrimitiveArray(type) -> {
-                return SpecialField.ARRAY_LENGTH
-            }
-            KotlinBuiltIns.isCollectionOrNullableCollection(type) || KotlinBuiltIns.isMapOrNullableMap(type) ||
-                    type.supertypes().any {
-                            st -> KotlinBuiltIns.isCollectionOrNullableCollection(st) || KotlinBuiltIns.isMapOrNullableMap(st)} -> {
-                return SpecialField.COLLECTION_SIZE
-            }
+            type.isEnum() -> SpecialField.ENUM_ORDINAL
+            KotlinBuiltIns.isArray(type) || KotlinBuiltIns.isPrimitiveArray(type) -> SpecialField.ARRAY_LENGTH
+            KotlinBuiltIns.isCollectionOrNullableCollection(type) ||
+                    KotlinBuiltIns.isMapOrNullableMap(type) ||
+                    type.supertypes().any { st -> KotlinBuiltIns.isCollectionOrNullableCollection(st) || KotlinBuiltIns.isMapOrNullableMap(st)}
+                -> SpecialField.COLLECTION_SIZE
             KotlinBuiltIns.isStringOrNullableString(type) -> SpecialField.STRING_LENGTH
             else -> null
         }
@@ -548,9 +548,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val selector = expr.selectorExpression ?: return null
         val receiver = expr.receiverExpression
         val selectorText = selector.text
-        if (selectorText != "size" && selectorText != "length") return null
+        if (selectorText != "size" && selectorText != "length" && selectorText != "ordinal") return null
         val field = findSpecialField(receiver.getKotlinType()) ?: return null
-        if ((selectorText == "length") != (field == SpecialField.STRING_LENGTH)) return null
+        val expectedFieldName = if (field == SpecialField.ARRAY_LENGTH) "size" else field.toString()
+        if (selectorText != expectedFieldName) return null
         return field
     }
 
@@ -892,6 +893,22 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             pushUnknown()
             return
         }
+        if (target is KtEnumEntry) {
+            if (qualifierOnStack) {
+                addInstruction(PopInstruction())
+            }
+            val enumClass = target.containingClass()?.toLightClass()
+            if (enumClass != null) {
+                val enumConstant = enumClass.fields.firstOrNull { f -> f is PsiEnumConstant && f.name == target.name }
+                if (enumConstant != null) {
+                    val dfType = DfTypes.referenceConstant(enumConstant, TypeConstraints.exactClass(enumClass).instanceOf())
+                    addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
+                    return
+                }
+            }
+            pushUnknown()
+            return
+        }
         addCall(expr, 0, qualifierOnStack)
     }
 
@@ -1116,8 +1133,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val leftType = left?.getKotlinType()
         val rightType = right?.getKotlinType()
         processExpression(left)
+        val leftDfType = leftType.toDfType(expr)
+        val rightDfType = rightType.toDfType(expr)
         if ((relation == RelationType.EQ || relation == RelationType.NE) ||
-            (leftType.toDfType(expr) is DfPrimitiveType && rightType.toDfType(expr) is DfPrimitiveType)) {
+            (leftDfType is DfPrimitiveType && rightDfType is DfPrimitiveType)) {
             val balancedType: KotlinType? = balanceType(leftType, rightType, forceEqualityByContent)
             addImplicitConversion(left, balancedType)
             processExpression(right)
@@ -1126,10 +1145,22 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             // but probably keep it for some types like enum, class, array
             addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
         } else {
-            // TODO: support >/>=/</<= for String and enum
-            // Overloaded >/>=/</<=: do not evaluate
-            processExpression(right)
-            addCall(expr, 2)
+            val leftConstraint = TypeConstraint.fromDfType(leftDfType)
+            val rightConstraint = TypeConstraint.fromDfType(rightDfType)
+            if (leftConstraint.isEnum && rightConstraint.isEnum && leftConstraint.meet(rightConstraint) != TypeConstraints.BOTTOM) {
+                addInstruction(UnwrapDerivedVariableInstruction(SpecialField.ENUM_ORDINAL))
+                processExpression(right)
+                addInstruction(UnwrapDerivedVariableInstruction(SpecialField.ENUM_ORDINAL))
+                addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
+            } else if (leftConstraint.isExact(CommonClassNames.JAVA_LANG_STRING) &&
+                rightConstraint.isExact(CommonClassNames.JAVA_LANG_STRING)) {
+                processExpression(right)
+                addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
+            } else {
+                // Overloaded >/>=/</<=: do not evaluate
+                processExpression(right)
+                addCall(expr, 2)
+            }
         }
     }
 
