@@ -19,9 +19,8 @@ import org.jetbrains.kotlin.context.GlobalContext
 import org.jetbrains.kotlin.context.withModule
 import org.jetbrains.kotlin.context.withProject
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.diagnostics.DiagnosticSink
-import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
+import org.jetbrains.kotlin.diagnostics.*
+import org.jetbrains.kotlin.diagnostics.PositioningStrategies.DECLARATION_WITH_BODY
 import org.jetbrains.kotlin.frontend.di.createContainerForLazyBodyResolve
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.trackers.clearInBlockModifications
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.storage.guarded
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.checkWithAttachment
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
@@ -123,7 +123,7 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             // step 3: perform analyze of analyzableParent as nothing has been cached yet
             val result = analyze(analyzableParent, null, localCallback)
 
-            // some of diagnostics could be not handled with a callback - send out the rest
+            // some diagnostics could be not handled with a callback - send out the rest
             callback?.let { c ->
                 result.bindingContext.diagnostics.filterNot { it in localDiagnostics }.forEach(c::callback)
             }
@@ -327,10 +327,12 @@ private class StackedCompositeBindingContextTrace(
     val stackedContext = StackedCompositeBindingContext()
 
     /**
-     * All diagnostics from parentContext apart those diagnostics those belongs to the element or its descendants
+     * All diagnostics from parentContext apart this diagnostics this belongs to the element or its descendants
      */
-    val parentDiagnosticsApartElement: Collection<Diagnostic> = parentContext.diagnostics.all().filter { d ->
-        d.psiElement.parentsWithSelf.none { it == element }
+    val parentDiagnosticsApartElement: Collection<Diagnostic> = run {
+        val all = parentContext.diagnostics.all()
+        val filtered = all.filter { it.psiElement == element && selfDiagnosticToHold(it) } + all.filter { it.psiElement.parentsWithSelf.none { e -> e == element } }
+        filtered
     }
 
     inner class StackedCompositeBindingContext : BindingContext {
@@ -386,6 +388,17 @@ private class StackedCompositeBindingContextTrace(
         super.clear()
         stackedContext.cachedDiagnostics = null
     }
+
+    companion object {
+        private fun selfDiagnosticToHold(d: Diagnostic): Boolean {
+            @Suppress("MoveVariableDeclarationIntoWhen")
+            val positioningStrategy = d.factory.safeAs<DiagnosticFactoryWithPsiElement<*, *>>()?.positioningStrategy
+            return when (positioningStrategy) {
+                DECLARATION_WITH_BODY -> false
+                else -> true
+            }
+        }
+    }
 }
 
 private object KotlinResolveDataProvider {
@@ -408,6 +421,7 @@ private object KotlinResolveDataProvider {
     fun findAnalyzableParent(element: KtElement): KtElement? {
         if (element is KtFile) return element
 
+        @Suppress("MoveVariableDeclarationIntoWhen")
         val topmostElement = KtPsiUtil.getTopmostParentOfTypes(element, *topmostElementTypes) as KtElement?
         // parameters and supertype lists are not analyzable by themselves, but if we don't count them as topmost, we'll stop inside, say,
         // object expressions inside arguments of super constructors of classes (note that classes themselves are not topmost elements)
