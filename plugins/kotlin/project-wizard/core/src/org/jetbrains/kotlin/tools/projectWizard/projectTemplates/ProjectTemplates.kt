@@ -322,6 +322,7 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                     "ios",
                     RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios),
                     null,
+                    permittedTemplateIds = emptySet(),
                     sourceSets = createDefaultSourceSets(),
                     subModules = emptyList()
                 )
