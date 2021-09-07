@@ -47,7 +47,7 @@ class MavenProjectsAware(
       submitSettingsFilesPartition(settingsFilesContext) { (filesToUpdate, filesToDelete) ->
         val updated = settingsFilesContext.created + settingsFilesContext.updated
         val deleted = settingsFilesContext.deleted
-        if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
+        if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size && !containMavenConfigFiles(updated)) {
           watcher.scheduleUpdate(filesToUpdate, filesToDelete, false, true)
         }
         else {
@@ -99,6 +99,13 @@ class MavenProjectsAware(
   }
 
   private fun join(parentPath: String, relativePath: String) = File(parentPath, relativePath).path
+
+  private fun containMavenConfigFiles(updated: Set<String>) = updated.any {
+    it.endsWith(MavenConstants.JVM_CONFIG_RELATIVE_PATH)
+    || it.contains(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
+    || it.contains(MavenConstants.MAVEN_WRAPPER_RELATIVE_PATH)
+  }
+
 
   init {
     manager.addManagerListener(object : MavenProjectsManager.Listener {
