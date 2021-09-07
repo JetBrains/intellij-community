@@ -120,7 +120,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
       if (project != null) {
         val model = ProjectStructureConfigurable.getInstance(project)?.context?.modulesConfigurator?.moduleModel
         val module = when(model) {
-          null -> ModuleManager.getInstance(project).findModuleByName(moduleName)
+          null -> ModuleManager.getInstance(project)?.findModuleByName(moduleName)
           else -> model.findModuleByName(moduleName)
         }
         if (module != null) return error(JavaUiBundle.message("module.name.location.dialog.message.module.already.exist.in.project", moduleName))
