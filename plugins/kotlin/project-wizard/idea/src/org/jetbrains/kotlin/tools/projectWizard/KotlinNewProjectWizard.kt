@@ -2,18 +2,24 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.generators.AbstractNewProjectWizardSdkStep
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.columns
 
 class KotlinNewProjectWizard : NewProjectWizard {
     override val name: String = "Kotlin"
 
-    override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent, SdkStep(parent))
+    override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
     class Step(
-        parent: NewProjectWizardLanguageStep,
-        override val commonStep: SdkStep
+        parent: NewProjectWizardLanguageStep
     ) : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, KotlinBuildSystemType.EP_NAME),
         NewProjectWizardBuildSystemData,
         NewProjectWizardLanguageData by parent {
@@ -24,10 +30,18 @@ class KotlinNewProjectWizard : NewProjectWizard {
 
         override val buildSystemProperty by ::stepProperty
         override val buildSystem by ::step
-    }
 
-    class SdkStep(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardSdkStep<NewProjectWizardLanguageStep>(parent) {
-        override val sdkLabel: String = JavaUiBundle.message("label.project.wizard.new.project.jdk")
-        override val sdkPropertyId: String = StdModuleTypes.JAVA.id
+        lateinit var sdkComboBox: Cell<JdkComboBox>
+        val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+        val sdk by sdkProperty
+
+        override fun setupCommonUI(builder: Panel) {
+            with(builder) {
+                row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+                    sdkComboBox = sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id)
+                        .columns(COLUMNS_MEDIUM)
+                }
+            }
+        }
     }
 }

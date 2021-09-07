@@ -20,8 +20,6 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
 
   protected abstract val label: @NlsContexts.Label String
 
-  protected open val commonStep: NewProjectWizardStep? = null
-
   val stepProperty = propertyGraph.graphProperty { "" }
   var step by stepProperty
 
@@ -30,6 +28,8 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
       .filter { it.isEnabled }
       .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }
   }
+
+  open fun setupCommonUI(builder: Panel) {}
 
   final override fun setupUI(builder: Panel) {
     with(builder) {
@@ -43,7 +43,7 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
         }
       }.bottomGap(BottomGap.SMALL)
 
-      commonStep?.setupUI(this)
+      setupCommonUI(this)
 
       val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
       val stepsPanels = HashMap<String, DialogPanel>()
@@ -65,7 +65,6 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
   }
 
   final override fun setupProject(project: Project) {
-    commonStep?.setupProject(project)
     steps[step]?.setupProject(project)
   }
 }

@@ -3,23 +3,23 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkListItem
-import com.intellij.openapi.roots.ui.configuration.createSdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateSdk
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 abstract class AbstractNewProjectWizardSdkStep<P : NewProjectWizardStep>(parent: P)
   : AbstractNewProjectWizardChildStep<P>(parent), NewProjectWizardSdkData {
 
@@ -27,8 +27,6 @@ abstract class AbstractNewProjectWizardSdkStep<P : NewProjectWizardStep>(parent:
 
   final override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
   final override val sdk by sdkProperty
-
-  protected val sdksModel = ProjectSdksModel()
 
   protected abstract val sdkLabel: @NlsContexts.Label String
   protected abstract val sdkPropertyId: String
@@ -42,9 +40,8 @@ abstract class AbstractNewProjectWizardSdkStep<P : NewProjectWizardStep>(parent:
   final override fun setupUI(builder: Panel) {
     with(builder) {
       row(sdkLabel) {
-        val comboBox = createSdkComboBox(
-          context.project,
-          sdksModel,
+        sdkComboBox = sdkComboBox(
+          context,
           sdkProperty,
           sdkPropertyId,
           ::sdkTypeFilter,
@@ -52,11 +49,7 @@ abstract class AbstractNewProjectWizardSdkStep<P : NewProjectWizardStep>(parent:
           ::suggestedSdkItemFilter,
           ::creationSdkTypeFilter,
           ::onNewSdkAdded
-        )
-        sdkComboBox = cell(comboBox)
-          .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateSdk(sdkProperty, sdksModel) }
-          .onApply { context.projectJdk = sdk }
+        ).columns(COLUMNS_MEDIUM)
       }
     }
   }
@@ -67,10 +60,4 @@ abstract class AbstractNewProjectWizardSdkStep<P : NewProjectWizardStep>(parent:
    * @see ProjectSdksModel.apply
    */
   final override fun setupProject(project: Project) {}
-
-  init {
-    Disposer.register(context.disposable, Disposable {
-      sdksModel.disposeUIResources()
-    })
-  }
 }
