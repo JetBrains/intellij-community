@@ -6,9 +6,12 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
+import com.intellij.ide.wizard.getCanonicalPath
+import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
@@ -46,8 +49,8 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
     }
 
     private val moduleNameProperty = propertyGraph.graphProperty { parent.name }
-    private val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
-    private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
+    private val contentRootProperty = propertyGraph.graphProperty(pathFromParent).transform(::getPresentablePath, ::getCanonicalPath)
+    private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent).transform(::getPresentablePath, ::getCanonicalPath)
 
     private var moduleName by moduleNameProperty
     private var contentRoot by contentRootProperty
