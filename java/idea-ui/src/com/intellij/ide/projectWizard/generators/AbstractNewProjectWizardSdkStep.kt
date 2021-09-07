@@ -59,5 +59,5 @@ abstract class AbstractNewProjectWizardSdkStep<P : NewProjectWizardStep>(parent:
    * @see validateSdk
    * @see ProjectSdksModel.apply
    */
-  final override fun setupProject(project: Project) {}
+  override fun setupProject(project: Project) {}
 }
