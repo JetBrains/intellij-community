@@ -182,7 +182,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     task {
       text(GitLessonsBundle.message("git.quick.start.name.new.branch", LessonUtil.rawEnter(), strong(createButtonText)))
       triggerOnNotification { it.displayId == BRANCH_OPERATION_SUCCESS }
-      restoreByUi(showBranchesTaskId, delayMillis = defaultRestoreDelay)
+      restoreByUi(showBranchesTaskId, delayMillis = 4 * defaultRestoreDelay)
     }
 
     prepareRuntimeTask {
@@ -272,7 +272,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
     }
   }
 
