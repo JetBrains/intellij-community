@@ -385,6 +385,14 @@
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
     </group>
+
+    <group id="Git.Experimental.Branch.Popup.Actions">
+      <reference ref="Vcs.UpdateProject"/>
+      <reference ref="CheckinProject"/>
+      <reference ref="Git.Commit.Stage"/>
+      <reference ref="Vcs.Push"/>
+      <reference ref="Vcs.QuickListPopupAction"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

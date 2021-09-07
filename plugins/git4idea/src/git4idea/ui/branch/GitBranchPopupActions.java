@@ -2,7 +2,6 @@
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.push.VcsPushAction;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.ui.*;
 import com.intellij.icons.AllIcons;
@@ -19,9 +18,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
-import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction;
-import com.intellij.openapi.vcs.actions.VcsQuickListPopupAction;
-import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
@@ -35,7 +31,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.fetch.GitFetchSupport;
 import git4idea.i18n.GitBundle;
-import git4idea.index.actions.GitCommitWithStagingAreaAction;
 import git4idea.push.GitPushSource;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
@@ -92,28 +87,8 @@ public class GitBranchPopupActions {
     }
 
     if (ExperimentalUI.isNewVcsBranchPopup()) {
-      addAction(popupGroup,
-                new CommonUpdateProjectAction(),
-                AllIcons.Actions.CheckOut,
-                ActionsBundle.messagePointer("action.Vcs.UpdateProject.text"));
-
-      addAction(popupGroup,
-                new CommonCheckinProjectAction(),
-                AllIcons.Actions.Commit,
-                GitBundle.messagePointer("commit.action.text"));
-
-      addAction(popupGroup,
-                new GitCommitWithStagingAreaAction(),
-                AllIcons.Actions.Commit,
-                GitBundle.messagePointer("commit.action.text"));
-
-      addAction(popupGroup,
-                new VcsPushAction(),
-                AllIcons.Vcs.Push,
-                ActionsBundle.messagePointer("action.Vcs.Push.text"));
-
-      popupGroup.add(new VcsQuickListPopupAction());
-
+      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("Git.Experimental.Branch.Popup.Actions");
+      popupGroup.addAll(actionGroup);
       popupGroup.addSeparator();
     }
 
@@ -163,14 +138,6 @@ public class GitBranchPopupActions {
     wrapWithMoreActionIfNeeded(myProject, popupGroup, sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
                                getNumOfTopShownBranches(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
     return popupGroup;
-  }
-
-  private static void addAction(LightActionGroup popupGroup,
-                                AnAction action,
-                                @NotNull Icon icon, @NotNull Supplier<@Nls String> stringSupplier) {
-    action.getTemplatePresentation().setIcon(icon);
-    action.getTemplatePresentation().setText(stringSupplier);
-    popupGroup.add(action);
   }
 
   private static boolean isSpecForRepo(@NotNull GitRebaseSpec spec, @NotNull GitRepository repository) {
