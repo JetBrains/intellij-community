@@ -106,6 +106,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
+        val other = UastBinaryOperator.OTHER
+        val resolvedOperator = resolveCall(ktBinaryExpression) ?: return other
+        return KotlinUBinaryExpression.BITWISE_OPERATORS[resolvedOperator.name] ?: other
+    }
+
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
         when (ktElement) {
             is KtCallElement -> {

@@ -10,12 +10,12 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UastBinaryOperator
 
-abstract class KotlinAbstractUBinaryExpression(
+class KotlinUBinaryExpression(
     override val sourcePsi: KtBinaryExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UBinaryExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
 
-    protected companion object {
+    companion object {
         val BITWISE_OPERATORS = mapOf(
             "or" to UastBinaryOperator.BITWISE_OR,
             "and" to UastBinaryOperator.BITWISE_AND,
@@ -67,8 +67,7 @@ abstract class KotlinAbstractUBinaryExpression(
             KtTokens.IN_KEYWORD -> KotlinBinaryOperators.IN
             KtTokens.NOT_IN -> KotlinBinaryOperators.NOT_IN
             KtTokens.RANGE -> KotlinBinaryOperators.RANGE_TO
-            else -> handleBitwiseOperators()
+            else -> baseResolveProviderService.resolveBitwiseOperators(sourcePsi)
         }
 
-    abstract fun handleBitwiseOperators(): UastBinaryOperator
 }
