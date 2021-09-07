@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
@@ -642,7 +642,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (initial == null) initial = new Dimension();
         if (initial.width <= 0 || initial.height <= 0) {
           maximize(initial, getSize()); // cannot be less than packed size
-          if (!SystemInfo.isLinux) {
+          if (!SystemInfo.isLinux && Registry.is("ide.dialog.wrapper.resize.by.tables")) {
             // [kb] temporary workaround for IDEA-253643
             maximize(initial, getSizeForTableContainer(getContentPane()));
           }
