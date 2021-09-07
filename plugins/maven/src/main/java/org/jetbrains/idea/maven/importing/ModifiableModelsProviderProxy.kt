@@ -57,15 +57,9 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
     ReadAction.compute(
       ThrowableComputable<ModifiableWorkspace, RuntimeException> {
         project.getService(ExternalProjectsWorkspaceImpl::class.java)
-          .createModifiableWorkspace { moduleModel.modules.asList() }
+          .createModifiableWorkspace { moduleModelProxy.modules.asList() }
       })
   }
-
-  val moduleModel : ModuleModelProxy
-    get() {
-      return moduleModelProxy
-    }
-
   private val myModifiableRootModels: MutableMap<Module, ModifiableRootModel> = HashMap()
   private val modifiableLibraryModels: MutableMap<Library, Library.ModifiableModel> = IdentityHashMap()
   private val modifiableLibraryTable: ProjectModifiableLibraryTableBridge by lazy {
@@ -99,7 +93,7 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
     modifiableLibraryTable.prepareForCommit()
 
     val rootModels: List<ModifiableRootModel>
-    val existingModules: Array<Module> = moduleModel.modules
+    val existingModules: Array<Module> = moduleModelProxy.modules
     for (module in existingModules) {
       module.putUserData(IdeModifiableModelsProviderImpl.MODIFIABLE_MODELS_PROVIDER_KEY, null)
     }
@@ -129,7 +123,7 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
     }
 
     val oldModules = ModuleManager.getInstance(project).modules.map { it.name }
-    val newModules = moduleModel.modules.mapTo(HashSet<String>()) { it.name }
+    val newModules = moduleModelProxy.modules.mapTo(HashSet<String>()) { it.name }
 
     val removedModules: MutableCollection<String> = HashSet(oldModules)
     removedModules.removeAll(newModules)
@@ -149,7 +143,7 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
         }
       }
 
-    for (module in moduleModel.modules) {
+    for (module in moduleModelProxy.modules) {
       val modifiableRootModel = getModifiableRootModel(module)
       var changed = false
       val entries = modifiableRootModel.orderEntries
@@ -159,7 +153,8 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
         val orderEntry = entries[i]
         if (orderEntry is ModuleOrderEntry) {
           val workspaceModule = orderEntry.moduleName
-          if (removedModules.contains(workspaceModule)) { // check if removed module was a dependency substitution and restore library dependency
+          if (removedModules.contains(
+              workspaceModule)) { // check if removed module was a dependency substitution and restore library dependency
             val scope = orderEntry.scope
             if (substitutionWorkspace.isSubstitution(module.name, workspaceModule, scope)) {
               val libraryName = substitutionWorkspace.getSubstitutedLibrary(workspaceModule)
