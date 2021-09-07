@@ -602,8 +602,7 @@ public class BreakpointManager {
   }
 
   public void reloadBreakpoints() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    getBreakpoints().forEach(Breakpoint::reload);
+    ReadAction.run(() -> getBreakpoints().forEach(Breakpoint::reload));
   }
 
   public void fireBreakpointChanged(Breakpoint breakpoint) {

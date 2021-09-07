@@ -409,6 +409,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       // breakpoints should be initialized after all processAttached listeners work
       ApplicationManager.getApplication().runReadAction(() -> {
         if (session != null) {
+          // reload to make sure that source positions are initialized
+          DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().reloadBreakpoints();
+
           session.initBreakpoints();
         }
       });
