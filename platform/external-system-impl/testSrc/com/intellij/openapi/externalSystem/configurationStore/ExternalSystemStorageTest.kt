@@ -846,18 +846,12 @@ class ExternalSystemStorageTest {
 
   private fun isFolderWithoutFiles(root: File): Boolean = root.walk().none { it.isFile }
 
-  private inline fun suppressLogs(action: () -> Unit) {
-    val oldInstance = LoggedErrorProcessor.getInstance()
-    try {
-      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
-          message == null || !message.contains("Trying to load multiple modules with the same name.")
-      })
-
+  private fun suppressLogs(action: () -> Unit) {
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
+        message == null || !message.contains("Trying to load multiple modules with the same name.")
+    }) {
       action()
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(oldInstance)
     }
   }
 }

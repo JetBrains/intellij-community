@@ -77,8 +77,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-
-    setupErrorLoggingFor_IDEA_274474();
     setUpFixtures();
     myProject = myTestFixture.getProject();
     setupWsl();
@@ -133,8 +131,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
     assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
   }
 
-  private void setupErrorLoggingFor_IDEA_274474() {
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+  @Override
+  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
         if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
@@ -142,7 +141,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         }
         return super.processError(category, message, t, details);
       }
-    });
+    }, () -> super.runBare(testRunnable));
   }
 
   private Sdk getWslSdk(String jdkPath) {
