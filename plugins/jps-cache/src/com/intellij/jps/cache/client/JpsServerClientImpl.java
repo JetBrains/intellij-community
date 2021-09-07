@@ -56,7 +56,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
   @NotNull
   @Override
   public Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project) {
-    Map<String, List<String>> response = doGetRequest(project, getRequestHeaders());
+    Map<String, List<String>> response = doGetRequest(project);
     if (response == null) return Collections.emptyMap();
     Map<String, Set<String>> result = new HashMap<>();
     response.forEach((key, value) -> result.put(GitRepositoryUtil.getRemoteRepoName(key), new HashSet<>(value)));
@@ -77,7 +77,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     LOG.debug("Downloading JPS metadata from: " + downloadUrl);
     File metadataFile;
     try {
-      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, getRequestHeaders(), null);
+      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, null);
       Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
       metadataFile = first != null ? first.first : null;
       if (metadataFile == null) {
@@ -106,7 +106,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     LOG.debug("Downloading JPS caches from: " + downloadUrl);
     File zipFile;
     try {
-      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, getRequestHeaders(), DOWNLOAD_CACHE_SIZE_EVENT_ID);
+      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, DOWNLOAD_CACHE_SIZE_EVENT_ID);
       downloadIndicatorManager.finished(this);
 
       Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
@@ -141,7 +141,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     List<File> downloadedFiles = new ArrayList<>();
     try {
       // Downloading process
-      List<Pair<File, DownloadableFileDescription>> download = downloader.download(targetDir, getRequestHeaders(), DOWNLOAD_BINARY_SIZE_EVENT_ID);
+      List<Pair<File, DownloadableFileDescription>> download = downloader.download(targetDir, DOWNLOAD_BINARY_SIZE_EVENT_ID);
       downloadIndicatorManager.finished(this);
 
       downloadedFiles = ContainerUtil.map(download, pair -> pair.first);
@@ -159,7 +159,8 @@ public final class JpsServerClientImpl implements JpsServerClient {
     }
   }
 
-  private Map<String, List<String>> doGetRequest(@NotNull Project project, @NotNull Map<String, String> headers) {
+  private @Nullable Map<String, List<String>> doGetRequest(@NotNull Project project) {
+    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
     try {
       return HttpRequests.request(stringThree + "/commit_history.json")
         .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
@@ -187,20 +188,6 @@ public final class JpsServerClientImpl implements JpsServerClient {
         .notify(project);
     }
     return null;
-  }
-
-  private static @NotNull Map<String, String> getRequestHeaders() {
-    JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
-    if (authExtension == null) {
-      String message = JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin");
-      throw new RuntimeException(message);
-    }
-    Map<String, String> authHeader = authExtension.getAuthHeader();
-    if (authHeader == null) {
-      String message = JpsCacheBundle.message("internal.authentication.plugin.missing.token");
-      throw new RuntimeException(message);
-    }
-    return authHeader;
   }
 
   private static InputStream getInputStream(HttpURLConnection httpConnection) throws IOException {

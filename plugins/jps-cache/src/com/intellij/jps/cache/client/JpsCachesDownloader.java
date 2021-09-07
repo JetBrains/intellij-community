@@ -42,8 +42,7 @@ class JpsCachesDownloader {
   }
 
   @NotNull
-  List<Pair<File, DownloadableFileDescription>> download(@NotNull File targetDir, @NotNull Map<String, String> requestHeaders,
-                                                         @Nullable EventId1<Long> eventId) throws IOException {
+  List<Pair<File, DownloadableFileDescription>> download(@NotNull File targetDir, @Nullable EventId1<Long> eventId) throws IOException {
     List<Pair<File, DownloadableFileDescription>> downloadedFiles = new CopyOnWriteArrayList<>();
     List<Pair<File, DownloadableFileDescription>> existingFiles = new CopyOnWriteArrayList<>();
 
@@ -62,7 +61,7 @@ class JpsCachesDownloader {
           File downloaded = null;
           while (downloaded == null && attempt++ < MAX_RETRY_COUNT) {
             try {
-              downloaded = downloadFile(description, existing, requestHeaders, indicator);
+              downloaded = downloadFile(description, existing, indicator);
             } catch (IOException e) {
               int httpStatusCode = -1;
               if (e  instanceof HttpRequests.HttpStatusException) {
@@ -138,8 +137,9 @@ class JpsCachesDownloader {
 
   @NotNull
   private File downloadFile(@NotNull final DownloadableFileDescription description, @NotNull final File existingFile,
-                                   @NotNull Map<String, String> headers, @NotNull final ProgressIndicator indicator) throws IOException {
+                            @NotNull final ProgressIndicator indicator) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
+    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
     indicator.setText2(IdeCoreBundle.message("progress.connecting.to.download.file.text", presentableUrl));
     indicator.setIndeterminate(false);
 
