@@ -114,14 +114,11 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   private fun refreshProject(smart: Boolean) {
     LOG.debug("Incremental project refresh")
-    if (isDisabled.get() || Registry.`is`("external.system.auto.import.disabled")) return
-    if (!projectChangeOperation.isOperationCompleted()) return
-    if (smart && !projectRefreshOperation.isOperationCompleted()) return
 
     val projectsToReload = projectDataMap.values
       .filter { (!smart || it.isActivated) && !it.isUpToDate() }
 
-    if (projectsToReload.isEmpty()) {
+    if (isDisabledAutoReload() || projectsToReload.isEmpty()) {
       LOG.debug("Skipped all projects reload")
       updateProjectNotification()
       return
@@ -142,14 +139,22 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   private fun updateProjectNotification() {
     LOG.debug("Notification status update")
-    if (isDisabled.get() || Registry.`is`("external.system.auto.import.disabled")) return
+
+    val isDisabledAutoReload = isDisabledAutoReload()
     val notificationAware = ProjectNotificationAware.getInstance(project)
     for ((projectId, data) in projectDataMap) {
-      when (data.isUpToDate()) {
+      when (isDisabledAutoReload || data.isUpToDate()) {
         true -> notificationAware.notificationExpire(projectId)
         else -> notificationAware.notificationNotify(data.projectAware)
       }
     }
+  }
+
+  private fun isDisabledAutoReload(): Boolean {
+    return isDisabled.get() ||
+           Registry.`is`("external.system.auto.import.disabled") ||
+           !projectChangeOperation.isOperationCompleted() ||
+           !projectRefreshOperation.isOperationCompleted()
   }
 
   private fun getModificationType(): ModificationType? {
