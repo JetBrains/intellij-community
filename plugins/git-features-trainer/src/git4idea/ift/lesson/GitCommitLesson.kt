@@ -105,7 +105,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {
-      text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName), strong(secondFileName)))
+      text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName), strong(firstFileName)))
       text(GitLessonsBundle.message("git.commit.choose.files.balloon"),
            LearningBalloonConfig(Balloon.Position.below, 300, cornerToPointerDistance = 55))
       highlightVcsChange(firstFileName)
