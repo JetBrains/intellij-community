@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.kotlin.expressions.FirKotlinUArrayAccessExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUBinaryExpression
 import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
 import org.jetbrains.uast.kotlin.psi.*
@@ -120,7 +119,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtBinaryExpressionWithTypeRHS -> expr<UBinaryExpressionWithType>(build(::KotlinUBinaryExpressionWithType))
                 is KtIsExpression -> expr<UBinaryExpressionWithType>(build(::KotlinUTypeCheckExpression))
 
-                is KtArrayAccessExpression -> expr<UArrayAccessExpression>(build(::FirKotlinUArrayAccessExpression))
+                is KtArrayAccessExpression -> expr<UArrayAccessExpression>(build(::KotlinUArrayAccessExpression))
 
                 is KtThisExpression -> expr<UThisExpression>(build(::KotlinUThisExpression))
                 is KtSuperExpression -> expr<USuperExpression>(build(::KotlinUSuperExpression))

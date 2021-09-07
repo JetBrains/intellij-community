@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.uast.UArrayAccessExpression
 import org.jetbrains.uast.UElement
 
-abstract class KotlinAbstractUArrayAccessExpression(
+class KotlinUArrayAccessExpression(
     override val sourcePsi: KtArrayAccessExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UArrayAccessExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
