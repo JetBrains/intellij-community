@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -38,7 +37,7 @@ import java.util.Set;
 public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInterface {
 
   private final MavenProject myMavenProject;
-  private final ModifiableModuleModel myModuleModel;
+  private final ModuleModelProxy myModuleModel;
   private final ModifiableRootModel myRootModel;
 
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
@@ -47,7 +46,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final ModifiableModelsProviderProxy rootModelsProvider) {
     myMavenProject = p;
-    myModuleModel = rootModelsProvider.getModifiableModuleModel();
+    myModuleModel = rootModelsProvider.getModuleModelProxy();
     myRootModel = rootModelsProvider.getModifiableRootModel(module);
 
     myRootModelModuleExtension = myRootModel.getModuleExtension(MavenSourceFoldersModuleExtension.class);
