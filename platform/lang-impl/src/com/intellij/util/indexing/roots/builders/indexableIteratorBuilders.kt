@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -44,6 +45,7 @@ object IndexableIteratorBuilders {
     val result = ArrayList<IndexableFilesIterator>(builders.size)
     var buildersToProceed = builders
     IndexableIteratorBuilderHandler.EP_NAME.forEachExtensionSafe { handler ->
+      ProgressManager.checkCanceled()
       val partition = buildersToProceed.partition { handler.accepts(it) }
       if (partition.first.isNotEmpty()) {
         result.addAll(handler.instantiate(partition.first, project, entityStorage))

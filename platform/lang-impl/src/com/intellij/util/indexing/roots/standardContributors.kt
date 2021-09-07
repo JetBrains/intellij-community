@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -27,6 +28,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
         if (provider is IndexableEntityProvider.Existing) {
           addIteratorBuildersFromProvider(provider, entityStorage, project, builders)
+          ProgressManager.checkCanceled()
         }
       }
       return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
