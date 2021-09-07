@@ -141,6 +141,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private WeakReference<JBPopup> myDocInfoHintRef;
   private WeakReference<Component> myFocusedBeforePopup;
   public static final Key<SmartPsiElementPointer<?>> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
+  public static final Key<Boolean> IS_FROM_LOOKUP = Key.create("IS FROM LOOKUP");
 
   private boolean myCloseOnSneeze;
   private @Nls String myPrecalculatedDocumentation;
@@ -970,8 +971,19 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     storeOriginalElement(myProject, contextElement, element);
-
+    storeIsFromLookup(element, false);
     return element;
+  }
+
+  private static void storeIsFromLookup(@Nullable PsiElement element, boolean value) {
+    if (element == null) return;
+
+    if (value) {
+      element.putUserData(IS_FROM_LOOKUP, true);
+    }
+    else {
+      element.putUserData(IS_FROM_LOOKUP, null);
+    }
   }
 
   @Nullable
@@ -1007,7 +1019,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     PsiManager psiManager = PsiManager.getInstance(project);
     PsiElement fromProvider = targetElement == null ? null :
                               documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
-    return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
+    if (fromProvider == null) {
+      return CompletionUtil.getTargetElement(item);
+    }
+    storeIsFromLookup(fromProvider, true);
+    return fromProvider;
   }
 
   public @NlsSafe String generateDocumentation(@NotNull PsiElement element, @Nullable PsiElement originalElement, boolean onHover) {
