@@ -120,7 +120,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
         (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
       }
       stateCheck { repository.currentBranchName == main }
-      restoreState(firstShowBranchesTaskId, delayMillis = defaultRestoreDelay) {
+      restoreState(firstShowBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
         val newBranchName = repository.currentBranchName
         previous.ui?.isShowing != true || (newBranchName != curBranchName && newBranchName != main)
       }
@@ -183,7 +183,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       text(GitLessonsBundle.message("git.feature.branch.checkout.and.rebase", strong(branchName), strong(checkoutAndRebaseText)))
       highlightListItemAndRehighlight { item -> item.toString().contains(checkoutAndRebaseText) }
       triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
-      restoreState(secondShowBranchesTaskId, delayMillis = 3 * defaultRestoreDelay) {
+      restoreState(secondShowBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
         previous.ui?.isShowing != true && !StoreReloadManager.getInstance().isReloadBlocked() // reload is blocked when rebase is running
       }
     }
