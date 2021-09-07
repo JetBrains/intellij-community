@@ -142,6 +142,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     RunnerAndConfigurationSettings settings = getSettings();
 
     RunConfiguration runConfiguration = settings.getConfiguration();
+
+    RunConfiguration oldRunConfiguration = runConfiguration.clone();
+
     settings.setName(getNameText());
     runConfiguration.setAllowRunningInParallel(myIsAllowRunningInParallel);
     myRunOnTargetPanel.apply();
@@ -153,6 +156,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     super.apply();
     RunManagerImpl.getInstanceImpl(myProject).addConfiguration(settings);
+    runConfiguration.collectSettingsChanges(oldRunConfiguration);
   }
 
   @Override
