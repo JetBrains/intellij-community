@@ -36,7 +36,8 @@ public final class InjectedGeneralHighlightingPassFactory implements MainHighlig
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    return new InjectedGeneralHighlightingPass(file.getProject(), file, document, 0, document.getTextLength(), true, new ProperTextRange(0,document.getTextLength()), null,
+    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(document);
+    return new InjectedGeneralHighlightingPass(file.getProject(), file, document, 0, document.getTextLength(), true, visibleRange, null,
                                                highlightInfoProcessor);
   }
 }
