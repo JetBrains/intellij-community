@@ -26,7 +26,7 @@ class KotlinPluginBuilder {
   private final String communityHome
   private final String home
   private final ProductProperties properties
-  private static List<String> MODULES = [
+  public static List<String> MODULES = [
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
