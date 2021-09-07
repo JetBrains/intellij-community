@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.jvm;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -19,6 +18,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.*;
 
+import java.util.Arrays;
 import java.util.function.Function;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
@@ -239,12 +239,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
         if (constraint.isExact()) {
           PsiClass cls = PsiUtil.resolveClassInClassTypeOnly(constraint.getPsiType(qualifier.getFactory().getProject()));
           if (cls != null) {
-            int count = 0;
-            for (PsiField field : cls.getFields()) {
-              if (field instanceof PsiEnumConstant) {
-                count++;
-              }
-            }
+            long count = Arrays.stream(cls.getFields()).filter(field -> field instanceof PsiEnumConstant).count();
             // Keep +1 ordinal for possible enum changes
             return DfTypes.intRange(LongRangeSet.range(0, count));
           }
