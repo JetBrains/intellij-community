@@ -4032,6 +4032,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       final int oldStart = mySelectionModel.getSelectionStart();
       final int oldEnd = mySelectionModel.getSelectionEnd();
 
+      LogicalPosition oldBlockStart = null;
+
+      if (isColumnMode()) {
+        @NotNull List<CaretState> caretsAndSelections = getCaretModel().getCaretsAndSelections();
+
+        CaretState originalCaret = caretsAndSelections.get(0);
+        oldBlockStart = Objects.equals(originalCaret.getCaretPosition(), originalCaret.getSelectionEnd())
+                                                ? originalCaret.getSelectionStart()
+                                                : originalCaret.getSelectionEnd();
+      }
+
       boolean toggleCaret = e.getSource() != myGutterComponent && isToggleCaretEvent(e);
       boolean lastPressCreatedCaret = myLastPressCreatedCaret;
       if (e.getClickCount() == 1) {
@@ -4117,18 +4128,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (moveCaret) {
         if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown()) {
-          if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-            if (caretOffset < mySavedSelectionStart) {
-              mySelectionModel.setSelection(mySavedSelectionEnd, caretOffset);
-            }
-            else {
-              mySelectionModel.setSelection(mySavedSelectionStart, caretOffset);
-            }
+          if (oldBlockStart != null) {
+            mySelectionModel.setBlockSelection(oldBlockStart, getCaretModel().getLogicalPosition());
           }
           else {
-            int startToUse = oldSelectionStart;
-            if (mySelectionModel.isUnknownDirection() && caretOffset > startToUse) {
-              startToUse = Math.min(oldStart, oldEnd);
+            int startToUse;
+            if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+              if (caretOffset < mySavedSelectionStart) {
+                startToUse = mySavedSelectionEnd;
+              }
+              else {
+                startToUse = mySavedSelectionStart;
+              }
+            }
+            else {
+              startToUse = oldSelectionStart;
+              if (mySelectionModel.isUnknownDirection() && caretOffset > startToUse) {
+                startToUse = Math.min(oldStart, oldEnd);
+              }
             }
             mySelectionModel.setSelection(startToUse, caretOffset);
           }
