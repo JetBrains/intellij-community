@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.ChildAttributes;
@@ -149,7 +149,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitCaseSection(@NotNull GrCaseSection caseSection) {
-    if (myChildType != GroovyElementTypes.CASE_LABEL) {
+    if (myChildType != KW_CASE && myChildType != KW_DEFAULT) {
       myResult = getNormalIndent();
     }
   }

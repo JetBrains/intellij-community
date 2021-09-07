@@ -24,24 +24,24 @@ Groovy script
         PsiElement({)('{')
         PsiWhiteSpace('\n      ')
         Case section
-          Case label
-            PsiElement(case)('case')
-            PsiWhiteSpace(' ')
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          Expression list
             Literal
               PsiElement(Integer)('2')
-            PsiElement(:)(':')
+          PsiElement(:)(':')
           PsiElement(new line)('\n        ')
           RETURN statement
             PsiElement(return)('return')
           PsiWhiteSpace(' ')
           PsiElement(new line)('\n      ')
         Case section
-          Case label
-            PsiElement(case)('case')
-            PsiWhiteSpace(' ')
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          Expression list
             Literal
               PsiElement(Integer)('3')
-            PsiElement(:)(':')
+          PsiElement(:)(':')
           PsiElement(new line)('\n        ')
           RETURN statement
             PsiElement(return)('return')
@@ -50,12 +50,12 @@ Groovy script
               PsiElement(false)('false')
           PsiElement(new line)('\n      ')
         Case section
-          Case label
-            PsiElement(case)('case')
-            PsiWhiteSpace(' ')
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          Expression list
             Literal
               PsiElement(Integer)('4')
-            PsiElement(:)(':')
+          PsiElement(:)(':')
           PsiElement(new line)('\n        ')
           RETURN statement
             PsiElement(return)('return')
@@ -94,12 +94,12 @@ Groovy script
         PsiElement({)('{')
         PsiWhiteSpace('\n      ')
         Case section
-          Case label
-            PsiElement(case)('case')
-            PsiWhiteSpace(' ')
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          Expression list
             Literal
               PsiElement(Integer)('2')
-            PsiElement(:)(':')
+          PsiElement(:)(':')
           PsiElement(new line)('\n        ')
           RETURN statement
             PsiElement(return)('return')
@@ -125,12 +125,12 @@ Groovy script
               PsiElement(false)('false')
           PsiElement(new line)('\n      ')
         Case section
-          Case label
-            PsiElement(case)('case')
-            PsiWhiteSpace(' ')
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          Expression list
             Literal
               PsiElement(Integer)('4')
-            PsiElement(:)(':')
+          PsiElement(:)(':')
           PsiElement(new line)('\n        ')
           RETURN statement
             PsiElement(return)('return')
