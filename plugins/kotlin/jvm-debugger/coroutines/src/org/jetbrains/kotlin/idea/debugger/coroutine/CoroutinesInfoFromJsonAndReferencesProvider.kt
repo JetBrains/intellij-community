@@ -38,7 +38,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
             ?: error("The third element of the result array must be an array")
         val coroutineInfoRefs = array.getValue(3).safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
             ?: error("The fourth element of the result array must be an array")
-        val coroutinesInfo = Gson().fromJson(coroutinesInfoAsJsonString, Array<CoroutineInfoPack>::class.java)
+        val coroutinesInfo = Gson().fromJson(coroutinesInfoAsJsonString, Array<CoroutineInfoFromJson>::class.java)
 
         if (coroutineInfoRefs.size != lastObservedFrameRefs.size ||
             lastObservedFrameRefs.size != coroutinesInfo.size ||
@@ -50,7 +50,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
     }
 
     private fun calculateCoroutineInfoData(
-        coroutineInfos: Array<CoroutineInfoPack>,
+        coroutineInfos: Array<CoroutineInfoFromJson>,
         coroutineInfoRefs: List<ObjectReference>,
         lastObservedThreadRefs: List<ThreadReference?>,
         lastObservedFrameRefs: List<ObjectReference>
@@ -71,7 +71,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
     }
 
     private fun getLazyCoroutineInfoData(
-        info: CoroutineInfoPack,
+        info: CoroutineInfoFromJson,
         coroutineInfosRef: ObjectReference,
         lastObservedThreadRef: ThreadReference?,
         lastObservedFrameRef: ObjectReference?,
@@ -95,7 +95,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
         return LazyCoroutineInfoData(coroutineInfoMirror, stackTraceProvider)
     }
 
-    private data class CoroutineInfoPack(
+    private data class CoroutineInfoFromJson(
         val name: String?,
         val id: Long?,
         val dispatcher: String?,
