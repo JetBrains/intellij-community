@@ -185,7 +185,7 @@ private class EditorTabDiffPreviewProvider(
 
   override fun getOwner(): Any = this
 
-  override fun getEditorTabName(): @Nls String = tabNameProvider().orEmpty()
+  override fun getEditorTabName(processor: DiffRequestProcessor?): @Nls String = tabNameProvider().orEmpty()
 
   override fun createDiffRequestChain(): DiffRequestChain? {
     if (diffProcessor is ChangeViewDiffRequestProcessor) {

@@ -15,7 +15,7 @@ public class PreviewDiffVirtualFile extends DiffVirtualFile {
   @NotNull private final DiffPreviewProvider myProvider;
 
   public PreviewDiffVirtualFile(@NotNull DiffPreviewProvider provider) {
-    super(provider.getEditorTabName());
+    super("DiffPreview");
     myProvider = provider;
 
     putUserData(SplitAction.FORBID_TAB_SPLIT, true);

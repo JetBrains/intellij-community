@@ -162,11 +162,10 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
     return preview
   }
 
-  override fun getEditorTabName(): @Nls String {
-    val change = VcsLogChangeProcessor.getSelectedOrAll(changesBrowser).userObjectsStream(Change::class.java).findFirst().orElse(null)
-
-    return if (change == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
-    else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", ChangesUtil.getFilePath(change).name)
+  override fun getEditorTabName(processor: DiffRequestProcessor?): @Nls String {
+    val filePath = (processor as? VcsLogChangeProcessor)?.currentChange?.filePath
+    return if (filePath == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
+    else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", filePath.name)
   }
 
   override fun getOwnerComponent(): JComponent = changesBrowser.preferredFocusedComponent
