@@ -148,7 +148,9 @@ fun isProjectImplicitlyTrusted(projectDir: Path?): Boolean {
 
 private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                        ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                       java.lang.Boolean.getBoolean("idea.is.integration.test")
+                                       java.lang.Boolean.getBoolean("idea.is.integration.test") ||
+                                       java.lang.Boolean.getBoolean("idea.trust.all.projects")
+                                       
 
 private sealed class TrustedCheckResult {
   object Trusted : TrustedCheckResult()
