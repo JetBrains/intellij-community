@@ -12,6 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 fun <T> runReadAction(action: () -> T): T {
     return ApplicationManager.getApplication().runReadAction<T>(action)
@@ -83,4 +86,9 @@ fun <T> executeInBackgroundWithProgress(project: Project? = null, @NlsContexts.P
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(
         ThrowableComputable { block() }, title, true, project
     )
+}
+
+fun KotlinExceptionWithAttachments.withPsiAttachment(name: String, element: PsiElement?): KotlinExceptionWithAttachments {
+    kotlin.runCatching { element?.getElementTextWithContext() }.getOrNull()?.let { withAttachment(name, it) }
+    return this
 }

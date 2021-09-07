@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -216,7 +217,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
                         is KtElement, is PsiClass -> selectedParent
                         is PsiPackage -> createFileByPackage(selectedParent, editor, file)
                         else -> throw KotlinExceptionWithAttachments("Unexpected element: ${selectedParent::class.java}")
-                            .withAttachment("selectedParent", selectedParent.text)
+                            .withPsiAttachment("selectedParent", selectedParent)
                     } ?: return@runWriteAction
                 val constructorInfo = ClassWithPrimaryConstructorInfo(
                     classInfo,

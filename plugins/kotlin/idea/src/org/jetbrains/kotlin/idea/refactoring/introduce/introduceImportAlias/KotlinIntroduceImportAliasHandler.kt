@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.search.fileScope
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -86,7 +87,7 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
             validator = validator,
             defaultName = { fqName.asString().replace('.', '_') })
         checkWithAttachment(suggestionsName.isNotEmpty(), { "Unable to build any suggestion name for $fqName" }) {
-            it.withAttachment("file.kt", file.text)
+            it.withPsiAttachment("file.kt", file)
         }
         val newName = suggestionsName.first()
         suggestedImportAliasNames = suggestionsName

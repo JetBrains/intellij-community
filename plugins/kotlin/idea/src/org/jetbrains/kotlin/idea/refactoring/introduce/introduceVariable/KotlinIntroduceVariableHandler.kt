@@ -37,10 +37,7 @@ import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.*
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
@@ -346,7 +343,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 is KtExpression -> candidate
                 is KtStringTemplateEntryWithExpression -> candidate.expression
                 else -> throw KotlinExceptionWithAttachments("Unexpected candidate element ${candidate::class.java}")
-                    .withAttachment("candidate.kt", candidate.text)
+                    .withPsiAttachment("candidate.kt", candidate)
             }
         }
 

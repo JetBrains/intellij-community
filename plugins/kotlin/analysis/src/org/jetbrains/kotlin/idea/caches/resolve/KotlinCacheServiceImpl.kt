@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.project.useCompositeAnalysis
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.*
@@ -92,11 +93,10 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 it.containingKtFile ?: throw IllegalStateException("containingKtFile was null for $it of ${it.javaClass}")
             } catch (e: Exception) {
                 if (e is ControlFlowException) throw e
-                throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e).apply {
-                    kotlin.runCatching { it.text }.getOrNull()?.let { s -> withAttachment("element", s) }
-                    kotlin.runCatching { it.containingFile.text }.getOrNull()?.let { s -> withAttachment("file", s) }
-                    withAttachment("original", e.message)
-                }
+                throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e)
+                    .withPsiAttachment("element", it)
+                    .withPsiAttachment("file", it.containingFile)
+                    .withAttachment("original", e.message)
             }
         }
     }

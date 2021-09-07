@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -130,10 +131,10 @@ private class KotlinIdeaResolutionException(
             append(creationPlace.description())
         })
         for (element in resolvingWhat.elements.withIndex()) {
-            withAttachment("element${element.index}.kt", element.value.text)
-            withAttachment(
+            withPsiAttachment("element${element.index}.kt", element.value)
+            withPsiAttachment(
                 "file${element.index}.kt",
-                element.value.containingFile?.text ?: "No file! 'element.value' ${element.value} have 'containingFile' == null"
+                element.value.containingFile
             )
         }
     }

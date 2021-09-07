@@ -18,7 +18,6 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.idea.formatter.trailingComma.addTrailingCommaIsAllowedFor
 import org.jetbrains.kotlin.idea.formatter.trailingCommaAllowedInModule
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.isComma
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
@@ -158,11 +158,11 @@ class TrailingCommaInspection(
         private fun commonParent(commaOwner: PsiElement, elementForTextRange: PsiElement): PsiElement =
             PsiTreeUtil.findCommonParent(commaOwner, elementForTextRange)
                 ?: throw KotlinExceptionWithAttachments("Common parent not found")
-                    .withAttachment("commaOwner", commaOwner.text)
+                    .withPsiAttachment("commaOwner", commaOwner)
                     .withAttachment("commaOwnerRange", commaOwner.textRange)
-                    .withAttachment("elementForTextRange", elementForTextRange.text)
+                    .withPsiAttachment("elementForTextRange", elementForTextRange)
                     .withAttachment("elementForTextRangeRange", elementForTextRange.textRange)
-                    .withAttachment("parent", commaOwner.parent.text)
+                    .withPsiAttachment("parent", commaOwner.parent)
                     .withAttachment("parentRange", commaOwner.parent.textRange)
 
         private fun ProblemHighlightType.applyCondition(condition: Boolean): ProblemHighlightType = when {

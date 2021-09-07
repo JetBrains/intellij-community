@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -129,7 +130,7 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
         is KtBinaryExpression -> condition.left
         is KtIsExpression -> condition.leftHandSide
         else -> throw KotlinExceptionWithAttachments("Only binary / is expressions are supported here: ${condition?.let { it::class.java }}")
-            .withAttachment("condition", condition?.text)
+            .withPsiAttachment("condition", condition)
     }!!
     KotlinIntroduceVariableHandler.doRefactoring(
         project,

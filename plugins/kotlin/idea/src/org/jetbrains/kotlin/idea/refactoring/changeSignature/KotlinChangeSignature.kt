@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
@@ -125,8 +126,8 @@ class KotlinChangeSignature(
             }
 
             else -> throw KotlinExceptionWithAttachments("Unexpected declaration: ${baseDeclaration::class}")
-                .withAttachment("element", baseDeclaration.text)
-                .withAttachment("file", baseDeclaration.containingFile.text)
+                .withPsiAttachment("element.kt", baseDeclaration)
+                .withPsiAttachment("file.kt", baseDeclaration.containingFile)
         }
     }
 

@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.project.IdeaModuleStructureOracle
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.*
@@ -67,9 +68,9 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         checkWithAttachment(element.containingFile == file, {
             "Expected $file, but was ${element.containingFile} for ${if (element.isValid) "valid" else "invalid"} $element "
         }) {
-            it.withAttachment("element.kt", element.text)
-            it.withAttachment("file.kt", element.containingFile.text)
-            it.withAttachment("original.kt", file.text)
+            it.withPsiAttachment("element.kt", element)
+            it.withPsiAttachment("file.kt", element.containingFile)
+            it.withPsiAttachment("original.kt", file)
         }
     }
 

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.search.excludeKotlinSources
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.receiverTypes
 import org.jetbrains.kotlin.idea.util.substituteExtensionIfCallable
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
@@ -545,9 +546,7 @@ class KotlinIndicesHelper(
                     .withAttachment("compiledFile", IDEKotlinBinaryClassCache.getInstance().isKotlinJvmCompiledFile(containingFile.virtualFile))
                     .withAttachment("element", this)
                     .withAttachment("type", javaClass)
-                    .apply {
-                        kotlin.runCatching { ktFile.text }.getOrNull()?.let { s -> withAttachment("file.kt", s) }
-                    }
+                    .withPsiAttachment("file.kt", ktFile)
             )
 
             return emptyList()

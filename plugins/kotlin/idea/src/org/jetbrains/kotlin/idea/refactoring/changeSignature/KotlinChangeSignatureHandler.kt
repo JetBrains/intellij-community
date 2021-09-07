@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
 import org.jetbrains.kotlin.idea.util.expectedDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
@@ -45,7 +46,7 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
         val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return
         if (element !is KtElement)
             throw KotlinExceptionWithAttachments("This handler must be invoked for Kotlin elements only: ${element::class.java}")
-                .withAttachment("element", element.text)
+                .withAttachment("element", element)
 
         invokeChangeSignature(element, elementAtCaret, project, editor)
     }
@@ -54,7 +55,7 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
         val element = elements.singleOrNull()?.unwrapped ?: return
         if (element !is KtElement) {
             throw KotlinExceptionWithAttachments("This handler must be invoked for Kotlin elements only: ${element::class.java}")
-                .withAttachment("element", element.text)
+                .withAttachment("element", element)
         }
 
         val editor = dataContext?.let { CommonDataKeys.EDITOR.getData(it) }
