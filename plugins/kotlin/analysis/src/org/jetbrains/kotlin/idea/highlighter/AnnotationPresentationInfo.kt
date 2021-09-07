@@ -35,7 +35,7 @@ class AnnotationPresentationInfo(
 ) {
 
     companion object {
-        private const val KOTLIN_SUPPRESS_OPTIONS_ID = "KotlinSuppressOptions"
+        private const val KOTLIN_COMPILER_WARNING_ID = "KotlinSuppressOptions"
     }
 
     fun processDiagnostics(
@@ -68,21 +68,22 @@ class AnnotationPresentationInfo(
         diagnostic: Diagnostic,
         info: HighlightInfo
     ) {
-        val fixes = fixesMap[diagnostic]
-        val keyForSuppressOptions = HighlightDisplayKey.findOrRegister(
-            KOTLIN_SUPPRESS_OPTIONS_ID, KotlinIdeaAnalysisBundle.message("kotlin.suppress.options")
-        )
-        fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach {
-            QuickFixAction.registerQuickFixAction(info, it, keyForSuppressOptions)
+        val fixes = run {
+            fixesMap[diagnostic].takeIf { it.isNotEmpty() } ?: if (diagnostic.severity == Severity.WARNING) {
+                listOf(EmptyIntentionAction(diagnostic.factory.name))
+            } else emptyList()
         }
+        val keyForSuppressOptions = HighlightDisplayKey.findOrRegister(
+            KOTLIN_COMPILER_WARNING_ID, KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning")
+        )
 
-        if (diagnostic.severity == Severity.WARNING && fixes.isEmpty()) {
+        fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach {
             info.registerFix(
-                EmptyIntentionAction(diagnostic.factory.name),
+                it,
                 info.problemGroup.safeAs<SuppressableProblemGroup>()?.let { group ->
                     group.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
                 },
-                KotlinIdeaAnalysisBundle.message("kotlin.suppress.options"),
+                KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning"),
                 null,
                 keyForSuppressOptions
             )
