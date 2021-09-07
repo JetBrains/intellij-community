@@ -231,8 +231,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       LOG.assertTrue(isStartupActivitiesPassed)
       val snapshot = PerformanceWatcher.takeSnapshot()
       // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
-      // (depending on dumb-awareness), but because there is no other concurrent phase,ur
-      // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
+      // (depending on dumb-awareness), but because there is no other concurrent phase, we measure it as a sequential activity
+      // to put it on the timeline and make clear what's going at the end (avoiding the last "unknown" phase)
       val dumbAwareActivity = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES)
       val edtActivity = AtomicReference<Activity?>()
       val uiFreezeWarned = AtomicBoolean()

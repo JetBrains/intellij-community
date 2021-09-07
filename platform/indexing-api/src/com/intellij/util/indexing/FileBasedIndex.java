@@ -299,9 +299,9 @@ public abstract class FileBasedIndex {
   /**
    * An input filter which accepts {@link IndexedFile} as parameter.
    * One could use this interface for filters which require {@link Project} instance to filter out files.
-   * <br>
-   * Note, that in most of cases no one needs this filter.
-   * And the only use case is to optimize indexed file count when corresponding indexer is relatively slow.
+   * <p>
+   * Note that in most the cases no one needs this filter.
+   * And the only use case is to optimize indexed file count when the corresponding indexer is relatively slow.
    */
   @ApiStatus.Experimental
   public interface ProjectSpecificInputFilter extends InputFilter {

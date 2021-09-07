@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,8 +15,8 @@ import java.nio.charset.StandardCharsets;
 
 public final class PropertiesFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
-  @NonNls public static final String DEFAULT_EXTENSION = "properties";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
+  public static final String DEFAULT_EXTENSION = "properties";
+  public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
   public static final Charset PROPERTIES_DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
 
   private PropertiesFileType() {
@@ -25,20 +24,17 @@ public final class PropertiesFileType extends LanguageFileType {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "Properties";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return PropertiesBundle.message("filetype.properties.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
@@ -48,7 +44,7 @@ public final class PropertiesFileType extends LanguageFileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     Charset guessed = content.length == 0 ? null : new CharsetToolkit(content, PROPERTIES_DEFAULT_CHARSET, true).guessEncoding(content.length);
     Charset charset = guessed == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed;
     if (charset == null) {

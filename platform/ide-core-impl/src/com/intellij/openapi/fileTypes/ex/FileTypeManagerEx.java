@@ -17,8 +17,7 @@ public abstract class FileTypeManagerEx extends FileTypeManager {
 
   public abstract boolean isIgnoredFilesListEqualToCurrent(@NotNull String list);
 
-  @NotNull
-  public abstract String getExtension(@NotNull String fileName);
+  public abstract @NotNull String getExtension(@NotNull String fileName);
 
   /**
    * Use {@link FileTypeManagerEx#makeFileTypesChange(String, Runnable)} instead.
@@ -35,8 +34,8 @@ public abstract class FileTypeManagerEx extends FileTypeManager {
    */
   public abstract void makeFileTypesChange(@NonNls @NotNull String debugReasonMessage, @NotNull Runnable command);
 
-  @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
-  public FileType getByFile(@NotNull VirtualFile file) {
+  // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
+  public @Nullable FileType getByFile(@NotNull VirtualFile file) {
     return null;
   }
 }

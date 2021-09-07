@@ -23,10 +23,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Validator extends FileProcessingCompiler {
   /**
-   * Returns unique ID which can be used in project configuration files.
+   * Returns unique ID, which can be used in project configuration files.
    */
-  @NotNull
-  default @NonNls String getId() {
+  default @NotNull @NonNls String getId() {
     PluginException.reportDeprecatedDefault(
       getClass(), "getId",
       "The default implementation delegates to 'getDescription' which may be localized," +

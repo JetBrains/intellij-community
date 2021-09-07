@@ -32,17 +32,15 @@ import java.util.List;
  * Basic run configuration type for external system tasks.
  */
 public abstract class AbstractExternalSystemTaskConfigurationType implements ConfigurationType {
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  private final ConfigurationFactory @NotNull [] myFactories = new ConfigurationFactory[1];
+  private final ProjectSystemId myExternalSystemId;
+  private final ConfigurationFactory[] myFactories = new ConfigurationFactory[1];
+  private final NotNullLazyValue<Icon> myIcon;
 
-  @NotNull private final NotNullLazyValue<Icon> myIcon;
-
-  protected AbstractExternalSystemTaskConfigurationType(@NotNull final ProjectSystemId externalSystemId) {
+  protected AbstractExternalSystemTaskConfigurationType(@NotNull ProjectSystemId externalSystemId) {
     myExternalSystemId = externalSystemId;
     myFactories[0] = new ConfigurationFactory(this) {
-      @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return doCreateConfiguration(myExternalSystemId, project, this, "");
       }
 
@@ -73,9 +71,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   /**
    * This method must be overridden and a proper ID must be returned from it (it'll be used as a key in run configuration file).
    */
-  @NonNls
-  @NotNull
-  protected String getConfigurationFactoryId() {
+  protected @NonNls @NotNull String getConfigurationFactoryId() {
     PluginException.reportDeprecatedDefault(
       getClass(), "getConfigurationFactoryId",
       "The default implementation delegates to 'ProjectSystemId::getReadableName' which is supposed to be localized," +
@@ -83,27 +79,23 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return myExternalSystemId.getReadableName();
   }
 
-  @NotNull
-  public ProjectSystemId getExternalSystemId() {
+  public @NotNull ProjectSystemId getExternalSystemId() {
     return myExternalSystemId;
   }
 
-  @NotNull
-  public ConfigurationFactory getFactory() {
+  public @NotNull ConfigurationFactory getFactory() {
     return myFactories[0];
   }
 
-  @NotNull
-  protected ExternalSystemRunConfiguration doCreateConfiguration(@NotNull ProjectSystemId externalSystemId,
-                                                                 @NotNull Project project,
-                                                                 @NotNull ConfigurationFactory factory,
-                                                                 @NotNull String name) {
+  protected @NotNull ExternalSystemRunConfiguration doCreateConfiguration(@NotNull ProjectSystemId externalSystemId,
+                                                                          @NotNull Project project,
+                                                                          @NotNull ConfigurationFactory factory,
+                                                                          @NotNull String name) {
     return new ExternalSystemRunConfiguration(externalSystemId, project, factory, name);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return myExternalSystemId.getReadableName();
   }
 
@@ -117,9 +109,8 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return myIcon.getValue();
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myExternalSystemId.getReadableName() + "RunConfiguration";
   }
 
@@ -128,30 +119,27 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return myFactories;
   }
 
-  @NotNull
-  public static @NlsActions.ActionText String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
+  public static @NotNull @NlsActions.ActionText String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
     return generateName(
       project, settings.getExternalSystemId(), settings.getExternalProjectPath(), settings.getTaskNames(), settings.getExecutionName()
     );
   }
 
-  @NotNull
-  public static @NlsActions.ActionText String generateName(@NotNull Project project,
-                                                           @NotNull ProjectSystemId externalSystemId,
-                                                           @Nullable String externalProjectPath,
-                                                           @NotNull List<String> taskNames,
-                                                           @Nullable @Nls String executionName) {
+  public static @NotNull @NlsActions.ActionText String generateName(@NotNull Project project,
+                                                                    @NotNull ProjectSystemId externalSystemId,
+                                                                    @Nullable String externalProjectPath,
+                                                                    @NotNull List<String> taskNames,
+                                                                    @Nullable @Nls String executionName) {
     return generateName(project, externalSystemId, externalProjectPath, taskNames, executionName, " [", "]");
   }
 
-  @NotNull
-  public static @NlsActions.ActionText String generateName(@NotNull Project project,
-                                                           @NotNull ProjectSystemId externalSystemId,
-                                                           @Nullable String externalProjectPath,
-                                                           @NotNull List<String> taskNames,
-                                                           @Nullable @Nls String executionName,
-                                                           @NotNull String tasksPrefix,
-                                                           @NotNull String tasksPostfix) {
+  public static @NotNull @NlsActions.ActionText String generateName(@NotNull Project project,
+                                                                    @NotNull ProjectSystemId externalSystemId,
+                                                                    @Nullable String externalProjectPath,
+                                                                    @NotNull List<String> taskNames,
+                                                                    @Nullable @Nls String executionName,
+                                                                    @NotNull String tasksPrefix,
+                                                                    @NotNull String tasksPostfix) {
     if (!StringUtil.isEmpty(executionName)) {
       return executionName;
     }

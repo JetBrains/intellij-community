@@ -11,12 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PackageSetBase implements PackageSet {
-  /**
-   * @deprecated use {@link PackageSetBase#contains(VirtualFile, Project, NamedScopesHolder)} instead
-   */
+  /** @deprecated use {@link PackageSetBase#contains(VirtualFile, Project, NamedScopesHolder)} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder) {
+  public boolean contains(@SuppressWarnings("unused") @NotNull VirtualFile file, @SuppressWarnings("unused") NamedScopesHolder holder) {
     return false;
   }
 
@@ -31,8 +29,7 @@ public abstract class PackageSetBase implements PackageSet {
     return virtualFile != null && contains(virtualFile, file.getProject(), holder);
   }
 
-  @Nullable
-  public static PsiFile getPsiFile(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @Nullable PsiFile getPsiFile(@NotNull VirtualFile file, @NotNull Project project) {
     return PsiManager.getInstance(project).findFile(file);
   }
 }
