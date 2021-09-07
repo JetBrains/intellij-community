@@ -462,6 +462,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     Disposer.register(myRunContentDescriptor, view);
   }
 
+  @Nullable
+  protected XDebugView getView(String contentId) {
+    return myViews.get(contentId);
+  }
+
   private void removeContent(String contentId) {
     myUi.removeContent(findOrRestoreContentIfNeeded(contentId), true);
     unregisterView(contentId);

@@ -42,16 +42,12 @@ class XDebugFramesAndThreadsLayoutOptions(
     option as? FramesAndThreadsLayoutOptionBase ?: throw IllegalStateException("Unexpected option type: ${option::class.java}")
     if (!option.isSelected) {
       val newView = option.createView()
-      debugTab.registerThreadsView(session, newView)
-      content.setPreferredFocusedComponent { newView.mainComponent }
+      debugTab.registerThreadsView(session, content, newView)
       XDebugThreadsFramesViewChangeCollector.framesViewSelected(option.getOptionKey())
     }
 
     val contentUi = RunnerContentUi.KEY.getData(debugTab.ui as RunnerLayoutUiImpl)
-    if (contentUi != null &&
-        !isContentVisible() &&
-        !contentUi.isEmpty //avoid force restore of not initialized ui
-      ) {
+    if (contentUi != null && !isContentVisible()) {
       contentUi.restore(content)
       contentUi.select(content, true)
     }
