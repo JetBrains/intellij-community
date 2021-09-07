@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.isNothing
 
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private enum class ConstantValue {
@@ -97,47 +98,64 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         ) {
             return true
         }
-        if (value == ConstantValue.TRUE) {
-            if (isPairingConditionInWhen(expression)) return true
-        }
-        if (value == ConstantValue.ZERO) {
-            if (expression.readWriteAccess(false).isWrite) {
-                // like if (x == 0) x++, warning would be somewhat annoying
-                return true
+        when (value) {
+            ConstantValue.TRUE -> {
+                if (isPairingConditionInWhen(expression)) return true
             }
-            val bindingContext = expression.analyze()
-            if (ConstantExpressionEvaluator.getConstant(expression, bindingContext) != null) return true
-            if (expression is KtSimpleNameExpression &&
-                (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)) {
-                // zero value is passed as argument to another method or used for array access. Often, such a warning is annoying
-                return true
+            ConstantValue.FALSE -> {
+                if (parent is KtWhenConditionWithExpression && isAssertingCondition(parent)) return true
             }
-        }
-        if (value == ConstantValue.NULL) {
-            if (parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
-                // initialize other variable with null to copy type, like
-                // var x1 : X = null
-                // var x2 = x1 -- let's suppress this
-                return true
-            }
-            if (expression is KtBinaryExpressionWithTypeRHS && expression.left.isNull()) {
-                // like (null as? X)
-                return true
-            }
-            if (parent is KtBinaryExpression) {
-                val token = parent.operationToken
-                if ((token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) &&
-                    (parent.left?.isNull() == true || parent.right?.isNull() == true)
+            ConstantValue.ZERO -> {
+                if (expression.readWriteAccess(false).isWrite) {
+                    // like if (x == 0) x++, warning would be somewhat annoying
+                    return true
+                }
+                if (expression is KtDotQualifiedExpression && expression.selectorExpression?.textMatches("ordinal") == true) {
+                    var receiver: KtExpression? = expression.receiverExpression
+                    if (receiver is KtQualifiedExpression) {
+                        receiver = receiver.selectorExpression
+                    }
+                    if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtEnumEntry) {
+                        // ordinal() call on explicit enum constant
+                        return true
+                    }
+                }
+                val bindingContext = expression.analyze()
+                if (ConstantExpressionEvaluator.getConstant(expression, bindingContext) != null) return true
+                if (expression is KtSimpleNameExpression &&
+                    (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)
                 ) {
-                    // like if (x == null) when 'x' is known to be null: report 'always true' instead
+                    // zero value is passed as argument to another method or used for array access. Often, such a warning is annoying
                     return true
                 }
             }
-            val kotlinType = expression.getKotlinType()
-            if (kotlinType.toDfType(expression) == DfTypes.NULL) {
-                // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
-                return true
+            ConstantValue.NULL -> {
+                if (parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
+                    // initialize other variable with null to copy type, like
+                    // var x1 : X = null
+                    // var x2 = x1 -- let's suppress this
+                    return true
+                }
+                if (expression is KtBinaryExpressionWithTypeRHS && expression.left.isNull()) {
+                    // like (null as? X)
+                    return true
+                }
+                if (parent is KtBinaryExpression) {
+                    val token = parent.operationToken
+                    if ((token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) &&
+                        (parent.left?.isNull() == true || parent.right?.isNull() == true)
+                    ) {
+                        // like if (x == null) when 'x' is known to be null: report 'always true' instead
+                        return true
+                    }
+                }
+                val kotlinType = expression.getKotlinType()
+                if (kotlinType.toDfType(expression) == DfTypes.NULL) {
+                    // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
+                    return true
+                }
             }
+            else -> {}
         }
         if (expression is KtSimpleNameExpression) {
             val target = expression.mainReference.resolve()
@@ -330,10 +348,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         condition: KtWhenCondition
     ): Boolean {
         if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
+        if (cv == ConstantValue.FALSE && isAssertingCondition(condition)) return true
         if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
         val context = condition.analyze(BodyResolveMode.FULL)
         if (context.diagnostics.forElement(condition).any { it.factory == Errors.USELESS_IS_CHECK }) return true
         return false
+    }
+
+    private fun isAssertingCondition(condition: KtWhenCondition): Boolean {
+        val expression = (condition.parent as? KtWhenEntry)?.expression
+        return expression?.getKotlinType()?.isNothing() == true
     }
 
     private fun isLastCondition(condition: KtWhenCondition): Boolean {

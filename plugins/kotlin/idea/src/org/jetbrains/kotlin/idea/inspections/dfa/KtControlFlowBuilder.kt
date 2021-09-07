@@ -51,13 +51,13 @@ import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 /*
 com.intellij.database.dialects.oracle.introspector.OraIntrospector.OraSchemaRetriever#retrieveDbLinks
+com.intellij.ssh.integration.tests.auth.CheckCanAuthenticateTest#connectAndCheck
  */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
     private val trapTracker = TrapTracker(factory, context)
     private val stringType = PsiType.getJavaLangString(context.manager, context.resolveScope)
-    private val project = factory.project
 
     fun buildFlow(): ControlFlow? {
         processExpression(context)
@@ -893,7 +893,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         val target = expr.mainReference.resolve()
-        val value: DfType? = getReferenceValue(target)
+        val value: DfType? = getReferenceValue(expr, target)
         if (value != null) {
             if (qualifierOnStack) {
                 addInstruction(PopInstruction())
@@ -904,7 +904,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    private fun getReferenceValue(target: PsiElement?): DfType? {
+    private fun getReferenceValue(expr: KtExpression, target: PsiElement?): DfType? {
         return when (target) {
             is KtObjectDeclaration -> {
                 DfType.TOP // TODO
@@ -915,7 +915,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 if (constantValue != null && constantValue !is Boolean) {
                     DfTypes.constant(constantValue, target.type)
                 } else {
-                    DfTypes.typedObject(target.type, DfaPsiUtil.getElementNullability(null, target))
+                    expr.getKotlinType().toDfType(expr)
                 }
             }
             is KtEnumEntry -> {

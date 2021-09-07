@@ -103,5 +103,25 @@ fun returnFromWhen(x: Int): Unit {
     }
     if (<warning descr="Condition is always false">x == 11</warning>) {}
 }
+fun suppressAlreadyHandled(x: Int) {
+    when(x) {
+        0 -> {}
+        1 -> {}
+        2 -> return
+        3 -> {}
+    }
+    when(x) {
+        0 -> {}
+        1 -> {}
+        2 -> throw Exception()
+        3 -> {}
+    }
+    when {
+        x == 0 -> {}
+        x == 1 -> {}
+        x == 2 -> throw Exception()
+        x == 3 -> {}
+    }
+}
 class X {}
 class Y {}
