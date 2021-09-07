@@ -3,7 +3,6 @@ package training.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.util.ui.UIUtil
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
@@ -16,6 +15,7 @@ import org.fest.swing.timing.Timeout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Rectangle
+import java.awt.Window
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -98,10 +98,10 @@ object LearningUiUtil {
   }
 
   private fun isReallyVisible(component: Component): Boolean {
-    val frame = UIUtil.getParentOfType(IdeFrameImpl::class.java, component) ?: return true
+    val window = UIUtil.getParentOfType(Window::class.java, component) ?: return true
     val locationOnScreen = component.locationOnScreen
     val onScreenRect = Rectangle(locationOnScreen.x, locationOnScreen.y, component.width, component.height)
-    val bounds = frame.bounds
+    val bounds = window.bounds
     return bounds.intersects(onScreenRect)
   }
 
