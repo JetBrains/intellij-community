@@ -74,11 +74,6 @@ inline fun <reified T : Any> ComponentManager.getService(): T? = this.getService
 inline fun <reified T : Any> ComponentManager.getServiceSafe(): T =
     this.getService(T::class.java) ?: error("Unable to locate service ${T::class.java.name}")
 
-fun <T> Project.runReadActionInSmartMode(action: () -> T): T {
-    if (ApplicationManager.getApplication().isReadAccessAllowed) return action()
-    return DumbService.getInstance(this).runReadActionInSmartMode<T>(action)
-}
-
 fun <T> executeInBackgroundWithProgress(project: Project? = null, @NlsContexts.ProgressTitle title: String, block: () -> T): T {
     assert(!ApplicationManager.getApplication().isWriteAccessAllowed) {
         "Rescheduling computation into the background is impossible under the write lock"

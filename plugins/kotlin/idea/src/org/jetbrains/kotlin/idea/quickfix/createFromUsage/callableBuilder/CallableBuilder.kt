@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.DialogWithEditor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -993,7 +994,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                         PsiDocumentManager.getInstance(project).commitDocument(containingFileEditor.document)
 
                         dialogWithEditor?.close(DialogWrapper.OK_EXIT_CODE)
-                        if (brokenOff && !ApplicationManager.getApplication().isUnitTestMode) return
+                        if (brokenOff && !isUnitTestMode()) return
 
                         // file templates
                         val newDeclaration = PsiTreeUtil.findElementOfClassAtOffset(
@@ -1053,7 +1054,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         }
 
         fun showDialogIfNeeded() {
-            if (!ApplicationManager.getApplication().isUnitTestMode && dialogWithEditor != null && !finished) {
+            if (!isUnitTestMode() && dialogWithEditor != null && !finished) {
                 dialogWithEditor.show()
             }
         }

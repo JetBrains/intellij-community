@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -124,7 +125,7 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
         KotlinBundle.message("hints.settings.suspending"),
         false
     ) {
-        override fun isApplicable(elem: PsiElement) = elem.isNameReferenceInCall() && ApplicationManager.getApplication().isInternal
+        override fun isApplicable(elem: PsiElement) = elem.isNameReferenceInCall() && isApplicationInternalMode()
 
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val callExpression = elem.parent as? KtCallExpression ?: return emptyList()

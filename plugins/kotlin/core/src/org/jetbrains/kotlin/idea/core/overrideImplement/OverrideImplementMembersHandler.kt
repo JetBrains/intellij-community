@@ -6,7 +6,6 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.util.MemberChooser
 import com.intellij.lang.LanguageCodeInsightActionHandler
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -97,7 +97,7 @@ abstract class OverrideImplementMembersHandler : LanguageCodeInsightActionHandle
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-        invoke(project, editor, file, implementAll = ApplicationManager.getApplication().isUnitTestMode)
+        invoke(project, editor, file, implementAll = isUnitTestMode())
     }
 
     override fun startInWriteAction(): Boolean = false

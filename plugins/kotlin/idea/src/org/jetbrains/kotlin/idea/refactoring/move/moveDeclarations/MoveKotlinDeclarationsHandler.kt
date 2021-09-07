@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -25,6 +24,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwar
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinSelectNestedClassRefactoringDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinNestedClassesDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isEffectivelyActual
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -172,7 +172,7 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
             }
             val initialTargetDirectory = MoveFilesOrDirectoriesUtil.resolveToDirectory(project, initialTargetElement)
 
-            if (!ApplicationManager.getApplication().isUnitTestMode &&
+            if (!isUnitTestMode() &&
                 elementsToSearch.any { it.isExpectDeclaration() || it.isEffectivelyActual() }
             ) {
                 val message =

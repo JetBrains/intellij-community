@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetTypeRegistry
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.module.Module
@@ -26,6 +25,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType.Companion.ID
 import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -89,7 +89,7 @@ val Module.implementingModules: List<Module>
 private val Module.stableModuleName: String
     get() = ExternalSystemModulePropertyManager.getInstance(this).getLinkedProjectId()
         ?: name.also {
-            if (!ApplicationManager.getApplication().isUnitTestMode) LOG.error("Don't have a LinkedProjectId for module $this for HMPP!")
+            if (!isUnitTestMode()) LOG.error("Don't have a LinkedProjectId for module $this for HMPP!")
         }
 
 private val Project.modulesByLinkedKey: Map<String, Module>

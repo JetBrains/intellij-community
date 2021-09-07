@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.idea.formatter.trailingComma.addTrailingCommaIsAllowedFor
 import org.jetbrains.kotlin.idea.formatter.trailingCommaAllowedInModule
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.isComma
 import org.jetbrains.kotlin.idea.util.isLineBreak
@@ -166,7 +167,7 @@ class TrailingCommaInspection(
                     .withAttachment("parentRange", commaOwner.parent.textRange)
 
         private fun ProblemHighlightType.applyCondition(condition: Boolean): ProblemHighlightType = when {
-            ApplicationManager.getApplication().isUnitTestMode -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+            isUnitTestMode() -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
             condition -> this
             else -> ProblemHighlightType.INFORMATION
         }

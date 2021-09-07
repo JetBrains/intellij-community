@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.intentions.declarations
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.idea.refactoring.withExpectedActuals
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.actualsForExpected
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.liftToExpected
@@ -270,7 +270,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
     }
 
     private fun askIfExpectedIsAllowed(file: KtFile): Boolean {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             return file.allChildren.any { it is PsiComment && it.text.trim() == "// ALLOW_EXPECT_WITHOUT_ACTUAL" }
         }
 

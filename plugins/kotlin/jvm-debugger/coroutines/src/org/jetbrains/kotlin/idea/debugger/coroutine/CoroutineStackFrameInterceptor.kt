@@ -12,7 +12,7 @@ import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isInUnitTest
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class CoroutineStackFrameInterceptor(val project: Project) : StackFrameInterceptor {
     override fun createStackFrame(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl, location: Location): XStackFrame? {
@@ -21,7 +21,7 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
             && AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)
         ) {
             val suspendContextImpl = when {
-                isInUnitTest() -> debugProcess.suspendManager.pausedContext
+                isUnitTestMode() -> debugProcess.suspendManager.pausedContext
                 else -> debugProcess.debuggerContext.suspendContext
             }
             suspendContextImpl?.let {

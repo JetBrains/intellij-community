@@ -30,6 +30,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.idea.update.verify
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -99,7 +100,7 @@ class KotlinPluginUpdater : Disposable {
 
     fun kotlinFileEdited(file: VirtualFile) {
         if (!file.isInLocalFileSystem) return
-        if (ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isHeadlessEnvironment) return
+        if (isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment) return
         if (!UpdateSettings.getInstance().isCheckNeeded) return
 
         val lastUpdateTime = java.lang.Long.parseLong(PropertiesComponent.getInstance().getValue(PROPERTY_NAME, "0"))

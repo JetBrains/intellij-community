@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeHighlighting.RainbowHighlighter
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
@@ -47,7 +47,7 @@ internal class BeforeResolveHighlightingVisitor(holder: AnnotationHolder) : Abst
     }
 
     override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-        if (ApplicationManager.getApplication().isUnitTestMode) return
+        if (isUnitTestMode()) return
 
         val functionLiteral = lambdaExpression.functionLiteral
         createInfoAnnotation(functionLiteral.lBrace, textAttributes = KotlinHighlightingColors.FUNCTION_LITERAL_BRACES_AND_ARROW)

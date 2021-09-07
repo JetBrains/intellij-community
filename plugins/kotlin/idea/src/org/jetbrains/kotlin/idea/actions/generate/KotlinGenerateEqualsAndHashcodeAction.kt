@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.isJs
@@ -97,7 +98,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
         val properties = getPropertiesToUseInGeneratedMember(klass)
 
-        if (properties.isEmpty() || ApplicationManager.getApplication().isUnitTestMode) {
+        if (properties.isEmpty() || isUnitTestMode()) {
             val descriptors = properties.map { context[BindingContext.DECLARATION_TO_DESCRIPTOR, it] as VariableDescriptor }
             return Info(needEquals, needHashCode, classDescriptor, descriptors, descriptors)
         }

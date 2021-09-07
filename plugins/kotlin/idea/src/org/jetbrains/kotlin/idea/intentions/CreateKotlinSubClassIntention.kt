@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -121,7 +121,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
         }
         val project = baseClass.project
         val factory = KtPsiFactory(project)
-        if (container.containingClassOrObject == null && !ApplicationManager.getApplication().isUnitTestMode) {
+        if (container.containingClassOrObject == null && !isUnitTestMode()) {
             val dlg = chooseSubclassToCreate(baseClass, baseName) ?: return
             val targetName = dlg.className
             val (file, klass) = runWriteAction {
@@ -148,7 +148,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
     }
 
     private fun runInteractiveRename(klass: KtClass, project: Project, container: KtClassOrObject, editor: Editor) {
-        if (ApplicationManager.getApplication().isUnitTestMode) return
+        if (isUnitTestMode()) return
         PsiElementRenameHandler.rename(klass, project, container, editor)
     }
 

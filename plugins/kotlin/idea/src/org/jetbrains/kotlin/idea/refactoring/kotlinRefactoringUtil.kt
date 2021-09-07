@@ -80,6 +80,8 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.actualsForExpected
+import org.jetbrains.kotlin.idea.util.application.invokeLater
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.idea.util.string.collapseSpaces
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -214,7 +216,7 @@ fun Project.checkConflictsInteractively(
     onAccept: () -> Unit
 ) {
     if (!conflicts.isEmpty) {
-        if (ApplicationManager.getApplication()!!.isUnitTestMode) throw ConflictsInTestsException(conflicts.values())
+        if (isUnitTestMode()) throw ConflictsInTestsException(conflicts.values())
 
         val dialog = ConflictsDialog(this, conflicts) { onAccept() }
         dialog.show()
@@ -451,7 +453,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
         true
     }
 
-    ApplicationManager.getApplication().invokeLater {
+    invokeLater {
         popup.showInBestPositionFor(editor)
     }
 }
@@ -483,7 +485,7 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
 ) {
     when {
         containers.isEmpty() -> return
-        containers.size == 1 || ApplicationManager.getApplication()!!.isUnitTestMode -> onSelect(containers.first())
+        containers.size == 1 || isUnitTestMode() -> onSelect(containers.first())
         toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
         else -> {
             @Suppress("UNCHECKED_CAST")
@@ -1026,7 +1028,7 @@ fun checkSuperMethodsWithPopup(
     } ?: return action(listOf(declaration))
     if (superClass == null) return action(listOf(declaration))
 
-    if (ApplicationManager.getApplication().isUnitTestMode) return action(deepestSuperMethods)
+    if (isUnitTestMode()) return action(deepestSuperMethods)
 
     val kindIndex = when (declaration) {
         is KtNamedFunction -> 1 // "function"

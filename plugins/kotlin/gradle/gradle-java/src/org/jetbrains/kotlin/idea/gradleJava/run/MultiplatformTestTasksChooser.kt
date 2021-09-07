@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.execution.test.runner.*
@@ -102,7 +102,7 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
         consumer: Consumer<List<Map<SourcePath, TestTasks>>>
     ) {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             val result = mutableListOf<Map<SourcePath, TestTasks>>()
 
             for (tasks in testTasks.values) {

@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -28,6 +27,7 @@ import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
 import org.jetbrains.kotlin.idea.refactoring.getExpressionShortText
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.psi.*
@@ -129,7 +129,7 @@ class CreateExpectedClassFix(
 
     val selectedElements = when {
         membersForSelection.all(KtDeclaration::hasActualModifier) -> membersForSelection
-        ApplicationManager.getApplication().isUnitTestMode -> membersForSelection.filter(KtDeclaration::hasActualModifier)
+        isUnitTestMode() -> membersForSelection.filter(KtDeclaration::hasActualModifier)
         else -> {
             val prefix = klass.fqName?.asString()?.plus(".") ?: ""
             chooseMembers(project, membersForSelection, prefix) ?: return@block null
@@ -170,7 +170,7 @@ private fun showUnknownTypeInDeclarationDialog(
     )
 
     TypeAccessibilityChecker.testLog?.append("$message\n")
-    return ApplicationManager.getApplication().isUnitTestMode || showOkNoDialog(
+    return isUnitTestMode() || showOkNoDialog(
         KotlinBundle.message("unknown.types.title"),
         message,
         project

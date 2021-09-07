@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.inspections.migration
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.simpleNameExpressionVisitor
@@ -38,7 +38,7 @@ class FromClosedRangeMigrationInspection : AbstractKotlinInspection(), Migration
 
             run {
                 val versionAtLeast13 = simpleNameExpression.languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_1_3
-                if (!versionAtLeast13 && !ApplicationManager.getApplication().isUnitTestMode) {
+                if (!versionAtLeast13 && !isUnitTestMode()) {
                     return
                 }
             }
