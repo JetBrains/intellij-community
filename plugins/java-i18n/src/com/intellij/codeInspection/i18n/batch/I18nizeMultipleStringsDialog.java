@@ -71,7 +71,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private final List<I18nizedPropertyData<D>> myKeyValuePairs;
   private final @NotNull Function<? super D, ? extends List<UsageInfo>> myUsagePreviewProvider;
   private final Set<Module> myContextModules;
-  private final ResourceBundleManager myResourceBundleManager;
+  private ResourceBundleManager myResourceBundleManager;
   private JComboBox<String> myPropertiesFile;
   private UsagePreviewPanel myUsagePreviewPanel;
   private JBTable myTable;
@@ -89,6 +89,21 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     myProject = project;
     myKeyValuePairs = keyValuePairs;
     myUsagePreviewProvider = usagePreviewProvider;
+    myMarkAsNonNlsButtonIcon = markAsNonNlsButtonIcon;
+    myContextModules = contextFiles.stream().map(ModuleUtilCore::findModuleForFile).filter(Objects::nonNull).collect(Collectors.toSet());
+    setTitle(PropertiesBundle.message("i18nize.multiple.strings.dialog.title"));
+
+    ReadAction
+      .nonBlocking(() -> {
+        initResourceBundleManager(contextFiles, project, canShowCodeInfo);
+      })
+      .finishOnUiThread(ModalityState.any(), bundle -> {
+        init();
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  private void initResourceBundleManager(@NotNull Set<PsiFile> contextFiles, @NotNull Project project, boolean canShowCodeInfo) {
     ResourceBundleManager resourceBundleManager;
     try {
       resourceBundleManager = ResourceBundleManager.getManager(contextFiles, project);
@@ -100,10 +115,6 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       resourceBundleManager = null;
     }
     myResourceBundleManager = resourceBundleManager;
-    myMarkAsNonNlsButtonIcon = markAsNonNlsButtonIcon;
-    myContextModules = contextFiles.stream().map(ModuleUtilCore::findModuleForFile).filter(Objects::nonNull).collect(Collectors.toSet());
-    setTitle(PropertiesBundle.message("i18nize.multiple.strings.dialog.title"));
-    init();
   }
 
   public String getI18NText(String propertyKey, String propertyValue, String paramsString) {
