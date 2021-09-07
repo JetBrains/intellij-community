@@ -64,7 +64,7 @@ public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
       final PsiFile file = psiManager.findFile(fileOrDir);
       if (!(file instanceof PsiClassOwner)) return true;
       count[0] += ((PsiClassOwner)file).getClasses().length;
-      return count[0] <= limit;
+      return true;
     });
     if (count[0] <= limit) {
       return null;
