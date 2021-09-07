@@ -37,7 +37,7 @@ private val collapseHook = Hook<IElementType> { _, marker: Marker?, elementType:
 }
 
 fun parseBlockLazy(builder: PsiBuilder, level: Int, deepParser: Parser, elementType: IElementType): Boolean {
-  return if (builder.groovyParser.parseDeep()) {
+  return if (isLazyParsingForbidden(builder) || builder.groovyParser.parseDeep()) {
     deepParser.parse(builder, level + 1)
   }
   else {
@@ -45,6 +45,11 @@ fun parseBlockLazy(builder: PsiBuilder, level: Int, deepParser: Parser, elementT
     parseBlockLazy(builder, T_LBRACE, T_RBRACE, elementType) != null
   }
 }
+
+private fun isLazyParsingForbidden(builder : PsiBuilder) : Boolean {
+  return builder[insideSwitchExpression]
+}
+
 
 fun extendedStatement(builder: PsiBuilder, level: Int): Boolean = builder.groovyParser.parseExtendedStatement(builder)
 
