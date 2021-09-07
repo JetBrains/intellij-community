@@ -1,4 +1,4 @@
-public final enum Style {
+public enum Style {
     @org.jetbrains.annotations.NotNull private final var value: java.lang.String
     @null SHEET("foo") {
         public fun getExitAnimation() : java.lang.String {

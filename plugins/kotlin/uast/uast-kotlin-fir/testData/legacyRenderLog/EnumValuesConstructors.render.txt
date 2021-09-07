@@ -1,4 +1,4 @@
-public final enum Style {
+public enum Style {
     @org.jetbrains.annotations.Nullable private final var value: java.lang.String
     @null SYSTEM("system")
     @null USER("user")
