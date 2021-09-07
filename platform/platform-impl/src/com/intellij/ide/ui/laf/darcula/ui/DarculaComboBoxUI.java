@@ -327,12 +327,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Icon icon = null;
     Insets iPad = null;
     Border border = null;
+    boolean enabled = true;
     if (c instanceof SimpleColoredComponent) {
       SimpleColoredComponent cc = (SimpleColoredComponent)c;
       iPad = cc.getIpad();
       border = cc.getBorder();
+      enabled = cc.isEnabled();
       cc.setBorder(JBUI.Borders.empty());
       cc.setIpad(JBUI.emptyInsets());
+      cc.setEnabled(comboBox.isEnabled());
       icon = cc.getIcon();
       if (!cc.isIconOnTheRight()) {
         cc.setIcon(OffsetIcon.getOriginalIcon(icon));
@@ -379,6 +382,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       cc.setIpad(iPad);
       cc.setIcon(icon);
       cc.setBorder(border);
+      cc.setEnabled(enabled);
     }
     else if (c instanceof JLabel) {
       JLabel cc = (JLabel)c;
