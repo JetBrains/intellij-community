@@ -74,4 +74,9 @@ public abstract class GistManager {
    */
   public abstract void invalidateData(@NotNull VirtualFile file);
 
+  /**
+   * Checks if {@link PsiFileGist} uses memory storage instead of persistent storage.
+   * @returns true if {@link PsiFile}'s state doesn't match VFS.
+   */
+  public abstract boolean shouldUseMemoryStorage(@NotNull PsiFile file);
 }

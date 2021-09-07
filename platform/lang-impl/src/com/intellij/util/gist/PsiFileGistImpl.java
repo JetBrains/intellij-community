@@ -16,16 +16,12 @@
 package com.intellij.util.gist;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -66,7 +62,7 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   public Data getFileData(@NotNull PsiFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    if (shouldUseMemoryStorage(file)) {
+    if (GistManager.getInstance().shouldUseMemoryStorage(file)) {
       return CachedValuesManager.getManager(file.getProject()).getCachedValue(
         file, myCacheKey, () -> {
           Data data = myCalculator.calcData(getProjectForPersistence(file), getVirtualFile(file));
@@ -81,7 +77,7 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   @Override
   @RequiresReadLock
   public @Nullable Supplier<Data> getUpToDateOrNull(@NotNull PsiFile file) {
-    if (shouldUseMemoryStorage(file)) {
+    if (GistManager.getInstance().shouldUseMemoryStorage(file)) {
       CachedValue<Data> data = file.getUserData(myCacheKey);
       return data != null ? data.getUpToDateOrNull() : null;
     }
@@ -89,15 +85,7 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
     return ((VirtualFileGistImpl<Data>)myPersistence).getUpToDateOrNull(getProjectForPersistence(file), getVirtualFile(file));
   }
 
-  private static boolean shouldUseMemoryStorage(PsiFile file) {
-    if (!(getVirtualFile(file) instanceof NewVirtualFile)) return true;
-
-    PsiDocumentManager pdm = PsiDocumentManager.getInstance(file.getProject());
-    Document document = pdm.getCachedDocument(file);
-    return document != null && (pdm.isUncommited(document) || FileDocumentManager.getInstance().isDocumentUnsaved(document));
-  }
-
-  private static @NotNull VirtualFile getVirtualFile(@NotNull PsiFile file) {
+  static @NotNull VirtualFile getVirtualFile(@NotNull PsiFile file) {
     return file.getViewProvider().getVirtualFile();
   }
 
