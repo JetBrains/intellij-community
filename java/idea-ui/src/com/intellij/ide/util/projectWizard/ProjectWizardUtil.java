@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -165,5 +166,9 @@ public final class ProjectWizardUtil {
     else {
       jdkComboBox.setSelectedItem(jdkComboBox.showNoneSdkItem());
     }
+  }
+
+  public static @NotNull String getPreselectedJdkPropertyName(@Nullable ModuleType<?> moduleType) {
+    return "jdk.selected." + (moduleType == null ? "" : moduleType.getId());
   }
 }
