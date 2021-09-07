@@ -720,7 +720,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
             Icon icon = null;
             if (ExperimentalUI.isNewUI()) {
-              Optional<GutterMark> breakpoint = getGutterRenderers(logicalLine).stream()
+              Optional<GutterMark> breakpoint = getGutterRenderers(logicalLine - 1).stream()
                 .filter(r -> r instanceof GutterIconRenderer &&
                              ((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS)
                 .findFirst();
