@@ -796,13 +796,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations, @NotNull Disposable disposable) {
+  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations, @NotNull Disposable disposable) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
     doRegisterFileType(type, defaultAssociations);
     Disposer.register(disposable, () -> doUnregisterFileType(type));
   }
 
-  private void doRegisterFileType(FileType type, List<FileNameMatcher> defaultAssociations) {
+  private void doRegisterFileType(FileType type, List<? extends FileNameMatcher> defaultAssociations) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       registerFileTypeWithoutNotification(type, detectPluginDescriptor(type).pluginDescriptor, defaultAssociations, true);
