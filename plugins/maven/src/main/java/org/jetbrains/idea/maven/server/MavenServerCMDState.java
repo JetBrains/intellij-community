@@ -193,7 +193,7 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
   private static void setupMainClass(SimpleJavaParameters params, String mavenVersion) {
-    if (setupThrowMainClass && ApplicationManager.getApplication().isUnitTestMode()) {
+    if (setupThrowMainClass && MavenUtil.isMavenUnitTestModeEnabled()) {
       setupThrowMainClass = false;
       params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
     }

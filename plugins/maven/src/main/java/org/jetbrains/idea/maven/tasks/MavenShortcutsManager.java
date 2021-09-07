@@ -58,7 +58,7 @@ public final class MavenShortcutsManager implements Disposable {
   public MavenShortcutsManager(@NotNull Project project) {
     myProject = project;
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return;
     }
 

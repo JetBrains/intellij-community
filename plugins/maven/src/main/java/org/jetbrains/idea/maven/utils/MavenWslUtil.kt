@@ -222,7 +222,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun <T> resolveWslAware(project: Project?, ordinary: Supplier<T>, wsl: Function<WSLDistribution, T>): T {
-    if (project == null && ApplicationManager.getApplication().isUnitTestMode) {
+    if (project == null && MavenUtil.isMavenUnitTestModeEnabled()) {
       MavenLog.LOG.error("resolveWslAware: Project is null")
     }
     val wslDistribution = project?.let { tryGetWslDistribution(it) } ?: return ordinary.get()

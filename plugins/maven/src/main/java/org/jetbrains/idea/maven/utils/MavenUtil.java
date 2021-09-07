@@ -200,13 +200,15 @@ public class MavenUtil {
   }
 
   public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
-    if(ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       r.run();
-    } else if( ApplicationManager.getApplication().isDispatchThread()){
+    }
+    else if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().runWriteAction(r);
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(
-        ()->ApplicationManager.getApplication().runWriteAction(r), p),
+                                                          () -> ApplicationManager.getApplication().runWriteAction(r), p),
                                                         ModalityState.defaultModalityState());
     }
   }
@@ -237,7 +239,7 @@ public class MavenUtil {
   }
 
   public static boolean isNoBackgroundMode() {
-    return (ApplicationManager.getApplication().isUnitTestMode()
+    return (MavenUtil.isMavenUnitTestModeEnabled()
             || ApplicationManager.getApplication().isHeadlessEnvironment() &&
                !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode());
   }
@@ -384,7 +386,8 @@ public class MavenUtil {
           }
         }
       }
-    } else {
+    }
+    else {
       //set language level only for root pom
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
@@ -515,7 +518,6 @@ public class MavenUtil {
                                                  final boolean cancellable,
                                                  @NotNull final MavenTask task) {
     return runInBackground(project, title, cancellable, task, null);
-
   }
 
   @NotNull
@@ -524,7 +526,7 @@ public class MavenUtil {
                                                  final boolean cancellable,
                                                  @NotNull final MavenTask task,
                                                  @Nullable("null means application pooled thread")
-                                                     ExecutorService executorService) {
+                                                   ExecutorService executorService) {
     MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
     Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
     final MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
@@ -552,7 +554,8 @@ public class MavenUtil {
       final Future<?> future;
       if (executorService == null) {
         future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      } else {
+      }
+      else {
         future = executorService.submit(runnable);
       }
       final MavenTaskHandler handler = new MavenTaskHandler() {
@@ -806,7 +809,7 @@ public class MavenUtil {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
                                         resolveGlobalSettingsFile(overriddenMavenHome));
 
-      if(result == null) {
+      if (result == null) {
         result = new File(resolveM2Dir(), REPOSITORY_DIR);
       }
     }
@@ -1021,7 +1024,8 @@ public class MavenUtil {
     if (mavenHome != null) {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
-    return result == null ? doResolveSuperPomFile(new File(MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
+    return result == null ? doResolveSuperPomFile(
+      new File(MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
   }
 
   @Nullable
@@ -1109,7 +1113,7 @@ public class MavenUtil {
 
   public static boolean newModelEnabled(Project project) {
     return Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
-            || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
+           || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
@@ -1464,6 +1468,15 @@ public class MavenUtil {
 
   public static MavenDistribution getEffectiveMavenHome(Project project, String workingDirectory) {
     return MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirectory);
+  }
+
+  @ApiStatus.Internal
+  //temporary api
+  public static boolean isMavenUnitTestModeEnabled() {
+    if (System.getProperty("maven.unit.tests.remove") != null) {
+      return false;
+    }
+    return ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @NotNull

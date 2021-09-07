@@ -547,7 +547,7 @@ public final class MavenServerManager implements Disposable {
   public static File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
     //will be removed after IDEA-205421
-    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && ApplicationManager.getApplication().isUnitTestMode()) {
+    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && MavenUtil.isMavenUnitTestModeEnabled()) {
       return resolveEmbeddedMaven2HomeForTests().getMavenHome();
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
@@ -580,7 +580,7 @@ public final class MavenServerManager implements Disposable {
 
   @NotNull
   private static LocalMavenDistribution resolveEmbeddedMaven2HomeForTests() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!MavenUtil.isMavenUnitTestModeEnabled()) {
       throw new IllegalStateException("Maven2 is for test purpose only");
     }
 
