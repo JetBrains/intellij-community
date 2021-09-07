@@ -150,7 +150,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myHasInlaysWithGutterIcons;
   private int myStartIconAreaWidth = START_ICON_AREA_WIDTH.get();
   private int myIconsAreaWidth;
-  private int myLineNumberAreaWidth = 24;
+  private int myLineNumberAreaWidth = getInitialLineNumberWidth();
   private int myAdditionalLineNumberAreaWidth;
   @NotNull private List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   private int myTextAnnotationGuttersSize;
@@ -1660,7 +1660,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (!isLineNumbersShown()) return;
 
     Integer maxLineNumber = myLineNumberConverter.getMaxLineNumber(myEditor);
-    myLineNumberAreaWidth = Math.max(24, maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber));
+    myLineNumberAreaWidth = Math.max(getInitialLineNumberWidth(), maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber));
 
     myAdditionalLineNumberAreaWidth = 0;
     if (myAdditionalLineNumberConverter != null) {
@@ -2529,6 +2529,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (myAccessibleGutterLine != null) {
       myAccessibleGutterLine.escape(true);
     }
+  }
+
+  private static int getInitialLineNumberWidth() {
+    if (ExperimentalUI.isNewUI()) {
+      //have a placeholder for breakpoints
+      return 24;
+    }
+    return 0;
   }
 
   private static final class ClickInfo {
