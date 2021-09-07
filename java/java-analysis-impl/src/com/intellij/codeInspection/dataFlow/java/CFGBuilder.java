@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchAllTrap;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -623,6 +624,22 @@ public class CFGBuilder {
    */
   public CFGBuilder call(PsiMethodCallExpression call) {
     myAnalyzer.addBareCall(call, call.getMethodExpression());
+    return this;
+  }
+
+  /**
+   * Generate instructions to perform binary numeric operation on stack operands
+   * <p>
+   * Stack before: ... operand1 operand2
+   * <p>
+   * Stack after: ... result
+   *
+   * @param binOp operation to perform
+   * @param expression anchor
+   * @return this builder
+   */
+  public CFGBuilder mathOp(@NotNull LongRangeBinOp binOp, @Nullable PsiExpression expression) {
+    myAnalyzer.addInstruction(new NumericBinaryInstruction(binOp, expression == null ? null : new JavaExpressionAnchor(expression)));
     return this;
   }
 

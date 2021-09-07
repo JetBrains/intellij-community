@@ -358,6 +358,23 @@ public final class TypeConstraints {
     }
 
     @Override
+    public boolean isEnum() {
+      return myClass.isEnum();
+    }
+
+    @Override
+    public @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
+      int cur = 0;
+      for (PsiField field : myClass.getFields()) {
+        if (field instanceof PsiEnumConstant) {
+          if (cur == ordinal) return (PsiEnumConstant)field;
+          cur++;
+        }
+      }
+      return null;
+    }
+
+    @Override
     public boolean equals(Object obj) {
       return obj == this || obj instanceof ExactClass &&
                             myClass.getManager().areElementsEquivalent(myClass, ((ExactClass)obj).myClass);

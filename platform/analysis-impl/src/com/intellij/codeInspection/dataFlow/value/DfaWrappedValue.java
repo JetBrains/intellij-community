@@ -78,7 +78,7 @@ public final class DfaWrappedValue extends DfaValue {
       }
       if (specialFieldValue instanceof DfaTypeValue || specialFieldValue instanceof DfaWrappedValue) {
         DfType fieldValue = specialFieldValue.getDfType();
-        DfType dfType = qualifierType.meet(specialField.asDfType(fieldValue, specialFieldValue.getFactory().getProject()));
+        DfType dfType = specialField.asDfType(qualifierType, fieldValue);
         return myFactory.fromDfType(dfType);
       }
       if (specialFieldValue instanceof DfaVariableValue) {
