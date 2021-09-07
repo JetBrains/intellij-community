@@ -1,3 +1,4 @@
+// LANGUAGE_VERSION: 1.1
 // WITH_RUNTIME
 fun foo(f: () -> Unit) {}
 
@@ -8,7 +9,7 @@ class Bar {
 class Test {
     fun test() {
         Bar().run {
-            foo(::bar)
+            foo { <caret>bar() }
         }
     }
 }

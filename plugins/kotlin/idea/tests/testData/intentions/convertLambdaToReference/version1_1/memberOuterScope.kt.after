@@ -1,13 +1,12 @@
+// LANGUAGE_VERSION: 1.1
 // IS_APPLICABLE: true
 // WITH_RUNTIME
 
 class Test {
     fun test() {
         with(Any()) {
-            val f = ::foo
+            val f = this@Test::foo
         }
     }
-
+    fun foo(s: String) {}
 }
-
-fun Test.foo(s: String) {}

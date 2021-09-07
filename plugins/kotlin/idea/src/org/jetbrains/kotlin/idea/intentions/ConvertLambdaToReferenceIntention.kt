@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.*
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -313,6 +314,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                         lambdaParameterType?.isExtensionFunctionType == true ->
                             lambdaParameterType.getReceiverTypeFromFunctionType()?.fqName?.asString()
                         receiver == null || descriptor?.isCompanionObject() == true -> ""
+                        lambdaExpression.languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_1_2 -> ""
                         receiver is ExtensionReceiver ||
                                 descriptor?.let { DescriptorUtils.isAnonymousObject(it) } == true ||
                                 lambdaExpression.getResolutionScope().getImplicitReceiversHierarchy().size == 1 -> "this"

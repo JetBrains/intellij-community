@@ -4,7 +4,7 @@
 class Test {
     fun test() {
         with(Any()) {
-            val f = this@Test::foo
+            val f = ::foo
         }
     }
     fun foo(s: String) {}

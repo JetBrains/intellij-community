@@ -8,7 +8,7 @@ class Bar {
 class Test {
     fun test() {
         with(Bar()) {
-            foo(this::bar)
+            foo(::bar)
         }
     }
 }

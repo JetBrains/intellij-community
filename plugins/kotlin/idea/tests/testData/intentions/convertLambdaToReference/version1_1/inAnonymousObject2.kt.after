@@ -1,3 +1,4 @@
+// LANGUAGE_VERSION: 1.1
 interface I {
     fun foo(i: Int)
 }
@@ -6,7 +7,7 @@ class C {
     fun create(): I {
         return object : I {
             override fun foo(i: Int) {
-                bar(::baz)
+                bar(this::baz)
             }
 
             fun bar(f: (Int) -> Unit) {}

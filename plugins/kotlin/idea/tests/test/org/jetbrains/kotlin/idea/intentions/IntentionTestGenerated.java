@@ -5899,6 +5899,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertLambdaToReference/object.kt");
         }
 
+        @TestMetadata("outerClassFunction.kt")
+        public void testOuterClassFunction() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/outerClassFunction.kt");
+        }
+
         @TestMetadata("platformType.kt")
         public void testPlatformType() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/platformType.kt");
@@ -6052,6 +6057,64 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("wrongParameterOrder.kt")
         public void testWrongParameterOrder() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/wrongParameterOrder.kt");
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertLambdaToReference/version1_1")
+        public static class Version1_1 extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extension.kt")
+            public void testExtension() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/extension.kt");
+            }
+
+            @TestMetadata("extensionOuterScope.kt")
+            public void testExtensionOuterScope() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/extensionOuterScope.kt");
+            }
+
+            @TestMetadata("inAnonymousObject.kt")
+            public void testInAnonymousObject() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/inAnonymousObject.kt");
+            }
+
+            @TestMetadata("inAnonymousObject2.kt")
+            public void testInAnonymousObject2() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/inAnonymousObject2.kt");
+            }
+
+            @TestMetadata("member.kt")
+            public void testMember() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/member.kt");
+            }
+
+            @TestMetadata("memberInLambdaArgument.kt")
+            public void testMemberInLambdaArgument() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/memberInLambdaArgument.kt");
+            }
+
+            @TestMetadata("memberInScopeFunction.kt")
+            public void testMemberInScopeFunction() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/memberInScopeFunction.kt");
+            }
+
+            @TestMetadata("memberInScopeFunction2.kt")
+            public void testMemberInScopeFunction2() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/memberInScopeFunction2.kt");
+            }
+
+            @TestMetadata("memberOuterScope.kt")
+            public void testMemberOuterScope() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/memberOuterScope.kt");
+            }
+
+            @TestMetadata("outerClassFunction.kt")
+            public void testOuterClassFunction() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/outerClassFunction.kt");
+            }
         }
     }
 
