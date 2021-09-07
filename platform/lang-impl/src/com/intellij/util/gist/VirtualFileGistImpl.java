@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,35 +62,27 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
 
   @Override
   public Data getFileData(@Nullable Project project, @NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    ProgressManager.checkCanceled();
-
-    if (!(file instanceof VirtualFileWithId)) return myCalculator.calcData(project, file);
-
-    AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
-    int stamp = Objects.hash(PersistentFS.getInstance().getModificationCount(file),
-                             ((GistManagerImpl)GistManager.getInstance()).getReindexCount(),
-                             invalidationCount != null ? invalidationCount.get() : 0);
-
-    try (DataInputStream stream = getFileAttribute(project).readAttribute(file)) {
-      if (stream != null && DataInputOutputUtil.readINT(stream) == stamp) {
-        return stream.readBoolean() ? myExternalizer.read(stream) : null;
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-
-    Data result = myCalculator.calcData(project, file);
-    cacheResult(stamp, result, project, file);
-    return result;
+    return getOrCalculateAndCache(project, file, myCalculator).get();
   }
 
-  Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull VirtualFile file) {
+  @Nullable Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull VirtualFile file) {
+    return getOrCalculateAndCache(project, file, null);
+  }
+
+  @Contract("_, _, !null -> !null")
+  private @Nullable Supplier<Data> getOrCalculateAndCache(@Nullable Project project, @NotNull VirtualFile file, @Nullable GistCalculator<Data> calculator) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     ProgressManager.checkCanceled();
 
-    if (!(file instanceof VirtualFileWithId)) return null;
+    if (!(file instanceof VirtualFileWithId)) {
+      if (calculator != null) {
+        Data value = calculator.calcData(project, file);
+        return () -> value;
+      }
+      else {
+        return null;
+      }
+    }
 
     AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
     int stamp = Objects.hash(PersistentFS.getInstance().getModificationCount(file),
@@ -106,7 +99,14 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
       LOG.error(e);
     }
 
-    return null;
+    if (calculator != null) {
+      Data value = calculator.calcData(project, file);
+      cacheResult(stamp, value, project, file);
+      return () -> value;
+    }
+    else {
+      return null;
+    }
   }
 
   private void cacheResult(int modCount, @Nullable Data result, Project project, VirtualFile file) {
@@ -130,6 +130,5 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
       return ourAttributes.get(Pair.create(myId + (project == null ? "###noProject###" : project.getLocationHash()), myVersion + ourInternalVersion));
     }
   }
-
 }
 
