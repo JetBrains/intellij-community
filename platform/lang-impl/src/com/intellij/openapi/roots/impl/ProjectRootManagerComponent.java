@@ -297,7 +297,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (!myStartupActivityPerformed) return;
 
     if (!indexingInfos.isEmpty()) {
-      logRootChanges("Project roots of " + myProject.getName() + " will be partially reindexed");
+      LOG.debug("Project roots of " + myProject.getName() + " will be partially reindexed");
       EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
       return;
     }
