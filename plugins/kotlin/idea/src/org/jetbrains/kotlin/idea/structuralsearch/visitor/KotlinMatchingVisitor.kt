@@ -535,7 +535,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 if (curParam.isVarArg) {
                     val varArgType = arg.getArgumentExpression()?.resolveType()
                     var curArg: KtValueArgument? = arg
-                    while (varArgType == curArg?.getArgumentExpression()?.resolveType() || curArg?.isSpread == true) {
+                    while (varArgType != null && varArgType == curArg?.getArgumentExpression()?.resolveType() || curArg?.isSpread == true) {
                         i++
                         curArg = getOrNull(i)
 
@@ -1168,7 +1168,9 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     override fun visitClassLiteralExpression(expression: KtClassLiteralExpression) {
         val other = getTreeElementDepar<KtClassLiteralExpression>() ?: return
         myMatchingVisitor.result = myMatchingVisitor.match(expression.firstChild, other.firstChild)
-                || myMatchingVisitor.matchText(expression.text, other.resolveType().arguments.first().type.fqName.toString())
+                || other.resolveType()?.let { resolved ->
+            myMatchingVisitor.matchText(expression.text, resolved.arguments.first().type.fqName.toString())
+        } ?: false
     }
 
     override fun visitComment(comment: PsiComment) {

@@ -202,5 +202,4 @@ fun KtCallExpression.receiverValue(): ReceiverValue? {
 
 fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
 
-fun KtExpression.resolveType(): KotlinType =
-    this.analyze(BodyResolveMode.PARTIAL).getType(this)!!
+fun KtExpression.resolveType(): KotlinType? = this.analyze(BodyResolveMode.PARTIAL).getType(this)
