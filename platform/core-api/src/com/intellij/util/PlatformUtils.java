@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,14 +11,22 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * This class allows changing behavior of the platform in specific IDEs. But if its methods are used for something it means that third-party
- * IDEs not listed here won't be able to get the desired behavior. So <strong>it's strongly not recommended to use methods from this class</strong>.
+ * This class allows changing behavior of the platform and plugins in specific IDEs. But if its methods are used for something it means that third-party
+ * IDEs not listed here won't be able to get the desired behavior. Also, it's hard to correctly select IDEs where customizations should be
+ * enabled, and there is no chance that such code will be properly updated when new IDEs or their editions appear.
+ * So <strong>it's strongly not recommended to use methods from this class</strong>.
+ * <p>
  * If you need to customize behavior of the platform somewhere, you should create a special application service for that and override it in
  * a specific IDE (look at {@link com.intellij.lang.IdeLanguageCustomization} and {@link com.intellij.openapi.updateSettings.UpdateStrategyCustomization}
  * for example).
- *
+ * </p>
+ * <p>
+ * If you need to customize behavior of a plugin depending on the IDE it's installed, it's better to use optional dependency on a corresponding
+ * plugin or IDE module.
+ * </p>
  * @author Konstantin Bulenkov, Nikolay Chashnikov
  */
+@ApiStatus.Internal
 public final class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
@@ -65,6 +74,10 @@ public final class PlatformUtils {
     return appInfo != null && appInfo.getShortCompanyName().equals("JetBrains");
   }
 
+  /**
+   * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
+   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   */
   public static boolean isIntelliJ() {
     return isIdeaUltimate() || isIdeaCommunity() || isIdeaEducational();
   }
@@ -73,6 +86,10 @@ public final class PlatformUtils {
     return is(IDEA_PREFIX);
   }
 
+  /**
+   * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
+   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   */
   public static boolean isIdeaCommunity() {
     return is(IDEA_CE_PREFIX);
   }
