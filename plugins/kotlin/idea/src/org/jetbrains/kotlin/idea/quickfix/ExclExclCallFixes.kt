@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
@@ -43,7 +44,8 @@ abstract class ExclExclCallFix(psiElement: PsiElement) : KotlinQuickFixAction<Ps
     override fun startInWriteAction(): Boolean = true
 }
 
-class RemoveExclExclCallFix(psiElement: PsiElement) : ExclExclCallFix(psiElement), CleanupFix, HighPriorityAction {
+class RemoveExclExclCallFix(psiElement: PsiElement) : ExclExclCallFix(psiElement), CleanupFix, HighPriorityAction,
+                                                      IntentionActionWithFixAllOption {
     override fun getText(): String = KotlinBundle.message("fix.remove.non.null.assertion")
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =

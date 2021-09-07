@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -77,12 +78,15 @@ class AnnotationPresentationInfo(
             KOTLIN_COMPILER_WARNING_ID, KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning")
         )
 
-        fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach {
+        fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach { action ->
+            val options = mutableListOf<IntentionAction>()
+            action.safeAs<IntentionActionWithOptions>()?.options?.let { options += it }
+            info.problemGroup.safeAs<SuppressableProblemGroup>()?.let { group ->
+                options += group.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
+            }
             info.registerFix(
-                it,
-                info.problemGroup.safeAs<SuppressableProblemGroup>()?.let { group ->
-                    group.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
-                },
+                action,
+                options,
                 KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning"),
                 null,
                 keyForSuppressOptions
