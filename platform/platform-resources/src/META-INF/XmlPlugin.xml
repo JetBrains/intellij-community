@@ -6,6 +6,11 @@
     <listener class="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 
+  <projectListeners>
+    <listener class="com.intellij.codeInsight.completion.HtmlCompletionContributor$HtmlElementInTextLookupManagerListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+  </projectListeners>
+
   <project-components>
     <component>
       <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
@@ -326,6 +331,7 @@
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlPiTypedHandler" id="xmlDecl"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlGtTypedHandler" id="xmlGt"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlAutoPopupHandler" id="xmlAuto"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.HtmlAutoPopupHandler" id="htmlAuto"/>
 
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>

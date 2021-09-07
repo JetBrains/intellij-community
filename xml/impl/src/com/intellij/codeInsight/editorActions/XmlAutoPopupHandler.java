@@ -94,7 +94,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
     if (len < text.length()) {
       text = text.substring(0, len);
     }
-    if (text.equals("<") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
+    if (text.endsWith("<") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
         text.equals(" ") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
         text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
         text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||

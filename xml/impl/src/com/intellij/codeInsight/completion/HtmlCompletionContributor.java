@@ -1,36 +1,45 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.lookup.impl.PrefixChangeListener;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.html.impl.util.MicrodataUtil.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 public class HtmlCompletionContributor extends CompletionContributor implements DumbAware {
 
@@ -75,6 +84,10 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
         }
       }
     });
+    extend(CompletionType.BASIC, psiElement(XmlTokenType.XML_DATA_CHARACTERS)
+             .withParent(psiElement(XmlText.class))
+             .inFile(PlatformPatterns.psiFile(HtmlFileImpl.class)),
+           new HtmlElementInTextCompletionProvider());
   }
 
   public static boolean hasHtmlAttributesCompletion(PsiElement position) {
@@ -165,5 +178,119 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       return ArrayUtilRt.toStringArray(result);
     }
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
+  }
+
+  @Contract("null->false")
+  private static boolean shouldTryDeselectingFirstPopupItem(@Nullable Lookup lookup) {
+    PsiFile file = doIfNotNull(lookup, Lookup::getPsiFile);
+    if (!(file instanceof HtmlFileImpl)) {
+      return false;
+    }
+    PsiElement element = lookup.getPsiElement();
+    if (element == null) {
+      return false;
+    }
+    IElementType elementType = element.getNode().getElementType();
+
+    if ((elementType == XmlTokenType.XML_DATA_CHARACTERS
+         || element.getNode().getElementType() == XmlTokenType.XML_WHITE_SPACE)
+        && element.getParent() instanceof XmlText
+    ) {
+      return !element.getText().endsWith("<");
+    }
+
+    if (elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      return element.getText().contains("&");
+    }
+    return false;
+  }
+
+  private static class HtmlElementInTextCompletionProvider extends CompletionProvider<CompletionParameters> {
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  @NotNull ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+      // Do not provide HTML text completions outside of plain HTML files
+      if (!ContainerUtil.and(parameters.getOriginalFile().getViewProvider().getAllFiles(), f -> f instanceof HtmlFileImpl)) return;
+      PsiFile completionFile = parameters.getPosition().getContainingFile();
+      int offset = parameters.getOffset();
+      var offsets = new OffsetsInFile(completionFile);
+      offsets.getOffsets().addOffset(CompletionInitializationContext.START_OFFSET, offset);
+      offsets = offsets.copyWithReplacement(offset, offset, "<");
+      PsiElement tag = doIfNotNull(offsets.getFile().findElementAt(offset + 1), PsiElement::getParent);
+      if (tag instanceof XmlTag) {
+        for (LookupElement variant : TagNameReferenceCompletionProvider.getTagNameVariants((XmlTag)tag, "")) {
+          LookupElement decorated = new LookupElementDecorator<>(variant) {
+
+            @Override
+            public @NotNull String getLookupString() {
+              return "<" + super.getLookupString();
+            }
+
+            @Override
+            public void renderElement(LookupElementPresentation presentation) {
+              super.renderElement(presentation);
+              presentation.setItemText("<" + presentation.getItemText());
+            }
+          };
+          if (variant instanceof PrioritizedLookupElement) {
+            decorated = PrioritizedLookupElement.withGrouping(
+              PrioritizedLookupElement.withExplicitProximity(
+                PrioritizedLookupElement.withPriority(decorated,
+                                                      ((PrioritizedLookupElement<?>)variant).getPriority()),
+                ((PrioritizedLookupElement<?>)variant).getExplicitProximity()),
+              ((PrioritizedLookupElement<?>)variant).getGrouping());
+          }
+          result.consume(decorated);
+        }
+      }
+      if (result.getPrefixMatcher().getPrefix().isEmpty()) {
+        result.restartCompletionOnAnyPrefixChange();
+      }
+    }
+  }
+
+  public static class HtmlElementInTextLookupManagerListener implements LookupManagerListener {
+
+    @Override
+    public void activeLookupChanged(@Nullable Lookup oldLookup,
+                                    @Nullable Lookup newLookup) {
+      if (newLookup instanceof LookupImpl && shouldTryDeselectingFirstPopupItem(newLookup)) {
+        LookupImpl lookup = (LookupImpl)newLookup;
+        lookup.setPrefixChangeListener(new PrefixChangeListener() {
+          @Override
+          public void afterAppend(char c) {
+            // Select first item when two chars are typed after '&'
+            if (lookup.getCurrentItemOrEmpty() == null && hasTwoCharAfterAmp(lookup)) {
+              lookup.setSelectedIndex(0);
+            }
+          }
+        });
+        lookup.addLookupListener(new LookupListener() {
+          @Override
+          public void uiRefreshed() {
+            var currentCompletion = CompletionService.getCompletionService().getCurrentCompletion();
+            if (currentCompletion != null
+                && currentCompletion.isAutopopupCompletion()
+                && !lookup.isSelectionTouched()
+                && !hasTwoCharAfterAmp(lookup)) {
+              // Deselect topmost item
+              lookup.getList().setSelectedValue(null, false);
+              ListSelectionModel selectionModel = lookup.getList().getSelectionModel();
+              selectionModel.setAnchorSelectionIndex(-1);
+              selectionModel.setLeadSelectionIndex(-1);
+            }
+          }
+        });
+      }
+    }
+
+    private static boolean hasTwoCharAfterAmp(LookupImpl lookup) {
+      int start = Math.max(lookup.getLookupStart() - 1, 0);
+      int end = lookup.getEditor().getCaretModel().getOffset();
+      if (start > end) return false;
+      String text = lookup.getEditor().getDocument().getText(new TextRange(start, end));
+      return text.startsWith("&") && text.length() >= 3;
+    }
   }
 }
