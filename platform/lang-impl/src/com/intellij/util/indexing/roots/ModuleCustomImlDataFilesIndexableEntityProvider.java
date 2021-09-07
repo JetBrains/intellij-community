@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
@@ -20,27 +20,23 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull ModuleCustomImlDataEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project) {
-    return IndexableEntityProviderMethods.INSTANCE.createIterators(entity.getModule(), project);
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity entity,
+                                                                                                @NotNull Project project) {
+    return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().persistentId());
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull ModuleCustomImlDataEntity oldEntity,
-                                                                                         @NotNull ModuleCustomImlDataEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project) {
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity oldEntity,
+                                                                                                   @NotNull ModuleCustomImlDataEntity newEntity) {
     return Collections.emptyList();
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedModuleEntityIterator(@NotNull ModuleEntity oldEntity,
-                                                                                               @NotNull ModuleEntity newEntity,
-                                                                                               @NotNull WorkspaceEntityStorage storage,
-                                                                                               @NotNull Project project) {
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedModuleEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
+                                                                                                        @NotNull ModuleEntity newEntity,
+                                                                                                        @NotNull Project project) {
     if (shouldBeReindexed(newEntity, oldEntity)) {
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(newEntity, project);
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.persistentId());
     }
     return Collections.emptyList();
   }

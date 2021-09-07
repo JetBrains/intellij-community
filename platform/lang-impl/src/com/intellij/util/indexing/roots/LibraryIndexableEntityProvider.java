@@ -2,17 +2,12 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -24,33 +19,14 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull LibraryEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project) {
-    return createIterators(entity, project, true);
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull LibraryEntity entity,
+                                                                                                @NotNull Project project) {
+    return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.persistentId(), false);
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull LibraryEntity oldEntity,
-                                                                                         @NotNull LibraryEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project) {
-    return createIterators(newEntity, project, true);
-  }
-
-  @NotNull
-  static Collection<? extends IndexableFilesIterator> createIterators(@Nullable LibraryEntity entity,
-                                                                      @NotNull Project project,
-                                                                      boolean checkLibraryIsInDependencies) {
-    if (entity != null &&
-        (!checkLibraryIsInDependencies ||
-         ProjectRootsChangeListener.Companion.shouldFireRootsChanged$intellij_platform_lang_impl(entity, project))) {
-      WorkspaceEntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-      LibraryBridge library = IndexableEntityProviderMethods.INSTANCE.findLibraryForEntity(entity, entityStorage);
-      if (library != null) {
-        return IndexableEntityProviderMethods.INSTANCE.createIterators(library);
-      }
-    }
-    return Collections.emptyList();
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull LibraryEntity oldEntity,
+                                                                                                   @NotNull LibraryEntity newEntity) {
+    return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(newEntity.persistentId(), false);
   }
 }

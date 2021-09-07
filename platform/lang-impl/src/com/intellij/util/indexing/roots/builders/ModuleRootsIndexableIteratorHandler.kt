@@ -1,0 +1,65 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing.roots.builders
+
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.indexing.roots.IndexableEntityProvider
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
+import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.isEqualOrParentOf
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+
+class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
+  override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean =
+    builder is ModuleRootsIteratorBuilder || builder is FullModuleContentIteratorBuilder
+
+  override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,
+                           project: Project,
+                           entityStorage: WorkspaceEntityStorage): List<IndexableFilesIterator> {
+    val fullIndexedModules: Set<ModuleId> = builders.mapNotNull { (it as? FullModuleContentIteratorBuilder)?.moduleId }.toSet()
+    val partialIterators: Map<ModuleId, List<ModuleRootsIteratorBuilder>> = builders.filter {
+      it is ModuleRootsIteratorBuilder && !fullIndexedModules.contains(it.moduleId)
+    }.groupBy { builder -> (builder as ModuleRootsIteratorBuilder).moduleId } as Map<ModuleId, List<ModuleRootsIteratorBuilder>>
+
+    val result = mutableListOf<IndexableFilesIterator>()
+    fullIndexedModules.forEach { moduleId ->
+      entityStorage.resolve(moduleId)?.also { entity ->
+        result.addAll(IndexableEntityProviderMethods.createIterators(entity, project))
+      }
+    }
+
+    partialIterators.forEach { pair ->
+      entityStorage.resolve(pair.key)?.also { entity ->
+        result.addAll(IndexableEntityProviderMethods.createIterators(entity, resolveRoots(pair.value), project))
+      }
+    }
+    return result
+  }
+
+  private fun resolveRoots(builders: List<ModuleRootsIteratorBuilder>): List<VirtualFile> {
+    val roots = mutableListOf<VirtualFileUrl>()
+    for (builder in builders) {
+      for (root in builder.urls) {
+        var isChild = false
+        val it = roots.iterator()
+        while (it.hasNext()) {
+          val next = it.next()
+          if (next.isEqualOrParentOf(root)) {
+            isChild = true
+            break
+          }
+          if (root.isEqualOrParentOf(next)) {
+            it.remove()
+          }
+        }
+        if (!isChild) {
+          roots.add(root)
+        }
+      }
+    }
+    return roots.mapNotNull { url -> url.virtualFile }
+  }
+}

@@ -12,7 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableSetContributor
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.mergeIterators
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
@@ -22,14 +22,14 @@ import java.util.function.Predicate
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
     if (indexProjectBasedOnIndexableEntityProviders()) {
-      val iterators: MutableList<IndexableFilesIterator> = mutableListOf()
+      val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
       val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
         if (provider is IndexableEntityProvider.Existing) {
-          addIteratorsFromProvider(provider, entityStorage, project, iterators)
+          addIteratorBuildersFromProvider(provider, entityStorage, project, builders)
         }
       }
-      return mergeIterators(iterators)
+      return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     }
     else {
       val seenLibraries: MutableSet<Library> = HashSet()
@@ -77,13 +77,13 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
   }
 
   companion object {
-    private fun <E : WorkspaceEntity> addIteratorsFromProvider(provider: IndexableEntityProvider.Existing<E>,
-                                                               entityStorage: WorkspaceEntityStorage,
-                                                               project: Project,
-                                                               iterators: MutableList<IndexableFilesIterator>) {
+    private fun <E : WorkspaceEntity> addIteratorBuildersFromProvider(provider: IndexableEntityProvider.Existing<E>,
+                                                                      entityStorage: WorkspaceEntityStorage,
+                                                                      project: Project,
+                                                                      iterators: MutableList<IndexableEntityProvider.IndexableIteratorBuilder>) {
       val entityClass = provider.entityClass
       for (entity in entityStorage.entities(entityClass)) {
-        iterators.addAll(provider.getExistingEntityIterator(entity, entityStorage, project))
+        iterators.addAll(provider.getExistingEntityIteratorBuilder(entity, project))
       }
     }
 

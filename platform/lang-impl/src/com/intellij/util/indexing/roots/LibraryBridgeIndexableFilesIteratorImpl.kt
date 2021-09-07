@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.LibraryIdOriginImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 
 /**
@@ -11,6 +12,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
  */
 class LibraryBridgeIndexableFilesIteratorImpl(library: Library, private val libraryId: LibraryId) :
   LibraryIndexableFilesIteratorBase(library) {
+
+  constructor(library: LibraryBridge): this(library, library.libraryId)
 
   override fun getOrigin(): LibraryOrigin {
     return LibraryIdOriginImpl(library, libraryId)

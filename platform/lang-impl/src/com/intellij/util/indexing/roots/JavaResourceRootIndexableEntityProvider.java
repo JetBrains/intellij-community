@@ -2,20 +2,17 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaResourceRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-import static com.intellij.util.indexing.roots.JavaSourceRootIndexableEntityProvider.collectIteratorsOnAddedEntityWithDataExtractor;
-import static com.intellij.util.indexing.roots.JavaSourceRootIndexableEntityProvider.collectIteratorsOnReplacedEntityWithDataExtractor;
+import static com.intellij.util.indexing.roots.JavaSourceRootIndexableEntityProvider.collectBuildersOnAddedEntityWithDataExtractor;
+import static com.intellij.util.indexing.roots.JavaSourceRootIndexableEntityProvider.collectBuildersOnReplacedEntityWithDataExtractor;
 
 class JavaResourceRootIndexableEntityProvider implements IndexableEntityProvider<JavaResourceRootEntity> {
   @Override
@@ -24,29 +21,21 @@ class JavaResourceRootIndexableEntityProvider implements IndexableEntityProvider
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull JavaResourceRootEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project) {
-    return collectIteratorsOnAddedEntityWithDataExtractor(entity, JavaResourceRootIndexableEntityProvider::getDataToIndex, project);
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull JavaResourceRootEntity entity,
+                                                                                                @NotNull Project project) {
+    return collectBuildersOnAddedEntityWithDataExtractor(entity, JavaResourceRootIndexableEntityProvider::getDataForBuilders);
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull JavaResourceRootEntity oldEntity,
-                                                                                         @NotNull JavaResourceRootEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project) {
-    return collectIteratorsOnReplacedEntityWithDataExtractor(oldEntity, newEntity, JavaResourceRootIndexableEntityProvider::getDataToIndex,
-                                                             project);
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaResourceRootEntity oldEntity,
+                                                                                                   @NotNull JavaResourceRootEntity newEntity) {
+    return collectBuildersOnReplacedEntityWithDataExtractor(oldEntity, newEntity,
+                                                            JavaResourceRootIndexableEntityProvider::getDataForBuilders);
   }
 
-
-  @Nullable
-  private static Pair<VirtualFile, ModuleEntity> getDataToIndex(@NotNull JavaResourceRootEntity entity) {
+  @NotNull
+  private static Pair<VirtualFileUrl, ModuleEntity> getDataForBuilders(@NotNull JavaResourceRootEntity entity) {
     SourceRootEntity sourceRootEntity = entity.getSourceRoot();
-    VirtualFilePointer url = (VirtualFilePointer)sourceRootEntity.getUrl();
-    if (url.isValid()) {
-      return new Pair<>(url.getFile(), sourceRootEntity.getContentRoot().getModule());
-    }
-    return null;
+    return new Pair<>(sourceRootEntity.getUrl(), sourceRootEntity.getContentRoot().getModule());
   }
 }

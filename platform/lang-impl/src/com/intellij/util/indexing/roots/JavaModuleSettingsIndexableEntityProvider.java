@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,22 +18,19 @@ class JavaModuleSettingsIndexableEntityProvider implements IndexableEntityProvid
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull JavaModuleSettingsEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project) {
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity entity,
+                                                                                                @NotNull Project project) {
     if (entity.getLanguageLevelId() != null) {
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(entity.getModule(), project);
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().persistentId());
     }
     return Collections.emptyList();
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull JavaModuleSettingsEntity oldEntity,
-                                                                                         @NotNull JavaModuleSettingsEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project) {
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity oldEntity,
+                                                                                                   @NotNull JavaModuleSettingsEntity newEntity) {
     if (!Objects.equals(newEntity.getLanguageLevelId(), oldEntity.getLanguageLevelId())) {
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(newEntity.getModule(), project);
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().persistentId());
     }
     return Collections.emptyList();
   }

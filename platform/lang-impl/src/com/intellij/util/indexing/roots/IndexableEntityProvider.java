@@ -21,35 +21,27 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   Class<E> getEntityClass();
 
   /**
-   * Provides iterators to index files after {@code entity} was added
-   *
-   * @param storage is initialized after the change happened. Be ready to situation when desired entity is missing
+   * Provides builders of iterators to index files after {@code entity} was added
    */
   @NotNull
-  Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull E entity,
-                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                      @NotNull Project project);
+  Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull E entity,
+                                                                                @NotNull Project project);
 
   /**
-   * Provides iterators to index files after {@code oldEntity} was replaced with {@code newEntity}
+   * Provides builders of iterators to index files after {@code oldEntity} was replaced with {@code newEntity}
    *
-   * @param storage is initialized after the change happened. Be ready to situation when desired entity is missing
    */
   @NotNull
-  Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull E oldEntity,
-                                                                         @NotNull E newEntity,
-                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                         @NotNull Project project);
+  Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull E oldEntity,
+                                                                                   @NotNull E newEntity);
 
   /**
-   * Provides iterators to index files after {@code entity} was removed
+   * Provides builders of iterators to index files after {@code entity} was removed
    *
-   * @param storage is initialized after the change happened. Be ready to situation when desired entity is missing
    */
   @NotNull
-  default Collection<? extends IndexableFilesIterator> getRemovedEntityIterator(@NotNull E entity,
-                                                                                @NotNull WorkspaceEntityStorage storage,
-                                                                                @NotNull Project project) {
+  default Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull E entity,
+                                                                                          @NotNull Project project) {
     return Collections.emptyList();
   }
 
@@ -61,33 +53,38 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
     /**
      * Provides iterators to index files after {@code oldEntity} was replaced with {@code newEntity}
      *
-     * @param storage is initialized after the change happened. Be ready to situation when desired entity is missing
      */
     @NotNull
-    Collection<? extends IndexableFilesIterator> getReplacedModuleEntityIterator(@NotNull ModuleEntity oldEntity,
-                                                                                 @NotNull ModuleEntity newEntity,
-                                                                                 @NotNull WorkspaceEntityStorage storage,
-                                                                                 @NotNull Project project);
+    Collection<? extends IndexableIteratorBuilder> getReplacedModuleEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
+                                                                                          @NotNull ModuleEntity newEntity,
+                                                                                          @NotNull Project project);
   }
 
   interface Existing<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {
+
     /**
-     * Provides iterators to index files when just project is indexed, no events given
+     * Provides builders for iterators to index files when just project is indexed, no events given
      */
     @NotNull
-    default Collection<? extends IndexableFilesIterator> getExistingEntityIterator(@NotNull E entity,
-                                                                                   @NotNull WorkspaceEntityStorage storage,
-                                                                                   @NotNull Project project) {
-      return getAddedEntityIterator(entity, storage, project);
+    default Collection<? extends IndexableIteratorBuilder> getExistingEntityIteratorBuilder(@NotNull E entity,
+                                                                                            @NotNull Project project) {
+      return getAddedEntityIteratorBuilders(entity, project);
     }
 
-
     /**
-     * Provides iterators to index files belonging to a module when just module content is indexed, no events given
+     * Provides builders for iterators to index files belonging to a module when just module content is indexed, no events given
      */
     @NotNull
-    Collection<? extends IndexableFilesIterator> getIteratorsForExistingModule(@NotNull ModuleEntity entity,
-                                                                               @NotNull WorkspaceEntityStorage entityStorage,
-                                                                               @NotNull Project project);
+    Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
+                                                                                        @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                        @NotNull Project project);
+  }
+
+  /**
+   * Idea behind this marker interface is to mark that something should be reindexed as cheap as possible,
+   * with expensive checks and merges made in batch in corresponding
+   * {@link com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler#instantiate(Collection, Project, WorkspaceEntityStorage)}
+   */
+  interface IndexableIteratorBuilder {
   }
 }
