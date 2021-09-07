@@ -1,4 +1,4 @@
-// "Cast parameter to 'float'" "true"
+// "Cast argument to 'float'" "true"
 class a {
  void test(Float f) {}
  
