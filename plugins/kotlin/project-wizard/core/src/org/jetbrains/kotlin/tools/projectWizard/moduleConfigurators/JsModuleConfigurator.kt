@@ -85,7 +85,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             }
         }
 
-        internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.text
+        internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.scriptValue
 
         val useJsIrCompiler by booleanSetting(
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.ir.title"),
@@ -97,7 +97,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
 
         internal fun Reader.irOrLegacyCompiler(module: Module): String {
             fun Reader.useJsIrCompiler(module: Module): Boolean = settingValue(module, useJsIrCompiler) ?: false
-            return if (useJsIrCompiler(module)) JsCompiler.IR.text else JsCompiler.LEGACY.text
+            return if (useJsIrCompiler(module)) JsCompiler.IR.scriptValue else JsCompiler.LEGACY.scriptValue
         }
 
         fun Reader.isApplication(module: Module): Boolean =
