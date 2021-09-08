@@ -129,9 +129,9 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
-  override fun hideableGroup(title: String, indent: Boolean, init: Panel.() -> Unit): HideablePanelImpl {
+  override fun collapsibleGroup(title: String, indent: Boolean, init: Panel.() -> Unit): CollapsiblePanelImpl {
     val row = row { }
-    val result = HideablePanelImpl(dialogPanelConfig, row, title) {
+    val result = CollapsiblePanelImpl(dialogPanelConfig, row, title) {
       if (indent) {
         indent(init)
       }

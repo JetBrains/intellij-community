@@ -22,7 +22,7 @@ class MavenKotlinBuildSystemType : KotlinBuildSystemType {
 
         override fun setupUI(builder: Panel) {
             with(builder) {
-                hideableGroup(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
+                collapsibleGroup(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                     row(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) {
                         textField()
                             .bindText(::groupId)

@@ -27,6 +27,12 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit
   return bindItem(PropertyBinding(getter, setter))
 }
 
+/**
+ * Minimal width of combobox in chars
+ *
+ * @see COLUMNS_SHORT
+ * @see COLUMNS_MEDIUM
+ */
 fun <T, C : ComboBox<T>> Cell<C>.columns(columns: Int): Cell<C> {
   // See JTextField.getColumnWidth implementation
   val columnWidth = component.getFontMetrics(component.font).charWidth('m')

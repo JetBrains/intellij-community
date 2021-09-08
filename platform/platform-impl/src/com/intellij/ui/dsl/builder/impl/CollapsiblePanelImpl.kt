@@ -5,33 +5,33 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.builder.HideablePanel
+import com.intellij.ui.dsl.builder.CollapsiblePanel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
-internal class HideablePanelImpl(dialogPanelConfig: DialogPanelConfig,
-                                 parent: RowImpl,
-                                 @NlsContexts.BorderTitle title: String,
-                                 init: Panel.() -> Unit) :
-  PanelImpl(dialogPanelConfig, parent), HideablePanel {
+internal class CollapsiblePanelImpl(dialogPanelConfig: DialogPanelConfig,
+                                    parent: RowImpl,
+                                    @NlsContexts.BorderTitle title: String,
+                                    init: Panel.() -> Unit) :
+  PanelImpl(dialogPanelConfig, parent), CollapsiblePanel {
 
   override var expanded: Boolean = true
     set(value) {
       field = value
       expandablePanel.visible(value)
-      hideableTitledSeparator.updateIcon()
+      collapsibleTitledSeparator.updateIcon()
     }
 
-  private val hideableTitledSeparator = HideableTitledSeparator(title)
+  private val collapsibleTitledSeparator = CollapsibleTitledSeparator(title)
   private val expandablePanel: Panel
 
   init {
-    val hideableTitledSeparator = this.hideableTitledSeparator
+    val collapsibleTitledSeparator = this.collapsibleTitledSeparator
     val row = row {
-      cell(hideableTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
+      cell(collapsibleTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
     }
     row.internalTopGap = dialogPanelConfig.spacing.groupTopGap
     expandablePanel = panel {
@@ -39,7 +39,7 @@ internal class HideablePanelImpl(dialogPanelConfig: DialogPanelConfig,
     }
   }
 
-  private inner class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
+  private inner class CollapsibleTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
 
     init {
       updateIcon()

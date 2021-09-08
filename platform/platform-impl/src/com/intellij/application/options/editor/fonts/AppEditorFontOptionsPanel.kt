@@ -147,7 +147,7 @@ class AppEditorFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstra
   }
 
   private fun Panel.createTypographySettings() {
-    hideableGroup(ApplicationBundle.message("settings.editor.font.typography.settings"), indent = false) {
+    collapsibleGroup(ApplicationBundle.message("settings.editor.font.typography.settings"), indent = false) {
       if (isAdvancedFontFamiliesUI()) {
         row(ApplicationBundle.message("settings.editor.font.main.weight")) {
           val component = createRegularWeightCombo()

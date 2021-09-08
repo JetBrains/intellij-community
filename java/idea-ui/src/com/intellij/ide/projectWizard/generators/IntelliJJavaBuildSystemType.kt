@@ -73,7 +73,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
 
     override fun setupUI(builder: Panel) {
       with(builder) {
-        hideableGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
+        collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
           if (context.isCreatingNewProject) {
             row(UIBundle.message("label.project.wizard.new.project.module.name")) {
               textField()

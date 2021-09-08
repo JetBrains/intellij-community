@@ -21,7 +21,7 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType {
 
         override fun setupUI(builder: Panel) {
             with(builder) {
-                hideableGroup(GradleBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
+                collapsibleGroup(GradleBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                     row(GradleBundle.message("label.project.wizard.new.project.group.id")) {
                         textField()
                             .bindText(::groupId)
