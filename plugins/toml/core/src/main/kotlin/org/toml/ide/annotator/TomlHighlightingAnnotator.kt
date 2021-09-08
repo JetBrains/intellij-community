@@ -7,7 +7,7 @@ package org.toml.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
-import org.toml.openapiext.isUnitTestMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import org.toml.ide.colors.TomlColor
 import org.toml.lang.psi.TomlElementTypes
@@ -25,7 +25,7 @@ class TomlHighlightingAnnotator : AnnotatorBase() {
             TomlElementTypes.BARE_KEY -> TomlColor.KEY
             else -> return
         }
-        val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
+      val severity = if (ApplicationManager.getApplication().isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
 
         holder.newSilentAnnotation(severity).textAttributes(color.textAttributesKey).create()
     }
