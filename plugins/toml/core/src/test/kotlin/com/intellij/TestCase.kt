@@ -14,7 +14,7 @@ interface TestCase {
     fun getTestName(lowercaseFirstLetter: Boolean): String
 
     companion object {
-        const val testResourcesPath = "src/test/resources"
+        const val testResourcesPath = "resources"
 
         @JvmStatic
         fun camelOrWordsToSnake(name: String): String {

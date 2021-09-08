@@ -5,7 +5,6 @@
 
 package org.toml.ide.annotator
 
-import com.intellij.openapiext.Testmark
 import org.intellij.lang.annotations.Language
 import org.toml.TomlTestBase
 
@@ -34,9 +33,8 @@ abstract class TomlAnnotationTestBase : TomlTestBase() {
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
-        ignoreExtraHighlighting: Boolean = false,
-        testmark: Testmark? = null
-    ) = annotationFixture.checkByText(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, testmark)
+        ignoreExtraHighlighting: Boolean = false
+    ) = annotationFixture.checkByText(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
 
     protected fun checkFixByText(
         fixName: String,
@@ -44,14 +42,12 @@ abstract class TomlAnnotationTestBase : TomlTestBase() {
         @Language("TOML") after: String,
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
-        checkWeakWarn: Boolean = false,
-        testmark: Testmark? = null
-    ) = annotationFixture.checkFixByText(fixName, before, after, checkWarn, checkInfo, checkWeakWarn, testmark)
+        checkWeakWarn: Boolean = false
+    ) = annotationFixture.checkFixByText(fixName, before, after, checkWarn, checkInfo, checkWeakWarn)
 
     protected fun checkFixByTextWithoutHighlighting(
         fixName: String,
         @Language("TOML") before: String,
         @Language("TOML") after: String,
-        testmark: Testmark? = null
-    ) = annotationFixture.checkFixByTextWithoutHighlighting(fixName, before, after, testmark)
+    ) = annotationFixture.checkFixByTextWithoutHighlighting(fixName, before, after)
 }

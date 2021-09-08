@@ -28,7 +28,7 @@ class TomlParserTest
     fun testArrayTables() = doTest()
     fun testInvalid() = doTest()
 
-    override fun getTestDataPath() = "src/test/resources"
+    override fun getTestDataPath() = "resources"
     override fun setUp() {
         super.setUp()
         addExplicitExtension(LanguageASTFactory.INSTANCE, myLanguage, TomlASTFactory())

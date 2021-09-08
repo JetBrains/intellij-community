@@ -11,7 +11,6 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.findAnnotationInstance
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -84,15 +83,13 @@ abstract class AnnotationTestFixtureBase(
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
-        ignoreExtraHighlighting: Boolean = false,
-        testmark: Testmark? = null
+        ignoreExtraHighlighting: Boolean = false
     ) = check(text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
         ignoreExtraHighlighting = ignoreExtraHighlighting,
-        configure = this::configureByText,
-        testmark = testmark)
+        configure = this::configureByText)
 
     fun checkFixByText(
         fixName: String,
@@ -100,13 +97,11 @@ abstract class AnnotationTestFixtureBase(
         after: String,
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
-        checkWeakWarn: Boolean = false,
-        testmark: Testmark? = null
+        checkWeakWarn: Boolean = false
     ) = checkFix(fixName, before, after,
         configure = this::configureByText,
         checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
-        checkAfter = this::checkByText,
-        testmark = testmark)
+        checkAfter = this::checkByText)
 
     fun checkFixIsUnavailable(
         fixName: String,
@@ -114,15 +109,13 @@ abstract class AnnotationTestFixtureBase(
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
-        ignoreExtraHighlighting: Boolean = false,
-        testmark: Testmark? = null
+        ignoreExtraHighlighting: Boolean = false
     ) = checkFixIsUnavailable(fixName, text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
         ignoreExtraHighlighting = ignoreExtraHighlighting,
-        configure = this::configureByText,
-        testmark = testmark)
+        configure = this::configureByText)
 
     protected fun checkFixIsUnavailable(
         fixName: String,
@@ -131,10 +124,8 @@ abstract class AnnotationTestFixtureBase(
         checkInfo: Boolean,
         checkWeakWarn: Boolean,
         ignoreExtraHighlighting: Boolean,
-        configure: (String) -> Unit,
-        testmark: Testmark? = null
-    ) {
-        check(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, configure, testmark)
+        configure: (String) -> Unit) {
+        check(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, configure)
         check(codeInsightFixture.filterAvailableIntentions(fixName).isEmpty()) {
             "Fix $fixName should not be possible to apply."
         }
@@ -143,13 +134,11 @@ abstract class AnnotationTestFixtureBase(
     fun checkFixByTextWithoutHighlighting(
         fixName: String,
         before: String,
-        after: String,
-        testmark: Testmark? = null
+        after: String
     ) = checkFix(fixName, before, after,
         configure = this::configureByText,
         checkBefore = {},
-        checkAfter = this::checkByText,
-        testmark = testmark)
+        checkAfter = this::checkByText)
 
     protected open fun <T> check(
         content: T,
@@ -157,14 +146,10 @@ abstract class AnnotationTestFixtureBase(
         checkInfo: Boolean,
         checkWeakWarn: Boolean,
         ignoreExtraHighlighting: Boolean,
-        configure: (T) -> Unit,
-        testmark: Testmark? = null
+        configure: (T) -> Unit
     ) {
-        val action: () -> Unit = {
-            configure(content)
-            codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
-        }
-        testmark?.checkHit(action) ?: action()
+          configure(content)
+          codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
     }
 
     protected open fun checkFix(
@@ -173,16 +158,12 @@ abstract class AnnotationTestFixtureBase(
         after: String,
         configure: (String) -> Unit,
         checkBefore: () -> Unit,
-        checkAfter: (String) -> Unit,
-        testmark: Testmark? = null
+        checkAfter: (String) -> Unit
     ) {
-        val action: () -> Unit = {
-            configure(before)
-            checkBefore()
-            applyQuickFix(fixName)
-            checkAfter(after)
-        }
-        testmark?.checkHit(action) ?: action()
+        configure(before)
+        checkBefore()
+        applyQuickFix(fixName)
+        checkAfter(after)
     }
 
     private fun checkByText(text: String) {
