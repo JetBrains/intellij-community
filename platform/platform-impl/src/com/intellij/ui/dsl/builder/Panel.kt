@@ -8,6 +8,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
@@ -47,7 +48,7 @@ interface Panel : CellBase<Panel> {
    */
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
-  fun separator(@NlsContexts.Separator title: String? = null): Row
+  fun separator(@NlsContexts.Separator title: String? = null, background: Color? = null): Row
 
   /**
    * Creates sub-panel that occupies whole width and uses own grid inside
