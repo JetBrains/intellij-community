@@ -31,6 +31,7 @@ final class VmOptionsGenerator {
     '--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED',
     '--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
     '--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED',
+    '--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED',
     '--add-opens=java.desktop/sun.font=ALL-UNNAMED',
     '--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
     '--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED',
