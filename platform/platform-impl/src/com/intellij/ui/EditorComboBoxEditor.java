@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -44,16 +43,6 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
         EditorEx editor = super.createEditor();
         onEditorCreate(editor);
         return editor;
-      }
-
-      @Override
-      public void removeNotify() {
-        // The editor needs to be removed manually because it normally is removed by invokeLater, which may happen to late
-        Editor editor = getEditor();
-        if (editor != null && !editor.isDisposed()) {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-        super.removeNotify();
       }
     };
     myTextField.setName(NAME);
