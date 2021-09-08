@@ -71,10 +71,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static java.util.Objects.requireNonNull;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-
 public class FileTypesTest extends HeavyPlatformTestCase {
   private static final Logger LOG = Logger.getInstance(FileTypesTest.class);
 
@@ -479,7 +475,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     myFileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
     reInitFileTypeManagerComponent(element);
-    assertThat(myConflicts).isEmpty();
+    assertEmpty(myConflicts);
 
     assertEquals(otherType, myFileTypeManager.getFileTypeByExtension(ext));
     assertNotEmpty(myFileTypeManager.getRemovedMappingTracker().getMappingsForFileType(type.getName()));
@@ -487,10 +483,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testAddHashBangToReassignedTypeMustSurviveRestart() throws IOException, JDOMException {
-    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myFileTypeManager.getRegisteredFileTypeWithDescriptors().stream()
-      .filter(f -> !(f.fileType instanceof AbstractFileType))
-      .findFirst()
-      .orElseThrow();
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = ContainerUtil.find(myFileTypeManager.getRegisteredFileTypeWithDescriptors(),
+      f -> !(f.fileType instanceof AbstractFileType));
 
     String hashBang = "xxx";
     @Language("XML")
@@ -503,7 +497,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     myFileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
     reInitFileTypeManagerComponent(element);
-    assertThat(myConflicts).isEmpty();
+    assertEmpty(myConflicts);
 
     assertEquals(ftd, myFileTypeManager.getExtensionMap().findAssociatedFileTypeByHashBang("#!" + hashBang+"\n"));
   }
@@ -608,9 +602,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Disposable disposable = Disposer.newDisposable();
     try {
       myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
-      assertThat(myConflicts).isEmpty();
+      assertEmpty(myConflicts);
       createFakeType("myType", "myDisplayName", "myDescription", myWeirdExtension, disposable);
-      assertThat(myConflicts).isNotEmpty();
+      assertNotEmpty(myConflicts);
     }
     finally {
       Disposer.dispose(disposable);
@@ -1295,7 +1289,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       // now, ordinarily we'd get conflict, but thanks to externalized removed mapping tracker, we won't
       reInitFileTypeManagerComponent(stateWithRemovedMapping);
       FileType myType = createFakeType("myType", "myDisplayName", "myDescription", myWeirdExtension, disposable);
-      assertThat(myConflicts).isEmpty();
+      assertEmpty(myConflicts);
       assertEquals(myType, myFileTypeManager.getFileTypeByExtension(myWeirdExtension));
     }
     finally {
@@ -1316,7 +1310,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       WriteAction.run(() -> myFileTypeManager.associateExtension(PlainTextFileType.INSTANCE, myWeirdExtension));
       // now, ordinarily we'd get conflict, but thanks to externalized removed mapping tracker, we won't
       reInitFileTypeManagerComponent(stateWithRemovedMapping);
-      assertThat(myConflicts).isEmpty();
+      assertEmpty(myConflicts);
       assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension(myWeirdExtension));
     }
     finally {

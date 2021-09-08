@@ -108,7 +108,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> myDescriptions = new ConcurrentHashMap<>();
   private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> myDisplayNames = new ConcurrentHashMap<>();
 
-  private @Nullable Consumer<ConflictingFileTypeMappingTracker.ResolveConflictResult> myConflictResultConsumer;
+  private @Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> myConflictResultConsumer;
 
   private static final class StandardFileType {
     private final @NotNull FileType fileType;
@@ -1634,7 +1634,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  public void setConflictResultConsumer(@Nullable Consumer<ConflictingFileTypeMappingTracker.ResolveConflictResult> consumer) {
+  public void setConflictResultConsumer(@Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> consumer) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
     myConflictResultConsumer = consumer;
   }
