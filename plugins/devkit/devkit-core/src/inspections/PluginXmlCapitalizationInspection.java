@@ -251,7 +251,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     holder.createProblem(domElement,
                          DevKitBundle.message("inspections.plugin.xml.capitalization.error",
                                               escapedValue,
-                                              StringUtil.toLowerCase(capitalization.toString())),
+                                              capitalization == Nls.Capitalization.Title ? 0 : 1),
                          quickFix);
   }
 }
