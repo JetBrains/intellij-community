@@ -167,36 +167,14 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val other = getTreeElementDepar<KtExpression>() ?: return
         when (other) {
             is KtBinaryExpression -> {
-                val token = expression.operationToken
-                if (token in augmentedAssignmentsMap.keys && other.operationToken == KtTokens.EQ) {
-                    // Matching x ?= y with x = x ? y
-                    val right = other.right?.deparenthesize()
-                    val left = other.left?.deparenthesize()
-                    myMatchingVisitor.result = right is KtBinaryExpression
-                            && augmentedAssignmentsMap[token] == right.operationToken
-                            && myMatchingVisitor.match(expression.left, left)
-                            && myMatchingVisitor.match(expression.left, right.left)
-                            && myMatchingVisitor.match(expression.right, right.right)
-                    return
-                }
-                if (token == KtTokens.EQ) {
-                    val right = expression.right?.deparenthesize()
-                    if (right is KtBinaryExpression && right.operationToken == augmentedAssignmentsMap[other.operationToken]) {
-                        // Matching x = x ? y with x ?= y
-                        myMatchingVisitor.result = myMatchingVisitor.match(expression.left, other.left)
-                                && myMatchingVisitor.match(right.left, other.left)
-                                && myMatchingVisitor.match(right.right, other.right)
-                        return
-                    }
-                }
-                if (token == KtTokens.IDENTIFIER ) {
+                if (expression.operationToken == KtTokens.IDENTIFIER ) {
                     myMatchingVisitor.result = myMatchingVisitor.match(expression.left, other.right)
                             && myMatchingVisitor.match(expression.right, other.right)
                             && myMatchingVisitor.match(expression.operationReference, other.operationReference)
                     return
                 }
                 if (myMatchingVisitor.setResult(expression.match(other))) return
-                when (expression.operationToken) { // translated matching
+                when (expression.operationToken) { // semantical matching
                     KtTokens.GT, KtTokens.LT, KtTokens.GTEQ, KtTokens.LTEQ -> { // a.compareTo(b) OP 0
                         val left = other.left?.deparenthesize()
                         myMatchingVisitor.result = left is KtDotQualifiedExpression
@@ -205,7 +183,26 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                                 && myMatchingVisitor.match(other.right, KtPsiFactory(other, true).createExpression("0"))
 
                     }
-                    KtTokens.EQEQ -> { // match a?.equals(b) ?: (b === null)
+                    in augmentedAssignmentsMap.keys -> { // x OP= y with x = x OP y
+                        if (other.operationToken == KtTokens.EQ) {
+                            val right = other.right?.deparenthesize()
+                            val left = other.left?.deparenthesize()
+                            myMatchingVisitor.result = right is KtBinaryExpression
+                                    && augmentedAssignmentsMap[expression.operationToken] == right.operationToken
+                                    && myMatchingVisitor.match(expression.left, left)
+                                    && myMatchingVisitor.match(expression.left, right.left)
+                                    && myMatchingVisitor.match(expression.right, right.right)
+                        }
+                    }
+                    KtTokens.EQ -> { //  x = x OP y with x OP= y
+                        val right = expression.right?.deparenthesize()
+                        if (right is KtBinaryExpression && right.operationToken == augmentedAssignmentsMap[other.operationToken]) {
+                            myMatchingVisitor.result = myMatchingVisitor.match(expression.left, other.left)
+                                    && myMatchingVisitor.match(right.left, other.left)
+                                    && myMatchingVisitor.match(right.right, other.right)
+                        }
+                    }
+                    KtTokens.EQEQ -> { // a?.equals(b) ?: (b === null)
                         myMatchingVisitor.result = expression.matchEq(other)
                     }
                 }
