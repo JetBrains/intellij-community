@@ -414,14 +414,23 @@ public final class DiffDividerDrawUtil {
         g.setStroke(BOLD_DOTTED_STROKE);
       }
 
-      if (curve) {
-        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
-      }
-      else {
-        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
-      }
+      drawTrapezium(g, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor, curve);
 
       g.setStroke(oldStroke);
+    }
+
+    private static void drawTrapezium(@NotNull Graphics2D g,
+                                      int width,
+                                      int startY1, int endY1,
+                                      int startY2, int endY2,
+                                      @Nullable Color fillColor, @Nullable Color borderColor,
+                                      boolean curve) {
+      if (curve) {
+        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+      }
+      else {
+        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+      }
     }
 
     public String toString() {
