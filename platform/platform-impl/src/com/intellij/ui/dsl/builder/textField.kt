@@ -45,6 +45,13 @@ fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cel
     })
 }
 
+fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> {
+  component.text = property.get().toString()
+  return graphProperty(property)
+    .applyToComponent { bindIntProperty(property) }
+}
+
+
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
   return bindIntText(prop.toBinding())
 }

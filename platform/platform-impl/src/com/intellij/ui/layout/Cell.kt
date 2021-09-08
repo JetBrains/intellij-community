@@ -784,6 +784,23 @@ fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): 
     }
   )
 }
+fun JTextComponent.bindIntProperty(property: ObservableClearableProperty<Int>) {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      text = it.toString()
+    }
+  }
+  document.addDocumentListener(
+    object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        mutex.lockOrSkip {
+          property.set(text.toInt())
+        }
+      }
+    }
+  )
+}
 
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
   val slider = JSlider()

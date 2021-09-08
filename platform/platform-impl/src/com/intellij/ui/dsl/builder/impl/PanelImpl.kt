@@ -16,6 +16,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ButtonGroup
+import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -122,8 +123,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     }.layout(RowLayout.PARENT_GRID)
   }
 
-  override fun separator(@NlsContexts.Separator title: String?): Row {
-    val separator = createSeparator(title)
+  override fun separator(@NlsContexts.Separator title: String?, background: Color?): Row {
+    val separator = createSeparator(title, background)
     return row {
       cell(separator)
         .horizontalAlign(HorizontalAlign.FILL)
@@ -331,9 +332,9 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     }
   }
 
-  private fun createSeparator(@NlsContexts.BorderTitle title: String?): JComponent {
+  private fun createSeparator(@NlsContexts.BorderTitle title: String?, background: Color? = null): JComponent {
     if (title == null) {
-      return SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
+      return SeparatorComponent(0, background ?: OnePixelDivider.BACKGROUND, null)
     }
 
     val result = TitledSeparator(title)
