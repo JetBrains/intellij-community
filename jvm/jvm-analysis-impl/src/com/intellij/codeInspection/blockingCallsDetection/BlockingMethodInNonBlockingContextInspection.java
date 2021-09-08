@@ -161,8 +161,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       PsiMethod referencedMethod = callExpression.resolve();
       if (referencedMethod == null) return;
 
-      MethodContext methodContext = new MethodContext(referencedMethod, myBlockingMethodCheckers);
-      if (!isMethodOrSupersBlocking(methodContext)) return;
+      if (!isMethodOrSupersBlocking(referencedMethod, myBlockingMethodCheckers)) return;
 
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
@@ -176,16 +175,19 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     }
   }
 
-  private static boolean isMethodOrSupersBlocking(MethodContext methodContext) {
-    return StreamEx.of(methodContext.getMethod()).append(methodContext.getMethod().findDeepestSuperMethods())
-      .anyMatch(method -> isMethodBlocking(methodContext));
+  private static boolean isMethodOrSupersBlocking(PsiMethod referencedMethod, List<BlockingMethodChecker> checkers) {
+    return StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods())
+      .anyMatch(method -> isMethodBlocking(referencedMethod, checkers));
   }
 
-  private static boolean isMethodBlocking(MethodContext methodContext) {
-    return methodContext.getCheckers().stream().anyMatch(extension -> {
+  private static boolean isMethodBlocking(PsiMethod referencedMethod, List<BlockingMethodChecker> checkers) {
+    for (BlockingMethodChecker extension : checkers) {
       ProgressManager.checkCanceled();
-      return extension.isMethodBlocking(methodContext);
-    });
+
+      MethodContext methodContext = new MethodContext(referencedMethod, extension, checkers);
+      if (extension.isMethodBlocking(methodContext)) return true;
+    }
+    return false;
   }
 
   private static boolean isContextNonBlockingFor(PsiElement element,
