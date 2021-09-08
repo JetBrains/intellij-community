@@ -8,8 +8,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.backend.common.output.OutputFile
-import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
+import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.backend.jvm.*
+import org.jetbrains.kotlin.backend.jvm.lower.reflectiveAccessLowering
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen.Companion.getSharedTypeIfApplicable
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
 import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
@@ -33,9 +35,12 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledDataDescr
 import org.jetbrains.kotlin.idea.debugger.evaluate.getResolutionFacadeForCodeFragment
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.incremental.components.LookupLocation
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.util.NameProvider
+import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -138,35 +143,79 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
             if (fragmentCompilerBackend == FragmentCompilerBackend.JVM_IR) {
                 val mangler = JvmDescriptorMangler(MainFunctionDetector(bindingContext, compilerConfiguration.languageVersionSettings))
                 val evaluatorFragmentInfo = EvaluatorFragmentInfo(
-                        codegenInfo.classDescriptor,
-                        codegenInfo.methodDescriptor,
-                        codegenInfo.parameters.map { it.targetDescriptor }
+                    codegenInfo.classDescriptor,
+                    codegenInfo.methodDescriptor,
+                    codegenInfo.parameters.map { it.targetDescriptor }
                 )
+                val phaseConfig = PhaseConfig(
+                    NamedCompilerPhase(
+                        name = "IrFragmentCompiler",
+                        description = "IR Backend for Debugger Evaluator",
+                        nlevels = 1,
+                        actions = setOf(defaultDumper, validationAction),
+                        lower = reflectiveAccessLowering then jvmPhases
+                    )
+                )
+                codegenFactory(
+                    JvmIrCodegenFactory(
+                        configuration = compilerConfiguration,
+                        phaseConfig = phaseConfig,
+                        externalMangler = mangler,
+                        externalSymbolTable = FragmentCompilerSymbolTableDecorator(
+                            JvmIdSignatureDescriptor(mangler),
+                            IrFactoryImpl,
+                            evaluatorFragmentInfo,
+                            NameProvider.DEFAULT,
+                        ),
+                        prefixPhases = reflectiveAccessLowering,
+                        jvmGeneratorExtensions = object : JvmGeneratorExtensionsImpl(compilerConfiguration) {
+                            // Top-level declarations in the project being debugged is served to the compiler as
+                            // PSI, not as class files. PSI2IR generate these as "external declarations" and
+                            // here we provide a shim from the PSI structures serving the names of facade classes
+                            // for top level declarations (as the facade classes do not exist in the PSI but are
+                            // created and _named_ during compilation).
+                            override fun getContainerSource(descriptor: DeclarationDescriptor): DeserializedContainerSource? {
+                                val psiSourceFile =
+                                    descriptor.toSourceElement.containingFile as? PsiSourceFile ?: return super.getContainerSource(
+                                        descriptor
+                                    )
+                                return FacadeClassSourceShimForFragmentCompilation(psiSourceFile)
+                            }
 
-                codegenFactory(JvmIrCodegenFactory(
-                    configuration = compilerConfiguration,
-                    phaseConfig = PhaseConfig(jvmPhases),
-                    externalMangler = mangler,
-                    externalSymbolTable = FragmentCompilerSymbolTableDecorator(
-                        JvmIdSignatureDescriptor(mangler),
-                        IrFactoryImpl,
-                        evaluatorFragmentInfo,
-                        NameProvider.DEFAULT,
-                    ),
-                    jvmGeneratorExtensions = object : JvmGeneratorExtensionsImpl(compilerConfiguration) {
-                        // Top-level declarations in the project being debugged is served to the compiler as
-                        // PSI, not as class files. PSI2IR generate these as "external declarations" and
-                        // here we provide a shim from the PSI structures serving the names of facade classes
-                        // for top level declarations (as the facade classes do not exist in the PSI but are
-                        // created and _named_ during compilation).
-                        override fun getContainerSource(descriptor: DeclarationDescriptor): DeserializedContainerSource? {
-                            val psiSourceFile =
-                                descriptor.toSourceElement.containingFile as? PsiSourceFile ?: return super.getContainerSource(descriptor)
-                            return FacadeClassSourceShimForFragmentCompilation(psiSourceFile)
-                        }
-                    },
-                    evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfo
-                ))
+                            @OptIn(ObsoleteDescriptorBasedAPI::class)
+                            override fun isAccessorWithExplicitImplementation(accessor: IrSimpleFunction): Boolean {
+                                return (accessor.descriptor as? PropertyAccessorDescriptor)?.hasBody() == true
+                            }
+
+                            override fun remapDebuggerFieldPropertyDescriptor(propertyDescriptor: PropertyDescriptor): PropertyDescriptor {
+                                return when (propertyDescriptor) {
+                                    is DebuggerFieldPropertyDescriptor -> {
+                                        val fieldDescriptor = JavaPropertyDescriptor.create(
+                                            propertyDescriptor.containingDeclaration,
+                                            propertyDescriptor.annotations,
+                                            propertyDescriptor.modality,
+                                            propertyDescriptor.visibility,
+                                            propertyDescriptor.isVar,
+                                            Name.identifier(propertyDescriptor.fieldName.removeSuffix("_field")),
+                                            propertyDescriptor.source,
+                                            /*isStaticFinal= */ false
+                                        )
+                                        fieldDescriptor.setType(
+                                            propertyDescriptor.type,
+                                            propertyDescriptor.typeParameters,
+                                            propertyDescriptor.dispatchReceiverParameter,
+                                            propertyDescriptor.extensionReceiverParameter
+                                        )
+                                        fieldDescriptor
+                                    }
+                                    else ->
+                                        propertyDescriptor
+                                }
+                            }
+                        },
+                        evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfo
+                    )
+                )
             }
             generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
         }.build()
