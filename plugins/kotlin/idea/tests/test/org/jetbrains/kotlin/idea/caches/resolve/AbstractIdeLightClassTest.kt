@@ -53,7 +53,12 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
             else -> error("Invalid test data extension")
         }
 
-        withCustomCompilerOptions(File(testDataPath, fileName).readText(), project, module) {
+        val fileText = File(testDataPath, fileName).readText()
+        if (InTextDirectivesUtils.isDirectiveDefined(fileText, "SKIP_IDE_TEST")) {
+            return
+        }
+
+        withCustomCompilerOptions(fileText, project, module) {
             val testFiles = if (File(testDataPath, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
             val lazinessMode = lazinessModeByFileText()
             myFixture.configureByFiles(*testFiles.toTypedArray())
