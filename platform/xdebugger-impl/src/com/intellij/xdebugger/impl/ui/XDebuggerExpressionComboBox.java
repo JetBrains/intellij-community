@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -191,6 +192,15 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);
+      myDelegate.getEditorComponent().addPropertyChangeListener("ancestor", evt -> {
+        if (evt.getNewValue() == null) {
+          // The editor needs to be removed manually because it normally is removed by invokeLater, which may happen too late
+          Editor editor = myDelegate.getEditor();
+          if (editor != null && !editor.isDisposed()) {
+            EditorFactory.getInstance().releaseEditor(editor);
+          }
+        }
+      });
       JComponent comp = myDelegate.getEditorComponent();
       if (languageInside) {
         comp = addChooser(comp);
