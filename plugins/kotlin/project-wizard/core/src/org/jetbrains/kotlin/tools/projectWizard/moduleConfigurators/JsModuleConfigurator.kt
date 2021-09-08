@@ -56,7 +56,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind"),
             GenerationPhase.PROJECT_GENERATION
         ) {
-            description = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind.description")
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind.hint")
             defaultValue = value(JsTargetKind.APPLICATION)
             filter = filter@{ reference, kindCandidate ->
                 when {

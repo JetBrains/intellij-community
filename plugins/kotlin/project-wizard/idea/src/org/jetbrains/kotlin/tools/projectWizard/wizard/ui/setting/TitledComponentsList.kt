@@ -88,13 +88,15 @@ open class TitledComponentsList(
         var lastLabel: SpringLayout.Constraints? = null
         var lastComponent: SpringLayout.Constraints? = null
 
+        val tooltipWidth = componentsWithLabels.find { it.tooltip != null }?.tooltip?.width
+
         for (data in componentsWithLabels) {
             val (label, tooltip, component) = data
             label.x = xPanelPadding.asSpring()
             tooltip?.x = label[SpringLayout.EAST] + xGap
             component.x = maxLabelWidth + 2 * xGap
-            if (tooltip != null)
-                component.x += tooltip.width + xGap
+            if (tooltipWidth != null)
+                component.x += tooltipWidth + xGap
 
             if (lastComponent != null && lastLabel != null) {
                 val constraint = lastComponent[SpringLayout.SOUTH] + yGap + data.additionalComponentGap
