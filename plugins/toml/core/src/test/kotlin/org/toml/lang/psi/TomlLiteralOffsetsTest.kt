@@ -5,7 +5,6 @@
 
 package org.toml.lang.psi
 
-import com.intellij.lang.psi.LiteralOffsetsTestBase
 import com.intellij.psi.tree.IElementType
 import org.junit.Test
 import org.junit.runner.RunWith

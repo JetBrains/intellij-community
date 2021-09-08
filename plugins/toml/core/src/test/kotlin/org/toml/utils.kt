@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij
+package org.toml
 
 import junit.framework.TestCase
 

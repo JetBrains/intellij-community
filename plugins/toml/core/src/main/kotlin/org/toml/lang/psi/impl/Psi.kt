@@ -7,7 +7,7 @@ package org.toml.lang.psi.impl
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.lang.ASTFactory
-import com.intellij.lang.psi.SimpleMultiLineTextEscaper
+import org.toml.lang.psi.SimpleMultiLineTextEscaper
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry

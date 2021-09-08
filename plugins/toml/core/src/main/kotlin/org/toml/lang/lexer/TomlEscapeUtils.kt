@@ -5,7 +5,6 @@
 
 package org.toml.lang.lexer
 
-import com.intellij.lang.lexer.parseStringCharacters
 import com.intellij.psi.tree.IElementType
 import org.toml.lang.psi.TOML_BASIC_STRINGS
 import org.toml.lang.psi.TOML_STRING_LITERALS

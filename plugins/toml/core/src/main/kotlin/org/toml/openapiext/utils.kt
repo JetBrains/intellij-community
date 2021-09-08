@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.openapiext
+package org.toml.openapiext
 
 import com.intellij.openapi.application.ApplicationManager
 

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.lang.psi
+package org.toml.lang.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.impl.source.tree.LeafPsiElement

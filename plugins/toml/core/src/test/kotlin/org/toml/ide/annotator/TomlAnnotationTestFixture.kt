@@ -6,8 +6,6 @@
 package org.toml.ide.annotator
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.ide.annotator.AnnotationTestFixtureBase
-import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import junit.framework.TestCase
 import kotlin.reflect.KClass

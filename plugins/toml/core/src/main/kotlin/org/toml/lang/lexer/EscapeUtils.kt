@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.lang.lexer
+package org.toml.lang.lexer
 
 import com.intellij.lexer.Lexer
 import com.intellij.psi.StringEscapesTokenTypes.*

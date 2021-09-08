@@ -5,8 +5,6 @@
 
 package org.toml.ide.annotator
 
-import com.intellij.ide.annotator.BatchMode
-
 class TomlHighlightingAnnotatorTest : TomlAnnotatorTestBase(TomlHighlightingAnnotator::class) {
 
     fun `test numbers`() = checkHighlighting("""

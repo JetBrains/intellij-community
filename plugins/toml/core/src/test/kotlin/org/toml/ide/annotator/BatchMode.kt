@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.ide.annotator
+package org.toml.ide.annotator
 
 /**
  * Launch annotation test in batch mode.

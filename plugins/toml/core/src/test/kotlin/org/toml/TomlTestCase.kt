@@ -5,8 +5,6 @@
 
 package org.toml
 
-import com.intellij.TestCase
-
 interface TomlTestCase : TestCase {
     override val testFileExtension: String get() = "toml"
 }

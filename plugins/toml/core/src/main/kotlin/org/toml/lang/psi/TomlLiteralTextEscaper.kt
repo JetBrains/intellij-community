@@ -5,7 +5,6 @@
 
 package org.toml.lang.psi
 
-import com.intellij.lang.psi.LiteralTextEscaperBase
 import org.toml.lang.lexer.parseTomlStringCharacters
 
 class TomlLiteralTextEscaper(host: TomlLiteral) : LiteralTextEscaperBase<TomlLiteral>(host) {

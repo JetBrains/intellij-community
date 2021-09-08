@@ -6,7 +6,7 @@
 package org.toml.lang.psi.ext
 
 import com.intellij.lang.ASTNode
-import com.intellij.lang.psi.LiteralOffsets
+import org.toml.lang.psi.LiteralOffsets
 import org.toml.lang.lexer.unescapeToml
 import org.toml.lang.psi.TOML_LITERALS
 import org.toml.lang.psi.TOML_STRING_LITERALS

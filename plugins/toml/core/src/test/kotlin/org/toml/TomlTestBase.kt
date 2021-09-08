@@ -5,7 +5,6 @@
 
 package org.toml
 
-import com.intellij.TestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
 
