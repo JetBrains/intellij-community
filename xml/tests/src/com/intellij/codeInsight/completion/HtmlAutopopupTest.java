@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 public class HtmlAutopopupTest extends CompletionAutoPopupTestCase {
 
@@ -138,6 +139,14 @@ public class HtmlAutopopupTest extends CompletionAutoPopupTestCase {
     type(" p");
     myFixture.type("\n");
     myFixture.checkResult("<div>The p\n</div>");
+  }
+
+  public void testStartsWithCharMatchingAutoPopup() {
+    myFixture.configureByText(HtmlFileType.INSTANCE, "<html lang='en'><caret>");
+    type("la");
+    assertSameElements(ContainerUtil.map(getLookup().getItems(), i -> i.getLookupString()), "<label");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "lang", "<label", "<template");
   }
 
   private void doTestPopup(FileType fileType, String fileText, String typeString) {

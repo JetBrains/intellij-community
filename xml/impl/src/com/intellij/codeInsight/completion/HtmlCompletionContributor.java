@@ -1,13 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.patterns.PlatformPatterns;
@@ -37,6 +38,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInsight.completion.CompletionService.getCompletionService;
 import static com.intellij.html.impl.util.MicrodataUtil.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
@@ -205,6 +207,20 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     return false;
   }
 
+  public static CompletionResultSet withoutLiveTemplatesWeigher(@NotNull CompletionResultSet result,
+                                                                @NotNull CompletionParameters parameters) {
+    return result.withRelevanceSorter(withoutLiveTemplatesWeigher(null, parameters, result.getPrefixMatcher()));
+  }
+
+  private static CompletionSorter withoutLiveTemplatesWeigher(@Nullable CompletionSorter sorter,
+                                                              @NotNull CompletionParameters parameters,
+                                                              @NotNull PrefixMatcher prefixMatcher) {
+    if (sorter == null) {
+      sorter = getCompletionService().defaultSorter(parameters, prefixMatcher);
+    }
+    return ((CompletionSorterImpl)sorter).withoutClassifiers(f -> "templates".equals(f.getId()));
+  }
+
   private static class HtmlElementInTextCompletionProvider extends CompletionProvider<CompletionParameters> {
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -219,6 +235,13 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       offsets = offsets.copyWithReplacement(offset, offset, "<");
       PsiElement tag = doIfNotNull(offsets.getFile().findElementAt(offset + 1), PsiElement::getParent);
       if (tag instanceof XmlTag) {
+        // We want live templates to be mixed with tags and other contributions
+        result = withoutLiveTemplatesWeigher(result, parameters);
+        if (parameters.getInvocationCount() == 0) {
+          // We only want results which start with the prefix first char
+          result = result.withPrefixMatcher(new StartOnlyMatcher(result.getPrefixMatcher()));
+        }
+        CompletionResultSet patchedResultSet = result;
         for (LookupElement variant : TagNameReferenceCompletionProvider.getTagNameVariants((XmlTag)tag, "")) {
           LookupElement decorated = new LookupElementDecorator<>(variant) {
 
@@ -241,10 +264,15 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
                 ((PrioritizedLookupElement<?>)variant).getExplicitProximity()),
               ((PrioritizedLookupElement<?>)variant).getGrouping());
           }
-          result.consume(decorated);
+          patchedResultSet.consume(decorated);
         }
+        patchedResultSet.runRemainingContributors(parameters, r -> {
+          patchedResultSet.withPrefixMatcher(r.getPrefixMatcher())
+            .withRelevanceSorter(withoutLiveTemplatesWeigher(r.getSorter(), parameters, r.getPrefixMatcher()))
+            .addElement(r.getLookupElement());
+        });
       }
-      if (result.getPrefixMatcher().getPrefix().isEmpty()) {
+      if (result.getPrefixMatcher().getPrefix().length() < 2) {
         result.restartCompletionOnAnyPrefixChange();
       }
     }
@@ -269,7 +297,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
         lookup.addLookupListener(new LookupListener() {
           @Override
           public void uiRefreshed() {
-            var currentCompletion = CompletionService.getCompletionService().getCurrentCompletion();
+            var currentCompletion = getCompletionService().getCurrentCompletion();
             if (currentCompletion != null
                 && currentCompletion.isAutopopupCompletion()
                 && !lookup.isSelectionTouched()
@@ -288,9 +316,9 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     private static boolean hasTwoCharAfterAmp(LookupImpl lookup) {
       int start = Math.max(lookup.getLookupStart() - 1, 0);
       int end = lookup.getEditor().getCaretModel().getOffset();
-      if (start > end) return false;
-      String text = lookup.getEditor().getDocument().getText(new TextRange(start, end));
-      return text.startsWith("&") && text.length() >= 3;
+      if (end - start < 3) return false;
+      Document doc = lookup.getEditor().getDocument();
+      return doc.getTextLength() > start && doc.getCharsSequence().charAt(start) == '&';
     }
   }
 }
