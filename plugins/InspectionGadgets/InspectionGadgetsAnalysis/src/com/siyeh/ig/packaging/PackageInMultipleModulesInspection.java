@@ -52,7 +52,7 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     final Set<String> packages = new HashSet<>();
     scope.accept(file -> {
-      if (file.isDirectory() || !scope.contains(file)) return true;
+      if (file.isDirectory()) return true;
       final String packageName = ReadAction.compute(() -> {
         final PsiFile element = PsiManager.getInstance(scope.getProject()).findFile(file);
         if (!(element instanceof PsiClassOwner)) return null;
@@ -60,7 +60,7 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
         return classOwner.getPackageName();
       });
       if (packageName == null || !packages.add(packageName)) return true;
-      final RefPackage aPackage = globalContext.getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(packageName);
+      final RefPackage aPackage = (RefPackage)globalContext.getRefManager().getReference(RefJavaManager.PACKAGE, packageName);
       if (aPackage == null) return true;
       CommonProblemDescriptor[] descriptors = checkPackage(aPackage, scope, manager, globalContext);
       if (descriptors != null) {
