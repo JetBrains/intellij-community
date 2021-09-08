@@ -87,9 +87,8 @@ internal class PackageSearchRestService : RestService() {
             ProjectUtil.focusProjectWindow(project, true)
 
             PackageSearchToolWindowFactory.activateToolWindow(project) {
-                val rootModel = project.packageSearchDataService
+                project.packageSearchDataService.programmaticSearchQueryStateFlow.tryEmit(query ?: pkg.replace(':', ' '))
 //                rootModel.setSelectedPackage(pkg) // TODO preselect proper package
-                rootModel.setSearchQuery(query ?: pkg.replace(':', ' '))
 
                 notify(project, pkg)
             }

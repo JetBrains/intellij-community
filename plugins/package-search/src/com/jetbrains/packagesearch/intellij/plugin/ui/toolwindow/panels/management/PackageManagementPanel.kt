@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
@@ -54,7 +55,8 @@ internal class PackageManagementPanel(
     targetModuleSetter: TargetModuleSetter,
     searchClient: SearchClient,
     operationExecutor: OperationExecutor,
-    project: Project
+    project: Project,
+    programmaticSearchQueryInputsFlow: Flow<String>
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope, Disposable {
 
     companion object {
@@ -66,7 +68,8 @@ internal class PackageManagementPanel(
             targetModuleSetter = project.packageSearchDataService,
             searchClient = project.packageSearchDataService,
             operationExecutor = project.packageSearchDataService,
-            project = project
+            project = project,
+            programmaticSearchQueryInputsFlow = project.packageSearchDataService.programmaticSearchQueryStateFlow
         )
     }
 
@@ -92,7 +95,8 @@ internal class PackageManagementPanel(
         onItemSelectionChanged = { launch { selectedPackageSetter.setSelectedPackage(it) } },
         onSearchResultStateChanged = { searchResult, version, scope ->
             launch { searchResultStateSetter.setSearchResultState(searchResult, version, scope) }
-        }
+        },
+        programmaticSearchQueryInputsFlow = programmaticSearchQueryInputsFlow
     )
 
     private val packageDetailsPanel = PackageDetailsPanel(operationFactory, operationExecutor)
@@ -175,8 +179,7 @@ internal class PackageManagementPanel(
                     allKnownRepositories = data.allKnownRepositories,
                     filterOptions = data.filterOptions,
                     tableItems = tableItems,
-                    traceInfo = data.traceInfo,
-                    searchQuery = data.searchQuery
+                    traceInfo = data.traceInfo
                 )
             )
 
