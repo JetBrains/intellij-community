@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
@@ -223,7 +223,11 @@ private class MnemonicIcon(val icon: Icon?, val mnemonic: String?, val selected:
       it.paintIcon(c, g, dx, dy)
     }
     if (g is Graphics2D && false == mnemonic?.isEmpty()) {
-      val font = PLAIN.globalFont.deriveFont(.8f * size)
+      val fontSize = Registry.doubleValue("ide.recent.files.tool.window.mnemonics.font.size").toFloat()
+      val font = when (Registry.`is`("ide.recent.files.tool.window.mnemonics.font.monospaced")) {
+        true -> PLAIN.globalFont
+        else -> JBUI.Fonts.label()
+      }.deriveFont(fontSize.coerceAtLeast(8f).coerceAtMost(15f) * size / 16)
       g.font = font
       g.paint = when (selected) {
         true -> JBUI.CurrentTheme.List.foreground(true, true)
@@ -233,7 +237,7 @@ private class MnemonicIcon(val icon: Icon?, val mnemonic: String?, val selected:
       val metrics = g.fontMetrics
       val w = metrics.stringWidth(mnemonic)
       val dx = x + size - (w - width) / 2
-      val dy = y + size - metrics.descent
+      val dy = y + size - (metrics.height - size) / 2 - metrics.descent
       g.drawString(mnemonic, dx, dy)
       if (SystemInfo.isWindows) {
         LINE_UNDERSCORE.paint(g, dx, dy, w, metrics.descent, font)
