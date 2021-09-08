@@ -43,7 +43,7 @@ import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.DOWNLOAD
 import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.DOWNLOAD_CACHE_SIZE_EVENT_ID;
 
 public final class JpsServerClientImpl implements JpsServerClient {
-  private static final Logger LOG = Logger.getInstance(JpsServerClientImpl.class.getCanonicalName());
+  private static final Logger LOG = Logger.getInstance(JpsServerClientImpl.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   static final JpsServerClientImpl INSTANCE = new JpsServerClientImpl();
   private final String stringThree;
