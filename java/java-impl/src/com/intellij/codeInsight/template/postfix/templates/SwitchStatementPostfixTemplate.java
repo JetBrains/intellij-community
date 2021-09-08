@@ -9,6 +9,8 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -27,7 +29,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.Conditions.and;
 
-public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase {
+public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase implements DumbAware {
 
   private static final Condition<PsiElement> SWITCH_TYPE = expression -> {
     if (!(expression instanceof PsiExpression)) return false;
@@ -37,7 +39,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     if (type == null) return false;
     if (PsiType.INT.isAssignableFrom(type)) return true;
 
-    if (isEnumOrObjectOrSealed(type, expression)) return true;
+    if (isEnumOrObjectOrSealedClass(expression, type)) return true;
 
     if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       PsiFile containingFile = expression.getContainingFile();
@@ -50,20 +52,32 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     return false;
   };
 
-  @Contract(pure=true)
-  private static boolean isEnumOrObjectOrSealed(@Nullable PsiType type, @NotNull PsiElement expression) {
+  @Contract(pure = true)
+  private static boolean isEnumOrObjectOrSealedClass(@NotNull PsiElement expression, @Nullable PsiType type) {
     if (!(type instanceof PsiClassType)) return false;
 
-    final PsiResolveHelper resolver = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
-    final PsiClass psiClass = resolver.resolveReferencedClass(type.getCanonicalText(), null);
+    if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
 
+    final PsiClass psiClass = getClassType(expression.getProject(), type);
     if (psiClass == null) return false;
 
     if (psiClass.isEnum()) return true;
 
     if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return false;
 
-    return type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || psiClass.hasModifierProperty(PsiModifier.SEALED);
+    return CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName()) || psiClass.hasModifierProperty(PsiModifier.SEALED);
+  }
+
+  @Contract(pure = true)
+  private static @Nullable PsiClass getClassType(@NotNull Project project, @NotNull PsiType type) {
+    final PsiResolveHelper resolver = JavaPsiFacade.getInstance(project).getResolveHelper();
+
+    if (!DumbService.isDumb(project)) {
+      return resolver.resolveReferencedClass(type.getCanonicalText(), null);
+    }
+
+    return DumbService.getInstance(project)
+      .computeWithAlternativeResolveEnabled(() -> resolver.resolveReferencedClass(type.getCanonicalText(), null));
   }
 
   public SwitchStatementPostfixTemplate() {
