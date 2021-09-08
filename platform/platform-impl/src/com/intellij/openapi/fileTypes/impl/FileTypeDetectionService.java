@@ -118,7 +118,7 @@ final class FileTypeDetectionService implements Disposable {
                 " (file: " + file +
                 "; wasAutoDetectedBefore(file): " + (file == null ? null : wasAutoDetectedBefore(file)) +
                 "; isDetectable(file): " + (file == null ? null : isDetectable(file)) +
-                "; file.getLength(): " + (file == null ? null : file.getLength()) +
+                "; file.getLength(): " + (file == null ? null : file.isDirectory() ? "-" : file.getLength()) +
                 "; file.isValid(): " + (file == null ? null : file.isValid()) +
                 "; file.is(VFileProperty.SPECIAL): " + (file == null ? null : file.is(VFileProperty.SPECIAL)) +
                 "; packedFlags.get(id): " + (file instanceof VirtualFileWithId ? readableFlags(packedFlags.get(((VirtualFileWithId)file).getId())) : null) +

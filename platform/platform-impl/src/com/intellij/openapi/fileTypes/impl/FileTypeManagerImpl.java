@@ -521,12 +521,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  @TestOnly
-  boolean toLog;
   boolean toLog() {
-    return toLog;
+    return LOG.isDebugEnabled();
   }
-  void log(@NonNls String message) {
+
+  void log(String message) {
     LOG.debug(message + " - " + Thread.currentThread());
   }
 

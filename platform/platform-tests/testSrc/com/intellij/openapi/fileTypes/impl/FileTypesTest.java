@@ -350,16 +350,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     });
   }
 
-  private <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.@NotNull FileTypeDetector detector, @NotNull ThrowableRunnable<T> runnable) throws T {
+  private <T extends Throwable> void runWithDetector(FileTypeRegistry.FileTypeDetector detector, ThrowableRunnable<T> runnable) throws T {
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
-    FileTypeManagerImpl fileTypeManager = myFileTypeManager;
-    fileTypeManager.toLog = true;
-    try {
-      runnable.run();
-    }
-    finally {
-      fileTypeManager.toLog = false;
-    }
+    runnable.run();
   }
 
   private static void log(String message) {
