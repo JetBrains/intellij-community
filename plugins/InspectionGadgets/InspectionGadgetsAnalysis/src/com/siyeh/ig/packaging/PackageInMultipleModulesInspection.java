@@ -75,7 +75,7 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
                                                            @NotNull InspectionManager inspectionManager,
                                                            @NotNull GlobalInspectionContext globalInspectionContext) {
     final Project project = inspectionManager.getProject();
-    final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(aPackage.getQualifiedName());
+    final PsiPackage psiPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage(aPackage.getQualifiedName()));
     if (psiPackage == null)  return null;
     final PsiFile @NotNull [] files = ReadAction.compute(() -> psiPackage.getFiles(GlobalSearchScope.projectScope(project)));
     final Set<Module> modules = new HashSet<>();
