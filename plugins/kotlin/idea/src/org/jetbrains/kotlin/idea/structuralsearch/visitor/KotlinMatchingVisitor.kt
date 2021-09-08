@@ -189,6 +189,12 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                         return
                     }
                 }
+                if (token == KtTokens.IDENTIFIER ) {
+                    myMatchingVisitor.result = myMatchingVisitor.match(expression.left, other.right)
+                            && myMatchingVisitor.match(expression.right, other.right)
+                            && myMatchingVisitor.match(expression.operationReference, other.operationReference)
+                    return
+                }
                 if (myMatchingVisitor.setResult(expression.match(other))) return
                 when (expression.operationToken) { // translated matching
                     KtTokens.GT, KtTokens.LT, KtTokens.GTEQ, KtTokens.LTEQ -> { // a.compareTo(b) OP 0
