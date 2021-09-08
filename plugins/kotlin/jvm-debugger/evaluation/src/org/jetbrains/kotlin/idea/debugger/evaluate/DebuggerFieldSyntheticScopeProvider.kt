@@ -235,4 +235,7 @@ internal class DebuggerFieldPropertyDescriptor(
     /*isActual = */false,
     /*isExternal = */false,
     /*isDelegated = */false
-)
+) {
+    override val getter: PropertyGetterDescriptorImpl?
+        get() = null
+}
