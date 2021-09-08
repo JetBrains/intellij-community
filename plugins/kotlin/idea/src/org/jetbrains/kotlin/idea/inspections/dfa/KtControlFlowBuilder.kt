@@ -988,7 +988,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processInCheck(left?.getKotlinType(), expr.right, KotlinExpressionAnchor(expr), true)
             return
         }
-        // TODO: support other operators
         processExpression(expr.left)
         processExpression(expr.right)
         addCall(expr, 2)
@@ -1165,8 +1164,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(right)
             addImplicitConversion(right, balancedType)
             if (forceEqualityByContent && !mayCompareByContent(leftDfType, rightDfType)) {
-                // TODO: still keep the null-check
-                addCall(expr, 2)
+                val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
+                addInstruction(KotlinEqualityInstruction(expr, relation != RelationType.EQ, transfer))
             } else {
                 addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
             }

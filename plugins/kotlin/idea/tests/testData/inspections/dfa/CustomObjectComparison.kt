@@ -1,7 +1,11 @@
 // WITH_RUNTIME
 fun compareObjects(x: Any?, y: Any?) {
+    if (<warning descr="Condition is always true">x == x</warning>) {}
     if (x == y) {
         if (x == y) {}
+        if (x == null) {
+            if (<warning descr="Condition is always true">y == null</warning>) {}
+        }
     }
     val b = x == null
     if (b) {
