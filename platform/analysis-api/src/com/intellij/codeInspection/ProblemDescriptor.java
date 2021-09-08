@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,6 +24,16 @@ public interface ProblemDescriptor extends CommonProblemDescriptor {
   PsiElement getEndElement();
 
   TextRange getTextRangeInElement();
+
+  /**
+   * Returns the template (text or HTML) from which the editor tooltip text is built.
+   * By default, {@link #getDescriptionTemplate()} result is used.
+   */
+  @NlsContexts.Tooltip
+  @NotNull
+  default String getTooltipTemplate() {
+    return getDescriptionTemplate();
+  }
 
   /**
    * Returns 0-based line number of the problem.

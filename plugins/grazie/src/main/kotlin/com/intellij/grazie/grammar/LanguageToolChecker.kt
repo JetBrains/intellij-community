@@ -75,7 +75,9 @@ open class LanguageToolChecker : TextChecker() {
 
     override fun getDescriptionTemplate(isOnTheFly: Boolean): String =
       if (testDescription) match.rule.id
-      else toDescriptionTemplate(match, isOnTheFly)
+      else match.messageSanitized
+
+    override fun getTooltipTemplate(): String = toTooltipTemplate(match)
 
     override fun getReplacementRange() = highlightRange
     override fun getCorrections(): List<String> = match.suggestedReplacements
@@ -139,7 +141,7 @@ open class LanguageToolChecker : TextChecker() {
     }
 
     @NlsSafe
-    private fun toDescriptionTemplate(match: RuleMatch, isOnTheFly: Boolean): String {
+    private fun toTooltipTemplate(match: RuleMatch): String {
       val html = html {
         val withCorrections = match.rule.incorrectExamples.filter { it.corrections.isNotEmpty() }.takeIf { it.isNotEmpty() }
         val incorrectExample = (withCorrections ?: match.rule.incorrectExamples).minByOrNull { it.example.length }
@@ -149,7 +151,7 @@ open class LanguageToolChecker : TextChecker() {
           }
 
           +match.messageSanitized
-          if (!isOnTheFly) nbsp()
+          nbsp()
         }
 
         table {
@@ -164,12 +166,12 @@ open class LanguageToolChecker : TextChecker() {
                 +" "
                 +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
                 +" "
-                if (!isOnTheFly) nbsp()
+                nbsp()
               }
               td {
                 style = "width: 100%;"
                 toIncorrectHtml(it)
-                if (!isOnTheFly) nbsp()
+                nbsp()
               }
             }
 
@@ -181,12 +183,12 @@ open class LanguageToolChecker : TextChecker() {
                   +" "
                   +GrazieBundle.message("grazie.settings.grammar.rule.correct")
                   +" "
-                  if (!isOnTheFly) nbsp()
+                  nbsp()
                 }
                 td {
                   style = "padding-top: 5px; width: 100%;"
                   toCorrectHtml(it)
-                  if (!isOnTheFly) nbsp()
+                  nbsp()
                 }
               }
             }

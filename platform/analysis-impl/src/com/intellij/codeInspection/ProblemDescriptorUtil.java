@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -74,10 +75,21 @@ public final class ProblemDescriptorUtil {
   public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, @FlagConstant int flags) {
     String message = descriptor.getDescriptionTemplate();
 
-    // no message. Should not be the case if inspection correctly implemented.
+    // no message. This should not be the case if the inspection is correctly implemented.
     // noinspection ConstantConditions
     if (message == null) return "";
 
+    return renderDescriptionMessage(descriptor, element, flags, message);
+  }
+
+  @NotNull
+  @InspectionMessage
+  @NlsContexts.Tooltip
+  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor,
+                                                @Nullable PsiElement element,
+                                                @FlagConstant int flags,
+                                                @InspectionMessage String template) {
+    String message = template;
     if ((flags & APPEND_LINE_NUMBER) != 0 &&
         descriptor instanceof ProblemDescriptor &&
         !message.contains(REF_REFERENCE) &&

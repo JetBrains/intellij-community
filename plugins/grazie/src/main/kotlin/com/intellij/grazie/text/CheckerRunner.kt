@@ -9,8 +9,8 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
-import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
@@ -50,13 +50,19 @@ internal class CheckerRunner(val text: TextContent) {
   fun toProblemDescriptors(problems: List<TextProblem>, isOnTheFly: Boolean): List<ProblemDescriptor> {
     val parent = text.commonParent
     return problems.flatMap { problem ->
+      val tooltip = problem.tooltipTemplate
+      val description = problem.getDescriptionTemplate(isOnTheFly)
       fileHighlightRanges(problem).map { range ->
-        ProblemDescriptorBase(
-          parent, parent, problem.getDescriptionTemplate(isOnTheFly),
+        object : ProblemDescriptorBase(
+          parent, parent, description,
           if (isOnTheFly) toFixes(problem) else LocalQuickFix.EMPTY_ARRAY,
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
           range.shiftLeft(parent.startOffset),
-          true, isOnTheFly)
+          true, isOnTheFly) {
+          override fun getTooltipTemplate(): String {
+            return tooltip
+          }
+        }
       }
     }
   }

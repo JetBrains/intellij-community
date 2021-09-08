@@ -42,7 +42,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -734,7 +737,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     @NlsSafe String tooltip = null;
     if (descriptor.showTooltip()) {
-      tooltip = tooltips.intern(DaemonTooltipsUtil.getWrappedTooltip(message, shortName, myShortcutText, showToolDescription(toolWrapper)));
+      String template = descriptor.getTooltipTemplate();
+      String rendered = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.NONE, template);
+      tooltip = tooltips.intern(DaemonTooltipsUtil.getWrappedTooltip(rendered, shortName, myShortcutText, showToolDescription(toolWrapper)));
     }
     List<IntentionAction> fixes = getQuickFixes(key, descriptor, emptyActionRegistered);
     HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, fixes, key.getID());
