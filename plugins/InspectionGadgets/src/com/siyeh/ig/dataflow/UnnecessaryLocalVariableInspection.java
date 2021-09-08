@@ -198,6 +198,9 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
+      if (declarationStatement.getParent() instanceof PsiForStatement) {
+        return false;
+      }
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class);
       if (!(nextStatement instanceof PsiExpressionStatement)) {
         return false;
@@ -217,8 +220,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiReferenceExpression reference = (PsiReferenceExpression)rhs;
-      final PsiElement referent = reference.resolve();
-      if (referent == null || !referent.equals(variable)) {
+      if (!reference.isReferenceTo(variable)) {
         return false;
       }
       final PsiExpression lhs = assignmentExpression.getLExpression();
