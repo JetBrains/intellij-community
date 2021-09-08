@@ -25,9 +25,13 @@ import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
+import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -1160,9 +1164,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addImplicitConversion(left, balancedType)
             processExpression(right)
             addImplicitConversion(right, balancedType)
-            // TODO: avoid equals-comparison of unknown object types
-            // but probably keep it for some types like enum, class, array
-            addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
+            if (forceEqualityByContent && !mayCompareByContent(leftDfType, rightDfType)) {
+                // TODO: still keep the null-check
+                addCall(expr, 2)
+            } else {
+                addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
+            }
         } else {
             val leftConstraint = TypeConstraint.fromDfType(leftDfType)
             val rightConstraint = TypeConstraint.fromDfType(rightDfType)
@@ -1181,6 +1188,19 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 addCall(expr, 2)
             }
         }
+    }
+
+    private fun mayCompareByContent(leftDfType: DfType, rightDfType: DfType): Boolean {
+        if (leftDfType == DfTypes.NULL || rightDfType == DfTypes.NULL) return true
+        if (leftDfType is DfPrimitiveType || rightDfType is DfPrimitiveType) return true
+        val constraint = TypeConstraint.fromDfType(leftDfType)
+        if (constraint.isComparedByEquals || constraint.isArray || constraint.isEnum) return true
+        if (!constraint.isExact) return false
+        val cls = PsiUtil.resolveClassInClassTypeOnly(constraint.getPsiType(factory.project)) ?: return false
+        val equalsSignature =
+            MethodSignatureUtil.createMethodSignature("equals", arrayOf(TypeUtils.getObjectType(context)), arrayOf(), PsiSubstitutor.EMPTY)
+        val method = MethodSignatureUtil.findMethodBySignature(cls, equalsSignature, true)
+        return method?.containingClass?.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
     }
 
     private fun balanceType(leftType: KotlinType?, rightType: KotlinType?, forceEqualityByContent: Boolean): KotlinType? = when {

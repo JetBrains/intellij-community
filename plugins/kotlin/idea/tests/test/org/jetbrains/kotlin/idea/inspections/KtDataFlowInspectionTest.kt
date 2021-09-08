@@ -16,6 +16,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testBoxedInt() = doTest()
     fun testClassRef() = doTest()
     fun testComparison() = doTest()
+    fun testCustomObjectComparison() = doTest()
     fun testDoubleComparison() = doTest()
     fun testEnumComparison() = doTest()
     fun testExclamation() = doTest()
