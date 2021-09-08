@@ -23,21 +23,20 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val myExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testLangExt")
   private val myCompletionExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testCompletionExt")
   private val myExtensionPointXML = """
-<extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
-  <with attribute="implementationClass" implements="java.lang.String"/>
-</extensionPoint>
-"""
+      <extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
+        <with attribute="implementationClass" implements="java.lang.String"/>
+      </extensionPoint>
+      """.trimIndent()
   private val myCompletionExtensionPointXML = """
-<extensionPoint qualifiedName="$myCompletionExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
-  <with attribute="implementationClass" implements="java.lang.String"/>
-</extensionPoint>
-"""
+      <extensionPoint qualifiedName="$myCompletionExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
+        <with attribute="implementationClass" implements="java.lang.String"/>
+      </extensionPoint>
+      """.trimIndent()
 
   private val descriptor = DefaultPluginDescriptor(PluginId.getId(""), javaClass.classLoader)
   private lateinit var area: ExtensionsAreaImpl
   private lateinit var extension: LanguageExtension<String>
   private lateinit var completionExtension: CompletionExtension<String>
-
 
   override fun setUp() {
     super.setUp()
@@ -53,11 +52,10 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
 
   private fun registerExtension(extensionPointName: ExtensionPointName<KeyedLazyInstance<String>>,
                                 languageID: String,
-                                implementationFqn: String
-  ): Disposable {
+                                implementationFqn: String): Disposable {
     val disposable = Disposer.newDisposable(testRootDisposable, "registerExtension")
-    val languageExtensionPoint = LanguageExtensionPoint<String>(languageID, implementationFqn, PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
-    ApplicationManager.getApplication().registerExtension(extensionPointName, languageExtensionPoint, disposable)
+    val ep = LanguageExtensionPoint<String>(languageID, implementationFqn, PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
+    ApplicationManager.getApplication().registerExtension(extensionPointName, ep, disposable)
     return disposable
   }
 
@@ -89,12 +87,10 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
 
   private fun registerLanguageDialect(parentDisposable: Disposable): Language {
     val language: Language = object : Language(PlainTextLanguage.INSTANCE, "PlainTextDialect" + getTestName(false)) {
-      override fun getDisplayName(): String = "uniq blah-blah" + System.identityHashCode(this)
+      override fun getDisplayName(): String = "unique blah-blah" + System.identityHashCode(this)
     }
-    val plainTextDialectFileType = object: MockLanguageFileType(language, "xxxx") {
-      override fun getDescription(): String {
-        return "blah-blah" + System.identityHashCode(this)
-      }
+    val plainTextDialectFileType = object: MockLanguageFileType(language, "x_x_x_x") {
+      override fun getDescription(): String = "blah-blah" + System.identityHashCode(this)
     }
     (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(plainTextDialectFileType, listOf(), parentDisposable)
     return plainTextDialectFileType.language

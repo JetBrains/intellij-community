@@ -64,6 +64,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 
+@SuppressWarnings("HtmlRequiredTitleElement")
 public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialog {
   private static final Charset US_ASCII = StandardCharsets.US_ASCII;
   private static final Charset WINDOWS_1251 = CharsetToolkit.WIN_1251_CHARSET;
@@ -195,8 +196,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertEquals(defaultProjectEncoding(), file.getCharset());
   }
 
-  @NotNull
-  private static VirtualFile find(String name) {
+  private static @NotNull VirtualFile find(String name) {
     return Objects.requireNonNull(getTestRoot().findChild(name));
   }
 
@@ -389,8 +389,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertArrayEquals(text.getBytes(US_ASCII), bytes);
   }
 
-  @NotNull
-  private static Charset defaultProjectEncoding() {
+  private static @NotNull Charset defaultProjectEncoding() {
     // just for the sake of testing something different from utf-8
     return StandardCharsets.US_ASCII;
   }
@@ -545,7 +544,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertNotNull(document);
     FileDocumentManager.getInstance().saveAllDocuments();
     FileType fileType = file.getFileType();
-    assertEquals(StdFileTypes.HTML, fileType);
+    assertEquals(FileTypeManager.getInstance().getStdFileType("HTML"), fileType);
     Charset fromType = ((LanguageFileType)fileType).extractCharsetFromFileContent(myProject, file, (CharSequence)content);
     assertEquals(StandardCharsets.UTF_8, fromType);
     String fromProlog = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
@@ -699,7 +698,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testMustBeSafeToReloadISO8859TextMistakenlyLoadedInUTF8() throws IOException {
-    String isoText = "No se ha encontrado ningún puesto con ese criterio de búsqueda";
+    @SuppressWarnings("SpellCheckingInspection") String isoText = "No se ha encontrado ningún puesto con ese criterio de búsqueda";
     VirtualFile file = createTempFile("txt", NO_BOM, isoText, StandardCharsets.ISO_8859_1);
     byte[] bytes = isoText.getBytes(StandardCharsets.ISO_8859_1);
     file.setCharset(StandardCharsets.UTF_8);
@@ -973,7 +972,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     VirtualFile src = getTestRoot().findChild("BIG_CHANGES");
     assertNotNull(src);
 
-    // create new file to avoid caching the file AUTO_DETECTED attribute. we need to re-detect from scratch to test its correctness
+    // create new file to avoid caching the file AUTO_DETECTED attribute. we need to re-detect it from scratch to test its correctness
     VirtualFile file = createTempFile("blah-blah", NO_BOM, new String(src.contentsToByteArray(), StandardCharsets.UTF_8), StandardCharsets.UTF_8);
 
     assertNull(file.getBOM());
@@ -999,39 +998,12 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testEncodingDetectionRequestsRunInOneThreadForEachDocument() throws IOException {
     Set<Thread> detectThreads = ContainerUtil.newConcurrentSet();
     class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
-      private MyFT() {
-        super(new Language("my") {
-        });
-      }
-
-      @Override
-      public boolean isMyFileType(@NotNull VirtualFile file) {
-        return getDefaultExtension().equals(file.getExtension());
-      }
-
-      @NotNull
-      @Override
-      public String getName() {
-        return "my";
-      }
-
-      @NotNull
-      @Override
-      public String getDescription() {
-        return getName();
-      }
-
-      @NotNull
-      @Override
-      public String getDefaultExtension() {
-        return "my";
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon() {
-        return null;
-      }
+      private MyFT() { super(new Language("my") {}); }
+      @Override public boolean isMyFileType(@NotNull VirtualFile file) { return getDefaultExtension().equals(file.getExtension()); }
+      @Override public @NotNull String getName() { return "my"; }
+      @Override public @NotNull String getDescription() { return getName(); }
+      @Override public @NotNull String getDefaultExtension() { return "my"; }
+      @Override public @Nullable Icon getIcon() { return null; }
 
       @Override
       public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
@@ -1134,36 +1106,12 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testForcedCharsetOverridesFileEncodingProvider() throws IOException {
     final String ext = "yyy";
     class TestFileType extends LanguageFileType {
-
-      protected TestFileType() {
-        super(new Language("test") {
-        });
-      }
-
-      @Override
-      public @NotNull String getName() {
-        return "Test";
-      }
-
-      @Override
-      public @NotNull String getDescription() {
-        return "Test";
-      }
-
-      @Override
-      public @NotNull String getDefaultExtension() {
-        return ext;
-      }
-
-      @Override
-      public @Nullable Icon getIcon() {
-        return null;
-      }
-
-      @Override
-      public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-        return StandardCharsets.ISO_8859_1.name();
-      }
+      protected TestFileType() { super(new Language("test") {}); }
+      @Override public @NotNull String getName() { return "Test"; }
+      @Override public @NotNull String getDescription() { return "Test"; }
+      @Override public @NotNull String getDefaultExtension() { return ext; }
+      @Override public @Nullable Icon getIcon() { return null; }
+      @Override public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) { return StandardCharsets.ISO_8859_1.name(); }
     }
     TestFileType fileType = new TestFileType();
     FileEncodingProvider encodingProvider = new FileEncodingProvider() {

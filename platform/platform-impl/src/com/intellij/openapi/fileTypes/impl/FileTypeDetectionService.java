@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -36,7 +36,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -72,15 +71,14 @@ final class FileTypeDetectionService implements Disposable {
     new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE",
                       PropertiesComponent.getInstance().getInt(FILE_TYPE_CHANGED_COUNTER_PROPERTY, 0), true);
 
+  private static final int CHUNK_SIZE = 10;
+
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
-  private static final int CHUNK_SIZE = 10;
   private boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
-  private final Executor reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool",
-                                                                            AppExecutorUtil.getAppExecutorService(),
-                                                                            1,
-                                                                            this);
+  private final Executor reDetectExecutor =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
   private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();
 
   private volatile FileAttribute autoDetectedAttribute;
@@ -191,8 +189,7 @@ final class FileTypeDetectionService implements Disposable {
     myFileTypeManager.log(s);
   }
 
-  @NotNull
-  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
+  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
     if (!isDetectable(file)) {
       if (myFileTypeManager.getFileTypeByFileName(file.getName()) == DetectedByContentFileType.INSTANCE) {
         //allow to open empty file in IDEA's editor
@@ -279,6 +276,7 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
+  @SuppressWarnings("NonAtomicOperationOnVolatileField")
   private void updateFileTypeChangedCount(int countDelta) {
     int newValue = fileTypeChangedCount.addAndGet(countDelta);
     autoDetectedAttribute = autoDetectedAttribute.newVersion(newValue);
@@ -695,7 +693,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   // for diagnostics
-  @NonNls
+  @SuppressWarnings("ALL")
   private static Object streamInfo(@NotNull InputStream stream) throws IOException {
     if (stream instanceof BufferedInputStream) {
       InputStream in = ReflectionUtil.getField(stream.getClass(), stream, InputStream.class, "in");
@@ -729,8 +727,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   @TestOnly
-  @NotNull
-  Collection<VirtualFile> dumpReDetectQueue() {
+  @NotNull Collection<VirtualFile> dumpReDetectQueue() {
     synchronized (filesToRedetect) {
       return new ArrayList<>(filesToRedetect);
     }
