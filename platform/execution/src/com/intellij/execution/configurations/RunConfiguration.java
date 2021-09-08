@@ -173,9 +173,6 @@ public interface RunConfiguration extends RunProfile, Cloneable {
     return RestartSingletonResult.ASK_AND_RESTART;
   }
 
-  default void collectSettingsChanges(@NotNull RunConfiguration oldRunConfiguration) {
-  }
-
   /**
    * Further actions to restart the run configuration not allowing running in parallel.
    *
