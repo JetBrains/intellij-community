@@ -31,7 +31,7 @@ public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
 
   @Override
   @NotNull
-  public Set<Recompile> methodAnnotationsChanged(DependencyContext context, MethodRepr method, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff, Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff) {
+  public Set<Recompile> methodAnnotationsChanged(NamingContext context, MethodRepr method, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff, Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff) {
     //return RECOMPILE_NONE;
     return handleChanges(context, ContainerUtil.concat(
       annotationsDiff.added(),

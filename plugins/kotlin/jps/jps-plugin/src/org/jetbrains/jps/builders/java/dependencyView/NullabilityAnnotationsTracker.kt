@@ -16,7 +16,7 @@ internal class NullabilityAnnotationsTracker : AnnotationsChangeTracker() {
             .toTypedArray()
 
     override fun methodAnnotationsChanged(
-        context: DependencyContext,
+        context: NamingContext,
         method: MethodRepr,
         annotationsDiff: Difference.Specifier<ClassType, Difference>,
         paramAnnotationsDiff: Difference.Specifier<ParamAnnotation, Difference>

@@ -80,7 +80,7 @@ public abstract class AnnotationsChangeTracker {
    */
   @NotNull
   public Set<Recompile> methodAnnotationsChanged(
-    DependencyContext context, MethodRepr method,
+    NamingContext context, MethodRepr method,
     Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff,
     Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff
   ) {
