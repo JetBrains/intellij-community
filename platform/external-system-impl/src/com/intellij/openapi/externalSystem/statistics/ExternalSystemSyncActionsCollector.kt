@@ -34,7 +34,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.import", 2)
+    private val GROUP = EventLogGroup("build.gradle.import", 3)
 
     val activityIdField = EventFields.Long("ide_activity_id")
     val importPhaseField = EventFields.Enum<Phase>("phase")
@@ -52,8 +52,6 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
     val severityField = EventFields.String("severity", listOf("fatal", "warning"))
     val errorHashField = Int("error_hash")
     val tooManyErrorsField = Boolean("too_many_errors")
-    val errorFramesField = StringListValidatedByCustomRule("error_frames", "method_name")
-    val errorSizeField: EventField<Int> = Int("error_size")
 
     private val errorEvent = GROUP.registerVarargEvent("error",
                                                        activityIdField,
@@ -61,9 +59,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
                                                        severityField,
                                                        errorHashField,
                                                        EventFields.PluginInfo,
-                                                       tooManyErrorsField,
-                                                       errorFramesField,
-                                                       errorSizeField)
+                                                       tooManyErrorsField)
 
     private val ourErrorsRateThrottle = EventsRateThrottle(100, 5L * 60 * 1000) // 100 errors per 5 minutes
 
