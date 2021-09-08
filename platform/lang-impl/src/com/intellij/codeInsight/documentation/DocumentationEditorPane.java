@@ -100,14 +100,17 @@ public class DocumentationEditorPane extends JEditorPane {
   }
 
   private int definitionPreferredWidth() {
-    View definition = findDefinition(getUI().getRootView(this));
-    if (definition == null) {
+    int preferredDefinitionWidth = getPreferredDefinitionWidth();
+    if (preferredDefinitionWidth < 0) {
       return -1;
     }
+    int preferredContentWidth = getPreferredContentWidth(getDocument().getLength());
+    return Math.max(preferredContentWidth, preferredDefinitionWidth);
+  }
 
-    int preferredContentWidth = getPreferredContentWidth(definition.getDocument().getLength());
-    int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
-    return Math.max(preferredContentWidth, defaultPreferredSize);
+  private int getPreferredDefinitionWidth() {
+    View definition = findDefinition(getUI().getRootView(this));
+    return definition == null ? -1 : (int)definition.getPreferredSpan(View.X_AXIS);
   }
 
   private static int getPreferredContentWidth(int textLength) {
