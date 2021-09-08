@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.typeUtil.isNothing
 
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private enum class ConstantValue {
@@ -101,9 +100,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         when (value) {
             ConstantValue.TRUE -> {
                 if (isPairingConditionInWhen(expression)) return true
-            }
-            ConstantValue.FALSE -> {
-                if (parent is KtWhenConditionWithExpression && isAssertingCondition(parent)) return true
             }
             ConstantValue.ZERO -> {
                 if (expression.readWriteAccess(false).isWrite) {
@@ -348,16 +344,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         condition: KtWhenCondition
     ): Boolean {
         if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
-        if (cv == ConstantValue.FALSE && isAssertingCondition(condition)) return true
         if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
         val context = condition.analyze(BodyResolveMode.FULL)
         if (context.diagnostics.forElement(condition).any { it.factory == Errors.USELESS_IS_CHECK }) return true
         return false
-    }
-
-    private fun isAssertingCondition(condition: KtWhenCondition): Boolean {
-        val expression = (condition.parent as? KtWhenEntry)?.expression
-        return expression?.getKotlinType()?.isNothing() == true
     }
 
     private fun isLastCondition(condition: KtWhenCondition): Boolean {

@@ -103,7 +103,7 @@ fun returnFromWhen(x: Int): Unit {
     }
     if (<warning descr="Condition is always false">x == 11</warning>) {}
 }
-fun suppressAlreadyHandled(x: Int) {
+fun throwBranch(x: Int) {
     when(x) {
         0 -> {}
         1 -> {}
@@ -113,13 +113,13 @@ fun suppressAlreadyHandled(x: Int) {
     when(x) {
         0 -> {}
         1 -> {}
-        2 -> throw Exception()
+        <warning descr="'when' branch is never reachable">2</warning> -> throw Exception()
         3 -> {}
     }
     when {
         x == 0 -> {}
         x == 1 -> {}
-        x == 2 -> throw Exception()
+        <warning descr="Condition is always false">x == 2</warning> -> throw Exception()
         x == 3 -> {}
     }
 }
