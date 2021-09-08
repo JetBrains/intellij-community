@@ -7,7 +7,7 @@ class CommitSupportTest : BasePlatformTestCase() {
   fun `test commit message has highlighting with all quick fixes`() {
     myFixture.configureByText("a.txt", """
       
-      This is <caret><warning descr="EN_A_VS_AN">a</warning> error.
+      This is <caret><warning>a</warning> error.
       
       This reverts commit abcdef00.
     """.trimIndent())
