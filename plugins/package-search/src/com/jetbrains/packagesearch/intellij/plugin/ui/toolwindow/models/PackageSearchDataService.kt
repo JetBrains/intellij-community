@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -80,7 +81,8 @@ import kotlin.time.toDuration
 
 internal class PackageSearchDataService(
     override val project: Project
-) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, CoroutineScope, SearchResultStateSetter {
+) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor,
+    CoroutineScope, SearchResultStateSetter, UIStateModifier {
 
     override val coroutineContext = project.lifecycleScope.newCoroutineContext(CoroutineName("PackageSearchDataService"))
 
@@ -114,6 +116,8 @@ internal class PackageSearchDataService(
     private val highlightEvents = Channel<Unit>()
 
     private val replayFromErrorChannel = Channel<Unit>()
+
+    override val programmaticSearchQueryStateFlow = MutableStateFlow("")
 
     val projectModulesStateFlow = project.trustedProjectFlow.flatMapConcat { trustedState ->
         when (trustedState) {
@@ -153,7 +157,7 @@ internal class PackageSearchDataService(
             selectedPackageModel = selectedPackage,
             searchResultsUiStateOverrides = searchResultsUiStateOverrides
         )
-    }.replayOnSignals(dataChangeChannel.consumeAsFlow())
+    }.replayOnSignals(dataChangeChannel.consumeAsFlow(), project.moduleChangesSignalFlow)
         .mapLatest { it.toRootDataModel() }
         .onEach { highlightEvents.send(Unit) }
         .catch {
@@ -187,30 +191,32 @@ internal class PackageSearchDataService(
             .onEach { rerunHighlightingOnOpenBuildFiles() }
             .launchIn(this)
 
-        searchQueryState.mapLatest { query ->
-            val traceInfo = TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)
-            logDebug(traceInfo, "PKGSDataService#performSearch()") { "Searching for '$query'..." }
-            if (query.isBlank()) {
-                logDebug(traceInfo, "PKGSDataService#performSearch()") { "Query is empty, reverting to no results" }
-                return@mapLatest null
-            }
-
-            setStatus(isSearching = true)
-
-            val response =
-                dataProvider.doSearch(query, filterOptionsState.value).onFailure {
-                    logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
-                    handleSearchError(it)
+        searchQueryState
+            .debounce(250)
+            .mapLatest { query ->
+                val traceInfo = TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)
+                logDebug(traceInfo, "PKGSDataService#performSearch()") { "Searching for '$query'..." }
+                if (query.isBlank()) {
+                    logDebug(traceInfo, "PKGSDataService#performSearch()") { "Query is empty, reverting to no results" }
+                    return@mapLatest null
                 }
-                    .onSuccess {
-                        logDebug(traceInfo, "PKGSDataService#performSearch()") {
-                            "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
-                        }
+
+                setStatus(isSearching = true)
+
+                val response =
+                    dataProvider.doSearch(query, filterOptionsState.value).onFailure {
+                        logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
+                        handleSearchError(it)
                     }
-                    .getOrNull()
-            setStatus(isSearching = false)
-            response
-        }
+                        .onSuccess {
+                            logDebug(traceInfo, "PKGSDataService#performSearch()") {
+                                "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
+                            }
+                        }
+                        .getOrNull()
+                setStatus(isSearching = false)
+                response
+            }
             .catch { error -> handleSearchError(error) }
             .onEach { searchResultsState.emit(it) }
             .launchIn(this)
