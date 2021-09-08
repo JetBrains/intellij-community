@@ -17,11 +17,13 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
 
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
+    @Suppress("DEPRECATION")
     if (indexProjectBasedOnIndexableEntityProviders()) {
       val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
       val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
@@ -90,6 +92,13 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
       }
     }
 
+    /**
+     * Registry property introduced to provide quick workaround for possible performance issues.
+     * Should be removed when the feature becomes stable
+     */
+    @ApiStatus.ScheduledForRemoval(inVersion = "22.1")
+    @Deprecated("Registry property introduced to provide quick workaround for possible performance issues. " +
+                "Should be removed when the feature is proved to be stable", ReplaceWith("true"))
     @JvmStatic
     fun indexProjectBasedOnIndexableEntityProviders(): Boolean = Registry.`is`("indexing.enable.entity.provider.based.indexing")
   }

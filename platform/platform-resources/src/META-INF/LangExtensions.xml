@@ -1405,7 +1405,7 @@
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after aditionalFiles"/>
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 
-    <registryKey defaultValue="false" description="Use IndexableEntityProviders to iterate project for indexing"
+    <registryKey defaultValue="true" description="Use IndexableEntityProviders to iterate project for indexing"
                  key="indexing.enable.entity.provider.based.indexing"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>

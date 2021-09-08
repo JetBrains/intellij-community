@@ -60,6 +60,7 @@ object IndexableEntityProviderMethods {
   }
 
   fun createIterators(entity: ModuleEntity, project: Project): Collection<IndexableFilesIterator> {
+    @Suppress("DEPRECATION")
     if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
       val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
       val entityStorage = WorkspaceModel.Companion.getInstance(project).entityStorage.current
