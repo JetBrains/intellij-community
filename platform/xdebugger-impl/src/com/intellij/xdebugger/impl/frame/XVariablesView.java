@@ -33,20 +33,18 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  protected BorderLayoutPanel myComponent;
+  protected JPanel myComponent;
   protected final WeakReference<XDebugSessionImpl> mySession;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
     mySession = new WeakReference<>(session);
-    myComponent = constructPanel(super.getPanel());
+    myComponent = createMainPanel(super.getPanel());
     DataManager.registerDataProvider(myComponent, this);
   }
 
-  BorderLayoutPanel constructPanel(JComponent localsPanel) {
-    var p = new BorderLayoutPanel();
-    p.add(localsPanel);
-    return p;
+  protected JPanel createMainPanel(JComponent localsPanel) {
+    return new BorderLayoutPanel().addToCenter(localsPanel);
   }
 
   @Override

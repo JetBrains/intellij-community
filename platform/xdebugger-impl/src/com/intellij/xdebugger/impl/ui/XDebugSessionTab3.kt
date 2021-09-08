@@ -57,7 +57,7 @@ class XDebugSessionTab3(
     return if (useSplitterView)
       XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)
     else
-      return XWatchesViewImpl(session, watchesIsVariables, true, false)
+      XWatchesViewImpl(session, watchesIsVariables, true, false)
   }
 
   override fun addVariablesAndWatches(session: XDebugSessionImpl) {

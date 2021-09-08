@@ -132,8 +132,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @Override
-  BorderLayoutPanel constructPanel(@NotNull JComponent localsPanelComponent) {
-    var variablesPanel = super.constructPanel(localsPanelComponent);
+  protected JPanel createMainPanel(@NotNull JComponent localsPanelComponent) {
+    var variablesPanel = new BorderLayoutPanel().addToCenter(localsPanelComponent);
     var top = createTopPanel();
     if (top == null)
       return variablesPanel;
