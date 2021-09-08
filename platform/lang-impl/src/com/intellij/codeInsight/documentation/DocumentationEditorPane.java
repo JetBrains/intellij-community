@@ -105,11 +105,16 @@ public class DocumentationEditorPane extends JEditorPane {
       return -1;
     }
 
+    int preferredContentWidth = getPreferredContentWidth(definition.getDocument().getLength());
+    int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
+    return Math.max(preferredContentWidth, defaultPreferredSize);
+  }
+
+  private static int getPreferredContentWidth(int textLength) {
     // Heuristics to calculate popup width based on the amount of the content.
     // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
     // 200 chars and less is 300px, 1000 chars and more is 500px.
     // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
-    int textLength = definition.getDocument().getLength();
     final int contentLengthPreferredSize;
     if (textLength < 200) {
       contentLengthPreferredSize = JBUIScale.scale(300);
@@ -120,8 +125,7 @@ public class DocumentationEditorPane extends JEditorPane {
     else {
       contentLengthPreferredSize = JBUIScale.scale(500);
     }
-    int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
-    return Math.max(contentLengthPreferredSize, defaultPreferredSize);
+    return contentLengthPreferredSize;
   }
 
   private static @Nullable View findDefinition(@NotNull View view) {
