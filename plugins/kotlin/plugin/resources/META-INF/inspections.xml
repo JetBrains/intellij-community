@@ -2779,7 +2779,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.InconsistentCommentForJavaParameterInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"

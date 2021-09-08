@@ -5,14 +5,14 @@ Reports inconsistent parameter name for <b>java</b> method specified in a commen
 <pre><code>
 // Java
 public class JavaService {
-    public void invoke(String command) {}
+  public void invoke(String command) {}
 }
 </code></pre>
 <pre><code>
 // Kotlin
 
 fun main() {
-    JavaService().invoke(/* name = */ "fix")
+  JavaService().invoke(/* name = */ "fix")
 }
 </code></pre>
 <p>The quick fix corrects parameter name in a comment block:</p>

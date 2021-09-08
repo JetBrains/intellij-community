@@ -5616,6 +5616,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/comment.kt");
+        }
+
+        @TestMetadata("na.kt")
+        public void testNa() throws Exception {
+            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/na.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/simple.kt");

@@ -28,11 +28,8 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
 ) {
     override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean {
         val arguments = element.valueArguments.filterNot { it is KtLambdaArgument }
-        if (arguments.isEmpty() || arguments.any { it.isNamed() || it.hasBlockCommentWithName() }) return false
-        val resolvedCall = element.resolveToCall() ?: return false
-        val descriptor = resolvedCall.candidateDescriptor
-        if (descriptor !is JavaMethodDescriptor && descriptor !is JavaClassConstructorDescriptor) return false
-        return arguments.size == arguments.resolve(resolvedCall).size
+        val resolve = resolveValueParameterDescriptors(element, anyBlockCommentsWithName = true) ?: return false
+        return arguments.size == resolve.size
     }
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
@@ -47,6 +44,18 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
     }
 
     companion object {
+        fun resolveValueParameterDescriptors(element: KtCallExpression, anyBlockCommentsWithName: Boolean): List<Pair<KtValueArgument, ValueParameterDescriptor>>? {
+            val arguments = element.valueArguments.filterNot { it is KtLambdaArgument }
+            if (arguments.isEmpty() || arguments.any { it.isNamed() } ||
+                (anyBlockCommentsWithName && arguments.any { it.hasBlockCommentWithName() }) ||
+                (!anyBlockCommentsWithName && arguments.none { it.hasBlockCommentWithName() })
+            ) return null
+            val resolvedCall = element.resolveToCall() ?: return null
+            val descriptor = resolvedCall.candidateDescriptor
+            if (descriptor !is JavaMethodDescriptor && descriptor !is JavaClassConstructorDescriptor) return null
+            return arguments.resolve(resolvedCall)
+        }
+
         fun ValueParameterDescriptor.toCommentedParameterName(): String =
             "/* ${if (isVararg) "...$name" else name.asString()} = */"
 
