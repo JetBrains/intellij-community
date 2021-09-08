@@ -17,7 +17,7 @@ internal class NullabilityAnnotationsTracker : AnnotationsChangeTracker() {
 
     override fun methodAnnotationsChanged(
         context: NamingContext,
-        method: MethodRepr,
+        method: ProtoMethodEntity,
         annotationsDiff: Difference.Specifier<ClassType, Difference>,
         paramAnnotationsDiff: Difference.Specifier<ParamAnnotation, Difference>
     ): Set<Recompile> {
@@ -29,7 +29,7 @@ internal class NullabilityAnnotationsTracker : AnnotationsChangeTracker() {
 
     override fun fieldAnnotationsChanged(
         context: NamingContext,
-        field: FieldRepr,
+        field: ProtoFieldEntity,
         annotationsDiff: Difference.Specifier<ClassType, Difference>
     ): Set<Recompile> {
         return handleNullAnnotationsChanges(context, field, annotationsDiff.addedOrRemoved())
@@ -37,7 +37,7 @@ internal class NullabilityAnnotationsTracker : AnnotationsChangeTracker() {
 
     private fun handleNullAnnotationsChanges(
         context: NamingContext,
-        protoMember: ProtoMember,
+        protoMember: ProtoEntity,
         annotations: Sequence<TypeRepr.ClassType>
     ): Set<Recompile> {
         val n = this.annotations.size
@@ -52,7 +52,7 @@ internal class NullabilityAnnotationsTracker : AnnotationsChangeTracker() {
         if (changedNullAnnotation != null) {
             result.add(Recompile.USAGES)
 
-            if (protoMember is MethodRepr && !protoMember.isFinal) {
+            if (protoMember is ProtoMethodEntity && !protoMember.isFinal) {
                 // methods can be overridden, whereas fields cannot be
                 result.add(Recompile.SUBCLASSES)
             }

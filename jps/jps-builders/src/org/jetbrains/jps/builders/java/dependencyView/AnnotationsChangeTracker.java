@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -79,8 +80,9 @@ public abstract class AnnotationsChangeTracker {
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link Recompile}
    */
   @NotNull
+  @ApiStatus.Internal
   public Set<Recompile> methodAnnotationsChanged(
-    NamingContext context, MethodRepr method,
+    NamingContext context, ProtoMethodEntity method,
     Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff,
     Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff
   ) {
@@ -95,7 +97,8 @@ public abstract class AnnotationsChangeTracker {
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link Recompile}
    */
   @NotNull
-  public Set<Recompile> fieldAnnotationsChanged(NamingContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+  @ApiStatus.Internal
+  public Set<Recompile> fieldAnnotationsChanged(NamingContext context, ProtoFieldEntity field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 
