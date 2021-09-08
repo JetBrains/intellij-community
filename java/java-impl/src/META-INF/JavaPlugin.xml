@@ -769,7 +769,7 @@
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
     <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
     <registryKey key="java.refactoring.extractMethod.newDuplicatesExtractor"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enable experimental extract duplicates implementation"/>
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
