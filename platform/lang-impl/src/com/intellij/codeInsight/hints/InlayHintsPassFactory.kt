@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.isOneLineMode) return null
     val savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP)
+    if (DiffUtil.isDiffEditor(editor)) return null
     val currentStamp = getCurrentModificationStamp(file)
     if (savedStamp != null && savedStamp == currentStamp) return null
 
