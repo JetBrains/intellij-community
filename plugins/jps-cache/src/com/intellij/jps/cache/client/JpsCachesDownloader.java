@@ -78,7 +78,7 @@ class JpsCachesDownloader {
                 if (httpStatusCode != -1) {
                   LOG.info("Failed to download " + description.getDownloadUrl() + " HTTP code: " + httpStatusCode + ". Attempt " + attempt + " to download file again");
                 } else {
-                  LOG.info("Failed to download " + description.getDownloadUrl() + ". Attempt " + attempt + " to download file again");
+                  LOG.info("Failed to download " + description.getDownloadUrl() + " Root cause: " + e + ". Attempt " + attempt + " to download file again");
                 }
               } else {
                 throw new IOException(IdeCoreBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
