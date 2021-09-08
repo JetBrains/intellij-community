@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
@@ -367,7 +368,16 @@ fun @Nls String.dropMnemonic(): @Nls String {
   return TextWithMnemonic.parse(this).dropMnemonic(true).text
 }
 
-val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
+
+fun TaskContext.waitSmartModeStep() {
+  val future = CompletableFuture<Boolean>()
+  addStep(future)
+  DumbService.getInstance(project).runWhenSmart {
+    future.complete(true)
+  }
+}
+
+private val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
 
 fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
   if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
