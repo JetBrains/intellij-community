@@ -48,6 +48,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
             is LibraryOrderEntry -> {
               val library = orderEntry.library
               if (library != null && seenLibraries.add(library)) {
+                @Suppress("DEPRECATION")
                 providers.add(LibraryIndexableFilesIteratorImpl(library))
               }
             }

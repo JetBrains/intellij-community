@@ -18,11 +18,13 @@ data class ModuleRootOriginImpl(override val module: Module,
  * Used only with [com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl], when
  * [com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor.Companion.indexProjectBasedOnIndexableEntityProviders] == false
  */
+@Deprecated("Don't use it in new code", ReplaceWith("LibraryIdOriginImpl"))
 class LibraryOriginImpl(override val library: Library, val roots: List<VirtualFile>) : LibraryOrigin {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
+    @Suppress("DEPRECATION")
     return roots == (other as LibraryOriginImpl).roots
   }
 
