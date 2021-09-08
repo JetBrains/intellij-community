@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -197,10 +196,24 @@ public class TestDataReferenceCollector {
 
     // copied from com.intellij.testFramework.PlatformTestUtil
     private @NotNull String lowercaseFirstLetter(@NotNull String name) {
-      if (!PlatformTestUtil.isAllUppercaseName(name)) {
+      if (!isAllUppercaseName(name)) {
         name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
       }
       return name;
+    }
+
+    // copied from com.intellij.testFramework.PlatformTestUtil
+    private boolean isAllUppercaseName(@NotNull String name) {
+      int uppercaseChars = 0;
+      for (int i = 0; i < name.length(); i++) {
+        if (Character.isLowerCase(name.charAt(i))) {
+          return false;
+        }
+        if (Character.isUpperCase(name.charAt(i))) {
+          uppercaseChars++;
+        }
+      }
+      return uppercaseChars >= 3;
     }
   }
 }
