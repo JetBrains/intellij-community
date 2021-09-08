@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
@@ -142,7 +143,9 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       val fakeDataPack = DataPack.build(commits, refs, mapOf(root to logProviders[root]), storage, false)
       val visibleGraph = vcsLogFilterer.createVisibleGraph(fakeDataPack, sortType, null,
                                                            null/*no need to filter here, since we do not have any extra commits in this pack*/)
-      return VisiblePack(fakeDataPack, visibleGraph, false, filters).withFileHistory(FileHistory(pathsMap))
+      return VisiblePack(fakeDataPack, visibleGraph, false, filters)
+        .withFileHistory(FileHistory(pathsMap))
+        .apply { putUserData(NO_PARENTS_INFO, true) }
     }
 
     private fun getFilteredRefs(dataPack: DataPack): Map<VirtualFile, CompressedRefs> {
@@ -236,6 +239,8 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
   companion object {
     private val LOG = logger<FileHistoryFilterer>()
+    @JvmField
+    val NO_PARENTS_INFO = Key.create<Boolean>("NO_PARENTS_INFO")
 
     private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
 
