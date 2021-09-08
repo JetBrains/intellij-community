@@ -11,7 +11,10 @@ import com.intellij.codeInspection.i18n.batch.I18nizedPropertyData;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -40,6 +43,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import icons.UIDesignerIcons;
@@ -68,65 +72,33 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
                        CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
-    List<I18nizedPropertyData<HardcodedStringInFormData>> dataList = new ArrayList<>();
-    HashSet<PsiFile> contextFiles = new HashSet<>();
-    Map<VirtualFile, RadRootContainer> containerMap = new HashMap<>();
-    UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
-    Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates = new HashMap<>();
-    for (CommonProblemDescriptor descriptor : descriptors) {
-      FormElementProblemDescriptor formElementProblemDescriptor = (FormElementProblemDescriptor)descriptor;
-      PsiFile containingFile = formElementProblemDescriptor.getPsiElement().getContainingFile();
-      contextFiles.add(containingFile);
-      VirtualFile virtualFile = containingFile.getVirtualFile();
+    final List<I18nizedPropertyData<HardcodedStringInFormData>> dataList = new ArrayList<>();
+    final HashSet<PsiFile> contextFiles = new HashSet<>();
+    final Map<VirtualFile, RadRootContainer> containerMap = new HashMap<>();
+    final Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates = new HashMap<>();
 
-      final RadRootContainer rootContainer = containerMap.computeIfAbsent(virtualFile, f -> {
-        try {
-          final ClassLoader classLoader = LoaderFactory.getInstance(project).getLoader(virtualFile);
-          LwRootContainer lwRootContainer = Utils.getRootContainer(containingFile.getText(), new CompiledClassPropertiesProvider(classLoader));
-          Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+    ReadAction
+      .nonBlocking(() -> {
+        fillDuplicates(project, descriptors, dataList, contextFiles, containerMap, duplicates);
+        return I18nizeMultipleStringsDialog.getResourceBundleManager(project, contextFiles);
+      })
+      .finishOnUiThread(ModalityState.any(), bundleManager -> {
+        showI18nizeMultipleStringsDialog(project, dataList, contextFiles, bundleManager, containerMap, duplicates);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
 
-          ModuleProvider moduleProvider = new ModuleProvider() {
-            @Override
-            public Module getModule() {
-              return module;
-            }
-
-            @Override
-            public Project getProject() {
-              return project;
-            }
-          };
-
-          return XmlReader.createRoot(moduleProvider, lwRootContainer, LoaderFactory.getInstance(project).getLoader(virtualFile), null);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          return null;
-        }
-      });
-      if (rootContainer == null) continue;
-      RadComponent component = (RadComponent)FormEditingUtil.findComponent(rootContainer, formElementProblemDescriptor.getComponentId());
-      if (component == null) continue;
-      String propertyName = formElementProblemDescriptor.getPropertyName();
-      String value = getValue(component, propertyName);
-      if (value == null) continue;
-      String keyPrefix = suggestPropertyKeyPrefix(component, propertyName);
-      String defaultKey = keyPrefix != null ? keyPrefix + "." + I18nizeQuickFixDialog.generateDefaultPropertyKey(value) : null;
-      String key = uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, defaultKey, null));
-      I18nizedPropertyData<HardcodedStringInFormData> data = new I18nizedPropertyData<>(key, value, new HardcodedStringInFormData(component, propertyName, containingFile));
-      if (duplicates.containsKey(value)) {
-        duplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(data);
-      }
-      else {
-        dataList.add(data);
-        duplicates.put(value, null);
-      }
-    }
-
-    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<>(project, dataList, contextFiles,
-                                                                                                        I18nizeFormBatchFix::createUsageInfo,
-                                                                                                        UIDesignerIcons.InspectionSuppression,
-                                                                                                        false);
+  private void showI18nizeMultipleStringsDialog(@NotNull Project project,
+                                                @NotNull List<I18nizedPropertyData<HardcodedStringInFormData>> dataList,
+                                                @NotNull HashSet<PsiFile> contextFiles,
+                                                @NotNull ResourceBundleManager bundleManager,
+                                                @NotNull Map<VirtualFile, RadRootContainer> containerMap,
+                                                @NotNull Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates) {
+    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog =
+      new I18nizeMultipleStringsDialog<>(project, dataList, contextFiles, bundleManager,
+                                         I18nizeFormBatchFix::createUsageInfo,
+                                         UIDesignerIcons.InspectionSuppression,
+                                         false);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       PsiManager manager = PsiManager.getInstance(project);
@@ -180,6 +152,65 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
           }
         }
       }, files.toArray(PsiFile.EMPTY_ARRAY));
+    }
+  }
+
+  private void fillDuplicates(@NotNull Project project,
+                         CommonProblemDescriptor @NotNull [] descriptors,
+                         List<I18nizedPropertyData<HardcodedStringInFormData>> dataList,
+                         HashSet<PsiFile> contextFiles,
+                         Map<VirtualFile, RadRootContainer> containerMap,
+                         Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates) {
+    final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
+
+    for (CommonProblemDescriptor descriptor : descriptors) {
+      FormElementProblemDescriptor formElementProblemDescriptor = (FormElementProblemDescriptor)descriptor;
+      PsiFile containingFile = formElementProblemDescriptor.getPsiElement().getContainingFile();
+      contextFiles.add(containingFile);
+      VirtualFile virtualFile = containingFile.getVirtualFile();
+
+      final RadRootContainer rootContainer = containerMap.computeIfAbsent(virtualFile, f -> {
+        try {
+          final ClassLoader classLoader = LoaderFactory.getInstance(project).getLoader(virtualFile);
+          LwRootContainer lwRootContainer = Utils.getRootContainer(containingFile.getText(), new CompiledClassPropertiesProvider(classLoader));
+          Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+
+          ModuleProvider moduleProvider = new ModuleProvider() {
+            @Override
+            public Module getModule() {
+              return module;
+            }
+
+            @Override
+            public Project getProject() {
+              return project;
+            }
+          };
+
+          return XmlReader.createRoot(moduleProvider, lwRootContainer, LoaderFactory.getInstance(project).getLoader(virtualFile), null);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          return null;
+        }
+      });
+      if (rootContainer == null) continue;
+      RadComponent component = (RadComponent)FormEditingUtil.findComponent(rootContainer, formElementProblemDescriptor.getComponentId());
+      if (component == null) continue;
+      String propertyName = formElementProblemDescriptor.getPropertyName();
+      String value = getValue(component, propertyName);
+      if (value == null) continue;
+      String keyPrefix = suggestPropertyKeyPrefix(component, propertyName);
+      String defaultKey = keyPrefix != null ? keyPrefix + "." + I18nizeQuickFixDialog.generateDefaultPropertyKey(value) : null;
+      String key = uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, defaultKey, null));
+      I18nizedPropertyData<HardcodedStringInFormData> data = new I18nizedPropertyData<>(key, value, new HardcodedStringInFormData(component, propertyName, containingFile));
+      if (duplicates.containsKey(value)) {
+        duplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(data);
+      }
+      else {
+        dataList.add(data);
+        duplicates.put(value, null);
+      }
     }
   }
 

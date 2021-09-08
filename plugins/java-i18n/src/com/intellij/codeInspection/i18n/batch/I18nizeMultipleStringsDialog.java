@@ -71,7 +71,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private final List<I18nizedPropertyData<D>> myKeyValuePairs;
   private final @NotNull Function<? super D, ? extends List<UsageInfo>> myUsagePreviewProvider;
   private final Set<Module> myContextModules;
-  private ResourceBundleManager myResourceBundleManager;
+  private final ResourceBundleManager myResourceBundleManager;
   private JComboBox<String> myPropertiesFile;
   private UsagePreviewPanel myUsagePreviewPanel;
   private JBTable myTable;
@@ -82,6 +82,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   public I18nizeMultipleStringsDialog(@NotNull Project project,
                                       @NotNull List<I18nizedPropertyData<D>> keyValuePairs,
                                       @NotNull Set<PsiFile> contextFiles,
+                                      @Nullable ResourceBundleManager bundleManager,
                                       @NotNull Function<? super D, ? extends List<UsageInfo>> usagePreviewProvider,
                                       Icon markAsNonNlsButtonIcon,
                                       boolean canShowCodeInfo) {
@@ -91,30 +92,10 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     myUsagePreviewProvider = usagePreviewProvider;
     myMarkAsNonNlsButtonIcon = markAsNonNlsButtonIcon;
     myContextModules = contextFiles.stream().map(ModuleUtilCore::findModuleForFile).filter(Objects::nonNull).collect(Collectors.toSet());
+    myResourceBundleManager = bundleManager;
+    if (bundleManager != null) myShowCodeInfo = canShowCodeInfo && myResourceBundleManager.canShowJavaCodeInfo();
     setTitle(PropertiesBundle.message("i18nize.multiple.strings.dialog.title"));
-
-    ReadAction
-      .nonBlocking(() -> {
-        initResourceBundleManager(contextFiles, project, canShowCodeInfo);
-      })
-      .finishOnUiThread(ModalityState.any(), bundle -> {
-        init();
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
-  }
-
-  private void initResourceBundleManager(@NotNull Set<PsiFile> contextFiles, @NotNull Project project, boolean canShowCodeInfo) {
-    ResourceBundleManager resourceBundleManager;
-    try {
-      resourceBundleManager = ResourceBundleManager.getManager(contextFiles, project);
-      LOG.assertTrue(resourceBundleManager != null);
-      myShowCodeInfo = canShowCodeInfo && resourceBundleManager.canShowJavaCodeInfo();
-    }
-    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
-      LOG.error(e);
-      resourceBundleManager = null;
-    }
-    myResourceBundleManager = resourceBundleManager;
+    init();
   }
 
   public String getI18NText(String propertyKey, String propertyValue, String paramsString) {
@@ -324,6 +305,18 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   protected void dispose() {
     Disposer.dispose(myUsagePreviewPanel);
     super.dispose();
+  }
+
+  public static ResourceBundleManager getResourceBundleManager(@NotNull Project project, @NotNull Set<PsiFile> contextFiles) {
+    ResourceBundleManager bundleManager = null;
+    try {
+      bundleManager = ResourceBundleManager.getManager(contextFiles, project);
+      LOG.assertTrue(bundleManager != null);
+    }
+    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
+      LOG.error(e);
+    }
+    return bundleManager;
   }
 
   private class MyKeyValueModel extends AbstractTableModel implements ItemRemovable {
