@@ -45,11 +45,15 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
 
         val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(scope, baseClass.project)
         names.forEach { name ->
+            ProgressManager.checkCanceled()
             KotlinSuperClassIndex.getInstance()
                 .get(name, baseClass.project, noLibrarySourceScope).asSequence()
                 .mapNotNull { candidate -> candidate.toLightClassWithBuiltinMapping() ?: KtFakeLightClass(candidate) }
                 .filter { candidate -> candidate.isInheritor(baseClass, false) }
-                .forEach { candidate -> consumer.process(candidate) }
+                .forEach { candidate ->
+                    ProgressManager.checkCanceled()
+                    consumer.process(candidate)
+                }
         }
     }
 }
