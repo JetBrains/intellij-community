@@ -80,6 +80,7 @@ class JpsCachesDownloader {
                 } else {
                   LOG.info("Failed to download " + description.getDownloadUrl() + " Root cause: " + e + ". Attempt " + attempt + " to download file again");
                 }
+                Thread.sleep(250);
               } else {
                 throw new IOException(IdeCoreBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
               }
