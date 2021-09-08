@@ -163,7 +163,7 @@ class XDebugSessionTab3(
   }
 
   val threadFramesView: XDebugView?
-    get() = getView(DebuggerContentInfo.FRAME_CONTENT)
+    get() = getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)
 
   override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier
 
