@@ -159,5 +159,6 @@
     <orderEntry type="module" module-name="intellij.laf.macos" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.laf.win10" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.toml" scope="RUNTIME" />
   </component>
 </module>
