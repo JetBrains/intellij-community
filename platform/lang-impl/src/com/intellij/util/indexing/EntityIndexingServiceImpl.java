@@ -15,7 +15,6 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
 import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -48,7 +47,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
     for (RootsChangeIndexingInfo change : changes) {
       if (change == RootsChangeIndexingInfo.NO_INDEXING_NEEDED) continue;
       if (change instanceof ProjectRootsChangeListener.WorkspaceEventIndexingInfo) {
-        builders.addAll(getBuildersOnWorkspaceChange(project, ((ProjectRootsChangeListener.WorkspaceEventIndexingInfo)change).getEvent()));
+        builders.addAll(getBuildersOnWorkspaceChange(project, ((ProjectRootsChangeListener.WorkspaceEventIndexingInfo)change).getEvents()));
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
@@ -81,22 +80,17 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   @TestOnly
   @NotNull
   static List<IndexableFilesIterator> getIterators(@NotNull Project project,
-                                                   @NotNull Collection<? extends VersionedStorageChange> events) {
+                                                   @NotNull Collection<EntityChange<?>> events) {
     WorkspaceEntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-    List<IndexableIteratorBuilder> result = new ArrayList<>(events.size());
-    for (VersionedStorageChange event : events) {
-      result.addAll(getBuildersOnWorkspaceChange(project, event));
-    }
+    List<IndexableIteratorBuilder> result = getBuildersOnWorkspaceChange(project, events);
     return IndexableIteratorBuilders.INSTANCE.instantiateBuilders(result, project, entityStorage);
   }
 
   @NotNull
   private static List<IndexableIteratorBuilder> getBuildersOnWorkspaceChange(@NotNull Project project,
-                                                                             @NotNull VersionedStorageChange event) {
+                                                                             @NotNull Collection<EntityChange<?>> event) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
-    Iterator<EntityChange<?>> iterator = event.getAllChanges().iterator();
-    while (iterator.hasNext()) {
-      EntityChange<? extends WorkspaceEntity> change = iterator.next();
+    for (EntityChange<? extends WorkspaceEntity> change : event) {
       if (change instanceof EntityChange.Added) {
         WorkspaceEntity entity = ((EntityChange.Added<? extends WorkspaceEntity>)change).getEntity();
         collectIteratorBuildersOnAdd(entity, project, builders);

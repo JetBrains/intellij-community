@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.List;
 
 @SkipSlowTestLocally
-@NeedsIndex.ForStandardLibrary
+@NeedsIndex.Full
 public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private final static String TEST_INDEX_FILE_NAME = "TestIndex.java";
   private final static String TEST_COMPLETION_FILE_NAME = "TestCompletion.java";

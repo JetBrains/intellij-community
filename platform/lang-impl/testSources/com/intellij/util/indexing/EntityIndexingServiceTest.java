@@ -25,6 +25,7 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
@@ -166,7 +167,15 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
     List<IndexableFilesIterator> iterators;
     try {
-      iterators = EntityIndexingServiceImpl.getIterators(getProject(), listener.myEvents);
+      List<EntityChange<?>> changes = new ArrayList<>();
+      for (VersionedStorageChange event : listener.myEvents) {
+        Iterator<EntityChange<?>> iterator = event.getAllChanges().iterator();
+        while (iterator.hasNext()) {
+          EntityChange<?> next = iterator.next();
+          changes.add(next);
+        }
+      }
+      iterators = EntityIndexingServiceImpl.getIterators(getProject(), changes);
       Collection<IndexableFilesIterator> expectedIterators = expectedIteratorsProducer.fun(createdEntities);
 
       assertSameIterators(iterators, expectedIterators);
