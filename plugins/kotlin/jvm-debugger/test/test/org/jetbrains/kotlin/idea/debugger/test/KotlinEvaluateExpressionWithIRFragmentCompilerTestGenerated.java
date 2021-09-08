@@ -87,6 +87,11 @@ public abstract class KotlinEvaluateExpressionWithIRFragmentCompilerTestGenerate
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/outerMembersNoReflection.kt");
                 }
 
+                @TestMetadata("privateAnnotationCompanionValue.kt")
+                public void testPrivateAnnotationCompanionValue() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/privateAnnotationCompanionValue.kt");
+                }
+
                 @TestMetadata("selfMembers.kt")
                 public void testSelfMembers() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/selfMembers.kt");
@@ -1201,6 +1206,11 @@ public abstract class KotlinEvaluateExpressionWithIRFragmentCompilerTestGenerate
             @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
             public void testPrivatePropertyWithExplicitDefaultGetter() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
+            }
+
+            @TestMetadata("privatePropertyWithNonDefaultAccessor.kt")
+            public void testPrivatePropertyWithNonDefaultAccessor() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privatePropertyWithNonDefaultAccessor.kt");
             }
 
             @TestMetadata("protectedMember.kt")
