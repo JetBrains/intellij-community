@@ -6,6 +6,7 @@ import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.formatting.FormattingRangesInfo;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -22,6 +23,7 @@ import java.util.List;
  */
 @ApiStatus.Experimental
 public abstract class AbstractDocumentFormattingService implements FormattingService {
+  private final static Key<Document> DOCUMENT_KEY = Key.create("formatting.service.document");
 
   @Override
   public final @NotNull PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpaceOnly) {
@@ -36,6 +38,9 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
     FormattingContext formattingContext = FormattingContext.create(file, range, CodeStyle.getSettings(file), FormattingMode.REFORMAT);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     Document document = documentManager.getDocument(file);
+    if (document == null) {
+      document = file.getUserData(DOCUMENT_KEY);
+    }
     if (document != null) {
       int offset = element.getTextOffset();
       formatDocument(document, Collections.singletonList(range), formattingContext, canChangeWhiteSpaceOnly, false);
@@ -69,5 +74,10 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
                                       @NotNull FormattingContext formattingContext,
                                       boolean canChangeWhiteSpaceOnly,
                                       boolean quickFormat);
+
+
+  public static void setDocument(@NotNull PsiFile file, @NotNull Document document) {
+    file.putUserData(DOCUMENT_KEY, document);
+  }
 
 }

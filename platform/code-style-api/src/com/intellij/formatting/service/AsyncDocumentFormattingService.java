@@ -186,7 +186,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
         charset = originalFile.getCharset();
       }
       else {
-        ext = "";
+        ext = myContext.getContainingFile().getFileType().getDefaultExtension();
         charset = EncodingManager.getInstance().getDefaultCharset();
       }
       try {
