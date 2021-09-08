@@ -600,11 +600,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     List<VirtualFile> filesInScope;
     filesInScope = new SmartList<>();
     if (scope.contains(file)) filesInScope.add(file);
+    ProgressManager.checkCanceled();
     for (ModelBranch branch : scope.getModelBranchesAffectingScope()) {
       VirtualFile copy = branch.findFileCopy(file);
       if (!((ModelBranchImpl)branch).hasModifications(copy) && scope.contains(copy)) {
         filesInScope.add(copy);
       }
+      ProgressManager.checkCanceled();
     }
     return filesInScope;
   }
