@@ -215,7 +215,11 @@ public abstract class DebuggerSupport {
     }
   };
 
+  /**
+   * @deprecated use {@link com.intellij.xdebugger.XDebugSessionListener#breakpointsMuted(boolean)}
+   */
   @NotNull
+  @Deprecated
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return DISABLED_TOGGLE_HANDLER;
   }
