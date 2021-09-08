@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -7,11 +7,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.MacDistributionCustomizer
-import org.jetbrains.intellij.build.MacHostProperties
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.nio.file.Files
@@ -270,15 +266,20 @@ final class MacDmgBuilder {
 
   @CompileStatic(TypeCheckingMode.SKIP)
   private void deleteRemoteDir() {
-    ftpAction("delete") {
-      ant.fileset() {
-        include(name: "**")
+    try {
+      ftpAction("delete") {
+        ant.fileset() {
+          include(name: "**")
+        }
+      }
+      ftpAction("rmdir", true, null, 0, PathUtilRt.getParentPath(remoteDir)) {
+        ant.fileset() {
+          include(name: "${PathUtilRt.getFileName(remoteDir)}/**")
+        }
       }
     }
-    ftpAction("rmdir", true, null, 0, PathUtilRt.getParentPath(remoteDir)) {
-      ant.fileset() {
-        include(name: "${PathUtilRt.getFileName(remoteDir)}/**")
-      }
+    catch (BuildException e) {
+      buildContext.messages.warning("Error while deleting remote directory: " + e.message)
     }
   }
 
@@ -371,6 +372,9 @@ final class MacDmgBuilder {
       passive       : "yes",
       retriesallowed: "$retriesAllowed"
     ]
+    if (action == "delete" || action == "rmdir") {
+      args["skipFailedTransfers"] = "yes"
+    }
     if (chmod != null) {
       args["chmod"] = chmod
     }
