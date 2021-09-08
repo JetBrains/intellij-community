@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
 LineBreakpoint created at privateMembersPriority.kt:21
 LineBreakpoint created at privateMembersPriority.kt:33
 LineBreakpoint created at privateMembersPriority.kt:40
