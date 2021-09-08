@@ -2,10 +2,7 @@
 package com.jetbrains.python.formatter;
 
 import com.intellij.lang.Language;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,5 +37,11 @@ public class PyLanguageCodeStyleSettingsProviderBase extends LanguageCodeStyleSe
   @Override
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
     return new PyCodeStyleSettings(settings);
+  }
+
+  @Override
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
+                                                           @NotNull CodeStyleSettings modelSettings) {
+    return super.createConfigurable(baseSettings, modelSettings);
   }
 }
