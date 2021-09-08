@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.google.common.util.concurrent.Futures;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.AppUIExecutor;
@@ -52,6 +53,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -94,7 +96,18 @@ public final class StubIndexImpl extends StubIndexEx {
       if (myStateFuture == null) {
         ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitUntilIndicesAreInitialized();
       }
-      myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+      if (ProgressManager.getInstance().isInNonCancelableSection()) {
+        try {
+          state = Futures.getUnchecked(myStateFuture);
+        }
+        catch (Exception e) {
+          FileBasedIndexImpl.LOG.error(e);
+        }
+      }
+      else {
+        state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+      }
+      myState = state;
     }
     return state;
   }
@@ -584,7 +597,8 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   void setDataBufferingEnabled(final boolean enabled) {
-    for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
+    AsyncState state = ProgressManager.getInstance().computeInNonCancelableSection(this::getAsyncState);
+    for (UpdatableIndex<?, ?, ?> index : state.myIndices.values()) {
       index.setBufferingEnabled(enabled);
     }
   }
