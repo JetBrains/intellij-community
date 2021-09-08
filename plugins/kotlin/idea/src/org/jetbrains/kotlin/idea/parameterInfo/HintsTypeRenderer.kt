@@ -110,6 +110,7 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
             return
         }
         when (val unwrappedType = this.unwrap()) {
+            // KTIJ-19098: platform type (e.g. `String!`) is rendered like a plain text `String!` w/o fqName link
             is FlexibleType -> list.append(unwrappedType.render(renderer, options))
             is SimpleType -> unwrappedType.renderSimpleTypeTo(list)
         }
