@@ -26,14 +26,13 @@ class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() 
             ) ?: return
             if (arguments.size != valueDescriptorByValueArgument.size) return
 
-            for (valueArgumentByDescriptor in valueDescriptorByValueArgument) {
-                val comment = valueArgumentByDescriptor.first.blockCommentWithName() ?: continue
-                val valueDescriptor = valueArgumentByDescriptor.second
-                val commentedParameterName = valueDescriptor.toCommentedParameterName()
+            for ((argument, descriptor)  in valueDescriptorByValueArgument) {
+                val comment = argument.blockCommentWithName() ?: continue
+                val commentedParameterName = descriptor.toCommentedParameterName()
                 if (commentedParameterName == comment.text) continue
                 holder.registerProblem(
                     comment,
-                    KotlinBundle.message("inspection.message.inconsistent.parameter.name.for.0", valueDescriptor.name.asString()),
+                    KotlinBundle.message("inspection.message.inconsistent.parameter.name.for.0", descriptor.name.asString()),
                     CorrectNamesInCommentsToJavaCallArgumentsFix(commentedParameterName)
                 )
             }
