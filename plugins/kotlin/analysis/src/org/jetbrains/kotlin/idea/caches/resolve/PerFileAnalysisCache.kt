@@ -11,7 +11,9 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.findParentInFile
+import com.intellij.psi.util.findTopmostParentInFile
+import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
@@ -403,27 +405,26 @@ private class StackedCompositeBindingContextTrace(
 }
 
 private object KotlinResolveDataProvider {
-    private val topmostElementTypes = arrayOf<Class<out PsiElement?>?>(
-        KtNamedFunction::class.java,
-        KtAnonymousInitializer::class.java,
-        KtProperty::class.java,
-        KtImportDirective::class.java,
-        KtPackageDirective::class.java,
-        KtCodeFragment::class.java,
-        // TODO: Non-analyzable so far, add more granular analysis
-        KtAnnotationEntry::class.java,
-        KtTypeConstraint::class.java,
-        KtSuperTypeList::class.java,
-        KtTypeParameter::class.java,
-        KtParameter::class.java,
-        KtTypeAlias::class.java
-    )
-
     fun findAnalyzableParent(element: KtElement): KtElement? {
         if (element is KtFile) return element
 
         @Suppress("MoveVariableDeclarationIntoWhen")
-        val topmostElement = KtPsiUtil.getTopmostParentOfTypes(element, *topmostElementTypes) as KtElement?
+        val topmostElement = element.findTopmostParentInFile {
+            it is KtNamedFunction ||
+            it is KtAnonymousInitializer ||
+            it is KtProperty ||
+            it is KtImportDirective ||
+            it is KtPackageDirective ||
+            it is KtCodeFragment ||
+            // TODO: Non-analyzable so far, add more granular analysis
+            it is KtAnnotationEntry ||
+            it is KtTypeConstraint ||
+            it is KtSuperTypeList ||
+            it is KtTypeParameter ||
+            it is KtParameter ||
+            it is KtTypeAlias
+        } as KtElement?
+
         // parameters and supertype lists are not analyzable by themselves, but if we don't count them as topmost, we'll stop inside, say,
         // object expressions inside arguments of super constructors of classes (note that classes themselves are not topmost elements)
         val analyzableElement = when (topmostElement) {
@@ -431,7 +432,7 @@ private object KotlinResolveDataProvider {
             is KtTypeConstraint,
             is KtSuperTypeList,
             is KtTypeParameter,
-            is KtParameter -> PsiTreeUtil.getParentOfType(topmostElement, KtClassOrObject::class.java, KtCallableDeclaration::class.java)
+            is KtParameter -> topmostElement.findParentInFile { it is KtClassOrObject || it is KtCallableDeclaration } as? KtElement?
             else -> topmostElement
         }
         // Primary constructor should never be returned
@@ -440,7 +441,7 @@ private object KotlinResolveDataProvider {
         if (analyzableElement is KtClassInitializer) return analyzableElement.containingDeclaration
         return analyzableElement
         // if none of the above worked, take the outermost declaration
-            ?: PsiTreeUtil.getTopmostParentOfType(element, KtDeclaration::class.java)
+            ?: element.findTopmostParentOfType<KtDeclaration>()
             // if even that didn't work, take the whole file
             ?: element.containingFile as? KtFile
     }
