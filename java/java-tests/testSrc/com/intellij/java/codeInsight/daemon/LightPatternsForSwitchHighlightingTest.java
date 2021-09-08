@@ -109,6 +109,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     assertNotNull(myFixture.getAvailableIntention("Rename 's' to 'ignored'"));
   }
 
+  public void testMalformedReferenceExpression() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

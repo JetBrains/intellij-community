@@ -534,6 +534,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return CreateConstructorFromUsage.generateConstructorActions(call);
   }
 
+  @Override
+  public @NotNull IntentionAction createReplaceWithTypePatternFix(@NotNull PsiReferenceExpression exprToReplace,
+                                                                  @NotNull PsiClass resolvedExprClass,
+                                                                  @NotNull String patternVarName) {
+    return new ReplaceWithTypePatternFix(exprToReplace, resolvedExprClass, patternVarName);
+  }
+
   @NotNull
   @Override
   public IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression call) {

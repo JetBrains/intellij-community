@@ -321,6 +321,11 @@ public abstract class QuickFixFactory {
   }
 
   @NotNull
+  public abstract IntentionAction createReplaceWithTypePatternFix(@NotNull PsiReferenceExpression exprToReplace,
+                                                                  @NotNull PsiClass resolvedExprClass,
+                                                                  @NotNull String patternVarName);
+
+  @NotNull
   public abstract IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression call);
 
   @NotNull

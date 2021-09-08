@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightRecordMethod;
@@ -66,6 +67,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -2054,6 +2056,21 @@ public final class HighlightUtil {
     }
     PsiExpression expression = initializer instanceof PsiArrayInitializerExpression ? null : initializer;
     return checkAssignability(componentType, initializerType, expression, initializer);
+  }
+
+  @Nullable
+  static HighlightInfo checkPatternVariableRequired(@NotNull PsiReferenceExpression expression,
+                                                    @NotNull JavaResolveResult resultForIncompleteCode) {
+    if (!(expression.getParent() instanceof PsiCaseLabelElementList)) return null;
+    PsiClass resolved = tryCast(resultForIncompleteCode.getElement(), PsiClass.class);
+    if (resolved == null) return null;
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+      .descriptionAndTooltip(JavaErrorBundle.message("type.pattern.expected")).create();
+    if (info != null) {
+      String patternVarName = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE).byName("ignored").generate(true);
+      QuickFixAction.registerQuickFixAction(info, getFixFactory().createReplaceWithTypePatternFix(expression, resolved, patternVarName));
+    }
+    return info;
   }
 
   static HighlightInfo checkExpressionRequired(@NotNull PsiReferenceExpression expression,
