@@ -441,7 +441,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun markDirty() = markDirty(projectAware.projectId)
 
-    fun forceRefreshProject() = forceRefreshProject(projectAware.projectId)
+    fun forceRefreshProject() = projectAware.forceReloadProject()
 
     fun registerProjectAware() = register(projectAware)
 

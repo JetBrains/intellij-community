@@ -358,13 +358,13 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 7, notified = false, event = "complete first external modification")
 
       modification {
-        assertState(refresh = 7, notified = false, event = "start external modification")
+        assertState(refresh = 7, notified = false, event = "start exte]rnal modification")
         settingsFile.replaceStringInIoFile("println", "print")
         assertState(refresh = 7, notified = false, event = "external modification")
         settingsFile.replaceString("hi", "hello")
-        assertState(refresh = 7, notified = true, event = "internal modification during external modification")
+        assertState(refresh = 7, notified = false, event = "internal modification during external modification")
         settingsFile.replaceStringInIoFile("hello", "settings")
-        assertState(refresh = 7, notified = true, event = "external modification")
+        assertState(refresh = 7, notified = false, event = "external modification")
       }
       assertState(refresh = 7, notified = true, event = "complete external modification")
       refreshProject()
@@ -537,7 +537,7 @@ class AutoImportTest : AutoImportTestCase() {
       projectAware.registerSettingsFile(settingsFile.path)
       settingsFile.replaceContentInIoFile("println 'generated project'")
     }
-    forceRefreshProject(projectId)
+    projectAware.forceReloadProject()
     assertProjectAware(projectAware, refresh = 2, event = "registration of settings file during project refresh")
     assertNotificationAware(event = "registration of settings file during project refresh")
 
@@ -545,7 +545,7 @@ class AutoImportTest : AutoImportTestCase() {
     projectAware.onceDuringRefresh {
       settingsFile.appendString("println 'hello'")
     }
-    forceRefreshProject(projectId)
+    projectAware.forceReloadProject()
     assertProjectAware(projectAware, refresh = 3, event = "modification during project refresh")
     assertNotificationAware(projectId, event = "modification during project refresh")
   }
