@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -66,6 +68,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   private int myReplaceFieldsWithGetters;
   private final boolean myDeclareFinal;
   private final boolean myGenerateDelegate;
+  private final boolean myReplaceWithLambda;
   private PsiType myForcedType;
   private final IntList myParametersToRemove;
   private final PsiManager myManager;
@@ -87,6 +90,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                      int replaceFieldsWithGetters,
                                      boolean declareFinal,
                                      boolean generateDelegate,
+                                     boolean replaceWithLambda,
                                      PsiType forcedType,
                                      @NotNull IntList parametersToRemove) {
     super(project);
@@ -103,6 +107,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     myDeclareFinal = declareFinal;
     myGenerateDelegate = generateDelegate;
+    myReplaceWithLambda = replaceWithLambda;
     myForcedType = forcedType;
     myManager = PsiManager.getInstance(project);
 
@@ -126,10 +131,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                      int replaceFieldsWithGetters,
                                      boolean declareFinal,
                                      boolean generateDelegate,
+                                     boolean replaceWithLambda,
                                      PsiType forcedType,
                                      @NotNull TIntArrayList parametersToRemove) {
     this(project, methodToReplaceIn, methodToSearchFor, parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName, replaceAllOccurrences,
-         replaceFieldsWithGetters, declareFinal, generateDelegate, forcedType, new IntArrayList(parametersToRemove.toNativeArray()));
+         replaceFieldsWithGetters, declareFinal, generateDelegate, replaceWithLambda, forcedType, new IntArrayList(parametersToRemove.toNativeArray()));
   }
 
   public void setParameterInitializer(PsiExpression parameterInitializer) {
@@ -406,6 +412,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       PsiType initializerType = getInitializerType(myForcedType, myParameterInitializer, myLocalVariable);
       setForcedType(initializerType);
 
+
+
       // Converting myParameterInitializer
       if (myParameterInitializer == null) {
         LOG.assertTrue(myLocalVariable != null);
@@ -415,6 +423,16 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         final PsiExpression newExprArrayInitializer =
           RefactoringUtil.createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)myParameterInitializer, initializerType);
         myParameterInitializer = (PsiExpression)myParameterInitializer.replace(newExprArrayInitializer);
+      } else {
+        if (myReplaceWithLambda) {
+          PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(myParameterInitializer, initializerType);
+          if (lambda != null) {
+            if (lambda instanceof PsiLambdaExpression) {
+              lambda = LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference((PsiLambdaExpression)lambda);
+            }
+            myParameterInitializer = lambda;
+          }
+        }
       }
 
       myInitializerWrapper = new JavaExpressionWrapper(myParameterInitializer);

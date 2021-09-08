@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -495,7 +495,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
                                                              : new IntArrayList();
     IntroduceParameterProcessor processor = new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, initializer, expr, localVar, true, parameterName, replaceAllOccurrences,
-      replaceFieldsWithGetters, declareFinal, generateDelegate, null, parametersToRemove
+      replaceFieldsWithGetters, declareFinal, generateDelegate, false, null, parametersToRemove
     ) {
       @Override
       protected boolean isReplaceDuplicates() {
@@ -543,7 +543,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, parameterInitializer, null, localVariable, removeLocalVariable,
       localVariable.getName(), replaceAllOccurrences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
-      declareFinal, false, null, parametersToRemove
+      declareFinal, false, false, null, parametersToRemove
     ).run();
   }
 }

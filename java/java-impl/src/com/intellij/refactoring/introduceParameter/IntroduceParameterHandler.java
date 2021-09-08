@@ -437,7 +437,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         PsiExpression initializer = myLocalVar != null && myExpr == null ? myLocalVar.getInitializer() : myExpr;
         new IntroduceParameterProcessor(myProject, method, methodToSearchFor, initializer, myExpr, myLocalVar, true, parameterName,
                                         true, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, mustBeFinal,
-                                        false, null,
+                                        false, false, null,
                                         getParamsToRemove(method, occurrences)).run();
       }
       else {

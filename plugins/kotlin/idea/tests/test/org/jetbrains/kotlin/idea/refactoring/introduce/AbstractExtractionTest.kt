@@ -194,6 +194,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
                 false,
                 false,
+                false,
                 null,
                 parametersToRemove
             ).run()
