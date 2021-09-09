@@ -1,20 +1,18 @@
 package com.intellij.grazie.ide.language
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 
 class CommitSupportTest : BasePlatformTestCase() {
   fun `test commit message has highlighting with all quick fixes`() {
-    myFixture.configureByText("a.txt", """
-      
-      This is <caret><warning>a</warning> error.
-      
-      This reverts commit abcdef00.
-    """.trimIndent())
-
-    val commitMessage = CommitMessage(project)
-    disposeOnTearDown(commitMessage)
-    myFixture.editor.document.putUserData(CommitMessage.DATA_KEY, commitMessage)
+    configureCommit(myFixture, """
+            
+            This is <caret><warning>a</warning> error.
+            
+            This reverts commit abcdef00.
+          """.trimIndent())
 
     myFixture.checkHighlighting()
 
@@ -23,4 +21,11 @@ class CommitSupportTest : BasePlatformTestCase() {
     myFixture.findSingleIntention("Add exception 'a error'")
     myFixture.findSingleIntention("Rule settings 'Use of 'a' vs. 'an''...")
   }
+}
+
+internal fun configureCommit(fixture: CodeInsightTestFixture, text: String) {
+  fixture.configureByText("a.txt", text)
+  val commitMessage = CommitMessage(fixture.project)
+  Disposer.register(fixture.testRootDisposable, commitMessage)
+  fixture.editor.document.putUserData(CommitMessage.DATA_KEY, commitMessage)
 }

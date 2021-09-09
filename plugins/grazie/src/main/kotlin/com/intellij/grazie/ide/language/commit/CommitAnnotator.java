@@ -37,10 +37,9 @@ public class CommitAnnotator implements Annotator {
         continue;
       }
 
-      String message = problem.getDescriptionTemplate(true);
       AnnotationBuilder annotation = holder
-        .newAnnotation(HighlightSeverity.WARNING, message)
-        .tooltip(message)
+        .newAnnotation(HighlightSeverity.WARNING, problem.getDescriptionTemplate(true))
+        .tooltip(problem.getTooltipTemplate())
         .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
         .range(text.textRangeToFile(problem.getHighlightRange()));
       for (QuickFix<?> fix : runner.toFixes(problem)) {
