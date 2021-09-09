@@ -188,9 +188,6 @@ private class MockNotebookCellLines(override val intervals: MutableList<Interval
 
   override val modificationStamp: Long
     get() = TODO("stub")
-
-  override val intervalsCount: Int
-    get() = TODO("stub")
 }
 
 

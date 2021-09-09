@@ -112,8 +112,6 @@ class CodeCellLinesChecker(private val description: String,
           .describedAs("Intervals: $descr")
           .isEqualTo(intervals)
       }
-
-      assertThat(codeCellLines.intervalsCount).isEqualTo(codeCellLines.intervalsIterator().asSequence().toList().size)
     }
 
     fun List<Pair<List<NotebookCellLines.Interval>, List<NotebookCellLines.Interval>>>.prettyListeners() =

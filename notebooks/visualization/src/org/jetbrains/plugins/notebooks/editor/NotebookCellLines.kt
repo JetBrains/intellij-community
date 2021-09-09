@@ -78,8 +78,6 @@ interface NotebookCellLines {
 
   val intervals: List<Interval>
 
-  val intervalsCount: Int
-
   val intervalListeners: EventDispatcher<IntervalListener>
 
   val modificationStamp: Long
