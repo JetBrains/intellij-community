@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
@@ -463,7 +464,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), false);
         DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
-        settings.setLineNumbersShown(getLineNumbersShownPreference());
+        settings.setLineNumbersShown(EditorSettingsExternalizable.getInstance().getOptions().ARE_LINE_NUMBERS_SHOWN);
         settings.setFoldingOutlineShown(true);
         settings.setLineMarkerAreaShown(true);
         settings.setGutterIconsShown(false);
@@ -486,17 +487,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       return Pair.create(InspectionResultsViewUtil.getPreviewIsNotAvailable(selectedEntity), null);
     }
     return Pair.create(InspectionResultsViewUtil.getInvalidEntityLabel(selectedEntity), null);
-  }
-
-  private boolean getLineNumbersShownPreference() {
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    if (editorManager == null) return true;
-    FileEditor editor = editorManager.getSelectedEditor();
-    if (editor instanceof PsiAwareTextEditorImpl) {
-      Editor editorImpl = ((PsiAwareTextEditorImpl)editor).getEditor();
-      return editorImpl.getSettings().isLineNumbersShown();
-    }
-    return true;
   }
 
   private boolean reuseEditorFor(Document document) {
