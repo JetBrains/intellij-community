@@ -148,14 +148,17 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
   override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, init: Panel.() -> Unit) {
     dialogPanelConfig.context.addButtonGroup(BindButtonGroup(binding, type))
     try {
-      if (title != null) {
+      if (title == null) {
+        init()
+      }
+      else {
         val row = row {
           label(title)
             .applyToComponent { putClientProperty(DSL_LABEL_NO_BOTTOM_GAP_PROPERTY, true) }
         }
         row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
+        indent(init)
       }
-      indent(init)
     }
     finally {
       dialogPanelConfig.context.removeLastButtonGroup()
