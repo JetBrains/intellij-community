@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 @Serializable
 data class Configuration(val products: Map<String, ProductConfiguration>)
@@ -14,7 +15,7 @@ data class Configuration(val products: Map<String, ProductConfiguration>)
 data class ProductConfiguration(val modules: List<String>, @SerialName("class") val className: String)
 
 class BuildServer(val homePath: Path) {
-  private val outDir: Path = homePath.resolve("out/classes/production").toRealPath()
+  private val outDir: Path = Path(System.getenv("CLASSES_DIR")).toRealPath()
   private val configuration: Configuration
 
   private val platformPrefixToPluginBuilder = HashMap<String, IdeBuilder>()
