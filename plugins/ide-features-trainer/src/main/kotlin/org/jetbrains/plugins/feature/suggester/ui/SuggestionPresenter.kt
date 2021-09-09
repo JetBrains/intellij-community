@@ -18,7 +18,6 @@ import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatis
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_DONT_SUGGEST_EVENT_ID
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_LEARN_MORE_EVENT_ID
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_SHOWED_EVENT_ID
-import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_THANKS_EVENT_ID
 
 interface SuggestionPresenter {
     fun showSuggestion(project: Project, suggestion: PopupSuggestion)
@@ -36,8 +35,6 @@ class NotificationSuggestionPresenter :
             content = suggestion.message,
             type = NotificationType.INFORMATION
         ).apply {
-            addAction(createDontSuggestAction(this, suggestion))
-            addAction(createThanksAction(this, suggestion))
             when (suggestion) {
                 is TipSuggestion -> {
                     val action = createShowTipAction(project, this, suggestion)
@@ -49,6 +46,7 @@ class NotificationSuggestionPresenter :
                     addAction(createGoToDocumentationAction(this, suggestion))
                 }
             }
+            addAction(createDontSuggestAction(this, suggestion))
         }
 
         notification.notify(project)
@@ -62,14 +60,6 @@ class NotificationSuggestionPresenter :
                 settings.setEnabled(suggestion.suggesterId, false)
                 notification.hideBalloon()
                 FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggestion.suggesterId)
-            }
-        }
-    }
-
-    private fun createThanksAction(notification: Notification, suggestion: PopupSuggestion): AnAction {
-        return object : AnAction(FeatureSuggesterBundle.message("notification.thanks")) {
-            override fun actionPerformed(e: AnActionEvent) {
-                FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_THANKS_EVENT_ID, suggestion.suggesterId)
             }
         }
     }
