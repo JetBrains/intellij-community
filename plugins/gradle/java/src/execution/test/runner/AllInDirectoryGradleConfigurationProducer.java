@@ -115,6 +115,7 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
     PsiFileSystemItem directory = (PsiFileSystemItem)contextLocation;
     if (!directory.isDirectory()) return null;
     List<VirtualFile> sources = findTestSourcesUnderDirectory(module, directory.getVirtualFile());
+    if (sources.isEmpty()) return null;
     return new ConfigurationData(module, directory, sources, projectPath);
   }
 
