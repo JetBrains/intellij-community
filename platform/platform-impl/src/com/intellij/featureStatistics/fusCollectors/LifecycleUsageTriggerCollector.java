@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -151,7 +151,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
         data.add(tooManyErrorsField.with(true));
       }
 
-      IDE_ERROR.log(data.toArray(new EventPair[0]));
+      IDE_ERROR.log(data);
     }
     catch (Exception e) {
       LOG.warn(e);
