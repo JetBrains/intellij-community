@@ -276,7 +276,6 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
-  @SuppressWarnings("NonAtomicOperationOnVolatileField")
   private void updateFileTypeChangedCount(int countDelta) {
     int newValue = fileTypeChangedCount.addAndGet(countDelta);
     autoDetectedAttribute = autoDetectedAttribute.newVersion(newValue);
@@ -693,7 +692,6 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   // for diagnostics
-  @SuppressWarnings("ALL")
   private static Object streamInfo(@NotNull InputStream stream) throws IOException {
     if (stream instanceof BufferedInputStream) {
       InputStream in = ReflectionUtil.getField(stream.getClass(), stream, InputStream.class, "in");

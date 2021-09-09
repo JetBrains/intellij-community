@@ -301,10 +301,10 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertTrue(fileType.toString(), fileType instanceof ProjectFileType);
     FileType module = myFileTypeManager.findFileTypeByName("IDEA_MODULE");
     assertNotNull(module);
-    assertNotEquals(module, PlainTextFileType.INSTANCE);
+    assertFalse(module.equals(PlainTextFileType.INSTANCE));
     FileType project = myFileTypeManager.findFileTypeByName("IDEA_PROJECT");
     assertNotNull(project);
-    assertNotEquals(project, PlainTextFileType.INSTANCE);
+    assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
     Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
@@ -612,7 +612,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public void testPreserveUninstalledPluginAssociations() {
     FileType typeFromPlugin = new MyTestFileType();
     FileTypeFactory factory = new FileTypeFactory() {
@@ -705,7 +704,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   public void testDefaultFileType() {
     final String extension = "very_rare_extension";
-    FileType idl = requireNonNull(myFileTypeManager.findFileTypeByName("IDL"));
+    FileType idl = Objects.requireNonNull(myFileTypeManager.findFileTypeByName("IDL"));
     WriteAction.run(() -> myFileTypeManager.associatePattern(idl, "*." + extension));
 
     Element element = myFileTypeManager.getState();
@@ -764,7 +763,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     return myFileTypeManager.getFileTypeByFile(file);
   }
 
-  @SuppressWarnings("unused")
   public void _testStressPlainTextFileWithEverIncreasingLength() throws IOException {
     FrequentEventDetector.disableUntil(getTestRootDisposable());
 
@@ -816,7 +814,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     if (exception.get() != null) throw new RuntimeException(exception.get());
   }
 
-  @SuppressWarnings("unused")
   public void _testStressPlainTextFileWithEverIncreasingLength2() throws IOException {
     FrequentEventDetector.disableUntil(getTestRootDisposable());
 
@@ -1035,7 +1032,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testPluginOverridesAbstractFileType() {
-    assertThat(myFileTypeManager.findFileTypeByName(MyHaskellFileType.NAME)).isInstanceOf(AbstractFileType.class);
+    assertInstanceOf(myFileTypeManager.findFileTypeByName(MyHaskellFileType.NAME), AbstractFileType.class);
 
     FileTypeBean bean = new FileTypeBean();
     bean.name = MyHaskellFileType.NAME;
@@ -1043,8 +1040,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.implementationClass = MyHaskellFileType.class.getName();
     Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
 
-    assertThat(myFileTypeManager.findFileTypeByName(MyHaskellFileType.NAME)).isInstanceOf(MyHaskellFileType.class);
-    assertThat(myFileTypeManager.getFileTypeByFileName("foo.hs")).isInstanceOf(MyHaskellFileType.class);
+    assertInstanceOf(myFileTypeManager.findFileTypeByName(MyHaskellFileType.NAME), MyHaskellFileType.class);
+    assertInstanceOf(myFileTypeManager.getFileTypeByFileName("foo.hs"), MyHaskellFileType.class);
 
     WriteAction.run(() -> Disposer.dispose(disposable));
 
@@ -1069,7 +1066,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testPluginWhichOverridesBundledFileTypeMustWin() {
-    FileType bundled = requireNonNull(myFileTypeManager.findFileTypeByName("Image"));
+    FileType bundled = Objects.requireNonNull(myFileTypeManager.findFileTypeByName("Image"));
     PluginDescriptor pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(bundled.getClass().getName());
     assertTrue(pluginDescriptor.isBundled());
     LOG.debug("pluginDescriptor = " + pluginDescriptor);
@@ -1104,8 +1101,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testTwoPluginsWhichOverrideBundledFileTypeMustNegotiateBetweenThemselves() {
-    FileType bundled = requireNonNull(myFileTypeManager.findFileTypeByName("Image"));
-    PluginDescriptor pluginDescriptor = requireNonNull(PluginManagerCore.getPluginDescriptorOrPlatformByClassName(bundled.getClass().getName()));
+    FileTypeManager fileTypeManager = myFileTypeManager;
+    FileType bundled = Objects.requireNonNull(fileTypeManager.findFileTypeByName("Image"));
+    PluginDescriptor pluginDescriptor = Objects.requireNonNull(PluginManagerCore.getPluginDescriptorOrPlatformByClassName(bundled.getClass().getName()));
     assertTrue(pluginDescriptor.isBundled());
     LOG.debug("pluginDescriptor = " + pluginDescriptor);
 
@@ -1132,9 +1130,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       FileTypeManagerImpl.EP_NAME.getPoint().registerExtension(bean2, disposable);
     });
 
-    assertInstanceOf(myFileTypeManager.findFileTypeByName(bean.name), MyCustomImageFileType.class);
-    assertInstanceOf(myFileTypeManager.findFileTypeByName(bean2.name), MyCustomImageFileType2.class);
-    assertInstanceOf(myFileTypeManager.getFileTypeByExtension(ext), MyCustomImageFileType.class); // either MyCustomImageFileType or MyCustomImageFileType2
+    assertInstanceOf(fileTypeManager.findFileTypeByName(bean.name), MyCustomImageFileType.class);
+    assertInstanceOf(fileTypeManager.findFileTypeByName(bean2.name), MyCustomImageFileType2.class);
+    assertInstanceOf(fileTypeManager.getFileTypeByExtension(ext), MyCustomImageFileType.class); // either MyCustomImageFileType or MyCustomImageFileType2
 
     WriteAction.run(() -> Disposer.dispose(disposable));
   }

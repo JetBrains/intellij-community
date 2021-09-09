@@ -32,10 +32,7 @@ import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -55,8 +52,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.Objects.requireNonNullElse;
-
 @State(
   name = "FileTypeManager",
   storages = @Storage("filetypes.xml"),
@@ -64,6 +59,7 @@ import static java.util.Objects.requireNonNullElse;
   category = SettingsCategory.CODE)
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
   static final ExtensionPointName<FileTypeBean> EP_NAME = new ExtensionPointName<>("com.intellij.fileType");
+  private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
   static final int VERSION = 18;
@@ -72,9 +68,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @SuppressWarnings("SpellCheckingInspection")
   static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc";
 
-  private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
-
-          static final String FILE_SPEC = "filetypes";
+  static final String FILE_SPEC = "filetypes";
   private static final String ELEMENT_EXTENSION_MAP = "extensionMap";
   private static final String ELEMENT_FILETYPE = "filetype";
   private static final String ELEMENT_IGNORE_FILES = "ignoreFiles";
@@ -90,7 +84,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final FileTypeDetectionService myDetectionService;
   private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
-          FileTypeAssocTable<FileTypeWithDescriptor> myPatternsTable = new FileTypeAssocTable<>();
+  FileTypeAssocTable<FileTypeWithDescriptor> myPatternsTable = new FileTypeAssocTable<>();
   private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
   private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
 
@@ -667,7 +661,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
       return detected;
     }
-    return requireNonNullElse(fileType, UnknownFileType.INSTANCE);
+    return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
   }
 
   protected @NotNull FileType detectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
@@ -1248,7 +1242,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private static @NotNull List<FileNameMatcher> parse(@NotNull Object context,
                                                       @NotNull String semicolonDelimitedTokens,
-                                                      @NotNull Function<String, ? extends FileNameMatcher> matcherFactory) {
+                                                      @NotNull Function<? super String, ? extends FileNameMatcher> matcherFactory) {
     if (semicolonDelimitedTokens.isEmpty()) {
       return Collections.emptyList();
     }
@@ -1384,7 +1378,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
                                          boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
 
-    String extensionsStr = requireNonNullElse(typeElement.getAttributeValue("extensions"), "");
+    String extensionsStr = Objects.requireNonNullElse(typeElement.getAttributeValue("extensions"), "");
     if (isDefault && !extensionsStr.isEmpty()) {
       // todo support wildcards
       extensionsStr = filterAlreadyRegisteredExtensions(extensionsStr);

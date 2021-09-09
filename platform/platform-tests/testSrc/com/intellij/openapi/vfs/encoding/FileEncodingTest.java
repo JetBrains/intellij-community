@@ -64,7 +64,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 
-@SuppressWarnings("HtmlRequiredTitleElement")
 public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialog {
   private static final Charset US_ASCII = StandardCharsets.US_ASCII;
   private static final Charset WINDOWS_1251 = CharsetToolkit.WIN_1251_CHARSET;
