@@ -23,7 +23,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
-public class HtmlAutopopupTest extends CompletionAutoPopupTestCase {
+public class HtmlAutoPopupTest extends CompletionAutoPopupTestCase {
 
   public void testAfterTagOpen() {
     doTestPopup(HtmlFileType.INSTANCE, "<div><caret></div>", "<");
@@ -55,6 +55,15 @@ public class HtmlAutopopupTest extends CompletionAutoPopupTestCase {
     myFixture.checkResult("<div>&star;</div>");
   }
 
+  public void testAfterAmpersandEmptyFile() {
+    doTestPopup(HtmlFileType.INSTANCE, "&<caret>", "s");
+    assertNull(getLookup().getCurrentItemOrEmpty());
+    myFixture.type("t");
+    type("a");
+    myFixture.type("\n");
+    myFixture.checkResult("&star;");
+  }
+
   public void testAfterAmpersandZeroChars() {
     doTestPopup(HtmlFileType.INSTANCE, "<div><caret></div>", "&");
     myFixture.type("\n");
@@ -73,6 +82,13 @@ public class HtmlAutopopupTest extends CompletionAutoPopupTestCase {
     myFixture.checkResult("<div>&target;</div>");
   }
 
+  public void testAfterAmpersandContents() {
+    doTestPopup(HtmlFileType.INSTANCE, "<div><caret></div>", "&bb");
+    assertSameElements(myFixture.getLookupElementStrings(), "bbrk", "bbrktbrk");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "bbrk", "bbrktbrk", "lbbrk", "rbbrk");
+  }
+
   public void testAfterAmpersandWithPrefix() {
     doTestPopup(HtmlFileType.INSTANCE, "<div><caret></div>", "the&n");
     myFixture.type("bs\n");
@@ -83,9 +99,7 @@ public class HtmlAutopopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testAmpersandInsideEmptyAttributeValue() {
-    doTestPopup(HtmlFileType.INSTANCE, "<div title='<caret>'></div>", "&");
-    myFixture.type("ta");
-    type("r");
+    doTestPopup(HtmlFileType.INSTANCE, "<div title='<caret>'></div>", "&tar");
     myFixture.type("\n");
     myFixture.checkResult("<div title='&target;'></div>");
   }
@@ -109,9 +123,9 @@ public class HtmlAutopopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testAmpersandInsideAttributeValue() {
-    doTestPopup(HtmlFileType.INSTANCE, "<div title='v<caret>a'></div>", "&");
-    myFixture.type("tar\n");
-    myFixture.checkResult("<div title='v&bigstar;a'></div>");
+    doTestPopup(HtmlFileType.INSTANCE, "<div title='v<caret>a'></div>", "&tar");
+    myFixture.type("\n");
+    myFixture.checkResult("<div title='v&target;a'></div>");
   }
 
   public void testDoNotShowPopupAfterQuotedSymbolXhtml() {
@@ -139,6 +153,14 @@ public class HtmlAutopopupTest extends CompletionAutoPopupTestCase {
     type(" p");
     myFixture.type("\n");
     myFixture.checkResult("<div>The p\n</div>");
+  }
+
+  public void testTypingInHtmlTextEmptyFile() {
+    myFixture.configureByText(HtmlFileType.INSTANCE, "<caret>");
+    type("p");
+    assertNull(getLookup().getCurrentItemOrEmpty());
+    myFixture.type("\n");
+    myFixture.checkResult("p\n");
   }
 
   public void testStartsWithCharMatchingAutoPopup() {

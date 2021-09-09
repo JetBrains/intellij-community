@@ -11,7 +11,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,10 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
@@ -86,9 +85,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
         }
       }
     });
-    extend(CompletionType.BASIC, psiElement(XmlTokenType.XML_DATA_CHARACTERS)
-             .withParent(psiElement(XmlText.class))
-             .inFile(PlatformPatterns.psiFile(HtmlFileImpl.class)),
+    extend(CompletionType.BASIC, getHtmlElementInTextPattern(),
            new HtmlElementInTextCompletionProvider());
   }
 
@@ -196,7 +193,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
 
     if ((elementType == XmlTokenType.XML_DATA_CHARACTERS
          || element.getNode().getElementType() == XmlTokenType.XML_WHITE_SPACE)
-        && element.getParent() instanceof XmlText
+        && (element.getParent() instanceof XmlText || element.getParent() instanceof XmlDocument)
     ) {
       return !element.getText().endsWith("<");
     }
@@ -207,9 +204,23 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     return false;
   }
 
-  public static CompletionResultSet withoutLiveTemplatesWeigher(@NotNull CompletionResultSet result,
-                                                                @NotNull CompletionParameters parameters) {
-    return result.withRelevanceSorter(withoutLiveTemplatesWeigher(null, parameters, result.getPrefixMatcher()));
+  @ApiStatus.Internal
+  public static ElementPattern<PsiElement> getHtmlElementInTextPattern() {
+    return psiElement(XmlTokenType.XML_DATA_CHARACTERS)
+      .withParent(StandardPatterns.or(psiElement(XmlText.class), psiElement(XmlDocument.class)))
+      .inFile(PlatformPatterns.psiFile(HtmlFileImpl.class));
+  }
+
+  @ApiStatus.Internal
+  public static CompletionResultSet patchResultSetForHtmlElementInTextCompletion(@NotNull CompletionResultSet result,
+                                                                                 @NotNull CompletionParameters parameters) {
+    // We want live templates to be mixed with tags and other contributions
+    result = result.withRelevanceSorter(withoutLiveTemplatesWeigher(null, parameters, result.getPrefixMatcher()));
+    if (parameters.getInvocationCount() == 0) {
+      // We only want results which start with the prefix first char
+      result = result.withPrefixMatcher(new StartOnlyMatcher(result.getPrefixMatcher()));
+    }
+    return result;
   }
 
   private static CompletionSorter withoutLiveTemplatesWeigher(@Nullable CompletionSorter sorter,
@@ -235,13 +246,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       offsets = offsets.copyWithReplacement(offset, offset, "<");
       PsiElement tag = doIfNotNull(offsets.getFile().findElementAt(offset + 1), PsiElement::getParent);
       if (tag instanceof XmlTag) {
-        // We want live templates to be mixed with tags and other contributions
-        result = withoutLiveTemplatesWeigher(result, parameters);
-        if (parameters.getInvocationCount() == 0) {
-          // We only want results which start with the prefix first char
-          result = result.withPrefixMatcher(new StartOnlyMatcher(result.getPrefixMatcher()));
-        }
-        CompletionResultSet patchedResultSet = result;
+        CompletionResultSet patchedResultSet = patchResultSetForHtmlElementInTextCompletion(result, parameters);
         for (LookupElement variant : TagNameReferenceCompletionProvider.getTagNameVariants((XmlTag)tag, "")) {
           LookupElement decorated = new LookupElementDecorator<>(variant) {
 
@@ -289,7 +294,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
           @Override
           public void afterAppend(char c) {
             // Select first item when two chars are typed after '&'
-            if (lookup.getCurrentItemOrEmpty() == null && hasTwoCharAfterAmp(lookup)) {
+            if (lookup.getCurrentItemOrEmpty() == null && hasTwoCharsAfterAmp(lookup)) {
               lookup.setSelectedIndex(0);
             }
           }
@@ -301,7 +306,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
             if (currentCompletion != null
                 && currentCompletion.isAutopopupCompletion()
                 && !lookup.isSelectionTouched()
-                && !hasTwoCharAfterAmp(lookup)) {
+                && !hasTwoCharsAfterAmp(lookup)) {
               // Deselect topmost item
               lookup.getList().setSelectedValue(null, false);
               ListSelectionModel selectionModel = lookup.getList().getSelectionModel();
@@ -313,7 +318,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       }
     }
 
-    private static boolean hasTwoCharAfterAmp(LookupImpl lookup) {
+    private static boolean hasTwoCharsAfterAmp(LookupImpl lookup) {
       int start = Math.max(lookup.getLookupStart() - 1, 0);
       int end = lookup.getEditor().getCaretModel().getOffset();
       if (end - start < 3) return false;
