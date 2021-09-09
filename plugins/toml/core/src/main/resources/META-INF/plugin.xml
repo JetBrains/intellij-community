@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="org.toml">
     <id>org.toml.lang</id>
     <name>Toml</name>
     <vendor>JetBrains</vendor>
@@ -7,7 +7,9 @@
       TOML language support
     ]]></description>
 
-    <depends>com.intellij.modules.lang</depends>
+    <dependencies>
+        <plugin id="com.intellij.modules.lang"/>
+    </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="TOML"

@@ -11,7 +11,7 @@ import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.openapi.util.io.StreamUtil
-import icons.TomlIcons
+import org.toml.TomlIcons
 import org.toml.ide.TomlHighlighter
 import org.toml.lang.TomlLanguage
 import javax.swing.Icon

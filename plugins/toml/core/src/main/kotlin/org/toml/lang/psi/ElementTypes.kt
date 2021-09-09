@@ -10,7 +10,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import icons.TomlIcons
+import org.toml.TomlIcons
 import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlElementTypes.*
 import javax.swing.Icon

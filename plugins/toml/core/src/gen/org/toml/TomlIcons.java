@@ -1,4 +1,4 @@
-package icons;
+package org.toml;
 
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
