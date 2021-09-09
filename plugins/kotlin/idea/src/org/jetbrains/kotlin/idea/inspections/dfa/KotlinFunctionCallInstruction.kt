@@ -25,6 +25,8 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 
+// TODO: support Java contracts
+// TODO: support Kotlin contracts
 class KotlinFunctionCallInstruction(
     private val call: KtExpression,
     private val argCount: Int,

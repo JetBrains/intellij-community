@@ -438,6 +438,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun inlineLambda(lambda: KtLambdaExpression) {
+        // TODO: check callsInPlace Kotlin contract and use it here
         /*
             We encode unknown call with inlineable lambda as
             unknownCode()
