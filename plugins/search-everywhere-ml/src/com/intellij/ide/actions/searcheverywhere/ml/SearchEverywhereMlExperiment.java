@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 
 public class SearchEverywhereMlExperiment {
-  private static final int NUMBER_OF_GROUPS = 8;
+  private static final int NUMBER_OF_GROUPS = 4;
 
   private final int myExperimentGroup;
   private final boolean myIsExperimentalMode;
@@ -44,7 +44,7 @@ public class SearchEverywhereMlExperiment {
 
   private static int getExperimentGroupForTab(@NotNull SearchEverywhereTabWithMl tab) {
     if (tab == SearchEverywhereTabWithMl.ACTIONS) {
-      return 6;
+      return 1;
     }
 
     return -1;
