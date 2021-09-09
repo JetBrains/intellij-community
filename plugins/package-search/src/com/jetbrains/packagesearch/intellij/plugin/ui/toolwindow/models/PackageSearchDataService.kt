@@ -492,9 +492,8 @@ internal class PackageSearchDataService(
         allKnownRepositories: KnownRepositories.All
     ): PackagesHeaderData {
         val count = installedUiPackageModels.count() + installableUiPackageModels.count()
-        val selectedModules = targetModulesState.value
-        val moduleNames = if (selectedModules.size == 1) {
-            selectedModules.first().projectModule.name
+        val moduleNames = if (targetModules is TargetModules.One) {
+            targetModules.module.projectModule.name
         } else {
             PackageSearchBundle.message("packagesearch.ui.toolwindow.allModules").lowercase()
         }
