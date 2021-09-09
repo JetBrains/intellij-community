@@ -41,10 +41,10 @@ import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
-  private static final Key<Pair<Long, Date>> SECOND_FORMAT_KEY = Key.create("second.format");
+  private static final Key<Trinity<Long, Date, List<TextRange>>> SECOND_FORMAT_KEY = Key.create("second.format");
   private static final String SECOND_REFORMAT_CONFIRMED = "second.reformat.confirmed";
 
-  private final Collection<TextRange> myRanges = new ArrayList<>();
+  private final List<TextRange> myRanges = new ArrayList<>();
   private SelectionModel mySelectionModel;
 
   public ReformatCodeProcessor(Project project, boolean processChangedTextOnly) {
@@ -109,7 +109,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public void setDoNotKeepLineBreaks(PsiFile file) {
-    file.putUserData(SECOND_FORMAT_KEY, Pair.create(file.getModificationStamp(), new Date()));
+    file.putUserData(SECOND_FORMAT_KEY, Trinity.create(file.getModificationStamp(), new Date(), myRanges));
   }
 
   @Override
@@ -227,9 +227,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
-  private static boolean isDoNotKeepLineBreaks(PsiFile file) {
-    Pair<Long, Date> pair = SECOND_FORMAT_KEY.get(file);
-    return pair != null && pair.first == file.getModificationStamp() && (new Date().getTime() - pair.second.getTime() < 5000);
+  private boolean isDoNotKeepLineBreaks(PsiFile file) {
+    Trinity<Long, Date, List<TextRange>> previous = SECOND_FORMAT_KEY.get(file);
+    return previous != null && previous.first == file.getModificationStamp() &&
+           (new Date().getTime() - previous.second.getTime() < 5000) &&
+           myRanges.equals(previous.third);
   }
 
   @Nullable
