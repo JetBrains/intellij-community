@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.feature.suggester.DocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
@@ -68,7 +69,12 @@ class NotificationSuggestionPresenter :
         notification: Notification,
         suggestion: DocumentationSuggestion
     ): AnAction {
-        return object : AnAction(FeatureSuggesterBundle.message("notification.learn.more")) {
+        return object : AnAction(
+            FeatureSuggesterBundle.message(
+                "notification.open.help",
+                ApplicationNamesInfo.getInstance().productName
+            )
+        ) {
             override fun actionPerformed(e: AnActionEvent) {
                 BrowserUtil.open(suggestion.documentURL)
                 notification.hideBalloon()
