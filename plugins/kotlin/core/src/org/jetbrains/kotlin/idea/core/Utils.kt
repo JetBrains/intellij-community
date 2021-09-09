@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpression
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
@@ -194,4 +196,14 @@ fun isEnumCompanionPropertyWithEntryConflict(element: PsiElement, expectedName: 
     if (!outerClass.isEnum()) return false
 
     return outerClass.declarations.any { it is KtEnumEntry && it.name == expectedName }
+}
+
+fun KtModifierKeywordToken.toVisibility(): DescriptorVisibility {
+    return when (this) {
+        KtTokens.PUBLIC_KEYWORD -> DescriptorVisibilities.PUBLIC
+        KtTokens.PRIVATE_KEYWORD -> DescriptorVisibilities.PRIVATE
+        KtTokens.PROTECTED_KEYWORD -> DescriptorVisibilities.PROTECTED
+        KtTokens.INTERNAL_KEYWORD -> DescriptorVisibilities.INTERNAL
+        else -> throw IllegalArgumentException("Unknown visibility modifier:$this")
+    }
 }
