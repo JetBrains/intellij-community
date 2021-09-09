@@ -53,6 +53,11 @@ public class WSLDistribution {
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
+  public static final String WSL_EXE = "wsl.exe";
+  public static final String DISTRIBUTION_PARAMETER = "--distribution";
+  public static final String SHELL_PARAMETER = "$SHELL";
+  public static final String EXIT_CODE_PARAMETER = "; exitcode=$?";
+  public static final String EXEC_PARAMETER = "--exec";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
@@ -301,21 +306,21 @@ public class WSLDistribution {
     String linuxCommandStr = StringUtil.join(linuxCommand, " ");
     if (wslExe != null) {
       commandLine.setExePath(wslExe.toString());
+      commandLine.addParameters(DISTRIBUTION_PARAMETER, getMsId());
       if (isElevated) {
         commandLine.addParameters("-u", "root");
       }
-      commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
         // workaround WSL1 problem: https://github.com/microsoft/WSL/issues/4082
         if (options.getSleepTimeoutSec() > 0 && getVersion() == 1) {
-          linuxCommandStr += "; exitcode=$?; sleep " + options.getSleepTimeoutSec() + "; (exit $exitcode)";
+          linuxCommandStr += EXIT_CODE_PARAMETER + "; sleep " + options.getSleepTimeoutSec() + "; (exit $exitcode)";
         }
 
         if (options.isExecuteCommandInDefaultShell()) {
-          commandLine.addParameters("$SHELL", "-c", linuxCommandStr);
+          commandLine.addParameters(SHELL_PARAMETER, "-c", linuxCommandStr);
         }
         else {
-          commandLine.addParameters("--exec", options.getShellPath());
+          commandLine.addParameters(EXEC_PARAMETER, options.getShellPath());
           if (options.isExecuteCommandInInteractiveShell()) {
             commandLine.addParameters("-i");
           }
@@ -326,7 +331,7 @@ public class WSLDistribution {
         }
       }
       else {
-        commandLine.addParameter("--exec");
+        commandLine.addParameter(EXEC_PARAMETER);
         commandLine.addParameters(linuxCommand);
       }
     }
@@ -359,7 +364,7 @@ public class WSLDistribution {
   }
 
   public static @Nullable Path findWslExe() {
-    File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
+    File file = PathEnvironmentVariableUtil.findInPath(WSL_EXE);
     return file != null ? file.toPath() : null;
   }
 
