@@ -603,23 +603,26 @@ idea.fatal.error.notification=disabled
   }
 
   private void setupJBre(String targetArch = null) {
-    logFreeDiskSpace("before downloading JREs")
-    String[] args = [
-      'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
-      "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
-    ]
-    if (targetArch != null) {
-      args += "-Dintellij.build.target.arch=" + targetArch
+    def message = 'Downloading JetBrains Runtime'
+    buildContext.executeStep(message, BuildOptions.RUNTIME_DOWNLOADING_STEP) {
+      logFreeDiskSpace("before downloading runtime")
+      String[] args = [
+        'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
+        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
+      ]
+      if (targetArch != null) {
+        args += "-Dintellij.build.target.arch=" + targetArch
+      }
+      String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
+      if (prefix != null) {
+        args += "-Dintellij.build.bundled.jre.prefix=" + prefix
+      }
+      if (buildContext.options.bundledJreBuild != null) {
+        args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledJreBuild
+      }
+      buildContext.gradle.run(message, args)
+      logFreeDiskSpace("after downloading runtime")
     }
-    String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
-    if (prefix != null) {
-      args += "-Dintellij.build.bundled.jre.prefix=" + prefix
-    }
-    if (buildContext.options.bundledJreBuild != null) {
-      args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledJreBuild
-    }
-    buildContext.gradle.run('Setting up JetBrains JREs', args)
-    logFreeDiskSpace("after downloading JREs")
   }
 
   private void setupBundledMaven() {
