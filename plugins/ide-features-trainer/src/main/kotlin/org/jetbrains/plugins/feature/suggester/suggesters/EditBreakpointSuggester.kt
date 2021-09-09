@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.lang.Language
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.TipSuggestion
@@ -13,10 +14,9 @@ import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 
 class EditBreakpointSuggester : AbstractFeatureSuggester() {
     override val id: String = "Edit breakpoint"
-    override val suggestingActionDisplayName: String = "Edit breakpoint"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("edit.breakpoint.name")
 
-    override val message =
-        "You may edit breakpoint and make it conditional instead of waiting needed iteration. Use right click on breakpoint gutter."
+    override val message = FeatureSuggesterBundle.message("edit.breakpoint.message")
     override val suggestingActionId = "com.intellij.xdebugger.impl.actions.EditBreakpointAction\$ContextAction"
     override val suggestingTipFileName = "BreakpointSpeedmenu.html"
 

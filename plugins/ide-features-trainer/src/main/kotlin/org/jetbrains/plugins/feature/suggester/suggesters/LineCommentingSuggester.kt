@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
@@ -13,9 +14,9 @@ import kotlin.math.abs
 
 class LineCommentingSuggester : AbstractFeatureSuggester() {
     override val id: String = "Comment with line comment"
-    override val suggestingActionDisplayName: String = "Comment with line comment"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("line.commenting.name")
 
-    override val message = "Try the Comment Line feature to do it faster."
+    override val message = FeatureSuggesterBundle.message("line.commenting.message")
     override val suggestingActionId = "CommentByLineComment"
     override val suggestingTipFileName = "CommentCode.html"
 

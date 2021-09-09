@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
@@ -15,9 +16,9 @@ import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class SurroundWithSuggester : AbstractFeatureSuggester() {
     override val id: String = "Surround with"
-    override val suggestingActionDisplayName: String = "Surround with"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("surround.with.name")
 
-    override val message = "Why not to use Surround With action?"
+    override val message = FeatureSuggesterBundle.message("surround.with.message")
     override val suggestingActionId = "SurroundWith"
     override val suggestingTipFileName = "SurroundWith.html"
 

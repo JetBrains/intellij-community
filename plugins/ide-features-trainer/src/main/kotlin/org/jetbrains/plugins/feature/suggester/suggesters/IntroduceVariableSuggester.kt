@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
@@ -15,9 +16,9 @@ import java.awt.datatransfer.DataFlavor
 
 class IntroduceVariableSuggester : AbstractFeatureSuggester() {
     override val id: String = "Introduce variable"
-    override val suggestingActionDisplayName: String = "Introduce variable"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("introduce.variable.name")
 
-    override val message = "Why not use the Introduce Variable refactoring?"
+    override val message = FeatureSuggesterBundle.message("introduce.variable.message")
     override val suggestingActionId = "IntroduceVariable"
     override val suggestingTipFileName = "IntroduceVariable.html"
 

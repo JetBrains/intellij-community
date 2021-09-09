@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.lang.Language
 import com.intellij.openapi.ide.CopyPasteManager
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorCopyAction
@@ -12,9 +13,9 @@ import java.awt.datatransfer.Transferable
 
 class CopyPasteSuggester : AbstractFeatureSuggester() {
     override val id: String = "Paste from history"
-    override val suggestingActionDisplayName: String = "Paste from history"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("paste.from.history.name")
 
-    override val message = "You may use history of clipboard that can save your time."
+    override val message = FeatureSuggesterBundle.message("paste.from.history.message")
     override val suggestingActionId = "PasteMultiple"
     override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/working-with-source-code.html#copy_paste"
 

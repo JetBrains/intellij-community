@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.feature.suggester.DocumentationSuggestion
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.TipSuggestion
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
@@ -31,7 +32,7 @@ class NotificationSuggestionPresenter :
 
     override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
         val notification = notificationGroup.createNotification(
-            title = "IDE Feature Suggester",
+            title = FeatureSuggesterBundle.message("notification.title"),
             content = suggestion.message,
             type = NotificationType.INFORMATION
         ).apply {
@@ -55,7 +56,7 @@ class NotificationSuggestionPresenter :
     }
 
     private fun createDontSuggestAction(notification: Notification, suggestion: PopupSuggestion): AnAction {
-        return object : AnAction("Do not suggest this action anymore") {
+        return object : AnAction(FeatureSuggesterBundle.message("notification.dont.suggest")) {
             override fun actionPerformed(e: AnActionEvent) {
                 val settings = FeatureSuggesterSettings.instance()
                 settings.setEnabled(suggestion.suggesterId, false)
@@ -66,9 +67,8 @@ class NotificationSuggestionPresenter :
     }
 
     private fun createThanksAction(notification: Notification, suggestion: PopupSuggestion): AnAction {
-        return object : AnAction("Thanks! Useful suggestion") {
+        return object : AnAction(FeatureSuggesterBundle.message("notification.thanks")) {
             override fun actionPerformed(e: AnActionEvent) {
-                notification.hideBalloon()
                 FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_THANKS_EVENT_ID, suggestion.suggesterId)
             }
         }
@@ -78,7 +78,7 @@ class NotificationSuggestionPresenter :
         notification: Notification,
         suggestion: DocumentationSuggestion
     ): AnAction {
-        return object : AnAction("Learn more") {
+        return object : AnAction(FeatureSuggesterBundle.message("notification.learn.more")) {
             override fun actionPerformed(e: AnActionEvent) {
                 BrowserUtil.open(suggestion.documentURL)
                 notification.hideBalloon()
@@ -93,7 +93,7 @@ class NotificationSuggestionPresenter :
         suggestion: TipSuggestion
     ): AnAction? {
         val tip = getTipByFilename(suggestion.suggestingTipFilename) ?: return null
-        return object : AnAction("Learn more") {
+        return object : AnAction(FeatureSuggesterBundle.message("notification.learn.more")) {
             override fun actionPerformed(e: AnActionEvent) {
                 SingleTipDialog.showForProject(project, tip)
                 notification.hideBalloon()

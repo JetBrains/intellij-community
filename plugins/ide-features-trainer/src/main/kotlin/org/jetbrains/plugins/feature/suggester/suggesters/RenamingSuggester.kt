@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
@@ -14,9 +15,9 @@ import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class RenamingSuggester : AbstractFeatureSuggester() {
     override val id: String = "Rename all occurrences"
-    override val suggestingActionDisplayName: String = "Rename all occurrences"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("rename.name")
 
-    override val message = "Why not to use safe renaming?"
+    override val message = FeatureSuggesterBundle.message("rename.message")
     override val suggestingActionId = "Rename"
     override val suggestingTipFileName = "Rename.html"
 

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.lang.Language
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BreakpointAddedAction
@@ -16,9 +17,9 @@ import kotlin.math.abs
 
 class MuteBreakpointsSuggester : AbstractFeatureSuggester() {
     override val id: String = "Mute breakpoints"
-    override val suggestingActionDisplayName: String = "Mute breakpoints"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("mute.breakpoints.name")
 
-    override val message = "You may mute all breakpoints instead of deleting them."
+    override val message = FeatureSuggesterBundle.message("mute.breakpoints.message")
     override val suggestingActionId = "XDebugger.MuteBreakpoints"
     override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/using-breakpoints.html#mute"
 

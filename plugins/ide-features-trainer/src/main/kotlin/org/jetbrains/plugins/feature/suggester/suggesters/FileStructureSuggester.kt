@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.EditorFindAction
@@ -15,9 +16,9 @@ import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class FileStructureSuggester : AbstractFeatureSuggester() {
     override val id: String = "File structure"
-    override val suggestingActionDisplayName: String = "File structure"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("file.structure.name")
 
-    override val message = "Finding a definition can be faster using the File Structure action."
+    override val message = FeatureSuggesterBundle.message("file.structure.message")
     override val suggestingActionId = "FileStructurePopup"
     override val suggestingTipFileName = "FileStructurePopup.html"
 

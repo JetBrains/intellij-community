@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.ui.JBUI
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import java.awt.Window
 import javax.swing.JComponent
 
@@ -36,7 +37,7 @@ class SingleTipDialog(parent: Window, tip: TipAndTrickBean) : DialogWrapper(pare
 
     init {
         isModal = false
-        title = "Suggested Tip"
+        title = FeatureSuggesterBundle.message("tip.title")
         setCancelButtonText(CommonBundle.getCloseButtonText())
         tipPanel = SingleTipPanel(tip)
         horizontalStretch = 1.33f

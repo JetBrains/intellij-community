@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeCompletionChooseItemAction
@@ -15,9 +16,9 @@ import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class CompletionPopupSuggester : AbstractFeatureSuggester() {
     override val id = "Completion"
-    override val suggestingActionDisplayName = "Show completion popup"
+    override val suggestingActionDisplayName = FeatureSuggesterBundle.message("completion.popup.name")
 
-    override val message = "You may use shortcut to call completion popup."
+    override val message = FeatureSuggesterBundle.message("completion.popup.message")
     override val suggestingActionId = "CodeCompletion"
     override val suggestingTipFileName = "CodeCompletion.html"
 

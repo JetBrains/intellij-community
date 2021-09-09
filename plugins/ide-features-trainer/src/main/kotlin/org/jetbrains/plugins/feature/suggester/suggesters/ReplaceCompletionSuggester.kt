@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeCompletionChooseItemAction
@@ -21,9 +22,9 @@ import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
     override val id: String = "Completion with replace"
-    override val suggestingActionDisplayName: String = "Choose lookup item and replace"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("replace.completion.name")
 
-    override val message = "In completion popup you may use shortcut to replace current expression."
+    override val message = FeatureSuggesterBundle.message("replace.completion.message")
     override val suggestingActionId = "EditorChooseLookupItemReplace"
     override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/auto-completing-code.html#accept"
 

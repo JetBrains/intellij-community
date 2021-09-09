@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.lang.Language
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BreakpointAddedAction
@@ -12,9 +13,9 @@ import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 
 class RunToCursorSuggester : AbstractFeatureSuggester() {
     override val id: String = "Run to cursor"
-    override val suggestingActionDisplayName: String = "Run to cursor"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("run.to.cursor.name")
 
-    override val message = "You may use run to cursor instead of placing and removing breakpoints."
+    override val message = FeatureSuggesterBundle.message("run.to.cursor.message")
     override val suggestingActionId = "RunToCursor"
     override val suggestingDocUrl =
         "https://www.jetbrains.com/help/idea/stepping-through-the-program.html#run-to-cursor"

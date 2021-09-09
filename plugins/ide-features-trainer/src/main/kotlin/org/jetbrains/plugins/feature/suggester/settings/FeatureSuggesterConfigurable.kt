@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.settings
 
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 import javax.swing.JComponent
 
@@ -34,5 +35,5 @@ class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependenci
         return mutableListOf(FeatureSuggester.EP_NAME)
     }
 
-    override fun getDisplayName(): String = "Feature Suggester"
+    override fun getDisplayName(): String = FeatureSuggesterBundle.message("configurable.name")
 }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.TextFragment
@@ -12,9 +13,9 @@ import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class UnwrapSuggester : AbstractFeatureSuggester() {
     override val id: String = "Unwrap"
-    override val suggestingActionDisplayName: String = "Unwrap"
+    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("unwrap.name")
 
-    override val message = "Why not to use Unwrap action?"
+    override val message = FeatureSuggesterBundle.message("unwrap.message")
     override val suggestingActionId = "Unwrap"
     override val suggestingDocUrl =
         "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"

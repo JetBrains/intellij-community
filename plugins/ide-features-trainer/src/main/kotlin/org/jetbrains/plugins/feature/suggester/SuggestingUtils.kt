@@ -13,6 +13,7 @@ import com.intellij.psi.util.parents
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -69,12 +70,13 @@ internal fun actionsLocalSummary(): ActionsLocalSummary {
     return ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
 }
 
+@Nls
 internal fun getShortcutText(actionId: String): String {
     val shortcut = KeymapUtil.getShortcutText(actionId)
     return if (shortcut == "<no shortcut>") {
-        "You can bind this action to convenient shortcut."
+        FeatureSuggesterBundle.message("shortcut.not.found.message")
     } else {
-        "Shortcut: $shortcut"
+        FeatureSuggesterBundle.message("shortcut", shortcut)
     }
 }
 

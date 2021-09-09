@@ -4,6 +4,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.ThreeStateCheckBox.State
+import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -23,7 +24,7 @@ class FeatureSuggestersPanel(
     private val settings: FeatureSuggesterSettings
 ) : JPanel() {
     private val toggleAllCheckBox =
-        ThreeStateCheckBox("Show suggestions for actions that I have not performed in more than ", State.SELECTED)
+        ThreeStateCheckBox(FeatureSuggesterBundle.message("configurable.show.suggestions.checkbox"), State.SELECTED)
     private val suggestingIntervalField = JTextField(3)
     private val actionPanels: List<SuggestingActionPanel> =
         suggesterIdToName.map { SuggestingActionPanel(it.key, it.value) }
@@ -41,7 +42,7 @@ class FeatureSuggestersPanel(
             border = JBUI.Borders.empty(0, 10, 0, 0)
         }
         val instructionLabel =
-            JLabel("<html><body>Configure suggestions for actions. It will suggest the following actions in cases where their application can be effective.</body></html>")
+            JLabel("<html><body>${FeatureSuggesterBundle.message("configurable.explanation")}</body></html>")
         instructionLabel.maximumSize = Dimension(580, 50)
         panel.apply {
             add(instructionLabel)
@@ -66,7 +67,7 @@ class FeatureSuggestersPanel(
         }
 
         suggestingIntervalField.maximumSize = Dimension(49, 30)
-        val daysLabel = JBLabel(" days.")
+        val daysLabel = JBLabel(FeatureSuggesterBundle.message("configurable.days.label"))
 
         panel.apply {
             add(toggleAllCheckBox)
