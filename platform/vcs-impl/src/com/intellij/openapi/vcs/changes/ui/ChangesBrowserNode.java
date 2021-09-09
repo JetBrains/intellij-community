@@ -400,12 +400,8 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
     private final @NotNull Object myValue;
 
-    public WrapperTag(@NotNull Object value) {
+    private WrapperTag(@NotNull Object value) {
       myValue = value;
-    }
-
-    public @NotNull Object getValue() {
-      return myValue;
     }
 
     @Nls
