@@ -15,7 +15,7 @@ class KotlinUBinaryExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UBinaryExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
 
-    internal companion object {
+    companion object {
         val BITWISE_OPERATORS = mapOf(
             "or" to UastBinaryOperator.BITWISE_OR,
             "and" to UastBinaryOperator.BITWISE_AND,
