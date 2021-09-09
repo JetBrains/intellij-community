@@ -12,7 +12,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.search.codeUsageScope
+import org.jetbrains.kotlin.idea.search.codeUsageScopeRestrictedToProject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -22,7 +22,7 @@ abstract class AbstractKotlinDeclarationInlineProcessor<TElement : KtDeclaration
     protected val declaration: TElement,
     protected val editor: Editor?,
     project: Project,
-) : BaseRefactoringProcessor(project, declaration.codeUsageScope(), null) {
+) : BaseRefactoringProcessor(project, declaration.codeUsageScopeRestrictedToProject(), null) {
 
     protected val kind = when (declaration) {
         is KtNamedFunction ->

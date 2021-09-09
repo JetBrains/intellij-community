@@ -96,6 +96,8 @@ fun isOnlyKotlinSearch(searchScope: SearchScope): Boolean {
     return searchScope is LocalSearchScope && searchScope.scope.all { it.containingFile is KtFile }
 }
 
+fun PsiElement.codeUsageScopeRestrictedToProject(): SearchScope = project.projectScope().intersectWith(codeUsageScope())
+
 fun PsiElement.codeUsageScope(): SearchScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(this)
 // TODO: improve scope calculations
 fun PsiElement.codeUsageScopeRestrictedToKotlinSources(): SearchScope = codeUsageScope().restrictToKotlinSources()
