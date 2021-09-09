@@ -5,16 +5,17 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContent.TextDomain.*
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.utils.Text
 import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
-import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import java.util.regex.Pattern
 
 internal class KotlinTextExtractor : TextExtractor() {
   private val kdocBuilder = TextContentBuilder.FromPsi
@@ -26,10 +27,10 @@ internal class KotlinTextExtractor : TextExtractor() {
   public override fun buildTextContent(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): TextContent? {
     if (DOCUMENTATION in allowedDomains) {
       if (root is KDocSection) {
-        return kdocBuilder.excluding { e -> e is KDocTag && e != root }.build(root, DOCUMENTATION)
+        return kdocBuilder.excluding { e -> e is KDocTag && e != root }.build(root, DOCUMENTATION)?.removeCode()
       }
       if (root is KDocTag) {
-        return kdocBuilder.excluding { e -> e.elementType == KDocTokens.TAG_NAME }.build(root, DOCUMENTATION)
+        return kdocBuilder.excluding { e -> e.elementType == KDocTokens.TAG_NAME }.build(root, DOCUMENTATION)?.removeCode()
       }
     }
     if (COMMENTS in allowedDomains && root is PsiCommentImpl) {
@@ -46,4 +47,9 @@ internal class KotlinTextExtractor : TextExtractor() {
     }
     return null
   }
+
+    private val codeFragments = Pattern.compile("(?s)```.+?```|`.+?`")
+
+    private fun TextContent.removeCode(): TextContent? =
+        excludeRanges(Text.allOccurrences(codeFragments, this).map { TextContent.Exclusion.markUnknown(it) })
 }
