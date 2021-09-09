@@ -1,5 +1,4 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import java.util.concurrent.TimeUnit
 
 apply from: 'archivesCleanup.gradle'
 
@@ -43,7 +42,7 @@ static def splitJbrBuild(String jreBuild, String version) {
 
 def jbrTasks(String defaultBuild, int version, String targetOs, String targetArch, String forcedPrefix) {
   platformsToDownload(targetOs).each { platform ->
-    archToDownload(platform, targetArch).each { arch ->
+    archToDownload(platform, targetArch, version).each { arch ->
       prefixes(arch, forcedPrefix).each { prefix ->
         def jbrBuild = project.ext.has("jreBuild_${platform}_${arch}") ? project.ext["jreBuild_${platform}_${arch}"] :
                        (project.ext.has("jreBuild_${platform}") ? project.ext["jreBuild_${platform}"] : defaultBuild)
@@ -90,11 +89,17 @@ enum Arch {
   x86, x64, aarch64
 }
 
-static def archToDownload(String platform, String targetArch) {
+static def archToDownload(String platform, String targetArch, int jbrVersion) {
   if (targetArch != null) {
     return [Arch.valueOf(targetArch)]
   }
-  platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64, Arch.aarch64]
+  if (platform == 'osx') {
+    return [Arch.x64, Arch.aarch64]
+  }
+  if (jbrVersion > 11) {
+    return [Arch.x64]
+  }
+  return [Arch.x86, Arch.x64]
 }
 
 /**
