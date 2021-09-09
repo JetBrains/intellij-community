@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -180,12 +180,15 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
         for (String toolId : suppressedIds) {
           PsiElement documentedElement = globalContext.getRefManager().getContainerElement(suppressedScope);
           if (documentedElement != null && documentedElement.isValid()) {
-            if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<>();
-            String key = toolId + ";" + suppressedScope.getLanguage().getID();
-            QuickFix<?> fix = myQuickFixes.get(key);
-            if (fix == null) {
-              fix = createQuickFix(key);
-              myQuickFixes.put(key, fix);
+            QuickFix<?> fix;
+            synchronized (this) {
+              if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<>();
+              String key = toolId + ";" + suppressedScope.getLanguage().getID();
+              fix = myQuickFixes.get(key);
+              if (fix == null) {
+                fix = createQuickFix(key);
+                myQuickFixes.put(key, fix);
+              }
             }
             PsiElement identifier;
             if (suppressedScope instanceof PsiNameIdentifierOwner && suppressedScope == documentedElement) {
@@ -286,12 +289,12 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
   }
 
   @Override
-  public @Nullable QuickFix<?> getQuickFix(final String hint) {
+  public synchronized @Nullable QuickFix<?> getQuickFix(final String hint) {
     return myQuickFixes != null ? myQuickFixes.get(hint) : createQuickFix(hint);
   }
 
   @Override
-  public @Nullable String getHint(final @NotNull QuickFix fix) {
+  public synchronized @Nullable String getHint(final @NotNull QuickFix fix) {
     if (myQuickFixes != null) {
       final List<String> list = myQuickFixes.getKeysByValue(fix);
       if (list != null) {
