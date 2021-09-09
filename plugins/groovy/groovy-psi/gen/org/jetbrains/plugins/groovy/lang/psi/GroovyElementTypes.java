@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationMethodEl
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrClassDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType;
@@ -66,6 +67,7 @@ public interface GroovyElementTypes {
   GroovyElementType ATTRIBUTE_EXPRESSION = new GroovyElementType("ATTRIBUTE_EXPRESSION");
   GroovyElementType BAND_EXPRESSION = new GroovyElementType("BAND_EXPRESSION");
   GrBlockLambdaBodyElementType BLOCK_LAMBDA_BODY = new GrBlockLambdaBodyElementType("BLOCK_LAMBDA_BODY");
+  GrBlockLambdaBodyElementType BLOCK_LAMBDA_BODY_SWITCH_AWARE = ParserUtils.getSwitchAwareLambdaBlockElementType("BLOCK_LAMBDA_BODY_SWITCH_AWARE");
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("BLOCK_STATEMENT");
   GroovyElementType BOR_EXPRESSION = new GroovyElementType("BOR_EXPRESSION");
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("BREAK_STATEMENT");
@@ -78,6 +80,7 @@ public interface GroovyElementTypes {
   GrClassDefinitionElementType CLASS_TYPE_DEFINITION = new GrClassDefinitionElementType("CLASS_TYPE_DEFINITION");
   GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("CLASS_TYPE_ELEMENT");
   GrClosureElementType CLOSURE = new GrClosureElementType("CLOSURE");
+  GrClosureElementType CLOSURE_SWITCH_AWARE = ParserUtils.getSwitchAwareClosureBlockElementType("CLOSURE_SWITCH_AWARE");
   GroovyElementType CODE_REFERENCE = new GroovyElementType("CODE_REFERENCE");
   GrConstructorElementType CONSTRUCTOR = new GrConstructorElementType("CONSTRUCTOR");
   GrConstructorBlockElementType CONSTRUCTOR_BLOCK = new GrConstructorBlockElementType("CONSTRUCTOR_BLOCK");
@@ -125,6 +128,7 @@ public interface GroovyElementTypes {
   GroovyElementType NAMED_ARGUMENT = new GroovyElementType("NAMED_ARGUMENT");
   GroovyElementType NEW_EXPRESSION = new GroovyElementType("NEW_EXPRESSION");
   GrBlockElementType OPEN_BLOCK = new GrBlockElementType("OPEN_BLOCK");
+  GrBlockElementType OPEN_BLOCK_SWITCH_AWARE = ParserUtils.getSwitchAwareBlockElementType("OPEN_BLOCK_SWITCH_AWARE");
   GrPackageDefinitionElementType PACKAGE_DEFINITION = new GrPackageDefinitionElementType("PACKAGE_DEFINITION");
   GrParameterElementType PARAMETER = new GrParameterElementType("PARAMETER");
   GrParameterListElementType PARAMETER_LIST = new GrParameterListElementType("PARAMETER_LIST");

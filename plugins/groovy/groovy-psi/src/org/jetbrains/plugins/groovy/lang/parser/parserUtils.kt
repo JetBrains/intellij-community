@@ -37,19 +37,26 @@ private val collapseHook = Hook<IElementType> { _, marker: Marker?, elementType:
 }
 
 fun parseBlockLazy(builder: PsiBuilder, level: Int, deepParser: Parser, elementType: IElementType): Boolean {
-  return if (isLazyParsingForbidden(builder) || builder.groovyParser.parseDeep()) {
+  return if (builder.groovyParser.parseDeep()) {
     deepParser.parse(builder, level + 1)
   }
   else {
-    register_hook_(builder, collapseHook, elementType)
-    parseBlockLazy(builder, T_LBRACE, T_RBRACE, elementType) != null
+    val contextAwareElementType = induceContext(elementType, builder)
+    register_hook_(builder, collapseHook, contextAwareElementType)
+    parseBlockLazy(builder, T_LBRACE, T_RBRACE, contextAwareElementType) != null
   }
 }
 
-private fun isLazyParsingForbidden(builder : PsiBuilder) : Boolean {
-  return builder[insideSwitchExpression]
+private fun induceContext(elementType: IElementType, builder: PsiBuilder) : IElementType = if (builder[insideSwitchExpression]) {
+  when(elementType) {
+    OPEN_BLOCK -> OPEN_BLOCK_SWITCH_AWARE
+    BLOCK_LAMBDA_BODY -> BLOCK_LAMBDA_BODY_SWITCH_AWARE
+    CLOSURE -> CLOSURE_SWITCH_AWARE
+    else -> elementType
+  }
+} else {
+  elementType
 }
-
 
 fun extendedStatement(builder: PsiBuilder, level: Int): Boolean = builder.groovyParser.parseExtendedStatement(builder)
 
@@ -447,7 +454,7 @@ private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
 }
 
 fun isAfterClosure(builder: PsiBuilder, level: Int): Boolean {
-  return builder.latestDoneMarker?.tokenType == CLOSURE
+  return builder.latestDoneMarker?.tokenType is GrClosureElementType
 }
 
 fun isParameterizedClosure(builder: PsiBuilder, level: Int): Boolean {

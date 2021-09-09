@@ -604,12 +604,18 @@ constructor_block ::= '{' mb_separators [constructor_call_expression block_level
   extraRoot = true
 }
 lazy_block ::= <<parseBlockLazy open_block 'OPEN_BLOCK'>> { elementType = '' }
-open_block ::= '{' mb_separators block_levels '}'
+open_block ::= open_block_impl
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType'
-  pin = 1
   extraRoot = true
 }
+open_block_switch_aware ::= <<insideSwitchExpression open_block_impl>>
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType'
+  elementTypeFactory = 'org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getSwitchAwareBlockElementType'
+  extraRoot = true
+}
+private open_block_impl ::= '{' mb_separators block_levels '}' { pin = 1 }
 // endregion
 
 
@@ -1002,11 +1008,17 @@ lazy_block_lambda_body ::= <<parseBlockLazy block_lambda_body 'BLOCK_LAMBDA_BODY
   elementType = block_lambda_body
 }
 
-block_lambda_body ::= '{' mb_nl block_levels '}' {
+block_lambda_body ::= block_lambda_body_impl {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType'
   consumeTokenMethod = 'consumeTokenFast'
   extraRoot = true
 }
+block_lambda_body_switch_aware ::= <<insideSwitchExpression block_lambda_body_impl>> {
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType'
+  elementTypeFactory = 'org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getSwitchAwareLambdaBlockElementType'
+  extraRoot = true
+}
+private block_lambda_body_impl ::= '{' mb_nl block_levels '}'
 // endregion
 
 lazy_closure ::= <<parseBlockLazy closure 'CLOSURE'>>
@@ -1014,13 +1026,19 @@ lazy_closure ::= <<parseBlockLazy closure 'CLOSURE'>>
   extends = expression
   elementType = closure
 }
-closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
+closure ::= closure_impl
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
-  pin = 1
-  consumeTokenMethod = 'consumeTokenFast'
   extraRoot = true
 }
+closure_switch_aware ::= <<insideSwitchExpression closure_impl>>
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
+  elementTypeFactory = 'org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getSwitchAwareClosureBlockElementType'
+  extraRoot = true
+}
+private closure_impl ::= '{' mb_nl closure_header mb_separators block_levels '}' { pin = 1   consumeTokenMethod = 'consumeTokenFast'
+ }
 private closure_header ::= closure_header_with_arrow | empty_parameter_list
 private closure_header_with_arrow ::= empty_parameter_list mb_nl closure_arrow | closure_parameter_list mb_nl closure_arrow
 private closure_arrow ::= '->'

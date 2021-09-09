@@ -46,11 +46,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     else if (t == BLOCK_LAMBDA_BODY) {
       r = block_lambda_body(b, l + 1);
     }
+    else if (t == BLOCK_LAMBDA_BODY_SWITCH_AWARE) {
+      r = block_lambda_body_switch_aware(b, l + 1);
+    }
     else if (t == BLOCK_STATEMENT) {
       r = block_statement(b, l + 1);
     }
     else if (t == CLOSURE) {
       r = closure(b, l + 1);
+    }
+    else if (t == CLOSURE_SWITCH_AWARE) {
+      r = closure_switch_aware(b, l + 1);
     }
     else if (t == CODE_REFERENCE) {
       r = code_reference(b, l + 1);
@@ -60,6 +66,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     }
     else if (t == OPEN_BLOCK) {
       r = open_block(b, l + 1);
+    }
+    else if (t == OPEN_BLOCK_SWITCH_AWARE) {
+      r = open_block_switch_aware(b, l + 1);
     }
     else if (t == TYPE_ELEMENT) {
       r = type_element(b, l + 1);
@@ -1376,17 +1385,40 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' mb_nl block_levels '}'
+  // block_lambda_body_impl
   public static boolean block_lambda_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_lambda_body")) return false;
     if (!nextTokenIsFast(b, T_LBRACE)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenFast(b, T_LBRACE);
+    r = block_lambda_body_impl(b, l + 1);
+    exit_section_(b, m, BLOCK_LAMBDA_BODY, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '{' mb_nl block_levels '}'
+  static boolean block_lambda_body_impl(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_lambda_body_impl")) return false;
+    if (!nextTokenIs(b, T_LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_LBRACE);
     r = r && mb_nl(b, l + 1);
     r = r && block_levels(b, l + 1);
     r = r && consumeToken(b, T_RBRACE);
-    exit_section_(b, m, BLOCK_LAMBDA_BODY, r);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // <<insideSwitchExpression block_lambda_body_impl>>
+  public static boolean block_lambda_body_switch_aware(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_lambda_body_switch_aware")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, BLOCK_LAMBDA_BODY_SWITCH_AWARE, "<block lambda body switch aware>");
+    r = insideSwitchExpression(b, l + 1, GroovyGeneratedParser::block_lambda_body_impl);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -2334,21 +2366,15 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' mb_nl closure_header mb_separators block_levels '}'
+  // closure_impl
   public static boolean closure(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "closure")) return false;
     if (!nextTokenIsFast(b, T_LBRACE)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, CLOSURE, null);
-    r = consumeTokenFast(b, T_LBRACE);
-    p = r; // pin = 1
-    r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, closure_header(b, l + 1)) && r;
-    r = p && report_error_(b, mb_separators(b, l + 1)) && r;
-    r = p && report_error_(b, block_levels(b, l + 1)) && r;
-    r = p && consumeToken(b, T_RBRACE) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = closure_impl(b, l + 1);
+    exit_section_(b, m, CLOSURE, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2404,6 +2430,24 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // '{' mb_nl closure_header mb_separators block_levels '}'
+  static boolean closure_impl(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "closure_impl")) return false;
+    if (!nextTokenIsFast(b, T_LBRACE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeTokenFast(b, T_LBRACE);
+    p = r; // pin = 1
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && report_error_(b, closure_header(b, l + 1)) && r;
+    r = p && report_error_(b, mb_separators(b, l + 1)) && r;
+    r = p && report_error_(b, block_levels(b, l + 1)) && r;
+    r = p && consumeToken(b, T_RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // <<closureParameter parse_parameter>>
   static boolean closure_parameter(PsiBuilder b, int l) {
     return closureParameter(b, l + 1, GroovyGeneratedParser::parse_parameter);
@@ -2428,6 +2472,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = mb_nl(b, l + 1);
     r = r && closure_parameter(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // <<insideSwitchExpression closure_impl>>
+  public static boolean closure_switch_aware(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "closure_switch_aware")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, CLOSURE_SWITCH_AWARE, "<closure switch aware>");
+    r = insideSwitchExpression(b, l + 1, GroovyGeneratedParser::closure_impl);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -5365,12 +5420,24 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' mb_separators block_levels '}'
+  // open_block_impl
   public static boolean open_block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "open_block")) return false;
     if (!nextTokenIs(b, T_LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = open_block_impl(b, l + 1);
+    exit_section_(b, m, OPEN_BLOCK, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '{' mb_separators block_levels '}'
+  static boolean open_block_impl(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "open_block_impl")) return false;
+    if (!nextTokenIs(b, T_LBRACE)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, OPEN_BLOCK, null);
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, T_LBRACE);
     p = r; // pin = 1
     r = r && report_error_(b, mb_separators(b, l + 1));
@@ -5378,6 +5445,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = p && consumeToken(b, T_RBRACE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // <<insideSwitchExpression open_block_impl>>
+  public static boolean open_block_switch_aware(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "open_block_switch_aware")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, OPEN_BLOCK_SWITCH_AWARE, "<open block switch aware>");
+    r = insideSwitchExpression(b, l + 1, GroovyGeneratedParser::open_block_impl);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
