@@ -56,6 +56,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   protected abstract void selectChange(@NotNull Wrapper change);
 
+  protected boolean showAllChangesForEmptySelection() {
+    return true;
+  }
+
   //
   // Update
   //
@@ -139,7 +143,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     if (isDisposed()) return;
 
     List<Wrapper> selectedChanges = getSelectedChanges().collect(Collectors.toList());
-    if (selectedChanges.isEmpty()) selectedChanges = getAllChanges().collect(Collectors.toList());
+    if (selectedChanges.isEmpty() && showAllChangesForEmptySelection()) selectedChanges = getAllChanges().collect(Collectors.toList());
 
     Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
     if (fromModelRefresh &&
@@ -224,6 +228,9 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     if (selectedChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
     if (selectedChanges.size() > 1) {
       return new ChangesNavigatable(selectedChanges, selectedChanges.get(0), false);
+    }
+    if (selectedChanges.isEmpty() && !showAllChangesForEmptySelection()) {
+      return null;
     }
 
     List<Wrapper> allChanges = toListIfNotMany(getAllChanges(), fromUpdate);

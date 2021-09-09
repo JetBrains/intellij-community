@@ -80,6 +80,8 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
 
   override fun getAllChanges(): Stream<Wrapper> = wrap(project, StreamEx.of(changesView.changesNodes.iterator()), changesView.unversionedFiles)
 
+  override fun showAllChangesForEmptySelection(): Boolean = false
+
   override fun selectChange(change: Wrapper) {
     changesView.findNodePathInTree(change.userObject, (change.tag as? ChangesBrowserNode.WrapperTag)?.value)
       ?.let {
