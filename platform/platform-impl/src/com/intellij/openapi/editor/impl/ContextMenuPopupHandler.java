@@ -9,9 +9,11 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -26,16 +28,14 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
 
   @Override
   public boolean handlePopup(@NotNull EditorMouseEvent event) {
+    MouseEvent mouseEvent = event.getMouseEvent();
+    Component c = mouseEvent.getComponent();
+    if (c == null || !c.isShowing()) return true;
     ActionGroup group = getActionGroup(event);
-    if (group != null) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
-      MouseEvent e = event.getMouseEvent();
-      final Component c = e.getComponent();
-      if (c != null && c.isShowing()) {
-        popupMenu.getComponent().show(c, e.getX(), e.getY());
-      }
-      event.consume();
-    }
+    if (group == null) return true;
+    event.consume();
+    JPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group).getComponent();
+    popupMenu.show(c, mouseEvent.getX(), mouseEvent.getY());
     return true;
   }
 
