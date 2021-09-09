@@ -2,6 +2,7 @@ package com.intellij.jps.cache.client;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -16,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.Base64;
@@ -29,6 +28,7 @@ import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
 public class JpsServerConnectionUtil {
   private static final Logger LOG = Logger.getInstance(JpsServerConnectionUtil.class);
   private static final String CDN_CACHE_HEADER = "X-Cache";
+  private static boolean routingCalculated = false;
 
   public static void measureConnectionSpeed(@NotNull Project project) {
     INSTANCE.execute(() -> {
@@ -83,6 +83,25 @@ public class JpsServerConnectionUtil {
     }
     catch (ExecutionException e) {
       LOG.warn("Failed to check if internet connection is available", e);
+    }
+  }
+
+  public static void checkDomainRouting(@NotNull String domain) {
+    if (routingCalculated) return;
+    try {
+      GeneralCommandLine pingCommand = new GeneralCommandLine("traceroute");
+      pingCommand.addParameter(domain);
+      ProcessOutput processOutput = ExecUtil.execAndGetOutput(pingCommand);
+      int code = processOutput.getExitCode();
+      if (code == 0) {
+        LOG.info("traceroute for the " + domain + "\n" + processOutput.getStdout());
+      } else {
+        LOG.info("traceroute failed with exception " + processOutput.getStderr());
+      }
+      routingCalculated = true;
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Failed to execute traceroute", e);
     }
   }
 
