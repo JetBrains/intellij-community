@@ -53,10 +53,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
-/*
-com.intellij.database.dialects.oracle.introspector.OraIntrospector.OraSchemaRetriever#retrieveDbLinks
-com.intellij.ssh.integration.tests.auth.CheckCanAuthenticateTest#connectAndCheck
- */
+
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
