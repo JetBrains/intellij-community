@@ -277,4 +277,54 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       gradleRCTemplate?.settings?.scriptParameters = ""
     }
   }
+
+  @Test
+  fun `test run configuration command line partition`() {
+    createAndAddRunConfiguration("task1 task2").apply {
+      assertSameElements(settings.taskNames, "task1", "task2")
+      assertEmpty(settings.scriptParameters)
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("task1 task2 --debug").apply {
+      assertSameElements(settings.taskNames, "task1", "task2")
+      assertEquals(settings.scriptParameters, "--debug")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("task1 task2 --info").apply {
+      assertSameElements(settings.taskNames, "task1", "task2")
+      assertEquals(settings.scriptParameters, "--info")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("--info -PmyKey=myVal -DmyKey=myVal").apply {
+      assertEmpty(settings.taskNames)
+      assertEquals(settings.scriptParameters, "--info -PmyKey=myVal -DmyKey=myVal")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("my-Doc -DmyKey=myVal", vmOptions = "-ea -lorem").apply {
+      assertSameElements(settings.taskNames, "my-Doc")
+      assertEquals(settings.scriptParameters, "-DmyKey=myVal")
+      assertEquals(settings.vmOptions, "-ea -lorem")
+    }
+    createAndAddRunConfiguration("""test1 --tests Test test2 --tests="My test --debug" --continue --info""").apply {
+      assertSameElements(settings.taskNames, "test1", "--tests", "Test", "test2", """--tests="My test --debug"""")
+      assertEquals(settings.scriptParameters, "--continue --info")
+      assertEmpty(settings.vmOptions)
+    }
+    createAndAddRunConfiguration("--info task --ipsum --stacktrace --'dolor sit amet'").apply {
+      assertSameElements(settings.taskNames, "task", "--ipsum", "--'dolor sit amet'")
+      assertEquals(settings.scriptParameters, "--info --stacktrace")
+      assertEmpty(settings.vmOptions)
+    }
+  }
+
+  @Test
+  fun `test reusing configuration with options`() {
+    val projectData = generateAndImportTemplateProject()
+    val projectElement = projectData["project"].root
+    createAndAddRunConfiguration("build test --info -PmyKey=myVal -DmyKey=myVal")
+    createAndAddRunConfiguration("build --info -PmyKey=myVal -DmyKey=myVal")
+    createAndAddRunConfiguration("test --debug -PmyKey=myVal -DmyKey=myVal")
+    assertConfigurationForTask("build --info -PmyKey=myVal -DmyKey=myVal", "build", projectElement)
+    assertConfigurationForTask("test --debug -PmyKey=myVal -DmyKey=myVal", "test", projectElement)
+  }
 }

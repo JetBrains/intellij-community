@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
@@ -8,7 +9,11 @@ import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
+import com.intellij.openapi.externalSystem.model.task.TaskData
+import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
@@ -16,9 +21,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
+import com.intellij.util.LocalTimeCounter
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.TasksToRun
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
@@ -90,6 +99,17 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     assertEquals(expectedSettings, configuration.settings.toString())
   }
 
+  protected fun assertConfigurationForTask(expectedSettings: String, taskName: String, element: PsiElement) = runReadActionAndWait {
+    val taskData = TaskData(GradleConstants.SYSTEM_ID, taskName, projectPath, null)
+    val taskInfo = ExternalSystemActionUtil.buildTaskInfo(taskData)
+    val taskLocation = ExternalSystemTaskLocation(myProject, element, taskInfo)
+    val context = ConfigurationContext.createEmptyContextForLocation(taskLocation)
+    val configurationFromContext = getConfigurationFromContext(context)
+    assertInstanceOf(configurationFromContext.configurationProducer, AbstractExternalSystemRunConfigurationProducer::class.java)
+    val runConfiguration = configurationFromContext.configuration as ExternalSystemRunConfiguration
+    assertEquals(expectedSettings, runConfiguration.settings.toString())
+  }
+
   protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
     testTasksChooser = object : TestTasksChooser() {
       override fun chooseTestTasks(project: Project,
@@ -103,6 +123,25 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected fun GradleTestRunConfigurationProducer.createTemplateConfiguration(): ExternalSystemRunConfiguration {
     return configurationFactory.createTemplateConfiguration(myProject) as ExternalSystemRunConfiguration
+  }
+
+  protected fun createAndAddRunConfiguration(commandLine: String, vmOptions: String? = null): GradleRunConfiguration {
+    val runManager = RunManager.getInstance(myProject)
+
+    val name = "configuration (${LocalTimeCounter.currentTime()})"
+    val configuration = runManager.createConfiguration(name, GradleExternalTaskConfigurationType::class.java)
+
+    val runConfiguration = configuration.configuration as GradleRunConfiguration
+    runConfiguration.settings.externalProjectPath = projectPath
+    runConfiguration.commandLine = commandLine
+    if (vmOptions != null) {
+      runConfiguration.settings.vmOptions = vmOptions
+    }
+
+    runManager.addConfiguration(configuration)
+    runManager.selectedConfiguration = configuration
+
+    return runConfiguration
   }
 
   protected fun generateAndImportTemplateProject(): ProjectData {

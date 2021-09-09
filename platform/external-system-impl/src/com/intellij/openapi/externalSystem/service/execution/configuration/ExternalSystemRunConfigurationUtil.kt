@@ -96,16 +96,6 @@ fun <C : RunConfigurationBase<*>> createTag(
     actionHint = hint
   }
 
-fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addCommandLineFragment(
-  project: Project,
-  commandLineInfo: CommandLineInfo
-) = addCommandLineFragment(
-  project,
-  commandLineInfo,
-  { settings.commandLine },
-  { settings.commandLine = it }
-)
-
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addCommandLineFragment(
   project: Project,
   commandLineInfo: CommandLineInfo,
