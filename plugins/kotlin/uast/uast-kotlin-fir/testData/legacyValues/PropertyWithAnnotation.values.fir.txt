@@ -4,6 +4,9 @@ UFile (package = ) [public final class PropertyWithAnnotationKt {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UAnnotation (fqName = TestAnnotation) [@TestAnnotation]
             ULiteralExpression (value = 0) [0] = (long)0
+        UField (name = prop3) [@org.jetbrains.annotations.NotNull private static var prop3: int = 0]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            ULiteralExpression (value = 0) [0] = (long)0
         UMethod (name = getProp1) [public static final fun getProp1() : int = UastEmptyExpression]
         UMethod (name = getProp2) [@TestAnnotation...}]
             UAnnotation (fqName = TestAnnotation) [@TestAnnotation]
