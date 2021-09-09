@@ -7,15 +7,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -29,7 +32,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
@@ -42,7 +49,8 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
-  @Nullable private ProgressIndicator myResolveIndicator = null;
+  @NotNull private final CommitDataLoader myRefsLoader = new CommitDataLoader();
+  @NotNull private final CommitDataLoader myHashesResolver = new CommitDataLoader();
 
   public VcsLogCommitDetailsListPanel(@NotNull VcsLogData logData,
                                       @NotNull VcsLogColorManager colorManager,
@@ -74,54 +82,35 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
     });
   }
 
-  private void resolveHashes(@NotNull List<? extends CommitId> ids,
-                             @NotNull List<? extends CommitPresentation> presentations,
-                             @NotNull Set<String> unResolvedHashes,
-                             @NotNull Condition<Object> expired) {
-    if (!unResolvedHashes.isEmpty()) {
-      myResolveIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
-        MultiMap<String, CommitId> resolvedHashes = new MultiMap<>();
+  @NotNull
+  private List<CommitPresentation> doResolveHashes(@NotNull List<? extends CommitPresentation> presentations,
+                                                   @NotNull Set<String> unResolvedHashes) {
+    MultiMap<String, CommitId> resolvedHashes = new MultiMap<>();
 
-        Set<String> fullHashes = new HashSet<>(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
-        for (String fullHash : fullHashes) {
-          Hash hash = HashImpl.build(fullHash);
-          for (VirtualFile root : myLogData.getRoots()) {
-            CommitId id = new CommitId(hash, root);
-            if (myLogData.getStorage().containsCommit(id)) {
-              resolvedHashes.putValue(fullHash, id);
-            }
+    Set<String> fullHashes = new HashSet<>(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
+    for (String fullHash : fullHashes) {
+      Hash hash = HashImpl.build(fullHash);
+      for (VirtualFile root : myLogData.getRoots()) {
+        CommitId id = new CommitId(hash, root);
+        if (myLogData.getStorage().containsCommit(id)) {
+          resolvedHashes.putValue(fullHash, id);
+        }
+      }
+    }
+    unResolvedHashes.removeAll(fullHashes);
+
+    if (!unResolvedHashes.isEmpty()) {
+      myLogData.getStorage().iterateCommits(commitId -> {
+        for (String hashString : unResolvedHashes) {
+          if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
+            resolvedHashes.putValue(hashString, commitId);
           }
         }
-        unResolvedHashes.removeAll(fullHashes);
-
-        if (!unResolvedHashes.isEmpty()) {
-          myLogData.getStorage().iterateCommits(commitId -> {
-            for (String hashString : unResolvedHashes) {
-              if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
-                resolvedHashes.putValue(hashString, commitId);
-              }
-            }
-            return true;
-          });
-        }
-
-        List<CommitPresentation> resolvedPresentations = ContainerUtil.map2List(presentations,
-                                                                                presentation -> presentation.resolve(resolvedHashes));
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        ApplicationManager.getApplication().invokeLater(() -> {
-                                                          myResolveIndicator = null;
-                                                          setPresentations(ids, resolvedPresentations);
-                                                        },
-                                                        Conditions.or(o -> myResolveIndicator != indicator, expired));
+        return true;
       });
     }
-  }
 
-  private void cancelResolve() {
-    if (myResolveIndicator != null) {
-      myResolveIndicator.cancel();
-      myResolveIndicator = null;
-    }
+    return ContainerUtil.map2List(presentations, presentation -> presentation.resolve(resolvedHashes));
   }
 
   private void setPresentations(@NotNull List<? extends CommitId> ids,
@@ -132,15 +121,51 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
     });
   }
 
+  private void cancelLoading() {
+    myHashesResolver.cancelLoading();
+    myRefsLoader.cancelLoading();
+  }
+
   @Override
   public void dispose() {
-    cancelResolve();
+    cancelLoading();
   }
 
   @NotNull
   @Override
   protected CommitPanel getCommitDetailsPanel() {
     return new CommitPanel(myLogData, myColorManager, this::navigate);
+  }
+
+  private class CommitDataLoader {
+    @Nullable private ProgressIndicator myProgressIndicator = null;
+
+    private <T> void loadData(@NotNull Function<ProgressIndicator, List<T>> loadData,
+                              @NotNull TriConsumer<CommitPanel, Integer, T> setData) {
+      List<Integer> currentSelection = mySelection;
+      myProgressIndicator = BackgroundTaskUtil.executeOnPooledThread(VcsLogCommitDetailsListPanel.this, () -> {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        List<T> loaded = loadData.apply(indicator);
+        ApplicationManager.getApplication()
+          .invokeLater(() -> {
+                         myProgressIndicator = null;
+                         forEachPanelIndexed((i, panel) -> {
+                           setData.accept(panel, i, loaded.get(i));
+                           return Unit.INSTANCE;
+                         });
+                       },
+                       Conditions.or(o -> myProgressIndicator != indicator,
+                                     o -> currentSelection != mySelection
+                       ));
+      });
+    }
+
+    private void cancelLoading() {
+      if (myProgressIndicator != null) {
+        myProgressIndicator.cancel();
+        myProgressIndicator = null;
+      }
+    }
   }
 
   private class CommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> {
@@ -156,41 +181,32 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
       List<CommitPresentation> presentations = ContainerUtil.map(detailsList,
                                                                  detail -> buildPresentation(myLogData.getProject(), detail,
                                                                                              unResolvedHashes));
-      setPresentations(ids, presentations);
+      forEachPanelIndexed((i, panel) -> {
+        panel.setCommit(ids.get(i), presentations.get(i));
+        return Unit.INSTANCE;
+      });
 
-      List<Integer> currentSelection = mySelection;
-      resolveHashes(ids, presentations, unResolvedHashes, o -> currentSelection != mySelection);
+      if (!unResolvedHashes.isEmpty()) {
+        myHashesResolver.loadData(indicator -> doResolveHashes(presentations, unResolvedHashes),
+                                  (panel, index, presentation) -> panel.setCommit(ids.get(index), presentation));
+      }
     }
 
     @Override
     protected void onSelection(int @NotNull [] selection) {
-      cancelResolve();
+      cancelLoading();
 
       int shownPanelsCount = rebuildPanel(selection.length);
       mySelection = Ints.asList(Arrays.copyOf(selection, shownPanelsCount));
 
       List<Integer> currentSelection = mySelection;
-      loadRefs(currentSelection);
-    }
-
-    private void loadRefs(@NotNull List<Integer> currentSelection) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<Collection<VcsRef>> result = new ArrayList<>();
-        for (Integer row : currentSelection) {
-          result.add(myGraphTable.getModel().getRefsAtRow(row));
-        }
-        ApplicationManager.getApplication().invokeLater(() -> {
-          forEachPanelIndexed((i, panel) -> {
-            panel.setRefs(result.get(i));
-            return Unit.INSTANCE;
-          });
-        }, o -> Disposer.isDisposed(myGraphTable) || currentSelection != mySelection);
-      });
+      myRefsLoader.loadData(indicator -> ContainerUtil.map2List(currentSelection, row -> myGraphTable.getModel().getRefsAtRow(row)),
+                            (panel, index, refs) -> panel.setRefs(panel.sortRefs(refs)));
     }
 
     @Override
     protected void onEmptySelection() {
-      cancelResolve();
+      cancelLoading();
       setEmpty(VcsLogBundle.message("vcs.log.changes.details.no.commits.selected.status"));
     }
 
