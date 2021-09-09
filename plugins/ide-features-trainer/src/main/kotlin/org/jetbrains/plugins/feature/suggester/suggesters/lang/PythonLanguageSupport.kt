@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyStatementList
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyWhileStatement
+import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class PythonLanguageSupport : LanguageSupport {
@@ -52,6 +53,12 @@ class PythonLanguageSupport : LanguageSupport {
             element.statements.toList()
         } else {
             emptyList()
+        }
+    }
+
+    override fun getTopmostStatementWithText(psiElement: PsiElement, text: String): PsiElement? {
+        return psiElement.getParentByPredicate {
+            isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text
         }
     }
 

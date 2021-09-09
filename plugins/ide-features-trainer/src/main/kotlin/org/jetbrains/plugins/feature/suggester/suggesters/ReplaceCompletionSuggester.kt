@@ -2,7 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeCompletionChooseItemAction

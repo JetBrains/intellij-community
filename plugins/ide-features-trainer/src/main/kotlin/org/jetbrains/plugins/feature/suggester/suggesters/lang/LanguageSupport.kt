@@ -49,6 +49,8 @@ interface LanguageSupport {
      */
     fun getStatements(element: PsiElement): List<PsiElement>
 
+    fun getTopmostStatementWithText(psiElement: PsiElement, text: String): PsiElement?
+
     fun isSupportedStatementToIntroduceVariable(element: PsiElement): Boolean
 
     fun isPartOfExpression(element: PsiElement): Boolean

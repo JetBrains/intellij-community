@@ -9,10 +9,10 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parents
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -41,7 +41,7 @@ internal inline fun <reified T : PsiElement> PsiElement.getParentOfType(): T? {
 }
 
 internal fun PsiElement.getParentByPredicate(predicate: (PsiElement) -> Boolean): PsiElement? {
-    return parents.find(predicate)
+    return parents(true).find(predicate)
 }
 
 internal fun Transferable.asString(): String? {

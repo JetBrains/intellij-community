@@ -15,6 +15,7 @@ import com.intellij.lang.javascript.psi.JSWhileStatement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
+import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class JavaScriptLanguageSupport : LanguageSupport {
@@ -52,6 +53,12 @@ class JavaScriptLanguageSupport : LanguageSupport {
             element.statementListItems.toList()
         } else {
             emptyList()
+        }
+    }
+
+    override fun getTopmostStatementWithText(psiElement: PsiElement, text: String): PsiElement? {
+        return psiElement.getParentByPredicate {
+            isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text
         }
     }
 

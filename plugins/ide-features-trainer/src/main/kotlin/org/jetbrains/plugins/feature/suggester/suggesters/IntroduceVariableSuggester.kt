@@ -2,9 +2,6 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
@@ -12,7 +9,6 @@ import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
 import org.jetbrains.plugins.feature.suggester.asString
-import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.awt.datatransfer.DataFlavor
@@ -141,17 +137,6 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
             return variableEditingFinished && declaration != null &&
                 action.newChild.text == getVariableName(declaration!!) &&
                 changedStatement === getTopmostStatementWithText(action.newChild, "")
-        }
-    }
-
-    private fun LanguageSupport.getTopmostStatementWithText(psiElement: PsiElement, text: String): PsiElement? {
-        val statement = psiElement.getParentByPredicate {
-            isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text
-        }
-        return if (statement is KtCallExpression) {
-            return statement.getTopmostParentOfType<KtDotQualifiedExpression>() ?: statement
-        } else {
-            statement
         }
     }
 }

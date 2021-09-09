@@ -3,9 +3,11 @@ package org.jetbrains.plugins.feature.suggester.suggesters.lang
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
@@ -15,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtWhileExpression
+import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class KotlinLanguageSupport : LanguageSupport {
@@ -52,6 +55,17 @@ class KotlinLanguageSupport : LanguageSupport {
             element.statements
         } else {
             emptyList()
+        }
+    }
+
+    override fun getTopmostStatementWithText(psiElement: PsiElement, text: String): PsiElement? {
+        val statement = psiElement.getParentByPredicate {
+            isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text
+        }
+        return if (statement is KtCallExpression) {
+            return statement.parentsOfType<KtDotQualifiedExpression>().lastOrNull() ?: statement
+        } else {
+            statement
         }
     }
 

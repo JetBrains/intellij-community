@@ -16,6 +16,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiStatement
 import com.intellij.psi.PsiWhileStatement
 import com.intellij.psi.util.descendantsOfType
+import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class JavaLanguageSupport : LanguageSupport {
@@ -53,6 +54,12 @@ class JavaLanguageSupport : LanguageSupport {
             element.statements.toList()
         } else {
             emptyList()
+        }
+    }
+
+    override fun getTopmostStatementWithText(psiElement: PsiElement, text: String): PsiElement? {
+        return psiElement.getParentByPredicate {
+            isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text
         }
     }
 
