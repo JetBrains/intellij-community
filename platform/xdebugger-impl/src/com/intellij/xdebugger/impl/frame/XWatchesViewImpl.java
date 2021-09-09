@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
@@ -183,16 +184,25 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          XExpression expression = myEvaluateComboBox.getExpression();
-          if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
-            var popup = myEvaluateComboBox.getComboBox().getPopup();
-            if (popup != null && popup.isVisible()) {
-              popup.hide();
-            }
-            myEvaluateComboBox.saveTextInHistory();
-            XDebugSession session = getSession(getTree());
-            myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
+          // This listener overrides one from BasicComboBoxUI$Actions
+          // Close popup manually instead of default handler
+          if (myEvaluateComboBox.getComboBox().isPopupVisible()) {
+            myEvaluateComboBox.getComboBox().setPopupVisible(false);
           }
+          else {
+            addExpressionResultNode();
+          }
+        }
+      });
+      myEvaluateComboBox.getComboBox().addPopupMenuListener(new PopupMenuListenerAdapter() {
+        @Override
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+          myEvaluateComboBox.requestFocusInEditor();
+        }
+
+        @Override
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+          addExpressionResultNode();
         }
       });
       addToWatchesActionRef.get()
@@ -203,6 +213,15 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       return component;
     }
     return null;
+  }
+
+  private void addExpressionResultNode() {
+    XExpression expression = myEvaluateComboBox.getExpression();
+    if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
+      myEvaluateComboBox.saveTextInHistory();
+      XDebugSession session = getSession(getTree());
+      myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
+    }
   }
 
   @Override
