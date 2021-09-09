@@ -10,7 +10,6 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -67,15 +66,15 @@ class MavenProjectsAware(
   }
 
   private fun partitionSettingsFiles(context: ExternalSystemSettingsFilesReloadContext): Pair<List<VirtualFile>, List<VirtualFile>> {
-    val localFileSystem = LocalFileSystem.getInstance()
-    val projectsFiles = projectsTree.projectsFiles
-    val created = context.created.asSequence()
-      .mapNotNull { localFileSystem.findFileByPath(it) }
-      .filter { projectsTree.findProject(it) != null }
-      .toList()
-    val updated = projectsFiles.filter { it.path in context.updated }
-    val deleted = projectsFiles.filter { it.path in context.deleted }
-    return created + updated to deleted
+    val updated = mutableListOf<VirtualFile>()
+    val deleted = mutableListOf<VirtualFile>()
+    for (projectsFile in projectsTree.projectsFiles) {
+      val path = projectsFile.path
+      if (path in context.created) updated.add(projectsFile)
+      if (path in context.updated) updated.add(projectsFile)
+      if (path in context.deleted) deleted.add(projectsFile)
+    }
+    return updated to deleted
   }
 
   private fun hasPomFile(rootDirectory: String): Boolean {
