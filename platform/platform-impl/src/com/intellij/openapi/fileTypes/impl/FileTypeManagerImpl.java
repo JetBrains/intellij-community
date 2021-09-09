@@ -114,6 +114,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       this.pluginDescriptor = pluginDescriptor;
       this.matchers = new ArrayList<>(matchers);
     }
+
+    private @NotNull FileTypeWithDescriptor getDescriptor() {
+      return new FileTypeWithDescriptor(fileType, pluginDescriptor);
+    }
   }
 
   private final Map<String, StandardFileType> myStandardFileTypes = new LinkedHashMap<>();
@@ -243,7 +247,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     // equals to all FileTypeWithDescriptor with this fileType
-    static @NotNull FileTypeWithDescriptor allFor(FileType fileType) {
+    static @NotNull FileTypeWithDescriptor allFor(@NotNull FileType fileType) {
       return new FileTypeWithDescriptor(fileType, WILD_CARD);
     }
 
@@ -261,7 +265,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     ApplicationManager.getApplication().runWriteAction(() -> {
       stdFileType.matchers.removeAll(extension.getMatchers());
       for (FileNameMatcher matcher : extension.getMatchers()) {
-        myPatternsTable.removeAssociation(matcher, descriptorForStandard(stdFileType));
+        myPatternsTable.removeAssociation(matcher, stdFileType.getDescriptor());
       }
       fireFileTypesChanged(stdFileType.fileType, null);
     });
@@ -336,7 +340,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       String name = entry.getKey();
       StandardFileType stdType = entry.getValue();
       FileType type = stdType.fileType;
-      FileTypeWithDescriptor ftd = descriptorForStandard(stdType);
+      FileTypeWithDescriptor ftd = stdType.getDescriptor();
       for (FileNameMatcher matcher : stdType.matchers) {
         removeAssociation(ftd, matcher, false);
       }
@@ -439,7 +443,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     type.matchers.addAll(fileTypeBean.getMatchers());
     for (FileNameMatcher matcher : fileTypeBean.getMatchers()) {
-      myPatternsTable.addAssociation(matcher, descriptorForStandard(type));
+      myPatternsTable.addAssociation(matcher, type.getDescriptor());
     }
     return type.fileType;
   }
@@ -475,8 +479,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       if (!fileType.getName().equals(fileTypeName)) {
-        LOG.error(new PluginException("Incorrect name specified in <fileType>, should be " + fileType.getName() + ", actual " + fileTypeName,
-                                      pluginId));
+        LOG.error(new PluginException("Incorrect name specified in <fileType>, should be " + fileType.getName() + ", actual " + fileTypeName, pluginId));
       }
       if (fileType instanceof LanguageFileType) {
         LanguageFileType languageFileType = (LanguageFileType)fileType;
@@ -1354,7 +1357,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     for (FileNameMatcher matcher : new ArrayList<>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(matcher);
       if (standardFileType.fileType.getName().equals(name)) {
-        myPatternsTable.addAssociation(matcher, descriptorForStandard(standardFileType));
+        myPatternsTable.addAssociation(matcher, standardFileType.getDescriptor());
         myUnresolvedMappings.remove(matcher);
       }
     }
@@ -1366,10 +1369,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   static @NotNull FileTypeWithDescriptor coreDescriptorFor(@NotNull FileType fileType) {
     return new FileTypeWithDescriptor(fileType, coreIdeaPluginDescriptor());
-  }
-
-  private static @NotNull FileTypeWithDescriptor descriptorForStandard(@NotNull StandardFileType stdType) {
-    return new FileTypeWithDescriptor(stdType.fileType, stdType.pluginDescriptor);
   }
 
   private @NotNull FileType loadFileType(@NotNull Object context,
@@ -1623,6 +1622,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
       else {
         type.matchers.addAll(fileNameMatchers);
+        for (FileNameMatcher matcher : fileNameMatchers) {
+          myPatternsTable.addAssociation(matcher, type.getDescriptor());
+        }
       }
     }
   }
