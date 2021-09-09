@@ -89,6 +89,9 @@
     <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
     <notificationGroup id="Breakpoint hit" displayType="NONE" toolWindowId="Debug" isLogByDefault="false"/>
     <notificationGroup id="Attach to Process action" displayType="BALLOON"/>
+
+    <advancedSetting id="debugger.max.recent.expressions" default="50"
+                     groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
   </extensions>
 
   <actions>
