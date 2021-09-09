@@ -23,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -140,7 +139,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     return variablesPanel.addToTop(top);
   }
 
-  JComponent createTopPanel() {
+  private JComponent createTopPanel() {
     if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
       Ref<AnAction> addToWatchesActionRef = new Ref<>();
@@ -186,6 +185,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         public void actionPerformed(ActionEvent e) {
           XExpression expression = myEvaluateComboBox.getExpression();
           if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
+            var popup = myEvaluateComboBox.getComboBox().getPopup();
+            if (popup != null && popup.isVisible()) {
+              popup.hide();
+            }
             myEvaluateComboBox.saveTextInHistory();
             XDebugSession session = getSession(getTree());
             myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
