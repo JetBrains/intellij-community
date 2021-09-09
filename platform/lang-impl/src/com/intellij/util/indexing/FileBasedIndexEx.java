@@ -471,17 +471,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (LightEdit.owns(project)) {
       return Collections.emptyList();
     }
-    return ReadAction.compute(() -> {
-      if (project.isDisposed()) {
-        return Collections.emptyList();
-      }
 
-      return IndexableFilesContributor.EP_NAME
-        .getExtensionList()
-        .stream()
-        .flatMap(c -> c.getIndexableFiles(project).stream())
-        .collect(Collectors.toList());
-    });
+    return IndexableFilesContributor.EP_NAME
+      .getExtensionList()
+      .stream()
+      .flatMap(c -> {
+        return ReadAction.nonBlocking(() -> c.getIndexableFiles(project)).expireWith(project).executeSynchronously().stream();
+      })
+      .collect(Collectors.toList());
   }
 
   @Nullable
