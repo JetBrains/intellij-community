@@ -57,7 +57,7 @@ class NotebookGutterRenderer {
               editor,
               g,
               r,
-              notebookCellLines.getIterator(interval),
+              notebookCellLines.intervals.listIterator(interval.ordinal),
               visualLineStart,
               visualLineEnd,
               logicalLineStart,

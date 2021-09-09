@@ -37,7 +37,7 @@ class CellBackgroundGutterController : NotebookCellGutterController {
     }
 
     for (controller: NotebookCellInlayController in notebookCellInlayManager.inlaysForInterval(interval)) {
-      controller.paintGutter(editor, g, r, notebookCellLines.getIterator(interval))
+      controller.paintGutter(editor, g, r, notebookCellLines.intervals.listIterator(interval.ordinal))
     }
   }
 

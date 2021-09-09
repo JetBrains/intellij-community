@@ -182,8 +182,6 @@ private class MockNotebookCellLines(override val intervals: MutableList<Interval
 
   override fun getIterator(ordinal: Int): ListIterator<Interval> = intervals.listIterator(ordinal)
 
-  override fun getIterator(interval: Interval): ListIterator<Interval> = getIterator(interval.ordinal)
-
   override fun intervalsIterator(startLine: Int): ListIterator<Interval> = TODO("stub")
 
   override val modificationStamp: Long

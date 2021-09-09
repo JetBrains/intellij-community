@@ -32,11 +32,6 @@ class NonIncrementalCellLines private constructor(private val document: Document
   override fun getIterator(ordinal: Int): ListIterator<NotebookCellLines.Interval> =
     intervals.listIterator(ordinal)
 
-  override fun getIterator(interval: NotebookCellLines.Interval): ListIterator<NotebookCellLines.Interval> {
-    check(interval == intervals[interval.ordinal])
-    return intervals.listIterator(interval.ordinal)
-  }
-
   override fun intervalsIterator(startLine: Int): ListIterator<NotebookCellLines.Interval> {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val ordinal = intervals.find { startLine <= it.lines.last }?.ordinal ?: intervals.size

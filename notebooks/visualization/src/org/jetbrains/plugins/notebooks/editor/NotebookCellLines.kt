@@ -72,8 +72,6 @@ interface NotebookCellLines {
 
   fun getIterator(ordinal: Int): ListIterator<Interval>
 
-  fun getIterator(interval: Interval): ListIterator<Interval>
-
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
 
   val intervals: List<Interval>
