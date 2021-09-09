@@ -74,7 +74,8 @@ class JpsCachesDownloader {
                 }
               } else {
                 if (Registry.is("jps.cache.check.internet.connection")){
-                  JpsServerConnectionUtil.checkDomainIsReachable("www.google.com");
+                  JpsServerConnectionUtil.checkDomainIsReachable("google.com");
+                  JpsServerConnectionUtil.checkDomainIsReachable("d1lc5k9lerg6km.cloudfront.net");
                 }
               }
 

@@ -67,14 +67,13 @@ public class JpsServerConnectionUtil {
 
   public static void checkDomainIsReachable(@NotNull String domain) {
     try {
-      InetAddress address = InetAddress.getByName(domain);
       GeneralCommandLine pingCommand = new GeneralCommandLine("ping");
       if (SystemInfo.isWindows) {
         pingCommand.addParameter("-n 2");
       } else {
         pingCommand.addParameter("-c 2");
       }
-      pingCommand.addParameter(address.getHostAddress());
+      pingCommand.addParameter(domain);
       int code = ExecUtil.execAndGetOutput(pingCommand).getExitCode();
       if (code == 0) {
         LOG.info("Domain " + domain + " is reachable");
@@ -82,8 +81,8 @@ public class JpsServerConnectionUtil {
         LOG.info("Domain " + domain + " isn't reachable");
       }
     }
-    catch (UnknownHostException | ExecutionException e) {
-      LOG.warn("Failed to check if internet connection is avaliable", e);
+    catch (ExecutionException e) {
+      LOG.warn("Failed to check if internet connection is available", e);
     }
   }
 
