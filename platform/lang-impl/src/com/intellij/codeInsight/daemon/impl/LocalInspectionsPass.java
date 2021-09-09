@@ -720,7 +720,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull ProblemDescriptor descriptor,
                                              @NotNull PsiElement element) {
     HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
-    @NlsSafe String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
+    var presentation = ProblemDescriptorUtil.renderDescriptor(descriptor, element, ProblemDescriptorUtil.NONE);
+    String message = presentation.getDescription();
 
     ProblemGroup problemGroup = descriptor.getProblemGroup();
     String problemName = problemGroup != null ? problemGroup.getProblemName() : null;
@@ -737,8 +738,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     @NlsSafe String tooltip = null;
     if (descriptor.showTooltip()) {
-      String template = descriptor.getTooltipTemplate();
-      String rendered = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.NONE, template);
+      String rendered = presentation.getTooltip();
       tooltip = tooltips.intern(DaemonTooltipsUtil.getWrappedTooltip(rendered, shortName, myShortcutText, showToolDescription(toolWrapper)));
     }
     List<IntentionAction> fixes = getQuickFixes(key, descriptor, emptyActionRegistered);

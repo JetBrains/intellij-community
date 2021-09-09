@@ -12,6 +12,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -82,10 +83,43 @@ public final class ProblemDescriptorUtil {
     return renderDescriptionMessage(descriptor, element, flags, message);
   }
 
+  public static ProblemPresentation renderDescriptor(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, @FlagConstant int flags) {
+    NotNullLazyValue<@InspectionMessage String> descTemplate = NotNullLazyValue.volatileLazy(
+      () -> StringUtil.notNullize(descriptor.getDescriptionTemplate()));
+    NotNullLazyValue<@InspectionMessage String> tooltipTemplate = NotNullLazyValue.volatileLazy(
+      () -> descriptor instanceof ProblemDescriptor
+            ? StringUtil.notNullize(((ProblemDescriptor)descriptor).getTooltipTemplate())
+            : descTemplate.getValue()
+    );
+    NotNullLazyValue<@InspectionMessage String> description = NotNullLazyValue.volatileLazy(
+      () -> renderDescriptionMessage(descriptor, element, flags, descTemplate.getValue()));
+    NotNullLazyValue<@NlsContexts.Tooltip String> tooltip = NotNullLazyValue.volatileLazy(() -> {
+      String template = tooltipTemplate.getValue();
+      return template.equals(descTemplate.getValue()) ? description.getValue()
+                                                      : renderDescriptionMessage(descriptor, element, flags, template);
+    });
+    return new ProblemPresentation() {
+      @Override
+      public @NotNull String getDescription() {
+        return description.getValue();
+      }
+
+      @Override
+      public @NotNull String getTooltip() {
+        return tooltip.getValue();
+      }
+    };
+  }
+
+  public interface ProblemPresentation {
+    @NotNull @InspectionMessage String getDescription();
+    @NotNull @NlsContexts.Tooltip String getTooltip();
+  }
+
   @NotNull
   @InspectionMessage
   @NlsContexts.Tooltip
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor,
+  private static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor,
                                                 @Nullable PsiElement element,
                                                 @FlagConstant int flags,
                                                 @InspectionMessage String template) {
