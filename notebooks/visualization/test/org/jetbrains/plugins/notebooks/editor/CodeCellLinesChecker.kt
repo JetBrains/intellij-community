@@ -103,7 +103,7 @@ class CodeCellLinesChecker(private val description: String,
         """.trimMargin("|||")
 
       markers.let { markers ->
-        assertThat(makeMarkersFromIntervals(editor.document, codeCellLines.intervalsIterator()).filter { it.offset >= markersStartOffset })
+        assertThat(makeMarkersFromIntervals(editor.document, codeCellLines.intervals).filter { it.offset >= markersStartOffset })
           .describedAs("Markers: $descr")
           .isEqualTo(markers)
       }

@@ -31,7 +31,7 @@ internal class NotebookOutputCollapseAllAction private constructor() : ToggleAct
 
   private fun allCollapsingComponents(e: AnActionEvent): Sequence<CollapsingComponent> {
     val inlayManager = e.notebookCellInlayManager ?: return emptySequence()
-    return NotebookCellLines.get(inlayManager.editor).intervalsIterator().asSequence()
+    return NotebookCellLines.get(inlayManager.editor).intervals.asSequence()
       .filter { it.type == NotebookCellLines.CellType.CODE }
       .mapNotNull { getCollapsingComponents(inlayManager.editor, it) }
       .flatMap { it }

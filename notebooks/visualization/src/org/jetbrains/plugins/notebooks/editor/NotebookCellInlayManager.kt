@@ -117,9 +117,8 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   }
 
   private fun handleRefreshedDocument() {
-    val allCellLines = notebookCellLines.intervalsIterator().asSequence().toList()
     val factories = NotebookCellInlayController.Factory.EP_NAME.extensionList
-    for (interval in allCellLines) {
+    for (interval in notebookCellLines.intervals) {
       for (factory in factories) {
         val controller = factory.compute(editor, emptyList(), notebookCellLines.intervals.listIterator(interval.ordinal))
         if (controller != null) {
@@ -127,7 +126,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
         }
       }
     }
-    addHighlighters(allCellLines)
+    addHighlighters(notebookCellLines.intervals)
     inlaysChanged()
   }
 
