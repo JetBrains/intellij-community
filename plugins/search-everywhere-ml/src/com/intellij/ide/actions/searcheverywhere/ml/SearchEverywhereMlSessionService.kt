@@ -25,7 +25,8 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   private val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
 
   override fun shouldOrderByMl(tabId: String): Boolean {
-    return service<SearchEverywhereMlSettings>().isSortingByMlEnabled(tabId) || experiment.shouldOrderByMl()
+    val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false // Tab does not support ML ordering
+    return service<SearchEverywhereMlSettings>().isSortingByMlEnabled(tab) || experiment.shouldOrderByMl(tab)
   }
 
   override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {

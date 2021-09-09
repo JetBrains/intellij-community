@@ -5,9 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
-import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
@@ -56,7 +54,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = getCurrentSearchState()
     if (state != null && isMLSupportedTab(state.tabId)) {
-      val orderByMl = orderedByMl(experimentStrategy, state.tabId)
+      val orderByMl = orderedByMl(state.tabId)
       logger.onItemSelected(
         project, sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
@@ -70,7 +68,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = getCurrentSearchState()
     if (state != null && isMLSupportedTab(state.tabId)) {
-      val orderByMl = orderedByMl(experimentStrategy, state.tabId)
+      val orderByMl = orderedByMl(state.tabId)
       logger.onSearchFinished(
         project, sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
@@ -89,8 +87,8 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     return -1.0
   }
 
-  private fun orderedByMl(experimentStrategy: SearchEverywhereMlExperiment, tabId: String): Boolean {
-    return service<SearchEverywhereMlSettings>().isSortingByMlEnabled(tabId) || experimentStrategy.shouldOrderByMl()
+  private fun orderedByMl(tabId: String): Boolean {
+    return SearchEverywhereMlSessionService.getService().shouldOrderByMl(tabId)
   }
 
   fun isMLSupportedTab(tabId: String): Boolean {

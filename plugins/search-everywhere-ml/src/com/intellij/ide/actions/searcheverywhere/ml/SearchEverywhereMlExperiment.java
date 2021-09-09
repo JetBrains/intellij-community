@@ -6,20 +6,19 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 public class SearchEverywhereMlExperiment {
   private static final int NUMBER_OF_GROUPS = 8;
-  private static final int EXPERIMENT_GROUP = 6;
 
   private final int myExperimentGroup;
-  private final boolean myPerformExperiment;
-
   private final boolean myIsExperimentalMode;
 
   public SearchEverywhereMlExperiment() {
     myIsExperimentalMode = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
     myExperimentGroup = myIsExperimentalMode ? EventLogConfiguration.getInstance().getBucket() % NUMBER_OF_GROUPS : -1;
-    myPerformExperiment = myExperimentGroup == EXPERIMENT_GROUP;
   }
 
   public boolean isAllowed() {
@@ -27,17 +26,33 @@ public class SearchEverywhereMlExperiment {
     return settings.isSortingByMlEnabledInAnyTab() || !isDisableLoggingAndExperiments();
   }
 
-  public boolean shouldOrderByMl() {
-    if (isDisableLoggingAndExperiments() || isDisableExperiments()) return false;
-    return myPerformExperiment;
+  public boolean shouldOrderByMl(@NotNull SearchEverywhereTabWithMl tab) {
+    // This method will only run when ordering by ML is disabled in settings for the given tab,
+    // in which case, here we will check if the user belongs to the experiment group.
+    if (isDisableLoggingAndExperiments() || isDisableExperiments(tab)) return false;
+    return shouldPerformExperiment(tab);
   }
 
   private boolean isDisableLoggingAndExperiments() {
     return !myIsExperimentalMode || Registry.is("search.everywhere.force.disable.logging.ml");
   }
 
-  private static boolean isDisableExperiments() {
-    return Registry.is("search.everywhere.force.disable.experiment.action.ml");
+  private static boolean isDisableExperiments(@NotNull SearchEverywhereTabWithMl tab) {
+    final String key = String.format("search.everywhere.force.disable.experiment.%s.ml", tab.name().toLowerCase(Locale.ROOT));
+    return Registry.is(key);
+  }
+
+  private static int getExperimentGroupForTab(@NotNull SearchEverywhereTabWithMl tab) {
+    if (tab == SearchEverywhereTabWithMl.ACTIONS) {
+      return 6;
+    }
+
+    return -1;
+  }
+
+  private boolean shouldPerformExperiment(@NotNull SearchEverywhereTabWithMl tab) {
+    final int tabExperimentGroup = getExperimentGroupForTab(tab);
+    return myExperimentGroup == tabExperimentGroup;
   }
 
   public int getExperimentGroup() {

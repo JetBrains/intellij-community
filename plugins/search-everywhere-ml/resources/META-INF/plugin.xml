@@ -25,7 +25,7 @@
 
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with actions order won't be performed"
-                 key="search.everywhere.force.disable.experiment.action.ml"/>
+                 key="search.everywhere.force.disable.experiment.actions.ml"/>
     <registryKey defaultValue="false"
                  description="When enabled ML logs and experiments in Search Everywhere will be disabled"
                  key="search.everywhere.force.disable.logging.ml"/>
