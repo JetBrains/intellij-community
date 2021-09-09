@@ -10,7 +10,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.toml.ide.icons.TomlIcons
+import icons.TomlIcons
 import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlElementTypes.*
 import javax.swing.Icon
@@ -22,7 +22,7 @@ object TomlFileType : LanguageFileType(TomlLanguage), FileTypeIdentifiableByVirt
     override fun getName(): String = "TOML"
     override fun getDescription(): String = "TOML file"
     override fun getDefaultExtension(): String = "toml"
-    override fun getIcon(): Icon = TomlIcons.TOML_FILE
+    override fun getIcon(): Icon = TomlIcons.TomlFile
     override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
     override fun isMyFileType(file: VirtualFile): Boolean {
