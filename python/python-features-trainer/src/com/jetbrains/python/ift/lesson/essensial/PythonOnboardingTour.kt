@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
@@ -147,14 +146,9 @@ class PythonOnboardingTour :
     task {
       text(PythonLessonsBundle.message("python.onboarding.epilog",
                                        getCallBackActionId("CloseProject"),
-                                       returnToWelcomeScreenRemark(),
+                                       LessonUtil.returnToWelcomeScreenRemark(),
                                        LearningUiManager.addCallback { LearningUiManager.resetModulesView() }))
     }
-  }
-
-  private fun returnToWelcomeScreenRemark(): String {
-    val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
-    return if (isSingleProject) PythonLessonsBundle.message("python.onboarding.return.to.welcome") else ""
   }
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
@@ -165,7 +159,7 @@ class PythonOnboardingTour :
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
                                                     PythonLessonsBundle.message("python.onboarding.finish.text",
-                                                                                returnToWelcomeScreenRemark()))
+                                                                                LessonUtil.returnToWelcomeScreenRemark()))
         .yesText(PythonLessonsBundle.message("python.onboarding.finish.exit"))
         .noText(PythonLessonsBundle.message("python.onboarding.finish.modules"))
         .icon(FeaturesTrainerIcons.Img.PluginIcon)
