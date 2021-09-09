@@ -3,7 +3,7 @@ package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -36,8 +36,8 @@ public class DanglingJavadocInspection extends BaseInspection {
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("dangling.javadoc.ignore.copyright.option"), this,
-                                          "ignoreCopyright");
+    return InspectionOptionsPanel.singleCheckBox(this, InspectionGadgetsBundle.message("dangling.javadoc.ignore.copyright.option"),
+                                                 "ignoreCopyright");
   }
 
   @Override
