@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.psi.tree.IElementType;
@@ -87,7 +87,6 @@ public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyS
   IElementType CASE_SECTION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CASE_SECTION;
   IElementType EXPRESSION_LIST = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.EXPRESSION_LIST;
 
-  IElementType CASE_LABEL = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CASE_LABEL;
   //for clauses
   IElementType FOR_IN_CLAUSE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.FOR_IN_CLAUSE;
   IElementType FOR_TRADITIONAL_CLAUSE = TRADITIONAL_FOR_CLAUSE;

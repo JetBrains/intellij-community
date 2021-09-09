@@ -443,6 +443,10 @@ public abstract class GroovyElementVisitor {
     visitElement(comment);
   }
 
+  public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+    visitExpression(switchExpression);
+  }
+
   public void visitDocTag(@NotNull GrDocTag docTag) {
     visitElement(docTag);
   }
