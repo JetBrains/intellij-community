@@ -2,6 +2,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.util.registry.Registry;
 
 /**
  * @author ven
@@ -13,4 +14,12 @@ public class MoveJavaFileTest extends MoveFileTestCase {
   }
 
   public void testPackageInfo() { doTest("pack2", "pack1/package-info.java"); }
+
+  public static class BranchTest extends MoveJavaFileTest {
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
+    }
+  }
 }
