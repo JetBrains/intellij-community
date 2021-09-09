@@ -41,6 +41,7 @@ import java.util.concurrent.FutureTask;
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
   private static final Key<Long> SECOND_FORMAT_KEY = Key.create("second.format");
+  private static final String SECOND_REFORMAT_CONFIRMED = "second.reformat.confirmed";
 
   private final Collection<TextRange> myRanges = new ArrayList<>();
   private SelectionModel mySelectionModel;
@@ -135,26 +136,33 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     });
   }
 
+  private boolean isSecondReformatDisabled() {
+    return !CodeStyle.getSettings(myProject).ENABLE_SECOND_REFORMAT && PropertiesComponent.getInstance().isValueSet(SECOND_REFORMAT_CONFIRMED);
+  }
+
   private boolean confirmSecondReformat(@NotNull PsiFile file) {
-    CodeStyleSettings defaultSettings = CodeStyle.getSettings(myProject);
-    Ref<Boolean> doNotKeepLineBreaks = Ref.create(isDoNotKeepLineBreaks(file));
-    String key = "second.reformat.confirmed";
-    if (doNotKeepLineBreaks.get() && !defaultSettings.ENABLE_SECOND_REFORMAT && !PropertiesComponent.getInstance().isValueSet(key)) {
+    boolean doNotKeepLineBreaks = isDoNotKeepLineBreaks(file);
+    if (!doNotKeepLineBreaks || isSecondReformatDisabled()) return false;
+    CodeStyleSettings settings = CodeStyle.getSettings(myProject);
+    if (!settings.ENABLE_SECOND_REFORMAT) {
+      Ref<Boolean> ref = Ref.create(true);
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        doNotKeepLineBreaks.set(
+        ref.set(
           MessageDialogBuilder.yesNo(CodeInsightBundle.message("second.reformat"),
-                                     CodeInsightBundle.message("do.you.want.to.remove.custom.line.breaks")).doNotAsk(new DoNotAskOption.Adapter() {
-            @Override
-            public void rememberChoice(boolean isSelected, int exitCode) {
-              if (isSelected) {
-                PropertiesComponent.getInstance().setValue(key,
-                                                           defaultSettings.ENABLE_SECOND_REFORMAT = exitCode == DialogWrapper.OK_EXIT_CODE);
+                                     CodeInsightBundle.message("do.you.want.to.remove.custom.line.breaks"))
+            .doNotAsk(new DoNotAskOption.Adapter() {
+              @Override
+              public void rememberChoice(boolean isSelected, int exitCode) {
+                if (isSelected) {
+                  settings.ENABLE_SECOND_REFORMAT = exitCode == DialogWrapper.OK_EXIT_CODE;
+                  PropertiesComponent.getInstance().setValue(SECOND_REFORMAT_CONFIRMED, true);
+                }
               }
-            }
-          }).ask(myProject));
+            }).ask(myProject));
       });
+      return ref.get();
     }
-    return doNotKeepLineBreaks.get();
+    return true;
   }
 
   private boolean doReformat(@NotNull PsiFile fileToProcess, boolean processChangedTextOnly) {
@@ -164,10 +172,10 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       final LayoutCodeInfoCollector infoCollector = getInfoCollector();
       LOG.assertTrue(infoCollector == null || document != null);
 
-      CharSequence before = document == null
-       ? null
-       : document.getImmutableCharSequence();
-      KeptLineFeedsCollector.setup(fileToProcess);
+      CharSequence before = document == null ? null : document.getImmutableCharSequence();
+      if (!isSecondReformatDisabled()) {
+        KeptLineFeedsCollector.setup(fileToProcess);
+      }
       try {
         EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
           if (processChangedTextOnly) {
