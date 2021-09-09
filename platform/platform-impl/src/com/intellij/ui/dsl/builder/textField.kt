@@ -18,7 +18,6 @@ const val COLUMNS_SHORT = 18
 const val COLUMNS_MEDIUM = 25
 
 fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
-  component.text = binding.get()
   return bind(JTextComponent::getText, JTextComponent::setText, binding)
 }
 

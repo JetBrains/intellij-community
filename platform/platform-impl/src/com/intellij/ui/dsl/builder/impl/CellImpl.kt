@@ -151,6 +151,8 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
+    componentSet(component, binding.get())
+
     onApply { if (shouldSaveOnApply()) binding.set(componentGet(component)) }
     onReset { componentSet(component, binding.get()) }
     onIsModified { shouldSaveOnApply() && componentGet(component) != binding.get() }

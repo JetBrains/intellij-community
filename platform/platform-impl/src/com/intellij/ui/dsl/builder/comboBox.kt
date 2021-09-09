@@ -7,7 +7,6 @@ import com.intellij.ui.layout.*
 import kotlin.reflect.KMutableProperty0
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C> {
-  component.selectedItem = binding.get()
   return bind({ component -> component.selectedItem as T? },
     { component, value -> component.setSelectedItem(value) },
     binding)
