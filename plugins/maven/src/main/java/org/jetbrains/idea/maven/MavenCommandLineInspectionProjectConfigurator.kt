@@ -50,6 +50,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
       ApplicationManager.getApplication().invokeAndWait {
         mavenProjectAware.linkAndLoadProject(project, basePath)
         mavenProjectsManager.waitForResolvingCompletion()
+        mavenProjectsManager.waitForPluginsResolvingCompletion()
       }
 
       LOG.info("mavenProjectsManager isMavenized after link and load project: ${mavenProjectsManager.isMavenizedProject}")
