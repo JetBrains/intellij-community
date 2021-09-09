@@ -17,6 +17,7 @@ import java.net.URL;
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
 import static org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages.adaptGenerics1;
 import static org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages.adaptGenerics2;
+import static org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.*;
 import static org.jetbrains.kotlin.diagnostics.rendering.Renderers.*;
 import static org.jetbrains.kotlin.diagnostics.rendering.TabledDescriptorRenderer.TextElementType;
 import static org.jetbrains.kotlin.idea.highlighter.HtmlTabledDescriptorRenderer.tableForTypes;
