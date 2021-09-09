@@ -115,6 +115,10 @@ public abstract class GroovyElementVisitor {
     visitStatement(returnStatement);
   }
 
+  public void visitYieldStatement(@NotNull GrYieldStatement yieldStatement) {
+    visitStatement(yieldStatement);
+  }
+
   public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
     visitStatement(assertStatement);
   }

@@ -162,6 +162,7 @@ public final class GroovyPsiCreator {
 
     //Branch statements
     if (elem == RETURN_STATEMENT) return new GrReturnStatementImpl(node);
+    if (elem == YIELD_STATEMENT) return new GrYieldStatementImpl(node);
     if (elem == THROW_STATEMENT) return new GrThrowStatementImpl(node);
     if (elem == ASSERT_STATEMENT) return new GrAssertStatementImpl(node);
     if (elem == BREAK_STATEMENT) return new GrBreakStatementImpl(node);
