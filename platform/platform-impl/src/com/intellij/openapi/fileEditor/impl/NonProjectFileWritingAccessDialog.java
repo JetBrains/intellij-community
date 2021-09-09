@@ -1,18 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.navigation.TargetPresentation;
-import com.intellij.navigation.TargetPresentationBuilder;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadOnlyStatusDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.list.TargetPopup;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,29 +22,21 @@ import java.util.List;
 class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JPanel myPanel;
   private JLabel myListTitle;
-  private JList<Pair<VirtualFile, Icon>> myFileList;
+  private JList<VirtualFile> myFileList;
   private JRadioButton myUnlockOneButton;
   private JRadioButton myUnlockDirButton;
   private JRadioButton myUnlockAllButton;
 
-  NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<Pair<VirtualFile, Icon>> nonProjectFiles) {
+  NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<? extends VirtualFile> nonProjectFiles) {
     super(project);
     setTitle(IdeBundle.message("dialog.title.non.project.files.protection"));
 
     myFileList.setPreferredSize(ReadOnlyStatusDialog.getDialogPreferredSize());
 
-    myFileList.setCellRenderer(TargetPopup.createTargetPresentationRenderer((pair) -> {
-      VirtualFile vf = pair.first;
-      TargetPresentationBuilder builder = TargetPresentation.builder(vf.getPresentableName())
-        .icon(pair.second)
-        .presentableText(vf.getPresentableName());
-      VirtualFile vfParent = vf.getParent();
-      if (vfParent != null) builder = builder.locationText(vfParent.getPresentableUrl());
-      return builder.presentation();
-    }));
+    myFileList.setCellRenderer(new FileListRenderer());
     myFileList.setModel(new CollectionListModel<>(nonProjectFiles));
 
-    boolean dirsOnly = ContainerUtil.and(nonProjectFiles, pair -> pair.first.isDirectory());
+    boolean dirsOnly = nonProjectFiles.stream().allMatch(VirtualFile::isDirectory);
     int size = nonProjectFiles.size();
 
     String listTitle = dirsOnly
@@ -61,7 +50,7 @@ class NonProjectFileWritingAccessDialog extends DialogWrapper {
                   : IdeBundle.message("button.i.want.to.edit.choice.this.file.anyway", size);
     setTextAndMnemonicAndListeners(myUnlockOneButton, text, "edit");
 
-    int dirsSize = ContainerUtil.map2Set(nonProjectFiles, pair -> pair.first.getParent()).size();
+    int dirsSize = ContainerUtil.map2Set(nonProjectFiles, VirtualFile::getParent).size();
     String dirsText = IdeBundle.message("button.i.want.to.edit.all.files.in.choice.this.directory", dirsSize);
     setTextAndMnemonicAndListeners(myUnlockDirButton, dirsText, "dir");
 
