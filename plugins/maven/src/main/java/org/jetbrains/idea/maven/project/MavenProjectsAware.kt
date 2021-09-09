@@ -47,7 +47,7 @@ class MavenProjectsAware(
       submitSettingsFilesPartition(settingsFilesContext) { (filesToUpdate, filesToDelete) ->
         val updated = settingsFilesContext.created + settingsFilesContext.updated
         val deleted = settingsFilesContext.deleted
-        if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size && isProjectFiles(filesToUpdate, filesToDelete)) {
+        if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
           watcher.scheduleUpdate(filesToUpdate, filesToDelete, false, true)
         }
         else {
@@ -68,8 +68,11 @@ class MavenProjectsAware(
 
   private fun partitionSettingsFiles(context: ExternalSystemSettingsFilesReloadContext): Pair<List<VirtualFile>, List<VirtualFile>> {
     val localFileSystem = LocalFileSystem.getInstance()
-    val created = context.created.mapNotNull { localFileSystem.findFileByPath(it) }
     val projectsFiles = projectsTree.projectsFiles
+    val created = context.created.asSequence()
+      .mapNotNull { localFileSystem.findFileByPath(it) }
+      .filter { projectsTree.findProject(it) != null }
+      .toList()
     val updated = projectsFiles.filter { it.path in context.updated }
     val deleted = projectsFiles.filter { it.path in context.deleted }
     return created + updated to deleted
@@ -99,9 +102,6 @@ class MavenProjectsAware(
   }
 
   private fun join(parentPath: String, relativePath: String) = File(parentPath, relativePath).path
-
-  private fun isProjectFiles(updated: List<VirtualFile>, filesToDelete: List<VirtualFile>) =
-    updated.all { projectsTree.findProject(it) != null } && filesToDelete.all { projectsTree.findProject(it) != null }
 
   init {
     manager.addManagerListener(object : MavenProjectsManager.Listener {
