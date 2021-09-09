@@ -198,14 +198,12 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
   @Override
   public TextContent excludeRange(TextRange rangeInText) {
-    return rangeInText.getLength() == 0
-           ? this
-           : excludeRanges(List.of(new Exclusion(rangeInText.getStartOffset(), rangeInText.getEndOffset(), false)));
+    return rangeInText.getLength() == 0 ? this : excludeRanges(List.of(Exclusion.exclude(rangeInText)));
   }
 
   @Override
   public TextContent markUnknown(TextRange rangeInText) {
-    return excludeRanges(List.of(new Exclusion(rangeInText.getStartOffset(), rangeInText.getEndOffset(), true)));
+    return excludeRanges(List.of(Exclusion.markUnknown(rangeInText)));
   }
 
   @Override
