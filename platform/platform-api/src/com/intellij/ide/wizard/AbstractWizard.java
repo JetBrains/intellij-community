@@ -64,6 +64,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   private boolean myCreatingModule;
 
+  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent) {
+    super(dialogParent, true);
+    mySteps = new ArrayList<>();
+    initWizard(title, false);
+  }
+
   public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent, @Nullable Project project) {
     super(dialogParent, true);
     mySteps = new ArrayList<>();
