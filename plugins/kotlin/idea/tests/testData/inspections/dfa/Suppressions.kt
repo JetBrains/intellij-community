@@ -1,4 +1,14 @@
 // WITH_RUNTIME
+fun assertCall(x: Int) {
+    if (x < 0) return
+    assert(x >= 0)
+    assert(<warning descr="Condition is always false">x < 0</warning>)
+}
+fun requireCall(x: Int) {
+    if (x < 0) return
+    require(x >= 0)
+    require(<warning descr="Condition is always false">x < 0</warning>)
+}
 fun compilerWarningSuppression() {
     val x: Int = 1
     @Suppress("SENSELESS_COMPARISON")

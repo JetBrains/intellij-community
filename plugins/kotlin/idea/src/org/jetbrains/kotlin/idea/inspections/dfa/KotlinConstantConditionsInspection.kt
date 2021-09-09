@@ -15,13 +15,16 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
@@ -78,7 +81,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
-        // TODO: suppress in assert() or require() conditions (optionally?)
         // TODO: suppress when condition is required for a smart cast
         var parent = expression.parent
         if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
@@ -101,6 +103,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         when (value) {
             ConstantValue.TRUE -> {
                 if (isPairingConditionInWhen(expression)) return true
+                if (isAssertion(parent)) return true
             }
             ConstantValue.ZERO -> {
                 if (expression.readWriteAccess(false).isWrite) {
@@ -165,6 +168,17 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return true
         }
         return expression.isUsedAsStatement(expression.analyze(BodyResolveMode.FULL))
+    }
+
+    private fun isAssertion(parent: PsiElement?): Boolean {
+        val valueArg = parent as? KtValueArgument ?: return false
+        val valueArgList = valueArg.parent as? KtValueArgumentList ?: return false
+        val call = valueArgList.parent as? KtCallExpression ?: return false
+        val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
+        val name = descriptor.name.asString()
+        if (name != "assert" && name != "require") return false
+        val pkg = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+        return pkg.fqName.asString() == "kotlin"
     }
 
     /**
