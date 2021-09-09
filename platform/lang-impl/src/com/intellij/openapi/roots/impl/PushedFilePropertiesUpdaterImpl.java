@@ -349,6 +349,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
           return ReadAction.compute(() -> {
             if (module.isDisposed()) return Stream.empty();
             ProgressManager.checkCanceled();
+            //noinspection deprecation
             return ContainerUtil.map(ModuleIndexableFilesIteratorImpl.getModuleIterators(module), it -> new Object() {
                 final IndexableFilesIterator files = it;
                 final ContentIteratorEx iterator = iteratorProducer.apply(it.getOrigin().getModule());

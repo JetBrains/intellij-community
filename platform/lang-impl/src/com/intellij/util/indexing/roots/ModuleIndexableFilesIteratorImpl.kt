@@ -9,13 +9,12 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.ModuleFileIndexImpl
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 open class ModuleIndexableFilesPolicy {
@@ -32,6 +31,10 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
   companion object {
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval(inVersion = "22.1")
+    @Deprecated("Should not be used in new code; only when rolled back to old behaviour, " +
+                "see DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders(). " +
+                "Should be removed once new code proves stable")
     fun getModuleIterators(module: Module): Collection<ModuleIndexableFilesIteratorImpl> {
       val fileIndex = ModuleRootManager.getInstance(module).fileIndex as ModuleFileIndexImpl
       val moduleRoots = fileIndex.moduleRootsToIterate.toList()
