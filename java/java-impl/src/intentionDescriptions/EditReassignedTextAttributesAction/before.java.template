@@ -1,0 +1,4 @@
+//...
+int i = 0;
+<caret>i = 42;
+System.out.println("Answer: " + i);

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -11,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -351,7 +351,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
       boolean highestPriorityOnly = !Registry.is("ide.tooltip.showAllSeverities");
       info = daemonCodeAnalyzer
-        .findHighlightsByOffset(editor.getDocument(), offset, false, highestPriorityOnly, HighlightSeverity.INFORMATION);
+        .findHighlightsByOffset(editor.getDocument(), offset, false, highestPriorityOnly, HighlightInfoType.SYMBOL_TYPE_SEVERITY);
     }
 
     PsiElement elementForQuickDoc = findElementForQuickDoc(editor, offset, project);
