@@ -35,12 +35,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
-  private static final Key<Long> SECOND_FORMAT_KEY = Key.create("second.format");
+  private static final Key<Pair<Long, Date>> SECOND_FORMAT_KEY = Key.create("second.format");
   private static final String SECOND_REFORMAT_CONFIRMED = "second.reformat.confirmed";
 
   private final Collection<TextRange> myRanges = new ArrayList<>();
@@ -108,7 +109,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public void setDoNotKeepLineBreaks(PsiFile file) {
-    file.putUserData(SECOND_FORMAT_KEY, file.getModificationStamp());
+    file.putUserData(SECOND_FORMAT_KEY, Pair.create(file.getModificationStamp(), new Date()));
   }
 
   @Override
@@ -227,8 +228,8 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   private static boolean isDoNotKeepLineBreaks(PsiFile file) {
-    Long cachedValue = SECOND_FORMAT_KEY.get(file);
-    return cachedValue != null && cachedValue == file.getModificationStamp();
+    Pair<Long, Date> pair = SECOND_FORMAT_KEY.get(file);
+    return pair != null && pair.first == file.getModificationStamp() && (new Date().getTime() - pair.second.getTime() < 5000);
   }
 
   @Nullable
