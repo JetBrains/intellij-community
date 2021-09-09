@@ -26,11 +26,8 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
     KtCallExpression::class.java,
     KotlinBundle.lazyMessage("add.names.in.comment.to.call.arguments")
 ) {
-    override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean {
-        val arguments = element.valueArguments.filterNot { it is KtLambdaArgument }
-        val resolve = resolveValueParameterDescriptors(element, anyBlockCommentsWithName = true) ?: return false
-        return arguments.size == resolve.size
-    }
+    override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean =
+        resolveValueParameterDescriptors(element, anyBlockCommentsWithName = true) != null
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
         val resolvedCall = element.resolveToCall() ?: return
@@ -53,7 +50,9 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
             val resolvedCall = element.resolveToCall() ?: return null
             val descriptor = resolvedCall.candidateDescriptor
             if (descriptor !is JavaMethodDescriptor && descriptor !is JavaClassConstructorDescriptor) return null
-            return arguments.resolve(resolvedCall)
+            val resolve = arguments.resolve(resolvedCall)
+            if (arguments.size != resolve.size) return null
+            return resolve
         }
 
         fun ValueParameterDescriptor.toCommentedParameterName(): String =

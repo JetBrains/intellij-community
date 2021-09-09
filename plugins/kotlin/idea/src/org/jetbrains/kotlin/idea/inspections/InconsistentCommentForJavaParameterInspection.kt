@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.blockCommentWithName
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toCommentedParameterName
-import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -19,12 +18,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         callExpressionVisitor(fun(callExpression) {
-            val arguments = callExpression.valueArguments.filterNot { it is KtLambdaArgument }
             val valueDescriptorByValueArgument = AddNamesInCommentToJavaCallArgumentsIntention.resolveValueParameterDescriptors(
                 callExpression,
                 anyBlockCommentsWithName = false
             ) ?: return
-            if (arguments.size != valueDescriptorByValueArgument.size) return
 
             for ((argument, descriptor)  in valueDescriptorByValueArgument) {
                 val comment = argument.blockCommentWithName() ?: continue
