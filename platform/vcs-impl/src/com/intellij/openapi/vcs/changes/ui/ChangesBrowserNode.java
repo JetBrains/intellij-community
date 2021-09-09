@@ -391,23 +391,21 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     }
   }
 
-  public static class WrapperTag implements Tag {
+  public static class WrapperTag extends ValueTag<Object> {
     public static Tag wrap(@Nullable Object object) {
       if (object == null) return null;
       if (object instanceof Tag) return (Tag)object;
       return new WrapperTag(object);
     }
 
-    private final @NotNull Object myValue;
-
     private WrapperTag(@NotNull Object value) {
-      myValue = value;
+      super(value);
     }
 
     @Nls
     @Override
     public String toString() {
-      return myValue.toString(); //NON-NLS
+      return value.toString(); //NON-NLS
     }
   }
 
