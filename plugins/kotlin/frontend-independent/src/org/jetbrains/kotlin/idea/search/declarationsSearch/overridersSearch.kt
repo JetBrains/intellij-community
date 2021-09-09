@@ -15,7 +15,8 @@ import com.intellij.util.EmptyQuery
 import com.intellij.util.MergeQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
-import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.asJava.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedCreateKtFakeLightMethod
 import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedGetRepresentativeLightMethod
 import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedIsKtFakeLightClass
@@ -24,13 +25,10 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.find
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forEachKotlinOverride
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
-import org.jetbrains.kotlin.idea.search.codeUsageScope
+import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.search.excludeKotlinSources
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.util.*
 
@@ -66,8 +64,8 @@ object KotlinPsiMethodOverridersSearch : HierarchySearch<PsiMethod>(PsiMethodOve
             override fun nextElements(current: PsiClass): Iterable<PsiClass> =
                 DirectClassInheritorsSearch.search(
                     current,
-                    current.codeUsageScope(),
-                    /* includeAnonymous = */ true,
+                    current.project.allScope(),
+                    /* includeAnonymous = */ true
                 )
 
             override fun shouldDescend(element: PsiClass): Boolean =
@@ -111,7 +109,7 @@ fun PsiElement.toPossiblyFakeLightMethods(): List<PsiMethod> {
 }
 
 fun KtNamedDeclaration.forEachOverridingElement(
-    scope: SearchScope = runReadAction { if (this !is KtClassOrObject) codeUsageScope() else useScope },
+    scope: SearchScope = runReadAction { useScope },
     searchDeeply: Boolean = true,
     processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
 ): Boolean {
@@ -138,12 +136,26 @@ fun KtNamedDeclaration.hasOverridingElement(): Boolean {
 }
 
 fun PsiMethod.forEachImplementation(
-    scope: SearchScope = runReadAction { codeUsageScope() },
+    scope: SearchScope = runReadAction { useScope },
     processor: (PsiElement) -> Boolean
 ): Boolean = forEachOverridingMethod(scope, processor) && FunctionalExpressionSearch.search(
     this,
     scope.excludeKotlinSources()
 ).forEach(Processor { processor(it) })
+
+@Deprecated(
+        "This method is obsolete and will be removed",
+        ReplaceWith(
+                "OverridersSearchUtilsKt.forEachOverridingMethod",
+                "org.jetbrains.kotlin.idea.search.declarationsSearch.OverridersSearchUtilsKt"
+        ),
+        DeprecationLevel.ERROR
+)
+@JvmName("forEachOverridingMethod")
+fun PsiMethod.forEachOverridingMethodCompat(
+        scope: SearchScope = runReadAction { useScope },
+        processor: (PsiMethod) -> Boolean
+): Boolean = forEachOverridingMethod(scope, processor)
 
 fun PsiClass.forEachDeclaredMemberOverride(processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean) {
     val scope = runReadAction { useScope }
