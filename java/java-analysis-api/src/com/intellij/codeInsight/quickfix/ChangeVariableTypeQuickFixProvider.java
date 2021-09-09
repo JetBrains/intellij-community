@@ -8,6 +8,9 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This extension allow adding additional fixes in places where analysis wants to have different type for variable.
+ */
 public interface ChangeVariableTypeQuickFixProvider {
   ExtensionPointName<ChangeVariableTypeQuickFixProvider> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.changeVariableTypeQuickFixProvider");
 
