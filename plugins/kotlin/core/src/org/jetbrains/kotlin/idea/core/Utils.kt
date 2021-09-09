@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpression
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
@@ -207,3 +209,13 @@ fun KtCallExpression.receiverValue(): ReceiverValue? {
 fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
 
 fun KtExpression.resolveType(): KotlinType? = this.analyze(BodyResolveMode.PARTIAL).getType(this)
+
+fun KtModifierKeywordToken.toVisibility(): DescriptorVisibility {
+    return when (this) {
+        KtTokens.PUBLIC_KEYWORD -> DescriptorVisibilities.PUBLIC
+        KtTokens.PRIVATE_KEYWORD -> DescriptorVisibilities.PRIVATE
+        KtTokens.PROTECTED_KEYWORD -> DescriptorVisibilities.PROTECTED
+        KtTokens.INTERNAL_KEYWORD -> DescriptorVisibilities.INTERNAL
+        else -> throw IllegalArgumentException("Unknown visibility modifier:$this")
+    }
+}

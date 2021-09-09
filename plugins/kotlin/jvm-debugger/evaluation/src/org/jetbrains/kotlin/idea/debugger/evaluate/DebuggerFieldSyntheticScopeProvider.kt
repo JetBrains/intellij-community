@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertySetterDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
 import org.jetbrains.kotlin.incremental.components.LookupLocation
@@ -81,7 +82,7 @@ class DebuggerFieldSyntheticScope(val javaSyntheticPropertiesScope: JavaSyntheti
             return false
         }
 
-        return containingFile is KtCodeFragment && containingFile.getCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) != null
+        return containingFile is KtCodeFragment && containingFile.getCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) != null
     }
 
     private fun getSyntheticPropertiesForClass(clazz: ClassDescriptor): Collection<PropertyDescriptor> {
