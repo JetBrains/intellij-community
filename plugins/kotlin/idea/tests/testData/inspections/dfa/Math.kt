@@ -28,7 +28,7 @@ fun test(x : Int) {
     } else {
         a *= 3
     }
-    if (<warning descr="Condition is always true">a == 5 || <warning descr="Condition is always true">a == 9</warning></warning>) {}
+    if (<warning descr="Condition is always true">a == 5 || <warning descr="Condition is always true when reached">a == 9</warning></warning>) {}
 }
 fun divByZero(x : Int) {
     val y = 100 / x

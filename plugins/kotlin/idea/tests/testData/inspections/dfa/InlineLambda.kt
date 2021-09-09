@@ -6,7 +6,7 @@ fun lambdaGlobalReturn(ints: Array<Int>, b : Boolean) {
         x++
         print(it)
     }
-    if (<warning descr="Condition is always false">b && <warning descr="Condition is always false"><weak_warning descr="Value is always zero">x</weak_warning> == 1</warning></warning>)
+    if (<warning descr="Condition is always false">b && <warning descr="Condition is always false when reached"><weak_warning descr="Value is always zero">x</weak_warning> == 1</warning></warning>)
         println()
 }
 fun lambdaGlobalReturn2(ints: Array<Int>, b : Boolean) {
@@ -16,7 +16,7 @@ fun lambdaGlobalReturn2(ints: Array<Int>, b : Boolean) {
         if (b) return
         print(it)
     }
-    if (<warning descr="Condition is always false">b && <warning descr="Condition is always false"><weak_warning descr="Value is always zero">x</weak_warning> == 1</warning></warning>)
+    if (<warning descr="Condition is always false">b && <warning descr="Condition is always false when reached"><weak_warning descr="Value is always zero">x</weak_warning> == 1</warning></warning>)
         println()
 }
 fun lambdaLocalReturn(ints: Array<Int>, b : Boolean) {

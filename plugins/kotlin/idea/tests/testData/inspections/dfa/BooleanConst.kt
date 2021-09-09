@@ -4,7 +4,7 @@ fun foo(a: Int, b: Int) {
     val flag = a > b
     if (flag) {
         val notflag = <warning descr="Condition is always false">!flag</warning>
-        if (<weak_warning descr="Condition is always false">notflag</weak_warning>)
+        if (<weak_warning descr="Value is always false">notflag</weak_warning>)
             println()
     }
 }
@@ -21,7 +21,7 @@ fun boo(a: Boolean) {
 fun boo2(a: Boolean) {
     val flag = a
     val flag2 = a
-    if (<warning descr="Condition is always false">flag && <warning descr="Condition is always false">!flag2</warning></warning>) {
+    if (<warning descr="Condition is always false">flag && <warning descr="Condition is always false when reached">!flag2</warning></warning>) {
         println()
     }
 }
@@ -29,7 +29,7 @@ fun boo2(a: Boolean) {
 fun boo3(a: Boolean) {
     val flag = a
     val flag2 = a
-    if (flag && <weak_warning descr="Condition is always true">flag2</weak_warning>) {
+    if (flag && <weak_warning descr="Value is always true">flag2</weak_warning>) {
         println()
     }
 }
@@ -37,14 +37,14 @@ fun boo3(a: Boolean) {
 fun foo1(b: Boolean) {
     if (b)
         return
-    if (<weak_warning descr="Condition is always false">b</weak_warning>)
+    if (<weak_warning descr="Value is always false">b</weak_warning>)
         println()
 }
 
 fun foo2(b: Boolean) {
     if (!b)
         return
-    if (<weak_warning descr="Condition is always true">b</weak_warning>)
+    if (<weak_warning descr="Value is always true">b</weak_warning>)
         println()
 }
 
@@ -53,7 +53,7 @@ fun foo3(b: Boolean) {
         print (123)
     else
         return
-    if (<weak_warning descr="Condition is always true">b</weak_warning>)
+    if (<weak_warning descr="Value is always true">b</weak_warning>)
         println()
 }
 
@@ -62,13 +62,13 @@ fun foo4(b: Boolean) {
         print (123)
     else
         return
-    if (<weak_warning descr="Condition is always false">b</weak_warning>)
+    if (<weak_warning descr="Value is always false">b</weak_warning>)
         println()
 }
 
 fun foo5(a: Boolean, b: Boolean) {
     if (a && b) {
-        if (<weak_warning descr="Condition is always true">b</weak_warning>)
+        if (<weak_warning descr="Value is always true">b</weak_warning>)
             println()
     } else {
         if (a)
@@ -78,7 +78,7 @@ fun foo5(a: Boolean, b: Boolean) {
 
 fun foo6(a: Boolean, b: Boolean, c: Boolean) {
     if (a && b && c) {
-        if (<weak_warning descr="Condition is always true">c</weak_warning>)
+        if (<weak_warning descr="Value is always true">c</weak_warning>)
             println()
     } else {
         if (!b)
@@ -87,7 +87,7 @@ fun foo6(a: Boolean, b: Boolean, c: Boolean) {
 }
 
 fun foo7(a: Boolean, <warning descr="[UNUSED_PARAMETER] Parameter 'b' is never used">b</warning>: Boolean, <warning descr="[UNUSED_PARAMETER] Parameter 'c' is never used">c</warning>: Boolean) {
-    if (a || <weak_warning descr="Condition is always false">a</weak_warning>) {
+    if (a || <weak_warning descr="Value is always false">a</weak_warning>) {
         println()
     }
 }

@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -274,8 +275,20 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         val expr = anchor.expression
                         if (!shouldSuppress(cv, expr)) {
                             val key = when (cv) {
-                                ConstantValue.TRUE -> "inspection.message.condition.always.true"
-                                ConstantValue.FALSE -> "inspection.message.condition.always.false"
+                                ConstantValue.TRUE ->
+                                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression)
+                                        "inspection.message.value.always.true"
+                                    else if (logicalChain(expr))
+                                        "inspection.message.condition.always.true.when.reached" 
+                                    else 
+                                        "inspection.message.condition.always.true"
+                                ConstantValue.FALSE ->
+                                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression)
+                                        "inspection.message.value.always.false"
+                                    else if (logicalChain(expr))
+                                        "inspection.message.condition.always.false.when.reached"
+                                    else
+                                        "inspection.message.condition.always.false"
                                 ConstantValue.NULL -> "inspection.message.value.always.null"
                                 ConstantValue.ZERO -> "inspection.message.value.always.zero"
                                 else -> throw IllegalStateException("Unexpected constant: $cv")
@@ -323,6 +336,20 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
         }
+    }
+
+    private fun logicalChain(expr: KtExpression): Boolean {
+        var context = expr
+        var parent = context.parent
+        while (parent is KtParenthesizedExpression) {
+            context = parent
+            parent = context.parent
+        }
+        if (parent is KtBinaryExpression && parent.right == context) {
+            val token = parent.operationToken
+            return token == KtTokens.ANDAND || token == KtTokens.OROR
+        }
+        return false
     }
 
     private fun isCompilationWarning(anchor: KtExpression): Boolean

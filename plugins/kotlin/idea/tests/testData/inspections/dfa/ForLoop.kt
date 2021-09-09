@@ -29,7 +29,7 @@ fun testEmptyLoop(x: Int, y: Int) {
 }
 fun testArray(arr : Array<Int>) {
     for (x in arr) {
-        if (<warning descr="Condition is always false">x > 5 && <warning descr="Condition is always false">x < 3</warning></warning>) {}
+        if (<warning descr="Condition is always false">x > 5 && <warning descr="Condition is always false when reached">x < 3</warning></warning>) {}
     }
 }
 fun destructuring(list : List<Pair<String, Int>>) {
@@ -49,7 +49,7 @@ fun destructuring2(list : List<Pair<String, Int>>) {
         if (i > 0) {
             s1 = s
         }
-        if (<warning descr="Condition is always false">i > 0 && <warning descr="Condition is always false">s1 != s</warning></warning>) {
+        if (<warning descr="Condition is always false">i > 0 && <warning descr="Condition is always false when reached">s1 != s</warning></warning>) {
 
         }
     }
