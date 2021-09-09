@@ -1,4 +1,15 @@
 // WITH_RUNTIME
+fun itVariable(x:List<Int>) {
+    x.forEach {
+        if (it > 0) {
+            if (<warning descr="Condition is always false">it < 0</warning>) {
+            }
+            x.forEach {
+                if (it < 0) {}
+            }
+        }
+    }
+}
 fun captureMutableLocal() {
     var x = 10
     val fn = {

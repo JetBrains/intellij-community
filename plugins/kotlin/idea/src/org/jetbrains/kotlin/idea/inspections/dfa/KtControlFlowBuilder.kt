@@ -438,7 +438,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun inlineLambda(lambda: KtLambdaExpression) {
-        // TODO: check/process 'it'
         /*
             We encode unknown call with inlineable lambda as
             unknownCode()
