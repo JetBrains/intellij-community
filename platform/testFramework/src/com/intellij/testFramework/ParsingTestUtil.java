@@ -115,12 +115,9 @@ public final class ParsingTestUtil {
       result.append(NL_SEPARATOR_NL);
     }
 
-    UsefulTestCase.assertSameLinesWithFile(answersFilePath, result.toString(), false);
-
     WriteAction.run(() -> fileDocument.setText(newFileText));
     psiDocumentManager.commitDocument(fileDocument);
     var psiBeforeCommit = psiFileToString(psiFile);
-    ensureNoErrorElementsInAllSubTrees(psiFile);
     WriteCommandAction.runWriteCommandAction(project, () -> {
       fileDocument.setText("");
       psiDocumentManager.commitDocument(fileDocument);
@@ -128,7 +125,9 @@ public final class ParsingTestUtil {
       psiDocumentManager.commitDocument(fileDocument);
     });
 
-    TestCase.assertEquals("Reparsing error", psiBeforeCommit, psiFileToString(psiFile));
+    TestCase.assertEquals("Reparsing error", psiFileToString(psiFile), psiBeforeCommit);
+    ensureNoErrorElementsInAllSubTrees(psiFile);
+    UsefulTestCase.assertSameLinesWithFile(answersFilePath, result.toString(), false);
   }
 
   private static void serializeReparseableRoots(@Nullable Couple<ASTNode> reparseableRoots,
