@@ -429,6 +429,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon BalloonInformation = load("general/balloonInformation.svg", -1420324160821406768L, 2);
     /** 16x16 */ public static final @NotNull Icon BalloonWarning = load("general/balloonWarning.svg", -1931199119404078185L, 2);
     /** 12x12 */ public static final @NotNull Icon BalloonWarning12 = load("general/balloonWarning12.svg", 4823823179138939439L, 2);
+    /** 32x15 */ public static final @NotNull Icon Beta = load("general/beta.svg", -7959941215981400915L, 0);
     /** 8x4 */ public static final @NotNull Icon ButtonDropTriangle = load("general/buttonDropTriangle.svg", -1305243295153025777L, 2);
     /** 16x16 */ public static final @NotNull Icon ChevronDown = load("general/chevron-down.svg", -574064105000500988L, 0);
     /** 16x16 */ public static final @NotNull Icon ChevronLeft = load("general/chevron-left.svg", -422346459894404165L, 0);
