@@ -12949,6 +12949,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             public void testSumByShorts() throws Exception {
                 runTest("testData/intentions/loopToCallChain/sum/sumByShorts.kt");
             }
+
+            @TestMetadata("sumOfDouble.kt")
+            public void testSumOfDouble() throws Exception {
+                runTest("testData/intentions/loopToCallChain/sum/sumOfDouble.kt");
+            }
+
+            @TestMetadata("sumOfInts.kt")
+            public void testSumOfInts() throws Exception {
+                runTest("testData/intentions/loopToCallChain/sum/sumOfInts.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
