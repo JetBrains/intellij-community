@@ -96,6 +96,21 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("abc def", extractText("a.java", "class C { String s = \" abc def \"; }", 27).toString());
   }
 
+  public void testJavaTextBlock() {
+    String text = "class C { " +
+                  "  String s = \"\"\"\n" +
+                  "    abc \\\n" +
+                  "    \\\n" +
+                  "    def\n" +
+                  "      ghi\n" +
+                  "    \"\"\"; " +
+                  "}";
+    int offset = text.indexOf("def");
+    TextContent content = extractText("a.java", text, offset);
+    assertEquals("abc def\n  ghi", content.toString());
+    assertEquals(offset, content.textOffsetToFile("abc ".length()));
+  }
+
   public void testNoExtractionInInjectedFragments() {
     InjectedLanguageManager.getInstance(getProject()).registerMultiHostInjector(new MultiHostInjector() {
       @Override
