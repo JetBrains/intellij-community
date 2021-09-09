@@ -1,4 +1,21 @@
 // WITH_RUNTIME
+fun objectDeclaration() {
+    var x : Any = object : X(), Y {}
+    if (<warning descr="Condition is always true">x is X</warning>) {}
+    if (<warning descr="Condition is always true">x is Y</warning>) {}
+    if (<warning descr="Condition is always false">x is Z</warning>) {}
+    if (<warning descr="Condition is always false">x is ZZ</warning>) {}
+    if (<warning descr="Condition is always false">x is ZZZ</warning>) {}
+    if (<warning descr="Condition is always false">x is Int</warning>) {}
+
+    var x1 : Any = object {}
+    var x2 : Any = object {}
+    var x3 = x1
+    if (<warning descr="Condition is always false">x1 is Int</warning>) {}
+    if (<warning descr="Condition is always false">x1 === x2</warning>) {}
+    if (<warning descr="Condition is always true">x1 === x3</warning>) {}
+    if (<warning descr="Condition is always false">x2 === x3</warning>) {}
+}
 fun destructuring(a: Int, b: Int) {
     val (c, d) = a to b
     if (c > d) {
@@ -12,15 +29,6 @@ fun localFunction() {
     }
     foo()
     if (x == 5) {}
-}
-fun objectDeclaration() {
-    var x : Any = object : X(), Y {}
-    if (<warning descr="Condition is always true">x is X</warning>) {}
-    if (<warning descr="Condition is always true">x is Y</warning>) {}
-    if (<warning descr="Condition is always false">x is Z</warning>) {}
-    if (<warning descr="Condition is always false">x is ZZ</warning>) {}
-    if (x is ZZZ) {}
-    if (<warning descr="Condition is always false">x is Int</warning>) {}
 }
 open class X {}
 interface Y {

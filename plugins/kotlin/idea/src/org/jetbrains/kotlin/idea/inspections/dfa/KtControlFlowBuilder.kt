@@ -434,7 +434,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
 
         addCall(expr, argCount, qualifierOnStack)
-        // TODO: support pure calls, some known methods, probably Java contracts, etc.
     }
 
     private fun inlineLambda(lambda: KtLambdaExpression) {
@@ -907,9 +906,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun getReferenceValue(expr: KtExpression, target: PsiElement?): DfType? {
         return when (target) {
-            is KtObjectDeclaration -> {
-                DfType.TOP // TODO
-            }
+            // Companion object qualifier
+            is KtObjectDeclaration -> DfType.TOP
             is PsiClass -> DfType.TOP
             is PsiVariable -> {
                 val constantValue = target.computeConstantValue()

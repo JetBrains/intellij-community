@@ -17,9 +17,9 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -84,15 +84,16 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                     if (source is KotlinSourceElement) {
                         val psi = source.psi
                         if (psi is KtObjectDeclaration) {
-                            var objectConstraint = TypeConstraints.EXACTLY_OBJECT.instanceOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
-                            for (entry in psi.superTypeListEntries) {
-                                val ref = entry.typeReference
-                                if (ref != null) {
-                                    val kotlinType = ref.getAbbreviatedTypeOrType(ref.analyze(BodyResolveMode.FULL))
-                                    objectConstraint = objectConstraint.meet(kotlinType?.toDfTypeNotNullable(context) ?: DfType.TOP)
+                            val bindingContext = psi.analyze()
+                            val superTypes = psi.superTypeListEntries
+                                .map { entry ->
+                                    val psiType = entry.typeReference?.getAbbreviatedTypeOrType(bindingContext)?.toPsiType(psi)
+                                    PsiUtil.resolveClassInClassTypeOnly(psiType)
                                 }
-                            }
-                            return objectConstraint
+                            return if (superTypes.contains(null))
+                                DfType.TOP
+                            else
+                                TypeConstraints.exactSubtype(psi, superTypes).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
                         }
                     }
                 }
@@ -158,7 +159,7 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
         is BooleanValue -> DfTypes.booleanValue(constant.value)
         is ByteValue -> DfTypes.intValue(constant.value.toInt())
         is ShortValue -> DfTypes.intValue(constant.value.toInt())
-        is CharValue -> DfTypes.intValue(constant.value.toInt())
+        is CharValue -> DfTypes.intValue(constant.value.code)
         is IntValue -> DfTypes.intValue(constant.value)
         is LongValue -> DfTypes.longValue(constant.value)
         is FloatValue -> DfTypes.floatValue(constant.value)

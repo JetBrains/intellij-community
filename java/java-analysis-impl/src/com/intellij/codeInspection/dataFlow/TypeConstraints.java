@@ -11,6 +11,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +117,7 @@ public final class TypeConstraints {
    * @return a type that represents a final subclass that has no corresponding PsiClass.
    * {@link #BOTTOM} if creation of such a subclass is impossible
    */
-  public static TypeConstraint exactSubtype(@NotNull PsiElement id, @NotNull PsiType superType) {
+  public static @NotNull TypeConstraint exactSubtype(@NotNull PsiElement id, @NotNull PsiType superType) {
     superType = normalizeType(superType);
     if (superType instanceof PsiClassType) {
       TypeConstraint.Exact exact = createExact(superType);
@@ -133,6 +135,15 @@ public final class TypeConstraints {
       return new ExactSubclass(id, supers.toArray(new TypeConstraint.Exact[0]));
     }
     return BOTTOM;
+  }
+
+  public static @NotNull TypeConstraint exactSubtype(@NotNull PsiElement id, @NotNull List<PsiClass> superClasses) {
+    TypeConstraint.Exact[] supers = ContainerUtil.map2Array(superClasses, TypeConstraint.Exact.class, cls -> exactClass(cls));
+    if (StreamEx.of(supers).anyMatch(TypeConstraint.Exact::isFinal)) return BOTTOM;
+    if (supers.length == 0) {
+      supers = new TypeConstraint.Exact[]{EXACTLY_OBJECT};
+    }
+    return new ExactSubclass(id, supers);
   }
 
   /**
