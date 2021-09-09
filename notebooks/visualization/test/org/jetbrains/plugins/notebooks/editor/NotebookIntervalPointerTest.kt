@@ -180,8 +180,6 @@ private class MockNotebookCellLines(override val intervals: MutableList<Interval
 
   override val intervalListeners = EventDispatcher.create(NotebookCellLines.IntervalListener::class.java)
 
-  override fun getIterator(ordinal: Int): ListIterator<Interval> = intervals.listIterator(ordinal)
-
   override fun intervalsIterator(startLine: Int): ListIterator<Interval> = TODO("stub")
 
   override val modificationStamp: Long

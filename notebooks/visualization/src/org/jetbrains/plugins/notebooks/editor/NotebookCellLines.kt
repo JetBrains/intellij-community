@@ -3,7 +3,6 @@ package org.jetbrains.plugins.notebooks.editor
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.EventDispatcher
-import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 val NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY = DataKey.create<NotebookCellLines.Interval>("NOTEBOOK_CELL_LINES_INTERVAL")
@@ -69,8 +68,6 @@ interface NotebookCellLines {
      */
     fun segmentChanged(oldIntervals: List<Interval>, newIntervals: List<Interval>)
   }
-
-  fun getIterator(ordinal: Int): ListIterator<Interval>
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
 
