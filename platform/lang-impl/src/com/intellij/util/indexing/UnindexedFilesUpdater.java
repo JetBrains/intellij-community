@@ -345,7 +345,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private List<IndexableFilesIterator> getOrderedProviders() {
     if (myPredefinedIndexableFilesIterators != null) return myPredefinedIndexableFilesIterators;
 
-    List<IndexableFilesIterator> originalOrderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
+    List<IndexableFilesIterator> originalOrderedProviders = myIndex.getIndexableFilesProviders(myProject);
 
     List<IndexableFilesIterator> orderedProviders = new ArrayList<>();
     originalOrderedProviders.stream()

@@ -451,7 +451,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
-    List<IndexableFilesIterator> providers = getOrderedIndexableFilesProviders(project);
+    List<IndexableFilesIterator> providers = getIndexableFilesProviders(project);
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
     for (IndexableFilesIterator provider : providers) {
       if (indicator != null) {
@@ -464,10 +464,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   /**
-   * Returns providers of files to be indexed. Indexing is performed in the order corresponding to the resulting list.
+   * Returns providers of files to be indexed.
    */
   @NotNull
-  public List<IndexableFilesIterator> getOrderedIndexableFilesProviders(@NotNull Project project) {
+  public List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
     if (LightEdit.owns(project)) {
       return Collections.emptyList();
     }

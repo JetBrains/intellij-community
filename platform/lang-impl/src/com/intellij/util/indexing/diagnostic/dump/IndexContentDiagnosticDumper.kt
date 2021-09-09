@@ -51,7 +51,7 @@ object IndexContentDiagnosticDumper {
   private val jacksonObjectMapper = jacksonObjectMapper()
 
   fun getIndexContentDiagnosticForProject(project: Project, indicator: ProgressIndicator): IndexContentDiagnostic {
-    val providers = (FileBasedIndex.getInstance() as FileBasedIndexImpl).getOrderedIndexableFilesProviders(project)
+    val providers = (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndexableFilesProviders(project)
     val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
     indicator.text = IndexingBundle.message("index.content.diagnostic.dumping")
