@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.io.HttpRequests;
@@ -70,6 +71,10 @@ class JpsCachesDownloader {
                   LOG.info("File not found to download " + description.getDownloadUrl());
                   indicator.finished();
                   return null;
+                }
+              } else {
+                if (Registry.is("jps.cache.check.internet.connection")){
+                  JpsServerConnectionUtil.checkDomainIsReachable("www.google.com");
                 }
               }
 
