@@ -103,8 +103,8 @@ public class EditorMergedHorizontalScrollBarLayout extends AbstractLayoutManager
     int newHistoryHeight = panelSize.height - newInputHeight;
 
     var normalizedHeights = normalizeHeights(newHistoryHeight, newInputHeight);
-    newHistoryHeight = normalizedHeights.HistoryConsoleHeight;
-    newInputHeight = normalizedHeights.InputConsoleHeight;
+    newHistoryHeight = normalizedHeights.historyConsoleHeight;
+    newInputHeight = normalizedHeights.inputConsoleHeight;
 
     // apply new bounds & scroll history viewer
     input.getComponent().setBounds(0, newHistoryHeight, panelSize.width, newInputHeight);
@@ -126,11 +126,11 @@ public class EditorMergedHorizontalScrollBarLayout extends AbstractLayoutManager
   }
 
   protected static class HeightOfComponents {
-    public int HistoryConsoleHeight, InputConsoleHeight;
+    public int historyConsoleHeight, inputConsoleHeight;
 
     public HeightOfComponents(int historyHeight, int inputHeight) {
-      HistoryConsoleHeight = historyHeight;
-      InputConsoleHeight = inputHeight;
+      historyConsoleHeight = historyHeight;
+      inputConsoleHeight = inputHeight;
     }
   }
 }
