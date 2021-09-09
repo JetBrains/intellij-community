@@ -76,6 +76,8 @@ interface NotebookCellLines {
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
 
+  val intervals: List<Interval>
+
   val intervalsCount: Int
 
   val intervalListeners: EventDispatcher<IntervalListener>

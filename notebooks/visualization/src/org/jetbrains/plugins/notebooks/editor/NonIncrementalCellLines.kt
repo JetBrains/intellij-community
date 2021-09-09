@@ -15,7 +15,8 @@ import com.intellij.util.containers.ContainerUtil
 class NonIncrementalCellLines private constructor(private val document: Document,
                                                   private val intervalsGenerator: (Document) -> List<NotebookCellLines.Interval>) : NotebookCellLines {
 
-  private var intervals: List<NotebookCellLines.Interval> = emptyList()
+  override var intervals: List<NotebookCellLines.Interval> = emptyList()
+    private set
   private val documentListener = createDocumentListener()
   override val intervalListeners = EventDispatcher.create(NotebookCellLines.IntervalListener::class.java)
 

@@ -173,7 +173,7 @@ private class TestEnv(intervals: List<Interval>) {
 }
 
 
-private class MockNotebookCellLines(val intervals: MutableList<Interval> = mutableListOf()) : NotebookCellLines {
+private class MockNotebookCellLines(override val intervals: MutableList<Interval> = mutableListOf()) : NotebookCellLines {
   init {
     checkIntervals(intervals)
   }
