@@ -11,10 +11,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -35,8 +32,6 @@ import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.crea
  * @author Vladislav.Soroka
  */
 public final class AllInPackageGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
-  private Key LOCATION_NAME = Key.create("LOCATION_NAME");
-
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {
@@ -60,12 +55,6 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     String filter = createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
     configuration.getSettings().setScriptParameters(filter);
     configuration.setName(suggestName(configurationData));
-    // Store information about the location of the run configuration.
-    Module configurationModule = ((ModuleWithDependenciesScope)configuration.getSearchScope()).getModule();
-    VirtualFile locationFile = getSourceFile(getSourceElement(configurationModule, configurationData.sourceElement));
-    if (locationFile != null) {
-      configuration.putUserData(LOCATION_NAME, locationFile);
-    }
     return true;
   }
 
@@ -84,12 +73,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     final String filter = createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/true);
-    if (!scriptParameters.contains(filter)) return false;
-    VirtualFile locationFile = (VirtualFile)configuration.getUserData(LOCATION_NAME);
-    // If locationFile is null, then return true. This is for all the existing configurations created without location information
-    // from previous versions, as they would have already passed all the previous comparisons.
-    if (locationFile == null) return true;
-    return FileUtil.pathsEqual(configurationData.source.getPath(), locationFile.getPath());
+    return scriptParameters.contains(filter);
   }
 
   @Override
