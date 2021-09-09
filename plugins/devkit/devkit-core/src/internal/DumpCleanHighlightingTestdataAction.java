@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,14 +17,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -34,7 +32,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class DumpCleanHighlightingTestdataAction extends AnAction implements DumbAware {
+final class DumpCleanHighlightingTestdataAction extends AnAction implements DumbAware, UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(DumpCleanHighlightingTestdataAction.class);
 
   private final NullableLazyValue<Class<?>> myHighlightingDataClass = NullableLazyValue.createValue(() -> {
@@ -60,56 +58,61 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getProject();
-    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return;
+
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (psiFile != null) {
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile != null) {
-        final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-        if (document != null) {
-          initHighlightingData(document);
-        }
-        return;
+      processFile(psiFile);
+    }
+    else {
+      processDirectory(project);
+    }
+  }
+
+  private void processFile(PsiFile psiFile) {
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file != null) {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        stripHighlightingData(document);
       }
     }
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+  }
+
+  private void processDirectory(Project project) {
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(DevKitBundle.message("action.DumpCleanTestData.file.chooser.title"));
     descriptor.setDescription(DevKitBundle.message("action.DumpCleanTestData.file.chooser.source.description"));
-    final VirtualFile dirToProcess = FileChooser.chooseFile(descriptor, project, null);
-    if (dirToProcess != null) {
-      LOG.assertTrue(project != null);
-      final FileChooserDescriptor targetDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      targetDescriptor.setTitle(DevKitBundle.message("action.DumpCleanTestData.file.chooser.title"));
-      targetDescriptor.setDescription(DevKitBundle.message("action.DumpCleanTestData.file.chooser.destination.description"));
-      final VirtualFile destinationFolder = FileChooser.chooseFile(targetDescriptor, project, null);
-      if (dirToProcess.equals(destinationFolder)) {
-        Messages.showErrorDialog(project, DevKitBundle.message("action.DumpCleanTestData.error.source.destination.must.differ"),
-                                 CommonBundle.getErrorTitle());
-        return;
-      }
-      if (destinationFolder != null) {
-        final File destination = VfsUtilCore.virtualToIoFile(destinationFolder);
-        final VirtualFile[] files = dirToProcess.getChildren();
-        for (VirtualFile virtualFile : files) {
-          final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-          if (document != null) {
-            initHighlightingData(document);
-            final File file = new File(destination, virtualFile.getName());
-            try {
-              FileUtil.writeToFile(file, document.getText());
-            }
-            catch (IOException ex) {
-              LOG.error(ex);
-            }
-          }
+    VirtualFile dirToProcess = FileChooser.chooseFile(descriptor, project, null);
+    if (dirToProcess == null) return;
+
+    descriptor.setDescription(DevKitBundle.message("action.DumpCleanTestData.file.chooser.destination.description"));
+    VirtualFile destinationDir = FileChooser.chooseFile(descriptor, project, null);
+    if (destinationDir == null) return;
+    if (dirToProcess.equals(destinationDir)) {
+      Messages.showErrorDialog(project, DevKitBundle.message("action.DumpCleanTestData.error.source.destination.must.differ"), CommonBundle.getErrorTitle());
+      return;
+    }
+
+    Path destination = destinationDir.toNioPath();
+    for (VirtualFile file : dirToProcess.getChildren()) {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        stripHighlightingData(document);
+        try {
+          Files.writeString(destination.resolve(file.getName()), document.getText(), file.getCharset());
+        }
+        catch (IOException e) {
+          LOG.error(e);
         }
       }
     }
   }
 
   /** {@code new ExpectedHighlightingData(document, true, true).init()} */
-  private void initHighlightingData(Document document) {
+  private void stripHighlightingData(Document document) {
     Class<?> klass = myHighlightingDataClass.getValue();
     if (klass != null) {
       try {

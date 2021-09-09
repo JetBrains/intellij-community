@@ -76,10 +76,7 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
@@ -112,7 +109,7 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "TestOnlyProblems"})
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class PlatformTestUtil {
   private static final Logger LOG = Logger.getInstance(PlatformTestUtil.class);
 
@@ -1119,10 +1116,6 @@ public final class PlatformTestUtil {
 
   /**
    * Wait and dispatch events during timeout
-   *
-   * @param errorMessageSupplier The error message supplier if timeout happens
-   * @param condition            Check whether finished
-   * @param timeoutInSeconds     timeout in seconds
    */
   public static void waitWithEventsDispatching(@NotNull Supplier<String> errorMessageSupplier,
                                                @NotNull BooleanSupplier condition,
