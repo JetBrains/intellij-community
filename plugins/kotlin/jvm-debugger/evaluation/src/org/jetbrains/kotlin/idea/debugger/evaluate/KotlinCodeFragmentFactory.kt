@@ -23,6 +23,7 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.InvalidStackFrameException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.idea.debugger.getContextElement
@@ -47,7 +48,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         supplyDebugInformation(item, codeFragment, context)
 
-        codeFragment.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
+        codeFragment.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
             val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
             val debuggerSession = debuggerContext.debuggerSession
             if (debuggerSession == null || debuggerContext.suspendContext == null) {

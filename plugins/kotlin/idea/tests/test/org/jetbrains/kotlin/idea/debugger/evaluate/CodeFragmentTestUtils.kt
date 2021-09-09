@@ -10,6 +10,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils.BLOCK_CODE_FRAGMENT
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.getContextElement
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtElement
@@ -42,7 +43,7 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
     val file = createCodeFragment(filePath, elementAt!!, isBlock)
 
     val typeStr = InTextDirectivesUtils.findStringWithPrefixes(getFile().text, "// ${ExpectedCompletionUtils.RUNTIME_TYPE} ")
-    file.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) {
+    file.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) {
         if (typeStr != null) {
             val codeFragment = KtPsiFactory(project).createBlockCodeFragment(
                 "val xxx: $typeStr",
