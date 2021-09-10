@@ -12,6 +12,7 @@ import com.intellij.util.SingleAlarm
 import org.gradle.tooling.ProjectConnection
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Temporarily store latest virtual files written from documents.
@@ -20,20 +21,22 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @Service
 class GradleFileModificationTracker: Disposable {
-  private val myPathsCache = ConcurrentHashMap.newKeySet<Path>()
+  private val myCacheRef = AtomicReference<MutableSet<Path>>(ConcurrentHashMap.newKeySet())
   private val alarm = SingleAlarm.pooledThreadSingleAlarm(5000, this) {
-    myPathsCache.clear()
+    myCacheRef.set(ConcurrentHashMap.newKeySet())
   }
 
   fun notifyConnectionAboutChangedPaths(connection: ProjectConnection) {
-    val collection = myPathsCache.toList()
-    connection.notifyDaemonsAboutChangedPaths(collection);
+    val collection = myCacheRef.getAndSet(ConcurrentHashMap.newKeySet()).toList()
+    if (collection.isNotEmpty()) {
+      connection.notifyDaemonsAboutChangedPaths(collection);
+    }
   }
 
   fun beforeSaving(virtualFile: VirtualFile) {
     val vfs = virtualFile.fileSystem
     vfs.getNioPath(virtualFile)?.let {
-      myPathsCache.add(it)
+      myCacheRef.get().add(it)
     }
     alarm.cancelAndRequest()
   }
