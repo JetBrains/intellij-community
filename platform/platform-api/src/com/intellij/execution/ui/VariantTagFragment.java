@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.*;
 
@@ -177,6 +179,21 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       myDropDown = new DropDownLink<>(null, link -> showPopup());
       myDropDown.setForeground(JBUI.CurrentTheme.Label.foreground());
       add(myDropDown, JLayeredPane.POPUP_LAYER);
+      myButton.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            myDropDown.dispatchEvent(e);
+          }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            myDropDown.dispatchEvent(e);
+          }
+        }
+      });
     }
 
     private JBPopup showPopup() {
