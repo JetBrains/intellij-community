@@ -43,7 +43,7 @@ public class SearchEverywhereMlExperiment {
   }
 
   private static int getExperimentGroupForTab(@NotNull SearchEverywhereTabWithMl tab) {
-    if (tab == SearchEverywhereTabWithMl.ACTIONS) {
+    if (tab == SearchEverywhereTabWithMl.ACTION) {
       return 1;
     }
 
