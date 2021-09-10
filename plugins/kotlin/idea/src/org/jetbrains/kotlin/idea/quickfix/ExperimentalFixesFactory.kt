@@ -46,14 +46,14 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
 
         val containingDeclarationIsConstructor = containingDeclaration is KtConstructor<*>
         val annotationFqName = when (diagnostic.factory) {
-            EXPERIMENTAL_API_USAGE -> EXPERIMENTAL_API_USAGE.cast(diagnostic).a
-            EXPERIMENTAL_API_USAGE_ERROR -> EXPERIMENTAL_API_USAGE_ERROR.cast(diagnostic).a
-            EXPERIMENTAL_OVERRIDE -> EXPERIMENTAL_OVERRIDE.cast(diagnostic).a
-            EXPERIMENTAL_OVERRIDE_ERROR -> EXPERIMENTAL_OVERRIDE_ERROR.cast(diagnostic).a
+            OPT_IN_USAGE -> OPT_IN_USAGE.cast(diagnostic).a
+            OPT_IN_USAGE_ERROR -> OPT_IN_USAGE_ERROR.cast(diagnostic).a
+            OPT_IN_OVERRIDE -> OPT_IN_OVERRIDE.cast(diagnostic).a
+            OPT_IN_OVERRIDE_ERROR -> OPT_IN_OVERRIDE_ERROR.cast(diagnostic).a
             else -> null
         } ?: return emptyList()
 
-        val isOverrideError = diagnostic.factory == EXPERIMENTAL_OVERRIDE_ERROR || diagnostic.factory == EXPERIMENTAL_OVERRIDE
+        val isOverrideError = diagnostic.factory == OPT_IN_OVERRIDE_ERROR || diagnostic.factory == OPT_IN_OVERRIDE
 
         val moduleDescriptor = containingDeclaration.resolveToDescriptorIfAny()?.module ?: return emptyList()
         val annotationClassDescriptor = moduleDescriptor.resolveClassByFqName(
