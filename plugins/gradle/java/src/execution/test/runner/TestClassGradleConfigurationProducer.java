@@ -27,6 +27,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
 
@@ -38,9 +39,6 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfi
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
-/**
- * @author Vladislav.Soroka
- */
 public class TestClassGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
   @NotNull
   @Override
@@ -49,9 +47,11 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
   }
 
   @Override
-  protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                    ConfigurationContext context,
-                                                    Ref<PsiElement> sourceElement) {
+  protected boolean doSetupConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context,
+    @NotNull Ref<PsiElement> sourceElement
+  ) {
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
@@ -111,7 +111,10 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
   }
 
   @Override
-  protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
+  protected boolean doIsConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context
+  ) {
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
@@ -144,8 +147,11 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
   }
 
   @Override
-  public void onFirstRun(@NotNull final ConfigurationFromContext fromContext, @NotNull final ConfigurationContext context, @NotNull final Runnable performRunnable) {
-    Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
+  public void onFirstRun(
+    @NotNull ConfigurationFromContext fromContext,
+    @NotNull ConfigurationContext context,
+    @NotNull Runnable performRunnable
+  ) {
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
@@ -157,15 +163,19 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
         chooseTestClassConfiguration(fromContext, context, performRunnable, aClass);
       }
     };
-    if (inheritorChooser.runMethodInAbstractClass(context, runnableWithCheck, null, (PsiClass)fromContext.getSourceElement())) return;
     PsiClass psiClass = (PsiClass)fromContext.getSourceElement();
-    chooseTestClassConfiguration(fromContext, context, runnableWithCheck, psiClass);
+    Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
+    if (!inheritorChooser.runMethodInAbstractClass(context, runnableWithCheck, null, psiClass)) {
+      chooseTestClassConfiguration(fromContext, context, runnableWithCheck, psiClass);
+    }
   }
 
-  private void chooseTestClassConfiguration(@NotNull ConfigurationFromContext fromContext,
-                                                   @NotNull ConfigurationContext context,
-                                                   @NotNull Runnable performRunnable,
-                                                   PsiClass @NotNull ... classes) {
+  private void chooseTestClassConfiguration(
+    @NotNull ConfigurationFromContext fromContext,
+    @NotNull ConfigurationContext context,
+    @NotNull Runnable performRunnable,
+    PsiClass @NotNull ... classes
+  ) {
     String locationName = classes.length == 1 ? classes[0].getName() : null;
     DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
     getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, classes, tasks -> {

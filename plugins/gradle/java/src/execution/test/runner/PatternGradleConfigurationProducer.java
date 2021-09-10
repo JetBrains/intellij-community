@@ -24,6 +24,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -33,11 +34,9 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfi
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
-/**
- * @author Vladislav.Soroka
- */
+
 public final class PatternGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
-  private final GradlePatternBasedConfigurationProducer myBaseConfigurationProducer = new GradlePatternBasedConfigurationProducer();
+  private final GradlePatternBasedConfigurationProducer<?> myBaseConfigurationProducer = new GradlePatternBasedConfigurationProducer<>();
 
   @NotNull
   @Override
@@ -46,9 +45,11 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
   }
 
   @Override
-  protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                    ConfigurationContext context,
-                                                    Ref<PsiElement> sourceElement) {
+  protected boolean doSetupConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context,
+    @NotNull Ref<PsiElement> sourceElement
+  ) {
     if (!isMultipleElementsSelected(context)) return false;
     ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
     if (!GradleConstants.SYSTEM_ID.equals(settings.getExternalSystemId())) return false;
@@ -70,14 +71,19 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
   }
 
   @Override
-  protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
+  protected boolean doIsConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context
+  ) {
     return false;
   }
 
   @Override
-  public void onFirstRun(@NotNull ConfigurationFromContext fromContext,
-                         @NotNull ConfigurationContext context,
-                         @NotNull Runnable performRunnable) {
+  public void onFirstRun(
+    @NotNull ConfigurationFromContext fromContext,
+    @NotNull ConfigurationContext context,
+    @NotNull Runnable performRunnable
+  ) {
     Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
     if (!isMultipleElementsSelected(context)) {
       super.onFirstRun(fromContext, context, runnableWithCheck);

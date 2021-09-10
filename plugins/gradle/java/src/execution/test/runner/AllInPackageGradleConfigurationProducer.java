@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
@@ -21,6 +20,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
 
@@ -28,9 +28,6 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfi
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
-/**
- * @author Vladislav.Soroka
- */
 public final class AllInPackageGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
   @NotNull
   @Override
@@ -39,9 +36,11 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
   }
 
   @Override
-  protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                    ConfigurationContext context,
-                                                    Ref<PsiElement> sourceElement) {
+  protected boolean doSetupConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context,
+    @NotNull Ref<PsiElement> sourceElement
+  ) {
     ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) return false;
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
@@ -59,7 +58,10 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
   }
 
   @Override
-  protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
+  protected boolean doIsConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context
+  ) {
     ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) return false;
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
@@ -77,9 +79,11 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
   }
 
   @Override
-  public void onFirstRun(@NotNull ConfigurationFromContext fromContext,
-                         @NotNull ConfigurationContext context,
-                         @NotNull Runnable performRunnable) {
+  public void onFirstRun(
+    @NotNull ConfigurationFromContext fromContext,
+    @NotNull ConfigurationContext context,
+    @NotNull Runnable performRunnable
+  ) {
     ConfigurationData configurationData = extractConfigurationData(context);
     Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
     if (configurationData == null) {
@@ -91,16 +95,16 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
     PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
     getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, sourceElements, tasks -> {
-        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-        Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
-        if (!applyTestConfiguration(settings, context.getModule(), tasks, sourceElements, createFilter)) {
-          LOG.warn("Cannot apply package test configuration, uses raw run configuration");
-          runnableWithCheck.run();
-          return;
-        }
-      configuration.setName(suggestName(configurationData));
+      GradleRunConfiguration configuration = (GradleRunConfiguration)fromContext.getConfiguration();
+      ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
+      Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
+      if (!applyTestConfiguration(settings, context.getModule(), tasks, sourceElements, createFilter)) {
+        LOG.warn("Cannot apply package test configuration, uses raw run configuration");
         runnableWithCheck.run();
+        return;
+      }
+      configuration.setName(suggestName(configurationData));
+      runnableWithCheck.run();
     });
   }
 

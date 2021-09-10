@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.execution.RunManager
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
@@ -69,7 +68,7 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
 
       val contexts = (locations + locations).map { getContextByLocation(it) } // with duplicate locations
       val cfgFromCtx = contexts.map { getConfigurationFromContext(it) }
-      val configurations = cfgFromCtx.map { it.configuration as ExternalSystemRunConfiguration }
+      val configurations = cfgFromCtx.map { it.configuration as GradleRunConfiguration }
       val methodProd = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
       val classProd = getConfigurationProducer<TestClassGradleConfigurationProducer>()
       val packageProd = getConfigurationProducer<AllInPackageGradleConfigurationProducer>()

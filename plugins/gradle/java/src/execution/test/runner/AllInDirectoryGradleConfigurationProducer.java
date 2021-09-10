@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
@@ -24,6 +23,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -44,9 +44,11 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
   }
 
   @Override
-  protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                    ConfigurationContext context,
-                                                    Ref<PsiElement> sourceElement) {
+  protected boolean doSetupConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context,
+    @NotNull Ref<PsiElement> sourceElement
+  ) {
     ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) return false;
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
@@ -61,7 +63,10 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
   }
 
   @Override
-  protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
+  protected boolean doIsConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context
+  ) {
     ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) return false;
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
@@ -76,9 +81,11 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
   }
 
   @Override
-  public void onFirstRun(@NotNull ConfigurationFromContext fromContext,
-                         @NotNull ConfigurationContext context,
-                         @NotNull Runnable performRunnable) {
+  public void onFirstRun(
+    @NotNull ConfigurationFromContext fromContext,
+    @NotNull ConfigurationContext context,
+    @NotNull Runnable performRunnable
+  ) {
     Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
     ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) {
@@ -89,7 +96,7 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
     String locationName = String.format("'%s'", configurationData.module.getName());
     DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
     getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, configurationData.sources, tasks -> {
-      ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
+      GradleRunConfiguration configuration = (GradleRunConfiguration)fromContext.getConfiguration();
       ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
       Function1<VirtualFile, String> createFilter = (e) -> createTestWildcardFilter(/*hasSuffix=*/false);
       if (!applyTestConfiguration(settings, context.getModule(), tasks, configurationData.sources, it -> it, createFilter)) {

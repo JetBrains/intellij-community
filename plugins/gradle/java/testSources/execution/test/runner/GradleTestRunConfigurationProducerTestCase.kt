@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -90,7 +89,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val configurationFromContext = getConfigurationFromContext(context)
     val producer = configurationFromContext.configurationProducer as P
     producer.setTestTasksChooser(testTasksFilter)
-    val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
+    val configuration = configurationFromContext.configuration as GradleRunConfiguration
     assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
     if (producer !is PatternGradleConfigurationProducer) {
       assertTrue(producer.isConfigurationFromContext(configuration, context))
@@ -106,7 +105,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val context = ConfigurationContext.createEmptyContextForLocation(taskLocation)
     val configurationFromContext = getConfigurationFromContext(context)
     assertInstanceOf(configurationFromContext.configurationProducer, AbstractExternalSystemRunConfigurationProducer::class.java)
-    val runConfiguration = configurationFromContext.configuration as ExternalSystemRunConfiguration
+    val runConfiguration = configurationFromContext.configuration as GradleRunConfiguration
     assertEquals(expectedSettings, runConfiguration.settings.toString())
   }
 
@@ -121,8 +120,8 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     }
   }
 
-  protected fun GradleTestRunConfigurationProducer.createTemplateConfiguration(): ExternalSystemRunConfiguration {
-    return configurationFactory.createTemplateConfiguration(myProject) as ExternalSystemRunConfiguration
+  protected fun GradleTestRunConfigurationProducer.createTemplateConfiguration(): GradleRunConfiguration {
+    return configurationFactory.createTemplateConfiguration(myProject) as GradleRunConfiguration
   }
 
   protected fun createAndAddRunConfiguration(commandLine: String, vmOptions: String? = null): GradleRunConfiguration {

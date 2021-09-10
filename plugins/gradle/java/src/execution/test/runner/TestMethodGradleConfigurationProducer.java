@@ -23,8 +23,8 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.List;
 
@@ -32,9 +32,6 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodL
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
-/**
- * @author Vladislav.Soroka
- */
 public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
   @NotNull
   @Override
@@ -43,9 +40,11 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   }
 
   @Override
-  protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                    ConfigurationContext context,
-                                                    Ref<PsiElement> sourceElement) {
+  protected boolean doSetupConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context,
+    @NotNull Ref<PsiElement> sourceElement
+  ) {
     if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
@@ -75,11 +74,10 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   }
 
   @Override
-  protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
-      return false;
-    }
-
+  protected boolean doIsConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context
+  ) {
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
@@ -109,7 +107,11 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   }
 
   @Override
-  public void onFirstRun(@NotNull final ConfigurationFromContext fromContext, @NotNull final ConfigurationContext context, @NotNull final Runnable performRunnable) {
+  public void onFirstRun(
+    @NotNull ConfigurationFromContext fromContext,
+    @NotNull ConfigurationContext context,
+    @NotNull Runnable performRunnable
+  ) {
     Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
     final PsiMethod psiMethod = (PsiMethod)fromContext.getSourceElement();
     final PsiClass psiClass = psiMethod.getContainingClass();
@@ -128,11 +130,13 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     chooseTestClassConfiguration(fromContext, context, runnableWithCheck, psiMethod, psiClass);
   }
 
-  private void chooseTestClassConfiguration(@NotNull ConfigurationFromContext fromContext,
-                                                   @NotNull ConfigurationContext context,
-                                                   @NotNull Runnable performRunnable,
-                                                   @NotNull PsiMethod psiMethod,
-                                                   PsiClass @NotNull ... classes) {
+  private void chooseTestClassConfiguration(
+    @NotNull ConfigurationFromContext fromContext,
+    @NotNull ConfigurationContext context,
+    @NotNull Runnable performRunnable,
+    @NotNull PsiMethod psiMethod,
+    PsiClass @NotNull ... classes
+  ) {
     DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), psiMethod.getName());
     getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();

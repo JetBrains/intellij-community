@@ -6,7 +6,6 @@ import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.junit.InheritorChooser
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
@@ -77,7 +76,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
         val dataContext = MultiplatformTestTasksChooser.createContext(context.dataContext, locationName)
 
         mppTestTasksChooser.multiplatformChooseTasks(context.project, dataContext, classes) { tasks ->
-            val configuration = fromContext.configuration as ExternalSystemRunConfiguration
+            val configuration = fromContext.configuration as GradleRunConfiguration
             val settings = configuration.settings
 
             val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz, hasSuffix = true) }
@@ -94,7 +93,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
 
 abstract class AbstractKotlinTestClassGradleConfigurationProducer
     : TestClassGradleConfigurationProducer(), KotlinGradleConfigurationProducer {
-    override fun isConfigurationFromContext(configuration: ExternalSystemRunConfiguration, context: ConfigurationContext): Boolean {
+    override fun isConfigurationFromContext(configuration: GradleRunConfiguration, context: ConfigurationContext): Boolean {
         if (!context.check()) {
             return false
         }
@@ -108,7 +107,7 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
     }
 
     override fun setupConfigurationFromContext(
-        configuration: ExternalSystemRunConfiguration,
+        configuration: GradleRunConfiguration,
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {
@@ -123,7 +122,7 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
         if (GradleConstants.SYSTEM_ID != configuration.settings.externalSystemId) return false
         if (sourceElement.isNull) return false
 
-        (configuration as? GradleRunConfiguration)?.isScriptDebugEnabled = false
+        configuration.isScriptDebugEnabled = false
         return doSetupConfigurationFromContext(configuration, context, sourceElement)
     }
 
