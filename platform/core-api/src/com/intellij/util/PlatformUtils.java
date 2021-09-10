@@ -79,7 +79,7 @@ public final class PlatformUtils {
    * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
    */
   public static boolean isIntelliJ() {
-    return isIdeaUltimate() || isIdeaCommunity() || isIdeaEducational();
+    return isIdeaUltimate() || isIdeaCommunity() || is(IDEA_EDU_PREFIX);
   }
 
   public static boolean isIdeaUltimate() {
@@ -94,6 +94,10 @@ public final class PlatformUtils {
     return is(IDEA_CE_PREFIX);
   }
 
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link PlatformUtils the class-level javadoc}
+   */
+  @Deprecated
   public static boolean isIdeaEducational() {
     return is(IDEA_EDU_PREFIX);
   }
@@ -119,9 +123,13 @@ public final class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational() || isPyCharmDs();
+    return is(PYCHARM_PREFIX) || isPyCharmCommunity() || isPyCharmEducational() || isPyCharmDs();
   }
 
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link PlatformUtils the class-level javadoc}
+   */
+  @Deprecated
   public static boolean isPyCharmPro() {
     return is(PYCHARM_PREFIX);
   }
