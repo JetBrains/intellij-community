@@ -173,6 +173,11 @@ open class FirUastApiTest : AbstractFirUastTest() {
           doCheck("uast-kotlin/testData/ReifiedParameters.kt", ::checkCallbackForReifiedParameters)
         }
 
+        @TestMetadata("LambdaParameters.kt")
+        fun testLambdaParameters() {
+            doCheck("uast-kotlin/testData/LambdaParameters.kt", ::checkCallbackForLambdaParameters)
+        }
+
         @TestMetadata("SAM.kt")
         fun testSAM() {
             doCheck("uast-kotlin/testData/SAM.kt", ::checkCallbackForSAM)
