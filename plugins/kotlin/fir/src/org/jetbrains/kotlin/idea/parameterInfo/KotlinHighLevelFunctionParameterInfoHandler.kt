@@ -105,17 +105,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         val callElement = argumentList.parent as? KtElement ?: return null
         return analyse(callElement) {
-            // TODO: FE 1.0 plugin collects all candidates (i.e., all overloads), even if arguments do not match. Not just resolved call.
-            // See Call.resolveCandidates() in core/src/org/jetbrains/kotlin/idea/core/Utils.kt. Note `replaceCollectAllCandidates(true)`.
-
-            val resolvedCall = when (callElement) {
-                is KtCallElement -> callElement.resolveCall()
-                is KtArrayAccessExpression -> callElement.resolveCall()
-                else -> return null
-            }
-
-            val candidates = resolvedCall?.targetFunction?.candidates ?: return null
-            context.itemsToShow = candidates.map { CandidateInfo(it.createPointer(), it.deprecationStatus != null) }.toTypedArray()
+            val candidatesWithMapping = resolveCallCandidates(callElement)
+            context.itemsToShow = candidatesWithMapping.map { (candidateSymbol, _) ->
+                CandidateInfo(candidateSymbol.createPointer(), candidateSymbol.deprecationStatus != null)
+            }.toTypedArray()
 
             argumentList
         }
@@ -136,15 +129,15 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         val callElement = argumentList.parent as? KtElement ?: return
         analyse(callElement) {
-            val (resolvedCall, valueArguments, arguments) = when (callElement) {
+            val (valueArguments, arguments) = when (callElement) {
                 is KtCallElement -> {
                     val valueArguments = callElement.valueArgumentList?.arguments
-                    Triple(callElement.resolveCall(), valueArguments, valueArguments?.map { it.getArgumentExpression() } ?: listOf())
+                    Pair(valueArguments, valueArguments?.map { it.getArgumentExpression() } ?: listOf())
                 }
-                is KtArrayAccessExpression -> Triple(callElement.resolveCall(), null, callElement.indexExpressions)
+                is KtArrayAccessExpression -> Pair(null, callElement.indexExpressions)
                 else -> return@analyse
             }
-            val candidates = resolvedCall?.targetFunction?.candidates ?: return@analyse
+            val candidatesWithMapping = resolveCallCandidates(callElement)
 
             for (objectToView in context.objectsToView) {
                 val candidateInfo = objectToView as? CandidateInfo ?: continue
@@ -153,7 +146,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 // functional values (see FunctionalValue*.kt tests), and Java functions (see useJava*FromLib.kt tests).
                 // HL API gets a different symbol because a new ScopeSession() is used, and therefore a new enhanced FirFunction is created.
                 val candidateToMatch = candidateInfo.candidate.restoreSymbol() ?: return@analyse
-                val candidate = candidates.firstOrNull { it == candidateToMatch } ?: return@analyse
+                val (candidate, argumentMapping) = candidatesWithMapping.firstOrNull { it.candidate == candidateToMatch } ?: return@analyse
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
                 val isArraySetCall = candidate.callableIdIfNonLocal?.let {
@@ -182,8 +175,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     }
                 }
 
-                // TODO: The argument mapping should also be per-candidate once we have all candidates available.
-                val argumentMapping = resolvedCall.argumentMapping
                 val argumentToParameterIndex = LinkedHashMap<KtExpression, Int>(argumentMapping.size).apply {
                     for ((argumentExpression, parameterForArgument) in argumentMapping) {
                         if (parameterForArgument == setValueParameter) continue
@@ -208,7 +199,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 )
 
                 // TODO: This should be changed when there are multiple candidates available; need to know which one the call is resolved to
-                val isCallResolvedToCandidate = candidates.size == 1
+                val isCallResolvedToCandidate = candidatesWithMapping.size == 1
 
                 candidateInfo.callInfo = CallInfo(
                     callElement,
