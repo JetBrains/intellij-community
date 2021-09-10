@@ -309,6 +309,8 @@ public class DomBasicsTest extends DomTestCase {
   }
 
   public void testInstanceImplementation() {
+    DomApplicationComponent.getInstance().registerImplementation(MyElement.class, Impl.class, getTestRootDisposable());
+    DomApplicationComponent.getInstance().registerImplementation(InheritedElement.class, AnotherImpl.class, getTestRootDisposable());
     MyElement element = createElement("");
     final Object o = new Object();
     element.setObject(o);
@@ -321,6 +323,8 @@ public class DomBasicsTest extends DomTestCase {
   }
 
   public void testSeveralInstanceImplementations() {
+    DomApplicationComponent.getInstance().registerImplementation(MyElement.class, Impl.class, getTestRootDisposable());
+    DomApplicationComponent.getInstance().registerImplementation(InheritedElement.class, AnotherImpl.class, getTestRootDisposable());
     InheritedElement element = createElement("", InheritedElement.class);
     final Object o = new Object();
     element.setObject(o);
@@ -533,7 +537,6 @@ public class DomBasicsTest extends DomTestCase {
     assertTrue(copy.isValid());
   }
 
-  @Implementation(Impl.class)
   public interface MyElement extends DomElement {
     GenericAttributeValue<String> getAttr();
 
@@ -604,7 +607,6 @@ public class DomBasicsTest extends DomTestCase {
 
   public static abstract class EmptyImpl extends BaseImpl implements AnotherElement{}
 
-  @Implementation(AnotherImpl.class)
   public interface InheritedElement extends MyElement, DomElement {
     String getString();
 

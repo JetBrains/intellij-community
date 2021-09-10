@@ -72,12 +72,6 @@
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlScriptContentProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="html.inlineScriptTokenTypesProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <!--suppress DeprecatedClassUsageInspection -->
-      <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
-    </extensionPoint>
-
     <extensionPoint name="html.embeddedContentSupport"
                     interface="com.intellij.html.embedding.HtmlEmbeddedContentSupport"
                     dynamic="true"/>
