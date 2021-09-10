@@ -15,7 +15,8 @@ data class Configuration(val products: Map<String, ProductConfiguration>)
 data class ProductConfiguration(val modules: List<String>, @SerialName("class") val className: String)
 
 class BuildServer(val homePath: Path) {
-  private val outDir: Path = Path(System.getenv("CLASSES_DIR")).toRealPath()
+
+  private val outDir: Path = Path(System.getenv("CLASSES_DIR") ?: "../out/classes/production").toAbsolutePath()
   private val configuration: Configuration
 
   private val platformPrefixToPluginBuilder = HashMap<String, IdeBuilder>()
