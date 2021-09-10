@@ -11,15 +11,18 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.blockCommentWithName
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toCommentedParameterName
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-        callExpressionVisitor(fun(callExpression) {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : KtVisitorVoid() {
+        override fun visitCallExpression(callExpression: KtCallExpression) = callExpression.check()
+
+        override fun visitSuperTypeCallEntry(call: KtSuperTypeCallEntry) = call.check()
+
+        private fun KtCallElement.check() {
             val valueDescriptorByValueArgument = AddNamesInCommentToJavaCallArgumentsIntention.resolveValueParameterDescriptors(
-                callExpression,
+                this,
                 anyBlockCommentsWithName = false
             ) ?: return
 
@@ -33,7 +36,8 @@ class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() 
                     CorrectNamesInCommentsToJavaCallArgumentsFix(commentedParameterName)
                 )
             }
-        })
+        }
+    }
 
     class CorrectNamesInCommentsToJavaCallArgumentsFix(private val commentedParameterName: String) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("intention.name.correct.parameter.name")
