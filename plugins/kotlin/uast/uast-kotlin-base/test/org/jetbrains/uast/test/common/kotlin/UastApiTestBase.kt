@@ -622,6 +622,42 @@ interface UastApiTestBase : UastPluginSelection {
         }
     }
 
+    fun checkCallbackForLambdaParameters(uFilePath: String, uFile: UFile) {
+        val errors = mutableListOf<String>()
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+                kotlin.runCatching {
+                    val classResolveResult =
+                        (node.getExpressionType() as? PsiClassType)?.resolveGenerics() ?: kfail("cannot resolve lambda")
+                    val psiMethod =
+                        LambdaUtil.getFunctionalInterfaceMethod(classResolveResult.element) ?: kfail("cannot get method signature")
+                    val methodParameters = psiMethod.getSignature(classResolveResult.substitutor).parameterTypes.toList()
+                    val lambdaParameters = node.parameters.map { it.type }
+
+                    TestCase.assertEquals("parameter lists size are different", methodParameters.size, lambdaParameters.size)
+                    methodParameters.zip(lambdaParameters).forEachIndexed { index, (interfaceParamType, lambdaParamType) ->
+                        TestCase.assertTrue(
+                            "unexpected types for param $index: $lambdaParamType cannot be assigned to $interfaceParamType",
+                            interfaceParamType.isAssignableFrom(lambdaParamType)
+                        )
+                    }
+                }.onFailure {
+                    errors += "${node.getContainingUMethod()?.name}: ${it.message}"
+                }
+
+                return super.visitLambdaExpression(node)
+            }
+        })
+
+        // TODO: PsiMethod -> getFunctionalInterfaceMethod
+        if (!isFirUastPlugin) {
+            TestCase.assertTrue(
+                errors.joinToString(separator = "\n", postfix = "", prefix = "") { it },
+                errors.isEmpty()
+            )
+        }
+    }
+
     fun checkCallbackForSAM(uFilePath: String, uFile: UFile) {
         TestCase.assertNull(uFile.findElementByText<ULambdaExpression>("{ /* Not SAM */ }").functionalInterfaceType)
         TestCase.assertEquals(
