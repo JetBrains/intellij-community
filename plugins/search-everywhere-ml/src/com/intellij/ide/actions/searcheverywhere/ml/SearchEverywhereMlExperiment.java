@@ -26,11 +26,11 @@ public class SearchEverywhereMlExperiment {
     return settings.isSortingByMlEnabledInAnyTab() || !isDisableLoggingAndExperiments();
   }
 
-  public boolean shouldOrderByMl(@NotNull SearchEverywhereTabWithMl tab) {
-    // This method will only run when ordering by ML is disabled in settings for the given tab,
-    // in which case, here we will check if the user belongs to the experiment group.
+  public boolean shouldPerformExperiment(@NotNull SearchEverywhereTabWithMl tab) {
     if (isDisableLoggingAndExperiments() || isDisableExperiments(tab)) return false;
-    return shouldPerformExperiment(tab);
+
+    final int tabExperimentGroup = getExperimentGroupForTab(tab);
+    return myExperimentGroup == tabExperimentGroup;
   }
 
   private boolean isDisableLoggingAndExperiments() {
@@ -48,11 +48,6 @@ public class SearchEverywhereMlExperiment {
     }
 
     return -1;
-  }
-
-  private boolean shouldPerformExperiment(@NotNull SearchEverywhereTabWithMl tab) {
-    final int tabExperimentGroup = getExperimentGroupForTab(tab);
-    return myExperimentGroup == tabExperimentGroup;
   }
 
   public int getExperimentGroup() {
