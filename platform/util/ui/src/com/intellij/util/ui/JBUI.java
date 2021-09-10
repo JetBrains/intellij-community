@@ -179,17 +179,6 @@ public class JBUI {
     return JBUIScale.scaleIcon(icon);
   }
 
-  /**
-   * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static <T extends JBIcon> T scale(@NotNull T icon) {
-    //noinspection unchecked
-    return (T)icon.withIconPreScaled(false);
-  }
-
   @NotNull
   public static JBDimension emptySize() {
     return new JBDimension(0, 0);
@@ -760,16 +749,6 @@ public class JBUI {
       @NotNull
       public static Color tabHoveredBackground() {
         return hoverInactiveBackground();
-      }
-
-      /**
-       * @deprecated obsolete UI
-       */
-      @Deprecated
-      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-      @NotNull
-      public static Color tabHoveredBackground(boolean active) {
-        return active ? hoverBackground() : hoverInactiveBackground();
       }
 
       @NotNull
@@ -1446,21 +1425,6 @@ public class JBUI {
     @Override
     public boolean update(@Nullable BaseScaleContext context) {
       return super.update(context);
-    }
-  }
-
-  /**
-   * @deprecated Use {@link JBScalableIcon}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public abstract static class JBIcon<T extends JBScalableIcon> extends JBScalableIcon {
-    public JBIcon() {
-      super();
-    }
-    public JBIcon(T icon) {
-      super(icon);
     }
   }
 }
