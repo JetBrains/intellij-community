@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,12 +35,16 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
   private static final Condition<PsiElement> SWITCH_TYPE = expression -> {
     if (!(expression instanceof PsiExpression)) return false;
 
-    PsiType type = ((PsiExpression)expression).getType();
+    final PsiType type = getType((PsiExpression)expression);
 
     if (type == null) return false;
     if (PsiType.INT.isAssignableFrom(type)) return true;
+    if (type instanceof PsiClassType) {
+      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return true;
 
-    if (isEnumOrObjectOrSealedClass(expression, type)) return true;
+      PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass != null && psiClass.isEnum()) return true;
+    }
 
     if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       PsiFile containingFile = expression.getContainingFile();
@@ -51,6 +56,14 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
 
     return false;
   };
+
+  @Contract(pure = true)
+  private static @Nullable PsiType getType(@NotNull PsiExpression expression) {
+    if (!DumbService.isDumb(expression.getProject())) {
+      return expression.getType();
+    }
+    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(expression::getType);
+  }
 
   @Contract(pure = true)
   private static boolean isEnumOrObjectOrSealedClass(@NotNull PsiElement expression, @Nullable PsiType type) {

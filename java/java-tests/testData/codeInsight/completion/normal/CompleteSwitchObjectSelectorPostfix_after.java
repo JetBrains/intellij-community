@@ -1,6 +1,6 @@
 
 class Main {
-  int g(Object o) {
+  int g(CharSequence o) {
       switch (o) {
           <caret>
       }
