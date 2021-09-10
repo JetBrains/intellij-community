@@ -70,7 +70,7 @@ fun createNormalFunctionInsertHandler(
     val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler2>>()
 
     // \n - NormalCompletion
-    lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler2.LazyBuilder { builder ->
+    lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler2.LazyBuilder(holdReadLock = true) { builder ->
         val argumentsStringToInsert = StringBuilder()
 
         val offset = editor.caretModel.offset

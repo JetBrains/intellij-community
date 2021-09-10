@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
@@ -125,8 +126,17 @@ open class DeclarativeInsertHandler2 protected constructor(
     fun produce(builder: Builder)
   }
 
-  class LazyBuilder(private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler2> {
-    private val delegate = lazy { Builder().also(block::produce).build() }
+  class LazyBuilder(holdReadLock: Boolean, private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler2> {
+    private val delegate = if (holdReadLock) {
+      lazy { runReadAction {
+        Builder().also(block::produce).build()
+      }}
+    }
+    else {
+      lazy {
+        Builder().also(block::produce).build()
+      }
+    }
 
     override val value: DeclarativeInsertHandler2
       get() = delegate.value
