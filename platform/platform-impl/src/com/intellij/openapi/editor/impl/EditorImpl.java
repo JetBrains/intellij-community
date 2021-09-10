@@ -2582,12 +2582,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 oldVisLeadSelectionStart = selectionModel.getSelectionEndPosition();
               }
             }
-            if (oldVisLeadSelectionStart != null) {
-              setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
+            else if (mySettings.isBlockCursor()) {
+              // adjust selection range, so that it covers caret location
+              if (mySelectionModel.hasSelection() && oldVisLeadSelectionStart.equals(mySelectionModel.getSelectionEndPosition())) {
+                oldVisLeadSelectionStart = prevSelectionVisualPosition(oldVisLeadSelectionStart);
+              }
+              if (newVisualCaret.after(oldVisLeadSelectionStart)) {
+                newVisualCaret = nextSelectionVisualPosition(newVisualCaret);
+                newCaretOffset = visualPositionToOffset(newVisualCaret);
+              }
+              else if (oldVisLeadSelectionStart.after(newVisualCaret) ||
+                       oldVisLeadSelectionStart.equals(newVisualCaret) && mySelectionModel.hasSelection()) {
+                oldVisLeadSelectionStart = nextSelectionVisualPosition(oldVisLeadSelectionStart);
+              }
+              oldSelectionStart = visualPositionToOffset(oldVisLeadSelectionStart);
             }
-            else {
-              setSelectionAndBlockActions(e, oldSelectionStart, newCaretOffset);
-            }
+            setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
             cancelAutoResetForMouseSelectionState();
           }
           else {
@@ -2619,6 +2629,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
     }
+  }
+
+  private VisualPosition nextSelectionVisualPosition(VisualPosition pos) {
+    if (!isColumnMode() && pos.column >= EditorUtil.getLastVisualLineColumnNumber(this, pos.line)) {
+      return new VisualPosition(pos.line + 1, 0, false);
+    }
+    else {
+      return new VisualPosition(pos.line, pos.column + 1, false);
+    }
+  }
+
+  private VisualPosition prevSelectionVisualPosition(VisualPosition pos) {
+    int prevColumn = pos.column - 1;
+    if (prevColumn >= 0) {
+      return new VisualPosition(pos.line, prevColumn, true);
+    }
+    if (isColumnMode() || pos.line == 0) {
+      return new VisualPosition(pos.line, 0, true);
+    }
+    int prevLine = pos.line - 1;
+    return new VisualPosition(prevLine, EditorUtil.getLastVisualLineColumnNumber(this, prevLine), true);
   }
 
   private void setupSpecialSelectionOnMouseDrag(int newCaretOffset, int caretShift) {
@@ -2702,13 +2733,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return allCarets.get(allCarets.size() - 1);
     }
     return firstCaret;
-  }
-
-  private void setSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, int startOffset, int endOffset) {
-    mySelectionModel.setSelection(startOffset, endOffset);
-    if (myCurrentDragIsSubstantial || startOffset != endOffset) {
-      onSubstantialDrag(mouseDragEvent);
-    }
   }
 
   private void setSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent,

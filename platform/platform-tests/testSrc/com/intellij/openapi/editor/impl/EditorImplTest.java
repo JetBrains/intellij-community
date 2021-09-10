@@ -771,4 +771,59 @@ public class EditorImplTest extends AbstractEditorTest {
     Point caretPosition = getEditor().visualPositionToXY(getEditor().getCaretModel().getVisualPosition());
     assertTrue(visibleArea.contains(caretPosition));
   }
+
+  public void testMouseSelectionWithBlockCaret() {
+    initText("abcdef");
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
+    getEditor().getSettings().setBlockCursor(true);
+    int y = getEditor().getLineHeight() / 2;
+
+    mouse().pressAtXY(3 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<caret>def");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<caret>def");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("ab<selection><caret>cd</selection>ef");
+    mouse().dragToXY(TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("a<selection><caret>bcd</selection>ef");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("ab<selection><caret>cd</selection>ef");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<selection><caret>d</selection>ef");
+    mouse().dragToXY(4 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<selection>d<caret>e</selection>f");
+    mouse().dragToXY(5 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<selection>de<caret>f</selection>");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("ab<selection><caret>cd</selection>ef");
+    mouse().dragToXY(5 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<selection>de<caret>f</selection>");
+  }
+
+  public void testMouseSelectionAtLineEndWithBlockCaret() {
+    initText("abc\ndef");
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
+    getEditor().getSettings().setBlockCursor(true);
+    int line1Y = getEditor().getLineHeight() / 2;
+    int line2Y = getEditor().getLineHeight() * 3 / 2;
+
+    mouse().pressAtXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("abc<caret>\ndef");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("abc<caret>\ndef");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("ab<selection><caret>c\n</selection>def");
+    mouse().dragToXY(TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("a<selection><caret>bc\n</selection>def");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("ab<selection><caret>c\n</selection>def");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("abc<selection><caret>\n</selection>def");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line2Y);
+    checkResultByText("abc<selection>\ndef<caret></selection>");
+    mouse().dragToXY(1, line2Y);
+    checkResultByText("abc<selection>\n<caret>d</selection>ef");
+    mouse().dragToXY(1, line1Y);
+    checkResultByText("<selection><caret>abc\n</selection>def");
+  }
 }
