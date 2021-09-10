@@ -7,7 +7,6 @@ import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
@@ -157,7 +156,6 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     init {
       // EditorTabDiffPreviewProvider does not create new processor, so general assumptions of DiffVirtualFile are violated
       preview.diffProcessor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, true)
-      putUserData(SplitAction.FORBID_TAB_SPLIT, true)
     }
   }
 
