@@ -26,7 +26,9 @@
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-ir" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler" level="project" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.common" />

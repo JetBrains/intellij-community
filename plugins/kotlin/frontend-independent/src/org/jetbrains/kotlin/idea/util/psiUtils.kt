@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.renderer.render
 fun KtElement.getElementTextInContext(): String {
     val context = parentOfType<KtImportDirective>()
         ?: parentOfType<KtPackageDirective>()
-        ?: containingDeclarationForPseudocode
+        ?: PsiTreeUtil.getParentOfType(this, KtDeclarationWithBody::class.java, KtClassOrObject::class.java)
+        ?: PsiTreeUtil.getNonStrictParentOfType(this, KtProperty::class.java)
         ?: containingKtFile
     val builder = StringBuilder()
     context.accept(object : PsiElementVisitor() {

@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinIconsIndependent.ACTUAL
 import org.jetbrains.kotlin.idea.KotlinIconsIndependent.EXPECT
 import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclarationBase
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 import javax.swing.Icon
+import org.jetbrains.kotlin.name.Name
 
 open class KotlinIconProviderBase : IconProvider(), DumbAware {
 
@@ -154,7 +154,7 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
             is KtClassInitializer -> KotlinIconsIndependent.CLASS_INITIALIZER
             is KtTypeAlias -> KotlinIconsIndependent.TYPE_ALIAS
             is KtAnnotationEntry -> {
-                (shortName?.asString() == JvmFileClassUtil.JVM_NAME_SHORT).ifTrue {
+                (shortName == JVM_NAME_SHORT).ifTrue {
                     val grandParent = parent.parent
                     if (grandParent is KtPropertyAccessor) {
                         grandParent.parentOfType<KtProperty>()?.getBaseIcon()
@@ -170,5 +170,7 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
             }
             else -> unwrapped?.takeIf { it != this }?.getBaseIcon()
         }
+
+        private val JVM_NAME_SHORT = Name.identifier("JvmName")
     }
 }

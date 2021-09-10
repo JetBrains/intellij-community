@@ -16,7 +16,6 @@ import com.intellij.util.MergeQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import org.jetbrains.kotlin.asJava.*
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.findDeepestSuperMethodsNoWrapping

@@ -57,7 +57,6 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" exported="" />
-    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
@@ -78,5 +77,8 @@
     <orderEntry type="library" scope="RUNTIME" name="completion-ranking-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="javax-inject" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-ir" level="project" />
   </component>
 </module>

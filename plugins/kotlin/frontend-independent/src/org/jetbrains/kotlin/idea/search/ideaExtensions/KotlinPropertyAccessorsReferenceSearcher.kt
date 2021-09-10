@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
+import org.jetbrains.kotlin.load.java.propertyNamesByAccessorName
 
 class KotlinPropertyAccessorsReferenceSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>() {
     override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
@@ -45,6 +45,6 @@ class KotlinPropertyAccessorsReferenceSearcher : QueryExecutorBase<PsiReference,
             return listOfNotNull(unwrapped.getName())
         }
 
-        return SyntheticJavaPropertyDescriptor.propertyNamesByAccessorName(Name.identifier(method.name)).map(Name::asString)
+        return propertyNamesByAccessorName(Name.identifier(method.name)).map(Name::asString)
     }
 }
