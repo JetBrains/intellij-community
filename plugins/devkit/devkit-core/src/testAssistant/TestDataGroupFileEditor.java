@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.reference.SoftReference;
@@ -148,6 +149,11 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements TextE
   @Override
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
+  }
+
+  @Override
+  public @NotNull VirtualFile getFile() {
+    return myFile;
   }
 
   @Override
