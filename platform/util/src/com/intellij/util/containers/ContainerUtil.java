@@ -355,16 +355,6 @@ public final class ContainerUtil {
     return new THashMap<>(identityStrategy());
   }
 
-  /**
-   * @deprecated Use {@link TreeSet#TreeSet()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure = true)
-  public static @NotNull <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
-    return new TreeSet<>();
-  }
-
   @Contract(pure = true)
   public static @NotNull <T> Set<T> newConcurrentSet() {
     //noinspection SSBasedInspection
@@ -2510,19 +2500,6 @@ public final class ContainerUtil {
     return CollectionFactory.createConcurrentWeakValueMap();
   }
 
-  /**
-   * @deprecated Use {@link CollectionFactory#createConcurrentWeakKeySoftValueMap(int, float, int, HashingStrategy)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(value = "_,_,_,_ -> new", pure = true)
-  static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
-                                                                                 float loadFactor,
-                                                                                 int concurrencyLevel,
-                                                                                 final @NotNull HashingStrategy<? super K> hashingStrategy) {
-    return CollectionFactory.createConcurrentWeakKeySoftValueMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
-  }
-
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftKeySoftValueMap() {
     return CollectionFactory.createConcurrentSoftKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors());
@@ -2557,20 +2534,6 @@ public final class ContainerUtil {
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
     return CollectionFactory.createConcurrentWeakMap();
-  }
-
-  /**
-   * @deprecated use {@link CollectionFactory#createConcurrentSoftMap(int, float, int, HashingStrategy)} instead
-   */
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  @Contract(value = "_,_,_,_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftMap(int initialCapacity,
-                                                                            float loadFactor,
-                                                                            int concurrencyLevel,
-                                                                            @NotNull HashingStrategy<? super K> hashingStrategy) {
-    return CollectionFactory.createConcurrentSoftMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   public static @NotNull <K> HashingStrategy<K> createHashingStrategy(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
