@@ -28,12 +28,12 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
 
   @Override
   public boolean handlePopup(@NotNull EditorMouseEvent event) {
-    MouseEvent mouseEvent = event.getMouseEvent();
-    Component c = mouseEvent.getComponent();
-    if (c == null || !c.isShowing()) return true;
     ActionGroup group = getActionGroup(event);
     if (group == null) return true;
     event.consume();
+    MouseEvent mouseEvent = event.getMouseEvent();
+    Component c = mouseEvent.getComponent();
+    if (c == null || !c.isShowing()) return true;
     JPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group).getComponent();
     popupMenu.show(c, mouseEvent.getX(), mouseEvent.getY());
     return true;
