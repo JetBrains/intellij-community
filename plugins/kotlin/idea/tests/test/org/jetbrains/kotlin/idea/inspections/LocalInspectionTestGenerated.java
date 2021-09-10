@@ -5580,6 +5580,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/simple.kt");
         }
+
+        @TestMetadata("superTypeCall.kt")
+        public void testSuperTypeCall() throws Exception {
+            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/superTypeCall.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
