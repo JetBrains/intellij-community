@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.findFunctionByName
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.*
+import org.jetbrains.uast.test.common.kotlin.findUElementByTextFromPsi
 import org.jetbrains.uast.test.env.kotlin.assertEqualsToFile
-import org.jetbrains.uast.test.env.kotlin.findUElementByTextFromPsi
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File

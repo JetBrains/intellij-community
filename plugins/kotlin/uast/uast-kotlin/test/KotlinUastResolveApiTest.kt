@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
 import org.jetbrains.uast.test.common.kotlin.findElementByText
-import org.jetbrains.uast.test.env.kotlin.findElementByTextFromPsi
-import org.jetbrains.uast.test.env.kotlin.findUElementByTextFromPsi
+import org.jetbrains.uast.test.common.kotlin.findElementByTextFromPsi
+import org.jetbrains.uast.test.common.kotlin.findUElementByTextFromPsi
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
