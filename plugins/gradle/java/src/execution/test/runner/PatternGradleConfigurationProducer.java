@@ -38,12 +38,6 @@ import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.crea
 public final class PatternGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
   private final GradlePatternBasedConfigurationProducer<?> myBaseConfigurationProducer = new GradlePatternBasedConfigurationProducer<>();
 
-  @NotNull
-  @Override
-  public ConfigurationFactory getConfigurationFactory() {
-    return GradleExternalTaskConfigurationType.getInstance().getFactory();
-  }
-
   @Override
   protected boolean doSetupConfigurationFromContext(
     @NotNull GradleRunConfiguration configuration,

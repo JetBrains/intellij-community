@@ -5,6 +5,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
+import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
@@ -50,6 +52,11 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   protected GradleTestRunConfigurationProducer() {
     super(true);
+  }
+
+  @Override
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
+    return GradleExternalTaskConfigurationType.getInstance().getFactory();
   }
 
   @Override
@@ -232,7 +239,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     Module module = ModuleUtilCore.findModuleForPsiElement(sourceElement);
     if (module == null) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("Cannot find module for %s", sourceElement.toString()), new Throwable());
+        LOG.debug(String.format("Cannot find module for %s", sourceElement), new Throwable());
       }
       return PLATFORM;
     }
