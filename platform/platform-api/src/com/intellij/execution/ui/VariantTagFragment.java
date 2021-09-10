@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -202,6 +203,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myFragment.setSelectedVariant(v);
+          IdeFocusManager.findInstanceByComponent(myButton).requestFocus(myButton, true);
         }
       }));
       return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
