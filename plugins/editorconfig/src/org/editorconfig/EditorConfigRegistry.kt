@@ -23,11 +23,5 @@ object EditorConfigRegistry {
   fun shouldSupportBreadCrumbs() = Registry.`is`(EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY, false)
 
   @JvmStatic
-  @Deprecated("Calling this C# is too narrow. Use shouldSupportDotNet instead",
-              ReplaceWith("shouldSupportDotNet()", "org.editorconfig.EditorConfigRegistry.shouldSupportDotNet"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  fun shouldSupportCSharp() = shouldSupportDotNet()
-
-  @JvmStatic
   fun shouldSupportDotNet() = Registry.`is`(EDITORCONFIG_DOTNET_SUPPORT_KEY, false)
 }
