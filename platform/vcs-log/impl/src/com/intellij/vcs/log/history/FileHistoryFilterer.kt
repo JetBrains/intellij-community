@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.vcs.AbstractVcs
@@ -12,6 +15,7 @@ import com.intellij.openapi.vcs.history.VcsCachingHistory
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
@@ -20,6 +24,7 @@ import com.intellij.vcs.log.VcsLogStructureFilter
 import com.intellij.vcs.log.data.CompressedRefs
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogProgress
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -33,15 +38,21 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicReference
 
-class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
+class FileHistoryFilterer(private val logData: VcsLogData, private val logId: String) : VcsLogFilterer, Disposable {
   private val project = logData.project
   private val logProviders = logData.logProviders
   private val storage = logData.storage
   private val index = logData.index
   private val indexDataGetter = index.dataGetter!!
-  private val vcsLogFilterer = VcsLogFiltererImpl(logProviders, storage, logData.topCommitsCache,
-                                                  logData.commitDetailsGetter, index)
+  private val vcsLogFilterer = VcsLogFiltererImpl(logProviders, storage, logData.topCommitsCache, logData.commitDetailsGetter, index)
+
+  private var fileHistoryTask: FileHistoryTask? = null
 
   override fun filter(dataPack: DataPack,
                       oldVisiblePack: VisiblePack,
@@ -52,14 +63,37 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     val root = filePath?.let { VcsLogUtil.getActualRoot(project, filePath) }
     val hash = getHash(filters)
     if (root != null && !filePath.isDirectory) {
-      val result = MyWorker(root, filePath, hash).filter(dataPack, oldVisiblePack, sortType, filters,
-                                                         commitCount)
+      val result = MyWorker(root, filePath, hash).filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
       if (result != null) return result
     }
     return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
   }
 
   override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean = true
+
+  private fun cancelLastTask(wait: Boolean) {
+    fileHistoryTask?.cancel(wait)
+    fileHistoryTask = null
+  }
+
+  private fun createFileHistoryTask(vcs: AbstractVcs, filePath: FilePath, hash: Hash?, isInitial: Boolean): FileHistoryTask {
+    val oldHistoryTask = fileHistoryTask
+    if (oldHistoryTask != null && !oldHistoryTask.isCancelled && !isInitial &&
+        oldHistoryTask.filePath == filePath && oldHistoryTask.hash == hash) return oldHistoryTask
+
+    cancelLastTask(false)
+    val newHistoryTask = FileHistoryTask(vcs, filePath, hash, createProgressIndicator())
+    fileHistoryTask = newHistoryTask
+    return newHistoryTask
+  }
+
+  private fun createProgressIndicator(): ProgressIndicator {
+    return logData.progress.createProgressIndicator(VcsLogProgress.ProgressKey("file history task for $logId"))
+  }
+
+  override fun dispose() {
+    cancelLastTask(true)
+  }
 
   private inner class MyWorker constructor(private val root: VirtualFile,
                                            private val filePath: FilePath,
@@ -71,10 +105,11 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
       val start = System.currentTimeMillis()
+      val isInitial = commitCount == CommitCountStage.INITIAL
 
       if (index.isIndexed(root) && dataPack.isFull) {
-        val visiblePack = filterWithIndex(dataPack, oldVisiblePack, sortType, filters,
-                                          commitCount == CommitCountStage.INITIAL)
+        cancelLastTask(false)
+        val visiblePack = filterWithIndex(dataPack, oldVisiblePack, sortType, filters, isInitial)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
         if (checkNotEmpty(dataPack, visiblePack, true)) {
           return Pair(visiblePack, commitCount)
@@ -84,7 +119,7 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
         if (vcs.vcsHistoryProvider != null) {
           try {
-            val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters)
+            val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, isInitial)
             LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                       " for computing history for $filePath with history provider")
             checkNotEmpty(dataPack, visiblePack, false)
@@ -117,9 +152,9 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     private fun filterWithProvider(vcs: AbstractVcs,
                                    dataPack: DataPack,
                                    sortType: PermanentGraph.SortType,
-                                   filters: VcsLogFilterCollection): VisiblePack {
-      val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
-      val revisions = VcsCachingHistory.collect(vcs, filePath, revisionNumber)
+                                   filters: VcsLogFilterCollection,
+                                   isInitial: Boolean): VisiblePack {
+      val (revisions, isDone) = createFileHistoryTask(vcs, filePath, hash, isInitial).waitForRevisions()
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
@@ -130,7 +165,8 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
           pathsMap[getIndex(revision)] = MaybeDeletedFilePath(revisionEx.path, revisionEx.isDeleted)
         }
         val visibleGraph = createVisibleGraph(dataPack, sortType, null, pathsMap.keys)
-        return VisiblePack(dataPack, visibleGraph, false, filters).withFileHistory(FileHistory(pathsMap))
+        return VisiblePack(dataPack, visibleGraph, !isDone, filters)
+          .withFileHistory(FileHistory(pathsMap))
       }
 
       val commits = ArrayList<GraphCommit<Int>>(revisions.size)
@@ -148,7 +184,7 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       val fakeDataPack = DataPack.build(commits, refs, mapOf(root to logProviders[root]), storage, false)
       val visibleGraph = createVisibleGraph(fakeDataPack, sortType, null,
                                             null/*no need to filter here, since we do not have any extra commits in this pack*/)
-      return VisiblePack(fakeDataPack, visibleGraph, false, filters)
+      return VisiblePack(fakeDataPack, visibleGraph, !isDone, filters)
         .withFileHistory(FileHistory(pathsMap))
         .apply { putUserData(NO_PARENTS_INFO, true) }
     }
@@ -295,4 +331,68 @@ private fun <K : Any?, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): Mult
   result.putAllValues(this)
   result.putAllValues(map)
   return result
+}
+
+private class FileHistoryTask(val vcs: AbstractVcs, val filePath: FilePath, val hash: Hash?, val indicator: ProgressIndicator) {
+  private val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
+
+  private val future: Future<*>
+  private val _revisions = ConcurrentLinkedQueue<VcsFileRevision>()
+  private val exception = AtomicReference<VcsException>()
+
+  @Volatile
+  private var lastSize = 0
+
+  val isCancelled get() = indicator.isCanceled
+
+  init {
+    future = AppExecutorUtil.getAppExecutorService().submit {
+      ProgressManager.getInstance().runProcess(Runnable {
+        try {
+          VcsCachingHistory.collect(vcs, filePath, revisionNumber) { revision -> _revisions.add(revision) }
+        }
+        catch (e: VcsException) {
+          exception.set(e)
+        }
+      }, indicator)
+    }
+  }
+
+  @Throws(VcsException::class)
+  fun waitForRevisions(): Pair<List<VcsFileRevision>, Boolean> {
+    throwOnError()
+    while (_revisions.size == lastSize) {
+      try {
+        future.get(100, TimeUnit.MILLISECONDS)
+        ProgressManager.checkCanceled()
+        throwOnError()
+        return Pair(getRevisionsSnapshot(), true)
+      }
+      catch (_: TimeoutException) {
+      }
+    }
+    return Pair(getRevisionsSnapshot(), false)
+  }
+
+  private fun getRevisionsSnapshot(): List<VcsFileRevision> {
+    val list = _revisions.toList()
+    lastSize = list.size
+    return list
+  }
+
+  @Throws(VcsException::class)
+  private fun throwOnError() {
+    if (exception.get() != null) throw VcsException(exception.get())
+  }
+
+  fun cancel(wait: Boolean) {
+    indicator.cancel()
+    if (wait) {
+      try {
+        future.get(20, TimeUnit.MILLISECONDS)
+      }
+      catch (_: Throwable) {
+      }
+    }
+  }
 }
