@@ -27,13 +27,16 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.CodeStyleSettingsTracker;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -432,6 +435,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myProjectsManager.scheduleImportInTests(files);
       myProjectsManager.importProjects();
     });
+
+    Promise<?> promise = myProjectsManager.waitForImportCompletion();
+    while (promise.getState() == Promise.State.PENDING) {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        UIUtil.dispatchAllInvocationEvents();
+      });
+    }
+    
 
     if (failOnReadingError) {
       for (MavenProject each : myProjectsTree.getProjects()) {

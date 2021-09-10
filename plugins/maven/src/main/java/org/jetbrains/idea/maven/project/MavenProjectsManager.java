@@ -262,7 +262,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       updateTabTitles();
 
       MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-        if (!MavenUtil.isMavenUnitTestModeEnabled()) {
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
           fireActivated();
           listenForExternalChanges();
         }

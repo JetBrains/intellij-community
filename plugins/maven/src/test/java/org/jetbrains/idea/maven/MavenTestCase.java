@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenServerConnector;
+import org.jetbrains.idea.maven.server.MavenServerConnectorImpl;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
@@ -613,6 +615,22 @@ public abstract class MavenTestCase extends UsefulTestCase {
     boolean result = getTestMavenHome() != null;
     if (!result) printIgnoredMessage("Maven installation not found");
     return result;
+  }
+
+  protected static MavenServerConnector ensureConnected(MavenServerConnector connector) {
+    assertTrue("Connector is Dummy!", connector instanceof MavenServerConnectorImpl);
+    long timeout = TimeUnit.SECONDS.toMillis(10);
+    long start = System.currentTimeMillis();
+    while (connector.getState() == MavenServerConnectorImpl.State.STARTING) {
+      if (System.currentTimeMillis() > start + timeout) {
+        throw new RuntimeException("Server connector not connected in 10 seconds");
+      }
+      EdtTestUtil.runInEdtAndWait(() -> {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      });
+    }
+    assertTrue(connector.checkConnected());
+    return connector;
   }
 
   private void printIgnoredMessage(String message) {
