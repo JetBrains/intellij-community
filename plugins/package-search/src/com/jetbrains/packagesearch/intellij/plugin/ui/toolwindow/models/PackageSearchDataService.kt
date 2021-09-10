@@ -4,7 +4,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -125,7 +125,7 @@ internal class PackageSearchDataService(
         }
     }
         .replayOnSignals(replayFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow)
-        .map { modules -> runReadAction { project.moduleTransformers.flatMapTransform(project, modules) } }
+        .map { modules -> readAction { project.moduleTransformers.flatMapTransform(project, modules) } }
         .catch {
             logError("PackageSearchDataService#projectModulesStateFlow", it) { "Error while elaborating latest project modules" }
             emit(emptyList())
@@ -307,7 +307,7 @@ internal class PackageSearchDataService(
     ): List<ModuleModel> {
         // Refresh project modules, this will cascade into updating the rest of the data
 
-        val moduleModels = runReadAction { projectModules.map { ModuleModel(it) } }
+        val moduleModels = readAction { projectModules.map { ModuleModel(it) } }
 
         if (targetModules is TargetModules.One && projectModules.none { it == targetModules.module.projectModule }) {
             logDebug(traceInfo, "PKGSDataService#fetchProjectModuleModels()") { "Target module doesn't exist anymore, resetting to 'All'" }
@@ -363,8 +363,8 @@ internal class PackageSearchDataService(
 
     private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> {
         logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
-        return runReadAction { ProjectModuleOperationProvider.forProjectModuleType(moduleType) }
-            ?.let { runReadAction { it.listDependenciesInModule(this@installedDependencies) } }
+        return readAction { ProjectModuleOperationProvider.forProjectModuleType(moduleType) }
+            ?.let { provider -> readAction { provider.listDependenciesInModule(this@installedDependencies) } }
             ?.toList() ?: emptyList()
     }
 
@@ -544,7 +544,7 @@ internal class PackageSearchDataService(
         logDebug(traceInfo, "PKGSDataService#setStatusAsync()") { "Status changed: $newStatus" }
     }
 
-    private fun rerunHighlightingOnOpenBuildFiles() = runReadAction {
+    private suspend fun rerunHighlightingOnOpenBuildFiles() = readAction {
         val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
         val psiManager = PsiManager.getInstance(project)
 
