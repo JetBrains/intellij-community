@@ -3,7 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
@@ -144,7 +144,7 @@ internal class PackageManagementPanel(
 
         rootDataModelProvider.dataModelFlow.filter { it.moduleModels.isNotEmpty() }
             .onEach { data ->
-                val (treeModel, selectionPath) = runReadAction {
+                val (treeModel, selectionPath) = readAction {
                     computeModuleTreeModel(
                         modules = data.moduleModels,
                         currentTargetModules = data.targetModules,
@@ -162,7 +162,7 @@ internal class PackageManagementPanel(
             .launchIn(this)
 
         rootDataModelProvider.dataModelFlow.onEach { data ->
-            val tableItems = runReadAction {
+            val tableItems = readAction {
                 computePackagesTableItems(
                     project = project,
                     packages = data.packageModels,
