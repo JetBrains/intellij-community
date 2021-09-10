@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class LoggedErrorProcessor {
   private static LoggedErrorProcessor ourInstance = new LoggedErrorProcessor();
@@ -27,6 +30,23 @@ public class LoggedErrorProcessor {
     finally  {
       setNewInstance(oldInstance);
     }
+  }
+
+  /**
+   * Set the new {@link LoggedErrorProcessor} {@code newInstance}, restore the old processor on dispose of {@code disposable}.
+   */
+  @TestOnly
+  public static void overrideInstance(@NotNull LoggedErrorProcessor newInstance, @NotNull Disposable disposable) {
+    LoggedErrorProcessor oldInstance = getInstance();
+    setNewInstance(newInstance);
+
+    //noinspection Convert2Lambda
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        setNewInstance(oldInstance);
+      }
+    });
   }
 
   /**
