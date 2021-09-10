@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.core.CoreBundle;
@@ -35,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -43,6 +44,7 @@ import java.util.*;
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -926,5 +928,23 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     CaseSensitivity expected = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
     assertEquals(expected, dir.getChildrenCaseSensitivity());
     assertEquals(expected == CaseSensitivity.SENSITIVE, dir.isCaseSensitive());
+  }
+
+  @Test(timeout = 30_000)
+  public void specialFileDoesNotCauseHangs() {
+    assumeUnix();
+
+    Path fifo = tempDir.getRoot().toPath().resolve("test.fifo");
+    createFifo(fifo.toString());
+    VirtualFile file = Objects.requireNonNull(myFS.refreshAndFindFileByNioFile(fifo));
+    assertThat(file.is(VFileProperty.SPECIAL)).isTrue();
+    assertThat(file.getLength()).isEqualTo(0);
+
+    assertThatExceptionOfType(FileNotFoundException.class)
+      .isThrownBy(() -> file.getInputStream())
+      .withMessageStartingWith("Not a file: ");
+    assertThatExceptionOfType(FileNotFoundException.class)
+      .isThrownBy(() -> file.contentsToByteArray())
+      .withMessageStartingWith("Not a file: ");
   }
 }
