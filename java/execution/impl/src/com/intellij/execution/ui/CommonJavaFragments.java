@@ -7,7 +7,12 @@ import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
+import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -16,6 +21,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -191,6 +197,13 @@ public final class CommonJavaFragments {
                                    configuration -> true);
     jrePath.setRemovable(false);
     jrePath.setHint(ExecutionBundle.message("run.configuration.jre.hint"));
+    jrePath.setValidation(configuration -> new SmartList<>(RuntimeConfigurationException.validate(comboBox, () -> ReadAction.run(() -> {
+      if (!(configuration instanceof TargetEnvironmentAwareRunProfile) ||
+          TargetEnvironmentConfigurations.getEffectiveTargetName((TargetEnvironmentAwareRunProfile)configuration,
+                                                                 configuration.getProject()) == null) {
+        JavaParametersUtil.checkAlternativeJRE(configuration);
+      }
+    }))));
     return jrePath;
   }
 }
