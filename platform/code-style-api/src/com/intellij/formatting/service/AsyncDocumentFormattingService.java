@@ -154,6 +154,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     private volatile @Nullable FormattingTask myTask;
 
+    private @Nullable String myResult;
+
     private final AtomicReference<FormattingRequestState> myStateRef = new AtomicReference<>(FormattingRequestState.NOT_STARTED);
 
     private FormattingRequestImpl(@NotNull FormattingContext formattingContext,
@@ -262,10 +264,40 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
               getNotificationGroupId(), getName(),
               CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())));
           }
+          else if (myResult != null) {
+            if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+              updateDocument(myResult);
+            }
+            else {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+                  try {
+                    WriteAction.run((ThrowableRunnable<Throwable>)() -> {
+                      updateDocument(myResult);
+                    });
+                  }
+                  catch (Throwable throwable) {
+                    LOG.error(throwable);
+                  }
+                });
+              });
+            }
+          }
         }
         catch (InterruptedException ie) {
           LOG.warn("Interrupted formatting thread.");
         }
+      }
+    }
+
+    private void updateDocument(@NotNull String newText) {
+      if (myDocument.getModificationStamp() > myInitialModificationStamp) {
+        for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
+          if (merger.updateDocument(myDocument, newText)) break;
+        }
+      }
+      else {
+        myDocument.setText(newText);
       }
     }
 
@@ -277,26 +309,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     @Override
     public void onTextReady(@NotNull final String updatedText) {
       if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myResult = updatedText;
         myTaskSemaphore.release();
-        ApplicationManager.getApplication().invokeLater(() -> {
-          CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-            try {
-              WriteAction.run((ThrowableRunnable<Throwable>)() -> {
-                if (myDocument.getModificationStamp() > myInitialModificationStamp) {
-                  for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
-                    if (merger.updateDocument(myDocument, updatedText)) break;
-                  }
-                }
-                else {
-                  myDocument.setText(updatedText);
-                }
-              });
-            }
-            catch (Throwable throwable) {
-              LOG.error(throwable);
-            }
-          });
-        });
       }
     }
 
