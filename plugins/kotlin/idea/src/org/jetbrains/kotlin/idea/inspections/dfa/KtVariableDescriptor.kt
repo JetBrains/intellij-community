@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
+import org.jetbrains.kotlin.types.KotlinType
 
 class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescriptor {
     val stable: Boolean = calculateStable()
@@ -121,7 +122,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                     if (descriptor is ValueParameterDescriptor) {
                         val fn = ((descriptor.containingDeclaration as? DeclarationDescriptorWithSource)?.source as? KotlinSourceElement)?.psi
                         if (fn != null) {
-                            val type = descriptor.type.toDfType(fn)
+                            val type = descriptor.type
                             return varFactory.createVariableValue(KtItVariableDescriptor(fn, type))
                         }
                     }
@@ -139,10 +140,10 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                     !target.isExtensionDeclaration()
     }
 }
-class KtItVariableDescriptor(val lambda: PsiElement, val type: DfType): VariableDescriptor {
-    override fun getDfType(qualifier: DfaVariableValue?): DfType = type
+class KtItVariableDescriptor(val lambda: KtElement, val type: KotlinType): VariableDescriptor {
+    override fun getDfType(qualifier: DfaVariableValue?): DfType = type.toDfType(lambda)
     override fun isStable(): Boolean = true
     override fun equals(other: Any?): Boolean = other is KtItVariableDescriptor && other.lambda == lambda
     override fun hashCode(): Int = lambda.hashCode()
-    override fun toString(): String = "it@$lambda"
+    override fun toString(): String = "it"
 }

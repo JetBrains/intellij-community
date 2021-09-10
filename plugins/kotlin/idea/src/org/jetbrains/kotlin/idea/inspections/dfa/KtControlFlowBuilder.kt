@@ -455,11 +455,25 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
 
         inlinedBlock(lambda) {
-            for (parameter in lambda.valueParameters) {
-                flushParameter(parameter)
+            val functionLiteral = lambda.functionLiteral
+            val bodyExpression = lambda.bodyExpression
+            if (bodyExpression != null) {
+                val valueParameters = lambda.valueParameters
+                if (valueParameters.isEmpty()) {
+                    val itVariable = SyntaxTraverser.psiTraverser(bodyExpression).filter(KtSimpleNameExpression::class.java)
+                        .filter { ref -> ref.parent !is KtCallExpression && ref.parent !is KtQualifiedExpression }
+                        .map { ref -> KtVariableDescriptor.createFromSimpleName(factory, ref) }
+                        .find { dfaVar -> (dfaVar?.descriptor as? KtItVariableDescriptor)?.lambda == functionLiteral }
+                    if (itVariable != null) {
+                        addInstruction(FlushVariableInstruction(itVariable))
+                    }
+                }
+                for (parameter in valueParameters) {
+                    flushParameter(parameter)
+                }
             }
-            processExpression(lambda.bodyExpression)
-            flow.finishElement(lambda.functionLiteral)
+            processExpression(bodyExpression)
+            flow.finishElement(functionLiteral)
             addInstruction(PopInstruction())
         }
 
@@ -888,7 +902,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 } else break
             }
             val exprType = realExpr.getKotlinType()
-            val declaredType = (dfVar.descriptor as? KtVariableDescriptor)?.variable?.type()
+            val declaredType = when (val desc = dfVar.descriptor) {
+                is KtVariableDescriptor -> desc.variable.type()
+                is KtItVariableDescriptor -> desc.type
+                else -> null
+            }
             addImplicitConversion(expr, declaredType, exprType)
             return
         }

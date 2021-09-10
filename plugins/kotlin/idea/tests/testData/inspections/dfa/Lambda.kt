@@ -10,6 +10,22 @@ fun itVariable(x:List<Int>) {
         }
     }
 }
+
+fun itVariableBoxed(x: Long?) {
+    x.let { it != null && it < 0 }
+}
+
+fun itFlush(x:List<Int>) {
+    var y : Int = 1
+    x.forEach {
+        if (it > 0) {
+            if (y == 2) {}
+        } else {
+            y = 2
+        }
+    }
+}
+
 fun captureMutableLocal() {
     var x = 10
     val fn = {
