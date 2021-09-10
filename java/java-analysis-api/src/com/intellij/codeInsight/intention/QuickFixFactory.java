@@ -361,14 +361,6 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createInitializeFinalFieldInConstructorFix(@NotNull PsiField field);
 
-  /**
-   * @deprecated use {@link #createDeleteFix(PsiElement)} on {@link PsiReferenceParameterList} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public abstract IntentionAction createRemoveTypeArgumentsFix(@NotNull PsiElement variable);
-
   @NotNull
   public abstract IntentionAction createChangeClassSignatureFromUsageFix(@NotNull PsiClass owner,
                                                                          @NotNull PsiReferenceParameterList parameterList);

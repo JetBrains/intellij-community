@@ -37,7 +37,6 @@ import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,12 +46,6 @@ import java.util.List;
  * @author dsl
  */
 public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
-  /**
-   * @deprecated Use {@link #getRefactoringName()} instead
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final String REFACTORING_NAME = "Push Members Down";
-
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     final List<PsiElement> elements = getElements(editor, file, Ref.create(), true);
