@@ -50,15 +50,6 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   private final List<ScopeListener> myScopeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  /**
-   * @deprecated use {@link #addScopeListener(ScopeListener, Disposable)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void addScopeListener(@NotNull ScopeListener scopeListener) {
-    myScopeListeners.add(scopeListener);
-  }
-
   public void addScopeListener(@NotNull ScopeListener scopeListener, @NotNull Disposable parentDisposable) {
     myScopeListeners.add(scopeListener);
     Disposer.register(parentDisposable, () -> myScopeListeners.remove(scopeListener));

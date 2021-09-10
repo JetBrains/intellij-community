@@ -66,20 +66,6 @@ public abstract class FindSettings {
   public abstract void setLocalRegularExpressions(boolean regularExpressions);
 
   /**
-   * @deprecated use {@link FindInProjectSettings#addStringToFind(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void addStringToFind(@NotNull String s);
-
-  /**
-   * @deprecated use {@link FindInProjectSettings#addStringToReplace(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void addStringToReplace(@NotNull String s);
-
-  /**
    * @deprecated use {@link FindInProjectSettings#getRecentFindStrings()}
    */
   @Deprecated
