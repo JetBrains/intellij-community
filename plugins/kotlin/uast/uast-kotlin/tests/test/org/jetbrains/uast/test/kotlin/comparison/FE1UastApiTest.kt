@@ -166,6 +166,11 @@ class FE1UastApiTest : AbstractFE1UastTest() {
             doTest("ReifiedParameters", ::checkCallbackForReifiedParameters)
         }
 
+        @TestMetadata("LambdaParameters.kt")
+        fun testLambdaParameters() {
+            doTest("LambdaParameters", ::checkCallbackForLambdaParameters)
+        }
+
         @TestMetadata("SAM.kt")
         fun testSAM() {
             doTest("SAM", ::checkCallbackForSAM)
