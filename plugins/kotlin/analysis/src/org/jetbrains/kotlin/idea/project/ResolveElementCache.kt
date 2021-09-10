@@ -136,21 +136,19 @@ class ResolveElementCache(
         ).bindingContext
     }
 
-    @Deprecated("Use getElementsAdditionalResolve")
-    fun getElementAdditionalResolve(
-        resolveElement: KtElement,
-        contextElement: KtElement,
-        bodyResolveMode: BodyResolveMode
-    ): BindingContext {
-        return getElementsAdditionalResolve(resolveElement, listOf(contextElement), bodyResolveMode)
-    }
-
     fun getElementsAdditionalResolve(
         resolveElement: KtElement,
         contextElements: Collection<KtElement>?,
         bodyResolveMode: BodyResolveMode
+    ): BindingContext = getElementsAdditionalResolve(resolveElement, null, contextElements, bodyResolveMode)
+
+    private fun getElementsAdditionalResolve(
+        resolveElement: KtElement,
+        contextElement: KtElement?,
+        contextElements: Collection<KtElement>? = null,
+        bodyResolveMode: BodyResolveMode
     ): BindingContext {
-        if (contextElements == null) {
+        if (contextElements == null && contextElement == null) {
             assert(bodyResolveMode == BodyResolveMode.FULL)
         }
 
@@ -170,7 +168,7 @@ class ResolveElementCache(
             val virtualFile = resolveElement.containingFile.virtualFile
             // applicable for real (physical) files only
             if (virtualFile != null && FileEditorManager.getInstance(resolveElement.project)?.selectedFiles?.any { it == virtualFile } == true) {
-                return getElementsAdditionalResolve(resolveElement, contextElements, BodyResolveMode.FULL)
+                return getElementsAdditionalResolve(resolveElement, contextElement, contextElements, BodyResolveMode.FULL)
             }
         }
 
@@ -194,11 +192,17 @@ class ResolveElementCache(
 
             else -> {
                 if (resolveElement !is KtDeclaration) {
-                    return getElementsAdditionalResolve(resolveElement, null, BodyResolveMode.FULL)
+                    return getElementsAdditionalResolve(
+                        resolveElement,
+                        contextElement = null,
+                        contextElements = null,
+                        bodyResolveMode = BodyResolveMode.FULL
+                    )
                 }
 
                 val file = resolveElement.getContainingKtFile()
                 val statementsToResolve =
+                    contextElement?.run { listOf(PartialBodyResolveFilter.findStatementToResolve(this, resolveElement)) } ?:
                     contextElements!!.map { PartialBodyResolveFilter.findStatementToResolve(it, resolveElement) }.distinct()
                 val statementsToResolveByKtFile =
                     statementsToResolve.groupBy { (it ?: resolveElement).containingKtFile }
@@ -218,7 +222,11 @@ class ResolveElementCache(
                     return CompositeBindingContext.create(cachedResults.map { it!!.bindingContext }.distinct())
                 }
 
-                val (bindingContext, statementFilter) = performElementAdditionalResolve(resolveElement, contextElements, bodyResolveMode)
+                val (bindingContext, statementFilter) = performElementAdditionalResolve(
+                    resolveElement,
+                    contextElements ?: listOfNotNull(contextElement),
+                    bodyResolveMode
+                )
 
                 if (statementFilter == StatementFilter.NONE &&
                     bodyResolveMode.doControlFlowAnalysis && !bodyResolveMode.bindingTraceFilter.ignoreDiagnostics
@@ -258,6 +266,29 @@ class ResolveElementCache(
                 return bindingContext
             }
         }
+    }
+
+    fun resolveToElement(element: KtElement, bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL): BindingContext {
+        val elementOfAdditionalResolve = findElementOfAdditionalResolve(element, bodyResolveMode)
+
+        ensureFileAnnotationsResolved(element.containingKtFile)
+
+        val bindingContext = if (elementOfAdditionalResolve != null) {
+            if (elementOfAdditionalResolve is KtParameter) {
+                throw AssertionError(
+                    "ResolveElementCache: Element of additional resolve should not be KtParameter: " +
+                            "${elementOfAdditionalResolve.text} for context element ${element.text}"
+                )
+            }
+            getElementsAdditionalResolve(elementOfAdditionalResolve, element, null, bodyResolveMode)
+        } else {
+            element.getNonStrictParentOfType<KtDeclaration>()?.takeIf {
+                it !is KtAnonymousInitializer && it !is KtDestructuringDeclaration && it !is KtDestructuringDeclarationEntry
+            }?.let { resolveSession.resolveToDescriptor(it) }
+            resolveSession.bindingContext
+        }
+
+        return bindingContext
     }
 
     fun resolveToElements(elements: Collection<KtElement>, bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL): BindingContext {
@@ -301,9 +332,13 @@ class ResolveElementCache(
     private fun ensureFileAnnotationsResolved(elements: Collection<KtElement>) {
         val filesToBeAnalyzed = elements.map { it.containingKtFile }.toSet()
         for (file in filesToBeAnalyzed) {
-            val fileLevelAnnotations = resolveSession.getFileAnnotations(file)
-            doResolveAnnotations(fileLevelAnnotations)
+            ensureFileAnnotationsResolved(file)
         }
+    }
+
+    private fun ensureFileAnnotationsResolved(file: KtFile) {
+        val fileLevelAnnotations = resolveSession.getFileAnnotations(file)
+        doResolveAnnotations(fileLevelAnnotations)
     }
 
     private fun findElementOfAdditionalResolve(element: KtElement, bodyResolveMode: BodyResolveMode): KtElement? {

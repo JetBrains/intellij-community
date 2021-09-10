@@ -99,15 +99,15 @@ fun KtElement.analyzeAndGetResult(resolutionFacade: ResolutionFacade): AnalysisR
 // This function is used on declarations to make analysis not only declaration itself but also it content:
 // body for declaration with body, initializer & accessors for properties
 fun KtElement.analyzeWithContentAndGetResult(resolutionFacade: ResolutionFacade): AnalysisResult =
-    resolutionFacade.analyzeWithAllCompilerChecks(listOf(this))
+    resolutionFacade.analyzeWithAllCompilerChecks(this)
 
 // This function is used on declarations to make analysis not only declaration itself but also it content:
 // body for declaration with body, initializer & accessors for properties
 fun KtDeclaration.analyzeWithContent(resolutionFacade: ResolutionFacade): BindingContext =
-    resolutionFacade.analyzeWithAllCompilerChecks(listOf(this)).bindingContext
+    resolutionFacade.analyzeWithAllCompilerChecks(this).bindingContext
 
 // This function is used to make full analysis of declaration container.
 // All its declarations, including their content (see above), are analyzed.
 inline fun <reified T> T.analyzeWithContent(resolutionFacade: ResolutionFacade): BindingContext where T : KtDeclarationContainer, T : KtElement =
-    resolutionFacade.analyzeWithAllCompilerChecks(listOf(this)).bindingContext
+    resolutionFacade.analyzeWithAllCompilerChecks(this).bindingContext
 

@@ -74,6 +74,12 @@ else
 
 
 class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
+    override fun getResolutionFacade(element: KtElement): ResolutionFacade {
+        val file = element.fileForElement()
+        val platform = TargetPlatformDetector.getPlatform(file)
+        return getFacadeToAnalyzeFile(file, platform)
+    }
+
     override fun getResolutionFacade(elements: List<KtElement>): ResolutionFacade {
         val files = getFilesForElements(elements)
         val platform = TargetPlatformDetector.getPlatform(files.first())
@@ -87,18 +93,20 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
 
     private fun getFilesForElements(elements: List<KtElement>): List<KtFile> {
         return elements.map {
-            try {
-                // in theory `containingKtFile` is `@NotNull` but in practice EA-114080
-                @Suppress("USELESS_ELVIS")
-                it.containingKtFile ?: throw IllegalStateException("containingKtFile was null for $it of ${it.javaClass}")
-            } catch (e: Exception) {
-                if (e is ControlFlowException) throw e
-                throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e)
-                    .withPsiAttachment("element", it)
-                    .withPsiAttachment("file", it.containingFile)
-                    .withAttachment("original", e.message)
-            }
+            it.fileForElement()
         }
+    }
+
+    private fun KtElement.fileForElement() = try {
+        // in theory `containingKtFile` is `@NotNull` but in practice EA-114080
+        @Suppress("USELESS_ELVIS")
+        containingKtFile ?: throw IllegalStateException("containingKtFile was null for $this of ${this.javaClass}")
+    } catch (e: Exception) {
+        if (e is ControlFlowException) throw e
+        throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e)
+            .withPsiAttachment("element", this)
+            .withPsiAttachment("file", this.containingFile)
+            .withAttachment("original", e.message)
     }
 
     override fun getSuppressionCache(): KotlinSuppressCache = kotlinSuppressCache.value
@@ -441,6 +449,25 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         return getResolutionFacadeByModuleInfo(moduleInfo, platform).createdFor(emptyList(), moduleInfo, platform)
     }
 
+    private fun getFacadeToAnalyzeFile(file: KtFile, platform: TargetPlatform): ResolutionFacade {
+        val moduleInfo = file.getModuleInfo()
+        val specialFile = file.filterNotInProjectSource(moduleInfo)
+
+        specialFile?.filterScript()?.let { script ->
+            val scripts = setOf(script)
+            val projectFacade = getFacadeForScripts(scripts)
+            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(scripts, moduleInfo)
+        }
+
+        if (specialFile != null) {
+            val specialFiles = setOf(specialFile)
+            val projectFacade = getFacadeForSpecialFiles(specialFiles)
+            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(specialFiles, moduleInfo)
+        }
+
+        return getResolutionFacadeByModuleInfo(moduleInfo, platform).createdFor(emptyList(), moduleInfo, platform)
+    }
+
     override fun getResolutionFacadeByFile(file: PsiFile, platform: TargetPlatform): ResolutionFacade? {
         if (!ProjectRootsUtil.isInProjectOrLibraryContent(file)) {
             return null
@@ -478,18 +505,22 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         return getResolutionFacadeByModuleInfoAndSettings(ideaModuleInfo, settings)
     }
 
-    private fun Collection<KtFile>.filterNotInProjectSource(moduleInfo: IdeaModuleInfo): Set<KtFile> {
-        return mapNotNull {
-            if (it is KtCodeFragment) it.getContextFile() else it
-        }.filter {
+    private fun Collection<KtFile>.filterNotInProjectSource(moduleInfo: IdeaModuleInfo): Set<KtFile> =
+        mapNotNullTo(mutableSetOf()) { it.filterNotInProjectSource(moduleInfo) }
+
+    private fun KtFile.filterNotInProjectSource(moduleInfo: IdeaModuleInfo): KtFile? {
+        val contextFile = if (this is KtCodeFragment) this.getContextFile() else this
+        return contextFile?.takeIf {
             !ProjectRootsUtil.isInProjectSource(it) || !moduleInfo.contentScope().contains(it)
-        }.toSet()
+        }
     }
 
-    private fun Collection<KtFile>.filterScripts(): Set<KtFile> {
-        return mapNotNull {
-            if (it is KtCodeFragment) it.getContextFile() else it
-        }.filter { it.isScript() }.toSet()
+    private fun Collection<KtFile>.filterScripts(): Set<KtFile> =
+        mapNotNullTo(mutableSetOf()) { it.filterScript() }
+
+    private fun KtFile.filterScript(): KtFile? {
+        val contextFile = if (this is KtCodeFragment) this.getContextFile() else this
+        return contextFile?.takeIf { it.isScript() }
     }
 
     private fun KtCodeFragment.getContextFile(): KtFile? {
