@@ -291,7 +291,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             if (descriptor is ClassDescriptor && descriptor.kind == ClassKind.ANNOTATION_CLASS) {
                 val fqName = descriptor.fqNameSafe.asString()
                 val languageVersionSettings = declaration.languageVersionSettings
-                if (fqName in languageVersionSettings.getFlag(AnalysisFlags.useExperimental)) return
+                if (fqName in languageVersionSettings.getFlag(AnalysisFlags.optIn)) return
             }
 
             // Main checks: finding reference usages && text usages
