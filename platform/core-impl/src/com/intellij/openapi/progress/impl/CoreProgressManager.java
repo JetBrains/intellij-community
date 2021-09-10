@@ -303,17 +303,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                    @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                    @NotNull Runnable process,
                                                    @Nullable Runnable successRunnable,
-                                                   @Nullable Runnable canceledRunnable) {
-    runProcessWithProgressAsynchronously(project, progressTitle, process, successRunnable, canceledRunnable,
-                                         PerformInBackgroundOption.DEAF);
-  }
-
-  // bg; runnables on UI/EDT?
-  @Override
-  public void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                   @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                   @NotNull Runnable process,
-                                                   @Nullable Runnable successRunnable,
                                                    @Nullable Runnable canceledRunnable,
                                                    @NotNull PerformInBackgroundOption option) {
     runProcessWithProgressAsynchronously(new Task.Backgroundable(project, progressTitle, true, option) {

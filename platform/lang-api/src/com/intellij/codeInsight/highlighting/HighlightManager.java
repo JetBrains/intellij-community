@@ -173,17 +173,6 @@ public abstract class HighlightManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addOccurrenceHighlights(@NotNull Editor editor,
-                                               PsiReference @NotNull [] occurrences,
-                                               @NotNull TextAttributes attributes,
-                                               boolean hideByTextChange,
-                                               @Nullable Collection<? super RangeHighlighter> outHighlighters);
-
-  /**
-   * @deprecated Use the overload with TextAttributesKey
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void addOccurrenceHighlights(@NotNull Editor editor,
                                                PsiElement @NotNull [] elements,
                                                @NotNull TextAttributes attributes,
                                                boolean hideByTextChange,

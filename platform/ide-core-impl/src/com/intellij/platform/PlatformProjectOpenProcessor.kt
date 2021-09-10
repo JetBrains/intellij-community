@@ -76,20 +76,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     @JvmStatic
-    @Suppress("UNUSED_PARAMETER")
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)} ")
-    fun doOpenProject(virtualFile: VirtualFile,
-                      projectToClose: Project?,
-                      forceOpenInNewFrame: Boolean,
-                      line: Int,
-                      callback: ProjectOpenedCallback?,
-                      isReopen: Boolean): Project? {
-      val options = OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, line = line)
-      return doOpenProject(Paths.get(virtualFile.path), options)
-    }
-
-    @JvmStatic
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)} ")
     fun doOpenProject(virtualFile: VirtualFile,

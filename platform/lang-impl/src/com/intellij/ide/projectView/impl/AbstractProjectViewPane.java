@@ -659,13 +659,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return extractValueFromNode(node);
   }
 
-  /** @deprecated use {@link AbstractProjectViewPane#getValueFromNode(Object)} **/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected Object exhumeElementFromNode(DefaultMutableTreeNode node) {
-    return getValueFromNode(node);
-  }
-
   @Nullable
   public static Object extractValueFromNode(@Nullable Object node) {
     Object userObject = TreeUtil.getUserObject(node);

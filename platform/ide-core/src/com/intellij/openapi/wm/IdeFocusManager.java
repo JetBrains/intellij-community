@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.ui.ComponentUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,13 +77,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * Finds focused component among descendants of the given component. Descendants may be in child popups and windows.
    */
   public abstract @Nullable Component getFocusedDescendantFor(@NotNull Component comp);
-
-  /**
-   * @deprecated This method does nothing currently.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void typeAheadUntil(ActionCallback done) {}
 
   /**
    * @deprecated This method does nothing currently.

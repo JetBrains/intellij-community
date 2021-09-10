@@ -326,16 +326,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return ((MatchedValue)o1).compareWeights((MatchedValue)o2);
   }
 
-  /**
-   * @deprecated Please use {@link GotoActionModel#defaultActionForeground(boolean, boolean, Presentation)} instead.
-   * This method may be removed in future versions
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
-    return defaultActionForeground(isSelected, true, presentation);
-  }
-
   public static Color defaultActionForeground(boolean isSelected, boolean hasFocus, @Nullable Presentation presentation) {
     if (isSelected) return UIUtil.getListSelectionForeground(hasFocus);
     if (presentation != null && !presentation.isEnabledAndVisible()) return UIUtil.getInactiveTextColor();

@@ -208,29 +208,10 @@ public final class ExternalSystemUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force) {
-    refreshProjects(project, externalSystemId, force, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
-  }
-
-  /**
-   * Asks to refresh all external projects of the target external system linked to the given ide project.
-   * <p/>
-   * 'Refresh' here means 'obtain the most up-to-date version and apply it to the ide'.
-   *
-   * @param project          target ide project
-   * @param externalSystemId target external system which projects should be refreshed
-   * @param force            flag which defines if external project refresh should be performed if it's config is up-to-date
-   * @deprecated use {@link  ExternalSystemUtil#refreshProjects(ImportSpecBuilder)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void refreshProjects(@NotNull final Project project,
-                                     @NotNull final ProjectSystemId externalSystemId,
-                                     boolean force,
-                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
     refreshProjects(
       new ImportSpecBuilder(project, externalSystemId)
         .forceWhenUptodate(force)
-        .use(progressExecutionMode)
+        .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
     );
   }
 
