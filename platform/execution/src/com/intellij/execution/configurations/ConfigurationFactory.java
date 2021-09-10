@@ -87,13 +87,6 @@ public abstract class ConfigurationFactory {
     return myType.getDisplayName();
   }
 
-  /** @deprecated Use {@link com.intellij.icons.AllIcons.General#Add} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public Icon getAddIcon() {
-    return IconUtil.getAddIcon();
-  }
-
   public Icon getIcon(final @NotNull RunConfiguration configuration) {
     return getIcon();
   }
