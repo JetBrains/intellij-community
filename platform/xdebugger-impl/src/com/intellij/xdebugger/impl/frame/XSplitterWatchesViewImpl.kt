@@ -9,20 +9,32 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+/**
+ * Allows customizing of variables view and splitting into 2 components.
+ * Notice that you must provide the bottom component of the view by implementing XDebugSessionTabCustomizer in your XDebugProcess
+ * @see com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer.getBottomLocalsComponentProvider
+ */
 class XSplitterWatchesViewImpl(
   session: XDebugSessionImpl,
   watchesInVariables: Boolean,
   isVertical: Boolean,
   withToolbar: Boolean
-) : XWatchesViewImpl(session, watchesInVariables, isVertical, withToolbar), DnDNativeTarget, XWatchesView {
+) : XWatchesViewImpl(session.also { checkContract(it) }, watchesInVariables, isVertical, withToolbar), DnDNativeTarget, XWatchesView {
 
   companion object {
     const val proportionKey = "debugger.immediate.window.in.watches.proportion.key"
+
+    private fun checkContract(session: XDebugSessionImpl) {
+      if (tryGetBottomComponentProvider(session) == null)
+        error("XDebugProcess must provide a properly configured XDebugSessionTabCustomizer to use XSplitterWatchesViewImpl. Read JavaDoc for details")
+    }
+
+    private fun tryGetBottomComponentProvider(session: XDebugSessionImpl) = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider
   }
 
   override fun createMainPanel(localsPanelComponent: JComponent): JPanel {
     val session = mySession.get() ?: error("Not null session is expected here")
-    val bottomLocalsComponentProvider = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider
+    val bottomLocalsComponentProvider = tryGetBottomComponentProvider(session)
                                         ?: error("BottomLocalsComponentProvider is not implemented to use SplitterWatchesVariablesView")
 
     val evaluatorComponent = bottomLocalsComponentProvider.createBottomLocalsComponent()
