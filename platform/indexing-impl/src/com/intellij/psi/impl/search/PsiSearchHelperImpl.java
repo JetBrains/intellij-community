@@ -190,20 +190,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return AsyncUtil.wrapBoolean(result);
   }
 
-  /**
-   * @deprecated use {@link PsiSearchHelperImpl#processElementsWithWord(SearchScope, String, short, EnumSet, String, SearchSession, TextOccurenceProcessor)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
-                                         @NotNull SearchScope searchScope,
-                                         @NotNull String text,
-                                         short searchContext,
-                                         @NotNull EnumSet<Options> options,
-                                         @Nullable String containerName) {
-    return processElementsWithWord(searchScope, text, searchContext, options, containerName, new SearchSession(), processor);
-  }
-
   public boolean processElementsWithWord(@NotNull SearchScope searchScope,
                                          @NotNull String text,
                                          short searchContext,
