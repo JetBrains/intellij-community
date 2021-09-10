@@ -96,7 +96,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
      * Registry property introduced to provide quick workaround for possible performance issues.
      * Should be removed when the feature becomes stable
      */
-    @ApiStatus.ScheduledForRemoval(inVersion = "22.1")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
     @Deprecated("Registry property introduced to provide quick workaround for possible performance issues. " +
                 "Should be removed when the feature is proved to be stable", ReplaceWith("true"))
     @JvmStatic
