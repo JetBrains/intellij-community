@@ -36,7 +36,7 @@ interface NotebookCellLinesLexer {
       }
     }
 
-    fun defaultIntervals(document: Document, markers: List<NotebookCellLines.Marker>): List<NotebookCellLines.Interval> {
+    private fun defaultIntervals(document: Document, markers: List<NotebookCellLines.Marker>): List<NotebookCellLines.Interval> {
       val intervals = toIntervalsInfo(document, markers)
 
       val result = mutableListOf<NotebookCellLines.Interval>()
