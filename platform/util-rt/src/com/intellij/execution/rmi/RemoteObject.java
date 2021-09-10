@@ -143,7 +143,13 @@ public class RemoteObject implements Remote, Unreferenced {
     private final String myOriginalClassName; //or store hierarchy here
 
     public static ForeignException create(String message, Class<?> clazz) {
-      return new ForeignException(message, clazz.getName());
+      String name = clazz.getName();
+      if (message.startsWith(name)) {
+        int o = name.length();
+        if (message.startsWith(":", o)) o += 1;
+        message = message.substring(o).trim();
+      }
+      return new ForeignException(message, name);
     }
 
     public ForeignException(String message, String originalClassName) {
@@ -153,6 +159,12 @@ public class RemoteObject implements Remote, Unreferenced {
 
     public String getOriginalClassName() {
       return myOriginalClassName;
+    }
+
+    public String toString() {
+      String s = getOriginalClassName();
+      String message = getLocalizedMessage();
+      return (message != null) ? (s + ": " + message) : s;
     }
   }
 }
