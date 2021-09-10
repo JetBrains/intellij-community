@@ -18,6 +18,9 @@ final class IdeaCommunityBuilder {
     this.buildContext = buildContext
   }
 
+  /**
+   * Compiles production modules and test modules required for {@link org.jetbrains.intellij.build.CommunityStandaloneJpsBuilder#processJpsLayout}
+   */
   void compileModules() {
     BuildTasks.create(buildContext).compileProjectAndTests(["intellij.platform.jps.build"])
   }
@@ -38,6 +41,10 @@ final class IdeaCommunityBuilder {
 
   void buildDistributions() {
     compileModules()
+    /**
+     * required because {@link org.jetbrains.intellij.build.BuildTasks#buildDistributions} will trigger compilation of production modules
+     * wiping out test modules compiled in {@link org.jetbrains.intellij.build.IdeaCommunityBuilder#compileModules}
+     */
     buildContext.options.incrementalCompilation = true
     def tasks = BuildTasks.create(buildContext)
     tasks.buildDistributions()
