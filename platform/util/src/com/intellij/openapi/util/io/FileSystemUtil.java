@@ -61,8 +61,7 @@ public final class FileSystemUtil {
         if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
           return check(new IdeaWin32MediatorImpl());
         }
-        else if ((SystemInfo.isLinux || SystemInfo.isMac && CpuArch.isIntel64() || SystemInfo.isSolaris || SystemInfo.isFreeBSD) &&
-                 JnaLoader.isLoaded() && JnaLoader.isSupportsDirectMapping()) {
+        else if ((SystemInfo.isLinux || SystemInfo.isMac) && CpuArch.isIntel64() && JnaLoader.isLoaded() && JnaLoader.isSupportsDirectMapping()) {
           return check(new JnaUnixMediatorImpl());
         }
       }
@@ -254,17 +253,8 @@ public final class FileSystemUtil {
       static native int __xstat64(int ver, String path, Pointer stat);
     }
 
-    private static final int[] LINUX_32 =  {16, 44, 72, 24, 28};
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
-    private static final int[] LNX_PPC32 = {16, 48, 80, 24, 28};
-    private static final int[] LNX_PPC64 = LINUX_64;
-    private static final int[] LNX_ARM32 = LNX_PPC32;
-    private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
-    private static final int[] BSD_32_12 = {24, 96, 64, 28, 32};
-    private static final int[] BSD_64_12 = {24,112, 64, 28, 32};
-    private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
-    private static final int[] SUN_OS_64 = {16, 40, 64, 24, 28};
 
     private static final int STAT_VER = 1;
     private static final int OFF_MODE = 0;
@@ -282,16 +272,8 @@ public final class FileSystemUtil {
     JnaUnixMediatorImpl() {
       assert JnaLoader.isSupportsDirectMapping() : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
 
-      if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
-      else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
-      else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
-      else if ("linux-ppc".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC32;
-      else if ("linux-ppc64le".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC64;
+      if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
       else if ("darwin-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
-      else if ("freebsd-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = SystemInfo.isOsVersionAtLeast("12") ? BSD_32_12 : BSD_32;
-      else if ("freebsd-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SystemInfo.isOsVersionAtLeast("12") ? BSD_64_12 : BSD_64;
-      else if ("sunos-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_32;
-      else if ("sunos-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + Platform.RESOURCE_PREFIX);
 
       Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, CharsetToolkit.getPlatformCharset().name());
