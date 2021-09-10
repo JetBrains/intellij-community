@@ -99,7 +99,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         @Override
         public void addNotify() {
           super.addNotify();
-          toggleRunPanel(isShowToolPanel(UISettings.getInstance()));
         }
       };
 
