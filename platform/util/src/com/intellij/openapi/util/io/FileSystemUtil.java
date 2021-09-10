@@ -8,8 +8,6 @@ import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.system.CpuArch;
@@ -470,7 +468,7 @@ public final class FileSystemUtil {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
     if (!anyChild.exists()) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("readParentCaseSensitivityByJavaIO("+anyChild+") fallback returned UNKNOWN because the child doesn't exist");
+        LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): does not exist");
       }
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
@@ -479,7 +477,7 @@ public final class FileSystemUtil {
       String probe = findCaseToggleableChild(anyChild);
       if (probe == null) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("readParentCaseSensitivityByJavaIO("+anyChild+") fallback returned UNKNOWN because parent is null and toggleable child wasn't found. isDirectory="+anyChild.isDirectory());
+          LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): no toggleable child, parent=null isDirectory=" + anyChild.isDirectory());
         }
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
@@ -494,18 +492,20 @@ public final class FileSystemUtil {
       name = findCaseToggleableChild(parent);
       if (name == null) {
         if (LOG.isDebugEnabled()) {
-          String[] list;
+          String[] list = null;
           try {
             list = parent.list();
           }
-          catch (Exception e) {
-            list = null;
+          catch (Exception ignored) { }
+          if (list == null) {
+            LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): parent.list() failed");
           }
-          int count = list==null?0:list.length;
-          LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + ") fallback returned UNKNOWN because toggleable child wasn't found among " + count +" children:\n "+StringUtil.first(StringUtil.join(
-                      ObjectUtils.notNull(list, ArrayUtil.EMPTY_STRING_ARRAY), ", "), 200, true));
+          else {
+            LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): no toggleable child among " + list.length + " siblings");
+            if (LOG.isTraceEnabled()) LOG.trace("readParentCaseSensitivityByJavaIO(" + anyChild + "): " + Arrays.toString(list));
+          }
         }
-        // we can't find any file with toggleable case.
+        // we can't find any file with a case-toggleable name
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
       altName = toggleCase(name);
@@ -528,7 +528,7 @@ public final class FileSystemUtil {
       }
     }
     catch (IOException e) {
-      LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + ") fallback returned UNKNOWN because of IOException", e);
+      LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + ")", e);
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
 
