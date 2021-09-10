@@ -52,8 +52,7 @@ public final class FileSystemUtil {
 
   private static final Mediator ourMediator = computeMediator();
 
-  @NotNull
-  static Mediator computeMediator() {
+  static @NotNull Mediator computeMediator() {
     if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
       try {
         if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
@@ -71,8 +70,7 @@ public final class FileSystemUtil {
     return new Nio2MediatorImpl();
   }
 
-  @NotNull
-  private static Mediator check(@NotNull Mediator mediator) throws Exception {
+  private static Mediator check(Mediator mediator) throws Exception {
     String quickTestPath = SystemInfo.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
@@ -150,8 +148,7 @@ public final class FileSystemUtil {
   }
 
   /**
-   * Gives the second file permissions of the first one if possible; returns true if succeed.
-   * Will do nothing on Windows.
+   * Gives the second file permissions of the first one if possible; returns {@code true} on success; no-op on Windows.
    */
   public static boolean clonePermissions(@NotNull String source, @NotNull String target) {
     try {
@@ -164,8 +161,7 @@ public final class FileSystemUtil {
   }
 
   /**
-   * Gives the second file permissions to execute of the first one if possible; returns true if succeed.
-   * Will do nothing on Windows.
+   * Gives the second file permissions of the first one if possible; returns {@code true} on success; no-op on Windows.
    */
   public static boolean clonePermissionsToExecute(@NotNull String source, @NotNull String target) {
     try {
@@ -472,6 +468,7 @@ public final class FileSystemUtil {
       }
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
+
     File parent = anyChild.getParentFile();
     if (parent == null) {
       String probe = findCaseToggleableChild(anyChild);
@@ -519,7 +516,7 @@ public final class FileSystemUtil {
         // couldn't file this file by other-cased name, so deduce FS is sensitive
         return FileAttributes.CaseSensitivity.SENSITIVE;
       }
-      // if changed-case file found, there is a slim chance that the FS is still case-sensitive but there are two files with different case
+      // if changed-case file is found, there is a slim chance that the FS is still case-sensitive, but there are two files with different case
       File altCanonicalFile = new File(altPath).getCanonicalFile();
       String altCanonicalName = altCanonicalFile.getName();
       if (altCanonicalName.equals(name) || altCanonicalName.equals(anyChild.getCanonicalFile().getName())) {
@@ -532,7 +529,7 @@ public final class FileSystemUtil {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
 
-    // it's the different file indeed, what a bad luck
+    // it's a different file indeed; tough luck
     return FileAttributes.CaseSensitivity.SENSITIVE;
   }
 
@@ -554,7 +551,7 @@ public final class FileSystemUtil {
     return detected;
   }
 
-  private static @NotNull String toggleCase(@NotNull String name) {
+  private static String toggleCase(String name) {
     String altName = name.toUpperCase(Locale.getDefault());
     if (altName.equals(name)) altName = name.toLowerCase(Locale.getDefault());
     return altName;
@@ -579,8 +576,7 @@ public final class FileSystemUtil {
         }
       }
     }
-    catch (Exception ignored) {
-    }
+    catch (Exception ignored) { }
     return null;
   }
 

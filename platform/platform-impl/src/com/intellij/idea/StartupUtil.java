@@ -77,8 +77,8 @@ import java.util.function.Function;
 
 import static java.util.Objects.requireNonNullElse;
 
-@SuppressWarnings("LoggerInitializedWithForeignClass")
 @ApiStatus.Internal
+@SuppressWarnings("LoggerInitializedWithForeignClass")
 public final class StartupUtil {
   @SuppressWarnings("StaticNonFinalField")
   public static BiFunction<String, String[], Integer> LISTENER = (integer, s) -> Main.ACTIVATE_NOT_INITIALIZED;
@@ -142,11 +142,14 @@ public final class StartupUtil {
       activity = activity.endAndStart("Cwm Host init");
       try {
         Class<?> projectorMainClass = StartupUtil.class.getClassLoader().loadClass(PROJECTOR_LAUNCHER_CLASS_NAME);
-        MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
-      } catch (RuntimeException e) {
+        MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup())
+          .findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
+      }
+      catch (RuntimeException e) {
         throw e;
-      } catch (Throwable e) {
-        throw new RuntimeException(e);
+      }
+      catch (Throwable t) {
+        throw new RuntimeException(t);
       }
     }
 
@@ -236,7 +239,7 @@ public final class StartupUtil {
       runPreAppClass(log, args);
     }
 
-    // may be called from EDT, but other events in the queue should be processed before `patchSystem`
+    // may be called from EDT, but other events in the queue should be processed before the `#patchSystem`
     CompletableFuture<@Nullable Void> prepareUiFuture = agreementDialogWasShown
       .thenRunAsync(() -> {
         patchSystem(log);
@@ -387,7 +390,7 @@ public final class StartupUtil {
     }
   }
 
-  private static void importConfig(List<String> args, Logger log, AppStarter appStarter, CompletableFuture<Boolean> agreementDialogWasShown) throws Exception {
+  private static void importConfig(List<String> args, Logger log, AppStarter appStarter, CompletableFuture<Boolean> agreementShown) throws Exception {
     Activity activity = StartUpMeasurer.startActivity("screen reader checking");
     try {
       EventQueue.invokeAndWait(AccessibilityUtils::enableScreenReaderSupportIfNecessary);
@@ -398,11 +401,11 @@ public final class StartupUtil {
     activity = activity.endAndStart("config importing");
     appStarter.beforeImportConfigs();
     Path newConfigDir = PathManager.getConfigDir();
-    EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown.join(), newConfigDir, args, log));
+    EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementShown.join(), newConfigDir, args, log));
     appStarter.importFinished(newConfigDir);
 
     if (!ConfigImportHelper.isConfigImported()) {
-      // an exception handler is already set and event queue and icons are initialized by `ConfigImportHelper`
+      // an exception handler is already set and the event queue and icons are initialized by `ConfigImportHelper`
       EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
     }
     activity.end();
@@ -464,8 +467,8 @@ public final class StartupUtil {
         // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
         baseLaF.initialize();
 
-        // to compute system scale factor on non-macOS (JRE HiDpi is not enabled) we need to know system font data,
-        // and to compute system font data we need to know `Label.font` ui default (that's why we compute base LaF first)
+        // to compute system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
+        // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
         activity = activity.endAndStart("system font data initialization");
         JBUIScale.getSystemFontData(() -> {
           Activity subActivity = StartUpMeasurer.startActivity("base LaF defaults getting");
@@ -498,7 +501,7 @@ public final class StartupUtil {
           and thus will effectively disable auto shutdown behavior for this application.
          */
         AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread);
-      }, it -> EventQueue.invokeLater(it)/* don't use here method reference (EventQueue class must be loaded on demand) */);
+      }, it -> EventQueue.invokeLater(it) /* don't use a method reference here (`EventQueue` class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {
       return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(() -> {
@@ -517,11 +520,10 @@ public final class StartupUtil {
   }
 
   /*
-   * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
-   * which is called from Toolkit.getDefaultToolkit().
+   * The method should be called before `Toolkit#initAssistiveTechnologies`, which is called from `Toolkit#getDefaultToolkit`.
    */
   private static void blockATKWrapper() {
-    // registry must not be used here, because this method is called before application loading
+    // the registry must not be used here, because this method is called before application loading
     //noinspection SpellCheckingInspection
     if (!SystemInfoRt.isLinux || !Boolean.parseBoolean(System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true"))) {
       return;
@@ -538,7 +540,7 @@ public final class StartupUtil {
 
   private static void loadSystemFontsAndDnDCursors() {
     Activity activity = StartUpMeasurer.startActivity("system fonts loading");
-    // forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
+    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
     new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
     // caches available font family names (for the default locale), to speed up editor reopening (`ComplementaryFontsRegistry` initialization)
     GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
@@ -549,7 +551,6 @@ public final class StartupUtil {
     activity.end();
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   private static boolean showEuaAndScheduleSplashIfNeeded(String[] args, @Nullable Object euaDocument) {
     Activity activity = StartUpMeasurer.startActivity("eua showing");
     EndUserAgreement.Document document = (EndUserAgreement.Document)euaDocument;
@@ -839,9 +840,7 @@ public final class StartupUtil {
     activity.end();
   }
 
-  private static void logEssentialInfoAboutIde(Logger log,
-                                               ApplicationInfo appInfo,
-                                               String [] args) {
+  private static void logEssentialInfoAboutIde(Logger log, ApplicationInfo appInfo, String[] args) {
     Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
 
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
