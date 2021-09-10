@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
@@ -112,12 +111,6 @@ abstract class EditorDiffPreview(protected val project: Project,
       else {
         updatePreview(true)
       }
-    }
-  }
-
-  override fun updatePreview(fromModelRefresh: Boolean) {
-    if (previewFileDelegate.isInitialized()) {
-      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(previewFile)
     }
   }
 

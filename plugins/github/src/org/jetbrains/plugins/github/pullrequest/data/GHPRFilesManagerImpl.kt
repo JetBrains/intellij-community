@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
@@ -59,7 +58,6 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     val file = findTimelineFile(details)
     if (file != null) {
       file.details = details
-      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
     }
   }
 

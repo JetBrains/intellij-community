@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -122,7 +121,6 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   override fun updatePreview(fromModelRefresh: Boolean) {
     if (isPreviewOpen()) {
       updatePreviewProcessor?.refresh(false)
-      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(previewFile)
     }
     else {
       updatePreviewProcessor?.clear()
