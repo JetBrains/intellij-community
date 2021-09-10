@@ -1660,6 +1660,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testMethodCallWithVararg() throws Exception {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
         }
+
+        @TestMetadata("superTypeCall.kt")
+        public void testSuperTypeCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/superTypeCall.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

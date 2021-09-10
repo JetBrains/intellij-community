@@ -13,26 +13,23 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtLambdaArgument
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCallExpression>(
-    KtCallExpression::class.java,
+class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtCallElement>(
+    KtCallElement::class.java,
     KotlinBundle.lazyMessage("add.names.in.comment.to.call.arguments")
 ) {
-    override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean =
+    override fun isApplicableTo(element: KtCallElement, caretOffset: Int): Boolean =
         resolveValueParameterDescriptors(element, anyBlockCommentsWithName = true) != null
 
-    override fun applyTo(element: KtCallExpression, editor: Editor?) {
+    override fun applyTo(element: KtCallElement, editor: Editor?) {
         val resolvedCall = element.resolveToCall() ?: return
         val psiFactory = KtPsiFactory(element)
-        for ((argument, parameter) in element.valueArguments.resolve(resolvedCall)) {
+        for ((argument, parameter) in element.valueArguments.filterIsInstance<KtValueArgument>().resolve(resolvedCall)) {
             val parent = argument.parent
             parent.addBefore(psiFactory.createComment(parameter.toCommentedParameterName()), argument)
             parent.addBefore(psiFactory.createWhiteSpace(), argument)
@@ -41,8 +38,11 @@ class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCa
     }
 
     companion object {
-        fun resolveValueParameterDescriptors(element: KtCallExpression, anyBlockCommentsWithName: Boolean): List<Pair<KtValueArgument, ValueParameterDescriptor>>? {
-            val arguments = element.valueArguments.filterNot { it is KtLambdaArgument }
+        fun resolveValueParameterDescriptors(
+            element: KtCallElement,
+            anyBlockCommentsWithName: Boolean
+        ): List<Pair<KtValueArgument, ValueParameterDescriptor>>? {
+            val arguments = element.valueArguments.filterIsInstance<KtValueArgument>().filterNot { it is KtLambdaArgument }
             if (arguments.isEmpty() || arguments.any { it.isNamed() } ||
                 (anyBlockCommentsWithName && arguments.any { it.hasBlockCommentWithName() }) ||
                 (!anyBlockCommentsWithName && arguments.none { it.hasBlockCommentWithName() })
