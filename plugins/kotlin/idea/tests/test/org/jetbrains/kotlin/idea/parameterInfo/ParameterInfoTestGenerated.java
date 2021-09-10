@@ -122,6 +122,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/Deprecated.kt");
         }
 
+        @TestMetadata("DeprecatedHidden.kt")
+        public void testDeprecatedHidden() throws Exception {
+            runTest("testData/parameterInfo/functionCall/DeprecatedHidden.kt");
+        }
+
         @TestMetadata("deprecatedSinceKotlinApplicable.kt")
         public void testDeprecatedSinceKotlinApplicable() throws Exception {
             runTest("testData/parameterInfo/functionCall/deprecatedSinceKotlinApplicable.kt");
@@ -245,6 +250,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("NoAnnotations.kt")
         public void testNoAnnotations() throws Exception {
             runTest("testData/parameterInfo/functionCall/NoAnnotations.kt");
+        }
+
+        @TestMetadata("NoCandidatesDeprecatedHidden.kt")
+        public void testNoCandidatesDeprecatedHidden() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesDeprecatedHidden.kt");
+        }
+
+        @TestMetadata("NoCandidatesNotAccessible.kt")
+        public void testNoCandidatesNotAccessible() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesNotAccessible.kt");
         }
 
         @TestMetadata("NoShadowedDeclarations.kt")
