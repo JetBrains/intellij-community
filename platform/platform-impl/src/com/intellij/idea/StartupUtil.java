@@ -75,6 +75,8 @@ import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static java.util.Objects.requireNonNullElse;
+
 @SuppressWarnings("LoggerInitializedWithForeignClass")
 @ApiStatus.Internal
 public final class StartupUtil {
@@ -945,7 +947,7 @@ public final class StartupUtil {
       if (SystemInfoRt.isXWindow) {
         activity = activity.endAndStart("linux wm set");
         String wmName = X11UiUtil.getWmName();
-        log.info("WM detected: " + wmName);
+        log.info("WM detected: " + wmName + ", desktop: " + requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "-"));
         if (wmName != null) {
           X11UiUtil.patchDetectedWm(wmName);
         }
