@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  */
 object ExperimentalAnnotationWrongTargetFixesFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-        if (diagnostic.factory != Errors.EXPERIMENTAL_ANNOTATION_ON_WRONG_TARGET) return emptyList()
+        if (diagnostic.factory != Errors.OPT_IN_MARKER_ON_WRONG_TARGET) return emptyList()
         val annotationEntry = diagnostic.psiElement.safeAs<KtAnnotationEntry>() ?: return emptyList()
         val annotationUseSiteTarget = annotationEntry.useSiteTarget?.getAnnotationUseSiteTarget()
         val annotatedElement = annotationEntry.getParentOfTypes(
