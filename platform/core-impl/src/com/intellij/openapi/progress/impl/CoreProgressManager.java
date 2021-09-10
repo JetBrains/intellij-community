@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -130,6 +130,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
+    Cancellation.checkCancelled();
+
     CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
     if (behavior == CheckCanceledBehavior.NONE) return;
 
