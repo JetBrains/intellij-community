@@ -4,6 +4,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -28,7 +29,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesHeaderData
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
-import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.combineTyped
 import com.jetbrains.packagesearch.intellij.plugin.util.flatMapTransform
@@ -69,7 +69,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newCoroutineContext
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
 import java.net.SocketTimeoutException
@@ -126,12 +125,12 @@ internal class PackageSearchDataService(
         }
     }
         .replayOnSignals(replayFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow)
-        .map { modules -> project.moduleTransformers.flatMapTransform(project, modules) }
+        .map { modules -> runReadAction { project.moduleTransformers.flatMapTransform(project, modules) } }
         .catch {
             logError("PackageSearchDataService#projectModulesStateFlow", it) { "Error while elaborating latest project modules" }
             emit(emptyList())
         }
-        .flowOn(Dispatchers.ReadActions)
+        .flowOn(Dispatchers.Default)
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
     override val dataModelFlow: StateFlow<RootDataModel> = combineTyped(
@@ -308,7 +307,7 @@ internal class PackageSearchDataService(
     ): List<ModuleModel> {
         // Refresh project modules, this will cascade into updating the rest of the data
 
-        val moduleModels = withContext(Dispatchers.ReadActions) { projectModules.map { ModuleModel(it) } }
+        val moduleModels = runReadAction { projectModules.map { ModuleModel(it) } }
 
         if (targetModules is TargetModules.One && projectModules.none { it == targetModules.module.projectModule }) {
             logDebug(traceInfo, "PKGSDataService#fetchProjectModuleModels()") { "Target module doesn't exist anymore, resetting to 'All'" }
@@ -362,15 +361,12 @@ internal class PackageSearchDataService(
     private suspend fun fetchProjectDependencies(modules: List<ProjectModule>, traceInfo: TraceInfo): Map<ProjectModule, List<UnifiedDependency>> =
         modules.associateWith { module -> module.installedDependencies(traceInfo) }
 
-    private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> =
-        withContext(Dispatchers.ReadActions) {
-            logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
-            ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-                ?.also { yield() }
-                ?.listDependenciesInModule(this@installedDependencies)
-                ?.toList()
-                ?: emptyList()
-        }
+    private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> {
+        logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
+        return runReadAction { ProjectModuleOperationProvider.forProjectModuleType(moduleType) }
+            ?.let { runReadAction { it.listDependenciesInModule(this@installedDependencies) } }
+            ?.toList() ?: emptyList()
+    }
 
     private fun PackageModel.matches(query: String, onlyKotlinMultiplatform: Boolean): Boolean {
         if (onlyKotlinMultiplatform && !isKotlinMultiplatform) {
@@ -548,7 +544,7 @@ internal class PackageSearchDataService(
         logDebug(traceInfo, "PKGSDataService#setStatusAsync()") { "Status changed: $newStatus" }
     }
 
-    private suspend fun rerunHighlightingOnOpenBuildFiles() = withContext(Dispatchers.ReadActions) {
+    private fun rerunHighlightingOnOpenBuildFiles() = runReadAction {
         val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
         val psiManager = PsiManager.getInstance(project)
 
