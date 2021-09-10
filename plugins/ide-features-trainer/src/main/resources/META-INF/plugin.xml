@@ -5,13 +5,7 @@
             url="http://www.jetbrains.com">JetBrains
     </vendor>
 
-    <description>Provides feature suggesting utility that helps users</description>
-    <change-notes><![CDATA[
-    <p>
-      Added support for suggesting Introduce variable and Unwrap actions in JavaScript.
-    </p>
-    ]]></change-notes>
-    <category>Code tools</category>
+    <description>It is a plugin that analyzes your actions while coding and suggests IDE actions to make you work more efficiently.</description>
 
     <resource-bundle>messages.FeatureSuggesterBundle</resource-bundle>
 
