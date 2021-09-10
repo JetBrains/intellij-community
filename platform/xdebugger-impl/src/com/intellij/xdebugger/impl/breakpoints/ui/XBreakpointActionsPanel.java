@@ -50,16 +50,16 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
       myLogExpressionPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myLogExpressionCheckBox)));
       myLogExpressionPanel.add(myLogExpressionComboBox.getComponent(), BorderLayout.CENTER);
       myLogExpressionComboBox.setEnabled(false);
-      boolean isLineBreakpoint = breakpoint instanceof XLineBreakpoint;
-      myTemporaryCheckBox.setVisible(isLineBreakpoint);
-      if (isLineBreakpoint) {
-        myTemporaryCheckBox.addActionListener(e -> ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected()));
-      }
       myLogExpressionCheckBox.addActionListener(listener);
       DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionComboBox.getEditorComponent());
     }
     else {
       myExpressionPanel.getParent().remove(myExpressionPanel);
+    }
+    boolean isLineBreakpoint = breakpoint instanceof XLineBreakpoint;
+    myTemporaryCheckBox.setVisible(isLineBreakpoint);
+    if (isLineBreakpoint) {
+      myTemporaryCheckBox.addActionListener(e -> ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected()));
     }
   }
 
