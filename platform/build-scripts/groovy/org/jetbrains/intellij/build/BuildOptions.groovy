@@ -166,6 +166,11 @@ class BuildOptions {
 
   String logPath = System.getProperty("intellij.build.log.root")
 
+  /**
+   * If {@code true} write a separate compilation.log for all compilation messages
+   */
+  Boolean compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
+
   static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
   boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
 
