@@ -555,6 +555,21 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/typeArguments/JavaClassNoParens.kt");
         }
 
+        @TestMetadata("NoCandidatesDeprecatedHidden.kt")
+        public void testNoCandidatesDeprecatedHidden() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/NoCandidatesDeprecatedHidden.kt");
+        }
+
+        @TestMetadata("NoCandidatesNotAccessible.kt")
+        public void testNoCandidatesNotAccessible() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/NoCandidatesNotAccessible.kt");
+        }
+
+        @TestMetadata("NoCandidatesWrongReceiver.kt")
+        public void testNoCandidatesWrongReceiver() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/NoCandidatesWrongReceiver.kt");
+        }
+
         @TestMetadata("Overloads.kt")
         public void testOverloads() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/typeArguments/Overloads.kt");
