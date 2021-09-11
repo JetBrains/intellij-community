@@ -2,8 +2,7 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.psi.*
 
@@ -17,9 +16,7 @@ internal fun KtAnalysisSession.resolveCallCandidates(callElement: KtElement): Co
             val parent = callElement.parent
             val receiver = if (parent is KtDotQualifiedExpression && parent.selectorExpression == callElement) {
                 parent.receiverExpression
-            } else {
-                null
-            }
+            } else null
             Pair(callElement.resolveCall(), receiver)
         }
         is KtArrayAccessExpression -> Pair(callElement.resolveCall(), callElement.arrayExpression)
@@ -29,32 +26,39 @@ internal fun KtAnalysisSession.resolveCallCandidates(callElement: KtElement): Co
 
 
     val fileSymbol = callElement.containingKtFile.getFileSymbol()
-    return resolvedCall.targetFunction.candidates.filter { candidateSymbol ->
-        if (callElement is KtConstructorDelegationCall) {
-            // Exclude caller from candidates for `this(...)` delegated constructor calls.
-            // The parent of KtDelegatedConstructorCall should be the KtConstructor. We don't need to get the symbol for the constructor
-            // to determine if it's a self-call; we can just compare the candidate's PSI.
-            val candidatePsi = candidateSymbol.psi
-            if (candidatePsi != null && candidatePsi == callElement.parent) {
-                return@filter false
-            }
-        }
-
-        if (receiver != null) {
-            // Filter out candidates with wrong receiver
-            val receiverType = receiver.getKtType() ?: error("Receiver should have a KtType")
-            val candidateReceiverType = candidateSymbol.receiverType?.type
-            if (candidateReceiverType != null && receiverType.isNotSubTypeOf(candidateReceiverType)) return@filter false
-        }
-
-        // Filter out candidates not visible from call site
-        if (candidateSymbol is KtSymbolWithVisibility && !isVisible(candidateSymbol, fileSymbol, receiver, callElement)) return@filter false
-
-        true
-    }.map {
+    return resolvedCall.targetFunction.candidates.filter { filterCandidate(it, callElement, fileSymbol, receiver) }.map {
         // TODO: The argument mapping should also be per-candidate once we have all candidates available.
         CandidateWithMapping(it, resolvedCall.argumentMapping)
     }
+}
+
+internal fun KtAnalysisSession.filterCandidate(
+    candidateSymbol: KtSymbol,
+    callElement: KtElement,
+    fileSymbol: KtFileSymbol,
+    receiver: KtExpression?
+): Boolean {
+    if (callElement is KtConstructorDelegationCall) {
+        // Exclude caller from candidates for `this(...)` delegated constructor calls.
+        // The parent of KtDelegatedConstructorCall should be the KtConstructor. We don't need to get the symbol for the constructor
+        // to determine if it's a self-call; we can just compare the candidate's PSI.
+        val candidatePsi = candidateSymbol.psi
+        if (candidatePsi != null && candidatePsi == callElement.parent) {
+            return false
+        }
+    }
+
+    if (receiver != null && candidateSymbol is KtCallableSymbol) {
+        // Filter out candidates with wrong receiver
+        val receiverType = receiver.getKtType() ?: error("Receiver should have a KtType")
+        val candidateReceiverType = candidateSymbol.receiverType?.type
+        if (candidateReceiverType != null && receiverType.isNotSubTypeOf(candidateReceiverType)) return false
+    }
+
+    // Filter out candidates not visible from call site
+    if (candidateSymbol is KtSymbolWithVisibility && !isVisible(candidateSymbol, fileSymbol, receiver, callElement)) return false
+
+    return true
 }
 
 internal data class CandidateWithMapping(
