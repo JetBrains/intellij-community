@@ -170,7 +170,7 @@ public final class DownloadUtil {
           try {
             int contentLength = request.getConnection().getContentLength();
             substituteContentLength(progress, originalText, contentLength);
-            NetUtils.copyStreamContent(progress, request.getInputStream(), output, contentLength);
+            NetUtils.copyStreamContent(progress, request.getInputStream(), output, (long)contentLength);
           }
           catch (IOException e) {
             throw new IOException(HttpRequests.createErrorMessage(e, request, true), e);
