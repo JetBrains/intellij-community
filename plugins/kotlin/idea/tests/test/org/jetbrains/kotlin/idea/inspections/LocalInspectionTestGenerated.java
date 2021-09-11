@@ -6760,6 +6760,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testSubObjectFunctionCall() throws Exception {
             runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/subObjectFunctionCall.kt");
         }
+
+        @TestMetadata("usedInAnnotationOnContainingObject.kt")
+        public void testUsedInAnnotationOnContainingObject() throws Exception {
+            runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/usedInAnnotationOnContainingObject.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
