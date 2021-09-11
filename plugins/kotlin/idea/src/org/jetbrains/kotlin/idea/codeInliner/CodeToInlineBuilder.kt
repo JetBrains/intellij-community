@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.typeUtil.unCapture
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
@@ -357,7 +358,7 @@ class CodeToInlineBuilder(
                         val resolutionScope = expression.getResolutionScope(bindingContext, resolutionFacade)
                         val receiverExpressionToInline = receiver.asExpression(resolutionScope, psiFactory)
                         if (receiverExpressionToInline != null) {
-                            val receiverType = receiver.type
+                            val receiverType = receiver.type.unCapture()
                             codeToInline.addPreCommitAction(expressionToResolve) { expr ->
                                 val expressionToReplace = expr.parent as? KtCallExpression ?: expr
                                 val replaced = codeToInline.replaceExpression(
