@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiReference
@@ -104,7 +105,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         var inClassUsageFound = false
         ReferencesSearch.search(declaration, restrictedScope).forEach(Processor<PsiReference> {
             val usage = it.element
-            if (classOrObject != usage.getParentOfType<KtClassOrObject>(false)) {
+            if (usage.isOutside(classOrObject)) {
                 otherUsageFound = true
                 return@Processor false
             }
@@ -130,6 +131,12 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             }
         })
         return inClassUsageFound && !otherUsageFound
+    }
+
+    private fun PsiElement.isOutside(classOrObject: KtClassOrObject): Boolean {
+        if (classOrObject != getParentOfType<KtClassOrObject>(false)) return true
+        val annotationEntry = getStrictParentOfType<KtAnnotationEntry>() ?: return false
+        return classOrObject.annotationEntries.any { it == annotationEntry }
     }
 
     private fun KtModifierListOwner?.insideInline() = this?.let { it.hasModifier(KtTokens.INLINE_KEYWORD) && !it.isPrivate() } ?: false
