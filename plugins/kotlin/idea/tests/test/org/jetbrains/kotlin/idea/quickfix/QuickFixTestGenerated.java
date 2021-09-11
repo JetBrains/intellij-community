@@ -5908,6 +5908,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/deprecatedSymbolUsage/extensionForGenericClass.kt");
         }
 
+        @TestMetadata("extensionReceiverWithVarianceType.kt")
+        public void testExtensionReceiverWithVarianceType() throws Exception {
+            runTest("testData/quickfix/deprecatedSymbolUsage/extensionReceiverWithVarianceType.kt");
+        }
+
         @TestMetadata("implicitCompanionObjectThis.kt")
         public void testImplicitCompanionObjectThis() throws Exception {
             runTest("testData/quickfix/deprecatedSymbolUsage/implicitCompanionObjectThis.kt");
