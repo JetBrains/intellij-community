@@ -311,6 +311,8 @@ idea.fatal.error.notification=disabled
       }
     }
 
+    return Files.readString(sourceFile)  // Android Studio: don't patch ApplicationInfo.xml
+
     return BuildUtils.replaceAll(Files.readString(sourceFile), Map.<String, String>of(
       "BUILD_NUMBER", buildContext.fullBuildNumber,
       "BUILD_DATE", date,
