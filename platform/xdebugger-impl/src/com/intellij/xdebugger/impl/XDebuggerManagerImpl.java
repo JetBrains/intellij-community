@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.messages.MessageBusConnection;
@@ -411,6 +412,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
       Editor editor = e.getEditor();
+      if (ExperimentalUI.isNewUI()) {
+        //todo[kb] make it possible to do run to cursor by clicking on the gutter
+        return false;
+      }
       if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA ||
           editor.getProject() != myProject ||
           !EditorUtil.isRealFileEditor(editor) ||
