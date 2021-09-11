@@ -21,7 +21,7 @@ object HttpUrlConnectionUtil {
   fun readBytes(inputStream: InputStream, connection: URLConnection, progressIndicator: ProgressIndicator?): BufferExposingByteArrayOutputStream {
     val contentLength = connection.contentLength
     val out = BufferExposingByteArrayOutputStream(if (contentLength > 0) contentLength else BLOCK_SIZE)
-    NetUtils.copyStreamContent(progressIndicator, inputStream, out, contentLength)
+    NetUtils.copyStreamContent(progressIndicator, inputStream, out, contentLength.toLong())
     return out
   }
 
