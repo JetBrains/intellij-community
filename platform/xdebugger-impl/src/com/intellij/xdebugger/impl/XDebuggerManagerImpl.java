@@ -14,6 +14,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.CannotUnloadPluginException;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -32,8 +33,10 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -42,6 +45,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -50,6 +54,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -72,10 +77,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -182,9 +185,11 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     });
 
     DebuggerEditorListener listener = new DebuggerEditorListener();
+    BreakpointPromoterEditorListener bpPromoter = new BreakpointPromoterEditorListener();
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, this);
     eventMulticaster.addEditorMouseListener(listener, this);
+    eventMulticaster.addEditorMouseMotionListener(bpPromoter, this);
   }
 
   @Override
@@ -405,6 +410,56 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   public static @NotNull NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");
+  }
+
+  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+    final Icon hoverIcon = new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, 0.5f);
+        AllIcons.Debugger.Db_set_breakpoint.paintIcon(c, g, x, y);
+        config.restore();
+      }
+
+      @Override
+      public int getIconWidth() {
+        return AllIcons.Debugger.Db_set_breakpoint.getIconWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return AllIcons.Debugger.Db_set_breakpoint.getIconHeight();
+      }
+    };
+
+    @Override
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
+      if (!ExperimentalUI.isNewUI()) return;
+        EditorGutter editorGutter = e.getEditor().getGutter();
+        if (editorGutter instanceof EditorGutterComponentEx) {
+          EditorGutterComponentEx gutter = (EditorGutterComponentEx)editorGutter;
+          if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+            updateActiveLineNumberIcon(gutter, hoverIcon, e.getVisualPosition().line);
+          } else {
+            updateActiveLineNumberIcon(gutter, null, null);
+          }
+        }
+      }
+
+    private void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
+      boolean requireRepaint = false;
+      if (gutter.getClientProperty("line.number.hover.icon") != icon) {
+        gutter.putClientProperty("line.number.hover.icon", hoverIcon);
+        requireRepaint = true;
+      }
+      if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {
+        gutter.putClientProperty("active.line.number", line);
+        requireRepaint = true;
+      }
+      if (requireRepaint) {
+        gutter.repaint();
+      }
+    }
   }
 
   private final class DebuggerEditorListener implements EditorMouseMotionListener, EditorMouseListener {

@@ -728,6 +728,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               if (breakpoint.isPresent()) {
                 icon = breakpoint.get().getIcon();
               }
+              if (icon == null) {
+                if (Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
+                  Object activeIcon = getClientProperty("line.number.hover.icon");
+                  if (activeIcon instanceof Icon) {
+                    icon = (Icon)activeIcon;
+                  }
+                }
+              }
             }
 
             if (icon != null) {
