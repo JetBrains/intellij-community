@@ -322,6 +322,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
      *    See NamedParameter4.kt test.
      * 3. When the named argument IS in its own position, and LanguageFeature.MixedNamedArgumentsInTheirOwnPosition is DISABLED, then
      *    `namedMode = true` as described above. See MixedNamedArguments2.kt test.
+     * 4. `isDisabledBeforeHighlight = true` is used to separate used parameters (before the highlight) from unused parameters, if there
+     *    are any unused parameters.
      *
      * The logic for highlighting a parameter (i.e., by setting `highlight(Start|End)Offset`) is as follows:
      * 1. A parameter is highlighted when the cursor is on the corresponding argument in the candidate's mapping.
@@ -390,9 +392,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     if (length > 0) {
                         append(", ")
                         if (markUsedUnusedParameterBorder) {
-                            // TODO: This matches FE 1.0 plugin behavior, but consider removing "disable before highlight".
-                            // It's odd that we disable the used parameters, even though they might match. See NamedParameter3.kt test:
-                            // `y = false` matches, and we disable it even though the next argument could match too (e.g., `x = `).
+                            // This is used to "disable" the used parameters, when in "named mode" and there are more unused parameters.
+                            // See NamedParameter3.kt test. Disabling them gives a visual cue that they are already used.
 
                             // Highlight the space after the comma; highlighted text needs to be at least one character long
                             highlightStartOffset = length - 1
@@ -422,6 +423,15 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 if (valueArguments != null) {
                     for (valueArgument in valueArguments) {
                         val parameterIndex = argumentToParameterIndex[valueArgument.getArgumentExpression()]
+                        if (valueArgument.isNamed() &&
+                            !(supportsMixedNamedArgumentsInTheirOwnPosition && parameterIndex != null && parameterIndex == argumentIndex)
+                        ) {
+                            // "Named mode" (all arguments should be named) begins when there is a named argument NOT in their own position
+                            // or a named argument is unmapped (i.e., non-existent name),
+                            // or named arguments in their own position is not supported.
+                            namedMode = true
+                        }
+
                         if (parameterIndex == null) {
                             hasUnmappedArgument = true
                             if (argumentIndex < currentArgumentIndex) {
@@ -431,14 +441,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                             continue
                         }
                         if (!usedParameterIndices.add(parameterIndex)) continue
-
-                        if (valueArgument.isNamed() &&
-                            !(supportsMixedNamedArgumentsInTheirOwnPosition && parameterIndex == argumentIndex)
-                        ) {
-                            // "Named mode" (all arguments should be named) begins when there is a named argument NOT in their own position
-                            // or named arguments in their own position is not supported.
-                            namedMode = true
-                        }
 
                         val shouldHighlight = parameterIndex == highlightParameterIndex
                         appendParameter(parameterIndex, shouldHighlight, valueArgument.isNamed())
@@ -464,9 +466,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                 for (parameterIndex in 0 until valueParameterCount) {
                     if (parameterIndex !in usedParameterIndices) {
-                        if (argumentIndex != parameterIndex) {
-                            namedMode = true
-                        }
                         // Highlight the first unused parameter if it is in the correct position
                         val shouldHighlight = !namedMode && highlightStartOffset == -1
                         appendParameter(
