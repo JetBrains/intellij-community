@@ -45,24 +45,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
   }
 
-  public void testImportProjectWithWrapper() throws Exception {
-    Path pom = createPom();
-    createMavenWrapper(pom, "distributionUrl=wrapper-url");
-    Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    assertThat(module.getName()).isEqualTo("project");
-    String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
-    assertEquals(MavenServerManager.WRAPPED_MAVEN, mavenHome);
-  }
-
-  public void testImportProjectWithWrapperWithoutUrl() throws Exception {
-    Path pom = createPom();
-    createMavenWrapper(pom, "property1=value1");
-    Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    assertThat(module.getName()).isEqualTo("project");
-    String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
-    assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
-  }
-
   private @NotNull Path createPom() throws IOException {
     return createTempFile("pom.xml", MavenTestCase.createPomXml("<groupId>test</groupId>" +
                                                                 "<artifactId>project</artifactId>" +
