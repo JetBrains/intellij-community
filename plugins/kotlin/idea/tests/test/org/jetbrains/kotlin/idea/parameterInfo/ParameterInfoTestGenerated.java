@@ -262,6 +262,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/NoCandidatesNotAccessible.kt");
         }
 
+        @TestMetadata("NoCandidatesSelfDelegatedConstructorCall.kt")
+        public void testNoCandidatesSelfDelegatedConstructorCall() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesSelfDelegatedConstructorCall.kt");
+        }
+
+        @TestMetadata("NoCandidatesWrongReceiver.kt")
+        public void testNoCandidatesWrongReceiver() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
+        }
+
         @TestMetadata("NoShadowedDeclarations.kt")
         public void testNoShadowedDeclarations() throws Exception {
             runTest("testData/parameterInfo/functionCall/NoShadowedDeclarations.kt");
