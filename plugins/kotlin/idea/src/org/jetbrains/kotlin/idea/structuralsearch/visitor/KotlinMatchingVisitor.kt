@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
-import org.jetbrains.kotlin.fir.builder.toUnaryName
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.resolveType
@@ -53,6 +52,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -283,7 +283,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         myMatchingVisitor.result = when (other) {
             is KtDotQualifiedExpression -> {
                 myMatchingVisitor.match(expression.baseExpression, other.receiverExpression)
-                        && expression.operationToken.toUnaryName().toString() == other.calleeName
+                        && OperatorConventions.UNARY_OPERATION_NAMES[expression.operationToken].toString() == other.calleeName
             }
             is KtUnaryExpression -> myMatchingVisitor.match(expression.baseExpression, other.baseExpression)
                     && myMatchingVisitor.match(expression.operationReference, other.operationReference)
