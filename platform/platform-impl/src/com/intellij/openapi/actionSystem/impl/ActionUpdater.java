@@ -8,7 +8,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ComponentManager;
@@ -121,7 +124,6 @@ final class ActionUpdater {
 
   @Nullable
   private Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
-    if (myPreCacheSlowDataKeys) ReadAction.run(this::ensureSlowDataKeysPreCached);
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
@@ -164,11 +166,20 @@ final class ActionUpdater {
     boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
     boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
     boolean isEDT = EDT.isCurrentThreadEdt();
-    if (isEDT && canAsync && shallAsync && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
+    boolean shallEDT = !(canAsync && shallAsync);
+    if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
       LOG.error("Calling `" + action.getClass().getName() + "#" + operation + "` on EDT " +
                 (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
     }
-    if (isEDT || canAsync && shallAsync) {
+    if (myPreCacheSlowDataKeys && !isEDT &&
+        (shallEDT || Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false))) {
+      ApplicationManagerEx.getApplicationEx().tryRunReadAction(this::ensureSlowDataKeysPreCached);
+    }
+    if (myAllowPartialExpand) {
+      ProgressManager.checkCanceled();
+    }
+
+    if (isEDT || !shallEDT) {
       try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
         return call.get();
       }
@@ -273,7 +284,9 @@ final class ActionUpdater {
 
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
-      ensureSlowDataKeysPreCached();
+      if (Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false)) {
+        ensureSlowDataKeysPreCached();
+      }
       if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
       return () -> { // invoked outside the read-action
@@ -354,7 +367,7 @@ final class ActionUpdater {
     myPreCacheSlowDataKeys = false;
     long time = System.currentTimeMillis() - start;
     if (time > 500) {
-      LOG.debug("ensureAsyncDataKeysPreCached() took: " + time + " ms");
+      LOG.debug("ensureSlowDataKeysPreCached() took: " + time + " ms");
     }
   }
 
