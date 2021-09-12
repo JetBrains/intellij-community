@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
+import com.google.gson.Gson
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
@@ -23,7 +24,12 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
 
     private val enhanceStackTraceWithThreadDumpMethod by MethodMirrorDelegate("enhanceStackTraceWithThreadDump", javaLangListMirror)
     private val dumpMethod by MethodMirrorDelegate("dumpCoroutinesInfo", javaLangListMirror, "()Ljava/util/List;")
+
     private val dumpCoroutinesInfoAsJsonAndReferences by MethodDelegate<ArrayReference>("dumpCoroutinesInfoAsJsonAndReferences", "()[Ljava/lang/Object;")
+    private val enhanceStackTraceWithThreadDumpAsJsonMethod by MethodDelegate<StringReference>(
+        "enhanceStackTraceWithThreadDumpAsJson",
+        "(Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;)Ljava/lang/String;"
+    )
 
     val isInstalled: Boolean by lazy { isInstalled(context) }
 
@@ -38,11 +44,35 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     fun enhanceStackTraceWithThreadDump(
             context: DefaultExecutionContext,
             coroutineInfo: ObjectReference,
-            lastObservedStackTrace: ObjectReference
+            coroutineInfoMirror: CoroutineInfo
+    ): List<MirrorOfStackTraceElement> {
+        if (enhanceStackTraceWithThreadDumpAsJsonMethod.method != null) {
+            return enhanceStackTraceWithThreadDumpAsJson(context, coroutineInfo)
+        }
+        val lastObservedStackTrace = coroutineInfoMirror.getLastObservedStackTrace(coroutineInfo, context)
+            ?: return emptyList()
+        return enhanceStackTraceWithThreadDump(context, coroutineInfo, lastObservedStackTrace)
+    }
+
+    private fun enhanceStackTraceWithThreadDumpAsJson(
+        context: DefaultExecutionContext,
+        coroutineInfo: ObjectReference,
+    ): List<MirrorOfStackTraceElement> {
+        instance ?: return emptyList()
+        val stackTraceInfoAsJsonString = enhanceStackTraceWithThreadDumpAsJsonMethod.value(instance, context, coroutineInfo)?.value()
+            ?: return emptyList()
+        val result = Gson().fromJson(stackTraceInfoAsJsonString, Array<MirrorOfStackTraceElement>::class.java)
+        return result?.toList().orEmpty()
+    }
+
+    private fun enhanceStackTraceWithThreadDump(
+        context: DefaultExecutionContext,
+        coroutineInfo: ObjectReference,
+        lastObservedStackTrace: ObjectReference
     ): List<MirrorOfStackTraceElement> {
         instance ?: return emptyList()
         val list = enhanceStackTraceWithThreadDumpMethod.mirror(instance, context, coroutineInfo, lastObservedStackTrace)
-                   ?: return emptyList()
+            ?: return emptyList()
         return list.values.mapNotNull { stackTraceElement.mirror(it, context) }
     }
 
@@ -220,6 +250,9 @@ class CoroutineInfo private constructor(
         )
     }
 
+    fun getLastObservedStackTrace(value: ObjectReference, context: DefaultExecutionContext) =
+        lastObservedStackTraceMethod.value(value, context)
+
     private fun getCreationStackTraceProvider(value: ObjectReference, context: DefaultExecutionContext) =
         StackTraceMirrorProvider {
             val creationStackTraceMirror = creationStackTraceMethod.mirror(value, context)
@@ -228,11 +261,7 @@ class CoroutineInfo private constructor(
 
     private fun getEnhancedStackTraceProvider(value: ObjectReference, context: DefaultExecutionContext) =
         StackTraceMirrorProvider {
-            val lastObservedStackTrace = lastObservedStackTraceMethod.value(value, context)
-            if (lastObservedStackTrace != null)
-                debugProbesImplMirror.enhanceStackTraceWithThreadDump(context, value, lastObservedStackTrace)
-            else
-                emptyList()
-        }
+            debugProbesImplMirror.enhanceStackTraceWithThreadDump(context, value, this)
+       }
 }
 
