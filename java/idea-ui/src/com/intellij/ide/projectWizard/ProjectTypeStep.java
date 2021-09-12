@@ -132,7 +132,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
         myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> showCard(emptyCard));
 
-      listWithFilter.setMinimumSize(JBUI.size(40, -1));
+      myProjectTypePanel.setMinimumSize(JBUI.size(160, -1));
       myProjectTypePanel.add(listWithFilter);
 
       myOptionsPanel.add(new JBPanelWithEmptyText().withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure")), emptyCard);
