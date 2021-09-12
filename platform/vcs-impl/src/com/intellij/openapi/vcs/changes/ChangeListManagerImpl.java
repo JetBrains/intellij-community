@@ -365,9 +365,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
                                 @NotNull InvokeAfterUpdateMode mode,
                                 @Nullable String title,
                                 @Nullable ModalityState state) {
-    if (null != null && !myProject.isDisposed()) {
-      ((Consumer<? super VcsDirtyScopeManager>)null).consume(VcsDirtyScopeManager.getInstance(myProject));
-    }
     myUpdater.invokeAfterUpdate(afterUpdate, mode, title);
   }
 
