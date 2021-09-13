@@ -23,6 +23,31 @@ open class FirUastApiTest : AbstractFirUastTest() {
         // Bogus
     }
 
+    private val whitelist : Set<String> = setOf(
+        // TODO: psi -> UAST -> psi -> UAST ??
+        "uast-kotlin/testData/AnnotationParameters.kt",
+        // TODO: interface method's `hasModifierProperty`
+        "uast-kotlin/testData/DefaultImpls.kt",
+        // TODO: vararg, arrayOf call inside annotation
+        "uast-kotlin/testData/AnnotationComplex.kt",
+        // TODO: getArgumentsForParameter
+        "uast-kotlin/testData/ParametersDisorder.kt",
+        // TODO: resolve to inline and stdlib
+        "uast-kotlin/testData/Resolve.kt",
+        // TODO: no lambda call receiver?
+        "uast-kotlin/testData/Lambdas.kt",
+        // TODO: resolve to local declarations/constructors
+        "uast-kotlin/testData/LocalDeclarations.kt",
+        // TODO: return type of inline functions
+        "uast-kotlin/testData/ReifiedReturnType.kt",
+        // TODO: PsiMethod -> getFunctionalInterfaceMethod
+        "uast-kotlin/testData/LambdaParameters.kt",
+    )
+
+    override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {
+        return filePath in whitelist || super.isExpectedToFail(filePath, fileContent)
+    }
+
     @TestMetadata("../uast-kotlin/testData")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
@@ -123,34 +148,30 @@ open class FirUastApiTest : AbstractFirUastTest() {
             doCheck("uast-kotlin/testData/TypeAliases.kt", ::checkCallbackForTypeAliases)
         }
 
-// TODO: vararg, arrayOf call inside annotation
-//        @TestMetadata("AnnotationComplex.kt")
-//        fun testAnnotationComplex() {
-//            doCheck("uast-kotlin/testData/AnnotationComplex.kt", ::checkCallbackForAnnotationComplex)
-//        }
+        @TestMetadata("AnnotationComplex.kt")
+        fun testAnnotationComplex() {
+            doCheck("uast-kotlin/testData/AnnotationComplex.kt", ::checkCallbackForAnnotationComplex)
+        }
 
-// TODO: getArgumentsForParameter
-//        @TestMetadata("ParametersDisorder.kt")
-//        fun testParametersDisorder() {
-//            doCheck("uast-kotlin/testData/ParametersDisorder.kt", ::checkCallbackForParametersDisorder)
-//        }
+        @TestMetadata("ParametersDisorder.kt")
+        fun testParametersDisorder() {
+            doCheck("uast-kotlin/testData/ParametersDisorder.kt", ::checkCallbackForParametersDisorder)
+        }
 
-// TODO: resolve to inline and stdlib
-//        @TestMetadata("Resolve.kt")
-//        fun testResolve() {
-//            doCheck("uast-kotlin/testData/Resolve.kt", ::checkCallbackForResolve)
-//        }
+        @TestMetadata("Resolve.kt")
+        fun testResolve() {
+            doCheck("uast-kotlin/testData/Resolve.kt", ::checkCallbackForResolve)
+        }
 
         @TestMetadata("Lambdas.kt")
         fun testLambdas() {
             doCheck("uast-kotlin/testData/Lambdas.kt", ::checkCallbackForLambdas)
         }
 
-// TODO: resolve to local declarations/constructors
-//        @TestMetadata("LocalDeclarations.kt")
-//        fun testLocalDeclarations() {
-//            doCheck("uast-kotlin/testData/LocalDeclarations.kt", ::checkCallbackForLocalDeclarations)
-//        }
+        @TestMetadata("LocalDeclarations.kt")
+        fun testLocalDeclarations() {
+            doCheck("uast-kotlin/testData/LocalDeclarations.kt", ::checkCallbackForLocalDeclarations)
+        }
 
         @TestMetadata("Elvis.kt")
         fun testElvis() {
@@ -162,11 +183,10 @@ open class FirUastApiTest : AbstractFirUastTest() {
             doCheck("uast-kotlin/testData/TypeReferences.kt", ::checkCallbackForTypeReferences)
         }
 
-// TODO: return type of inline functions
-//        @TestMetadata("ReifiedReturnType.kt")
-//        fun testReifiedReturnType() {
-//            doCheck("uast-kotlin/testData/ReifiedReturnType.kt", ::checkCallbackForReifiedReturnType)
-//        }
+        @TestMetadata("ReifiedReturnType.kt")
+        fun testReifiedReturnType() {
+            doCheck("uast-kotlin/testData/ReifiedReturnType.kt", ::checkCallbackForReifiedReturnType)
+        }
 
         @TestMetadata("ReifiedParameters.kt")
         fun testReifiedParameters() {

@@ -11,9 +11,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.URLUtil
+import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.fir.uast.invalidateAllCachesForUastTests
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.test.KtAssert
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
@@ -21,6 +23,7 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
 import org.jetbrains.uast.test.common.kotlin.UastPluginSelection
+import java.lang.AssertionError
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -82,6 +85,10 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     abstract fun check(filePath: String, file: UFile)
 
+    open fun isExpectedToFail(filePath: String, fileContent: String): Boolean {
+        return fileContent.withIgnoreFirDirective
+    }
+
     protected fun doCheck(filePath: String, checkCallback: (String, UFile) -> Unit = { _filePath, file -> check(_filePath, file) }) {
         check(UastLanguagePlugin.getInstances().count { it.language == KotlinLanguage.INSTANCE } == 1)
         val normalizedFile = Paths.get(filePath).let { basePath?.resolve(it) ?: it}.normalize()
@@ -89,10 +96,18 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
         val testName = normalizedFile.fileName.toString().removeSuffix(".kt")
         val fileContent = File(virtualFile.canonicalPath!!).readText()
-        if (isFirPlugin && fileContent.withIgnoreFirDirective) return
 
         val psiFile = myFixture.configureByText(virtualFile.name, fileContent)
         val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
-        checkCallback(normalizedFile.toString(), uFile as UFile)
+        try {
+            checkCallback(normalizedFile.toString(), uFile as UFile)
+            if (isExpectedToFail(filePath, fileContent)) {
+                KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
+            }
+        } catch (e: AssertionError) {
+            if (!isExpectedToFail(filePath, fileContent)) throw e
+        } catch (e: AssertionFailedError) {
+            if (!isExpectedToFail(filePath, fileContent)) throw e
+        }
     }
 }

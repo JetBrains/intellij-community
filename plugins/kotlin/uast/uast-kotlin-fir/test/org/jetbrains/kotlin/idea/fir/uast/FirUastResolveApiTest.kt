@@ -21,6 +21,15 @@ open class FirUastResolveApiTest : AbstractFirUastTest() {
         // Bogus
     }
 
+    private val whitelist : Set<String> = setOf(
+        // TODO: Handle FirEqualityOperatorCall in KtFirCallResolver#resolveCall(KtBinaryExpression)
+        "uast-kotlin-fir/testData/declaration/doWhile.kt",
+    )
+
+    override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {
+        return filePath in whitelist || super.isExpectedToFail(filePath, fileContent)
+    }
+
     @TestMetadata("plugins/uast-kotlin-fir/testData/declaration")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
