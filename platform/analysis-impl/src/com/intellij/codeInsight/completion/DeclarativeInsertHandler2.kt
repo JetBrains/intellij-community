@@ -126,6 +126,10 @@ open class DeclarativeInsertHandler2 protected constructor(
     fun produce(builder: Builder)
   }
 
+  /**
+   * @param holdReadLock flag whether to run the @param block inside a readAction
+   * @param block code block that modifies the provided builder
+   */
   class LazyBuilder(holdReadLock: Boolean, private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler2> {
     private val delegate = if (holdReadLock) {
       lazy { runReadAction {
