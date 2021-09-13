@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -43,9 +44,10 @@ public class RunContextAction extends BaseRunConfigurationAction {
   @Override
   protected void perform(ConfigurationContext context) {
     final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
+    DataContext dataContext = context.getDefaultDataContext();
     ReadAction
       .nonBlocking(() -> findExisting(context))
-      .finishOnUiThread(ModalityState.defaultModalityState(), existingConfiguration -> perform(runManager, existingConfiguration, context))
+      .finishOnUiThread(ModalityState.NON_MODAL, existingConfiguration -> perform(runManager, existingConfiguration, dataContext))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
@@ -58,26 +60,29 @@ public class RunContextAction extends BaseRunConfigurationAction {
         return;
       }
       runManager.setTemporaryConfiguration(contextConfiguration);
-      perform(runManager, contextConfiguration, context);
+      perform(runManager, contextConfiguration, context.getDataContext());
     }
     else {
+      DataContext dataContext = context.getDefaultDataContext();
       ReadAction
         .nonBlocking(() -> findExisting(context))
-        .finishOnUiThread(ModalityState.defaultModalityState(), existingConfiguration -> {
+        .finishOnUiThread(ModalityState.NON_MODAL, existingConfiguration -> {
           if (configuration != existingConfiguration) {
             RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
             runManager.setTemporaryConfiguration(configuration);
-            perform(runManager, configuration, context);
+            perform(runManager, configuration, dataContext);
           }
           else {
-            perform(runManager, configuration, context);
+            perform(runManager, configuration, dataContext);
           }
         })
         .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 
-  private void perform(RunManagerEx runManager, RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
+  private void perform(RunManagerEx runManager,
+                       RunnerAndConfigurationSettings configuration, 
+                       DataContext dataContext) {
     if (runManager.shouldSetRunConfigurationFromContext()) {
       runManager.setSelectedConfiguration(configuration);
     }
@@ -89,7 +94,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    ExecutionUtil.doRunConfiguration(configuration, myExecutor, null, null, context.getDataContext());
+    ExecutionUtil.doRunConfiguration(configuration, myExecutor, null, null, dataContext);
   }
 
   @Override
