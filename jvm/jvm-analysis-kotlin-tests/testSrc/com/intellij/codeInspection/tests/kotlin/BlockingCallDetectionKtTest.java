@@ -38,12 +38,18 @@ public class BlockingCallDetectionKtTest extends JavaCodeInsightFixtureTestCase 
   public void testKotlinThrowsTypeDetection() {
     myFixture.addClass("package org.jetbrains.annotations;\n" +
                        "public @interface NonBlocking {}");
-    myFixture.addFileToProject("/TestKotlinThrowsTypeDetection.kt",
-                               "import org.jetbrains.annotations.NonBlocking\n" +
-                               "@NonBlocking\n" +
-                               "fun nonBlockingFunction() {\n" +
-                               "  Thread.<warning descr=\"Possibly blocking call in non-blocking context could lead to thread starvation\">sleep</warning>(111);}");
-    myFixture.testHighlighting(true, false, true, "TestKotlinThrowsTypeDetection.kt");
+
+    myFixture.configureByText("/TestKotlinThrowsTypeDetection.kt",
+                              "import org.jetbrains.annotations.NonBlocking\n" +
+                              "import java.net.URL\n" +
+                              "\n" +
+                              "@NonBlocking\n" +
+                              "fun nonBlockingFunction() {\n" +
+                              "  Thread.<warning descr=\"Possibly blocking call in non-blocking context could lead to thread starvation\">sleep</warning>(111);\n" +
+                              "  \n" +
+                              "  URL(\"https://example.com\")\n" +
+                              "}");
+
+    myFixture.checkHighlighting(true, false, true);
   }
 }
-
