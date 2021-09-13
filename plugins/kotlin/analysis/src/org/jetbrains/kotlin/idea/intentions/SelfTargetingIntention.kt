@@ -16,12 +16,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.containsInside
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.utils.checkWithAttachment
 
 @Suppress("EqualsOrHashCode")
 abstract class SelfTargetingIntention<TElement : PsiElement>(
@@ -76,7 +78,18 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
                 }
             }
 
-            if (!allowCaretInsideElement(element) && element.textRange.containsInside(offset)) break
+            if (!allowCaretInsideElement(element)) {
+                val elementTextRange = element.textRange
+                checkWithAttachment(elementTextRange != null, {
+                    "No text range defined for the ${if (element.isValid) "valid" else "invalid"} element $element"
+                }) {
+                    it.withAttachment("intention.txt", this::class)
+                    it.withPsiAttachment("element.kt", element)
+                    it.withPsiAttachment("file.kt", element.containingFile)
+                }
+
+                if (elementTextRange.containsInside(offset)) break
+            }
         }
         return null
     }
