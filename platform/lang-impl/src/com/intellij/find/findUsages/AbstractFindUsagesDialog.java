@@ -4,14 +4,12 @@ package com.intellij.find.findUsages;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -131,7 +129,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     if (myFindUsagesOptions instanceof PersistentFindUsagesOptions) {
       ((PersistentFindUsagesOptions)myFindUsagesOptions).storeDefaults(myProject);
     }
-    FindUsagesStatisticsCollector.logOptions(myProject, myFindUsagesOptions);
+    FindUsagesStatisticsCollector.logOptions(myProject, myFindUsagesOptions, myCbToOpenInNewTab.isSelected());
     return myFindUsagesOptions;
   }
 
@@ -292,12 +290,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
       return myScopeCombo.getComboBox();
     }
     return getPreferredFocusedControl();
-  }
-
-  protected final void addScopeData(FeatureUsageData data, SearchScope scope) {
-    if (FindUsagesStatisticsCollector.SearchableScopeField.isPredefinedScope(myProject, scope)) {
-      data.addData("searchScope", scope.getDisplayName());
-    }
   }
 
   private static class Title extends JPanel {
