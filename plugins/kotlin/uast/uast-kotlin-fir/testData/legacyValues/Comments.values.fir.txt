@@ -8,7 +8,7 @@ UFile (package = ) [public abstract interface Pizza {...]
     UClass (name = Margherita) [public final class Margherita : Pizza {...}]
         UField (name = size) [@org.jetbrains.annotations.NotNull private final var size: int = 42]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            ULiteralExpression (value = 42) [42] = (long)42
+            ULiteralExpression (value = 42) [42] = 42
         UMethod (name = getName) [public fun getName() : java.lang.String {...}]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return java.lang.<init>("Margherita")] = Nothing
@@ -30,4 +30,4 @@ UFile (package = ) [public abstract interface Pizza {...]
         UMethod (name = Margherita) [public fun Margherita(@org.jetbrains.annotations.NotNull size: int) = UastEmptyExpression]
             UParameter (name = size) [@org.jetbrains.annotations.NotNull var size: int = 42]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                ULiteralExpression (value = 42) [42] = (long)42
+                ULiteralExpression (value = 42) [42] = 42

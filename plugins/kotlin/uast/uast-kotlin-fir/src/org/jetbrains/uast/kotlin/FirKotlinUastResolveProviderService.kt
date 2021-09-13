@@ -43,7 +43,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val annotationEntry = uAnnotation.sourcePsi
         analyseForUast(annotationEntry) {
             val resolvedAnnotationCall = annotationEntry.resolveCall() as? KtAnnotationCall ?: return null
-            val parameter = resolvedAnnotationCall.argumentMapping[arg] ?: return null
+            val parameter = resolvedAnnotationCall.argumentMapping[arg.getArgumentExpression()] ?: return null
             val namedExpression = uAnnotation.attributeValues.find { it.name == parameter.name.asString() }
             return namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
         }
@@ -362,7 +362,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun evaluate(uExpression: UExpression): Any? {
         val ktExpression = uExpression.sourcePsi as? KtExpression ?: return null
         analyseForUast(ktExpression) {
-            return ktExpression.evaluate()?.value
+            return ktExpression.evaluate()?.toConst()
         }
     }
 }

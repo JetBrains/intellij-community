@@ -3,12 +3,12 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
         UMethod (name = foo) [@RequiresPermission(anyOf = <anonymous class>(1, 2, 3))...}]
             UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = <anonymous class>(1, 2, 3))]
                 UNamedExpression (name = anyOf) [anyOf = <anonymous class>(1, 2, 3)] = Nothing
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [<anonymous class>(1, 2, 3)] = external <anonymous class>(1, 2, 3)((long)1, (long)2, (long)3)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [<anonymous class>(1, 2, 3)] = external <anonymous class>(1, 2, 3)(1, 2, 3)
                         UIdentifier (Identifier (intArrayOf)) [UIdentifier (Identifier (intArrayOf))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(1, 2, 3)((long)1, (long)2, (long)3)
-                        ULiteralExpression (value = 1) [1] = (long)1
-                        ULiteralExpression (value = 2) [2] = (long)2
-                        ULiteralExpression (value = 3) [3] = (long)3
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(1, 2, 3)(1, 2, 3)
+                        ULiteralExpression (value = 1) [1] = 1
+                        ULiteralExpression (value = 2) [2] = 2
+                        ULiteralExpression (value = 3) [3] = 3
             UAnnotation (fqName = IntRange) [@IntRange(from = 10, to = 0)]
                 UNamedExpression (name = from) [from = 10] = Nothing
                     ULiteralExpression (value = 10) [10] = (long)10
@@ -20,7 +20,7 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                     ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 5] = Nothing
-                    ULiteralExpression (value = 5) [5] = (long)5
+                    ULiteralExpression (value = 5) [5] = 5
         UMethod (name = bar) [@IntRange(from = 0, to = 100)...}]
             UAnnotation (fqName = IntRange) [@IntRange(from = 0, to = 100)]
                 UNamedExpression (name = from) [from = 0] = Nothing
@@ -40,14 +40,14 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
         UMethod (name = fooWithArrLiteral) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])...}]
             UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])]
                 UNamedExpression (name = anyOf) [anyOf = collectionLiteral[1, 2, 3]] = Nothing
-                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral[1, 2, 3]] = external collectionLiteral[1, 2, 3]((long)1, (long)2, (long)3)
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral[1, 2, 3]] = external collectionLiteral[1, 2, 3](1, 2, 3)
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
-                        ULiteralExpression (value = 1) [1] = (long)1
-                        ULiteralExpression (value = 2) [2] = (long)2
-                        ULiteralExpression (value = 3) [3] = (long)3
+                        ULiteralExpression (value = 1) [1] = 1
+                        ULiteralExpression (value = 2) [2] = 2
+                        ULiteralExpression (value = 3) [3] = 3
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 5] = Nothing
-                    ULiteralExpression (value = 5) [5] = (long)5
+                    ULiteralExpression (value = 5) [5] = 5
         UMethod (name = fooWithStrArrLiteral) [@RequiresStrPermission(strs = collectionLiteral["a", "b", "c"])...}]
             UAnnotation (fqName = RequiresStrPermission) [@RequiresStrPermission(strs = collectionLiteral["a", "b", "c"])]
                 UNamedExpression (name = strs) [strs = collectionLiteral["a", "b", "c"]] = Nothing
@@ -58,7 +58,7 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                         ULiteralExpression (value = "c") ["c"] = "c"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 3] = Nothing
-                    ULiteralExpression (value = 3) [3] = (long)3
+                    ULiteralExpression (value = 3) [3] = 3
     UClass (name = IntRange) [public abstract annotation IntRange {...}]
         UAnnotationMethod (name = from) [public abstract fun from() : long = UastEmptyExpression]
         UAnnotationMethod (name = to) [public abstract fun to() : long = UastEmptyExpression]
@@ -68,6 +68,6 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
         UAnnotationMethod (name = strs) [public abstract fun strs() : java.lang.String[] = UastEmptyExpression]
     UClass (name = WithDefaultValue) [public abstract annotation WithDefaultValue {...}]
         UAnnotationMethod (name = value) [public abstract fun value() : int = UastEmptyExpression]
-            ULiteralExpression (value = 42) [42] = (long)42
+            ULiteralExpression (value = 42) [42] = 42
     UClass (name = SuppressLint) [public abstract annotation SuppressLint {...}]
         UAnnotationMethod (name = value) [public abstract fun value() : java.lang.String[] = UastEmptyExpression]
