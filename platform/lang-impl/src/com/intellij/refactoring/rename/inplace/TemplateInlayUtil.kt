@@ -97,11 +97,16 @@ object TemplateInlayUtil {
             }
           })
           .createPopup()
-        DumbAwareAction.create {
-          popup.cancel()
-          templateState.nextTab()
-          logStatisticsOnHide.invoke()
-        }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel)
+        val customEnterAction = object : DumbAwareAction() {
+          override fun actionPerformed(e: AnActionEvent) {
+            popup.cancel()
+            templateState.nextTab()
+          }
+        }
+        customEnterAction.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel)
+        Disposer.register(popup) {
+          customEnterAction.unregisterCustomShortcutSet(panel)
+        }
         popup.showInBestPositionFor(editor)
       }
       finally {
