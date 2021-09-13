@@ -9,6 +9,7 @@ import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -19,8 +20,14 @@ import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 
 public class JavaCallHierarchyTest extends HierarchyViewTestBase {
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_1_8; // method refs are needed
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -35,7 +42,10 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   private void doJavaCallerTypeHierarchyTest(@NotNull String classFqn, @NotNull String methodName, String @NotNull ... fileNames) throws Exception {
     doHierarchyTest(() -> {
       PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
+      assertNotNull("Class '" + classFqn + "' not found", psiClass);
       PsiMember method = psiClass.findMethodsByName(methodName, false) [0];
+      assertNotNull("Method '" + methodName + "' not found in " + classFqn + ". Available methods are " +
+                    Arrays.toString(psiClass.getMethods()), method);
       return new CallerMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
     }, fileNames);
   }
@@ -127,5 +137,8 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   }
   public void testEnclosingDeps() throws Exception {
     doJavaCallerTypeHierarchyTest("DummyImpl", "doSth", "A.java");
+  }
+  public void testThroughAnonymous() throws Exception {
+    doJavaCallerTypeHierarchyTest("com.hierarchytest.AcmClientImpl", "getUser", "X.java");
   }
 }
