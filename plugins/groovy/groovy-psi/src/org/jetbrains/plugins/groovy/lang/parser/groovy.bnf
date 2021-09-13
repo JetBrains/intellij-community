@@ -795,7 +795,7 @@ private fvd_modifiers_type ::= <<definitelyTypeElement type_element variable_loo
 private fvd_after_no_modifiers ::= (capital_type_element variable_lookahead) fvd_tail { pin = 1 }
 private fvd_tail ::= variable_declaration_tail <<wrapLeft>>
 
-expression_list ::= expression (',' expression)*
+expression_list ::= expression mb_nl (',' mb_nl expression)*
 
 // FIXME get rid of this weird logic
 private for_body ::= &<<extendedStatement>> | followed_by_semi | statement { name = 'loop body' }
@@ -990,7 +990,7 @@ private lambda_body ::=  (!<<isParameterizedClosure>> lazy_block_lambda_body) | 
 
 expression_lambda_body ::= expression_or_application
 
-single_parameter_lambda_expression::= !<<isClosureParameter>> single_parameter_lambda_expression_base | clear_variants_and_fail { elementType = lambda_expression }
+single_parameter_lambda_expression::= !<<isClosureParameter>> <<isLambdaExpressionAllowed>> single_parameter_lambda_expression_base | clear_variants_and_fail { elementType = lambda_expression }
 private single_parameter_lambda_expression_base ::= single_parameter_lambda_expression_head mb_nl single_parameter_lambda_body { pin = 1 }
 private single_parameter_lambda_expression_head ::= single_parameter_lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
 
@@ -1161,10 +1161,11 @@ switch_expression ::= 'switch' '(' expression ')' mb_nl ('{' mb_nl <<insideSwitc
 private general_switch_section ::= !'}' (case_section | default_section) { pin = 1 recoverWhile = case_section_recovery }
 private case_section_recovery ::= !('}' | 'case' | 'default')
 
-case_section ::= 'case' expression_list switch_expr_remainder { pin = 1 }
+case_section ::= 'case' <<forbidLambdaExpressions expression_list>> switch_expr_remainder { pin = 1 }
 default_section ::= 'default' switch_expr_remainder { elementType = case_section pin = 1 }
 private switch_expr_remainder ::= case_arrow_remainder | case_colon_remainder
-private case_arrow_remainder ::= '->' mb_nl block_level_item mb_separators { pin = 1 }
+// we need to enable yield here because groovy does not have such entity as switch statement with arrows, so technically yield is allowed there
+private case_arrow_remainder ::= '->' mb_nl <<insideSwitchExpression case_level_item>> mb_separators { pin = 1 }
 private case_colon_remainder ::= ':' mb_nl case_level_item* { pin = 1 }
 // endregion
 

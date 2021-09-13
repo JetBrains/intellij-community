@@ -78,6 +78,7 @@ private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closu
 private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.parse.nl.before.closure.argument")
 private val insideParentheses: Key<Boolean> = Key.create("groovy.parse.inside.parentheses")
 private val insideSwitchExpression: Key<Boolean> = Key.create("groovy.parse.inside.switch.expression")
+private val forbidLambdaExpression: Key<Boolean> = Key.create("groovy.parse.defer.lambda.expressions")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -551,6 +552,7 @@ fun isBlockParseable(text: CharSequence): Boolean {
 }
 
 fun insideParentheses(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  // enables 'yield' keyword in this and all inner code blocks
   return builder.withKey(insideParentheses, true) {
     parser.parse(builder, level)
   }
@@ -563,3 +565,18 @@ fun insideSwitchExpression(builder: PsiBuilder, level: Int, parser: Parser): Boo
 }
 
 fun insideSwitchExpression(builder: PsiBuilder, level: Int): Boolean = builder[insideSwitchExpression]
+
+/**
+ * Suppose we have a case section 'case a -> 10' somewhere inside the switch expression.
+ * Then, as an expression list is expected after 'case', the token set 'a -> 10' is recognized as a lambda expression.
+ * This function forbid the choice of lambda expression, making unqualified reference an only choice
+ */
+fun forbidLambdaExpressions(builder: PsiBuilder, level: Int, parser : Parser): Boolean {
+  return builder.withKey(forbidLambdaExpression, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun isLambdaExpressionAllowed(builder : PsiBuilder, level: Int) : Boolean {
+  return !builder[forbidLambdaExpression]
+}

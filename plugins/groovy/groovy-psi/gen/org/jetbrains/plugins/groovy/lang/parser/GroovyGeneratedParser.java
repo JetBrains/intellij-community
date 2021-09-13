@@ -1779,7 +1779,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '->' mb_nl block_level_item mb_separators
+  // '->' mb_nl <<insideSwitchExpression case_level_item>> mb_separators
   static boolean case_arrow_remainder(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_arrow_remainder")) return false;
     if (!nextTokenIs(b, T_ARROW)) return false;
@@ -1788,7 +1788,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_ARROW);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, block_level_item(b, l + 1)) && r;
+    r = p && report_error_(b, insideSwitchExpression(b, l + 1, GroovyGeneratedParser::case_level_item)) && r;
     r = p && mb_separators(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -1888,7 +1888,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'case' expression_list switch_expr_remainder
+  // 'case' <<forbidLambdaExpressions expression_list>> switch_expr_remainder
   public static boolean case_section(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_section")) return false;
     if (!nextTokenIs(b, KW_CASE)) return false;
@@ -1896,7 +1896,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CASE_SECTION, null);
     r = consumeToken(b, KW_CASE);
     p = r; // pin = 1
-    r = r && report_error_(b, expression_list(b, l + 1));
+    r = r && report_error_(b, forbidLambdaExpressions(b, l + 1, GroovyGeneratedParser::expression_list));
     r = p && switch_expr_remainder(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -3502,34 +3502,36 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // expression (',' expression)*
+  // expression mb_nl (',' mb_nl expression)*
   public static boolean expression_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expression_list")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, EXPRESSION_LIST, "<expression list>");
     r = expression(b, l + 1, -1);
-    r = r && expression_list_1(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    r = r && expression_list_2(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // (',' expression)*
-  private static boolean expression_list_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "expression_list_1")) return false;
+  // (',' mb_nl expression)*
+  private static boolean expression_list_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_list_2")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!expression_list_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "expression_list_1", c)) break;
+      if (!expression_list_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "expression_list_2", c)) break;
     }
     return true;
   }
 
-  // ',' expression
-  private static boolean expression_list_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "expression_list_1_0")) return false;
+  // ',' mb_nl expression
+  private static boolean expression_list_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_list_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, T_COMMA);
+    r = r && mb_nl(b, l + 1);
     r = r && expression(b, l + 1, -1);
     exit_section_(b, m, null, r);
     return r;
@@ -8866,7 +8868,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // !<<isClosureParameter>> single_parameter_lambda_expression_base | clear_variants_and_fail
+  // !<<isClosureParameter>> <<isLambdaExpressionAllowed>> single_parameter_lambda_expression_base | clear_variants_and_fail
   public static boolean single_parameter_lambda_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "single_parameter_lambda_expression")) return false;
     boolean r;
@@ -8877,12 +8879,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // !<<isClosureParameter>> single_parameter_lambda_expression_base
+  // !<<isClosureParameter>> <<isLambdaExpressionAllowed>> single_parameter_lambda_expression_base
   private static boolean single_parameter_lambda_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "single_parameter_lambda_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = single_parameter_lambda_expression_0_0(b, l + 1);
+    r = r && isLambdaExpressionAllowed(b, l + 1);
     r = r && single_parameter_lambda_expression_base(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
