@@ -35,7 +35,9 @@ import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
@@ -51,6 +53,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -460,12 +463,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (bodyExpression != null) {
                 val valueParameters = lambda.valueParameters
                 if (valueParameters.isEmpty()) {
-                    val itVariable = SyntaxTraverser.psiTraverser(bodyExpression).filter(KtSimpleNameExpression::class.java)
-                        .filter { ref -> ref.parent !is KtCallExpression && ref.parent !is KtQualifiedExpression }
-                        .map { ref -> KtVariableDescriptor.createFromSimpleName(factory, ref) }
-                        .find { dfaVar -> (dfaVar?.descriptor as? KtItVariableDescriptor)?.lambda == functionLiteral }
-                    if (itVariable != null) {
-                        addInstruction(FlushVariableInstruction(itVariable))
+                    val kotlinType = lambda.resolveType()?.getValueParameterTypesFromFunctionType()?.singleOrNull()?.type
+                    if (kotlinType != null) {
+                        val itVar = factory.varFactory.createVariableValue(KtItVariableDescriptor(functionLiteral, kotlinType))
+                        addInstruction(FlushVariableInstruction(itVar))
                     }
                 }
                 for (parameter in valueParameters) {
