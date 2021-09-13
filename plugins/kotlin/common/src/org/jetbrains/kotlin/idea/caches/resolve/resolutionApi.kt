@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtElement.getResolutionFacade(): ResolutionFacade =
     KotlinCacheService.getInstance(project).getResolutionFacade(this)
@@ -219,3 +221,5 @@ fun ResolutionFacade.resolveImportReference(
     DeprecationLevel.ERROR
 )
 fun KtElement.analyzeFully(): BindingContext = analyzeWithAllCompilerChecks().bindingContext
+
+fun Exception.isItNoDescriptorForDeclarationException(): Boolean = this is NoDescriptorForDeclarationException || (cause?.safeAs<Exception>()?.isItNoDescriptorForDeclarationException() ?: false)

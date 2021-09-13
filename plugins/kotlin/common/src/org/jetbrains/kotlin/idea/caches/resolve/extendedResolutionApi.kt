@@ -33,7 +33,7 @@ fun KtDeclaration.resolveToDescriptorIfAny(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
 ): DeclarationDescriptor? {
     //TODO: BodyResolveMode.PARTIAL is not quite safe!
-    val context = analyze(resolutionFacade, bodyResolveMode)
+    val context = safeAnalyze(resolutionFacade, bodyResolveMode)
     return if (this is KtParameter && hasValOrVar()) {
         context.get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, this)
     } else {
@@ -46,7 +46,7 @@ fun KtAnnotationEntry.resolveToDescriptorIfAny(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
 ): AnnotationDescriptor? {
     //TODO: BodyResolveMode.PARTIAL is not quite safe!
-    val context = analyze(resolutionFacade, bodyResolveMode)
+    val context = safeAnalyze(resolutionFacade, bodyResolveMode)
     return context.get(BindingContext.ANNOTATION, this)
 }
 
@@ -75,7 +75,7 @@ fun KtParameter.resolveToParameterDescriptorIfAny(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
 ): ValueParameterDescriptor? {
-    val context = analyze(resolutionFacade, bodyResolveMode)
+    val context = safeAnalyze(resolutionFacade, bodyResolveMode)
     return context.get(BindingContext.VALUE_PARAMETER, this) as? ValueParameterDescriptor
 }
 
@@ -83,8 +83,24 @@ fun KtElement.resolveToCall(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
 ): ResolvedCall<out CallableDescriptor>? =
-    getResolvedCall(analyze(resolutionFacade, bodyResolveMode))
+    getResolvedCall(safeAnalyze(resolutionFacade, bodyResolveMode))
 
+
+private fun KtElement.safeAnalyze(
+    resolutionFacade: ResolutionFacade,
+    bodyResolveMode: BodyResolveMode
+): BindingContext {
+    val context = try {
+        analyze(resolutionFacade, bodyResolveMode)
+    } catch (e: Exception) {
+        if (e.isItNoDescriptorForDeclarationException()) {
+            BindingContext.EMPTY
+        } else {
+            throw e
+        }
+    }
+    return context
+}
 
 @JvmOverloads
 fun KtElement.analyze(

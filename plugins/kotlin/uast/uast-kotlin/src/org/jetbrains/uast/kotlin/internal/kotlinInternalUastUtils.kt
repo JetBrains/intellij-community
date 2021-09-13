@@ -284,7 +284,7 @@ internal fun KtElement.canAnalyze(): Boolean {
 internal fun KtElement.analyze(): BindingContext {
     if (!canAnalyze()) return BindingContext.EMPTY
     return project.getService(KotlinUastResolveProviderService::class.java)
-        ?.getBindingContext(this) ?: BindingContext.EMPTY
+        ?.getBindingContextIfAny(this) ?: BindingContext.EMPTY
 }
 
 internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingContext.EXPECTED_EXPRESSION_TYPE, this]

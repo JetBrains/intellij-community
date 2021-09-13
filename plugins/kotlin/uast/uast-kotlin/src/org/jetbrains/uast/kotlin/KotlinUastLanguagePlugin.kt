@@ -45,6 +45,7 @@ import org.jetbrains.uast.util.ClassSetsWrapper
 
 interface KotlinUastResolveProviderService {
     fun getBindingContext(element: KtElement): BindingContext
+    fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
     fun getTypeMapper(element: KtElement): KotlinTypeMapper?
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
     fun isJvmElement(psiElement: PsiElement): Boolean
