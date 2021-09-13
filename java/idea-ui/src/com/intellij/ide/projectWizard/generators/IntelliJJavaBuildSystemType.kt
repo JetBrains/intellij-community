@@ -15,6 +15,7 @@ import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
@@ -25,6 +26,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
+import java.io.File
 import java.nio.file.Paths
 
 class IntelliJJavaBuildSystemType : JavaBuildSystemType {
@@ -56,6 +58,8 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
     private var contentRoot by contentRootProperty
     private var moduleFileLocation by moduleFileLocationProperty
 
+    private var contentRootField: TextFieldWithBrowseButton? = null
+
     private var userDefinedContentRoot: Boolean = false
     private var userDefinedModuleFileLocation: Boolean = false
 
@@ -69,6 +73,15 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
 
       contentRootProperty.dependsOn(moduleNameProperty, pathFromModuleName)
       moduleFileLocationProperty.dependsOn(moduleNameProperty, pathFromModuleName)
+
+      moduleNameProperty.dependsOn(contentRootProperty) {
+        val path = contentRootField?.text ?: ""
+        when (val i = path.lastIndexOf(File.separator)) {
+          -1, contentRoot.lastIndex -> ""
+          else -> path.substring(i + 1)
+        }
+      }
+      moduleFileLocationProperty.dependsOn(contentRootProperty) { contentRoot }
     }
 
     override fun setupUI(builder: Panel) {
@@ -89,6 +102,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
                 .horizontalAlign(HorizontalAlign.FILL)
                 .validationOnApply { validateContentRoot() }
                 .apply {
+                  contentRootField = component
                   component.textField.addKeyListener(object : KeyListener {
                     override fun keyTyped(e: KeyEvent?) {}
                     override fun keyPressed(e: KeyEvent?) { userDefinedContentRoot = true }
