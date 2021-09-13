@@ -9,7 +9,7 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                         UAnnotation (fqName = null) [@null]
                         UBinaryExpression (operator = <other>) ["foo" <other> 1] = Undetermined
                             ULiteralExpression (value = "foo") ["foo"] = "foo"
-                            ULiteralExpression (value = 1) [1] = (long)1
+                            ULiteralExpression (value = 1) [1] = 1
                     ULocalVariable (name = a) [@null var a: java.lang.String = var268d41a5.<anonymous class>()]
                         UAnnotation (fqName = null) [@null]
                         UQualifiedReferenceExpression [var268d41a5.<anonymous class>()] = external <anonymous class>()()
