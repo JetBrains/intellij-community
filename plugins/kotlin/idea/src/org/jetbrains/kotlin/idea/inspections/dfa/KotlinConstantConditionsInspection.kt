@@ -101,12 +101,12 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
         when (value) {
             ConstantValue.TRUE -> {
-                if (isSmartCastNecessary(expression)) return true
+                if (isSmartCastNecessary(expression, true)) return true
                 if (isPairingConditionInWhen(expression)) return true
                 if (isAssertion(parent)) return true
             }
             ConstantValue.FALSE -> {
-                if (isSmartCastNecessary(expression)) return true
+                if (isSmartCastNecessary(expression, false)) return true
             }
             ConstantValue.ZERO -> {
                 if (expression.readWriteAccess(false).isWrite) {

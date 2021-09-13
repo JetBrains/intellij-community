@@ -20,8 +20,7 @@ fun qualifierDoesNotAddSmartCastNullity(x: String?) {
 fun branchDisappears(x: String?) {
     val b = x != null
     if (b) return
-    // TODO: quick-fix may remove the 'else' branch, so we should not care about smartcasts in else branch
-    if (x == null) {
+    if (<warning descr="Condition is always true">x == null</warning>) {
         println(123)
     } else {
         println(x.trim())

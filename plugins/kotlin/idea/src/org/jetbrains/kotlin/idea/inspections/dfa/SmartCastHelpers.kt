@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.resolve.calls.smartcasts.IdentifierInfo
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
-internal fun isSmartCastNecessary(expr: KtExpression): Boolean {
+internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
     val bindingContext: BindingContext = expr.analyze()
 
     val values = getStableValuesInExpression(expr, bindingContext)
@@ -22,7 +22,7 @@ internal fun isSmartCastNecessary(expr: KtExpression): Boolean {
     val resolutionFacade = expr.getResolutionFacade()
     val factory = resolutionFacade.getDataFlowValueFactory()
     val moduleDescriptor = expr.findModuleDescriptor()
-    return getConditionScopes(expr)
+    return getConditionScopes(expr, value)
         .asSequence()
         .flatMap { scope -> SyntaxTraverser.psiTraverser(scope) }
         .filterIsInstance(KtExpression::class.java)
@@ -39,29 +39,31 @@ internal fun isSmartCastNecessary(expr: KtExpression): Boolean {
         }
 }
 
-private fun getConditionScopes(expr: KtExpression): List<KtExpression> {
+private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtExpression> {
     // TODO: reuse more standard utility to collect scopes
     return when (val parent = expr.parent) {
         is KtPrefixExpression ->
             if (parent.operationToken == KtTokens.EXCL) {
-                getConditionScopes(parent)
+                getConditionScopes(parent, if (value == null) null else !value)
             } else {
                 emptyList()
             }
         is KtParenthesizedExpression ->
-            getConditionScopes(parent)
-        is KtBinaryExpression ->
-            when {
-                parent.operationToken != KtTokens.ANDAND && parent.operationToken != KtTokens.OROR -> emptyList()
-                parent.left == expr -> getConditionScopes(parent) + listOfNotNull(parent.right)
-                else -> getConditionScopes(parent)
+            getConditionScopes(parent, value)
+        is KtBinaryExpression -> {
+            if (parent.operationToken != KtTokens.ANDAND && parent.operationToken != KtTokens.OROR) emptyList()
+            else {
+                val newValue = if ((value == true) == (parent.operationToken == KtTokens.ANDAND)) null else value
+                if (parent.left == expr) getConditionScopes(parent, newValue) + listOfNotNull(parent.right)
+                else getConditionScopes(parent, newValue)
             }
+        }
         is KtContainerNode ->
             when (val gParent = parent.parent) {
                 is KtIfExpression ->
                     if (gParent.condition == expr) {
-                        val thenExpression = gParent.then
-                        val elseExpression = gParent.`else`
+                        val thenExpression = if (value == false) null else gParent.then
+                        val elseExpression = if (value == true) null else gParent.`else`
                         val result = mutableListOf<KtExpression>()
                         if (thenExpression != null) result += thenExpression
                         if (elseExpression != null) result += elseExpression
@@ -77,7 +79,7 @@ private fun getConditionScopes(expr: KtExpression): List<KtExpression> {
                         result
                     } else emptyList()
                 is KtWhileExpression ->
-                    if (gParent.condition == expr) {
+                    if (gParent.condition == expr && value != false) {
                         listOfNotNull(gParent.body)
                     } else {
                         emptyList()
