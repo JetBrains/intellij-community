@@ -19,17 +19,17 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptionsProcessor;
-import com.intellij.codeInspection.reference.RefJavaManager;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.PackageGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,46 +38,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
+public class PackageInMultipleModulesInspection extends PackageGlobalInspection {
 
   @Override
-  public boolean isGraphNeeded() {
-    return false;
-  }
-
-  @Override
-  public void runInspection(@NotNull AnalysisScope scope,
-                            @NotNull InspectionManager manager,
-                            @NotNull GlobalInspectionContext globalContext,
-                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    final Set<String> packages = new HashSet<>();
-    scope.accept(file -> {
-      if (file.isDirectory()) return true;
-      final String packageName = ReadAction.compute(() -> {
-        final PsiFile element = PsiManager.getInstance(scope.getProject()).findFile(file);
-        if (!(element instanceof PsiClassOwner)) return null;
-        final PsiClassOwner classOwner = (PsiClassOwner)element;
-        return classOwner.getPackageName();
-      });
-      if (packageName == null || !packages.add(packageName)) return true;
-      final RefPackage aPackage = (RefPackage)globalContext.getRefManager().getReference(RefJavaManager.PACKAGE, packageName);
-      if (aPackage == null) return true;
-      CommonProblemDescriptor[] descriptors = checkPackage(aPackage, scope, manager, globalContext);
-      if (descriptors != null) {
-        problemDescriptionsProcessor.addProblemElement(aPackage, descriptors);
-      }
-      return true;
-    });
-  }
-
-  public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage aPackage,
+  public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage refPackage,
                                                            @NotNull AnalysisScope analysisScope,
                                                            @NotNull InspectionManager inspectionManager,
                                                            @NotNull GlobalInspectionContext globalInspectionContext) {
     final Project project = inspectionManager.getProject();
-    final PsiPackage psiPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage(aPackage.getQualifiedName()));
-    if (psiPackage == null)  return null;
-    final PsiFile @NotNull [] files = ReadAction.compute(() -> psiPackage.getFiles(GlobalSearchScope.projectScope(project)));
+    final PsiPackage aPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage(refPackage.getQualifiedName()));
+    if (aPackage == null)  return null;
+    final PsiFile @NotNull [] files = ReadAction.compute(() -> aPackage.getFiles(GlobalSearchScope.projectScope(project)));
     final Set<Module> modules = new HashSet<>();
     final ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     for (PsiFile file : files) {
@@ -92,7 +63,7 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
     final String errorString;
     if (moduleCount == 2) {
       errorString = InspectionGadgetsBundle.message(
-        "package.in.multiple.modules.problem.descriptor2", aPackage.getQualifiedName(), moduleList.get(0), moduleList.get(1));
+        "package.in.multiple.modules.problem.descriptor2", refPackage.getQualifiedName(), moduleList.get(0), moduleList.get(1));
     }
     else if (moduleCount == 3) {
       errorString = InspectionGadgetsBundle.message(
@@ -106,6 +77,7 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
     }
 
     return new CommonProblemDescriptor[]{
-      inspectionManager.createProblemDescriptor(errorString)};
+      inspectionManager.createProblemDescriptor(errorString)
+    };
   }
 }
