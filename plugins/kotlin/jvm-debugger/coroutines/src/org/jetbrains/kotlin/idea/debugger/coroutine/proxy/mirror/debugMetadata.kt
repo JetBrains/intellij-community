@@ -58,16 +58,32 @@ class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMe
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfBaseContinuationImpl? {
         val stackTraceElementMirror = debugMetadata.getStackTraceElement(value, context)
         val fieldVariables = getSpilledVariableFieldMapping(value, context)
-
         val completionValue = getCompletion.value(value, context)
-
-        val completion = if (completionValue != null && getCompletion.isCompatible(completionValue)) completionValue else null
-        val coroutineOwner =
-                if (completionValue != null && DebugProbesImplCoroutineOwner.instanceOf(completionValue)) completionValue else null
-        return MirrorOfBaseContinuationImpl(value, stackTraceElementMirror, fieldVariables, completion, coroutineOwner)
+        return MirrorOfBaseContinuationImpl(
+            value,
+            stackTraceElementMirror,
+            fieldVariables,
+            getNextContinuation(completionValue),
+            getCoroutineOwner(completionValue)
+        )
     }
 
-    private fun getSpilledVariableFieldMapping(value: ObjectReference, context: DefaultExecutionContext): List<FieldVariable> {
+    fun getNextContinuation(value: ObjectReference, context: DefaultExecutionContext): ObjectReference? =
+        getNextContinuation(getCompletion.value(value, context))
+
+    private fun getCoroutineOwner(completion: ObjectReference?) =
+        if (completion != null && DebugProbesImplCoroutineOwner.instanceOf(completion))
+            completion
+        else
+            null
+
+    private fun getNextContinuation(completion: ObjectReference?) =
+        if (completion != null && getCompletion.isCompatible(completion))
+            completion
+        else
+            null
+
+    fun getSpilledVariableFieldMapping(value: ObjectReference, context: DefaultExecutionContext): List<FieldVariable> {
         val getSpilledVariableFieldMappingReference =
                 debugMetadata.getSpilledVariableFieldMapping(value, context) ?: return emptyList()
 
