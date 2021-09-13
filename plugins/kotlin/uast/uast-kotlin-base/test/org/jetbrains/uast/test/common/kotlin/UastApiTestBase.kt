@@ -30,9 +30,9 @@ import kotlin.test.fail as kfail
 interface UastApiTestBase : UastPluginSelection {
     fun checkCallbackForAnnotationParameters(uFilePath: String, uFile: UFile) {
         val annotation = uFile.findElementByText<UAnnotation>("@IntRange(from = 10, to = 0)")
-        TestCase.assertEquals(annotation.findAttributeValue("from")?.evaluate(), 10)
+        TestCase.assertEquals(10L, annotation.findAttributeValue("from")?.evaluate())
         val toAttribute = annotation.findAttributeValue("to")!!
-        TestCase.assertEquals(toAttribute.evaluate(), 0)
+        TestCase.assertEquals(0L, toAttribute.evaluate())
         KtUsefulTestCase.assertInstanceOf(annotation.psi.toUElement(), UAnnotation::class.java)
         KtUsefulTestCase.assertInstanceOf(
             annotation.psi.cast<KtAnnotationEntry>().toLightAnnotation().toUElement(),
