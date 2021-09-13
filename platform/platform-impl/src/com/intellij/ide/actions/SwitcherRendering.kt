@@ -23,6 +23,7 @@ import com.intellij.ui.*
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
@@ -80,6 +81,7 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    component.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
     component.append(mainText)
   }
 }
@@ -107,7 +109,8 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
-    component.icon = RenderingUtil.getIcon(window.icon, selected)
+    component.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
+    component.icon = RenderingUtil.getIcon(window.icon ?: EmptyIcon.ICON_13, selected)
     component.append(mainText)
   }
 }
@@ -136,6 +139,7 @@ internal class SwitcherVirtualFile(
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    component.iconTextGap = JBUI.scale(4)
     component.icon = when (Registry.`is`("ide.project.view.change.icon.on.selection", true)) {
       true -> RenderingUtil.getIcon(icon, selected)
       else -> icon
@@ -155,9 +159,9 @@ internal class SwitcherVirtualFile(
 
 internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : ListCellRenderer<SwitcherListItem> {
   private val SEPARATOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
-  private val mnemonic = JLabel().apply {
-    border = JBUI.Borders.emptyRight(2)
-    preferredSize = JBUI.size(14, 0)
+  @Suppress("HardCodedStringLiteral") // to calculate preferred size
+  private val mnemonic = JLabel("W").apply {
+    preferredSize = preferredSize.apply { width += JBUI.CurrentTheme.ActionsList.mnemonicIconGap() }
     font = JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(font)
   }
   private val main = SimpleColoredComponent().apply { isOpaque = false }
