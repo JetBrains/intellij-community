@@ -4,24 +4,24 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
             UBlockExpression [{...}] = external mutableProp()
                 UDeclarationsExpression [var a: A = <init>(17)] = Undetermined
                     ULocalVariable (name = a) [var a: A = <init>(17)]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(17)] = external <init>(17)((long)17)
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(17)] = external <init>(17)(17)
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>(17)((long)17)
-                            ULiteralExpression (value = 17) [17] = (long)17
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>(17)(17)
+                            ULiteralExpression (value = 17) [17] = 17
                 UDeclarationsExpression [var x: int = -a.mutableProp] = Undetermined
                     ULocalVariable (name = x) [var x: int = -a.mutableProp]
                         UPrefixExpression (operator = -) [-a.mutableProp] = Undetermined
                             UQualifiedReferenceExpression [a.mutableProp] = external mutableProp()
-                                USimpleNameReferenceExpression (identifier = a) [a] = (var a = external <init>(17)((long)17))
+                                USimpleNameReferenceExpression (identifier = a) [a] = (var a = external <init>(17)(17))
                                 USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
                 UBinaryExpression (operator = =) [a.mutableProp = 1] = Undetermined
                     UQualifiedReferenceExpression [a.mutableProp] = external mutableProp()
-                        USimpleNameReferenceExpression (identifier = a) [a] = (var a = external <init>(17)((long)17))
+                        USimpleNameReferenceExpression (identifier = a) [a] = (var a = external <init>(17)(17))
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
-                    ULiteralExpression (value = 1) [1] = (long)1
+                    ULiteralExpression (value = 1) [1] = 1
                 UBinaryExpression (operator = +=) [a.mutableProp += x] = Undetermined
                     UQualifiedReferenceExpression [a.mutableProp] = external mutableProp()
-                        USimpleNameReferenceExpression (identifier = a) [a] = (var a = external <init>(17)((long)17))
+                        USimpleNameReferenceExpression (identifier = a) [a] = (var a = external <init>(17)(17))
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
                     USimpleNameReferenceExpression (identifier = x) [x] = (var x = Undetermined)
                 UPrefixExpression (operator = ++) [++a.mutableProp] = Undetermined
@@ -42,7 +42,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                             USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
                 UBinaryExpression (operator = =) [mutableProp = 1] = Undetermined
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
-                    ULiteralExpression (value = 1) [1] = (long)1
+                    ULiteralExpression (value = 1) [1] = 1
                 UBinaryExpression (operator = +=) [mutableProp += x] = Undetermined
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
                     USimpleNameReferenceExpression (identifier = x) [x] = (var x = Undetermined)
@@ -53,7 +53,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
     UClass (name = A) [public final class A {...}]
         UField (name = privateProp) [@org.jetbrains.annotations.NotNull private var privateProp: int = 0]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            ULiteralExpression (value = 0) [0] = (long)0
+            ULiteralExpression (value = 0) [0] = 0
         UField (name = mutableProp) [@org.jetbrains.annotations.NotNull private var mutableProp: int]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = getMutableProp) [public final fun getMutableProp() : int = UastEmptyExpression]

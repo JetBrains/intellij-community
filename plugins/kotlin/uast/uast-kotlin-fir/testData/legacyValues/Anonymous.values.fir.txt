@@ -53,7 +53,7 @@ UFile (package = ) [import java.io.Closeable...]
                                 UMethod (name = read) [public fun read() : int {...}]
                                     UBlockExpression [{...}] = Nothing
                                         UReturnExpression [return 0] = Nothing
-                                            ULiteralExpression (value = 0) [0] = (long)0
+                                            ULiteralExpression (value = 0) [0] = 0
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
                                 UMethod (name = ) [private fun () = UastEmptyExpression]
