@@ -95,7 +95,6 @@ class GotItTooltip(@NonNls val id: String,
   private var showCloseShortcut = false
   private var maxCount = 1
   private var onBalloonCreated: (Balloon) -> Unit = {}
-  private var hideOnClickOutside: Boolean = false
 
   // Ease the access (remove private or val to var) if fine tuning is needed.
   private val savedCount: (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
@@ -218,14 +217,6 @@ class GotItTooltip(@NonNls val id: String,
    */
   fun withShowCount(count: Int): GotItTooltip {
     if (count > 0) maxCount = count
-    return this
-  }
-
-  /**
-   * Hide popup when user clicks outside.
-   */
-  fun withHideOnClickOutside(): GotItTooltip {
-    hideOnClickOutside = true
     return this
   }
 
@@ -425,7 +416,7 @@ class GotItTooltip(@NonNls val id: String,
     var button: JButton? = null
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(createContent { button = it }).setDisposable(this).setHideOnAction(
       false).setHideOnClickOutside(false).setHideOnFrameResize(false).setHideOnKeyOutside(false).setHideOnClickOutside(
-      hideOnClickOutside).setBlockClicksThroughBalloon(true).setBorderColor(BORDER_COLOR).setCornerToPointerDistance(
+      false).setBlockClicksThroughBalloon(true).setBorderColor(BORDER_COLOR).setCornerToPointerDistance(
       ARROW_SHIFT).setFillColor(BACKGROUND_COLOR).setPointerSize(JBUI.size(16, 8)).createBalloon().also {
       it.setAnimationEnabled(false)
     }
