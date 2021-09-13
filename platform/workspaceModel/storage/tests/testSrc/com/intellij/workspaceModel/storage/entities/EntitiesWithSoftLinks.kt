@@ -57,7 +57,7 @@ internal class ModifiableNamedEntity : ModifiableWorkspaceEntityBase<NamedEntity
   var additionalProperty: String? by EntityDataDelegation()
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.addNamedEntity(name: String, additionalProperty: String? = null, source: EntitySource = MySource) =
+internal fun WorkspaceEntityStorageBuilder.addNamedEntity(name: String, additionalProperty: String? = null, source: EntitySource = MySource) =
   addEntity(ModifiableNamedEntity::class.java, source) {
     this.name = name
     this.additionalProperty = additionalProperty
@@ -197,9 +197,9 @@ internal class ModifiableComposedIdSoftRefEntity : ModifiableWorkspaceEntityBase
   var link: NameId by EntityDataDelegation()
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.addComposedIdSoftRefEntity(name: String,
-                                                                          link: NameId,
-                                                                          source: EntitySource = MySource): ComposedIdSoftRefEntity {
+internal fun WorkspaceEntityStorageBuilder.addComposedIdSoftRefEntity(name: String,
+                                                                      link: NameId,
+                                                                      source: EntitySource = MySource): ComposedIdSoftRefEntity {
   return addEntity(ModifiableComposedIdSoftRefEntity::class.java, source) {
     this.name = name
     this.link = link
