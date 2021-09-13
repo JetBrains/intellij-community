@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
@@ -1107,7 +1108,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private static boolean isOpenBlock(IElementType type) {
-    return type == GroovyElementTypes.OPEN_BLOCK || type == GroovyElementTypes.CONSTRUCTOR_BODY;
+    return type instanceof GrBlockElementType || type == GroovyElementTypes.CONSTRUCTOR_BODY;
   }
 
   @Nullable

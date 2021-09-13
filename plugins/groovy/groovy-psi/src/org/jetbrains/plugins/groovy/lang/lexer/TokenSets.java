@@ -30,6 +30,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.INTERF
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.METHOD;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.MULTIPLICATIVE_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.OPEN_BLOCK;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.OPEN_BLOCK_SWITCH_AWARE;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.POWER_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.RANGE_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.REGEX_FIND_EXPRESSION;
@@ -209,7 +210,7 @@ public interface TokenSets {
   TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAR, kYIELD);
 
   TokenSet BLOCK_SET =
-    TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, ENUM_BODY, CLASS_BODY, BLOCK_LAMBDA_BODY);
+    TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, OPEN_BLOCK_SWITCH_AWARE, CLOSABLE_BLOCK_SWITCH_AWARE, ENUM_BODY, CLASS_BODY, BLOCK_LAMBDA_BODY, BLOCK_LAMBDA_BODY_SWITCH_AWARE);
 
   TokenSet METHOD_DEFS = TokenSet.create(METHOD, CONSTRUCTOR, ANNOTATION_METHOD);
 

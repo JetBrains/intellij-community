@@ -16,7 +16,9 @@ public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyS
   GroovyElementType LITERAL = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LITERAL;
 
   GrCodeBlockElementType CLOSABLE_BLOCK = CLOSURE;
+  GrCodeBlockElementType CLOSABLE_BLOCK_SWITCH_AWARE = CLOSURE_SWITCH_AWARE;
   GrCodeBlockElementType OPEN_BLOCK = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK;
+  GrCodeBlockElementType OPEN_BLOCK_SWITCH_AWARE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK_SWITCH_AWARE;
   GrCodeBlockElementType CONSTRUCTOR_BODY = CONSTRUCTOR_BLOCK;
 
   IElementType BLOCK_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_STATEMENT;

@@ -319,7 +319,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     }
     else if (myChildType == GroovyStubElementTypes.THROWS_CLAUSE) {
       myResult = getGroovySettings().ALIGN_THROWS_KEYWORD ? getNoneIndent() : getContinuationIndent();
-    } else if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    } else if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().METHOD_BRACE_STYLE);
     }
   }
@@ -488,7 +488,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
-    if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().BRACE_STYLE);
     }
   }
@@ -507,7 +507,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitFinallyClause(@NotNull GrFinallyClause catchClause) {
-    if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().BRACE_STYLE);
     }
   }
