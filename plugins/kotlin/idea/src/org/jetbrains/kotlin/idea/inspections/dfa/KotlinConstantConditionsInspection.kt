@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -102,8 +101,12 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
         when (value) {
             ConstantValue.TRUE -> {
+                if (isSmartCastNecessary(expression)) return true
                 if (isPairingConditionInWhen(expression)) return true
                 if (isAssertion(parent)) return true
+            }
+            ConstantValue.FALSE -> {
+                if (isSmartCastNecessary(expression)) return true
             }
             ConstantValue.ZERO -> {
                 if (expression.readWriteAccess(false).isWrite) {
