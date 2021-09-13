@@ -4,8 +4,11 @@ package git4idea.ift.lesson
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -66,8 +69,12 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     task {
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) l@{ ui: EditorGutterComponentEx ->
+        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val offset = editor.document.charsSequence.indexOf(commentText)
-        if (offset == -1) return@l null
+        if (offset == -1) {
+          thisLogger().warn("Failed to find '${commentText}' in the editor text:\n${editor.document.charsSequence}")
+          return@l null
+        }
         val line = editor.offsetToVisualLine(offset, true)
         val y = editor.visualLineToY(line)
         return@l Rectangle(ui.x + ui.width - 15, y, 10, editor.lineHeight)
