@@ -11,9 +11,9 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                         ULiteralExpression (value = 3) [3] = 3
             UAnnotation (fqName = IntRange) [@IntRange(from = 10, to = 0)]
                 UNamedExpression (name = from) [from = 10] = Nothing
-                    ULiteralExpression (value = 10) [10] = 10
+                    ULiteralExpression (value = 10) [10] = (long)10
                 UNamedExpression (name = to) [to = 0] = Nothing
-                    ULiteralExpression (value = 0) [0] = 0
+                    ULiteralExpression (value = 0) [0] = (long)0
             UAnnotation (fqName = WithDefaultValue) [@WithDefaultValue]
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem")]
                 UNamedExpression (name = value) [value = "Lorem"] = Nothing
@@ -24,9 +24,9 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
         UMethod (name = bar) [@IntRange(from = 0, to = 100)...}]
             UAnnotation (fqName = IntRange) [@IntRange(from = 0, to = 100)]
                 UNamedExpression (name = from) [from = 0] = Nothing
-                    ULiteralExpression (value = 0) [0] = 0
+                    ULiteralExpression (value = 0) [0] = (long)0
                 UNamedExpression (name = to) [to = 100] = Nothing
-                    ULiteralExpression (value = 100) [100] = 100
+                    ULiteralExpression (value = 100) [100] = (long)100
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = <noref>("Lorem", "Ipsum", "Dolor"))]
                 UNamedExpression (name = value) [value = <noref>("Lorem", "Ipsum", "Dolor")] = Nothing
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [<noref>("Lorem", "Ipsum", "Dolor")] = Nothing
