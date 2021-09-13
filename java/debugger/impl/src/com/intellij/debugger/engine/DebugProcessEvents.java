@@ -7,10 +7,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -49,6 +46,7 @@ import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
+import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import one.util.streamex.StreamEx;
@@ -556,8 +554,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       Location location = event.location();
       if (location instanceof LocationImpl) {
-        LocationImpl l = (LocationImpl)location;
-        commands.add(l.methodAsync());
+        commands.add(DebuggerUtilsEx.getMethodAsync((LocationImpl)location));
       }
       try {
         CompletableFuture.allOf(commands.toArray(CompletableFuture[]::new)).get(1, TimeUnit.SECONDS);

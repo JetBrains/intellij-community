@@ -317,9 +317,9 @@ public final class DebuggerUtilsAsync {
 
   public static CompletableFuture<Method> method(Location location) {
     if (location instanceof LocationImpl && isAsyncEnabled()) {
-      return reschedule(((LocationImpl)location).methodAsync());
+      return reschedule(DebuggerUtilsEx.getMethodAsync((LocationImpl)location));
     }
-    return toCompletableFuture(() -> location.method());
+    return toCompletableFuture(() -> DebuggerUtilsEx.getMethod(location));
   }
 
   public static CompletableFuture<Boolean> isObsolete(Method method) {
