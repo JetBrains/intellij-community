@@ -20,6 +20,10 @@ class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() 
 
         override fun visitSuperTypeCallEntry(call: KtSuperTypeCallEntry) = call.check()
 
+        override fun visitConstructorDelegationCall(call: KtConstructorDelegationCall) = call.check()
+
+        override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) = annotationEntry.check()
+
         private fun KtCallElement.check() {
             val valueDescriptorByValueArgument = AddNamesInCommentToJavaCallArgumentsIntention.resolveValueParameterDescriptors(
                 this,

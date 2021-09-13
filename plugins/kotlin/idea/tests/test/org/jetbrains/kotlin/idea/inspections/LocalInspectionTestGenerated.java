@@ -5566,6 +5566,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/annotation.kt");
+        }
+
         @TestMetadata("comment.kt")
         public void testComment() throws Exception {
             runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/comment.kt");
@@ -5579,6 +5584,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/simple.kt");
+        }
+
+        @TestMetadata("superSecondaryCtorCall.kt")
+        public void testSuperSecondaryCtorCall() throws Exception {
+            runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/superSecondaryCtorCall.kt");
         }
 
         @TestMetadata("superTypeCall.kt")
