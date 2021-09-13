@@ -42,7 +42,7 @@ public final class PsiElementListNavigator {
                                                                    @NlsContexts.PopupTitle String title,
                                                                    @NlsContexts.TabTitle final String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
-    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
   }
 
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull MouseEvent e,

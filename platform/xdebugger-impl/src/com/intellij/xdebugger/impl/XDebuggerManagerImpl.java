@@ -77,8 +77,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -412,7 +412,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");
   }
 
-  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+  private static final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
     final Icon hoverIcon = new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
