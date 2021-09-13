@@ -73,7 +73,7 @@ final class FileTypeDetectionService implements Disposable {
                       PropertiesComponent.getInstance().getInt(FILE_TYPE_CHANGED_COUNTER_PROPERTY, 0), true);
 
   private static final int CHUNK_SIZE = 10;
-  private static final int OUR_MAX_FILE_SIZE_TO_LOG = 2 << 12; //8 KB
+  private static final int OUR_MAX_FILE_SIZE_TO_LOG = 512;
 
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
