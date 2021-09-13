@@ -4,6 +4,8 @@ package training.learn.lesson.general.assistance
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ModalityState
@@ -22,7 +24,6 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBLoadingPanelListener
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.DocumentUtil
@@ -285,7 +286,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
   }
 
   private fun findDiffGutterRect(ui: EditorGutterComponentEx): Rectangle? {
-    val editor = findEditorForGutter(ui) ?: return null
+    val editor = CommonDataKeys.EDITOR.getData(ui as DataProvider) ?: return null
     val offset = editor.document.charsSequence.indexOf(textToDelete)
     return if (offset != -1) {
       val lineIndex = editor.document.getLineNumber(offset)
@@ -295,11 +296,6 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       }
     }
     else null
-  }
-
-  private fun findEditorForGutter(component: EditorGutterComponentEx): Editor? {
-    val scrollPane = UIUtil.getParentOfType(JBScrollPane::class.java, component) ?: return null
-    return UIUtil.findComponentOfType(scrollPane, EditorComponentImpl::class.java)?.editor
   }
 
   private fun TaskRuntimeContext.checkInsideLocalHistoryFrame(component: Component): Boolean {

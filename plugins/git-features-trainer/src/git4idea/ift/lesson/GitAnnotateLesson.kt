@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
@@ -249,8 +248,8 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   private fun TaskContext.highlightGutterComponent(splitter: DiffSplitter?, partOfEditorText: String, highlightRight: Boolean) {
     triggerByPartOfComponent l@{ ui: EditorGutterComponentEx ->
       if (splitter != null && !isInsideSplitter(splitter, ui)) return@l null
-      val editor = findEditorForGutter(ui) ?: return@l null
-      if (editor.document.charsSequence.contains(partOfEditorText)) {
+      val curEditor = CommonDataKeys.EDITOR.getData(ui as DataProvider) ?: return@l null
+      if (curEditor.document.charsSequence.contains(partOfEditorText)) {
         if (highlightRight) {
           Rectangle(ui.x, ui.y, ui.width - 5, ui.height)
         }
@@ -263,14 +262,14 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   private fun TaskContext.highlightAnnotation(splitter: DiffSplitter?, partOfLineText: String, highlightRight: Boolean) {
     triggerByPartOfComponent l@{ ui: EditorGutterComponentEx ->
       if (splitter != null && !isInsideSplitter(splitter, ui)) return@l null
-      val editor = findEditorForGutter(ui) ?: return@l null
-      val offset = editor.document.charsSequence.indexOf(partOfLineText)
+      val curEditor = CommonDataKeys.EDITOR.getData(ui as DataProvider) ?: return@l null
+      val offset = curEditor.document.charsSequence.indexOf(partOfLineText)
       if (offset == -1) return@l null
-      val y = editor.offsetToXY(offset).y
+      val y = curEditor.offsetToXY(offset).y
       if (highlightRight) {
-        Rectangle(ui.x + ui.annotationsAreaOffset, y, ui.annotationsAreaWidth, editor.lineHeight)
+        Rectangle(ui.x + ui.annotationsAreaOffset, y, ui.annotationsAreaWidth, curEditor.lineHeight)
       }
-      else Rectangle(ui.x + ui.width - ui.annotationsAreaOffset - ui.annotationsAreaWidth, y, ui.annotationsAreaWidth, editor.lineHeight)
+      else Rectangle(ui.x + ui.width - ui.annotationsAreaOffset - ui.annotationsAreaWidth, y, ui.annotationsAreaWidth, curEditor.lineHeight)
     }
   }
 
@@ -321,10 +320,5 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
 
   private fun isAnnotateShortcutSet(): Boolean {
     return KeymapManager.getInstance().activeKeymap.getShortcuts("Annotate").isNotEmpty()
-  }
-
-  private fun findEditorForGutter(component: EditorGutterComponentEx): Editor? {
-    val scrollPane = UIUtil.getParentOfType(JBScrollPane::class.java, component) ?: return null
-    return UIUtil.findComponentOfType(scrollPane, EditorComponentImpl::class.java)?.editor
   }
 }
