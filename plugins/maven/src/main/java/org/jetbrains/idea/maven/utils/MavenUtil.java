@@ -239,10 +239,8 @@ public class MavenUtil {
   }
 
   public static boolean isNoBackgroundMode() {
-    if (!isMavenUnitTestModeEnabled()){
-      return false;
-    }
-    return (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+    return (MavenUtil.isMavenUnitTestModeEnabled()
+            || ApplicationManager.getApplication().isHeadlessEnvironment() &&
                !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode());
   }
 
