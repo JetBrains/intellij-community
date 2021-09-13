@@ -9,22 +9,22 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                 UDeclarationsExpression [@kotlin.Suppress var a: int = 1] = Undetermined
                     ULocalVariable (name = a) [@kotlin.Suppress var a: int = 1]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
-                        ULiteralExpression (value = 1) [1] = (long)1
+                        ULiteralExpression (value = 1) [1] = 1
                 UDeclarationsExpression [@kotlin.Suppress var b: int = 2] = Undetermined
                     ULocalVariable (name = b) [@kotlin.Suppress var b: int = 2]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
-                        ULiteralExpression (value = 2) [2] = (long)2
+                        ULiteralExpression (value = 2) [2] = 2
                 UBinaryExpression (operator = =) [b = a] = Undetermined
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
-                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = (long)2)
-                    USimpleNameReferenceExpression (identifier = a) [a] = (var a = (long)1)
-                UIfExpression [if (a > 2) a else b] = (var b = (long)2)
+                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = 2)
+                    USimpleNameReferenceExpression (identifier = a) [a] = (var a = 1)
+                UIfExpression [if (a > 2) a else b] = (var b = 2)
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
-                    UBinaryExpression (operator = >) [a > 2] = false (depending on: (var a = (long)1))
-                        USimpleNameReferenceExpression (identifier = a) [a] = (var a = (long)1)
-                        ULiteralExpression (value = 2) [2] = (long)2
-                    USimpleNameReferenceExpression (identifier = a) [a] = (var a = (long)1)
-                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = (long)2)
+                    UBinaryExpression (operator = >) [a > 2] = false (depending on: (var a = 1))
+                        USimpleNameReferenceExpression (identifier = a) [a] = (var a = 1)
+                        ULiteralExpression (value = 2) [2] = 2
+                    USimpleNameReferenceExpression (identifier = a) [a] = (var a = 1)
+                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = 2)
                 UDeclarationsExpression [var c: int = elvis {...}] = Undetermined
                     ULocalVariable (name = c) [var c: int = elvis {...}]
                         UExpressionList (elvis) [elvis {...}] = Undetermined
@@ -70,5 +70,5 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                         ULiteralExpression (value = null) [null] = null
                             USwitchClauseExpressionWithBody [ -> {...] = Undetermined
                                 UExpressionList (when_entry) [{...] = Undetermined
-                                    UYieldExpression [yield 1] = UYieldResult((long)1)
-                                        ULiteralExpression (value = 1) [1] = (long)1
+                                    UYieldExpression [yield 1] = UYieldResult(1)
+                                        ULiteralExpression (value = 1) [1] = 1
