@@ -126,7 +126,7 @@ public class GroovyBlock implements Block, ASTBlock {
     if (psiParent instanceof GroovyFileBase) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
-    if (psiParent instanceof GrSwitchStatement) {
+    if (psiParent instanceof GrSwitchElement) {
       new ChildAttributes(Indent.getNoneIndent(), null);
     }
     if (psiParent instanceof GrCaseSection) {
@@ -139,7 +139,7 @@ public class GroovyBlock implements Block, ASTBlock {
     if (astNode.getElementType() == BLOCK_LAMBDA_BODY) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
-    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType())) {
+    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType()) || GroovyElementTypes.SWITCH_EXPRESSION.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (GroovyElementTypes.CASE_SECTION.equals(astNode.getElementType())) {

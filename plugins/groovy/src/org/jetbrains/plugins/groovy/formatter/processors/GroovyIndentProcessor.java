@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
@@ -154,11 +155,20 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     }
   }
 
-  @Override
-  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+  public void visitSwitchElement() {
     if (myChildType == GroovyElementTypes.CASE_SECTION) {
       myResult = getSwitchCaseIndent(getGroovySettings());
     }
+  }
+
+  @Override
+  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+    visitSwitchElement();
+  }
+
+  @Override
+  public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+    visitSwitchElement();
   }
 
   @Override
@@ -341,7 +351,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
     final IElementType type = block.getNode().getElementType();
-    if (type != GroovyElementTypes.OPEN_BLOCK && type != GroovyElementTypes.CONSTRUCTOR_BODY) return;
+    if (!(type instanceof GrBlockElementType) && type != GroovyElementTypes.CONSTRUCTOR_BODY) return;
 
     int braceStyle;
     PsiElement parent = block.getParent();
@@ -537,6 +547,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       if (child instanceof GrBreakStatement ||
           child instanceof GrContinueStatement ||
           child instanceof GrReturnStatement ||
+          child instanceof GrYieldStatement ||
           child instanceof GrThrowStatement) {
         return true;
       }

@@ -49,6 +49,7 @@ public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyS
   IElementType POWER_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.POWER_EXPRESSION;
   IElementType POWER_EXPRESSION_SIMPLE = new GroovyElementType("Simple power expression");
   IElementType PATH_PROPERTY_REFERENCE = PROPERTY_EXPRESSION;
+  IElementType SWITCH_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SWITCH_EXPRESSION;
 
   GroovyElementType PATH_METHOD_CALL = METHOD_CALL_EXPRESSION;
 
