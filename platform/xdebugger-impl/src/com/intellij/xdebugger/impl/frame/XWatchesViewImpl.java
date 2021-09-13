@@ -145,7 +145,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       XDebuggerTree tree = getTree();
       Ref<AnAction> addToWatchesActionRef = new Ref<>();
       myEvaluateComboBox =
-        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
+        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateExpression", null, false, true) {
           @Override
           protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
             AnAction addToWatchesAction =
