@@ -11,7 +11,6 @@ import io.netty.channel.DefaultFileRegion
 import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslHandler
 import io.netty.handler.stream.ChunkedNioFile
-import io.netty.util.CharsetUtil
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -85,13 +84,15 @@ object FileResponses {
     return sendFile(request, channel, file, extraHeaders, null)
   }
 
-  fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders? = null, extraSuffix: CharSequence? = null) {
+  fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders? = null, extraSuffix: ByteArray? = null) {
     val fileChannel: FileChannel
     val rangeHeader = request.headers().get(HttpHeaderNames.RANGE)
     val lastModified: Long
     try {
       lastModified = Files.getLastModifiedTime(file).toMillis()
-      if (rangeHeader == null && extraSuffix.isNullOrEmpty() && checkCache(request, channel, lastModified, extraHeaders)) {
+      if (rangeHeader == null &&
+          (extraSuffix == null || extraSuffix.isEmpty()) &&
+          checkCache(request, channel, lastModified, extraHeaders)) {
         return
       }
 
@@ -106,7 +107,7 @@ object FileResponses {
     var fileWillBeClosed = false
     try {
       val fileSize = fileChannel.size()
-      val responseLength = fileSize + (extraSuffix?.length ?: 0)
+      val responseLength = fileSize + (extraSuffix?.size ?: 0)
       val range = parseRange(rangeHeader, responseLength) ?: ByteRange(0, responseLength)
 
       val isPartialContent = !(range.start == 0L && range.end == responseLength)
@@ -133,10 +134,10 @@ object FileResponses {
           }
         }
         if (extraSuffix != null) {
-          val suffixRange = range.intersect(fileSize, fileSize + extraSuffix.length)
+          val suffixRange = range.intersect(fileSize, fileSize + extraSuffix.size)
           if (suffixRange != null && suffixRange.length > 0) {
             val byteBuf = Unpooled.copiedBuffer(
-              extraSuffix.subSequence((suffixRange.start - fileSize).toInt(), (suffixRange.end - fileSize).toInt()), CharsetUtil.US_ASCII)
+              extraSuffix, (suffixRange.start - fileSize).toInt(), suffixRange.length.toInt())
             channel.write(byteBuf)
           }
         }
