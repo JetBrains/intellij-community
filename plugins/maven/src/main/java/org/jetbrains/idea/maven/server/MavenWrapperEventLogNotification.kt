@@ -67,7 +67,7 @@ class MavenWrapperEventLogNotification {
       notificationGroup
         .createNotification(
           message("maven.wrapper.notification.title"),
-          message("maven.wrapper.notification.empty.url.contant.file.not.found"),
+          message("maven.wrapper.notification.empty.url.content.file.not.found"),
           NotificationType.WARNING
         )
         .addAction(NotificationAction.createSimple(message("maven.wrapper.notification.empty.url.action.disable")) {
