@@ -26,7 +26,6 @@ import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -41,15 +40,11 @@ import org.fest.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.ui.LearningUiHighlightingManager
-import training.ui.LearningUiManager
-import training.ui.LearningUiUtil
-import training.ui.UISettings
+import training.ui.*
 import training.util.learningToolWindow
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
@@ -63,11 +58,9 @@ object LessonUtil {
 
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManager.getInstance(project)
-    val declaredFields = ToolWindowId::class.java.declaredFields
-    for (field in declaredFields) {
-      if (Modifier.isStatic(field.modifiers) && field.type == String::class.java) {
-        val id = field.get(null) as String
-        windowManager.getToolWindow(id)?.hide(null)
+    for (id in windowManager.toolWindowIds) {
+      if (id != LearnToolWindowFactory.LEARN_TOOL_WINDOW) {
+        windowManager.getToolWindow(id)?.hide()
       }
     }
   }
