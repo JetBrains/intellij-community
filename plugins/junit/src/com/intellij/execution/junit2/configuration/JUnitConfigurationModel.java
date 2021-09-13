@@ -11,10 +11,14 @@ import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jetbrains.annotations.NonNls;
@@ -109,8 +113,19 @@ public class JUnitConfigurationModel {
         testObject != JUnitConfiguration.TEST_DIRECTORY &&
         testObject != JUnitConfiguration.TEST_CATEGORY  &&
         testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      data.METHOD_NAME = getJUnitTextValue(METHOD);
-      data.MAIN_CLASS_NAME = className;
+      try {
+        data.METHOD_NAME = getJUnitTextValue(METHOD);
+        final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
+        if (testClass != null && testClass.isValid()) {
+          data.setMainClass(testClass);
+        }
+        else {
+          data.MAIN_CLASS_NAME = className;
+        }
+      }
+      catch (ProcessCanceledException | IndexNotReadyException e) {
+        data.MAIN_CLASS_NAME = className;
+      }
     }
     else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
       if (testObject == JUnitConfiguration.TEST_PACKAGE) {
