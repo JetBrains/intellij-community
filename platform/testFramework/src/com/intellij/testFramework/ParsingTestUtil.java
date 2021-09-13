@@ -89,7 +89,8 @@ public final class ParsingTestUtil {
    */
   public static void testIncrementalParsing(@NotNull PsiFile psiFile,
                                             @NotNull CharSequence newFileText,
-                                            @NotNull String answersFilePath) {
+                                            @NotNull String answersFilePath,
+                                            boolean checkFinalTreeForErrors) {
     ensureNoErrorElements(psiFile);
     var project = psiFile.getProject();
     var psiDocumentManager = PsiDocumentManager.getInstance(project);
@@ -126,7 +127,9 @@ public final class ParsingTestUtil {
     });
 
     TestCase.assertEquals("Reparsing error", psiFileToString(psiFile), psiBeforeCommit);
-    ensureNoErrorElementsInAllSubTrees(psiFile);
+    if (checkFinalTreeForErrors) {
+      ensureNoErrorElementsInAllSubTrees(psiFile);
+    }
     UsefulTestCase.assertSameLinesWithFile(answersFilePath, result.toString(), false);
   }
 
