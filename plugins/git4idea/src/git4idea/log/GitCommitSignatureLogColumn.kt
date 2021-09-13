@@ -4,6 +4,7 @@ package git4idea.log
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
+import git4idea.commit.signature.GitCommitSignature
 import git4idea.i18n.GitBundle.message
 import javax.swing.table.TableCellRenderer
 
