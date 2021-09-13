@@ -20,6 +20,8 @@ import com.intellij.vcs.log.ui.table.column.isVisible
 import com.intellij.vcs.log.util.contains
 import com.intellij.vcs.log.util.expandBy
 import com.intellij.vcs.log.util.limitedBy
+import git4idea.commit.signature.GitCommitSignature
+import git4idea.commit.signature.loadCommitSignatures
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
