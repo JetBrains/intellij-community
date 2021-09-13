@@ -33,12 +33,9 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 return false
             }
         })
-        // TODO: Handle FirEqualityOperatorCall in KtFirCallResolver#resolveCall(KtBinaryExpression)
-        if (!isFirUastPlugin) {
-            Assert.assertEquals("Expect != (String.equals)", 1, resolvedBinaryOperators.size)
-            val op = resolvedBinaryOperators.single()
-            Assert.assertEquals("equals", op.name)
-        }
+        Assert.assertEquals("Expect != (String.equals)", 1, resolvedBinaryOperators.size)
+        val op = resolvedBinaryOperators.single()
+        Assert.assertEquals("equals", op.name)
 
         val kt44412 = facade.methods.find { it.name == "kt44412" }
             ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")

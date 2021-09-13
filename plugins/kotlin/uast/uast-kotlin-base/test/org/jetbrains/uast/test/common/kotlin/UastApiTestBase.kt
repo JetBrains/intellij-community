@@ -30,25 +30,16 @@ import kotlin.test.fail as kfail
 interface UastApiTestBase : UastPluginSelection {
     fun checkCallbackForAnnotationParameters(uFilePath: String, uFile: UFile) {
         val annotation = uFile.findElementByText<UAnnotation>("@IntRange(from = 10, to = 0)")
-        // TODO: evaluated constant: 10 v.s. 10L
-        if (!isFirUastPlugin) {
-            TestCase.assertEquals(annotation.findAttributeValue("from")?.evaluate(), 10)
-        }
+        TestCase.assertEquals(annotation.findAttributeValue("from")?.evaluate(), 10)
         val toAttribute = annotation.findAttributeValue("to")!!
-        // TODO: evaluated constant: 0 v.s. 0L
-        if (!isFirUastPlugin) {
-            TestCase.assertEquals(toAttribute.evaluate(), 0)
-        }
-        // TODO: psi -> UAST -> psi -> UAST ??
-        if (!isFirUastPlugin) {
-            KtUsefulTestCase.assertInstanceOf(annotation.psi.toUElement(), UAnnotation::class.java)
-            KtUsefulTestCase.assertInstanceOf(
-                annotation.psi.cast<KtAnnotationEntry>().toLightAnnotation().toUElement(),
-                UAnnotation::class.java
-            )
-            KtUsefulTestCase.assertInstanceOf(toAttribute.uastParent, UNamedExpression::class.java)
-            KtUsefulTestCase.assertInstanceOf(toAttribute.psi.toUElement()?.uastParent, UNamedExpression::class.java)
-        }
+        TestCase.assertEquals(toAttribute.evaluate(), 0)
+        KtUsefulTestCase.assertInstanceOf(annotation.psi.toUElement(), UAnnotation::class.java)
+        KtUsefulTestCase.assertInstanceOf(
+            annotation.psi.cast<KtAnnotationEntry>().toLightAnnotation().toUElement(),
+            UAnnotation::class.java
+        )
+        KtUsefulTestCase.assertInstanceOf(toAttribute.uastParent, UNamedExpression::class.java)
+        KtUsefulTestCase.assertInstanceOf(toAttribute.psi.toUElement()?.uastParent, UNamedExpression::class.java)
 
         checkFindAttributeDefaultValue(uFile)
         checkLiteralArraysTypes(uFile)
@@ -56,11 +47,8 @@ interface UastApiTestBase : UastPluginSelection {
 
     private fun checkFindAttributeDefaultValue(uFile: UFile) {
         val witDefaultValue = uFile.findElementByText<UAnnotation>("@WithDefaultValue")
-        // TODO: evaluated constant: 42 v.s. 42L
-        if (!isFirUastPlugin) {
-            TestCase.assertEquals(42, witDefaultValue.findAttributeValue("value")!!.evaluate())
-            TestCase.assertEquals(42, witDefaultValue.findAttributeValue(null)!!.evaluate())
-        }
+        TestCase.assertEquals(42, witDefaultValue.findAttributeValue("value")!!.evaluate())
+        TestCase.assertEquals(42, witDefaultValue.findAttributeValue(null)!!.evaluate())
     }
 
     private fun checkLiteralArraysTypes(uFile: UFile) {
@@ -106,10 +94,7 @@ interface UastApiTestBase : UastPluginSelection {
     fun checkCallbackForDefaultImpls(uFilePath: String, uFile: UFile) {
         val bar = uFile.findElementByText<UMethod>("fun bar() = \"Hello!\"")
         TestCase.assertFalse(bar.containingFile.text!!, bar.psi.modifierList.hasExplicitModifier(PsiModifier.DEFAULT))
-        // TODO: interface method's `hasModifierProperty`
-        if (!isFirUastPlugin) {
-            TestCase.assertTrue(bar.containingFile.text!!, bar.psi.modifierList.hasModifierProperty(PsiModifier.DEFAULT))
-        }
+        TestCase.assertTrue(bar.containingFile.text!!, bar.psi.modifierList.hasModifierProperty(PsiModifier.DEFAULT))
     }
 
     fun checkCallbackForParameterPropertyWithAnnotation(uFilePath: String, uFile: UFile) {
@@ -398,11 +383,8 @@ interface UastApiTestBase : UastPluginSelection {
 
     fun checkCallbackForLambdas(uFilePath: String, uFile: UFile) {
         checkUtilsStreamLambda(uFile)
-        // TODO: no lambda call receiver?
-        if (!isFirUastPlugin) {
-            checkLambdaParamCall(uFile)
-            checkLocalLambdaCall(uFile)
-        }
+        checkLambdaParamCall(uFile)
+        checkLocalLambdaCall(uFile)
     }
 
     private fun checkUtilsStreamLambda(uFile: UFile) {
@@ -649,13 +631,10 @@ interface UastApiTestBase : UastPluginSelection {
             }
         })
 
-        // TODO: PsiMethod -> getFunctionalInterfaceMethod
-        if (!isFirUastPlugin) {
-            TestCase.assertTrue(
-                errors.joinToString(separator = "\n", postfix = "", prefix = "") { it },
-                errors.isEmpty()
-            )
-        }
+        TestCase.assertTrue(
+            errors.joinToString(separator = "\n", postfix = "", prefix = "") { it },
+            errors.isEmpty()
+        )
     }
 
     fun checkCallbackForSAM(uFilePath: String, uFile: UFile) {
