@@ -29,20 +29,20 @@ UFile (package = ) [public final class MyColor {...]
                 ULambdaExpression [{ ...}] = Undetermined
                     UBlockExpression [{...}] = Nothing
                         UReturnExpression [return <init>(1, 2, 3)] = Nothing
-                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] = external <init>(1, 2, 3)((long)1, (long)2, (long)3)
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] = external <init>(1, 2, 3)(1, 2, 3)
                                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] = external <init>(1, 2, 3)((long)1, (long)2, (long)3)
-                                ULiteralExpression (value = 1) [1] = (long)1
-                                ULiteralExpression (value = 2) [2] = (long)2
-                                ULiteralExpression (value = 3) [3] = (long)3
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] = external <init>(1, 2, 3)(1, 2, 3)
+                                ULiteralExpression (value = 1) [1] = 1
+                                ULiteralExpression (value = 2) [2] = 2
+                                ULiteralExpression (value = 3) [3] = 3
         UField (name = nonLazy) [@org.jetbrains.annotations.NotNull private final var nonLazy: MyColor = <init>(1, 2, 3)]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] = external <init>(1, 2, 3)((long)1, (long)2, (long)3)
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] = external <init>(1, 2, 3)(1, 2, 3)
                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] = external <init>(1, 2, 3)((long)1, (long)2, (long)3)
-                ULiteralExpression (value = 1) [1] = (long)1
-                ULiteralExpression (value = 2) [2] = (long)2
-                ULiteralExpression (value = 3) [3] = (long)3
+                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] = external <init>(1, 2, 3)(1, 2, 3)
+                ULiteralExpression (value = 1) [1] = 1
+                ULiteralExpression (value = 2) [2] = 2
+                ULiteralExpression (value = 3) [3] = 3
         UMethod (name = getDelegate) [public final fun getDelegate() : MyColor = UastEmptyExpression]
         UMethod (name = getLambda) [public final fun getLambda() : kotlin.Lazy<? extends MyColor> = UastEmptyExpression]
         UMethod (name = getNonLazy) [public final fun getNonLazy() : MyColor = UastEmptyExpression]

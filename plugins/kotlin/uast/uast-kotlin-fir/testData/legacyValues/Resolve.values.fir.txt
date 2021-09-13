@@ -1,7 +1,7 @@
 UFile (package = ) [public final class ResolveKt {...]
     UClass (name = ResolveKt) [public final class ResolveKt {...}]
         UMethod (name = bar) [public static final fun bar() : void {...}]
-            UBlockExpression [{...}] = external <init>(1, 2)((long)1, (long)2)
+            UBlockExpression [{...}] = external <init>(1, 2)(1, 2)
                 UQualifiedReferenceExpression [<init>().foo()] = external foo()()
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
@@ -94,7 +94,7 @@ UFile (package = ) [public final class ResolveKt {...]
                                 UIdentifier (Identifier (mutableMapOf)) [UIdentifier (Identifier (mutableMapOf))]
                                 USimpleNameReferenceExpression (identifier = mutableMapOf, resolvesTo = null) [mutableMapOf] = external mutableMapOf(1 <other> "1")(Undetermined)
                                 UBinaryExpression (operator = <other>) [1 <other> "1"] = Undetermined
-                                    ULiteralExpression (value = 1) [1] = (long)1
+                                    ULiteralExpression (value = 1) [1] = 1
                                     ULiteralExpression (value = "1") ["1"] = "1"
                             USimpleNameReferenceExpression (identifier = entries) [entries] = external entries()
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] = external first()()
@@ -115,13 +115,13 @@ UFile (package = ) [public final class ResolveKt {...]
                         UIdentifier (Identifier (contains)) [UIdentifier (Identifier (contains))]
                         USimpleNameReferenceExpression (identifier = contains, resolvesTo = null) [contains] = external contains(2 as int)(2)
                         UBinaryExpressionWithType [2 as int] = 2
-                            ULiteralExpression (value = 2) [2] = (long)2
+                            ULiteralExpression (value = 2) [2] = 2
                             UTypeReferenceExpression (name = int) [int] = Undetermined
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, 2)] = external <init>(1, 2)((long)1, (long)2)
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, 2)] = external <init>(1, 2)(1, 2)
                     UIdentifier (Identifier (IntRange)) [UIdentifier (Identifier (IntRange))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(1, 2)((long)1, (long)2)
-                    ULiteralExpression (value = 1) [1] = (long)1
-                    ULiteralExpression (value = 2) [2] = (long)2
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(1, 2)(1, 2)
+                    ULiteralExpression (value = 1) [1] = 1
+                    ULiteralExpression (value = 2) [2] = 2
         UMethod (name = barT) [public static final fun barT(@org.jetbrains.annotations.NotNull t: T) : void {...}]
             UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
