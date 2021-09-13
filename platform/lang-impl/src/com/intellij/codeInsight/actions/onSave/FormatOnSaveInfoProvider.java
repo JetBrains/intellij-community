@@ -18,6 +18,7 @@ public class FormatOnSaveInfoProvider extends ActionOnSaveInfoProvider {
   @Override
   protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
     if (isRider()) {
+      // Rider has its own 'Format/cleanup/etc. on save' implementation.
       return Collections.emptyList();
     }
 
