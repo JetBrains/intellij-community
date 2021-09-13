@@ -19,6 +19,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -91,6 +92,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -257,7 +259,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     if (handler == null) return;
     //noinspection deprecation
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
-    showElementUsages(ShowUsagesParameters.initial(project, editor, popupPosition), createActionHandler(handler, options));
+    showElementUsages(ShowUsagesParameters.initial(project, editor, popupPosition).withPsiElement(element), createActionHandler(handler, options));
   }
 
   private static void rulesChanged(@NotNull UsageViewImpl usageView, @NotNull PingEDT pingEDT, JBPopup popup) {
@@ -484,6 +486,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, () -> rulesChanged(usageView, pingEDT, popup));
 
+    AtomicLong firstUsageAddedTS = new AtomicLong();
+    AtomicBoolean tooManyResults = new AtomicBoolean();
     Processor<Usage> collect = usage -> {
       if (!UsageViewManagerImpl.isInScope(usage, searchScope)) {
         if (outOfScopeUsages.getAndIncrement() == 0) {
@@ -493,9 +497,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         return true;
       }
       synchronized (usages) {
-        if (visibleUsages.size() >= parameters.maxUsages) return false;
+        if (visibleUsages.size() >= parameters.maxUsages) {
+          tooManyResults.set(true);
+          return false;
+        }
+
         UsageNode nodes = ReadAction.compute(() -> usageView.doAppendUsage(usage));
         usages.add(usage);
+        firstUsageAddedTS.compareAndSet(0, System.currentTimeMillis()); // Successes only once - at first assignment
+
         if (nodes != null) {
           visibleUsages.add(nodes.getUsage());
           boolean continueSearch = true;
@@ -514,6 +524,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     };
 
     UsageSearcher usageSearcher = actionHandler.createUsageSearcher();
+    long searchStarted = System.currentTimeMillis();
     FindUsagesManager.startProcessUsages(indicator, project, usageSearcher, collect, () -> ApplicationManager.getApplication().invokeLater(
       () -> {
         Disposer.dispose(processIcon);
@@ -558,6 +569,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
             }
           }
         }
+
+        Class<? extends PsiElement> targetClass = parameters.psiElement != null ? parameters.psiElement.getClass() : null;
+        Language language = parameters.psiElement != null ? parameters.psiElement.getLanguage() : null;
+        long current = System.currentTimeMillis();
+
+        UsageViewStatisticsCollector.logSearchFinished(project, targetClass, searchScope, language, usages.size(),
+                                                       current - firstUsageAddedTS.get(), current - searchStarted, tooManyResults.get(),
+                                                       CodeNavigateSource.ShowUsagesPopup);
       },
       project.getDisposed()
     ));
@@ -766,6 +785,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       if (event.getStateChange() == ItemEvent.SELECTED) {
         SearchScope scope = scopeChooserCombo.getSelectedScope();
         if (scope != null) {
+          UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope,
+                                                       parameters.psiElement != null ? parameters.psiElement.getClass() : null);
           cancel(popupRef.get());
           showElementUsages(parameters, actionHandler.withScope(scope));
         }

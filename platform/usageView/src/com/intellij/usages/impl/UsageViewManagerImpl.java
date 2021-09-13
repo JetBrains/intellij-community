@@ -4,6 +4,7 @@ package com.intellij.usages.impl;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.Language;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -149,11 +152,13 @@ public class UsageViewManagerImpl extends UsageViewManager {
     SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     AtomicReference<UsageViewEx> usageViewRef = new AtomicReference<>();
     long start = System.currentTimeMillis();
+    AtomicLong firstItemFoundTS = new AtomicLong();
+    AtomicBoolean tooManyUsages = new AtomicBoolean();
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
-                                    processPresentation, searchScopeToWarnOfFallingOutOf, listener).run();
+                                    processPresentation, searchScopeToWarnOfFallingOutOf, listener, firstItemFoundTS, tooManyUsages).run();
       }
 
       @NotNull
@@ -161,10 +166,41 @@ public class UsageViewManagerImpl extends UsageViewManager {
       public NotificationInfo getNotificationInfo() {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
+        long currentTS = System.currentTimeMillis();
+        long duration = currentTS - start;
+
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
-        LOG.debug(notification +" in "+(System.currentTimeMillis()-start) +"ms.");
+        LOG.debug(notification + " in " + duration + "ms.");
+
+        reportFUS(count, currentTS - firstItemFoundTS.get(), duration, tooManyUsages.get());
+
         return new NotificationInfo("Find Usages",
                                     UsageViewBundle.message("notification.title.find.usages.finished"), notification);
+      }
+
+      private void reportFUS(int count, long firstResultTS, long duration, boolean tooManyUsages) {
+        for (var target : searchFor) {
+          Language language = null;
+          SearchScope scope = null;
+          Class<? extends PsiElement> targetClass = null;
+
+          if (target instanceof PsiElementUsageTarget) {
+            var element = ((PsiElementUsageTarget)target).getElement();
+            if (element != null) {
+              targetClass = element.getClass();
+              language = element.getLanguage();
+            }
+          }
+
+          if (target instanceof DataProvider) {
+            DataProvider dataProvider = (DataProvider)target;
+            scope = UsageView.USAGE_SCOPE.getData(dataProvider);
+          }
+
+          UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language,
+                                                         count, firstResultTS, duration, tooManyUsages,
+                                                         CodeNavigateSource.FindToolWindow);
+        }
       }
     };
     ProgressManager.getInstance().run(task);

@@ -4,6 +4,7 @@ package com.intellij.find.actions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,12 +15,14 @@ final class ShowUsagesParameters {
 
   final @NotNull Project project;
   final @Nullable Editor editor;
+  final @Nullable PsiElement psiElement;
   final @NotNull RelativePoint popupPosition;
   final @NotNull IntRef minWidth;
   final int maxUsages;
 
   private ShowUsagesParameters(@NotNull Project project,
                                @Nullable Editor editor,
+                               @Nullable PsiElement psiElement,
                                @NotNull RelativePoint popupPosition,
                                @NotNull IntRef minWidth,
                                int maxUsages) {
@@ -28,17 +31,22 @@ final class ShowUsagesParameters {
     this.popupPosition = popupPosition;
     this.minWidth = minWidth;
     this.maxUsages = maxUsages;
+    this.psiElement = psiElement;
   }
 
   @NotNull ShowUsagesParameters moreUsages() {
-    return new ShowUsagesParameters(project, editor, popupPosition, minWidth, maxUsages + getUsagesPageSize());
+    return new ShowUsagesParameters(project, editor, null,  popupPosition, minWidth, maxUsages + getUsagesPageSize());
   }
 
   @NotNull ShowUsagesParameters withEditor(@NotNull Editor editor) {
-    return new ShowUsagesParameters(project, editor, popupPosition, minWidth, maxUsages);
+    return new ShowUsagesParameters(project, editor, null, popupPosition, minWidth, maxUsages);
+  }
+
+  @NotNull ShowUsagesParameters withPsiElement(@NotNull PsiElement element) {
+    return new ShowUsagesParameters(project, editor, element, popupPosition, minWidth, maxUsages);
   }
 
   static @NotNull ShowUsagesParameters initial(@NotNull Project project, @Nullable Editor editor, @NotNull RelativePoint popupPosition) {
-    return new ShowUsagesParameters(project, editor, popupPosition, new IntRef(0), getUsagesPageSize());
+    return new ShowUsagesParameters(project, editor, null, popupPosition, new IntRef(0), getUsagesPageSize());
   }
 }
