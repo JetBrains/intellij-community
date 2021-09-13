@@ -22,7 +22,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
@@ -55,9 +54,12 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
     if (!(refEntity instanceof RefModule)) {
       return null;
     }
+    final Project project = inspectionManager.getProject();
+    if (ModuleManager.getInstance(project).getModules().length == 1) {
+      return null;
+    }
     final RefModule refModule = (RefModule)refEntity;
     final ModuleFileIndex index = ModuleRootManager.getInstance(refModule.getModule()).getFileIndex();
-    final Project project = inspectionManager.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final int[] count = {0};
     index.iterateContent(fileOrDir -> {
@@ -69,9 +71,6 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
       return count[0] <= limit;
     });
     if (count[0] >= limit || count[0] == 0) {
-      return null;
-    }
-    if (ModuleManager.getInstance(project).getModules().length == 1) {
       return null;
     }
     final String errorString = InspectionGadgetsBundle.message("module.with.too.few.classes.problem.descriptor",
