@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.ModifiableChildSourceEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntitySource
 import com.intellij.workspaceModel.storage.entities.SourceEntity
 import com.intellij.workspaceModel.storage.entities.addSourceEntity
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter

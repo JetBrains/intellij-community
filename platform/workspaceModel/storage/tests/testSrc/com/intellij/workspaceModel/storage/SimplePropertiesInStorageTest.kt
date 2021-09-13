@@ -2,7 +2,10 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.openapi.util.Ref
-import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
+import com.intellij.workspaceModel.storage.entities.ModifiableSecondSampleEntity
+import com.intellij.workspaceModel.storage.entities.SampleEntity
+import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
