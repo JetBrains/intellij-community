@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -503,6 +504,61 @@ public class UndoManagerImpl extends UndoManager {
   boolean isUndoOrRedoAvailable(@NotNull DocumentReference ref) {
     Set<DocumentReference> refs = Collections.singleton(ref);
     return isUndoOrRedoAvailable(refs, true) || isUndoOrRedoAvailable(refs, false);
+  }
+
+  /**
+   * In case of global group blocking undo we can perform undo locally and separate undone changes from others stacks
+   * @param editor
+   * @param undoRedo
+   * @param undoConfirmationPolicy
+   */
+  public void fallbackOnLocalStack(@NotNull FileEditor editor,
+                                   @NotNull UndoRedo undoRedo,
+                                   @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
+    var group = undoRedo.myUndoableGroup;
+    Collection<DocumentReference> refs = getDocRefs(editor);
+    if (refs == null) return;
+
+    var clientState = getClientState();
+    if (clientState == null) return;
+    var stackHolder = getStackHolder(clientState, !undoRedo.isRedo());
+
+    for (DocumentReference each : refs) {
+      var stack = stackHolder.getStack(each);
+      if (stack.getLast() == group) {
+        stack.remove(group);
+        var replacingGroup = new UndoableGroup("Local " + group.getCommandName(),
+                                               false,
+                                               group.getCommandTimestamp(),
+                                               group.getStateBefore(),
+                                               group.getStateAfter(),
+                                               // only action that changes file locally
+                                               ContainerUtil.filter(group.getActions(),
+                                                                    i -> i instanceof EditorChangeAction &&
+                                                                         ContainerUtil.exists(
+                                                                           ((EditorChangeAction)i).getAffectedDocuments(),
+                                                                           doc -> doc == each)),
+                                               stackHolder, getProject(), undoConfirmationPolicy, group.isTransparent(),
+                                               group.isValid());
+        stack.add(replacingGroup);
+      }
+    }
+
+
+    var groupWithoutLocalChanges = new UndoableGroup(group.getCommandName(),
+                                                     group.isGlobal(),
+                                                     group.getCommandTimestamp(),
+                                                     group.getStateBefore(),
+                                                     group.getStateAfter(),
+                                                     // all action except from previous group
+                                                     ContainerUtil.filter(group.getActions(), i -> !(i instanceof EditorChangeAction) ||
+                                                                                                   ContainerUtil.exists(
+                                                                                                     ((EditorChangeAction)i).getAffectedDocuments(),
+                                                                                                     doc -> !refs.contains(doc))),
+                                                     stackHolder, getProject(), undoConfirmationPolicy, group.isTransparent(),
+                                                     group.isValid());
+
+    stackHolder.replaceOnStacks(group, groupWithoutLocalChanges);
   }
 
   private boolean isUndoOrRedoAvailable(@NotNull Collection<? extends DocumentReference> refs, boolean isUndo) {

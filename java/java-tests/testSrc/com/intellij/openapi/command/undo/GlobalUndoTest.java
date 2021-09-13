@@ -564,6 +564,31 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertUndoIsAvailable(getEditor(f));
   }
 
+  public void testUndoFallbackToLocalStack() throws Exception{
+    createClass("Bar");
+    createClass("Foo");
+
+    Editor barEditor = openEditor("Bar.java");
+
+    // 1: extends Foo
+    WriteAction.runAndWait(() -> executeCommand(() -> barEditor.getDocument().insertString(17, "extends Foo")));
+
+    // 2: change local stack in second file
+    WriteAction.runAndWait(() -> executeCommand(() -> barEditor.getDocument().insertString(30, "public void Test(){}")));
+
+    // 3: rename Foo class
+    renameClassTo("FooRenamed");
+    Editor fooEditor = openEditor("FooRenamed.java");
+
+    // 4: change local stack in FooRenamed.java
+    WriteAction.runAndWait(() -> executeCommand(() -> fooEditor.getDocument().insertString(25, "public void Test(){}")));
+
+    undo(barEditor);
+
+    // 5: check if instead of falling global command we undone command from local stack
+    assertFalse(barEditor.getDocument().getText().contains("FooRenamed"));
+  }
+
   public void testUndoRedoNotAvailableAfterFileWasDeletedExternally() {
     final VirtualFile f1 = createChildData(myRoot, "f1.txt");
     final VirtualFile f2 = createChildData(myRoot, "f2.txt");

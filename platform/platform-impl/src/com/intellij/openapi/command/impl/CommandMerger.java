@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
@@ -284,6 +285,11 @@ public final class CommandMerger {
         if (blockingChange != null && blockingChange.myUndoableGroup != undoRedo.myUndoableGroup) {
           if (undoRedo.confirmSwitchTo(blockingChange)) blockingChange.execute(false, true);
           break;
+        }
+
+        if (Registry.is("ide.undo.fallback")) {
+          myManager.fallbackOnLocalStack(editor, undoRedo, myUndoConfirmationPolicy);
+          undoRedo = createUndoOrRedo(editor, isUndo);
         }
       }
       if (!undoRedo.execute(false, isInsideStartFinishGroup)) return;
