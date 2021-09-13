@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.ui.UIUtil
@@ -80,8 +81,9 @@ object LearningUiUtil {
     if (allFound.size > 1) {
       // Only allow a single component to be found, otherwise you can get some really confusing
       // test failures; the matcher should pick a specific enough instance
-      throw ComponentLookupException(
-        "Found more than one " + matcher.supportedType().simpleName + " which matches the criteria: " + allFound)
+      val exceptionText = "Found more than one ${matcher.supportedType().simpleName} which matches the criteria: $allFound"
+      thisLogger().warn(exceptionText)
+      throw ComponentLookupException(exceptionText)
     }
     return allFound.single()
   }

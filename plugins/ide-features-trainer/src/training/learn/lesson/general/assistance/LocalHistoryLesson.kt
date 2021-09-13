@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBLoadingPanelListener
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
+import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.UIUtil
@@ -266,8 +267,9 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
     if (!lessonPassed) return
-    val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java)
-                          ?: error("Failed to find editor component")
+    val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java) { editor ->
+      UIUtil.getParentOfType(SingleHeightTabs::class.java, editor) != null
+    } ?: error("Failed to find editor component")
     val lines = textToDelete.lines()
     val rightColumn = lines.maxOf { it.length }
     LearningUiHighlightingManager.highlightPartOfComponent(editorComponent, HighlightingOptions(highlightInside = false)) {

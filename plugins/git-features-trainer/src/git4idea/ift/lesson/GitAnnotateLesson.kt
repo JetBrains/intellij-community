@@ -4,6 +4,8 @@ package git4idea.ift.lesson
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorBundle
@@ -220,7 +222,10 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
         text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
              + GitLessonsBundle.message("git.annotate.invoke.manually.2", strong(closeAnnotationsText)))
         triggerByPartOfComponent { ui: EditorGutterComponentEx ->
-          Rectangle(ui.x + ui.annotationsAreaOffset, ui.y, ui.annotationsAreaWidth, ui.height)
+          if (CommonDataKeys.EDITOR.getData(ui as DataProvider) == editor) {
+            Rectangle(ui.x + ui.annotationsAreaOffset, ui.y, ui.annotationsAreaWidth, ui.height)
+          }
+          else null
         }
         val closeAnnotationsItemFuture = CompletableFuture<ActionMenuItem>()
         triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
