@@ -105,7 +105,7 @@ class SimplifyCallChainFix(
         }
 
         result.containingKtFile.commitAndUnblockDocument()
-        ShortenReferences.DEFAULT.process(result.reformatted() as KtElement)
+        if (result.isValid) ShortenReferences.DEFAULT.process(result.reformatted() as KtElement)
         if (runOptimizeImports) {
             OptimizeImportsProcessor(project, file).run()
         }
