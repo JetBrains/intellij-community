@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
-import com.sun.net.httpserver.HttpHandler
+import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level
@@ -26,9 +26,18 @@ val skippedPluginModules = hashSetOf(
 
 val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
 
+enum class DevIdeaBuildServerStatus(private val status: String) {
+  OK("OK"),
+  FAILED("FAILED"),
+  UNDEFINED("UNDEFINED")
+}
+
 class DevIdeaBuildServer {
   companion object {
     const val SERVER_PORT = 20854
+
+    // <product / DevIdeaBuildServerStatus>
+    private var productBuildStatus = mutableMapOf<String, DevIdeaBuildServerStatus>()
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -47,65 +56,97 @@ class DevIdeaBuildServer {
         exitProcess(1)
       }
     }
-  }
-}
 
-private fun start() {
-  val buildServer = BuildServer(homePath = getHomePath())
+    private fun start() {
+      val buildServer = BuildServer(homePath = getHomePath())
 
-  val httpServer = createHttpServer(buildServer)
-  LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
-  @Suppress("SpellCheckingInspection")
-  LOG.info("Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
-  @Suppress("SpellCheckingInspection")
-  LOG.info("Run IDE on module intellij.platform.bootstrap with VM properties -Didea.use.dev.build.server=true -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
-  httpServer.start()
+      val httpServer = createHttpServer(buildServer)
+      LOG.info("Listening on ${httpServer.address.hostString}:${httpServer.address.port}")
+      @Suppress("SpellCheckingInspection")
+      LOG.info(
+        "Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
+      @Suppress("SpellCheckingInspection")
+      LOG.info(
+        "Run IDE on module intellij.platform.bootstrap with VM properties -Didea.use.dev.build.server=true -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+      httpServer.start()
 
-  val doneSignal = CountDownLatch(1)
+      val doneSignal = CountDownLatch(1)
 
-  // wait for ctrl-c
-  Runtime.getRuntime().addShutdownHook(Thread {
-    doneSignal.countDown()
-  })
+      // wait for ctrl-c
+      Runtime.getRuntime().addShutdownHook(Thread {
+        doneSignal.countDown()
+      })
 
-  try {
-    doneSignal.await()
-  }
-  catch (ignore: InterruptedException) {
-  }
+      try {
+        doneSignal.await()
+      }
+      catch (ignore: InterruptedException) {
+      }
 
-  LOG.info("Server stopping...")
-  httpServer.stop(10)
-}
-
-private fun createHttpServer(buildServer: BuildServer): HttpServer {
-  val httpServer = HttpServer.create()
-  httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), DevIdeaBuildServer.SERVER_PORT), 4)
-  httpServer.createContext("/build", HttpHandler { exchange ->
-    val platformPrefix = parseQuery(exchange.requestURI).get("platformPrefix")?.first() ?: "idea"
-    var statusMessage: String
-    var statusCode = HttpURLConnection.HTTP_OK
-    try {
-      exchange.responseHeaders.add("Content-Type", "text/plain")
-      val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
-      statusMessage = ideBuilder.pluginBuilder.buildChanged()
-      LOG.info(statusMessage)
-    }
-    catch (e: ConfigurationException) {
-      statusCode = HttpURLConnection.HTTP_BAD_REQUEST
-      statusMessage = e.message!!
-    }
-    catch (e: Throwable) {
-      exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
-      LOG.error("Cannot handle build request", e)
-      return@HttpHandler
+      LOG.info("Server stopping...")
+      httpServer.stop(10)
     }
 
-    val response = statusMessage.encodeToByteArray()
-    exchange.sendResponseHeaders(statusCode, response.size.toLong())
-    exchange.responseBody.write(response)
-  })
-  return httpServer
+    private fun HttpExchange.getPlatformPrefix() = parseQuery(this.requestURI).get("platformPrefix")?.first() ?: "idea"
+
+    private fun createHttpServer(buildServer: BuildServer): HttpServer {
+      val httpServer = HttpServer.create()
+      httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 4)
+
+      httpServer.createContext("/build") { exchange ->
+        val platformPrefix = exchange.getPlatformPrefix()
+
+        var statusMessage: String
+        var statusCode = HttpURLConnection.HTTP_OK
+        try {
+          exchange.responseHeaders.add("Content-Type", "text/plain")
+          val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
+          statusMessage = ideBuilder.pluginBuilder.buildChanged()
+          LOG.info(statusMessage)
+        }
+        catch (e: ConfigurationException) {
+          statusCode = HttpURLConnection.HTTP_BAD_REQUEST
+          statusMessage = e.message!!
+        }
+        catch (e: Throwable) {
+          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
+          exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
+          LOG.error("Cannot handle build request", e)
+          return@createContext
+        }
+
+        productBuildStatus[platformPrefix] =
+          if (statusCode == HttpURLConnection.HTTP_OK) DevIdeaBuildServerStatus.OK
+          else DevIdeaBuildServerStatus.FAILED
+
+        val response = statusMessage.encodeToByteArray()
+        exchange.sendResponseHeaders(statusCode, response.size.toLong())
+        exchange.responseBody.write(response)
+      }
+
+      httpServer.createContext("/status") { exchange ->
+        val platformPrefix = exchange.getPlatformPrefix()
+        val buildStatus = productBuildStatus.getOrDefault(platformPrefix, DevIdeaBuildServerStatus.UNDEFINED)
+
+        exchange.responseHeaders.add("Content-Type", "text/plain")
+        val response = buildStatus.toString().encodeToByteArray()
+        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
+        exchange.responseBody.write(response)
+      }
+
+      return httpServer
+    }
+
+    private fun getHomePath(): Path {
+      val homePath: Path? = (PathManager.getHomePath(false) ?: PathManager.getHomePathFor(DevIdeaBuildServer::class.java))?.let {
+        Paths.get(it)
+      }
+      if (homePath == null) {
+        throw ConfigurationException("Could not find installation home path. Please specify explicitly via `idea.path` system property")
+      }
+      return homePath
+    }
+  }
 }
 
 fun parseQuery(url: URI): Map<String, List<String?>> {
@@ -128,16 +169,6 @@ fun clearDirContent(dir: Path) {
       }
     }
   }
-}
-
-private fun getHomePath(): Path {
-  val homePath: Path? = (PathManager.getHomePath(false) ?: PathManager.getHomePathFor(DevIdeaBuildServer::class.java))?.let {
-    Paths.get(it)
-  }
-  if (homePath == null) {
-    throw ConfigurationException("Could not find installation home path. Please specify explicitly via `idea.path` system property")
-  }
-  return homePath
 }
 
 internal class ConfigurationException(message: String) : RuntimeException(message)

@@ -131,7 +131,7 @@ public final class BootstrapClassLoaderUtil {
 
     connection.disconnect();
     if (responseCode != HttpURLConnection.HTTP_OK) {
-      throw new RuntimeException("Dev Build server not able to handle build request, see server's log for details");
+      throw new RuntimeException("Dev Build server is not able to handle build request, see server's log for details");
     }
 
     List<Path> result = new ArrayList<>();

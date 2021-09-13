@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.devServer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.BuildOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -24,6 +25,9 @@ class BuildServer(val homePath: Path) {
   private val platformPrefixToPluginBuilder = HashMap<String, IdeBuilder>()
 
   init {
+    // for compatibility with local runs and runs on CI
+    System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, outDir.parent.toString())
+
     val jsonFormat = Json { isLenient = true }
     configuration = jsonFormat.decodeFromString(Configuration.serializer(),
       Files.readString(homePath.resolve("build/dev-build-server.json")))
