@@ -3,6 +3,7 @@ package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
+import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
@@ -154,7 +155,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
   }
 
-  static class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
+  static class RunLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
     private final DefaultActionGroup myActionGroup;
     private final AnAction mySingleAction;
 
@@ -193,6 +194,16 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     @Override
     public MarkupEditorFilter getEditorFilter() {
       return MarkupEditorFilterFactory.createIsNotDiffFilter();
+    }
+
+    @Override
+    public boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info) {
+      return info instanceof RunLineMarkerInfo && info.getIcon() == getIcon();
+    }
+
+    @Override
+    public Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
+      return getIcon();
     }
   }
 
