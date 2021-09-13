@@ -42,7 +42,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     if (type instanceof PsiClassType) {
       if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return true;
 
-      PsiClass psiClass = ((PsiClassType)type).resolve();
+      final PsiClass psiClass = getClassType(expression.getProject(), (PsiClassType)type);
       if (psiClass != null && psiClass.isEnum()) return true;
     }
 
@@ -66,31 +66,12 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
   }
 
   @Contract(pure = true)
-  private static boolean isEnumOrObjectOrSealedClass(@NotNull PsiElement expression, @Nullable PsiType type) {
-    if (!(type instanceof PsiClassType)) return false;
-
-    if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
-
-    final PsiClass psiClass = getClassType(expression.getProject(), type);
-    if (psiClass == null) return false;
-
-    if (psiClass.isEnum()) return true;
-
-    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return false;
-
-    return CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName()) || psiClass.hasModifierProperty(PsiModifier.SEALED);
-  }
-
-  @Contract(pure = true)
-  private static @Nullable PsiClass getClassType(@NotNull Project project, @NotNull PsiType type) {
-    final PsiResolveHelper resolver = JavaPsiFacade.getInstance(project).getResolveHelper();
-
+  private static @Nullable PsiClass getClassType(@NotNull Project project, @NotNull PsiClassType type) {
     if (!DumbService.isDumb(project)) {
-      return resolver.resolveReferencedClass(type.getCanonicalText(), null);
+      return type.resolve();
     }
 
-    return DumbService.getInstance(project)
-      .computeWithAlternativeResolveEnabled(() -> resolver.resolveReferencedClass(type.getCanonicalText(), null));
+    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(type::resolve);
   }
 
   public SwitchStatementPostfixTemplate() {
