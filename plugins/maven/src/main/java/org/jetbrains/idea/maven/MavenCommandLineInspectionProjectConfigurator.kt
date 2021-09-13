@@ -6,14 +6,19 @@ import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorCon
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ExceptionUtil
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.io.path.pathString
 
 private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "maven.create.dummy.module.on.first.import"
@@ -36,8 +41,6 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
 
     val mavenProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(MavenUtil.SYSTEM_ID)!!
-
-    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val isMavenProjectLinked = mavenProjectAware.isLinkedProject(project, basePath)
 
     LOG.info("maven project: ${project.name} is linked: $isMavenProjectLinked")
@@ -45,9 +48,20 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     if (!isMavenProjectLinked) {
       ApplicationManager.getApplication().invokeAndWait {
         mavenProjectAware.linkAndLoadProject(project, basePath)
-        mavenProjectsManager.waitForResolvingCompletion()
-        mavenProjectsManager.waitForPluginsResolvingCompletion()
       }
+    }
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+    val promise = mavenProjectsManager.waitForImportCompletion()
+    while (true) {
+      try {
+        promise.blockingGet(10, TimeUnit.MILLISECONDS)
+        break
+      } catch (e: TimeoutException) {
+
+      } catch (e: ExecutionException) {
+        ExceptionUtil.rethrow(e)
+      }
+      ProgressManager.checkCanceled()
     }
 
     for (mavenProject in mavenProjectsManager.projects) {
