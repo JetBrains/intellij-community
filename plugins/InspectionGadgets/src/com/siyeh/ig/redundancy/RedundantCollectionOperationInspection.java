@@ -68,7 +68,12 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static final CallMatcher MAP_KEY_SET = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet").parameterCount(0);
   private static final CallMatcher MAP_VALUES = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "values").parameterCount(0);
   private static final CallMatcher MAP_PUT_ALL = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "putAll").parameterCount(1);
-  private static final CallMatcher MAP_OF = staticCall(CommonClassNames.JAVA_UTIL_MAP, "of").parameterCount(2);
+  private static final CallMatcher MAP_OF =
+    anyOf(
+      staticCall(CommonClassNames.JAVA_UTIL_MAP, "of").parameterCount(2),
+      staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2));
+  private static final CallMatcher COLLECTION_ADD_ALL = instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll").parameterCount(1);
+  private static final CallMatcher COLLECTIONS_SINGLETON = staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1);
 
   private static final CallMapper<RedundantCollectionOperationHandler> HANDLERS =
     new CallMapper<RedundantCollectionOperationHandler>()
@@ -81,7 +86,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       .register(AS_LIST, RedundantAsListForIterationHandler::handler)
       .register(AS_LIST, RedundantSortAsListHandler::handler)
       .register(ITERABLE_ITERATOR, RedundantEmptyIteratorHandler::handler)
-      .register(MAP_PUT_ALL, call -> ReplaceNestedCallHandler.handler(call, MAP_OF, "put"));
+      .register(MAP_PUT_ALL, call -> ReplaceNestedCallHandler.handler(call, MAP_OF, "put"))
+      .register(COLLECTION_ADD_ALL, call -> ReplaceNestedCallHandler.handler(call, COLLECTIONS_SINGLETON, "add"));
 
   @NotNull
   @Override
