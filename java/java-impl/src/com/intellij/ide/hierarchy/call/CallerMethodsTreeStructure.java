@@ -41,6 +41,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     if (nodeDescriptor == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
     PsiClass enclosingClass = enclosingElement.getContainingClass();
+    PsiClass expectedQualifierClass; // we'll compare reference qualifier class against this to filter out irrelevant usages
     if (enclosingElement instanceof PsiMethod && isLocalOrAnonymousClass(enclosingClass)) {
       PsiElement parent = enclosingClass.getParent();
       PsiElement grandParent = parent instanceof PsiNewExpression ? parent.getParent() : null;
@@ -48,6 +49,15 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
         // for created anonymous class that immediately passed as argument use instantiation point as next call point (IDEA-73312)
         enclosingElement = CallHierarchyNodeDescriptor.getEnclosingElement(grandParent);
       }
+      if (enclosingClass instanceof PsiAnonymousClass) {
+        expectedQualifierClass = enclosingClass.getSuperClass();
+      }
+      else {
+        expectedQualifierClass = enclosingClass;
+      }
+    }
+    else {
+      expectedQualifierClass = enclosingClass;
     }
 
     PsiMember baseMember = (PsiMember)((CallHierarchyNodeDescriptor)nodeDescriptor).getTargetElement();
@@ -93,9 +103,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
           }
 
           if (receiverClass != null
-              && enclosingClass != null
-              && !InheritanceUtil.isInheritorOrSelf(enclosingClass, receiverClass, true)
-              && !InheritanceUtil.isInheritorOrSelf(receiverClass, enclosingClass, true)
+              && expectedQualifierClass != null
+              && !InheritanceUtil.isInheritorOrSelf(expectedQualifierClass, receiverClass, true)
+              && !InheritanceUtil.isInheritorOrSelf(receiverClass, expectedQualifierClass, true)
           ) {
             // ignore impossible candidates. E.g. when A < B,A < C and we invoked call hierarchy for method in C we should filter out methods in B because B and C are assignment-incompatible
             return true;
