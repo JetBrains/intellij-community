@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.project
 
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.ReopenProjectAction
@@ -175,8 +176,19 @@ object ProjectUtils {
     })
     invokeLater {
       val nioPath = projectDirectoryVirtualFile.toNioPath()
-      val project = ProjectUtil.openOrImport(nioPath, task)
-                    ?: error("Could not create project for ${langSupport.primaryLanguage} at $nioPath")
+      val confirmOpenNewProject = GeneralSettings.getInstance().confirmOpenNewProject
+      if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+        GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
+      }
+      val project = try {
+        ProjectUtil.openOrImport(nioPath, task)
+                      ?: error("Cannot create project for ${langSupport.primaryLanguage} at $nioPath")
+      }
+      finally {
+        if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+          GeneralSettings.getInstance().confirmOpenNewProject = confirmOpenNewProject
+        }
+      }
       project.setTrusted(true)
       postInitCallback(project)
     }
