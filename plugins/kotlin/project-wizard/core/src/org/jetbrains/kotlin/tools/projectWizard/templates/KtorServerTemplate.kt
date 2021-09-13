@@ -49,7 +49,9 @@ object KtorServerTemplate : Template() {
     override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> = buildList {
         +RepositoryIR(Repositories.KTOR)
         +RepositoryIR(DefaultRepository.JCENTER)
-        +runTaskIrs(mainClass = "ServerKt")
+
+        val packageName = module.originalModule.javaPackage(pomIR()).asCodePackage()
+        +runTaskIrs(mainClass = "$packageName.ServerKt")
     }
 
     override fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = buildList {
