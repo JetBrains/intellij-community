@@ -7,14 +7,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.util.concurrent.ExecutorService
 
 class NGramFileListener(private val project: Project) : FileEditorManagerListener.Before {
   override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-    val psiFile = PsiManager.getInstance(project).findFile(file) ?: return
+    val psiFile = PsiManagerEx.getInstanceEx(project).fileManager.getCachedPsiFile(file) ?: return
     val language = psiFile.language
     if (psiFile.fileType.isBinary || !NGram.isSupported(language) || LightEdit.owns(project)) return
     val filePointer = SmartPointerManager.createPointer(psiFile)
