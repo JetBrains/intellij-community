@@ -218,7 +218,7 @@ public class JUnit5Runner {
         .map(s -> {
           if (s instanceof ClassSource) {
             String className = ((ClassSource)s).getClassName();
-            if (className.equals(TestSuite.class.getName())) {
+            if (className.equals(TestSuite.class.getName()) || className.equals(displayName)) {
               //class level failure
               return displayName;
             }
