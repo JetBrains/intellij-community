@@ -1419,6 +1419,20 @@ public final class TreeUtil {
   }
 
   /**
+   * Promises to expand a node (specified by the path) in the given tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
+   *
+   * @param tree a tree, which nodes should be expanded
+   * @param path a tree path to a node that should be expanded
+   * @return a promise that will be succeeded only if path is found and expanded
+   */
+  public static @NotNull Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreePath path) {
+    return promiseExpand(tree, new TreeVisitor.ByTreePath<>(path, node -> node));
+  }
+
+  /**
    * Promises to expand a node in the specified tree.
    * <strong>NB!:</strong>
    * The returned promise may be resolved immediately,
@@ -1457,6 +1471,20 @@ public final class TreeUtil {
    */
   public static void makeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     promiseMakeVisibleOne(tree, visitor, consumer);
+  }
+
+  /**
+   * Promises to make visible a node (specified by the path) in the given tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
+   *
+   * @param tree a tree, which nodes should be made visible
+   * @param path a tree path to a node that should be made visible
+   * @return a promise that will be succeeded only if path is found and made visible
+   */
+  public static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreePath path) {
+    return promiseMakeVisible(tree, new TreeVisitor.ByTreePath<>(path, node -> node));
   }
 
   /**
@@ -1563,6 +1591,20 @@ public final class TreeUtil {
       }
       return action;
     });
+  }
+
+  /**
+   * Promises to select a node (specified by the path) in the given tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
+   *
+   * @param tree a tree, which nodes should be selected
+   * @param path a tree path to a node that should be selected
+   * @return a promise that will be succeeded only if path is found and selected
+   */
+  public static @NotNull Promise<TreePath> promiseSelect(@NotNull JTree tree, @NotNull TreePath path) {
+    return promiseSelect(tree, new TreeVisitor.ByTreePath<>(path, node -> node));
   }
 
   /**
