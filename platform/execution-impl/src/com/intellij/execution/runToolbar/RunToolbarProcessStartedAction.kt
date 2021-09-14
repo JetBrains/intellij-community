@@ -4,6 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.Key
@@ -39,6 +40,9 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
               e.presentation.text = ""
               e.presentation.icon = null
             }
+            e.presentation.description = RunToolbarData.prepareDescription(e.presentation.text,
+              ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.open.toolwindow.text"))
+
             true
           } ?: false
         } ?: false

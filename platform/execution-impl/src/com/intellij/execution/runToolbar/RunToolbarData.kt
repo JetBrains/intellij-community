@@ -8,13 +8,16 @@ import com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.icons.AllIcons
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.ColorUtil
+import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 interface RunToolbarData {
@@ -22,6 +25,16 @@ interface RunToolbarData {
     var RUN_TOOLBAR_DATA_KEY: DataKey<RunToolbarData> = DataKey.create("RUN_TOOLBAR_DATA_KEY")
     var RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
     var RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
+
+    internal fun prepareDescription(@Nls text: String, @Nls description: String): @Nls String {
+      return HtmlBuilder().append(text)
+          .br()
+          .append(
+            HtmlChunk
+              .font(-1)
+              .addText(description)
+              .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.Label.disabledForeground())))).toString()
+    }
   }
 
   val id: String
@@ -67,15 +80,15 @@ internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
   return runToolbarData()?.configuration
 }
 
-internal fun AnActionEvent.arrowData(): Pair<Icon, @NlsActions.ActionText String>? {
+internal fun AnActionEvent.arrowIcon(): Icon? {
   val isOpened = this.dataContext.getData(RunToolbarData.RUN_TOOLBAR_POPUP_STATE_KEY)
                  ?: return null
   return when {
     isOpened -> {
-      Pair(AllIcons.Toolbar.Collapse, ActionsBundle.message("action.RunToolbarShowHidePopupAction.hide.text"))
+      AllIcons.Toolbar.Collapse
     }
     else -> {
-      Pair(AllIcons.Toolbar.Expand, ActionsBundle.message("action.RunToolbarShowHidePopupAction.show.text"))
+      AllIcons.Toolbar.Expand
     }
   }
 }

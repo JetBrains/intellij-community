@@ -4,13 +4,13 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.PROP_ACTIVE_ENVIRONMENT
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.updatePresentation
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomAction
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
@@ -24,7 +24,7 @@ import javax.swing.*
 
 class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   companion object {
-     val ARROW_DATA = Key<Pair<Icon, @NlsActions.ActionText String>?>("ARROW_DATA")
+     val ARROW_DATA = Key<Icon?>("ARROW_DATA")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -48,7 +48,11 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
     MigLayout("ins 0, fill, gap 0", "[200]")
     a.add(JLabel(), "pushx")
 
-    e.presentation.putClientProperty(ARROW_DATA, e.arrowData())
+    e.presentation.description = e.runToolbarData()?.let {
+      RunToolbarData.prepareDescription(e.presentation.text, ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.show.popup.text"))
+    }
+
+    e.presentation.putClientProperty(ARROW_DATA, e.arrowIcon())
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): SegmentedCustomPanel {
@@ -142,7 +146,7 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
       updateEnvironment()
       setting.icon = presentation.icon
       setting.text = presentation.text
-
+      toolTipText = presentation.description
     }
 
     private fun updateEnvironment() {
@@ -155,13 +159,7 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
     }
 
     private fun updateArrow() {
-      presentation.getClientProperty(ARROW_DATA)?.let {
-        arrow.icon = it.first
-        toolTipText = it.second
-      } ?: run {
-        arrow.icon = null
-        toolTipText = null
-      }
+      arrow.icon = presentation.getClientProperty(ARROW_DATA)
     }
 
     override fun getPreferredSize(): Dimension {
