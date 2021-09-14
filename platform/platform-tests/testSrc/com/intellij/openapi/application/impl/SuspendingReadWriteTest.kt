@@ -3,7 +3,8 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
-import com.intellij.openapi.progress.Progress
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
@@ -70,10 +71,10 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
   fun `test read action is cancellable`(): Unit = runBlocking {
     val inRead = Semaphore(1)
     val job = launch(Dispatchers.Default) {
-      cra { progress ->
+      cra {
         inRead.up()
         while (true) {
-          progress.checkCancelled()
+          ProgressManager.checkCanceled()
           Thread.sleep(10)
         }
       }
@@ -139,12 +140,12 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     }
   }
 
-  protected abstract suspend fun <T> cra(constraints: ReadConstraints = ReadConstraints.unconstrained(), action: (Progress) -> T): T
+  protected abstract suspend fun <T> cra(constraints: ReadConstraints = ReadConstraints.unconstrained(), action: () -> T): T
 }
 
 class NonBlocking : SuspendingReadWriteTest() {
 
-  override suspend fun <T> cra(constraints: ReadConstraints, action: (Progress) -> T): T {
+  override suspend fun <T> cra(constraints: ReadConstraints, action: () -> T): T {
     return constrainedReadAction(constraints, action)
   }
 
@@ -153,12 +154,12 @@ class NonBlocking : SuspendingReadWriteTest() {
     val beforeWrite = beforeWrite()
     val job = launch(Dispatchers.Default) {
       var attempt = false
-      readAction { progress ->
+      readAction {
         assertFalse(attempt)
         attempt = true
         inRead.up()
         beforeWrite.waitTimeout()
-        assertTrue(progress.isCancelled)
+        assertTrue(Cancellation.isCancelled())
       }
     }
     inRead.waitTimeout()
@@ -193,16 +194,16 @@ class NonBlocking : SuspendingReadWriteTest() {
     val beforeWrite = beforeWrite()
     val job = cs.launch(Dispatchers.Default) {
       var attempts = 0
-      constrainedReadAction(constraints) { progress: Progress ->
+      constrainedReadAction(constraints) {
         inRead.up()
         beforeWrite.waitTimeout()
         when (attempts) {
-          0 -> assertTrue(progress.isCancelled)
-          1 -> assertFalse(progress.isCancelled)
+          0 -> assertTrue(Cancellation.isCancelled())
+          1 -> assertFalse(Cancellation.isCancelled())
           else -> fail()
         }
         attempts++
-        progress.checkCancelled()
+        ProgressManager.checkCanceled()
       }
     }
     inRead.waitTimeout()
@@ -216,10 +217,10 @@ class NonBlocking : SuspendingReadWriteTest() {
     val limit = 10
     val attempts = AtomicInteger()
     val job = launch(Dispatchers.Default) {
-      readAction { progress ->
+      readAction {
         if (attempts.getAndIncrement() < limit) {
           while (true) {
-            progress.checkCancelled() // wait to be cancelled by
+            ProgressManager.checkCanceled() // wait to be cancelled by
           }
         }
       }
@@ -236,7 +237,7 @@ class NonBlocking : SuspendingReadWriteTest() {
 
 class Blocking : SuspendingReadWriteTest() {
 
-  override suspend fun <T> cra(constraints: ReadConstraints, action: (Progress) -> T): T {
+  override suspend fun <T> cra(constraints: ReadConstraints, action: () -> T): T {
     return constrainedReadActionBlocking(constraints, action)
   }
 
@@ -246,13 +247,13 @@ class Blocking : SuspendingReadWriteTest() {
     val beforeWrite = beforeWrite()
     val job = launch(Dispatchers.Default) {
       var attempt = false
-      cra { progress ->
+      cra {
         assertFalse(attempt)
         attempt = true
         inRead.up()
         beforeWrite.waitTimeout()
-        assertFalse(progress.isCancelled)
-        progress.checkCancelled()
+        assertFalse(Cancellation.isCancelled())
+        ProgressManager.checkCanceled()
       }
     }
     inRead.waitFor()
