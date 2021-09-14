@@ -262,6 +262,10 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   }
 
   protected fun getModuleVirtualFileUrl(moduleEntity: ModuleEntity): VirtualFileUrl? {
+    return getImlFileDirectory(moduleEntity)?.append("${moduleEntity.name}.iml")
+  }
+
+  protected fun getImlFileDirectory(moduleEntity: ModuleEntity): VirtualFileUrl? {
     val entitySource = when (val moduleSource = moduleEntity.entitySource) {
       is JpsFileDependentEntitySource -> moduleSource.originalSource
       is CustomModuleEntitySource -> moduleSource.internalSource
@@ -270,7 +274,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     if (entitySource !is JpsFileEntitySource.FileInDirectory) {
       return null
     }
-    return entitySource.directory.append("${moduleEntity.name}.iml")
+    return entitySource.directory
   }
 
   fun createModuleInstance(

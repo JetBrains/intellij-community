@@ -165,7 +165,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
-  private @NotNull IComponentStore getStore() {
+  protected @NotNull IComponentStore getStore() {
     return Objects.requireNonNull(getService(IComponentStore.class));
   }
 
