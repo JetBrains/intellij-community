@@ -86,18 +86,14 @@ fun KtElement.resolveToCall(
     getResolvedCall(safeAnalyze(resolutionFacade, bodyResolveMode))
 
 
-private fun KtElement.safeAnalyze(
+fun KtElement.safeAnalyze(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode
 ): BindingContext {
     val context = try {
         analyze(resolutionFacade, bodyResolveMode)
     } catch (e: Exception) {
-        if (e.isItNoDescriptorForDeclarationException()) {
-            BindingContext.EMPTY
-        } else {
-            throw e
-        }
+        e.returnIfNoDescriptorForDeclarationException { BindingContext.EMPTY }
     }
     return context
 }

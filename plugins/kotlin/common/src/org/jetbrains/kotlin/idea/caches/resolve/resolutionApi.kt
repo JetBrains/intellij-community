@@ -222,4 +222,11 @@ fun ResolutionFacade.resolveImportReference(
 )
 fun KtElement.analyzeFully(): BindingContext = analyzeWithAllCompilerChecks().bindingContext
 
-fun Exception.isItNoDescriptorForDeclarationException(): Boolean = this is NoDescriptorForDeclarationException || (cause?.safeAs<Exception>()?.isItNoDescriptorForDeclarationException() ?: false)
+val Exception.isItNoDescriptorForDeclarationException: Boolean
+    get() = this is NoDescriptorForDeclarationException || cause?.safeAs<Exception>()?.isItNoDescriptorForDeclarationException == true
+
+inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(crossinline computable: () -> T): T {
+    if (this.isItNoDescriptorForDeclarationException)
+        return computable()
+    else throw this
+}

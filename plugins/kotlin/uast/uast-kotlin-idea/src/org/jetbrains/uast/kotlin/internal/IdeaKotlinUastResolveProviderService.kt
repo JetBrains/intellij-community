@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.isItNoDescriptorForDeclarationException
+import org.jetbrains.kotlin.idea.caches.resolve.returnIfNoDescriptorForDeclarationException
 import org.jetbrains.kotlin.idea.core.resolveCandidates
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -35,11 +35,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
         try {
             getBindingContext(element)
         } catch (e: Exception) {
-            if (e.isItNoDescriptorForDeclarationException()) {
-                null
-            } else {
-                throw e
-            }
+            e.returnIfNoDescriptorForDeclarationException { null }
         }
 
     override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
