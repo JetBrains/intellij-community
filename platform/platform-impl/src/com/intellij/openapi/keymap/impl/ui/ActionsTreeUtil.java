@@ -404,8 +404,7 @@ public final class ActionsTreeUtil {
       if (isNonExecutableActionGroup(id, actionOrStub) ||
           id.startsWith(QuickList.QUICK_LIST_PREFIX) ||
           mainGroup.containsId(id) ||
-          result.contains(id) ||
-          keymapManager.getBoundActions().contains(id)) {
+          result.contains(id)) {
         continue;
       }
 
