@@ -17,10 +17,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeAndroidTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeJvmDesktopTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeMppModuleTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeWebModuleTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.compose.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
 
 abstract class ProjectTemplate : DisplayableSettingItem {
@@ -422,7 +419,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                     Module(
                         "android",
                         AndroidTargetConfigurator,
-                        template = null,
+                        template = ComposeCommonAndroidTemplate(),
                         sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<AndroidTargetConfigurator> {
