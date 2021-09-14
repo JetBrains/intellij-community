@@ -1,4 +1,6 @@
 // WITH_RUNTIME
+import kotlin.contracts.*
+
 fun lambdaGlobalReturn(ints: Array<Int>, b : Boolean) {
     var x = 0
     ints.forEach {
@@ -52,4 +54,48 @@ fun letInline(x: String?):Boolean {
     // if x is non-null we return from inner condition.
     // as a result, outer one can only evaluate to false.
     return <warning descr="Condition is always false">x?.let { return x.isEmpty() } ?: false</warning>
+}
+fun exactlyOnce(ints: Array<Int>) {
+    var x = 0
+    synchronized(ints) {
+        x++
+    }
+    if (<warning descr="Condition is always true">x == 1</warning>) {}
+    synchronized(ints) {
+        x++
+    }
+    if (<warning descr="Condition is always true">x == 2</warning>) {}
+    ints.forEach {
+        x++
+    }
+    if (x == 3) {}
+}
+
+fun atMostOnce(result : Result<String>) {
+    var x = 1
+    result.onSuccess { x++ }
+    if (<warning descr="Condition is always false">x == 0</warning>) {}
+    if (x == 1) {}
+    if (x == 2) {}
+    if (<warning descr="Condition is always true">x == 1 || <warning descr="Condition is always true when reached">x == 2</warning></warning>) {}
+}
+
+fun atLeastOnce() {
+    var x = <warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'x' initializer is redundant">1</warning>
+    var y = 1
+    runAtLeastOnce {
+        x = 2
+        y++
+    }
+    if (y == 2) {}
+    if (<warning descr="Condition is always true">x == 2</warning>) {}
+}
+
+@<warning descr="[EXPERIMENTAL_IS_NOT_ENABLED] This class can only be used with the compiler argument '-Xopt-in=kotlin.RequiresOptIn'">OptIn</warning>(kotlin.contracts.ExperimentalContracts::class)
+inline fun runAtLeastOnce(lambda: () -> Unit) {
+    contract {
+        callsInPlace(lambda, InvocationKind.AT_LEAST_ONCE)
+    }
+    lambda()
+    lambda()
 }

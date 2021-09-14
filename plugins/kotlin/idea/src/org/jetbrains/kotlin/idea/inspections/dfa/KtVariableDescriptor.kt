@@ -48,7 +48,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                             parentScope = PsiTreeUtil.getParentOfType(context, KtFunction::class.java)
                             val maybeLambda = parentScope?.parent as? KtLambdaExpression
                             val maybeCall = (maybeLambda?.parent as? KtLambdaArgument)?.parent as? KtCallExpression
-                            if (maybeCall != null && getInlineableLambda(maybeCall) == maybeLambda) {
+                            if (maybeCall != null && getInlineableLambda(maybeCall)?.lambda == maybeLambda) {
                                 context = maybeCall
                                 continue
                             }

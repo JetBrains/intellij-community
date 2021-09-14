@@ -2,9 +2,6 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil
-import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
@@ -27,7 +24,6 @@ import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
@@ -36,7 +32,12 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
+import org.jetbrains.kotlin.contracts.description.CallsEffectDeclaration
+import org.jetbrains.kotlin.contracts.description.ContractProviderKey
+import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
@@ -53,7 +54,6 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -428,7 +428,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         val lambda = getInlineableLambda(expr)
         if (lambda != null) {
-            inlineLambda(lambda)
+            var kind = getLambdaOccurrenceRange(expr, lambda.descriptor.original)
+            inlineLambda(lambda.lambda, kind)
         } else {
             for(lambdaArg in expr.lambdaArguments) {
                 processExpression(lambdaArg.getLambdaExpression())
@@ -439,8 +440,20 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addCall(expr, argCount, qualifierOnStack)
     }
 
-    private fun inlineLambda(lambda: KtLambdaExpression) {
-        // TODO: check callsInPlace Kotlin contract and use it here
+    private fun getLambdaOccurrenceRange(expr: KtCallExpression, descriptor: ValueParameterDescriptor): EventOccurrencesRange {
+        val contractDescription = expr.resolveToCall()?.resultingDescriptor?.getUserData(ContractProviderKey)?.getContractDescription()
+        if (contractDescription != null) {
+            val callEffect = contractDescription.effects
+                .singleOrNull { e -> e is CallsEffectDeclaration && e.variableReference.descriptor == descriptor }
+                    as? CallsEffectDeclaration
+            if (callEffect != null) {
+                return callEffect.kind
+            }
+        }
+        return EventOccurrencesRange.UNKNOWN
+    }
+
+    private fun inlineLambda(lambda: KtLambdaExpression, kind: EventOccurrencesRange) {
         /*
             We encode unknown call with inlineable lambda as
             unknownCode()
@@ -453,9 +466,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
          */
         addInstruction(FlushFieldsInstruction())
         val offset = ControlFlow.FixedOffset(flow.instructionCount)
-        pushUnknown()
         val endOffset = DeferredOffset()
-        addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
+        if (kind != EventOccurrencesRange.EXACTLY_ONCE && kind != EventOccurrencesRange.MORE_THAN_ONCE &&
+                kind != EventOccurrencesRange.AT_LEAST_ONCE) {
+            pushUnknown()
+            addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
+        }
 
         inlinedBlock(lambda) {
             val functionLiteral = lambda.functionLiteral
@@ -480,8 +496,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
         setOffset(endOffset)
         addInstruction(FlushFieldsInstruction())
-        pushUnknown()
-        addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+        if (kind != EventOccurrencesRange.AT_MOST_ONCE && kind != EventOccurrencesRange.EXACTLY_ONCE) {
+            pushUnknown()
+            addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+        }
     }
 
     private inline fun inlinedBlock(element: KtElement, fn : () -> Unit) {

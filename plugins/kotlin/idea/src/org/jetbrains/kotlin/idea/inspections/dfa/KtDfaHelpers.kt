@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.project.builtIns
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
+import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
@@ -236,14 +238,17 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     else -> null
 }
 
-internal fun getInlineableLambda(expr: KtCallExpression): KtLambdaExpression? {
+internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null
+    val lambdaExpression = lambdaArgument.getLambdaExpression() ?: return null
     val index = expr.valueArguments.indexOf(lambdaArgument)
     assert(index >= 0)
-    val descriptor = expr.resolveToCall()?.resultingDescriptor as? FunctionDescriptor
+    val resolvedCall = expr.resolveToCall() ?: return null
+    val descriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor
     if (descriptor == null || !descriptor.isInline) return null
-    val valueParameters = descriptor.valueParameters
-    if (valueParameters.size <= index) return null
-    if (valueParameters[index].isNoinline) return null
-    return lambdaArgument.getLambdaExpression()
+    val parameterDescriptor = (resolvedCall.getArgumentMapping(lambdaArgument) as? ArgumentMatch)?.valueParameter ?: return null
+    if (parameterDescriptor.isNoinline) return null
+    return LambdaAndParameter(lambdaExpression, parameterDescriptor)
 }
+
+internal data class LambdaAndParameter(val lambda: KtLambdaExpression, val descriptor: ValueParameterDescriptor)
