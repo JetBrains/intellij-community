@@ -441,7 +441,7 @@
     <postStartupActivity implementation="com.intellij.codeInsight.hints.ParameterHintsSettingsMigration"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.InlayHintsPassFactory"/>
 
-    <projectConfigurable instance="com.intellij.codeInsight.hints.settings.InlayHintsConfigurable"
+    <projectConfigurable provider="com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableProvider"
                          id="inlay.hints"
                          parentId="editor"
                          key="settings.hints"
