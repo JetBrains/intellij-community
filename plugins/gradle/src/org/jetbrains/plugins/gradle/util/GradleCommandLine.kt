@@ -8,9 +8,22 @@ import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptio
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-class GradleCommandLine(val tasksAndArguments: List<String>, val scriptParameters: ScriptParameters) {
-  class ScriptParameters(val options: List<String>, val vmOptions: List<String>) {
-    override fun toString() = (options + vmOptions.map { "-D$it" }).joinToString(" ")
+class GradleCommandLine(val tasksAndArguments: TasksAndArguments, val scriptParameters: ScriptParameters) {
+
+  override fun toString() = tasksAndArguments.toString() + scriptParameters.toString()
+
+  class Task(val name: String, val arguments: List<String>) {
+    fun toList() = listOf(name) + arguments
+    override fun toString() = toList().joinToString(" ")
+  }
+
+  class TasksAndArguments(val tasks: List<Task>) {
+    fun toList() = tasks.flatMap(Task::toList)
+    override fun toString() = toList().joinToString(" ")
+  }
+
+  class ScriptParameters(val options: List<String>) {
+    override fun toString() = options.joinToString(" ")
   }
 
   companion object {
@@ -19,9 +32,8 @@ class GradleCommandLine(val tasksAndArguments: List<String>, val scriptParameter
 
     @JvmStatic
     fun parse(commandLine: List<String>): GradleCommandLine {
-      val tasksAndArguments = ArrayList<String>()
+      val tasksAndArguments = ArrayList<Task>()
       val options = ArrayList<String>()
-      val vmOptions = ArrayList<String>()
 
       val allOptions = GradleCommandLineOptionsProvider.getSupportedOptions()
         .options.asSequence()
@@ -31,12 +43,12 @@ class GradleCommandLine(val tasksAndArguments: List<String>, val scriptParameter
         when {
           token in allOptions -> options.add(token)
           token.startsWith("-P") -> options.add(token)
-          token.startsWith("-D") -> vmOptions.add(token.removePrefix("-D"))
-          else -> tasksAndArguments.add(token)
+          token.startsWith("-D") -> options.add(token)
+          else -> tasksAndArguments.add(Task(token, emptyList()))
         }
       }
 
-      return GradleCommandLine(tasksAndArguments, ScriptParameters(options, vmOptions))
+      return GradleCommandLine(TasksAndArguments(tasksAndArguments), ScriptParameters(options))
     }
   }
 }

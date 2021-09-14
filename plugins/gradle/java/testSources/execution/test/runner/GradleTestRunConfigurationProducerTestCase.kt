@@ -27,12 +27,10 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.TasksToRun
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.runners.Parameterized
 import java.io.File
-import java.util.function.Consumer
 
 abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestCase() {
 
@@ -90,9 +88,11 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val producer = configurationFromContext.configurationProducer as P
     producer.setTestTasksChooser(testTasksFilter)
     val configuration = configurationFromContext.configuration as GradleRunConfiguration
-    assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
+    assertTrue("Configuration can be setup by producer from his context",
+      producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
     if (producer !is PatternGradleConfigurationProducer) {
-      assertTrue(producer.isConfigurationFromContext(configuration, context))
+      assertTrue("Producer have to identify configuration that was created by him",
+        producer.isConfigurationFromContext(configuration, context))
     }
     producer.onFirstRun(configurationFromContext, context, Runnable {})
     assertEquals(expectedSettings, configuration.settings.toString())
@@ -111,11 +111,11 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
     testTasksChooser = object : TestTasksChooser() {
-      override fun chooseTestTasks(project: Project,
-                                   context: DataContext,
-                                   testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
-                                   consumer: Consumer<List<Map<SourcePath, TestTasks>>>) {
-        consumer.accept(testTasks.filterKeys(testTasksFilter).values.toList())
+      override fun <T> chooseTestTasks(project: Project,
+                                       context: DataContext,
+                                       testTasks: Map<TestName, T>,
+                                       consumer: (List<T>) -> Unit) {
+        consumer(testTasks.filterKeys(testTasksFilter).values.toList())
       }
     }
   }
@@ -132,7 +132,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
     val runConfiguration = configuration.configuration as GradleRunConfiguration
     runConfiguration.settings.externalProjectPath = projectPath
-    runConfiguration.commandLine = commandLine
+    runConfiguration.rawCommandLine = commandLine
     if (vmOptions != null) {
       runConfiguration.settings.vmOptions = vmOptions
     }

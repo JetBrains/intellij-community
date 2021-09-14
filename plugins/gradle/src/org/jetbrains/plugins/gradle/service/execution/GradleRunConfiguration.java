@@ -59,7 +59,7 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     setDebugServerProcess(scriptDebugEnabled);
   }
 
-  public @NotNull String getCommandLine() {
+  public @NotNull String getRawCommandLine() {
     StringJoiner commandLine = new StringJoiner(" ");
     for (String taskName : getSettings().getTaskNames()) {
       commandLine.add(taskName);
@@ -71,13 +71,17 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     return commandLine.toString();
   }
 
-  public void setCommandLine(@NotNull String commandLine) {
+  public void setRawCommandLine(@NotNull String commandLine) {
     setCommandLine(GradleCommandLine.parse(commandLine));
   }
 
-  private void setCommandLine(@NotNull GradleCommandLine commandLine) {
-    getSettings().setTaskNames(commandLine.getTasksAndArguments());
+  public void setCommandLine(@NotNull GradleCommandLine commandLine) {
+    getSettings().setTaskNames(commandLine.getTasksAndArguments().toList());
     getSettings().setScriptParameters(commandLine.getScriptParameters().toString());
+  }
+
+  public @NotNull GradleCommandLine getCommandLine() {
+    return GradleCommandLine.parse(getRawCommandLine());
   }
 
   @Nullable

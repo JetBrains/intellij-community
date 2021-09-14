@@ -39,12 +39,26 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
   private final GradlePatternBasedConfigurationProducer<?> myBaseConfigurationProducer = new GradlePatternBasedConfigurationProducer<>();
 
   @Override
+  public boolean isPreferredConfiguration(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
+    return other.isProducedBy(TestClassGradleConfigurationProducer.class) ||
+           other.isProducedBy(TestMethodGradleConfigurationProducer.class) ||
+           super.isPreferredConfiguration(self, other);
+  }
+
+  @Override
+  public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
+    return other.isProducedBy(TestClassGradleConfigurationProducer.class) ||
+           other.isProducedBy(TestMethodGradleConfigurationProducer.class) ||
+           super.shouldReplace(self, other);
+  }
+
+  @Override
   protected boolean doSetupConfigurationFromContext(
     @NotNull GradleRunConfiguration configuration,
     @NotNull ConfigurationContext context,
     @NotNull Ref<PsiElement> sourceElement
   ) {
-    if (!isMultipleElementsSelected(context)) return false;
+    if (!myBaseConfigurationProducer.isMultipleElementsSelected(context)) return false;
     ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
     if (!GradleConstants.SYSTEM_ID.equals(settings.getExternalSystemId())) return false;
     final Location contextLocation = context.getLocation();
@@ -74,42 +88,41 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
 
   @Override
   public void onFirstRun(
-    @NotNull ConfigurationFromContext fromContext,
+    @NotNull ConfigurationFromContext configuration,
     @NotNull ConfigurationContext context,
-    @NotNull Runnable performRunnable
+    @NotNull Runnable startRunnable
   ) {
-    Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
-    if (!isMultipleElementsSelected(context)) {
-      super.onFirstRun(fromContext, context, runnableWithCheck);
+    if (!myBaseConfigurationProducer.isMultipleElementsSelected(context)) {
+      super.onFirstRun(configuration, context, startRunnable);
       return;
     }
     Module module = getModuleFromContext(context);
     if (module == null) {
       LOG.warn("Cannot find module from context, uses raw run configuration");
-      runnableWithCheck.run();
+      super.onFirstRun(configuration, context, startRunnable);
       return;
     }
-    ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
+    ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)configuration.getConfiguration();
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
     if (tests.isEmpty()) {
       LOG.warn("Cannot find runnable tests from context, uses raw run configuration");
-      runnableWithCheck.run();
+      super.onFirstRun(configuration, context, startRunnable);
       return;
     }
     TestMappings testMappings = getTestMappings(project, tests);
     getTestTasksChooser().chooseTestTasks(project, context.getDataContext(), testMappings.getClasses().values(), tasks -> {
-      ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
+      ExternalSystemTaskExecutionSettings settings = runConfiguration.getSettings();
       Function1<String, VirtualFile> findTestSource = test -> getSourceFile(testMappings.getClasses().get(test));
       Function1<String, String> createFilter = (test) ->
         createTestFilterFrom(testMappings.getClasses().get(test), testMappings.getMethods().get(test), /*hasSuffix=*/true);
       if (!applyTestConfiguration(settings, module, tasks, tests, findTestSource, createFilter)) {
         LOG.warn("Cannot apply pattern test configuration, uses raw run configuration");
-        runnableWithCheck.run();
+        super.onFirstRun(configuration, context, startRunnable);
         return;
       }
-      configuration.setName(suggestConfigurationName(tests));
-      runnableWithCheck.run();
+      runConfiguration.setName(suggestConfigurationName(tests));
+      super.onFirstRun(configuration, context, startRunnable);
     });
   }
 
@@ -169,10 +182,6 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     private Map<String, String> getMethods() {
       return methods;
     }
-  }
-
-  public boolean isMultipleElementsSelected(ConfigurationContext context) {
-    return myBaseConfigurationProducer.isMultipleElementsSelected(context);
   }
 
   private static class GradlePatternBasedConfigurationProducer<T extends JavaTestConfigurationBase>

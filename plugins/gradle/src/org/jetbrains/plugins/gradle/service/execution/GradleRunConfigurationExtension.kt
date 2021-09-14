@@ -58,7 +58,7 @@ class GradleRunConfigurationExtension
   ) = addCommandLineFragment(
     project,
     GradleCommandLineInfo(project, workingDirectoryFragment.component().component),
-    { commandLine },
-    { commandLine = it }
+    { rawCommandLine },
+    { rawCommandLine = it }
   )
 }

@@ -66,33 +66,28 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
                              projectData["project"]["pkg.TestCase"].element.containingFile.containingDirectory,
                              projectData["project"]["TestCase"]["test2"].element)
 
-      val contexts = (locations + locations).map { getContextByLocation(it) } // with duplicate locations
+      val contexts = locations.map { getContextByLocation(it) } // with duplicate locations
       val cfgFromCtx = contexts.map { getConfigurationFromContext(it) }
       val configurations = cfgFromCtx.map { it.configuration as GradleRunConfiguration }
       val methodProd = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
       val classProd = getConfigurationProducer<TestClassGradleConfigurationProducer>()
       val packageProd = getConfigurationProducer<AllInPackageGradleConfigurationProducer>()
+      val directoryProd = getConfigurationProducer<AllInDirectoryGradleConfigurationProducer>()
 
       for ((j, configuration) in configurations.withIndex()) {
         for ((k, context) in contexts.withIndex()) {
-          val cfgMatchesContext = j % locations.size == k % locations.size
-
-          val isPsiMethod = context.psiLocation is PsiMethod
-          assertEquals(isPsiMethod && cfgMatchesContext, methodProd.isConfigurationFromContext(configuration, context))
-
-          val isPsiClass = context.psiLocation is PsiClass
-          assertEquals(isPsiClass && cfgMatchesContext, classProd.isConfigurationFromContext(configuration, context))
-
-          val isPsiDir = context.psiLocation is PsiDirectory
-          assertEquals(isPsiDir && cfgMatchesContext, packageProd.isConfigurationFromContext(configuration, context))
+          val cfgMatchesContext = j == k
+          when (context.psiLocation) {
+            is PsiMethod -> assertEquals(cfgMatchesContext, methodProd.isConfigurationFromContext(configuration, context))
+            is PsiClass -> assertEquals(cfgMatchesContext, classProd.isConfigurationFromContext(configuration, context))
+            is PsiDirectory -> assertEquals(cfgMatchesContext, packageProd.isConfigurationFromContext(configuration, context))
+          }
         }
       }
 
       val context = getContextByLocation(*locations.toTypedArray())
-
-      assertFalse(methodProd.isConfigurationFromContext(configurations[0], context))
-      assertFalse(classProd.isConfigurationFromContext(configurations[1], context))
       assertFalse(packageProd.isConfigurationFromContext(configurations[2], context))
+      assertFalse(directoryProd.isConfigurationFromContext(configurations[2], context))
     }
   }
 

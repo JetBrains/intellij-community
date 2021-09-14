@@ -108,9 +108,8 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     GradleCommandLine commandLine = GradleCommandLine.parse(fullCommandLine);
     ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
     settings.setExternalProjectPath(projectPath);
-    settings.setTaskNames(commandLine.getTasksAndArguments());
-    settings.setScriptParameters(StringUtil.nullize(StringUtil.join(commandLine.getScriptParameters().getOptions(), " ")));
-    settings.setVmOptions(StringUtil.nullize(StringUtil.join(commandLine.getScriptParameters().getVmOptions(), " ")));
+    settings.setTaskNames(commandLine.getTasksAndArguments().toList());
+    settings.setScriptParameters(commandLine.getScriptParameters().toString());
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
     return new ExternalTaskExecutionInfo(settings, executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId());
   }

@@ -9,11 +9,10 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.TestData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
@@ -41,7 +40,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
 import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
 public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<GradleRunConfiguration> {
@@ -60,20 +58,13 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   }
 
   @Override
-  public boolean isPreferredConfiguration(
-    @NotNull ConfigurationFromContext self,
-    @NotNull ConfigurationFromContext other
-  ) {
-    TestRunner testRunner = getTestRunner(self.getSourceElement());
-    return testRunner == CHOOSE_PER_TEST || testRunner == GRADLE;
+  public boolean isPreferredConfiguration(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
+    return isUsedTestRunners(self.getConfiguration(), CHOOSE_PER_TEST, GRADLE);
   }
 
   @Override
-  public boolean shouldReplace(
-    @NotNull ConfigurationFromContext self,
-    @NotNull ConfigurationFromContext other
-  ) {
-    return getTestRunner(self.getSourceElement()) == GRADLE;
+  public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
+    return isUsedTestRunners(self.getConfiguration(), GRADLE);
   }
 
   @Override
@@ -85,23 +76,40 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
 
     if (sourceElement.isNull()) return false;
-    TestRunner testRunner = getTestRunner(sourceElement.get());
-    if (testRunner == PLATFORM) return false;
+    if (isUsedTestRunners(context, PLATFORM)) return false;
     configuration.setScriptDebugEnabled(false);
     boolean result = doSetupConfigurationFromContext(configuration, context, sourceElement);
     restoreDefaultScriptParametersIfNeeded(configuration, context);
     return result;
   }
 
-  protected Runnable addCheckForTemplateParams(
+  protected abstract boolean doSetupConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context,
+    @NotNull Ref<PsiElement> sourceElement
+  );
+
+  @Override
+  public boolean isConfigurationFromContext(@NotNull GradleRunConfiguration configuration, @NotNull ConfigurationContext context) {
+    ProjectSystemId externalSystemId = configuration.getSettings().getExternalSystemId();
+    return GradleConstants.SYSTEM_ID.equals(externalSystemId) &&
+           isUsedTestRunners(configuration, CHOOSE_PER_TEST, GRADLE) &&
+           doIsConfigurationFromContext(configuration, context);
+  }
+
+  protected abstract boolean doIsConfigurationFromContext(
+    @NotNull GradleRunConfiguration configuration,
+    @NotNull ConfigurationContext context
+  );
+
+  @Override
+  public void onFirstRun(
     @NotNull ConfigurationFromContext configuration,
     @NotNull ConfigurationContext context,
     @NotNull Runnable startRunnable
   ) {
-    return () -> {
-      restoreDefaultScriptParametersIfNeeded(configuration.getConfiguration(), context);
-      startRunnable.run();
-    };
+    restoreDefaultScriptParametersIfNeeded(configuration.getConfiguration(), context);
+    startRunnable.run();
   }
 
   protected void restoreDefaultScriptParametersIfNeeded(
@@ -128,29 +136,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     }
   }
 
-  protected abstract boolean doSetupConfigurationFromContext(
-    @NotNull GradleRunConfiguration configuration,
-    @NotNull ConfigurationContext context,
-    @NotNull Ref<PsiElement> sourceElement
-  );
-
-  @Override
-  public boolean isConfigurationFromContext(@NotNull GradleRunConfiguration configuration, @NotNull ConfigurationContext context) {
-    if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
-
-    String projectPath = configuration.getSettings().getExternalProjectPath();
-    TestRunner testRunner = getTestRunner(context.getProject(), projectPath);
-    if (testRunner == PLATFORM) return false;
-    return doIsConfigurationFromContext(configuration, context);
-  }
-
-  protected abstract boolean doIsConfigurationFromContext(
-    @NotNull GradleRunConfiguration configuration,
-    @NotNull ConfigurationContext context
-  );
-
-  @Nullable
-  protected String resolveProjectPath(@NotNull Module module) {
+  protected static @Nullable String resolveProjectPath(@NotNull Module module) {
     GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
     if (gradleModuleData == null) return null;
     boolean isGradleProjectDirUsedToRunTasks = gradleModuleData.getDirectoryToRunTask().equals(gradleModuleData.getGradleProjectDir());
@@ -167,17 +153,6 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   @TestOnly
   public void setTestTasksChooser(TestTasksChooser testTasksChooser) {
     this.testTasksChooser = testTasksChooser;
-  }
-
-  public static boolean hasTasksInConfiguration(VirtualFile source, Project project, ExternalSystemTaskExecutionSettings settings) {
-    List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
-    List<List<String>> escapedTasks = ContainerUtil.map(tasksToRun, tasks -> ContainerUtil.map(tasks, it -> escapeIfNeeded(it)));
-    List<String> taskNames = settings.getTaskNames();
-    if (escapedTasks.stream().anyMatch(taskNames::containsAll)) return true;
-    String scriptParameters = settings.getScriptParameters();
-    if (StringUtil.isEmpty(scriptParameters)) return false;
-    List<String> escapedJoinedTasks = ContainerUtil.map(escapedTasks, it -> StringUtil.join(it, " "));
-    return escapedJoinedTasks.stream().anyMatch(scriptParameters::contains);
   }
 
   /**
@@ -231,18 +206,30 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     return testTasks;
   }
 
-  private static TestRunner getTestRunner(@NotNull Project project, @NotNull String projectPath) {
-    return GradleProjectSettings.getTestRunner(project, projectPath);
+  private static boolean isUsedTestRunners(@NotNull RunConfiguration configuration, TestRunner @NotNull ... runners) {
+    return configuration instanceof GradleRunConfiguration &&
+           isUsedTestRunners((GradleRunConfiguration)configuration, runners);
   }
 
-  private static TestRunner getTestRunner(@NotNull PsiElement sourceElement) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(sourceElement);
-    if (module == null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("Cannot find module for %s", sourceElement), new Throwable());
-      }
-      return PLATFORM;
-    }
-    return GradleProjectSettings.getTestRunner(module);
+  private static boolean isUsedTestRunners(@NotNull GradleRunConfiguration configuration, TestRunner @NotNull ... runners) {
+    Project project = configuration.getProject();
+    String externalProjectPath = configuration.getSettings().getExternalProjectPath();
+    return isUsedTestRunners(project, externalProjectPath, runners);
+  }
+
+  private static boolean isUsedTestRunners(@NotNull ConfigurationContext context, TestRunner @NotNull ... runners) {
+    Project project = context.getProject();
+    Module module = context.getModule();
+    return project != null && module != null &&
+           isUsedTestRunners(project, resolveProjectPath(module), runners);
+  }
+
+  private static boolean isUsedTestRunners(
+    @NotNull Project project,
+    @Nullable String externalProjectPath,
+    TestRunner @NotNull ... runners
+  ) {
+    TestRunner testRunner = GradleProjectSettings.getTestRunner(project, externalProjectPath);
+    return ContainerUtil.exists(runners, it -> it.equals(testRunner));
   }
 }
