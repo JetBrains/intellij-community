@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -25,8 +25,8 @@ import java.util.List;
 
 public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
+  protected void setUp() throws Exception {
+    super.setUp();
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
