@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
@@ -135,6 +136,8 @@ class PythonOnboardingTour :
     openLearnToolwindow()
 
     showInterpreterConfiguration()
+
+    waitIndexingTasks()
 
     runTasks()
 
@@ -287,6 +290,25 @@ class PythonOnboardingTour :
       it.isNotEmpty<Component?>() && (it[0] as? ActionButton)?.let { first ->
         first.action == needFirstAction
       } == true
+    }
+  }
+
+  private fun LessonContext.waitIndexingTasks() {
+    task {
+      triggerByUiComponentAndHighlight(highlightInside = false) { progress: NonOpaquePanel ->
+        progress.javaClass.name.contains("InlineProgressPanel")
+      }
+    }
+
+    task {
+      text(PythonLessonsBundle.message("python.onboarding.indexing.description"))
+      waitSmartModeStep()
+    }
+
+    waitBeforeContinue(300)
+
+    prepareRuntimeTask {
+      LearningUiHighlightingManager.clearHighlights()
     }
   }
 
