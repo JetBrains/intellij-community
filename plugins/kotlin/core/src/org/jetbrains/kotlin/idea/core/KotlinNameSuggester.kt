@@ -222,21 +222,18 @@ object KotlinNameSuggester {
             typeChecker.equalTypes(builtIns.charType, myType) -> addName("c", validator)
             typeChecker.equalTypes(builtIns.stringType, myType) -> addName("s", validator)
             myType.isFunctionType -> addName("function", validator)
+            KotlinBuiltIns.isArray(myType) || KotlinBuiltIns.isPrimitiveArray(myType) -> {
+                addNamesForArray(builtIns, myType, validator, typeChecker)
+            }
+            typeDescriptor != null && DescriptorUtils.isSubtypeOfClass(typeDescriptor.defaultType, builtIns.iterable.original)
+                    && type.arguments.isNotEmpty() ->
+                addNameForIterableInheritors(type, validator)
             else -> {
-                when {
-                    KotlinBuiltIns.isArray(myType) || KotlinBuiltIns.isPrimitiveArray(myType) -> {
-                        addNamesForArray(builtIns, myType, validator, typeChecker)
-                    }
-                    typeDescriptor != null && DescriptorUtils.isSubtypeOfClass(typeDescriptor.defaultType, builtIns.collection.original) ->
-                        addNameForCollectionsInheritors(type, validator)
-                    else -> {
-                        val name = getTypeName(myType)
-                        if (name != null) {
-                            addCamelNames(name, validator)
-                        }
-                        addNamesFromGenericParameters(myType, validator)
-                    }
+                val name = getTypeName(myType)
+                if (name != null) {
+                    addCamelNames(name, validator)
                 }
+                addNamesFromGenericParameters(myType, validator)
             }
         }
     }
@@ -266,7 +263,7 @@ object KotlinNameSuggester {
         }
     }
 
-    private fun MutableCollection<String>.addNameForCollectionsInheritors(type: KotlinType, validator: (String) -> Boolean) {
+    private fun MutableCollection<String>.addNameForIterableInheritors(type: KotlinType, validator: (String) -> Boolean) {
         val typeArgument = type.arguments.singleOrNull()?.type ?: return
         val name = getTypeName(typeArgument)
         if (name != null) {
