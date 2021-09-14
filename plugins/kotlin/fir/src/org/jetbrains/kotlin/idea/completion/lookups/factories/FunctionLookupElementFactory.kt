@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.idea.completion.lookups.QuotedNamesAwareInsertionHandler
 import org.jetbrains.kotlin.idea.completion.lookups.addCallableImportIfRequired
 import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambd
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS
 import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
-import org.jetbrains.kotlin.idea.frontend.api.components.KtDeclarationRendererOptions
+import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 
 internal class FunctionLookupElementFactory {
     fun KtAnalysisSession.createLookup(

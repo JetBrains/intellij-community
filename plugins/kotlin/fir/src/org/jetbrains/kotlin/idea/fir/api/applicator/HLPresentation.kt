@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.api.applicator
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.frontend.api.ForbidKtResolve
+import org.jetbrains.kotlin.analysis.api.ForbidKtResolve
 
 /**
  * Provides a presentation to display an message in the editor which may be latter fixed by [HLApplicator]

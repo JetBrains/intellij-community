@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.fir.uast
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.idea.frontend.api.InvalidWayOfUsingAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSessionProvider
+import org.jetbrains.kotlin.analysis.api.InvalidWayOfUsingAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSessionProvider
 
 @OptIn(InvalidWayOfUsingAnalysisSession::class)
 internal fun Project.invalidateAllCachesForUastTests() {

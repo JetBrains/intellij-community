@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.fir.api
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
-import org.jetbrains.kotlin.idea.frontend.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.idea.frontend.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
