@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.fir.api.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.fir.low.level.api.annotations.PrivateForInline
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.quickfix.QuickFixesPsiBasedFactory
+import org.jetbrains.kotlin.miniStdLib.annotations.PrivateForInline
 import kotlin.reflect.KClass
 
 class KtQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::class) constructor(

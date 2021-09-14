@@ -3,13 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
-import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
-import org.jetbrains.kotlin.idea.frontend.api.calls.KtAnnotationCall
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSamConstructorSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.idea.frontend.api.types.*
+import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.analyseForUast
+import org.jetbrains.kotlin.analysis.api.calls.KtAnnotationCall
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*

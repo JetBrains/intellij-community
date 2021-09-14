@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactoriesFromIntenti
 import org.jetbrains.kotlin.idea.fir.intentions.HLAddGetterAndSetterIntention
 import org.jetbrains.kotlin.idea.fir.intentions.HLAddGetterIntention
 import org.jetbrains.kotlin.idea.fir.intentions.HLAddSetterIntention
-import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.psi.KtProperty
 
 object AddAccessorsFactories {

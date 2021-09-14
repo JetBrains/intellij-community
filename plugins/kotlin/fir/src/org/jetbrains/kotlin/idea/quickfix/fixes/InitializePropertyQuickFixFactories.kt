@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
 import org.jetbrains.kotlin.idea.fir.api.fixes.HLQuickFix
 import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactories
-import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory

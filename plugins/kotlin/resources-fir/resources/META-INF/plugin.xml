@@ -125,16 +125,16 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <!-- fir-specific -->
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.fir.AndroidPluginIncompatibilityCheckerStartupActivity"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.fir.low.level.api.api.FirModuleResolveStateConfigurator"
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveStateConfigurator"
                     serviceImplementation="org.jetbrains.kotlin.idea.fir.low.level.api.ide.FirModuleResolveStateConfiguratorIdeImpl"/>
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSessionProvider"
-                        serviceImplementation="org.jetbrains.kotlin.idea.frontend.api.fir.KtFirAnalysisSessionProvider"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.KtAnalysisSessionProvider"
+                        serviceImplementation="org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSessionProvider"/>
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
                         serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinFirReferenceContributor"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupApplicationService"/>
     <highlightRangeExtension implementation="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirPsiChecker"/>
     <annotator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirPsiChecker"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.low.level.api.FirIdeResolveStateService"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.FirIdeResolveStateService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"

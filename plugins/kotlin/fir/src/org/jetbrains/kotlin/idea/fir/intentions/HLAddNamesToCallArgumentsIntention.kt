@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
-import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
+import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.MultipleArgumentsInput as Input
