@@ -35,6 +35,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.lightEdit",
   "intellij.webstorm",
   "intellij.cwm.plugin", /* platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
+  "intellij.osgi", /* no particular package prefix to choose */
 )
 
 class PluginModelValidator(sourceModules: List<Module>) {
