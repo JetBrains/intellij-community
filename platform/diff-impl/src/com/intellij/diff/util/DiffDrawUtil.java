@@ -571,24 +571,18 @@ public final class DiffDrawUtil {
       highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, editorMode, gutterMode,
                                                                    hideWithoutLineNumbers, isEmptyRange, isFirstLine, isLastLine, alignedSides));
 
-      if (isEmptyRange) {
+      if (isEmptyRange && !alignedSides) {
         LineMarkerBuilder builder = isFirstLine ? new LineMarkerBuilder(editor, 0, SeparatorPlacement.TOP)
                                                 : new LineMarkerBuilder(editor, startLine - 1, SeparatorPlacement.BOTTOM);
-        if (!alignedSides) {
-          builder.withDefaultRenderer(type, true, dottedLine, highlighter);
-        }
+        builder.withDefaultRenderer(type, true, dottedLine, highlighter);
         highlighters.addAll(builder.done());
       }
-      else if (editorMode.border != BorderType.NONE) {
-        LineMarkerBuilder firstLineBuilder = new LineMarkerBuilder(editor, startLine, SeparatorPlacement.TOP);
-        if (!alignedSides) {
-          firstLineBuilder.withDefaultRenderer(type, false, dottedLine, highlighter);
-        }
+      else if (editorMode.border != BorderType.NONE && !alignedSides) {
+        LineMarkerBuilder firstLineBuilder = new LineMarkerBuilder(editor, startLine, SeparatorPlacement.TOP)
+          .withDefaultRenderer(type, false, dottedLine, highlighter);
+        LineMarkerBuilder secondLineBuilder = new LineMarkerBuilder(editor, endLine - 1, SeparatorPlacement.BOTTOM)
+          .withDefaultRenderer(type, false, dottedLine, highlighter);
         highlighters.addAll(firstLineBuilder.done());
-        LineMarkerBuilder secondLineBuilder = new LineMarkerBuilder(editor, endLine - 1, SeparatorPlacement.BOTTOM);
-        if (!alignedSides) {
-          secondLineBuilder.withDefaultRenderer(type, false, dottedLine, highlighter);
-        }
         highlighters.addAll(secondLineBuilder.done());
       }
 
