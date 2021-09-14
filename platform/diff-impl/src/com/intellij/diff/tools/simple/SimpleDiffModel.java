@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.simple;
 
+import com.intellij.diff.util.DiffDividerDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
@@ -9,6 +10,8 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -105,5 +108,29 @@ public class SimpleDiffModel {
     }
 
     myValidChanges.removeAll(invalidated);
+  }
+
+  public void paintPolygons(@NotNull Graphics2D g, @NotNull JComponent divider) {
+    MyPaintable paintable = new MyPaintable(getChanges());
+    DiffDividerDrawUtil.paintPolygons(g, divider.getWidth(), myViewer.getEditor1(), myViewer.getEditor2(), paintable);
+  }
+
+  private static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
+    private final List<SimpleDiffChange> myChanges;
+
+    private MyPaintable(@NotNull List<SimpleDiffChange> changes) {
+      myChanges = changes;
+    }
+
+    @Override
+    public void process(@NotNull DiffDividerDrawUtil.DividerPaintable.Handler handler) {
+      for (SimpleDiffChange diffChange : myChanges) {
+        if (!handler.processExcludable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
+                                       diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
+                                       diffChange.getDiffType(), diffChange.isExcluded(), diffChange.isSkipped())) {
+          return;
+        }
+      }
+    }
   }
 }
