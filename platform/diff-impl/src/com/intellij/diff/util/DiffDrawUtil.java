@@ -121,19 +121,9 @@ public final class DiffDrawUtil {
                                         int start2, int end2,
                                         @Nullable Color fillColor,
                                         @Nullable Color borderColor) {
-    drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, fillColor, borderColor, false);
-  }
-
-  public static void drawCurveTrapezium(@NotNull Graphics2D g,
-                                        int x1, int x2,
-                                        int start1, int end1,
-                                        int start2, int end2,
-                                        @Nullable Color fillColor,
-                                        @Nullable Color borderColor,
-                                        boolean alignedSides) {
     if (fillColor != null) {
       g.setColor(fillColor);
-      g.fill(makeCurvePath(x1, x2, start1, start2, end1 + (alignedSides ? 0 : 1), end2 + (alignedSides ? 0 : 1)));
+      g.fill(makeCurvePath(x1, x2, start1, start2, end1 + 1, end2 + 1));
 
       // 'g.fill' above draws thin line when used with high slopes. Here we ensure that background is never less than 1px thick.
       Stroke oldStroke = g.getStroke();
