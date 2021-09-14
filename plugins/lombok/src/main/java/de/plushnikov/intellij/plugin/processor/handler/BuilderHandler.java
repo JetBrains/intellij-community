@@ -136,6 +136,11 @@ public class BuilderHandler {
         return true;
       }
 
+      if (builderInfos.isEmpty() &&
+          PsiClassUtil.collectClassConstructorIntern(psiClass).isEmpty()) {
+        return true;
+      }
+
       problemBuilder.addError(LombokBundle.message("inspection.message.lombok.builder.needs.proper.constructor.for.this.class"));
       return false;
     }

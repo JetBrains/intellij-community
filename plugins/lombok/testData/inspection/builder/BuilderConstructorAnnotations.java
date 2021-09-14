@@ -47,6 +47,10 @@ class BuilderValidConstructor5 {
   }
 }
 
+@lombok.Builder
+@lombok.NoArgsConstructor
+class BuilderNoConstructors { }
+
 <error descr="Lombok @Builder needs a proper constructor for this class">@lombok.Builder</error>
 @lombok.NoArgsConstructor
 class BuilderInvalidConstructor {
