@@ -17,8 +17,8 @@
     <fx14.version>14.0.2.1</fx14.version>
     <fx15.version>15.0.1</fx15.version>
     <fx16.version>16</fx16.version>
-    <fx17.version>17-ea+16</fx17.version>
-    <fx18.version>18-ea+1</fx18.version>
+    <fx17.version>17</fx17.version>
+    <fx18.version>18-ea+2</fx18.version>
   </properties>
 
   <dependencyManagement>
