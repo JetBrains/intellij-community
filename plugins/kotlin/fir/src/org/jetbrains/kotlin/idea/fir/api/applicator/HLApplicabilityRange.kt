@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.api.applicator
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.frontend.api.ForbidKtResolve
+import org.jetbrains.kotlin.analysis.api.ForbidKtResolve
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtElement
  * as it is responsibility of [HLApplicator.isApplicableByPsi]
  *
  * No resolve operations should be called inside [getApplicabilityRanges]
- * I.e no [org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
+ * I.e no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
  *
  * [getApplicabilityRanges] is guarantied to be called inside read action
  */
