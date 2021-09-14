@@ -176,6 +176,7 @@ public final class BootstrapClassLoaderUtil {
 
   private static @NotNull Collection<Path> computeClassPath(@NotNull Path libDir) throws IOException {
     Collection<Path> classpath = new LinkedHashSet<>();
+    parseClassPathString(System.getProperty("java.class.path"), classpath);  // Android Studio: IDEA-278177
 
     Path classPathFile = libDir.resolve("classpath.txt");
     try (Stream<String> stream = Files.lines(classPathFile)) {
@@ -193,7 +194,9 @@ public final class BootstrapClassLoaderUtil {
     }
 
     // no classpath file - compute classpath
+    /* Android Studio: IDEA-278177
     parseClassPathString(System.getProperty("java.class.path"), classpath);
+    Android Studio: IDEA-278177 */
 
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
     String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
