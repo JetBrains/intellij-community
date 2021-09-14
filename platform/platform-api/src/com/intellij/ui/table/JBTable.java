@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -335,7 +335,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (!forceVisibleRowCount) {
       visibleRows = Math.min(modelRows, visibleRows);
     }
-    int fixedWidth = base != null && base.width > 0 ? base.width : JBUI.scale(100);
+    int fixedWidth = base != null && base.width > 0 ? base.width : getPreferredWidth(this);
     Dimension size;
     if (modelRows == 0) {
       int fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
@@ -356,6 +356,23 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     }
     return size;
+  }
+
+  private static int getPreferredWidth(@NotNull JTable table) {
+    JTableHeader header = table.getTableHeader();
+    if (header != null) {
+      Dimension size = header.getPreferredSize();
+      if (size != null && size.width > 0) return size.width;
+    }
+    int width = 0;
+    TableColumnModel model = table.getColumnModel();
+    if (model != null) {
+      for (int i = 0; i < model.getColumnCount(); i++) {
+        TableColumn column = model.getColumn(i);
+        if (column != null) width += Math.max(column.getWidth(), column.getPreferredWidth());
+      }
+    }
+    return width > 0 ? width : JBUI.scale(100);
   }
 
   public boolean isEmpty() {
