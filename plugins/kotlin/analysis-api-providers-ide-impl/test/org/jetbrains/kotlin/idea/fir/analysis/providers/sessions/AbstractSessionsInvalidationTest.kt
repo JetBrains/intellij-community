@@ -7,6 +7,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
 import junit.framework.Assert
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSessionProviderStorage
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.moduleSourceInfo
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureReader
@@ -14,9 +17,6 @@ import org.jetbrains.kotlin.idea.fir.analysis.providers.incModificationTracker
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
-import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.FirIdeSession
-import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.FirIdeSessionProviderStorage
-import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.moduleSourceInfo
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.test.KotlinRoot

@@ -10,16 +10,16 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.fir.fe10.*
-import org.jetbrains.kotlin.idea.fir.low.level.api.api.getResolveState
-import org.jetbrains.kotlin.idea.frontend.api.*
-import org.jetbrains.kotlin.idea.frontend.api.fir.utils.EntityWasGarbageCollectedException
-import org.jetbrains.kotlin.idea.frontend.api.fir.utils.KtAnalysisSessionFe10BindingHolder
-import org.jetbrains.kotlin.idea.frontend.api.symbols.*
-import org.jetbrains.kotlin.idea.frontend.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
-import org.jetbrains.kotlin.idea.frontend.api.tokens.assertIsValidAndAccessible
+import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.fir.utils.EntityWasGarbageCollectedException
+import org.jetbrains.kotlin.analysis.api.fir.utils.KtAnalysisSessionFe10BindingHolder
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
+import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.api.tokens.assertIsValidAndAccessible
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getResolveState
+import org.jetbrains.kotlin.analysis.providers.getModuleInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -80,7 +80,7 @@ class FE10BindingContextImpl(
 ) : FE10BindingContext {
     private val token: ValidityToken = ValidityTokenForKtSymbolBasedWrappers(project)
 
-    private val moduleInfo = ktElement.getModuleInfo()
+    private val moduleInfo = ktElement.getModuleInfo() as IdeaModuleInfo
 
     @OptIn(InvalidWayOfUsingAnalysisSession::class)
     override val ktAnalysisSessionFacade = KtAnalysisSessionFe10BindingHolder.create(ktElement.getResolveState(), token, ktElement)
