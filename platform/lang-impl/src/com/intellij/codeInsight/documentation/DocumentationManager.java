@@ -977,13 +977,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private static void storeIsFromLookup(@Nullable PsiElement element, boolean value) {
     if (element == null) return;
-
-    if (value) {
-      element.putUserData(IS_FROM_LOOKUP, true);
-    }
-    else {
-      element.putUserData(IS_FROM_LOOKUP, null);
-    }
+    element.putUserData(IS_FROM_LOOKUP, value ? true : null);
   }
 
   @Nullable
