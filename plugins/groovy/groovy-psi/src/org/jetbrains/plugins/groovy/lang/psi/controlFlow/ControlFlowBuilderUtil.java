@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.util.Pair;
@@ -179,21 +179,21 @@ public final class ControlFlowBuilderUtil {
     else if (parent instanceof GrCaseSection) {
       final GrStatement[] statements = ((GrCaseSection)parent).getStatements();
       final GrStatement last = ArrayUtil.getLastElement(statements);
-      final GrSwitchStatement switchStatement = (GrSwitchStatement)parent.getParent();
-
+      final GrSwitchElement switchElement = (GrSwitchElement)parent.getParent();
+      final GrStatement switchAsStatement = switchElement instanceof GrSwitchExpression ? (GrSwitchExpression)switchElement : (GrStatement)switchElement;
       if (last instanceof GrBreakStatement && statements.length > 1 && statements[statements.length - 2] == st) {
-        return isCertainlyReturnStatement(switchStatement);
+        return isCertainlyReturnStatement(switchAsStatement);
       }
       else if (st == last) {
-        if (st instanceof GrBreakStatement || isLastStatementInCaseSection((GrCaseSection)parent, switchStatement)) {
-          return isCertainlyReturnStatement(switchStatement);
+        if (st instanceof GrBreakStatement || isLastStatementInCaseSection((GrCaseSection)parent, switchElement)) {
+          return isCertainlyReturnStatement(switchAsStatement);
         }
       }
     }
     return false;
   }
 
-  private static boolean isLastStatementInCaseSection(GrCaseSection caseSection, GrSwitchStatement switchStatement) {
+  private static boolean isLastStatementInCaseSection(GrCaseSection caseSection, GrSwitchElement switchStatement) {
     final GrCaseSection[] sections = switchStatement.getCaseSections();
     final int i = ArrayUtilRt.find(sections, caseSection);
     if (i == sections.length - 1) {
