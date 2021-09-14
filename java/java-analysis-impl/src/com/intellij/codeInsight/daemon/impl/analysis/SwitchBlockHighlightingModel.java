@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
@@ -707,6 +708,7 @@ public class SwitchBlockHighlightingModel {
                                               @NotNull List<PsiCaseLabelElement> elements,
                                               @NotNull List<HighlightInfo> results) {
       Set<PsiClass> directInheritedClasses;
+      List<String> allNames = new SmartList<>();
       if (elements.isEmpty()) {
         directInheritedClasses = Collections.emptySet();
       }
@@ -718,6 +720,7 @@ public class SwitchBlockHighlightingModel {
           PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
           if (patternClass != null) {
             patternClasses.put(patternClass, patternLabelElement);
+            allNames.add(patternClass.getName());
           }
         }
         directInheritedClasses = new SmartHashSet<>(
@@ -749,7 +752,11 @@ public class SwitchBlockHighlightingModel {
       }
       HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
       if (!directInheritedClasses.isEmpty()) {
-        // todo here we may try to create a quick-fix to provide missing labels
+        directInheritedClasses.forEach(aClass -> allNames.add(aClass.getName()));
+        Set<String> missingCases = new SmartHashSet<>();
+        directInheritedClasses.forEach(aClass -> missingCases.add(aClass.getName()));
+        IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
+        QuickFixAction.registerQuickFixAction(info, fix);
       }
       results.add(info);
     }

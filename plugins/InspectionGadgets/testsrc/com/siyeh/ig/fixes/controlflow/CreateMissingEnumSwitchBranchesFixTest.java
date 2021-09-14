@@ -10,7 +10,7 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 import com.siyeh.ig.controlflow.EnumSwitchStatementWhichMissesCasesInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class CreateMissingSwitchBranchesFixTest extends LightQuickFixParameterizedTestCase {
+public class CreateMissingEnumSwitchBranchesFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new EnumSwitchStatementWhichMissesCasesInspection[]{new EnumSwitchStatementWhichMissesCasesInspection()};
