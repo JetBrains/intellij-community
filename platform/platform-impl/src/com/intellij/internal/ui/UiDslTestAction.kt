@@ -48,7 +48,7 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     result.preferredSize = Dimension(800, 600)
     result.addTab("Text Fields", createTextFields())
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
-    result.addTab("Groups", createGroupsPanel())
+    result.addTab("Groups", JScrollPane(createGroupsPanel()))
     result.addTab("Segmented Button", createSegmentedButton())
     result.addTab("Visible/Enabled", createVisibleEnabled())
 
@@ -156,6 +156,18 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
         row("label2 long") {
           textField()
         }
+      }
+      group("Group, indent = false", indent = false) {
+        row("Row with label") {}
+      }
+      group("Group, topGroupGap = false", topGroupGap = false) {
+        row("Row with label2") {}
+      }
+      groupRowsRange("GroupRowsRange, indent = false", indent = false) {
+        row("Row with label") {}
+      }
+      groupRowsRange("GroupRowsRange, topGroupGap = false", topGroupGap = false) {
+        row("Row with label2") {}
       }
     }
   }
