@@ -30,8 +30,6 @@ open class FirUastApiTest : AbstractFirUastTest() {
         "uast-kotlin/testData/DefaultImpls.kt",
         // TODO: vararg, arrayOf call inside annotation
         "uast-kotlin/testData/AnnotationComplex.kt",
-        // TODO: getArgumentsForParameter
-        "uast-kotlin/testData/ParametersDisorder.kt",
         // TODO: resolve to inline and stdlib
         "uast-kotlin/testData/Resolve.kt",
         // TODO: no lambda call receiver?
