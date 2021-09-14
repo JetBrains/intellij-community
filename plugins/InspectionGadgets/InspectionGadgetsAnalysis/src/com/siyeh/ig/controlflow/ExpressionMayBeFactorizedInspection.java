@@ -3,11 +3,12 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -20,7 +21,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import static com.intellij.psi.JavaTokenType.*;
 
 /**
  * @author Fabrice TIERCELIN
@@ -39,7 +40,11 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
   }
 
   private static class ExpressionMayBeFactorizedVisitor extends BaseInspectionVisitor {
-    private ExpressionMayBeFactorizedFix expressionMayBeFactorizedFix;
+
+    private static final TokenSet outerTokens = TokenSet.create(OROR, ANDAND, OR, AND, PLUS, MINUS);
+    private static final TokenSet innerTokens = TokenSet.create(OROR, ANDAND, OR, AND, ASTERISK);
+
+    private final ExpressionMayBeFactorizedFix expressionMayBeFactorizedFix;
 
     private ExpressionMayBeFactorizedVisitor(ExpressionMayBeFactorizedFix expressionMayBeFactorizedFix) {
       this.expressionMayBeFactorizedFix = expressionMayBeFactorizedFix;
@@ -50,7 +55,7 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
       super.visitBinaryExpression(expression);
 
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!Arrays.asList(JavaTokenType.OROR, JavaTokenType.ANDAND, JavaTokenType.OR, JavaTokenType.AND).contains(tokenType)) {
+      if (!outerTokens.contains(tokenType)) {
         return;
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
@@ -62,7 +67,7 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
       final PsiBinaryExpression rBinaryExpression = (PsiBinaryExpression)rhs;
       final IElementType lTokenType = lBinaryExpression.getOperationTokenType();
       final IElementType rTokenType = rBinaryExpression.getOperationTokenType();
-      if (!Arrays.asList(JavaTokenType.OROR, JavaTokenType.ANDAND, JavaTokenType.OR, JavaTokenType.AND).contains(lTokenType)
+      if (!innerTokens.contains(lTokenType)
           || !lTokenType.equals(rTokenType)
           || tokenType.equals(lTokenType)
           || lBinaryExpression.getOperands().length != 2
@@ -80,7 +85,7 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
           || rrExpression == null) {
         return;
       }
-      if (Arrays.asList(JavaTokenType.OR, JavaTokenType.AND).contains(lTokenType)
+      if ((OR == lTokenType || AND == lTokenType)
           || (!SideEffectChecker.mayHaveSideEffects(lrExpression)
               && !SideEffectChecker.mayHaveSideEffects(rlExpression)
               && !SideEffectChecker.mayHaveSideEffects(rrExpression))) {
@@ -109,7 +114,7 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
       if (expressionMayBeFactorizedFix == null) {
         registerError(visitedElement);
       } else {
-        expressionMayBeFactorizedFix.effectivelyDoFix(visitedElement, lBinaryExpression, duplicateExpression, thenExpression, elseExpression,
+        ExpressionMayBeFactorizedFix.effectivelyDoFix(visitedElement, lBinaryExpression, duplicateExpression, thenExpression, elseExpression,
                                                       isFactorizedExpressionFirst);
       }
     }
@@ -117,14 +122,10 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    ExpressionMayBeFactorizedFix expressionMayBeFactorizedFix = new ExpressionMayBeFactorizedFix();
-    expressionMayBeFactorizedFix.expressionMayBeFactorizedVisitor = new ExpressionMayBeFactorizedVisitor(expressionMayBeFactorizedFix);
-    return expressionMayBeFactorizedFix;
+    return new ExpressionMayBeFactorizedFix();
   }
 
   private static class ExpressionMayBeFactorizedFix extends InspectionGadgetsFix {
-    private ExpressionMayBeFactorizedVisitor expressionMayBeFactorizedVisitor;
-
     @Override
     @NotNull
     public String getFamilyName() {
@@ -137,58 +138,44 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
       if (!(element instanceof PsiBinaryExpression)) {
         return;
       }
-      expressionMayBeFactorizedVisitor.visitBinaryExpression((PsiBinaryExpression)element);
+      new ExpressionMayBeFactorizedVisitor(this).visitBinaryExpression((PsiBinaryExpression)element);
     }
 
-    private void effectivelyDoFix(@NotNull PsiBinaryExpression visitedElement,
-                                  @NotNull PsiBinaryExpression lBinaryExpression,
-                                  @NotNull PsiExpression duplicateExpression,
-                                  @NotNull PsiExpression thenExpression,
-                                  @NotNull PsiExpression elseExpression, boolean isFactorizedExpressionFirst) {
+    private static void effectivelyDoFix(@NotNull PsiBinaryExpression visitedElement,
+                                         @NotNull PsiBinaryExpression lBinaryExpression,
+                                         @NotNull PsiExpression duplicateExpression,
+                                         @NotNull PsiExpression thenExpression,
+                                         @NotNull PsiExpression elseExpression, boolean isFactorizedExpressionFirst) {
       CommentTracker commentTracker = new CommentTracker();
       if (isFactorizedExpressionFirst) {
         PsiReplacementUtil.replaceExpression(visitedElement,
-                                             getTextBeforeAnOperator(duplicateExpression, lBinaryExpression, commentTracker)
-                                             + getTextForOperator(lBinaryExpression)
-                                             + " ("
-                                             + getTextBeforeAnOperator(thenExpression, visitedElement, commentTracker)
-                                             + getTextForOperator(visitedElement)
-                                             + getTextBeforeAnOperator(elseExpression, visitedElement, commentTracker)
+                                             commentTracker.text(duplicateExpression, ParenthesesUtils.getPrecedence(lBinaryExpression))
+                                             + getOperatorText(lBinaryExpression)
+                                             + '('
+                                             + commentTracker.text(thenExpression, ParenthesesUtils.getPrecedence(visitedElement))
+                                             + getOperatorText(visitedElement)
+                                             + commentTracker.text(elseExpression, ParenthesesUtils.getPrecedence(visitedElement))
                                              + ')',
                                              commentTracker);
       } else {
         PsiReplacementUtil.replaceExpression(visitedElement,
                                              '('
-                                             + getTextBeforeAnOperator(thenExpression, visitedElement, commentTracker)
-                                             + getTextForOperator(visitedElement)
-                                             + getTextBeforeAnOperator(elseExpression, visitedElement, commentTracker)
-                                             + ") "
-                                             + getTextForOperator(lBinaryExpression)
-                                             + getTextBeforeAnOperator(duplicateExpression, lBinaryExpression, commentTracker),
+                                             + commentTracker.text(thenExpression, ParenthesesUtils.getPrecedence(visitedElement))
+                                             + getOperatorText(visitedElement)
+                                             + commentTracker.text(elseExpression, ParenthesesUtils.getPrecedence(visitedElement))
+                                             + ')'
+                                             + getOperatorText(lBinaryExpression)
+                                             + commentTracker.text(duplicateExpression, ParenthesesUtils.getPrecedence(lBinaryExpression)),
                                              commentTracker);
       }
     }
 
-    private static String getTextBeforeAnOperator(@NotNull PsiExpression expression, @NotNull PsiBinaryExpression lBinaryExpression, @NotNull CommentTracker commentTracker) {
-      return ParenthesesUtils.getText(commentTracker.markUnchanged(expression),
-                                      Arrays.asList(JavaTokenType.ANDAND, JavaTokenType.AND).contains(lBinaryExpression.getOperationTokenType()) ? ParenthesesUtils.AND_PRECEDENCE : ParenthesesUtils.OR_PRECEDENCE);
-    }
-
-    private static String getTextForOperator(@NotNull PsiBinaryExpression psiBinaryExpression) {
-      final IElementType tokenType = psiBinaryExpression.getOperationTokenType();
-      if (JavaTokenType.OROR.equals(tokenType)) {
-        return "||";
-      }
-      if (JavaTokenType.ANDAND.equals(tokenType)) {
-        return "&&";
-      }
-      if (JavaTokenType.OR.equals(tokenType)) {
-        return "|";
-      }
-      if (JavaTokenType.AND.equals(tokenType)) {
-        return "&";
-      }
-      return null;
+    private static String getOperatorText(@NotNull PsiBinaryExpression binaryExpression) {
+      final PsiExpression rhs = binaryExpression.getROperand();
+      assert rhs != null;
+      final PsiJavaToken token = binaryExpression.getTokenBeforeOperand(rhs);
+      assert token != null;
+      return token.getText();
     }
   }
 }
