@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.fir.api.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 
 class KtQuickFixService {
     private val list = KtQuickFixesList.createCombined(KtQuickFixRegistrar.allQuickFixesList())

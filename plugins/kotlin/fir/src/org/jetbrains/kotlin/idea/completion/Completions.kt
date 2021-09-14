@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.contributors.complete
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 
 internal object Completions {
     fun KtAnalysisSession.complete(

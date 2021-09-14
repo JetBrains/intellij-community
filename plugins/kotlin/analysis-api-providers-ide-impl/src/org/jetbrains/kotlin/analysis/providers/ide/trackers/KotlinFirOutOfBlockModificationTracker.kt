@@ -18,9 +18,9 @@ import com.intellij.pom.tree.events.TreeChangeEvent
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.FileElement
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingInBodyDeclarationWith
+import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.isReanalyzableContainer
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.getNonLocalContainingInBodyDeclarationWith
-import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.isReanalyzableContainer
 import org.jetbrains.kotlin.idea.util.module
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong

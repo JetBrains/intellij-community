@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 internal class FirClassReferenceCompletionContributor(

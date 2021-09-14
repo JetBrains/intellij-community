@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.shortenRefs
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.idea.frontend.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile

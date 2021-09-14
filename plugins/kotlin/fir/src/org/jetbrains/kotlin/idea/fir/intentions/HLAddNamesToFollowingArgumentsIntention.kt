@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
+import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument

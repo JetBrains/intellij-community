@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.completion.context.FirSuperTypeCallNameReferenc
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
