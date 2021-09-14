@@ -3,11 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.analyseForUast
 import org.jetbrains.kotlin.analysis.api.calls.KtAnnotationCall
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -34,12 +36,25 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyseForUast(ktCallElement) {
             val argumentMapping = ktCallElement.resolveCall()?.argumentMapping ?: return null
-            return ktCallElement.valueArguments.map {
-                val parameter = argumentMapping[it.getArgumentExpression()]
-                val name = parameter?.name?.asString()
-                // TODO: parameter.isSpread() ?
-                KotlinUNamedExpression.create(name, it, parent)
+            val handledParameters = mutableSetOf<KtValueParameterSymbol>()
+            val valueArguments = SmartList<UNamedExpression>()
+            // NB: we need a loop over call element's value arguments to preserve their order.
+            ktCallElement.valueArguments.forEach {
+                val parameter = argumentMapping[it.getArgumentExpression()] ?: return@forEach
+                if (!handledParameters.add(parameter)) return@forEach
+                val arguments = argumentMapping.entries
+                    .filter { (_, param) -> param == parameter }
+                    .mapNotNull { (arg, _) -> arg.parentValueArgument }
+                val name = parameter.name.asString()
+                when {
+                    arguments.size == 1 ->
+                        KotlinUNamedExpression.create(name, arguments.first(), parent)
+                    arguments.size > 1 ->
+                        KotlinUNamedExpression.create(name, arguments, parent)
+                    else -> null
+                }?.let { valueArgument -> valueArguments.add(valueArgument) }
             }
+            return valueArguments.ifEmpty { null }
         }
     }
 

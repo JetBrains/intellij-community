@@ -27,13 +27,12 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                     ULiteralExpression (value = 0) [0] : PsiType:long
                 UNamedExpression (name = to) [to = 100]
                     ULiteralExpression (value = 100) [100] : PsiType:long
-            UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem", value = "Ipsum", value = "Dolor")]
-                UNamedExpression (name = value) [value = "Lorem"]
-                    ULiteralExpression (value = "Lorem") ["Lorem"] : PsiType:String
-                UNamedExpression (name = value) [value = "Ipsum"]
-                    ULiteralExpression (value = "Ipsum") ["Ipsum"] : PsiType:String
-                UNamedExpression (name = value) [value = "Dolor"]
-                    ULiteralExpression (value = "Dolor") ["Dolor"] : PsiType:String
+            UAnnotation (fqName = SuppressLint) [@SuppressLint(value = <noref>("Lorem", "Ipsum", "Dolor"))]
+                UNamedExpression (name = value) [value = <noref>("Lorem", "Ipsum", "Dolor")]
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [<noref>("Lorem", "Ipsum", "Dolor")]
+                        ULiteralExpression (value = "Lorem") ["Lorem"] : PsiType:String
+                        ULiteralExpression (value = "Ipsum") ["Ipsum"] : PsiType:String
+                        ULiteralExpression (value = "Dolor") ["Dolor"] : PsiType:String
             UBlockExpression [{...}]
                 UReturnExpression [return Unit]
                     USimpleNameReferenceExpression (identifier = Unit) [Unit] : PsiType:Unit

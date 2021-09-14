@@ -7,7 +7,7 @@ public final class AnnotationParametersKt {
         return 5
     }
     @IntRange(from = 0, to = 100)
-    @SuppressLint(value = "Lorem", value = "Ipsum", value = "Dolor")
+    @SuppressLint(value = <noref>("Lorem", "Ipsum", "Dolor"))
     public static final fun bar() : void {
         return Unit
     }
