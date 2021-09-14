@@ -89,6 +89,8 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
         logger.info("  $path")
       }
       logger.info("-- END")
+    } else {
+      logger.warn("Verbose classpath logging is disabled, set logClasspath to true to see it.")
     }
 
     return createClassPathArgFile(paths, classpath)
