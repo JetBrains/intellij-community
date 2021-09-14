@@ -1855,7 +1855,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       addConditionalErrorThrow();
       DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
-      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
+      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
+                                                 JavaMethodContractUtil.getMethodCallContracts(constructor, null);
       contracts = DfaUtil.addRangeContracts(constructor, contracts);
       addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
       processFailResult(contracts, expression);

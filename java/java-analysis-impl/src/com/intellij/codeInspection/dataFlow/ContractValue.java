@@ -79,7 +79,7 @@ public abstract class ContractValue {
     return OptionalInt.empty();
   }
 
-  public String getPresentationText(PsiMethodCallExpression call) {
+  public String getPresentationText(PsiCallExpression call) {
     return toString();
   }
 
@@ -146,7 +146,7 @@ public abstract class ContractValue {
     }
 
     @Override
-    public String getPresentationText(PsiMethodCallExpression call) {
+    public String getPresentationText(PsiCallExpression call) {
       PsiExpression place = findPlace(call);
       if (place != null) {
         return PsiExpressionTrimRenderer.render(place);
@@ -214,7 +214,7 @@ public abstract class ContractValue {
     }
 
     @Override
-    public String getPresentationText(PsiMethodCallExpression call) {
+    public String getPresentationText(PsiCallExpression call) {
       PsiExpression place = findPlace(call);
       if (place != null && !ExpressionUtils.isNullLiteral(place)) {
         return PsiExpressionTrimRenderer.render(place);
@@ -309,7 +309,7 @@ public abstract class ContractValue {
     }
 
     @Override
-    public String getPresentationText(PsiMethodCallExpression call) {
+    public String getPresentationText(PsiCallExpression call) {
       return JavaAnalysisBundle.message("dfa.find.cause.special.field.of.something", myField, myQualifier.getPresentationText(call));
     }
 
@@ -413,7 +413,7 @@ public abstract class ContractValue {
     }
 
     @Override
-    public String getPresentationText(PsiMethodCallExpression call) {
+    public String getPresentationText(PsiCallExpression call) {
       if (myLeft instanceof IndependentValue) {
         return myRight.getPresentationText(call) + " " + myRelationType.getFlipped() + " " + myLeft.getPresentationText(call);
       }

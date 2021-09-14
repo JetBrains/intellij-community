@@ -206,6 +206,15 @@ public final class HardcodedContracts {
     String className = owner.getQualifiedName();
     if (className == null) return Collections.emptyList();
 
+    if (method.isConstructor()) {
+      if (className.equals("java.util.concurrent.ArrayBlockingQueue") && paramCount == 3) {
+        return List.of(singleConditionContract(ContractValue.argument(0), RelationType.LT,
+                                               ContractValue.argument(2).specialField(SpecialField.COLLECTION_SIZE), fail()),
+                       singleConditionContract(ContractValue.argument(0), RelationType.LE,
+                                               ContractValue.constant(0, PsiType.INT), fail()));
+      }
+    }
+
     ContractProvider provider = HARDCODED_CONTRACTS.mapFirst(method);
     if (provider != null) {
       List<MethodContract> contracts = provider.getContracts(call, paramCount);
