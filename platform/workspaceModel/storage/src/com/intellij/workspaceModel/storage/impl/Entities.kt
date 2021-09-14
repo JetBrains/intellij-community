@@ -5,6 +5,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -176,6 +177,8 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
 
 interface SoftLinkable {
   fun getLinks(): Set<PersistentEntityId<*>>
+  fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>)
+  fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>)
   fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean
 }
 
