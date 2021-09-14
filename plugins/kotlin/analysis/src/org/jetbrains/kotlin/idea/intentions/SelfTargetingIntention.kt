@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.containsInside
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
@@ -54,6 +55,8 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
 
     abstract fun applyTo(element: TElement, editor: Editor?)
 
+    protected open val isKotlinOnlyIntention: Boolean = true
+
     fun getTarget(offset: Int, file: PsiFile): TElement? {
         val leaf1 = file.findElementAt(offset)
         val leaf2 = file.findElementAt(offset - 1)
@@ -79,6 +82,8 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
     }
 
     fun getTarget(editor: Editor, file: PsiFile): TElement? {
+        if (isKotlinOnlyIntention && file !is KtFile) return null
+
         val offset = editor.caretModel.offset
         return getTarget(offset, file)
     }
