@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -478,7 +479,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public boolean isShowQuickDocOnMouseOverElement() {
-    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
+    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT && !AccessibilityUtils.isScreenReaderDetected();
   }
 
   public void setShowQuickDocOnMouseOverElement(boolean show) {
