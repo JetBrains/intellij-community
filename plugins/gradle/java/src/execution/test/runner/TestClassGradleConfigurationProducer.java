@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
 public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunConfigurationProducer<PsiClass, PsiClass> {
@@ -40,11 +38,6 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
     return !other.isProducedBy(PatternGradleConfigurationProducer.class) &&
            !other.isProducedBy(TestMethodGradleConfigurationProducer.class) &&
            super.shouldReplace(self, other);
-  }
-
-  protected @Nullable PsiMethod getPsiMethodForLocation(Location<?> contextLocation) {
-    Location<PsiMethod> location = getMethodLocation(contextLocation);
-    return location != null ? location.getPsiElement() : null;
   }
 
   protected @Nullable PsiClass getPsiClassForLocation(Location<?> contextLocation) {

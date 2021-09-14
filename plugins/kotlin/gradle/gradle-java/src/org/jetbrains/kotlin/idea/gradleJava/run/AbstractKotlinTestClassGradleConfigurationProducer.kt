@@ -131,7 +131,6 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
     }
 
     override fun getPsiClassForLocation(contextLocation: Location<*>) = getTestClassForKotlinTest(contextLocation)
-    override fun getPsiMethodForLocation(contextLocation: Location<*>) = getTestMethodForKotlinTest(contextLocation)
 
     override fun isPreferredConfiguration(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
         return checkShouldReplace(self, other) || super.isPreferredConfiguration(self, other)
