@@ -134,19 +134,19 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   fun `test configuration tests for directory`() {
     val projectData = generateAndImportTemplateProject()
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:autoTest --tests * :automationTest --tests * :test --tests * --continue""",
+      """:autoTest :automationTest :test --continue""",
       projectData["project"].root
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:test --tests *""",
+      """:test""",
       projectData["project"].root.subDirectory("src")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:test --tests *""",
+      """:test""",
       projectData["project"].root.subDirectory("src", "test")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:test --tests *""",
+      """:test""",
       projectData["project"].root.subDirectory("src", "test", "java")
     )
     assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
@@ -154,11 +154,11 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       projectData["project"].root.subDirectory("src", "test", "java", "pkg")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:autoTest --tests * :automationTest --tests * --continue""",
+      """:autoTest :automationTest --continue""",
       projectData["project"].root.subDirectory("automation")
     )
     assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
-      """:module:test --tests *""",
+      """:module:test""",
       projectData["module"].root
     )
   }

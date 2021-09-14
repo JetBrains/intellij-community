@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser.Compa
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleCommandLine.Companion.parse
 import org.jetbrains.plugins.gradle.util.GradleCommandLine.TasksAndArguments
+import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestWildcardFilter
 import org.jetbrains.plugins.gradle.util.TasksToRun
 import java.util.*
 import java.util.function.Consumer
@@ -87,10 +88,10 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
         val chosenTasksAndArguments = chosenTestsToRun.flatten()
           .groupBy { it.tasksToRun }
           .mapValues { it.value.map(TestTasksToRun::testFilter).toSet() }
-          .map { it.key.map(String::escapeIfNeeded) + it.value }
+          .map { createTasksAndArguments(it.key, it.value) }
 
         runConfiguration.name = suggestConfigurationName(context, element, elements)
-        runConfiguration.settings.taskNames = chosenTasksAndArguments.flatten()
+        runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.toList() }
         runConfiguration.settings.scriptParameters = if (chosenTasksAndArguments.size > 1) "--continue" else ""
 
         super.onFirstRun(configuration, context, startRunnable)
@@ -144,17 +145,23 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     return -1
   }
 
-  class TestTasksToRun(val tasksToRun: TasksToRun, val testFilter: String) {
-    fun toTasksAndArguments(): TasksAndArguments {
-      val commandLineBuilder = StringJoiner(" ")
-      for (task in tasksToRun) {
-        commandLineBuilder.add(task.escapeIfNeeded())
-      }
-      if (StringUtil.isNotEmpty(testFilter)) {
-        commandLineBuilder.add(testFilter)
-      }
-      val commandLine = commandLineBuilder.toString()
-      return parse(commandLine).tasksAndArguments
+  private fun createTasksAndArguments(tasksToRun: TasksToRun, testFilters: Collection<String>): TasksAndArguments {
+    val commandLineBuilder = StringJoiner(" ")
+    for (task in tasksToRun) {
+      commandLineBuilder.add(task.escapeIfNeeded())
     }
+    if (createTestWildcardFilter(false) !in testFilters) {
+      for (testFilter in testFilters) {
+        if (StringUtil.isNotEmpty(testFilter)) {
+          commandLineBuilder.add(testFilter)
+        }
+      }
+    }
+    val commandLine = commandLineBuilder.toString()
+    return parse(commandLine).tasksAndArguments
   }
+
+  fun TestTasksToRun.toTasksAndArguments() = createTasksAndArguments(tasksToRun, listOf(testFilter))
+
+  class TestTasksToRun(val tasksToRun: TasksToRun, val testFilter: String)
 }
