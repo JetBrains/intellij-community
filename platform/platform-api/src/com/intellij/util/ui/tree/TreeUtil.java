@@ -185,7 +185,7 @@ public final class TreeUtil {
 
   /**
    * @param tree   a tree, which viewable paths are processed
-   * @param mapper a function to convert a expanded tree path to a corresponding object
+   * @param mapper a function to convert an expanded tree path to a corresponding object
    * @return a list of objects which correspond to expanded paths under the specified root node
    */
   @NotNull
@@ -236,7 +236,7 @@ public final class TreeUtil {
   /**
    * @param tree   a tree, which viewable paths are processed
    * @param root   an ascendant tree path to filter expanded tree paths
-   * @param mapper a function to convert a expanded tree path to a corresponding object
+   * @param mapper a function to convert an expanded tree path to a corresponding object
    * @return a list of objects which correspond to expanded paths under the specified root node
    */
   @NotNull
@@ -740,7 +740,6 @@ public final class TreeUtil {
       }
       done.run();
     };
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(builder == null ? scroll : () -> builder.getReady(TreeUtil.class).doWhenDone(scroll));
   }
 
@@ -792,7 +791,6 @@ public final class TreeUtil {
     return lastRow - firstRow + 1;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static void installActions(@NotNull final JTree tree) {
     TreeUI ui = tree.getUI();
     if (ui != null && ui.getClass().getName().equals("com.intellij.ui.tree.ui.DefaultTreeUI")) return;
@@ -973,7 +971,7 @@ public final class TreeUtil {
    * if this method is called on inappropriate background thread.
    *
    * @param tree a tree, which nodes should be expanded
-   * @return a promise that will be succeed when all nodes are expanded
+   * @return a promise that will be succeeded when all nodes are expanded
    */
   @NotNull
   public static Promise<?> promiseExpandAll(@NotNull JTree tree) {
@@ -983,7 +981,7 @@ public final class TreeUtil {
   /**
    * Expands n levels of the tree counting from the root
    * @param tree to expand nodes of
-   * @param levels depths of the expantion
+   * @param levels depths of the expansion
    */
   public static void expand(@NotNull JTree tree, int levels) {
     promiseExpand(tree, levels);
@@ -1008,7 +1006,7 @@ public final class TreeUtil {
    *
    * @param tree  a tree, which nodes should be expanded
    * @param depth a depth starting from the root node
-   * @return a promise that will be succeed when all needed nodes are expanded
+   * @return a promise that will be succeeded when all needed nodes are expanded
    */
   @NotNull
   public static Promise<?> promiseExpand(@NotNull JTree tree, int depth) {
@@ -1319,7 +1317,7 @@ public final class TreeUtil {
   }
 
   /**
-   * @return an user object retrieved from the last component of the specified {@code path}
+   * @return a user object retrieved from the last component of the specified {@code path}
    */
   @Nullable
   public static Object getLastUserObject(@Nullable TreePath path) {
@@ -1440,7 +1438,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be expanded
    * @param visitor a visitor that controls expanding of tree nodes
-   * @return a promise that will be succeed only if path is found and expanded
+   * @return a promise that will be succeeded only if path is found and expanded
    */
   @NotNull
   public static Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1455,7 +1453,7 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be expanded
    * @param visitors visitors to control expanding of tree nodes
-   * @return a promise that will be succeed only if paths are found and expanded
+   * @return a promise that will be succeeded only if paths are found and expanded
    */
   @NotNull
   public static Promise<List<TreePath>> promiseExpand(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
@@ -1495,7 +1493,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be made visible
    * @param visitor a visitor that controls expanding of tree nodes
-   * @return a promise that will be succeed only if path is found and made visible
+   * @return a promise that will be succeeded only if path is found and made visible
    */
   @NotNull
   public static Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1533,7 +1531,7 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be made visible
    * @param visitors visitors to control expanding of tree nodes
-   * @return a promise that will be succeed only if path are found and made visible
+   * @return a promise that will be succeeded only if path are found and made visible
    */
   @NotNull
   @SuppressWarnings("unused")
@@ -1615,7 +1613,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be selected
    * @param visitor a visitor that controls expanding of tree nodes
-   * @return a promise that will be succeed only if path is found and selected
+   * @return a promise that will be succeeded only if path is found and selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelect(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1630,7 +1628,7 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be selected
    * @param visitors visitors to control expanding of tree nodes
-   * @return a promise that will be succeed only if paths are found and selected
+   * @return a promise that will be succeeded only if paths are found and selected
    */
   @NotNull
   public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
@@ -1721,7 +1719,7 @@ public final class TreeUtil {
    * if this method is called on inappropriate background thread.
    *
    * @param tree a tree, which node should be selected
-   * @return a promise that will be succeed when first visible node is selected
+   * @return a promise that will be succeeded when first visible node is selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelectFirst(@NotNull JTree tree) {
@@ -1741,7 +1739,7 @@ public final class TreeUtil {
    * if this method is called on inappropriate background thread.
    *
    * @param tree a tree, which node should be selected
-   * @return a promise that will be succeed when first leaf node is made visible and selected
+   * @return a promise that will be succeeded when first leaf node is made visible and selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelectFirstLeaf(@NotNull JTree tree) {
@@ -1793,7 +1791,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be processed
    * @param visitor a visitor that controls processing of tree nodes
-   * @return a promise that will be succeed when visiting is finished
+   * @return a promise that will be succeeded when visiting is finished
    */
   @NotNull
   public static Promise<TreePath> promiseVisit(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
