@@ -361,7 +361,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   protected static @Nls @Nullable String generateExternalJavaDoc(@NotNull PsiElement element) {
-    JavaDocInfoGenerator generator = new GroovyDocInfoGenerator(element);
+    JavaDocInfoGenerator generator = new GroovyDocInfoGenerator(element, false);
     return JavaDocumentationProvider.generateExternalJavadoc(element, generator);
   }
 
@@ -564,7 +564,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Override
   public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement owner = comment.getOwner();
-    String html = new GroovyDocInfoGenerator(owner == null ? comment : owner).generateRenderedDocInfo();
+    String html = new GroovyDocInfoGenerator(owner == null ? comment : owner, true).generateRenderedDocInfo();
     return JavaDocExternalFilter.filterInternalDocInfo(html);
   }
 }
