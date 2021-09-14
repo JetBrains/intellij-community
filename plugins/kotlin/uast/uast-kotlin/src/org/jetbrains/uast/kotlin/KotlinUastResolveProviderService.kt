@@ -104,22 +104,13 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         if (arguments.isEmpty()) return null
         if (arguments.size == 1) {
             val argument = arguments.single()
-            val expression = argument.getArgumentExpression()
             if (parameter.varargElementType != null && argument.getSpreadElement() == null) {
-                return createVarargsHolder(arguments, parent)
+                return baseKotlinConverter.createVarargsHolder(arguments, parent)
             }
-            return baseKotlinConverter.convertOrEmpty(expression, parent)
+            return baseKotlinConverter.convertOrEmpty(argument.getArgumentExpression(), parent)
         }
-        return createVarargsHolder(arguments, parent)
+        return baseKotlinConverter.createVarargsHolder(arguments, parent)
     }
-
-    private fun createVarargsHolder(
-        arguments: List<ValueArgument>,
-        parent: UElement?,
-    ): KotlinUExpressionList =
-        KotlinUExpressionList(null, UastSpecialExpressionKind.VARARGS, parent).apply {
-            expressions = arguments.map { baseKotlinConverter.convertOrEmpty(it.getArgumentExpression(), parent) }
-        }
 
     override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
         val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null

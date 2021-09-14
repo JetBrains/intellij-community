@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.*
@@ -26,6 +27,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override val baseKotlinConverter: BaseKotlinConverter
         get() = FirKotlinConverter
+
+    private val KtExpression.parentValueArgument: ValueArgument?
+        get() = parents.firstOrNull { it is ValueArgument } as? ValueArgument
 
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyseForUast(ktCallElement) {
@@ -60,8 +64,26 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
-        // TODO: KtValueParameterSymbol doesn't have a way to retrieve 0-based index of the corresponding parameter.
-        return null
+        analyseForUast(ktCallElement) {
+            val resolvedCall = ktCallElement.resolveCall() ?: return null
+            val resolvedFunctionLikeSymbol = resolvedCall.targetFunction.candidates.singleOrNull() ?: return null
+            val parameter = resolvedFunctionLikeSymbol.valueParameters[index]
+            val arguments = resolvedCall.argumentMapping.entries
+                .filter { (_, param) -> param == parameter }
+                .mapNotNull { (arg, _) -> arg.parentValueArgument }
+            return when {
+                arguments.isEmpty() -> null
+                arguments.size == 1 -> {
+                    val argument = arguments.single()
+                    if (parameter.isVararg && argument.getSpreadElement() == null)
+                        baseKotlinConverter.createVarargsHolder(arguments, parent)
+                    else
+                        baseKotlinConverter.convertOrEmpty(argument.getArgumentExpression(), parent)
+                }
+                else ->
+                    baseKotlinConverter.createVarargsHolder(arguments, parent)
+            }
+        }
     }
 
     override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
