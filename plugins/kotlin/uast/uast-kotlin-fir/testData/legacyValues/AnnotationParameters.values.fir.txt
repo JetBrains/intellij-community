@@ -27,13 +27,12 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                     ULiteralExpression (value = 0) [0] = (long)0
                 UNamedExpression (name = to) [to = 100] = Nothing
                     ULiteralExpression (value = 100) [100] = (long)100
-            UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem", value = "Ipsum", value = "Dolor")]
-                UNamedExpression (name = value) [value = "Lorem"] = Nothing
-                    ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
-                UNamedExpression (name = value) [value = "Ipsum"] = Nothing
-                    ULiteralExpression (value = "Ipsum") ["Ipsum"] = "Ipsum"
-                UNamedExpression (name = value) [value = "Dolor"] = Nothing
-                    ULiteralExpression (value = "Dolor") ["Dolor"] = "Dolor"
+            UAnnotation (fqName = SuppressLint) [@SuppressLint(value = <noref>("Lorem", "Ipsum", "Dolor"))]
+                UNamedExpression (name = value) [value = <noref>("Lorem", "Ipsum", "Dolor")] = Nothing
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [<noref>("Lorem", "Ipsum", "Dolor")] = Nothing
+                        ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
+                        ULiteralExpression (value = "Ipsum") ["Ipsum"] = "Ipsum"
+                        ULiteralExpression (value = "Dolor") ["Dolor"] = "Dolor"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return Unit] = Nothing
                     USimpleNameReferenceExpression (identifier = Unit) [Unit] = external Unit()
