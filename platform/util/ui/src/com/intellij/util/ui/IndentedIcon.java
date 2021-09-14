@@ -10,10 +10,8 @@ public class IndentedIcon implements Icon {
   private final Icon baseIcon;
   private final Insets insets;
 
-  public IndentedIcon(Icon baseIcon, int leftIndent) {
-    this.baseIcon = baseIcon;
-    //noinspection UseDPIAwareInsets
-    insets = new Insets(0, leftIndent, 0, 0);
+  public IndentedIcon(Icon baseIcon, int leftInset) {
+    this(baseIcon, new JBInsets(0, leftInset, 0, 0));
   }
 
   public IndentedIcon(Icon baseIcon, Insets insets) {
