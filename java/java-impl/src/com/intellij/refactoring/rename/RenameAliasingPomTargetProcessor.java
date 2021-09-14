@@ -34,31 +34,31 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
     if (target != null) {
       if (target instanceof AliasingPsiTarget) {
         prepareAliasingPsiTargetRenaming((AliasingPsiTarget)target, newName, allRenames);
-      } else {
-        for (AliasingPsiTargetMapper mapper : AliasingPsiTargetMapper.EP_NAME.getExtensionList()) {
-          for (AliasingPsiTarget psiTarget : mapper.getTargets(target)) {
-            PsiElement psiElement = PomService.convertToPsi(psiTarget);
-            String name = psiTarget.getNameAlias(newName);
+      }
+      for (AliasingPsiTargetMapper mapper : AliasingPsiTargetMapper.EP_NAME.getExtensionList()) {
+        for (AliasingPsiTarget psiTarget : mapper.getTargets(target)) {
+          PsiElement psiElement = PomService.convertToPsi(psiTarget);
+          String name = psiTarget.getNameAlias(newName);
 
-            String definedName = allRenames.put(psiElement, name);
-            if (definedName != null) {
-              LOG.assertTrue(definedName.equals(name), "target: " + psiTarget + "; " +
-                                                       "defined name: " + definedName + "; " +
-                                                       "name: " + name + "; " +
-                                                       "mapper: " + mapper);
-            }
-            else {
-              if (name != null) prepareRenaming(psiElement, name, allRenames);
-            }
+          String definedName = allRenames.put(psiElement, name);
+          if (definedName != null) {
+            LOG.assertTrue(definedName.equals(name), "target: " + psiTarget + "; " +
+                                                     "defined name: " + definedName + "; " +
+                                                     "name: " + name + "; " +
+                                                     "mapper: " + mapper);
+          }
+          else {
+            if (name != null) prepareRenaming(psiElement, name, allRenames);
           }
         }
       }
     }
   }
 
-  private static void prepareAliasingPsiTargetRenaming(@NotNull AliasingPsiTarget aliasingPsiTarget,
-                                                       @NotNull String newName,
-                                                       @NotNull Map<PsiElement, String> allRenames) {
+
+  public static void prepareAliasingPsiTargetRenaming(@NotNull AliasingPsiTarget aliasingPsiTarget,
+                                                      @NotNull String newName,
+                                                      @NotNull Map<PsiElement, String> allRenames) {
     PsiElement psiElement = aliasingPsiTarget.getNavigationElement();
     if (psiElement instanceof PsiNamedElement) {
       String newTargetName = aliasingPsiTarget.getTargetName(newName);
