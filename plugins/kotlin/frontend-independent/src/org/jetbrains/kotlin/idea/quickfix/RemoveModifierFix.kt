@@ -63,18 +63,6 @@ class RemoveModifierFix(
         val removeOpenModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD)
         val removePrivateModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.PRIVATE_KEYWORD)
 
-        @Deprecated(
-            "For binary compatibility",
-            replaceWith = ReplaceWith("createRemoveModifierFromListOwnerPsiBasedFactory(modifier, isRedundant)")
-        )
-        fun createRemoveModifierFromListOwnerFactory(
-            modifier: KtModifierKeywordToken,
-            isRedundant: Boolean = false
-        ): KotlinSingleIntentionActionFactory =
-            KotlinSingleIntentionActionFactory.createFromQuickFixesPsiBasedFactory(
-                createRemoveModifierFromListOwnerPsiBasedFactory(modifier, isRedundant)
-            )
-
         fun createRemoveModifierFromListOwnerPsiBasedFactory(
             modifier: KtModifierKeywordToken,
             isRedundant: Boolean = false

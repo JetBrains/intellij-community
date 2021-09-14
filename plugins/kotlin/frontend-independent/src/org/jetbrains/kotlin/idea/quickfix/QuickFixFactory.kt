@@ -2,6 +2,4 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-interface QuickFixFactory {
-    fun asKotlinIntentionActionsFactory(): KotlinIntentionActionsFactory
-}
+interface QuickFixFactory
