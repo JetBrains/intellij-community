@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.util.BitUtil.isSet
+import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.event.*
 import java.util.function.Consumer
 import javax.swing.AbstractAction
@@ -22,8 +23,11 @@ private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDow
 internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
 internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
+  private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false
+  private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
+
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = event.project != null
+    event.presentation.isEnabled = event.project != null && !isControlTabDisabled(event)
     event.presentation.isVisible = forward == null
   }
 
