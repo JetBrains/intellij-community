@@ -681,6 +681,14 @@ interface BaseKotlinConverter {
         }
     }
 
+    fun createVarargsHolder(
+        arguments: Collection<ValueArgument>,
+        parent: UElement?,
+    ): KotlinUExpressionList =
+        KotlinUExpressionList(null, UastSpecialExpressionKind.VARARGS, parent).apply {
+            expressions = arguments.map { convertOrEmpty(it.getArgumentExpression(), parent) }
+        }
+
     fun convertOrEmpty(expression: KtExpression?, parent: UElement?): UExpression {
         return expression?.let { convertExpression(it, parent, DEFAULT_EXPRESSION_TYPES_LIST) } ?: UastEmptyExpression(parent)
     }
