@@ -110,7 +110,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
      * If [startInWriteAction] returns true, that means that the platform already called `preparePsiElementForWrite`
      * for us (we do not want to call it again because it will throw if the intention is used with Intention Preview).
      *
-     * Otherwise we have to call it ourselves (see javadoc for [getElementToMakeWritable]).
+     * Otherwise, we have to call it ourselves (see javadoc for [getElementToMakeWritable]).
      */
     private fun preparePsiElementForWriteIfNeeded(target: TElement): Boolean {
         if (startInWriteAction()) return true
