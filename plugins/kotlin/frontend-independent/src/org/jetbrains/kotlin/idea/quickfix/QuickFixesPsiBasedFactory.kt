@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.diagnostics.Diagnostic
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
@@ -12,15 +11,6 @@ abstract class QuickFixesPsiBasedFactory<PSI : PsiElement>(
     private val classTag: KClass<PSI>,
     private val suitabilityChecker: PsiElementSuitabilityChecker<PSI>,
 ) : QuickFixFactory {
-    final override fun asKotlinIntentionActionsFactory(): KotlinIntentionActionsFactory =
-        object : KotlinIntentionActionsFactory() {
-            @Suppress("UNCHECKED_CAST")
-            override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-                val psiElement = diagnostic.psiElement as PSI
-                return createQuickFix(psiElement)
-            }
-        }
-
     fun createQuickFix(psiElement: PsiElement): List<IntentionAction> {
         checkIfPsiElementIsSupported(psiElement)
         @Suppress("UNCHECKED_CAST")
