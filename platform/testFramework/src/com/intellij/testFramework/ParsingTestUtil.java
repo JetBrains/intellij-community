@@ -16,10 +16,12 @@ import com.intellij.psi.impl.BlockSupportImpl;
 import com.intellij.psi.impl.ChangedPsiRangeUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 public final class ParsingTestUtil {
@@ -104,7 +106,9 @@ public final class ParsingTestUtil {
       .append(originalText)
       .append(NL_SEPARATOR_NL);
 
-    for (PsiFile subTree : psiFile.getViewProvider().getAllFiles()) {
+    var allFiles = psiFile.getViewProvider().getAllFiles();
+    ContainerUtil.sort(allFiles, Comparator.comparing(it -> it.getLanguage().getID()));
+    for (PsiFile subTree : allFiles) {
       UsefulTestCase.assertInstanceOf(subTree, PsiFileImpl.class);
       var subTreeFile = (PsiFileImpl)subTree;
       TextRange changedRange =
