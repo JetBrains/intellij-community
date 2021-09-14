@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
@@ -88,6 +89,8 @@ class PythonOnboardingTour :
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"
 
+  private val uiSettings get() = UISettings.instance
+
   override val properties = LessonProperties(
     canStartInDumbMode = true,
     openFileAtStart = false
@@ -96,6 +99,8 @@ class PythonOnboardingTour :
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   private var backupPopupLocation: Point? = null
+  private var hideToolStripesPreference = false
+  private var showNavigationBarPreference = true
 
   val sample: LessonSample = parseLessonSample("""
     def find_average(values)<caret id=3/>:
@@ -121,6 +126,8 @@ class PythonOnboardingTour :
       }
     }
     clearBreakpoints()
+
+    checkUiSettings()
 
     projectTasks()
 
@@ -160,6 +167,11 @@ class PythonOnboardingTour :
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
+
+    uiSettings.hideToolStripes = hideToolStripesPreference
+    uiSettings.showNavigationBar = showNavigationBarPreference
+    uiSettings.fireUISettingsChanged()
+
     if (!lessonPassed) return
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
@@ -305,7 +317,6 @@ class PythonOnboardingTour :
     }
 
     task {
-
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
         ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
           val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
@@ -353,6 +364,30 @@ class PythonOnboardingTour :
     prepareRuntimeTask {
       LearningUiHighlightingManager.clearHighlights()
       requestEditorFocus()
+    }
+  }
+
+
+  private fun LessonContext.checkUiSettings() {
+    hideToolStripesPreference = uiSettings.hideToolStripes
+    showNavigationBarPreference = uiSettings.showNavigationBar
+
+    if (!hideToolStripesPreference && (showNavigationBarPreference || uiSettings.showMainToolbar)) {
+      // a small hack to have same tasks count. It is needed to track statistics result.
+      task { }
+      task { }
+      return
+    }
+
+    task {
+      text(PythonLessonsBundle.message("python.onboarding.change.ui.settings"))
+      proceedLink()
+    }
+
+    prepareRuntimeTask {
+      uiSettings.hideToolStripes = false
+      uiSettings.showNavigationBar = true
+      uiSettings.fireUISettingsChanged()
     }
   }
 
