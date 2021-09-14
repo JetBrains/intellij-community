@@ -82,7 +82,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
         fillDuplicates(project, descriptors, dataList, contextFiles, containerMap, duplicates);
         return I18nizeMultipleStringsDialog.getResourceBundleManager(project, contextFiles);
       })
-      .finishOnUiThread(ModalityState.any(), bundleManager -> {
+      .finishOnUiThread(ModalityState.NON_MODAL, bundleManager -> {
         showI18nizeMultipleStringsDialog(project, dataList, contextFiles, bundleManager, containerMap, duplicates);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
