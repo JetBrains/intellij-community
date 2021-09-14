@@ -26,3 +26,15 @@ abstract class KotlinSingleIntentionActionFactory : KotlinIntentionActionsFactor
         }
     }
 }
+
+fun QuickFixFactory.asKotlinIntentionActionsFactory(): KotlinIntentionActionsFactory = when (this) {
+    is KotlinIntentionActionsFactory -> this
+    is QuickFixesPsiBasedFactory<*> -> object : KotlinIntentionActionsFactory() {
+        @Suppress("UNCHECKED_CAST")
+        override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
+            val psiElement = diagnostic.psiElement
+            return createQuickFix(psiElement)
+        }
+    }
+    else -> error("Unexpected QuickFixFactory ${this::class}")
+}
