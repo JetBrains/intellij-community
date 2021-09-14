@@ -26,10 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.testFramework.CodeStyleSettingsTracker;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
@@ -40,6 +37,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -62,12 +60,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
+  protected TestCompletionMavenImporter testImporter = new TestCompletionMavenImporter();
 
   @Override
   protected void setUp() throws Exception {
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath());
 
     super.setUp();
+    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, Collections.singletonList(testImporter), getTestRootDisposable());
 
     myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
 
@@ -428,15 +428,21 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError,
                                   List<String> disabledProfiles, String... profiles) {
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
     initProjectsManager(false);
 
     readProjects(files, disabledProfiles, profiles);
+    testImporter.reset();
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.scheduleImportInTests(files);
       myProjectsManager.importProjects();
     });
-    waitForImportCompletion();
+
+    Promise<?> promise = myProjectsManager.waitForImportCompletion();
+    PlatformTestUtil.waitForPromise(promise);
+
+    
 
     if (failOnReadingError) {
       for (MavenProject each : myProjectsTree.getProjects()) {
