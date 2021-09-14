@@ -1,11 +1,11 @@
 UFile (package = ) [public final class AnnotationParametersKt {...]
     UClass (name = AnnotationParametersKt) [public final class AnnotationParametersKt {...}]
-        UMethod (name = foo) [@RequiresPermission(anyOf = <anonymous class>(1, 2, 3))...}]
-            UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = <anonymous class>(1, 2, 3))]
-                UNamedExpression (name = anyOf) [anyOf = <anonymous class>(1, 2, 3)] = Nothing
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [<anonymous class>(1, 2, 3)] = external <anonymous class>(1, 2, 3)(1, 2, 3)
+        UMethod (name = foo) [@RequiresPermission(anyOf = intArrayOf(1, 2, 3))...}]
+            UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = intArrayOf(1, 2, 3))]
+                UNamedExpression (name = anyOf) [anyOf = intArrayOf(1, 2, 3)] = Nothing
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [intArrayOf(1, 2, 3)] = external intArrayOf(1, 2, 3)(1, 2, 3)
                         UIdentifier (Identifier (intArrayOf)) [UIdentifier (Identifier (intArrayOf))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(1, 2, 3)(1, 2, 3)
+                        USimpleNameReferenceExpression (identifier = intArrayOf, resolvesTo = null) [intArrayOf] = external intArrayOf(1, 2, 3)(1, 2, 3)
                         ULiteralExpression (value = 1) [1] = 1
                         ULiteralExpression (value = 2) [2] = 2
                         ULiteralExpression (value = 3) [3] = 3
