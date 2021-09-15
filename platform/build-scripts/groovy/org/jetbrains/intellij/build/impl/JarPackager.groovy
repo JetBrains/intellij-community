@@ -74,20 +74,40 @@ final class JarPackager {
     }
 
     Map<JpsLibrary, List<Path>> librariesToMerge = packLibraries(actualModuleJars, outputDir, layout, layoutSpec, copiedFiles, buildContext)
+
+    boolean isRootDir = buildContext.paths.distAllDir == outputDir.parent
+    if (isRootDir) {
+      // kotlinx- libs to one kotlinx.jar
+      mergeLibsByPredicate("kotlinx.jar", librariesToMerge, outputDir, layoutSpec, buildContext) { it.startsWith("kotlinx-") }
+
+      Set<String> libsThatUsedInJps = Set.of(
+        "JDOM",
+        "ASM",
+        "Trove4j",
+        "aalto-xml",
+        "netty-buffer",
+        "netty-codec-http",
+        "netty-handler-proxy",
+        "fastutil-min",
+        "gson",
+        "Log4J",
+        "Slf4j",
+        "maven-resolver-provider",
+      )
+      mergeLibsByPredicate("3rd-party-rt.jar", librariesToMerge, outputDir, layoutSpec, buildContext) { libsThatUsedInJps.contains(it) }
+    }
+
     List libSources
     if (librariesToMerge.isEmpty()) {
       libSources = null
     }
+    else if (isRootDir) {
+      libSources = filesToSourceWithMappings(layoutSpec, outputDir.resolve(BaseLayout.PLATFORM_JAR), librariesToMerge, buildContext)
+    }
     else {
-      libSources = new ArrayList()
-      boolean isSeparateUberJar = actualModuleJars.size() != 1 || buildContext.paths.distAllDir == outputDir.parent
+      boolean isSeparateUberJar = actualModuleJars.size() != 1
       Path uberJarFile = outputDir.resolve(isSeparateUberJar ? "3rd-party.jar" : actualModuleJars.keySet().first())
-      String relativeToDistTargetFilePath = layoutSpec.getOutputFilePath("lib/" + uberJarFile.fileName.toString())
-      for (Map.Entry<JpsLibrary, List<Path>> entry : librariesToMerge.entrySet()) {
-        filesToSourceWithMapping(libSources, entry.value, layoutSpec.projectStructureMapping, entry.key, relativeToDistTargetFilePath,
-                                 buildContext)
-      }
-      libSources.sort(null)
+      libSources = filesToSourceWithMappings(layoutSpec, uberJarFile, librariesToMerge, buildContext)
       if (isSeparateUberJar) {
         buildJar(uberJarFile, libSources, !layoutSpec.copyFiles, buildContext)
         libSources = null
@@ -98,12 +118,52 @@ final class JarPackager {
       String jarPath = entry.key
       Path jarFile = outputDir.resolve(jarPath)
       List sourceList = new ArrayList()
-      if (libSources != null) {
+      if (libSources != null && (!isRootDir || jarPath == BaseLayout.PLATFORM_JAR)) {
         sourceList.addAll(libSources)
         libSources = null
       }
       packModuleOutputAndUnpackedProjectLibraries(entry.value, jarPath, jarFile, layoutSpec, buildContext, layout, sourceList)
     }
+  }
+
+  private static void mergeLibsByPredicate(String jarName,
+                                           Map<JpsLibrary, List<Path>> librariesToMerge,
+                                           Path outputDir,
+                                           LayoutBuilder.LayoutSpec layoutSpec,
+                                           BuildContext buildContext,
+                                           Predicate<String> predicate) {
+    Map<JpsLibrary, List<Path>> kotlinxToMerge = new HashMap<>()
+
+    Iterator<Map.Entry<JpsLibrary, List<Path>>> iterator = librariesToMerge.entrySet().iterator()
+    while (iterator.hasNext()) {
+      Map.Entry<JpsLibrary, List<Path>> entry = iterator.next()
+      if (predicate.test(entry.key.name)) {
+        iterator.remove()
+        kotlinxToMerge.put(entry.key, entry.value)
+      }
+    }
+
+    if (kotlinxToMerge.isEmpty()) {
+      return
+    }
+
+    Path uberJarFile = outputDir.resolve(jarName)
+    List libSources = filesToSourceWithMappings(layoutSpec, uberJarFile, kotlinxToMerge, buildContext)
+    buildJar(uberJarFile, libSources, !layoutSpec.copyFiles, buildContext)
+  }
+
+  private static List filesToSourceWithMappings(LayoutBuilder.LayoutSpec layoutSpec,
+                                                Path uberJarFile,
+                                                Map<JpsLibrary, List<Path>> librariesToMerge,
+                                                BuildContext buildContext) {
+    List sources = new ArrayList()
+    String relativeToDistTargetFilePath = layoutSpec.getOutputFilePath("lib/" + uberJarFile.fileName.toString())
+    for (Map.Entry<JpsLibrary, List<Path>> entry : librariesToMerge.entrySet()) {
+      filesToSourceWithMapping(sources, entry.value, layoutSpec.projectStructureMapping, entry.key, relativeToDistTargetFilePath,
+                               buildContext)
+    }
+    sources.sort(null)
+    sources
   }
 
   private static Stream<JpsLibrary> getModuleLibs(Map<String, List<String>> actualModuleJars,
@@ -225,23 +285,17 @@ final class JarPackager {
       if (!removeVersionFromJarName && !libraryData.standalone && isLibraryMergeable.invokeWithArguments(libName)) {
         toMerge.put(library, files)
       }
+      else if (libName != "Gradle" && !removeVersionFromJarName) {
+        String fileName = libNameToMergedJarFileName(libName)
+        buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), files, layoutSpec, buildContext)
+      }
       else {
-        if (libName != "Gradle" && !removeVersionFromJarName) {
-          String fileName = libNameToMergedJarFileName(libName)
-          buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), files, layoutSpec, buildContext)
-        }
-        else {
-          for (Path file : files) {
-            String fileName = file.fileName.toString()
-            if (removeVersionFromJarName) {
-              Matcher matcher = file.fileName.toString() =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN
-              if (matcher.matches()) {
-                fileName = matcher.group(1) + ".jar"
-                buildContext.messages.debug(" include $fileName (renamed from ${files[0]}) from library '${library.name}'")
-              }
-            }
-            buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), List.of(file), layoutSpec, buildContext)
+        for (Path file : files) {
+          String fileName = file.fileName.toString()
+          if (removeVersionFromJarName) {
+            fileName = removeVersionFromJar(fileName)
           }
+          buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), List.of(file), layoutSpec, buildContext)
         }
       }
     }
@@ -251,15 +305,21 @@ final class JarPackager {
       void accept(JpsLibrary library) {
         String libName = library.name
         List<Path> files = getLibraryFiles(library, copiedFiles, true)
+
+        if (libName == "async-profiler-windows") {
+          // custom name, removeVersionFromJar doesn't support strings like `2.1-ea-4`
+          buildLibrary(library, relativePathToLibFile, outputDir.resolve("async-profiler-windows.jar"), files, layoutSpec, buildContext)
+          return
+        }
+
         for (int i = files.size() - 1; i >= 0; i--) {
           Path file = files.get(i)
           String fileName = file.fileName.toString()
           //noinspection SpellCheckingInspection
           if (fileName.endsWith("-rt.jar") || fileName.startsWith("jps-") || fileName.contains("-agent") ||
-              fileName == "yjp-controller-api-redist.jar" ||
-              libName == "async-profiler-windows") {
+              fileName == "yjp-controller-api-redist.jar") {
             files.remove(i)
-            buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), List.of(file), layoutSpec, buildContext)
+            buildLibrary(library, relativePathToLibFile, outputDir.resolve(removeVersionFromJar(fileName)), List.of(file), layoutSpec, buildContext)
           }
         }
         if (!files.isEmpty()) {
@@ -269,6 +329,16 @@ final class JarPackager {
     })
 
     return toMerge
+  }
+
+  private static String removeVersionFromJar(String fileName) {
+    Matcher matcher = fileName =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN
+    if (matcher.matches()) {
+      return matcher.group(1) + ".jar"
+    }
+    else {
+      return fileName
+    }
   }
 
   private static List<Path> getLibraryFiles(JpsLibrary library, Map<Path, JpsLibrary> copiedFiles, boolean isModuleLevel) {
@@ -343,7 +413,6 @@ final class JarPackager {
   }
 
   private static buildJar(Path targetFile, List sources, boolean dryRun, BuildContext buildContext) {
-    BuildHelper.getInstance(buildContext).buildJar
-      .invokeWithArguments(targetFile, sources, buildContext.messages, dryRun)
+    BuildHelper.getInstance(buildContext).buildJar.invokeWithArguments(targetFile, sources, buildContext.messages, dryRun)
   }
 }

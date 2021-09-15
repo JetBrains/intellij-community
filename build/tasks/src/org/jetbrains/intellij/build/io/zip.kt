@@ -52,7 +52,7 @@ fun zip(targetFile: Path, dirs: Map<Path, String>, compress: Boolean = true, add
     if (dirNameSetToAdd.isNotEmpty()) {
       addDirForResourceFiles(zipCreator, dirNameSetToAdd)
     }
-    zipCreator.finish(null)
+    zipCreator.finish()
   }
 
   logger?.info("${targetFile.fileName} created in ${formatDuration(System.currentTimeMillis() - start)}")

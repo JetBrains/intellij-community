@@ -126,7 +126,7 @@ private fun getFilteredEntries(zipFile: ImmutableZipFile,
 
 @Suppress("SpellCheckingInspection")
 private val excludedFromMergeLibs = java.util.Set.of(
-  "jna", "Log4J", "sqlite", "Slf4j", "async-profiler",
+  "sqlite", "async-profiler",
   "dexlib2", // android-only lib
   "intellij-coverage", "intellij-test-discovery", // used as agent
   "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // contains native library
@@ -135,7 +135,7 @@ private val excludedFromMergeLibs = java.util.Set.of(
 
 fun isLibraryMergeable(libName: String): Boolean {
   return !excludedFromMergeLibs.contains(libName) &&
-         !libName.startsWith("kotlin") &&
+         !libName.startsWith("kotlin-") &&
          !libName.startsWith("projector-") &&
          !libName.contains("-agent-") &&
          !libName.startsWith("rd-") &&

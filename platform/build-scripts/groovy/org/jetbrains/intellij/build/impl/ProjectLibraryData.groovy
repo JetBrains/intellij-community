@@ -2,15 +2,33 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
-import groovy.transform.Immutable
 
 @CompileStatic
-@Immutable
 final class ProjectLibraryData {
-  String libraryName
-  String relativeOutputPath
+  final String libraryName
+  final String relativeOutputPath
   /**
    * Do not merge library JAR file into uber JAR.
    */
-  boolean standalone
+  final boolean standalone
+
+  ProjectLibraryData(String libraryName, String relativeOutputPath, boolean standalone) {
+    this.libraryName = libraryName
+    this.relativeOutputPath = relativeOutputPath
+    this.standalone = standalone
+  }
+
+  boolean equals(o) {
+    if (this.is(o)) return true
+    if (!(o instanceof ProjectLibraryData)) return false
+
+    ProjectLibraryData data = (ProjectLibraryData)o
+    if (libraryName != data.libraryName) return false
+
+    return true
+  }
+
+  int hashCode() {
+    return libraryName.hashCode()
+  }
 }

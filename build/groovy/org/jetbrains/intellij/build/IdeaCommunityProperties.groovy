@@ -21,7 +21,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     buildCrossPlatformDistribution = true
 
     productLayout.productImplementationModules = ["intellij.platform.main", "intellij.notebooks.visualization"]
-    productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
+    productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false

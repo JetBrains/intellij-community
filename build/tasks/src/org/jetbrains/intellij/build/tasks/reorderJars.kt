@@ -14,6 +14,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
 
@@ -62,13 +63,17 @@ fun reorderJars(homeDir: Path,
 }
 
 private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path, antLibDir: Path?): LinkedHashSet<Path> {
+  // sorted to ensure stable performance results
+  val existing = TreeSet<Path>()
+  addJarsFromDir(libDir) { paths ->
+    paths.filterTo(existing) { !excludedLibJars.contains(it.fileName.toString()) }
+  }
+
   val result = LinkedHashSet<Path>()
   // add first - should be listed first
-  sourceToNames.keys.asSequence().filter { it.parent == libDir }.toCollection(result)
-  addJarsFromDir(libDir) { paths ->
-    // sort to ensure stable performance results
-    result.addAll(paths.filter { !excludedLibJars.contains(it.fileName.toString()) }.sorted())
-  }
+  sourceToNames.keys.filterTo(result) { it.parent == libDir && existing.contains(it) }
+  result.addAll(existing)
+
   if (antLibDir != null) {
     val distAntLib = libDir.resolve("ant/lib")
     addJarsFromDir(antLibDir) { paths ->

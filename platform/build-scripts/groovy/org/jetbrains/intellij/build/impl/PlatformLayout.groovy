@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
@@ -10,8 +9,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
-
-import java.util.function.Consumer
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
  * <p>
@@ -26,17 +23,31 @@ final class PlatformLayout extends BaseLayout {
   final Set<String> excludedProjectLibraries = new HashSet<>()
   final List<String> projectLibrariesWithRemovedVersionFromJarNames = []
 
-  static PlatformLayout platform(Consumer<PlatformLayout> customizer, @DelegatesTo(PlatformLayoutSpec) Closure body = {}) {
-    def layout = new PlatformLayout()
-    customizer.accept(layout)
-    layout.customize(body)
-    return layout
-  }
-
   void customize(@DelegatesTo(PlatformLayoutSpec) Closure body) {
     def spec = new PlatformLayoutSpec(this)
     body.delegate = spec
     body()
+  }
+
+  /**
+   * Include all project libraries from dependencies of modules already included into layout to 'lib' directory
+   */
+  void withProjectLibrariesFromIncludedModules(BuildContext context) {
+    context.messages.debug("Collecting project libraries used by platform modules")
+
+    MultiMap<JpsLibrary, JpsModule> librariesToInclude = computeProjectLibrariesFromIncludedModules(context)
+    for (Map.Entry<JpsLibrary, Collection<JpsModule>> entry in librariesToInclude.entrySet()) {
+      context.messages.debug(" library '${entry.key.name}': used in ${entry.value.collect { "'$it.name'" }.join(", ")}")
+      includedProjectLibraries.add(new ProjectLibraryData(entry.key.name, "", false))
+    }
+  }
+
+  void withProjectLibrary(String libraryName, boolean standalone = false) {
+    includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", standalone))
+  }
+
+  void removeVersionFromProjectLibraryJarNames(String libraryName) {
+    projectLibrariesWithRemovedVersionFromJarNames.add(libraryName)
   }
 
   static final class PlatformLayoutSpec extends BaseLayoutSpec {
@@ -61,27 +72,14 @@ final class PlatformLayout extends BaseLayout {
      * will be removed when build scripts automatically compose bootstrap classpath.
      */
     void removeVersionFromProjectLibraryJarNames(String libraryName) {
-      layout.projectLibrariesWithRemovedVersionFromJarNames.add(libraryName)
-    }
-
-    /**
-     * Include all project libraries from dependencies of modules already included into layout to 'lib' directory
-     */
-    void withProjectLibrariesFromIncludedModules(BuildContext context) {
-      context.messages.debug("Collecting project libraries used by platform modules")
-
-      def librariesToInclude = layout.computeProjectLibrariesFromIncludedModules(context)
-      librariesToInclude.entrySet().each { entry ->
-        context.messages.debug(" library '${entry.key.name}': used in ${entry.value.collect { "'$it.name'" }.join(", ")}")
-        withProjectLibrary(entry.key.name)
-      }
+      layout.removeVersionFromProjectLibraryJarNames(libraryName)
     }
   }
 
   MultiMap<JpsLibrary, JpsModule> computeProjectLibrariesFromIncludedModules(BuildContext context) {
     MultiMap<JpsLibrary, JpsModule> result = MultiMap.createLinked()
     Collection<String> libsToUnpack = projectLibrariesToUnpack.values()
-    for (String moduleName in moduleJars.values()) {
+    for (String moduleName in includedModuleNames) {
       JpsModule module = context.findRequiredModule(moduleName)
       for (
         JpsLibrary library : JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {

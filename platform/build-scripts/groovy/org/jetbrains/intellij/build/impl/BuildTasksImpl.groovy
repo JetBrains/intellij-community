@@ -827,7 +827,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkBaseLayout(BaseLayout layout, String description) {
-    checkModules(layout.moduleJars.values(), "moduleJars in $description")
+    checkModules(layout.includedModuleNames, "moduleJars in $description")
     checkArtifacts(layout.includedArtifacts.keySet(), "includedArtifacts in $description")
     checkModules(layout.resourcePaths.collect { it.moduleName }, "resourcePaths in $description")
     checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description")

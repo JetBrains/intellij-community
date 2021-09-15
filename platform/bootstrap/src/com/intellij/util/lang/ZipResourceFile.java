@@ -60,7 +60,7 @@ public final class ZipResourceFile implements ResourceFile {
   @Override
   public @Nullable Attributes loadManifestAttributes() throws IOException {
     ImmutableZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME, MANIFEST_HASH_CODE);
-    return entry != null ? new Manifest(new ByteArrayInputStream(entry.getData(zipFile))).getMainAttributes() : null;
+    return entry == null ? null : new Manifest(new ByteArrayInputStream(entry.getData(zipFile))).getMainAttributes();
   }
 
   @Override
@@ -84,15 +84,14 @@ public final class ZipResourceFile implements ResourceFile {
     };
   }
 
-  @NotNull
-  private ClasspathCache.LoaderDataBuilder computePackageIndex() {
+  private @NotNull ClasspathCache.LoaderDataBuilder computePackageIndex() {
     ClasspathCache.LoaderDataBuilder builder = new ClasspathCache.LoaderDataBuilder(false);
     for (ImmutableZipEntry entry : zipFile.getRawNameSet()) {
       if (entry == null) {
         continue;
       }
 
-      String name = entry.getName();
+      String name = entry.name;
       if (name.endsWith(ClassPath.CLASS_EXTENSION)) {
         builder.addClassPackageFromName(name);
       }
@@ -235,7 +234,7 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public int getContentLength() {
-      return entry.getUncompressedSize();
+      return entry.uncompressedSize;
     }
   }
 
@@ -280,7 +279,7 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public int getContentLength() {
-      return entry.getUncompressedSize();
+      return entry.uncompressedSize;
     }
 
     @Override

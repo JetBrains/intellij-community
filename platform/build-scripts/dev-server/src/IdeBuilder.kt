@@ -88,7 +88,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
       item = BuildItem(pluginDir, PluginLayout.plugin(mainModuleName))
     }
     else {
-      for (entry in item.layout.moduleJars.entrySet()) {
+      for (entry in item.layout.jarToIncludedModuleNames) {
         if (!entry.key.contains('/')) {
           for (name in entry.value) {
             moduleNameToPlugin.put(name, item)

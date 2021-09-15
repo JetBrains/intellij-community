@@ -96,10 +96,10 @@ final class PluginLayout extends BaseLayout {
     void withModule(String moduleName) {
       if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
         // must be in a separate JAR
-        super.withModule(moduleName)
+        layout.withModule(moduleName)
       }
       else {
-        layout.moduleJars.putValue(mainJarName, moduleName)
+        layout.withModule(moduleName, mainJarName)
       }
     }
 

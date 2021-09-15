@@ -103,7 +103,7 @@ final class DistributionJARsBuilder {
                                                                                                 BuildContext buildContext) {
     MultiMap<JpsLibrary, JpsModule> result = MultiMap.createLinked()
     final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
-    plugin.moduleJars.values().each {
+    plugin.includedModuleNames.each {
       JpsModule module = buildContext.findRequiredModule(it)
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
         !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
@@ -144,7 +144,7 @@ final class DistributionJARsBuilder {
   }
 
   List<String> getPlatformModules() {
-    return (platform.moduleJars.values() as List<String>) + toolModules
+    return (platform.includedModuleNames as List<String>) + toolModules
   }
 
   static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
@@ -229,7 +229,7 @@ final class DistributionJARsBuilder {
   @CompileStatic
   List<String> getProductModules() {
     List<String> result = new ArrayList<>()
-    for (moduleJar in platform.moduleJars.entrySet()) {
+    for (moduleJar in platform.jarToIncludedModuleNames) {
       // Filter out jars with relative paths in name
       if (moduleJar.key.contains("\\") || moduleJar.key.contains("/")) {
         continue
@@ -308,7 +308,7 @@ final class DistributionJARsBuilder {
   }
 
   List<String> getModulesForPluginsToPublish() {
-    return platformModules + pluginsToPublish.collectMany(new LinkedHashSet()) { it.moduleJars.values() }
+    return platformModules + pluginsToPublish.collectMany(new LinkedHashSet()) { it.includedModuleNames }
   }
 
   static void buildAdditionalArtifacts(BuildContext buildContext, ProjectStructureMapping projectStructureMapping) {
@@ -390,7 +390,7 @@ final class DistributionJARsBuilder {
                                                @NotNull BuildContext buildContext,
                                                Map<String, String> moduleToJar = new HashMap<>(),
                                                String jarPrefix = "") {
-    for (Map.Entry<String, Collection<String>> entry : layout.moduleJars.entrySet()) {
+    for (Map.Entry<String, Collection<String>> entry : layout.jarToIncludedModuleNames) {
       String jarName = entry.key
       String fixedJarName = getActualModuleJarPath(jarName, entry.value, layout.explicitlySetJarPaths, buildContext)
       for (String el : entry.value) {
@@ -878,6 +878,7 @@ final class DistributionJARsBuilder {
     if (explicitlySetJarPaths.contains(relativeJarPath)) {
       return relativeJarPath
     }
+
     for (String moduleName : moduleNames) {
       if (relativeJarPath == "${BaseLayout.convertModuleNameToFileName(moduleName)}.jar" &&
           buildContext.getOldModuleName(moduleName) != null) {

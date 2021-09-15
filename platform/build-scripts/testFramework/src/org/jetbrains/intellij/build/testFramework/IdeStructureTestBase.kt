@@ -55,7 +55,7 @@ abstract class IdeStructureTestBase {
     val exceptions = missingModulesException
     val activeExceptions = mutableSetOf<String>()
 
-    val module2Jar = jarBuilder.platform.moduleJars.entrySet().flatMap { it.value.map { e -> e to it.key } }.toMap()
+    val module2Jar = jarBuilder.platform.jarToIncludedModuleNames.flatMap { it.value.map { e -> e to it.key } }.toMap()
     for (kv in module2Jar.entries.sortedBy { it.key }) {
       val module = buildContext.findRequiredModule(kv.key)
       for (dependency in module.dependenciesList.dependencies) {

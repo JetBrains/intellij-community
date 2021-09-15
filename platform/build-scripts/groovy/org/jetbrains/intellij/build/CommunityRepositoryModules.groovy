@@ -79,12 +79,16 @@ final class CommunityRepositoryModules {
       withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       withModule("intellij.maven.errorProne.compiler")
+
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
+
       withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
+
       withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
+
       withArtifact("maven-event-listener", "")
       withResource("maven36-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")

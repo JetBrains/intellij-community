@@ -14,20 +14,21 @@ import java.util.function.Consumer
  */
 @CompileStatic
 abstract class BaseIdeaProperties extends JetBrainsProductProperties {
-  public static final List<String> JAVA_IDE_API_MODULES = [
+  public static final List<String> JAVA_IDE_API_MODULES = List.of(
     "intellij.xml.dom",
     "intellij.java.testFramework",
     "intellij.platform.testFramework.core",
     "intellij.platform.uast.tests",
     "intellij.jsp.base"
-  ]
-  public static final List<String> JAVA_IDE_IMPLEMENTATION_MODULES = [
+  )
+
+  public static final List<String> JAVA_IDE_IMPLEMENTATION_MODULES = List.of(
     "intellij.xml.dom.impl",
     "intellij.platform.testFramework",
     "intellij.tools.testsBootstrap"
-  ]
+  )
 
-  protected static final List<String> BUNDLED_PLUGIN_MODULES = [
+  protected static final List<String> BUNDLED_PLUGIN_MODULES = List.of(
     "intellij.java.plugin",
     "intellij.java.ide.customization",
     "intellij.copyright",
@@ -85,52 +86,56 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.vcs.git.featuresTrainer",
     "intellij.lombok",
     "intellij.searchEverywhereMl",
-  ]
+    )
 
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
-    ""                                                          : "11",
-    "lib/idea_rt.jar"                                           : "1.6",
-    "lib/forms_rt.jar"                                          : "1.6",
-    "lib/annotations.jar"                                       : "1.6",
+    ""                                                      : "11",
+    "lib/idea_rt.jar"                                       : "1.6",
+    "lib/forms_rt.jar"                                      : "1.6",
+    "lib/annotations.jar"                                   : "1.6",
     // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
-    "lib/util.jar!/com/intellij/serialization/"                  : "1.8",
-    "lib/external-system-rt.jar"                                : "1.6",
-    "plugins/java/lib/jshell-frontend.jar"                      : "9",
-    "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
-    "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
-    "plugins/Groovy/lib/groovy-rt.jar"                          : "1.6",
-    "plugins/Groovy/lib/groovy-constants-rt.jar"                : "1.6",
-    "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",
-    "plugins/javaFX/lib/rt/sceneBuilderBridge.jar"              : "11",
-    "plugins/junit/lib/junit-rt.jar"                            : "1.6",
-    "plugins/junit/lib/junit5-rt.jar"                           : "1.8",
-    "plugins/gradle/lib/gradle-tooling-extension-api.jar"       : "1.6",
-    "plugins/gradle/lib/gradle-tooling-extension-impl.jar"      : "1.6",
-    "plugins/maven/lib/maven-server-api.jar"                    : "1.6",
-    "plugins/maven/lib/maven2-server.jar"                  : "1.6",
-    "plugins/maven/lib/maven3-server-common.jar"                : "1.6",
-    "plugins/maven/lib/maven30-server.jar"                 : "1.6",
-    "plugins/maven/lib/maven3-server.jar"                  : "1.6",
-    "plugins/maven/lib/artifact-resolver-m2.jar"                : "1.6",
-    "plugins/maven/lib/artifact-resolver-m3.jar"                : "1.6",
-    "plugins/maven/lib/artifact-resolver-m31.jar"               : "1.6",
-    "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
-    "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
-    "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
+    "lib/util.jar!/com/intellij/serialization/"             : "1.8",
+    "lib/external-system-rt.jar"                            : "1.6",
+    "plugins/java/lib/jshell-frontend.jar"                  : "9",
+    "plugins/java/lib/sa-jdwp"                              : "",  // ignored
+    "plugins/java/lib/rt/debugger-agent.jar"                : "1.6",
+    "plugins/Groovy/lib/groovy-rt.jar"                      : "1.6",
+    "plugins/Groovy/lib/groovy-constants-rt.jar"            : "1.6",
+    "plugins/coverage/lib/coverage_rt.jar"                  : "1.6",
+    "plugins/javaFX/lib/rt/sceneBuilderBridge.jar"          : "11",
+    "plugins/junit/lib/junit-rt.jar"                        : "1.6",
+    "plugins/junit/lib/junit5-rt.jar"                       : "1.8",
+    "plugins/gradle/lib/gradle-tooling-extension-api.jar"   : "1.6",
+    "plugins/gradle/lib/gradle-tooling-extension-impl.jar"  : "1.6",
+    "plugins/maven/lib/maven-server-api.jar"                : "1.6",
+    "plugins/maven/lib/maven2-server.jar"                   : "1.6",
+    "plugins/maven/lib/maven3-server-common.jar"            : "1.6",
+    "plugins/maven/lib/maven30-server.jar"                  : "1.6",
+    "plugins/maven/lib/maven3-server.jar"                   : "1.6",
+    "plugins/maven/lib/artifact-resolver-m2.jar"            : "1.6",
+    "plugins/maven/lib/artifact-resolver-m3.jar"            : "1.6",
+    "plugins/maven/lib/artifact-resolver-m31.jar"           : "1.6",
+    "plugins/xpath/lib/rt/xslt-rt.jar"                      : "1.6",
+    "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"        : "1.6",
+    "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar": "1.8",
   ]
 
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
 
-    productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
+    productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
         for (String name : JAVA_IDE_API_MODULES) {
-          withModule(name)
+          if (!productLayout.productApiModules.contains(name)) {
+            withModule(name)
+          }
         }
         for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
-          withModule(name)
+          if (!productLayout.productImplementationModules.contains(name)) {
+            withModule(name)
+          }
         }
 
         //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
