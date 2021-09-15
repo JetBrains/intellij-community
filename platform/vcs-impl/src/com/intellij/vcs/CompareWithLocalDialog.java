@@ -7,12 +7,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -23,6 +24,11 @@ import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction.FileRevisionProvider;
+import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
@@ -30,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,13 +44,56 @@ import java.util.List;
 import java.util.Objects;
 
 public class CompareWithLocalDialog {
-  public static void showDialog(@NotNull Project project,
+  public static void showChanges(@NotNull Project project,
+                                 @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                 @NotNull LocalContent localContent,
+                                 @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
+    if (Registry.is("vcs.show.affected.files.as.tab") &&
+        ModalityState.current() == ModalityState.NON_MODAL) {
+      showAsTab(project, dialogTitle, localContent, changesLoader);
+    }
+    else {
+      showDialog(project, dialogTitle, localContent, changesLoader);
+    }
+  }
+
+  private static void showDialog(@NotNull Project project,
+                                 @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                 @NotNull LocalContent localContent,
+                                 @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
+    MyLoadingChangesPanel changesPanel = createPanel(project, localContent, changesLoader);
+
+    DialogBuilder dialogBuilder = new DialogBuilder(project);
+    dialogBuilder.setTitle(dialogTitle);
+    dialogBuilder.setActionDescriptors(new DialogBuilder.CloseDialogAction());
+    dialogBuilder.setCenterPanel(changesPanel);
+    dialogBuilder.setPreferredFocusComponent(changesPanel.getChangesBrowser().getPreferredFocusedComponent());
+    dialogBuilder.addDisposable(changesPanel);
+    dialogBuilder.setDimensionServiceKey("Git.DiffForPathsDialog");
+    dialogBuilder.showNotModal();
+  }
+
+  private static void showAsTab(@NotNull Project project,
                                 @NotNull @NlsContexts.DialogTitle String dialogTitle,
                                 @NotNull LocalContent localContent,
                                 @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
-    Disposable loadingDisposable = Disposer.newDisposable();
+    MyLoadingChangesPanel changesPanel = createPanel(project, localContent, changesLoader);
+
+    Content content = ContentFactory.SERVICE.getInstance().createContent(changesPanel, dialogTitle, false);
+    content.setPreferredFocusableComponent(changesPanel.getChangesBrowser().getPreferredFocusedComponent());
+    content.setDisposer(changesPanel);
+
+    ChangesBrowserToolWindow.showTab(project, content);
+  }
+
+  @NotNull
+  private static MyLoadingChangesPanel createPanel(
+    @NotNull Project project,
+    @NotNull LocalContent localContent,
+    @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader
+  ) {
     MyChangesBrowser changesBrowser = new MyChangesBrowser(project, localContent);
-    MyLoadingChangesPanel changesPanel = new MyLoadingChangesPanel(changesBrowser, loadingDisposable) {
+    MyLoadingChangesPanel changesPanel = new MyLoadingChangesPanel(changesBrowser) {
       @NotNull
       @Override
       protected Collection<Change> loadChanges() throws VcsException {
@@ -51,31 +101,27 @@ public class CompareWithLocalDialog {
       }
     };
     changesPanel.reloadChanges();
-
-    DialogBuilder dialogBuilder = new DialogBuilder(project);
-    dialogBuilder.setTitle(dialogTitle);
-    dialogBuilder.setActionDescriptors(new DialogBuilder.CloseDialogAction());
-    dialogBuilder.setCenterPanel(changesPanel);
-    dialogBuilder.setPreferredFocusComponent(changesPanel.getChangesBrowser().getPreferredFocusedComponent());
-    dialogBuilder.addDisposable(loadingDisposable);
-    dialogBuilder.setDimensionServiceKey("Git.DiffForPathsDialog");
-    dialogBuilder.showNotModal();
+    return changesPanel;
   }
 
-  private static abstract class MyLoadingChangesPanel extends JPanel implements DataProvider {
+  private static abstract class MyLoadingChangesPanel extends JPanel implements DataProvider, Disposable {
     public static final DataKey<MyLoadingChangesPanel> DATA_KEY = DataKey.create("git4idea.log.MyLoadingChangesPanel");
 
     private final SimpleChangesBrowser myChangesBrowser;
     private final LoadingChangesPanel myLoadingPanel;
 
-    private MyLoadingChangesPanel(@NotNull SimpleChangesBrowser changesBrowser, @NotNull Disposable disposable) {
+    private MyLoadingChangesPanel(@NotNull SimpleChangesBrowser changesBrowser) {
       super(new BorderLayout());
 
       myChangesBrowser = changesBrowser;
 
       StatusText emptyText = myChangesBrowser.getViewer().getEmptyText();
-      myLoadingPanel = new LoadingChangesPanel(myChangesBrowser, emptyText, disposable);
+      myLoadingPanel = new LoadingChangesPanel(myChangesBrowser, emptyText, this);
       add(myLoadingPanel, BorderLayout.CENTER);
+    }
+
+    @Override
+    public void dispose() {
     }
 
     @NotNull
@@ -110,6 +156,12 @@ public class CompareWithLocalDialog {
     private MyChangesBrowser(@NotNull Project project, @NotNull LocalContent localContent) {
       super(project, false, true);
       myLocalContent = localContent;
+    }
+
+    @NotNull
+    @Override
+    protected Border createViewerBorder() {
+      return IdeBorderFactory.createBorder(SideBorder.TOP);
     }
 
     @NotNull

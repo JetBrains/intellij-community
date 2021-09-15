@@ -113,7 +113,7 @@ public final class VcsDiffUtil {
     String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
                                            revNumTitle1, revNumTitle2, VcsUtil.getFilePath(file));
 
-    CompareWithLocalDialog.showDialog(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
+    CompareWithLocalDialog.showChanges(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
       return provider.compareWithWorkingDir(file, targetRevNumber);
     });
   }
