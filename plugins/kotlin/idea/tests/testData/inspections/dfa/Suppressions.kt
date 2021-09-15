@@ -25,6 +25,18 @@ fun compilerWarningDuplicateWhen(x : X) {
         <warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'">is X</warning> -> {}
     }
 }
+fun nothingOrNull(s: String?): String? {
+    return s?.let {
+        if (it.isEmpty()) return null
+        return s
+    }
+}
+fun nothingOrNullToElvis(s: String?): Boolean {
+    return s?.let {
+        if (it.isEmpty()) return false
+        return s.hashCode() < 0
+    } ?: false
+}
 // f.get() always returns null but it's inevitable: we cannot return anything else, hence suppress the warning
 fun alwaysNull(f : MyFuture<Void>) = f.get()
 fun unusedResult(x: Int) {

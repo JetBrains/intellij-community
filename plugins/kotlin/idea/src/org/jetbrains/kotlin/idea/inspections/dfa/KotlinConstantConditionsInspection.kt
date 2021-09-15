@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
 
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private enum class ConstantValue {
@@ -98,6 +99,15 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             (parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
         ) {
             return true
+        }
+        if (expression is KtBinaryExpression && expression.operationToken == KtTokens.ELVIS) {
+            // Left part of Elvis is Nothing?, so the right part is always executed
+            // Could be caused by code like return x?.let { return ... } ?: true
+            // While inner "return" is redundant, the "always true" warning is confusing
+            // probably separate inspection could report extra "return"
+            if (expression.left?.getKotlinType()?.isNullableNothing() == true) {
+                return true
+            }
         }
         when (value) {
             ConstantValue.TRUE -> {
