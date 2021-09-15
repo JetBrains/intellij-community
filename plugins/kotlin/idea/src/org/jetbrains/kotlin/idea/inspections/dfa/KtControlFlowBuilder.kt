@@ -428,7 +428,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         val lambda = getInlineableLambda(expr)
         if (lambda != null) {
-            var kind = getLambdaOccurrenceRange(expr, lambda.descriptor.original)
+            val kind = getLambdaOccurrenceRange(expr, lambda.descriptor.original)
             inlineLambda(lambda.lambda, kind)
         } else {
             for(lambdaArg in expr.lambdaArguments) {
@@ -1149,7 +1149,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if ((mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) && resultType != null &&
             (resultType.isLong() || resultType.isInt())) {
             val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.ArithmeticException")
-            val zero = if (resultType.isLong() == true) DfTypes.longValue(0) else DfTypes.intValue(0)
+            val zero = if (resultType.isLong()) DfTypes.longValue(0) else DfTypes.intValue(0)
             addInstruction(EnsureInstruction(null, RelationType.NE, zero, transfer, true))
         }
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
