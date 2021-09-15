@@ -77,22 +77,28 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
     }
 
     init {
-      layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]4[]3[]push")
-      add(JPanel().apply {
-        isOpaque = false
-        add(arrow)
-        val d = preferredSize
-        d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
-        preferredSize = d
-      })
-      add(JPanel().apply {
-        preferredSize = JBDimension(1, 12)
-        minimumSize = JBDimension(1, 12)
+      layout = MigLayout("ins 0 0 0 3, fill, ay center")
+      val pane = JPanel().apply {
+        layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]3[shp 1]3[]")
+        add(JPanel().apply {
+          isOpaque = false
+          add(arrow)
+          val d = preferredSize
+          d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+          preferredSize = d
+        })
+        add(JPanel().apply {
+          preferredSize = JBDimension(1, 12)
+          minimumSize = JBDimension(1, 12)
 
-        background = UIManager.getColor("Separator.separatorColor")
-      })
-      add(setting)
-      add(process)
+          background = UIManager.getColor("Separator.separatorColor")
+        })
+        add(setting, "wmin 10")
+        add(process, "wmin 0")
+        isOpaque = false
+      }
+
+      add(pane)
 
       addMouseListener(object : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
