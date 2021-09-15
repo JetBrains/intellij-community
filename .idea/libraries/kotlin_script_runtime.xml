@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlin-script-runtime" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:1.5.10-release-943" />
+    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:1.5.10-release-944" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.5.10-release-943/kotlin-script-runtime-1.5.10-release-943.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.5.10-release-944/kotlin-script-runtime-1.5.10-release-944.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.5.10-release-943/kotlin-script-runtime-1.5.10-release-943-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.5.10-release-944/kotlin-script-runtime-1.5.10-release-944-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
