@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.settings.language.CaseListPanel
 import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.lang.Language
@@ -37,9 +38,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val langNode = CheckedTreeNode(lang.key)
         groupNode.add(langNode)
 
-        val parameterHintsProvider = InlayParameterHintsExtension.forLanguage(lang.key)
-        if (parameterHintsProvider != null) {
-          addModelNode(ParameterInlayProviderSettingsModel(parameterHintsProvider, lang.key), langNode)
+        if (group.key == CODE_VISION_GROUP) {
+          val parameterHintsProvider = InlayParameterHintsExtension.forLanguage(lang.key)
+          if (parameterHintsProvider != null) {
+            addModelNode(ParameterInlayProviderSettingsModel(parameterHintsProvider, lang.key), langNode)
+          }
         }
 
         lang.value.forEach {
@@ -90,6 +93,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     when (val item = treeNode?.userObject) {
       is InlayProviderSettingsModel -> {
         rightPanel.add(JLabel(item.name))
+        rightPanel.add(CaseListPanel(item.cases, item.onChangeListener!!))
         rightPanel.add(item.component)
       }
     }
