@@ -4,6 +4,7 @@ package com.intellij.ui
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.ImageUtil
 import java.awt.Component
 import java.awt.Graphics
@@ -18,11 +19,7 @@ class ScalingDeferredSquareImageIcon<K : Any>(size: Int, defaultIcon: Icon,
   private val scaledIconCache = ScaleContext.Cache { scaleCtx ->
     IconDeferrer.getInstance().defer(baseIcon, key) {
       try {
-        val image = imageLoader(it)
-        val hidpiImage = ImageUtil.ensureHiDPI(image, scaleCtx)
-        val scaledSize = scaleCtx.apply(size.toDouble(), ScaleType.USR_SCALE).toInt()
-        val scaledImage = ImageUtil.scaleImage(hidpiImage, scaledSize, scaledSize)
-        IconUtil.createImageIcon(scaledImage)
+        imageLoader(it)?.convertToIcon(size, scaleCtx) ?: baseIcon
       }
       catch (e: Exception) {
         baseIcon
@@ -36,4 +33,12 @@ class ScalingDeferredSquareImageIcon<K : Any>(size: Int, defaultIcon: Icon,
   override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
     scaledIconCache.getOrProvide(ScaleContext.create(c))?.paintIcon(c, g, x, y)
   }
+}
+
+@RequiresBackgroundThread
+fun Image.convertToIcon(size: Int, scaleContext: ScaleContext): Icon {
+  val hidpiImage = ImageUtil.ensureHiDPI(this, scaleContext)
+  val scaledSize = scaleContext.apply(size.toDouble(), ScaleType.USR_SCALE).toInt()
+  val scaledImage = ImageUtil.scaleImage(hidpiImage, scaledSize, scaledSize)
+  return IconUtil.createImageIcon(scaledImage)
 }
