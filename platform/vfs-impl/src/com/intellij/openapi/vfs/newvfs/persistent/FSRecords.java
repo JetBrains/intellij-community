@@ -504,7 +504,7 @@ public final class FSRecords {
     return readAndHandleErrors(() -> ourConnection.getNames().enumerate(name));
   }
 
-  public static String getName(int id) {
+  public static @NotNull String getName(int id) {
     return getNameSequence(id).toString();
   }
 

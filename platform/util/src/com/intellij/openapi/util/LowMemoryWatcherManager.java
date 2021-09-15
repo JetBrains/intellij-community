@@ -20,7 +20,7 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 public final class LowMemoryWatcherManager implements Disposable {
-  private static Logger getLogger() {
+  private static @NotNull Logger getLogger() {
     return Logger.getInstance(LowMemoryWatcherManager.class);
   }
 
@@ -50,7 +50,8 @@ public final class LowMemoryWatcherManager implements Disposable {
     myMemoryPoolMXBeansFuture = initializeMXBeanListenersLater(backendExecutorService);
   }
 
-  private Future<?> initializeMXBeanListenersLater(ExecutorService backendExecutorService) {
+  @NotNull
+  private Future<?> initializeMXBeanListenersLater(@NotNull ExecutorService backendExecutorService) {
     // do it in the other thread to get it out of the way during startup
     return backendExecutorService.submit(new Runnable() {
       @Override
