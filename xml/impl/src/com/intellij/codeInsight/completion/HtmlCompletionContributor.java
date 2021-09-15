@@ -237,7 +237,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-      // Do not provide HTML text completions outside of plain HTML files
+      // Do not provide HTML text completions in multi view files like PHP
       if (!ContainerUtil.and(parameters.getOriginalFile().getViewProvider().getAllFiles(), f -> f instanceof HtmlFileImpl)) return;
       PsiFile completionFile = parameters.getPosition().getContainingFile();
       int offset = parameters.getOffset();
