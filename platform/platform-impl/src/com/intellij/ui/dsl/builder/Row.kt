@@ -52,14 +52,24 @@ enum class TopGap {
   /**
    * See [SpacingConfiguration.verticalSmallGap]
    */
-  SMALL
+  SMALL,
+
+  /**
+   * See [SpacingConfiguration.verticalMediumGap]
+   */
+  MEDIUM
 }
 
 enum class BottomGap {
   /**
    * See [SpacingConfiguration.verticalSmallGap]
    */
-  SMALL
+  SMALL,
+
+  /**
+   * See [SpacingConfiguration.verticalMediumGap]
+   */
+  MEDIUM
 }
 
 @ApiStatus.Experimental

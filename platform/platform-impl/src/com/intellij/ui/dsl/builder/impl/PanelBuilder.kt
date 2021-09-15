@@ -6,11 +6,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.*
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
@@ -323,11 +320,13 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
     val top = when (row.topGap) {
       TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
+      TopGap.MEDIUM -> dialogPanelConfig.spacing.verticalMediumGap
       null -> row.internalTopGap
     }
 
     val bottom = when (row.bottomGap) {
       BottomGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
+      BottomGap.MEDIUM -> dialogPanelConfig.spacing.verticalMediumGap
       null -> row.internalBottomGap
     }
 

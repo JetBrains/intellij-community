@@ -41,6 +41,7 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val commentBottomGap = JBUI.scale(6)
     override val groupTopGap = JBUI.scale(20)
     override val verticalSmallGap = JBUI.scale(8)
+    override val verticalMediumGap = JBUI.scale(20)
     override val buttonGroupHeaderBottomGap = JBUI.scale(2)
     override val segmentedButtonVerticalGap = JBUI.scale(3)
     override val segmentedButtonHorizontalGap= JBUI.scale(12)

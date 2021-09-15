@@ -17,6 +17,7 @@ interface SpacingConfiguration {
       override val commentBottomGap = 0
       override val groupTopGap = 0
       override val verticalSmallGap = 0
+      override val verticalMediumGap = 0
       override val buttonGroupHeaderBottomGap = 0
       override val segmentedButtonVerticalGap = 0
       override val segmentedButtonHorizontalGap = 0
@@ -67,6 +68,11 @@ interface SpacingConfiguration {
    * Vertical small gap between unrelated settings
    */
   val verticalSmallGap: Int
+
+  /**
+   * Vertical medium gap between unrelated settings
+   */
+  val verticalMediumGap: Int
 
   /**
    * Vertical gap after button group header
