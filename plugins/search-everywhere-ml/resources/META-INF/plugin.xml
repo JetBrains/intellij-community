@@ -70,7 +70,7 @@
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereOptionFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.FileKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ClassAndFileKeyProvider"/>
 
     <rankingModelProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider"/>
