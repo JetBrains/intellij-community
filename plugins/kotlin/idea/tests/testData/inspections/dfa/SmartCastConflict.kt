@@ -92,3 +92,12 @@ interface B {
 interface C : B {
     override fun b()
 }
+
+fun doubleIf(x: String?) {
+    var y : String? = null
+    if (x != null) {
+        y = x.trim()
+    }
+    if (x == null || y == null) return
+    println(y.trim())
+}

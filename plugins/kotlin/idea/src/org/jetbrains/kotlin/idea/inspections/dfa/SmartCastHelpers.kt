@@ -70,7 +70,7 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtExpr
                         val nothingType = thenExpression?.getKotlinType()?.isNothing() == true ||
                                 elseExpression?.getKotlinType()?.isNothing() == true
                         if (nothingType) {
-                            var next = parent.nextSibling
+                            var next = gParent.nextSibling
                             while (next != null) {
                                 if (next is KtExpression) result += next
                                 next = next.nextSibling
