@@ -60,14 +60,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-  protected TestCompletionMavenImporter testImporter = new TestCompletionMavenImporter();
 
   @Override
   protected void setUp() throws Exception {
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath());
 
     super.setUp();
-    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, Collections.singletonList(testImporter), getTestRootDisposable());
 
     myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
 
@@ -432,7 +430,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     initProjectsManager(false);
 
     readProjects(files, disabledProfiles, profiles);
-    testImporter.reset();
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.scheduleImportInTests(files);
