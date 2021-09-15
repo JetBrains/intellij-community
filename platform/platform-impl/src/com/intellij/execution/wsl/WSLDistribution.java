@@ -60,6 +60,7 @@ public class WSLDistribution {
   public static final String EXEC_PARAMETER = "--exec";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
+  private static final String RSYNC = "rsync";
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
@@ -84,8 +85,8 @@ public class WSLDistribution {
   }
 
   /**
-   * @deprecated please don't use it, to be removed
    * @return executable file, null for WSL distributions parsed from `wsl.exe --list` output
+   * @deprecated please don't use it, to be removed
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
@@ -180,16 +181,17 @@ public class WSLDistribution {
    * @return process output
    */
 
-  @SuppressWarnings("UnusedReturnValue")
-  public ProcessOutput copyFromWsl(@NotNull String wslPath,
-                                   @NotNull String windowsPath,
-                                   @Nullable List<String> additionalOptions,
-                                   @Nullable Consumer<? super ProcessHandler> handlerConsumer
+  public void copyFromWsl(@NotNull String wslPath,
+                          @NotNull String windowsPath,
+                          @Nullable List<String> additionalOptions,
+                          @Nullable Consumer<? super ProcessHandler> handlerConsumer
   )
     throws ExecutionException {
+
+
     //noinspection ResultOfMethodCallIgnored
     new File(windowsPath).mkdirs();
-    List<String> command = new ArrayList<>(Arrays.asList("rsync", "-cr"));
+    List<String> command = new ArrayList<>(Arrays.asList(RSYNC, "-cr"));
 
     if (additionalOptions != null) {
       command.addAll(additionalOptions);
@@ -201,7 +203,16 @@ public class WSLDistribution {
       throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
     }
     command.add(targetWslPath + "/");
-    return executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
+    var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
+    if (process.getExitCode() != 0) {
+      // Most common problem is rsync not onstalled
+      if (executeOnWsl(10_000, "type", RSYNC).getExitCode() != 0) {
+        throw new ExecutionException(IdeBundle.message("wsl.no.rsync", this.myDescriptor.getMsId()));
+      }
+      else {
+        throw new ExecutionException(process.getStderr());
+      }
+    }
   }
 
   /**
@@ -564,7 +575,9 @@ public class WSLDistribution {
     return Strings.stringHashCodeInsensitive(getMsId());
   }
 
-  /** @deprecated use {@link WSLDistribution#getUNCRootPath()} instead */
+  /**
+   * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
+   */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @NotNull File getUNCRoot() {
