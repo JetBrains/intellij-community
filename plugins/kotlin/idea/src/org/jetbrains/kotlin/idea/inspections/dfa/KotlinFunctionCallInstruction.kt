@@ -101,6 +101,10 @@ class KotlinFunctionCallInstruction(
         return expr.getKotlinType().toDfType(expr)
     }
 
+    override fun getSuccessorIndexes(): IntArray {
+        return if (exceptionTransfer == null) intArrayOf(index + 1) else exceptionTransfer.possibleTargetIndices + (index + 1)
+    }
+
     override fun toString(): String {
         return "CALL " + call.text
     }
