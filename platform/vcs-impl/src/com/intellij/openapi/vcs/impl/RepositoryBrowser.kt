@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.VcsActions
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
@@ -23,6 +24,7 @@ import com.intellij.openapi.vcs.impl.RepositoryBrowserPanel.Companion.REPOSITORY
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
@@ -40,8 +42,7 @@ object RepositoryBrowser {
 
   fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, @NlsContexts.TabTitle title: String) {
     val toolWindowManager = ToolWindowManager.getInstance(project)
-    val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager,
-      project)
+    val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager)
 
     for (content in repoToolWindow.contentManager.contents) {
       val component = content.component as? RepositoryBrowserPanel ?: continue
@@ -59,8 +60,14 @@ object RepositoryBrowser {
     repoToolWindow.activate(null)
   }
 
-  private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager, project: Project): ToolWindow {
-    val toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.LEFT, project, true)
+  private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager): ToolWindow {
+    val toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
+      id = TOOLWINDOW_ID,
+      anchor = ToolWindowAnchor.LEFT,
+      canCloseContent = true,
+      canWorkInDumbMode = true,
+      stripeTitle = { VcsBundle.message("RepositoryBrowser.toolwindow.name") }
+    ))
     ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
     return toolWindow
   }
