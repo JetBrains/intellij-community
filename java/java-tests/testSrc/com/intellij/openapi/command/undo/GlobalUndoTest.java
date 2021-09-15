@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -564,7 +565,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertUndoIsAvailable(getEditor(f));
   }
 
-  public void testUndoFallbackToLocalStack() throws Exception{
+  private Pair<Editor, Editor> prepareTestUndoFallback(){
     createClass("Bar");
     createClass("Foo");
 
@@ -583,10 +584,37 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     // 4: change local stack in FooRenamed.java
     WriteAction.runAndWait(() -> executeCommand(() -> fooEditor.getDocument().insertString(25, "public void Test(){}")));
 
+    return new Pair<>(barEditor, fooEditor);
+  }
+
+  public void testUndoFallbackToLocalStack() throws Exception{
+    Pair<Editor, Editor> pair = prepareTestUndoFallback();
+    var barEditor = pair.first;
+    var fooEditor = pair.second;
+
     undo(barEditor);
 
-    // 5: check if instead of falling global command we undone command from local stack
-    assertFalse(barEditor.getDocument().getText().contains("FooRenamed"));
+    assertFalse("Bar.java doesn't remove rename from Foo.java", barEditor.getDocument().getText().contains("FooRenamed"));
+    assertTrue("Foo.java doesn't contains last rename result", fooEditor.getDocument().getText().contains("FooRenamed"));
+
+  }
+  public void testUndoFallbackToLocalStackAndRedo() throws Exception{
+    Pair<Editor, Editor> pair = prepareTestUndoFallback();
+    var barEditor = pair.first;
+    var fooEditor = pair.second;
+
+    undo(barEditor);
+
+    // call redo to gather splitted command together
+    redo(barEditor);
+
+    assertTrue(barEditor.getDocument().getText().contains("FooRenamed"));
+
+    // 7: undo rename Foo -> FooRenamed to check that changes also applied to Bar.java
+    undo(fooEditor);
+    undo(fooEditor);
+
+    assertFalse("FooRenamed rename undo doesn't applied to Bar.java", barEditor.getDocument().getText().contains("FooRenamed"));
   }
 
   public void testUndoRedoNotAvailableAfterFileWasDeletedExternally() {

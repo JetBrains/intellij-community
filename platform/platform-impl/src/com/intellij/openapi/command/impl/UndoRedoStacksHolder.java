@@ -102,13 +102,18 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     }
   }
 
-  public void replaceOnStacks(@NotNull UndoableGroup group, @NotNull UndoableGroup newgroup) {
+  public boolean replaceOnStacks(@NotNull UndoableGroup group, @NotNull UndoableGroup newGroup) {
+    boolean hasAffectedItems = false;
     for (LinkedList<UndoableGroup> stack : getAffectedStacks(group)) {
       int i = stack.indexOf(group);
       if (i < 0) continue;
+
+      hasAffectedItems = true;
+
       stack.remove(group);
-      stack.add(i, group);
+      stack.add(i, newGroup);
     }
+    return hasAffectedItems;
   }
 
   void clearStacks(boolean clearGlobal, @NotNull Set<? extends DocumentReference> refs) {

@@ -34,6 +34,7 @@ final class UndoableGroup implements Dumpable {
   private final List<? extends UndoableAction> myActions;
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
+  private UndoableGroupOriginalContext myGroupOriginalContext;
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
   private boolean myTemporary;
@@ -92,6 +93,15 @@ final class UndoableGroup implements Dumpable {
       if (action instanceof NonUndoableAction) return false;
     }
     return true;
+  }
+
+  void setOriginalContext(@NotNull UndoableGroupOriginalContext originalContext){
+    myGroupOriginalContext = originalContext;
+  }
+
+  @Nullable
+  UndoableGroupOriginalContext getGroupOriginalContext(){
+    return myGroupOriginalContext;
   }
 
   void undo() throws UnexpectedUndoException {
@@ -377,5 +387,23 @@ final class UndoableGroup implements Dumpable {
     if (multiline) result.append("\n");
     result.append("]");
     return result.toString();
+  }
+
+  static class UndoableGroupOriginalContext {
+    private final UndoableGroup myOriginalGroup;
+    private final UndoableGroup myCurrentStackGroup;
+
+    UndoableGroupOriginalContext(@NotNull UndoableGroup originalGroup, @NotNull UndoableGroup currentStackGroup) {
+      myOriginalGroup = originalGroup;
+      myCurrentStackGroup = currentStackGroup;
+    }
+
+    UndoableGroup getOriginalGroup() {
+      return myOriginalGroup;
+    }
+
+    UndoableGroup getCurrentStackGroup(){
+      return myCurrentStackGroup;
+    }
   }
 }

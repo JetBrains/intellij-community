@@ -287,12 +287,20 @@ public final class CommandMerger {
           break;
         }
 
-        if (Registry.is("ide.undo.fallback")) {
-          myManager.fallbackOnLocalStack(editor, undoRedo, myUndoConfirmationPolicy);
-          undoRedo = createUndoOrRedo(editor, isUndo);
+        // if undo is block by other global command, trying to split global command and undo only local change in editor
+        if (!undoRedo.isRedo() && undoRedo.myUndoableGroup.isGlobal() && Registry.is("ide.undo.fallback")) {
+          if (myManager.splitGlobalCommand(editor, undoRedo, myUndoConfirmationPolicy)) {
+            var splittedUndo = createUndoOrRedo(editor, isUndo);
+            if (splittedUndo != null) undoRedo = splittedUndo;
+          }
         }
       }
       if (!undoRedo.execute(false, isInsideStartFinishGroup)) return;
+
+      if(editor != null && undoRedo.isRedo() && Registry.is("ide.undo.fallback")){
+        myManager.gatherGlobalCommand(editor, undoRedo);
+      }
+
       isInsideStartFinishGroup = undoRedo.myUndoableGroup.isInsideStartFinishGroup(isUndo, isInsideStartFinishGroup);
       if (isInsideStartFinishGroup) continue;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();
