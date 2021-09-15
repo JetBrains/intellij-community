@@ -33,7 +33,6 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private static final Logger LOG = Logger.getInstance(VcsAnnotationLocalChangesListenerImpl.class);
 
   private final ZipperUpdater myUpdater;
-  private final MessageBusConnection myConnection;
 
   private final Runnable myUpdateStuff;
 
@@ -50,8 +49,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project) {
     myLock = new Object();
     myUpdateStuff = createUpdateStuff();
-    myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, project);
-    myConnection = project.getMessageBus().connect();
+    myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, this);
     myLocalFileSystem = LocalFileSystem.getInstance();
     VcsAnnotationRefresher handler = createHandler();
     myDirtyPaths = new HashSet<>();
@@ -61,7 +59,12 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myVcsKeySet = new HashSet<>();
 
-    myConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, handler);
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    busConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, handler);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @TestOnly
@@ -224,12 +227,6 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> key.equals(it.getVcsKey()));
       invalidateAnnotations(copy, true);
     }
-  }
-
-  @Override
-  public void dispose() {
-    myConnection.disconnect();
-    myUpdater.stop();
   }
 
   private VcsAnnotationRefresher createHandler() {
