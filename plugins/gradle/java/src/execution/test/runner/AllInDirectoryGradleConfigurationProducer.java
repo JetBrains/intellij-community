@@ -86,7 +86,7 @@ public final class AllInDirectoryGradleConfigurationProducer extends AbstractGra
     Module module = Objects.requireNonNull(context.getModule());
     VirtualFile directory = ((PsiFileSystemItem)element).getVirtualFile();
     List<VirtualFile> sources = findTestSourcesUnderDirectory(module, directory);
-    String testFilter = createTestWildcardFilter(/*hasSuffix=*/false);
+    String testFilter = createTestWildcardFilter();
     List<TestTasksToRun> testsTasksToRun = new ArrayList<>();
     for (VirtualFile source : sources) {
       testsTasksToRun.addAll(ContainerUtil.map(findAllTestsTaskToRun(source, project), it -> new TestTasksToRun(it, testFilter)));

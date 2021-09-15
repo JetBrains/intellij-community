@@ -82,7 +82,7 @@ public final class AllInPackageGradleConfigurationProducer extends AbstractGradl
     PsiElement sourceElement = Objects.requireNonNull(getSourceElement(module, psiLocation));
     VirtualFile source = Objects.requireNonNull(getSourceFile(sourceElement));
     List<TasksToRun> allTasksToRuns = findAllTestsTaskToRun(source, project);
-    String testFilter = createTestFilterFrom(element, /*hasSuffix=*/false);
+    String testFilter = createTestFilterFrom(element);
     return ContainerUtil.map(allTasksToRuns, it -> new TestTasksToRun(it, testFilter));
   }
 

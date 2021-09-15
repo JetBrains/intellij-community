@@ -23,7 +23,7 @@ import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfig
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
 abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer : AbstractKotlinTestMethodGradleConfigurationProducer() {
     override val forceGradleRunner: Boolean get() = true
@@ -92,7 +92,7 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
             val settings = configuration.settings
 
             val result = settings.applyTestConfiguration(context.module, tasks, *classes) {
-                var filters = createTestFilterFrom(context.location, it, psiMethod, true)
+                var filters = createTestFilterFrom(context.location, it, psiMethod)
                 if (context.location is PsiMemberParameterizedLocation && contextualSuffix != null) {
                     filters = filters.replace("[*$contextualSuffix*]", "")
                 }

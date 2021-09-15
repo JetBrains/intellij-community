@@ -69,7 +69,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     TestMappings testMappings = getTestMappings(project, tests);
     Function1<String, VirtualFile> findTestSource = test -> getSourceFile(testMappings.getClasses().get(test));
     Function1<String, String> createFilter = (test) ->
-      createTestFilterFrom(testMappings.getClasses().get(test), testMappings.getMethods().get(test), /*hasSuffix=*/true);
+      createTestFilterFrom(testMappings.getClasses().get(test), testMappings.getMethods().get(test));
     Module module = getModuleFromContext(context);
     if (module == null) return false;
     if (!applyTestConfiguration(settings, module, tests, findTestSource, createFilter)) return false;
@@ -115,7 +115,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
       ExternalSystemTaskExecutionSettings settings = runConfiguration.getSettings();
       Function1<String, VirtualFile> findTestSource = test -> getSourceFile(testMappings.getClasses().get(test));
       Function1<String, String> createFilter = (test) ->
-        createTestFilterFrom(testMappings.getClasses().get(test), testMappings.getMethods().get(test), /*hasSuffix=*/true);
+        createTestFilterFrom(testMappings.getClasses().get(test), testMappings.getMethods().get(test));
       if (!applyTestConfiguration(settings, module, tasks, tests, findTestSource, createFilter)) {
         LOG.warn("Cannot apply pattern test configuration, uses raw run configuration");
         super.onFirstRun(configuration, context, startRunnable);

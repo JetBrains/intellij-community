@@ -99,7 +99,7 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
     List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(element) : chosenElements;
     List<TestTasksToRun> testsTasksToRun = new ArrayList<>();
     for (PsiClass psiClass : elements) {
-      String testFilter = createTestFilterFrom(psiClass, /*hasSuffix=*/false);
+      String testFilter = createTestFilterFrom(psiClass);
       testsTasksToRun.addAll(ContainerUtil.map(findAllTestsTaskToRun(source, project), it -> new TestTasksToRun(it, testFilter)));
     }
     return testsTasksToRun;

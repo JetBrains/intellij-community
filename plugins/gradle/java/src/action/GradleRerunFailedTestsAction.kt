@@ -34,8 +34,8 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigura
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.execution.test.runner.getSourceFile
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom
 import org.jetbrains.plugins.gradle.util.containsTasks
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
 class GradleRerunFailedTestsAction(
   consoleView: GradleTestsExecutionConsole
@@ -60,7 +60,7 @@ class GradleRerunFailedTestsAction(
   private fun ExternalSystemTaskExecutionSettings.setupRerunTestConfiguration(project: Project) {
     val failedTests = getFailedTests(project).filterIsInstance<GradleSMTestProxy>().mapNotNull { getTestLocationInfo(project, it) }
     val findTestSource = { it: TestLocationInfo -> getSourceFile(it.element) }
-    val createFiler = { it: TestLocationInfo -> createTestFilterFrom(it.location, it.psiClass, it.psiMethod, true) }
+    val createFiler = { it: TestLocationInfo -> createTestFilterFrom(it.location, it.psiClass, it.psiMethod) }
     val getTestsTaskToRun = { source: VirtualFile ->
       val foundTasksToRun = findAllTestsTaskToRun(source, project)
       foundTasksToRun

@@ -13,8 +13,8 @@ import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser.Compa
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleCommandLine.Companion.parse
 import org.jetbrains.plugins.gradle.util.GradleCommandLine.TasksAndArguments
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestWildcardFilter
 import org.jetbrains.plugins.gradle.util.TasksToRun
+import org.jetbrains.plugins.gradle.util.createTestWildcardFilter
 import java.util.*
 import java.util.function.Consumer
 
@@ -150,7 +150,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     for (task in tasksToRun) {
       commandLineBuilder.add(task.escapeIfNeeded())
     }
-    if (createTestWildcardFilter(false) !in testFilters) {
+    if (createTestWildcardFilter() !in testFilters) {
       for (testFilter in testFilters) {
         if (StringUtil.isNotEmpty(testFilter)) {
           commandLineBuilder.add(testFilter)

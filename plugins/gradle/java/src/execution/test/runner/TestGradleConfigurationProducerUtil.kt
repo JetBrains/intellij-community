@@ -99,7 +99,10 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
       if (tasks.isEmpty()) continue
       val commandLine = tasks.joinToString(" ") { it.escapeIfNeeded() }
       val arguments = testRunConfigurations.getOrPut(commandLine, ::LinkedHashSet)
-      arguments.add(createFilter(test).trim())
+      val testFilter = createFilter(test).trim()
+      if (testFilter.isNotEmpty()) {
+        arguments.add(testFilter)
+      }
     }
   }
 

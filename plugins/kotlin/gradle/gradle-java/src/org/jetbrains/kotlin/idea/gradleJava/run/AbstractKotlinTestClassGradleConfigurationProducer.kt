@@ -13,14 +13,14 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
-import org.jetbrains.kotlin.idea.gradle.run.*
+import org.jetbrains.kotlin.idea.gradle.run.KotlinGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
 abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer : AbstractKotlinTestClassGradleConfigurationProducer() {
     override val forceGradleRunner: Boolean get() = true
@@ -79,7 +79,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
             val configuration = fromContext.configuration as GradleRunConfiguration
             val settings = configuration.settings
 
-            val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz, hasSuffix = true) }
+          val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz) }
             if (!settings.applyTestConfiguration(context.module, tasks, classes, createFilter)) {
                 LOG.warn("Cannot apply class test configuration, uses raw run configuration")
                 performRunnable.run()
