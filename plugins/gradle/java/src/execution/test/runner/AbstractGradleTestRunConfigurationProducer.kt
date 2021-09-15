@@ -49,7 +49,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     val location = context.location ?: return false
     val element = getElement(context) ?: return false
     val allTasksAndArguments = getAllTasksAndArguments(context, element, emptyList())
-    val tasksAndArguments = allTasksAndArguments.firstOrNull() ?: return false
+    val tasksAndArguments = allTasksAndArguments.firstOrNull() ?: TasksAndArguments(emptyList())
 
     sourceElement.set(element)
     configuration.name = suggestConfigurationName(context, element, emptyList())
@@ -77,8 +77,13 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
   }
 
   override fun onFirstRun(configuration: ConfigurationFromContext, context: ConfigurationContext, startRunnable: Runnable) {
-    val project = requireNotNull(context.project)
-    val element = requireNotNull(getElement(context))
+    val project = context.project
+    val element = getElement(context)
+    if (project == null || element == null) {
+      LOG.warn("Cannot extract configuration data from context, uses raw run configuration")
+      super.onFirstRun(configuration, context, startRunnable)
+      return
+    }
     val runConfiguration = configuration.configuration as GradleRunConfiguration
     val dataContext = contextWithLocationName(context.dataContext, getLocationName(context, element))
     chooseSourceElements(context, element) { elements ->
