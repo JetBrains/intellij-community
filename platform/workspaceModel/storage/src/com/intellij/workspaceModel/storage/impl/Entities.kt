@@ -167,14 +167,6 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
   internal fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
 }
 
-internal data class EntityId(val arrayId: Int, val clazz: Int) {
-  init {
-    if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
-  }
-
-  override fun toString(): String = clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString()
-}
-
 interface SoftLinkable {
   fun getLinks(): Set<PersistentEntityId<*>>
   fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>)
@@ -186,7 +178,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  internal fun createEntityId(): EntityId = EntityId(id, ClassConversion.entityDataToEntity(this.javaClass).toClassId())
+  internal fun createEntityId(): EntityId = createEntityId(id, ClassConversion.entityDataToEntity(javaClass).toClassId())
 
   abstract fun createEntity(snapshot: WorkspaceEntityStorage): E
 
@@ -198,7 +190,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   fun addMetaData(res: E, snapshot: WorkspaceEntityStorage, classId: Int) {
     (res as WorkspaceEntityBase).entitySource = entitySource
-    (res as WorkspaceEntityBase).id = EntityId(id, classId)
+    (res as WorkspaceEntityBase).id = createEntityId(id, classId)
     (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
   }
 

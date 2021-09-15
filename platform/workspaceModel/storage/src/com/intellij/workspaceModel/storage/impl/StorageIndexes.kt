@@ -68,7 +68,7 @@ internal open class StorageIndexes(
     storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
       if (family.entities.firstOrNull { it != null } !is SoftLinkable) return@forEachIndexed
-      var mutableId = EntityId(0, i)
+      var mutableId = createEntityId(0, i)
       family.entities.forEach { data ->
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
@@ -110,7 +110,7 @@ internal open class StorageIndexes(
     storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
       if (family.entities.firstOrNull { it != null }?.persistentId(storage) == null) return@forEachIndexed
-      var mutableId = EntityId(0, i)
+      var mutableId = createEntityId(0, i)
       family.entities.forEach { data ->
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
@@ -129,7 +129,7 @@ internal open class StorageIndexes(
     storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
       // Optimization to skip useless conversion of classes
-      var mutableId = EntityId(0, i)
+      var mutableId = createEntityId(0, i)
       family.entities.forEach { data ->
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)

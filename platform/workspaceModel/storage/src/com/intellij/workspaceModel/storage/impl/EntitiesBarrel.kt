@@ -34,7 +34,7 @@ internal class MutableEntitiesBarrel private constructor(
 
   fun book(clazz: Int): EntityId {
     val arrayId = getMutableEntityFamily(clazz).book()
-    return EntityId(arrayId, clazz)
+    return createEntityId(arrayId, clazz)
   }
 
   fun <T : WorkspaceEntity> cloneAndAdd(newEntity: WorkspaceEntityData<T>, clazz: Int): WorkspaceEntityData<T> {
