@@ -3,7 +3,6 @@ package com.intellij.ide;
 
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.lang.PathClassLoader;
 import com.intellij.util.lang.UrlClassLoader;
@@ -31,10 +30,6 @@ public final class BootstrapClassLoaderUtil {
   private static final String MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar";
 
   private BootstrapClassLoaderUtil() { }
-
-  private static Logger getLogger() {
-    return Logger.getInstance(BootstrapClassLoaderUtil.class);
-  }
 
   public static @NotNull PathClassLoader initClassLoader() throws IOException {
     Path distDir = Path.of(PathManager.getHomePath());
@@ -196,7 +191,8 @@ public final class BootstrapClassLoaderUtil {
     catch (NoSuchFileException ignored) {
     }
     catch (Exception e) {
-      getLogger().error("Cannot read " + classPathFile + ": ", e);
+      //noinspection UseOfSystemOutOrSystemErr
+      System.err.println("Cannot read " + classPathFile + ": " + e);
     }
 
     // no classpath file - compute classpath

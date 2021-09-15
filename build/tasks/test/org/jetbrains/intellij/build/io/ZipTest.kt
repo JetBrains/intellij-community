@@ -13,7 +13,6 @@ import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
-import java.util.zip.ZipEntry
 import kotlin.random.Random
 
 @Suppress("UsePropertyAccessSyntax")
@@ -47,30 +46,6 @@ class ZipTest {
       }))
     }
     ForkJoinTask.invokeAll(tasks)
-  }
-
-  @Test
-  fun `do not compress jars and images`() {
-    val random = Random(42)
-
-    val dir = tempDir.newPath("/dir")
-    Files.createDirectories(dir)
-    val fileDescriptors = listOf(
-      Entry("lib.jar", true), Entry("lib.zip", true), Entry("image.png", true), Entry("scalable-image.svg", true), Entry("readme.txt", true)
-    )
-    for (entry in fileDescriptors) {
-      Files.write(dir.resolve(entry.path), random.nextBytes(1024))
-    }
-
-    val archiveFile = tempDir.newPath("/archive.zip")
-    zip(archiveFile, mapOf(dir to ""))
-
-    val zipFile = ImmutableZipFile.load(archiveFile)
-    for (entry in fileDescriptors) {
-      assertThat(zipFile.getEntry(entry.path).method)
-        .describedAs(entry.path)
-        .isEqualTo(if (entry.isCompressed) ZipEntry.DEFLATED else ZipEntry.STORED)
-    }
   }
 
   @Test
@@ -178,7 +153,7 @@ class ZipTest {
       for (name in zipFile.entries) {
         val entry = zipFile.getEntry("samples/nested_dir/__init__.py")
         assertThat(entry).isNotNull()
-        assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
+        assertThat(String(entry!!.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
       }
     }
   }

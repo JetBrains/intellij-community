@@ -9,10 +9,8 @@ import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.ResourcesGenerator
 
 import java.nio.file.Path
-import java.util.function.BiFunction
 import java.util.function.BiPredicate
 import java.util.function.Consumer
-
 /**
  * Describes layout of a plugin in the product distribution
  */
@@ -99,10 +97,10 @@ final class PluginLayout extends BaseLayout {
     void withModule(String moduleName) {
       if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
         // must be in a separate JAR
-        super.withModule(moduleName)
+        layout.withModule(moduleName)
       }
       else {
-        layout.moduleJars.putValue(mainJarName, moduleName)
+        layout.withModule(moduleName, mainJarName)
       }
     }
 
