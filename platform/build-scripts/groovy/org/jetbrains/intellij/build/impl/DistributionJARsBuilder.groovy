@@ -144,12 +144,12 @@ final class DistributionJARsBuilder {
   }
 
   List<String> getPlatformModules() {
-    (platform.moduleJars.values() as List<String>) + toolModules
+    return (platform.moduleJars.values() as List<String>) + toolModules
   }
 
   static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
-    PlatformModules.PLATFORM_API_MODULES + PlatformModules.PLATFORM_IMPLEMENTATION_MODULES + modulesLayout.productApiModules +
-    modulesLayout.productImplementationModules + modulesLayout.additionalPlatformJars.values()
+    return PlatformModules.PLATFORM_API_MODULES + PlatformModules.PLATFORM_IMPLEMENTATION_MODULES + modulesLayout.productApiModules +
+           modulesLayout.productImplementationModules + modulesLayout.additionalPlatformJars.values()
   }
 
   /**

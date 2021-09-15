@@ -3,16 +3,13 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.Consumer
-
 /**
  * Base class for all editions of IntelliJ IDEA
  */
@@ -184,7 +181,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
       }
     }
 
-    Path targetDir = Paths.get(targetDirectory).toAbsolutePath().normalize()
+    Path targetDir = Path.of(targetDirectory).toAbsolutePath().normalize()
 
     Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
     BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))
