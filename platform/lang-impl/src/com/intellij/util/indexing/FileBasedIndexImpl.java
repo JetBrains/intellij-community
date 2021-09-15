@@ -987,14 +987,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  private Set<Document> getUnsavedDocuments() {
-    Document[] documents = myFileDocumentManager.getUnsavedDocuments();
-    if (documents.length == 0) return Collections.emptySet();
-    if (documents.length == 1) return Collections.singleton(documents[0]);
-    return ContainerUtil.set(documents);
-  }
-
-  @NotNull
   private Set<Document> getTransactedDocuments() {
     return myTransactionMap.keySet();
   }
@@ -1007,24 +999,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return; // no need to index unsaved docs        // todo: check scope ?
     }
 
-    Collection<Document> documents = getUnsavedDocuments();
-    Set<Document> transactedDocuments = getTransactedDocuments();
-    if (documents.isEmpty()) {
-      documents = transactedDocuments;
-    }
-    else if (!transactedDocuments.isEmpty()) {
-      documents = new HashSet<>(documents);
-      documents.addAll(transactedDocuments);
-    }
-    Document[] uncommittedDocuments = project != null ? PsiDocumentManager.getInstance(project).getUncommittedDocuments() : Document.EMPTY_ARRAY;
-    if (uncommittedDocuments.length > 0) {
-      List<Document> uncommittedDocumentsCollection = Arrays.asList(uncommittedDocuments);
-      if (documents.isEmpty()) documents = uncommittedDocumentsCollection;
-      else {
-        if (!(documents instanceof HashSet)) documents = new HashSet<>(documents);
+    final Set<Document> documents = new HashSet<>();
 
-        documents.addAll(uncommittedDocumentsCollection);
-      }
+    myFileDocumentManager.processUnsavedDocuments(document -> {
+      documents.add(document);
+      return true;
+    });
+
+    documents.addAll(getTransactedDocuments());
+
+    if (project != null) {
+      Collections.addAll(documents, PsiDocumentManager.getInstance(project).getUncommittedDocuments());
     }
 
     if (!documents.isEmpty()) {
