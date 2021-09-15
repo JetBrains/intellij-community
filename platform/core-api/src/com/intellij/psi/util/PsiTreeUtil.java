@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -508,9 +508,9 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null")
   public static @Nullable <T extends PsiElement> T getNextSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
     if (sibling == null) return null;
-    for (PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()) {
-      if (aClass.isInstance(child)) {
-        return aClass.cast(child);
+    for (PsiElement nextSibling = sibling.getNextSibling(); nextSibling != null; nextSibling = nextSibling.getNextSibling()) {
+      if (aClass.isInstance(nextSibling)) {
+        return aClass.cast(nextSibling);
       }
     }
     return null;
@@ -519,9 +519,9 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null")
   public static @Nullable <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
     if (sibling == null) return null;
-    for (PsiElement child = sibling.getPrevSibling(); child != null; child = child.getPrevSibling()) {
-      if (aClass.isInstance(child)) {
-        return aClass.cast(child);
+    for (PsiElement prevSibling = sibling.getPrevSibling(); prevSibling != null; prevSibling = prevSibling.getPrevSibling()) {
+      if (aClass.isInstance(prevSibling)) {
+        return aClass.cast(prevSibling);
       }
     }
     return null;
