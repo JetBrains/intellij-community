@@ -33,34 +33,26 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private static final Logger LOG = Logger.getInstance(VcsAnnotationLocalChangesListenerImpl.class);
 
   private final ZipperUpdater myUpdater;
-
   private final Runnable myUpdateStuff;
-
-  private final Set<String> myDirtyPaths;
-  private final Set<VirtualFile> myDirtyFiles;
-  private final Map<String, VcsRevisionNumber> myDirtyChanges;
   private final LocalFileSystem myLocalFileSystem;
   private final ProjectLevelVcsManager myVcsManager;
-  private final Set<VcsKey> myVcsKeySet;
-  private final Object myLock;
 
-  private final MultiMap<VirtualFile, FileAnnotation> myFileAnnotationMap;
+  private final Set<String> myDirtyPaths = new HashSet<>();
+  private final Set<VirtualFile> myDirtyFiles = new HashSet<>();
+  private final Map<String, VcsRevisionNumber> myDirtyChanges = new HashMap<>();
+  private final Set<VcsKey> myVcsKeySet = new HashSet<>();
+  private final Object myLock = new Object();
+
+  private final MultiMap<VirtualFile, FileAnnotation> myFileAnnotationMap = MultiMap.createSet();
 
   public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project) {
-    myLock = new Object();
     myUpdateStuff = createUpdateStuff();
     myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, this);
     myLocalFileSystem = LocalFileSystem.getInstance();
-    VcsAnnotationRefresher handler = createHandler();
-    myDirtyPaths = new HashSet<>();
-    myDirtyChanges = new HashMap<>();
-    myDirtyFiles = new HashSet<>();
-    myFileAnnotationMap = MultiMap.createSet();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myVcsKeySet = new HashSet<>();
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
-    busConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, handler);
+    busConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, createHandler());
   }
 
   @Override
