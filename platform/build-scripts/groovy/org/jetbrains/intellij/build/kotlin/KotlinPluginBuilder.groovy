@@ -267,7 +267,7 @@ class KotlinPluginBuilder {
 
   private static String replace(String oldText, String regex, String newText) {
     String result = oldText.replaceFirst(regex, newText)
-    if (result == oldText) {
+    if (result == oldText && /* Update IDE from Sources */ !oldText.contains(newText)) {
       throw new IllegalStateException("Cannot find '$regex' in '$oldText'")
     }
     return result
