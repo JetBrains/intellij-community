@@ -1,16 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
+import com.intellij.codeInsight.hint.EditorCodePreview;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -21,17 +25,17 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
+import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBInsets;
 import gnu.trove.TIntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.NonNls;
+import kotlin.ranges.IntRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,8 +67,6 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     myMustBeFinal = mustBeFinal;
     myReplaceChoice = replaceChoice;
 
-    myWholePanel.add(getPreviewComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                                   JBInsets.create(0, 5), 0, 0));
     myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
                                               myOccurrences) {
       @Override
@@ -140,9 +142,59 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   @Override
   protected JComponent getComponent() {
-    return myWholePanel;
+    return null;
   }
 
+  @Override
+  protected void afterTemplateStart() {
+     super.afterTemplateStart();
+    TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+    if (templateState == null) return;
+
+    TextRange currentVariableRange = templateState.getCurrentVariableRange();
+    if (currentVariableRange == null) return;
+
+    SelectableInlayPresentation presentation = TemplateInlayUtil.createSettingsPresentation((EditorImpl)templateState.getEditor());
+
+    TemplateInlayUtil.SelectableTemplateElement templateElement = new TemplateInlayUtil.SelectableTemplateElement(presentation);
+    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, 
+                                                       currentVariableRange.getEndOffset(),
+                                                       presentation, 
+                                                       myWholePanel, 
+                                                       templateElement);
+
+    PsiParameter parameter = getParameter();
+    if (parameter == null) return;
+    
+    showPreview(parameter, templateState);
+  }
+
+  
+  private void showPreview(PsiParameter psiParameter, Disposable parentDisposable) {
+    MarkupModel markupModel = myEditor.getMarkupModel();
+    TextRange newParameterRange = psiParameter.getTextRange();
+    List<RangeHighlighter> highlighters = new ArrayList<>();
+    highlighters.add(markupModel.addRangeHighlighter(newParameterRange.getStartOffset(), newParameterRange.getEndOffset(), 0, getTextAttributesForAdd(myEditor), HighlighterTargetArea.EXACT_RANGE));
+    PsiParameterList list = myMethod.getParameterList();
+    for (PsiParameter parameter : list.getParameters()) {
+      if (parameter != psiParameter && myPanel.isParamToRemove(parameter)) {
+        TextRange range = parameter.getTextRange();
+        highlighters.add(markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), 0, getTestAttributesForRemoval(), HighlighterTargetArea.EXACT_RANGE));
+      }
+    }
+    EditorCodePreview preview = EditorCodePreview.Companion.create(myEditor);
+    Document document = myEditor.getDocument();
+    
+    preview.addPreview(new IntRange(document.getLineNumber(myMethod.getTextOffset()), document.getLineNumber(list.getTextRange().getEndOffset())), 
+                       IntroduceParameterHelperKt.onClickCallback(psiParameter));
+    Disposer.register(parentDisposable, () -> {
+      Disposer.dispose(preview);
+      for (RangeHighlighter highlighter : highlighters) {
+        highlighter.dispose();
+      }
+    });
+  }
+  
   @Override
   public boolean isReplaceAllOccurrences() {
     return myReplaceChoice.isAll();
@@ -213,59 +265,9 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     return myReplaceChoice;
   }
 
-  @Override
-  protected void updateTitle(@Nullable PsiVariable variable) {
-    if (variable == null) return;
-    updateTitle(variable, variable.getName());
-  }
-
-  @Override
-  protected void updateTitle(@Nullable final PsiVariable variable, final String value) {
-    final PsiElement declarationScope = variable != null ? ((PsiParameter)variable).getDeclarationScope() : null;
-    if (declarationScope instanceof PsiMethod) {
-      final PsiMethod psiMethod = (PsiMethod)declarationScope;
-      final @NonNls StringBuilder buf = new StringBuilder();
-      buf.append(psiMethod.getName()).append(" (");
-      boolean frst = true;
-      final List<TextRange> ranges2Remove = new ArrayList<>();
-      TextRange addedRange = null;
-      for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
-        if (frst) {
-          frst = false;
-        }
-        else {
-          buf.append(", ");
-        }
-        int startOffset = buf.length();
-        if (myMustBeFinal || myPanel.isGenerateFinal()) {
-          buf.append("final ");
-        }
-        buf.append(parameter.getType().getPresentableText()).append(" ").append(variable == parameter ? value : parameter.getName());
-        int endOffset = buf.length();
-        if (variable == parameter) {
-          addedRange = new TextRange(startOffset, endOffset);
-        }
-        else if (myPanel.isParamToRemove(parameter)) {
-          ranges2Remove.add(new TextRange(startOffset, endOffset));
-        }
-      }
-
-      buf.append(")");
-      setPreviewText(buf.toString());
-      final MarkupModel markupModel = DocumentMarkupModel.forDocument(getPreviewEditor().getDocument(), myProject, true);
-      markupModel.removeAllHighlighters();
-      for (TextRange textRange : ranges2Remove) {
-        markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, getTestAttributesForRemoval(), HighlighterTargetArea.EXACT_RANGE);
-      }
-      markupModel.addRangeHighlighter(addedRange.getStartOffset(), addedRange.getEndOffset(), 0, getTextAttributesForAdd(), HighlighterTargetArea.EXACT_RANGE);
-      revalidate();
-    }
-  }
-
-  private static TextAttributes getTextAttributesForAdd() {
+  private static TextAttributes getTextAttributesForAdd(Editor editor) {
     final TextAttributes textAttributes = new TextAttributes();
-    textAttributes.setEffectType(EffectType.ROUNDED_BOX);
-    textAttributes.setEffectColor(JBColor.RED);
+    textAttributes.setBackgroundColor(editor.getColorsScheme().getColor(EditorColors.ADDED_LINES_COLOR));
     return textAttributes;
   }
 
