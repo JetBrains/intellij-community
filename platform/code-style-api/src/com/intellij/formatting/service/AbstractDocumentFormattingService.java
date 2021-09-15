@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.formatting.FormattingRangesInfo;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Base class for synchronous document formatting services.
@@ -80,4 +82,8 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
     file.putUserData(DOCUMENT_KEY, document);
   }
 
+  @Override
+  public @NotNull Set<ImportOptimizer> getImportOptimizers(@NotNull PsiFile file) {
+    return Collections.emptySet();
+  }
 }
