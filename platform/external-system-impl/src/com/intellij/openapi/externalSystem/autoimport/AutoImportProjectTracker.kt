@@ -30,7 +30,6 @@ import com.intellij.util.LocalTimeCounter.currentTime
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.streams.asStream
@@ -48,7 +47,6 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   private val projectChangeOperation = AnonymousParallelOperationTrace(debugName = "Project change operation")
   private val projectReloadOperation = CompoundParallelOperationTrace<String>(debugName = "Project reload operation")
   private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, false, null, project)
-  private val delayDispatcher = MergingUpdateQueue("AutoImportProjectTracker.delayDispatcher", 2000, false, null, project)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
   var isAsyncChangesProcessing by asyncChangesProcessingProperty
@@ -80,32 +78,48 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   override fun scheduleProjectRefresh() {
     LOG.debug("Schedule project reload", Throwable())
-    dispatcher.queue(PriorityEatUpdate(0) {
-      reloadProject(smart = false)
-    })
+    schedule(priority = 0, dispatchIterations = 1) { reloadProject(smart = false) }
   }
 
   override fun scheduleChangeProcessing() {
     LOG.debug("Schedule change processing")
-    dispatcher.queue(PriorityEatUpdate(1) {
-      processChanges()
-    })
+    schedule(priority = 1, dispatchIterations = 1) { processChanges() }
   }
 
-  private fun delay(action: () -> Unit) {
-    delayDispatcher.queue(Update.create(this, action))
+  /**
+   * ```
+   * dispatcher.mergingTimeSpan = 300 ms
+   * dispatchIterations = 9
+   * We already dispatched processChanges
+   * So delay is equal to (1 + 9) * 300 ms = 3000 ms = 3 s
+   * ```
+   */
+  private fun scheduleDelayedSmartProjectReload() {
+    LOG.debug("Schedule delayed project reload")
+    schedule(priority = 2, dispatchIterations = 9) { reloadProject(smart = true) }
+  }
+
+  private fun schedule(priority: Int, dispatchIterations: Int, action: () -> Unit) {
+    dispatcher.queue(PriorityEatUpdate(priority) {
+      if (dispatchIterations - 1 > 0) {
+        schedule(priority, dispatchIterations - 1, action)
+      }
+      else {
+        action()
+      }
+    })
   }
 
   private fun processChanges() {
     when (settings.autoReloadType) {
       AutoReloadType.ALL -> when (getModificationType()) {
-        INTERNAL -> delay { reloadProject(smart = true) }
-        EXTERNAL -> delay { reloadProject(smart = true) }
+        INTERNAL -> scheduleDelayedSmartProjectReload()
+        EXTERNAL -> scheduleDelayedSmartProjectReload()
         null -> updateProjectNotification()
       }
       AutoReloadType.SELECTIVE -> when (getModificationType()) {
         INTERNAL -> updateProjectNotification()
-        EXTERNAL -> delay { reloadProject(smart = true) }
+        EXTERNAL -> scheduleDelayedSmartProjectReload()
         null -> updateProjectNotification()
       }
       AutoReloadType.NONE -> updateProjectNotification()
@@ -252,9 +266,6 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     dispatcher.setRestartTimerOnAdd(true)
     dispatcher.isPassThrough = !isAsyncChangesProcessing
     dispatcher.activate()
-    delayDispatcher.setRestartTimerOnAdd(true)
-    delayDispatcher.isPassThrough = !isAsyncChangesProcessing
-    delayDispatcher.activate()
   }
 
   @TestOnly
@@ -274,8 +285,8 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   }
 
   @TestOnly
-  fun setAutoReloadDelay(delay: Int) {
-    delayDispatcher.setMergingTimeSpan(delay)
+  fun setDispatcherMergingSpan(delay: Int) {
+    dispatcher.setMergingTimeSpan(delay)
   }
 
   init {
@@ -290,7 +301,6 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     projectChangeOperation.afterOperation { LOG.debug("Project change finished") }
     settings.autoReloadTypeProperty.afterChange { scheduleChangeProcessing() }
     asyncChangesProcessingProperty.afterChange { dispatcher.isPassThrough = !it }
-    asyncChangesProcessingProperty.afterChange { delayDispatcher.isPassThrough = !it }
   }
 
   private fun ProjectData.getState() = State.Project(status.isDirty(), settingsTracker.getState())

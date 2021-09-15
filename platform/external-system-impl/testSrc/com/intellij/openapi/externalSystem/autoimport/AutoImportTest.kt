@@ -10,9 +10,13 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Modification
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 import com.intellij.openapi.util.Ref
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.AlarmFactory
+import org.jetbrains.concurrency.AsyncPromise
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class AutoImportTest : AutoImportTestCase() {
   @Test
@@ -22,7 +26,7 @@ class AutoImportTest : AutoImportTestCase() {
 
       settingsFile.appendString("println 'hello'")
       assertState(refresh = 1, notified = true, event = "modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
 
       settingsFile.replaceString("hello", "hi")
@@ -45,10 +49,10 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 2, notified = false, event = "append comment")
       settingsFile.insertString(0, "//")
       assertState(refresh = 2, notified = true, event = "comment code")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 3, notified = false, event = "project refresh")
 
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 3, notified = false, event = "empty project refresh")
     }
   }
@@ -60,15 +64,15 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 1, beforeRefresh = 1, afterRefresh = 1, event = "register project without cache")
       settingsFile.appendString("println 'hello'")
       assertState(refresh = 1, beforeRefresh = 1, afterRefresh = 1, event = "modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, beforeRefresh = 2, afterRefresh = 2, event = "project refresh")
       settingsFile.replaceString("hello", "hi")
       assertState(refresh = 2, beforeRefresh = 2, afterRefresh = 2, event = "modification")
       autoImportAwareCondition.set(false)
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 3, beforeRefresh = 2, afterRefresh = 2, event = "import with inapplicable autoImportAware")
       autoImportAwareCondition.set(true)
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 4, beforeRefresh = 3, afterRefresh = 3, event = "empty project refresh")
     }
   }
@@ -84,7 +88,7 @@ class AutoImportTest : AutoImportTestCase() {
         </element>
       """.trimIndent())
       assertState(refresh = 1, notified = true, event = "modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "refresh project")
 
       settingsFile.replaceString("my-name", "my name")
@@ -127,7 +131,7 @@ class AutoImportTest : AutoImportTestCase() {
 
       settingsFile.appendString("q71Gpj5 .9jR°`N.")
       assertState(refresh = 1, notified = true, event = "modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
 
       settingsFile.replaceString("9jR°`N", "9`B")
@@ -137,11 +141,11 @@ class AutoImportTest : AutoImportTestCase() {
 
       settingsFile.appendString(" ")
       assertState(refresh = 2, notified = true, event = "unrecognized empty modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 3, notified = false, event = "project refresh")
       settingsFile.appendString("//1G iT zt^P1Fp")
       assertState(refresh = 3, notified = true, event = "unrecognized comment modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 4, notified = false, event = "project refresh")
     }
   }
@@ -153,14 +157,14 @@ class AutoImportTest : AutoImportTestCase() {
 
       settingsFile.delete()
       assertState(refresh = 1, notified = true, event = "delete registered settings")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
 
       var newSettingsFile = createVirtualFile("settings.groovy")
       assertState(refresh = 2, notified = true, event = "create registered settings")
       newSettingsFile.replaceContent("println 'hello'")
       assertState(refresh = 2, notified = true, event = "modify registered settings")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 3, notified = false, event = "project refresh")
 
       newSettingsFile.delete()
@@ -178,7 +182,7 @@ class AutoImportTest : AutoImportTestCase() {
       val directory = findOrCreateDirectory("directory")
       createSettingsVirtualFile("directory/settings.txt")
       assertState(refresh = 0, notified = true, event = "settings created")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 1, notified = false, event = "project reloaded")
 
       directory.delete()
@@ -208,7 +212,7 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 1, notified = true, event = "modification")
       settingsFile.replaceString("hi", "hello")
       assertState(refresh = 1, notified = true, event = "try to revert changes if has other modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
 
       settingsFile.replaceString("hello", "hi")
@@ -261,7 +265,7 @@ class AutoImportTest : AutoImportTestCase() {
     assertProjectAware(projectAware2, refresh = 1, event = "revert changes at second settings")
     assertNotificationAware(projectId2, event = "revert changes at second settings")
 
-    refreshProject()
+    scheduleProjectReload()
     assertProjectAware(projectAware1, refresh = 1, event = "project refresh")
     assertProjectAware(projectAware2, refresh = 2, event = "project refresh")
     assertNotificationAware(event = "project refresh")
@@ -272,7 +276,7 @@ class AutoImportTest : AutoImportTestCase() {
     assertProjectAware(projectAware2, refresh = 2, event = "modification of both settings")
     assertNotificationAware(projectId1, projectId2, event = "modification of both settings")
 
-    refreshProject()
+    scheduleProjectReload()
     assertProjectAware(projectAware1, refresh = 2, event = "project refresh")
     assertProjectAware(projectAware2, refresh = 3, event = "project refresh")
     assertNotificationAware(event = "project refresh")
@@ -309,7 +313,7 @@ class AutoImportTest : AutoImportTestCase() {
       settingsFile.replaceStringInIoFile("hi", "settings")
       assertState(refresh = 2, notified = true, event = "untracked external modification during internal modification")
 
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 3, notified = false, event = "refresh project")
 
       modification {
@@ -367,7 +371,7 @@ class AutoImportTest : AutoImportTestCase() {
         assertState(refresh = 7, notified = false, event = "external modification")
       }
       assertState(refresh = 7, notified = true, event = "complete external modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 8, notified = false, event = "refresh project")
     }
   }
@@ -379,7 +383,7 @@ class AutoImportTest : AutoImportTestCase() {
 
       settingsFile.replaceContent("println 'hello'")
       assertState(refresh = 1, notified = true, event = "modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
     }
 
@@ -388,7 +392,7 @@ class AutoImportTest : AutoImportTestCase() {
 
       settingsFile.replaceString("hello", "hi")
       assertState(refresh = 0, notified = true, event = "modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 1, notified = false, event = "project refresh")
     }
 
@@ -401,7 +405,7 @@ class AutoImportTest : AutoImportTestCase() {
 
       settingsFile.replaceString("hello", "hi")
       assertState(refresh = 1, notified = true, event = "modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
     }
 
@@ -429,7 +433,7 @@ class AutoImportTest : AutoImportTestCase() {
       var scriptFile = settingsFile.copy("script.groovy")
       assertState(refresh = 1, notified = true, event = "copy to registered settings")
 
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
 
       scriptFile.delete()
@@ -476,7 +480,7 @@ class AutoImportTest : AutoImportTestCase() {
 
       settingsDocument.replaceContent("println 'hello'")
       assertState(refresh = 1, notified = true, event = "change")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "refresh project")
 
       settingsDocument.replaceString("hello", "hi")
@@ -503,21 +507,21 @@ class AutoImportTest : AutoImportTestCase() {
       setRefreshStatus(FAILURE)
       settingsFile.replaceStringInIoFile("hello", "hi")
       assertState(refresh = 3, notified = true, event = "external change with failure refresh")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 4, notified = true, event = "failure project refresh")
       setRefreshStatus(SUCCESS)
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 5, notified = false, event = "project refresh")
 
       settingsFile.replaceString("hi", "hello")
       assertState(refresh = 5, notified = true, event = "modify")
       setRefreshStatus(FAILURE)
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 6, notified = true, event = "failure project refresh")
       settingsFile.replaceString("hello", "hi")
       assertState(refresh = 6, notified = true, event = "try to revert changes after failure refresh")
       setRefreshStatus(SUCCESS)
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 7, notified = false, event = "project refresh")
     }
   }
@@ -561,7 +565,7 @@ class AutoImportTest : AutoImportTestCase() {
     state = simpleTest("settings.groovy", state = state) { settingsFile ->
       // Open modified project with disabled auto-import for external changes
       assertState(refresh = 0, autoReloadType = NONE, notified = true, event = "register modified project")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 1, autoReloadType = NONE, notified = false, event = "refresh project")
 
       // Checkout git branch, that has additional linked project
@@ -634,7 +638,7 @@ class AutoImportTest : AutoImportTestCase() {
     assertNotificationAware(projectId1, projectId2, event = "internally modify settings")
     assertActivationStatus(projectId1, event = "internally modify settings")
 
-    refreshProject()
+    scheduleProjectReload()
     assertProjectAware(projectAware1, refresh = 4, event = "refresh project")
     assertProjectAware(projectAware2, refresh = 1, event = "refresh project")
     assertNotificationAware(event = "refresh project")
@@ -669,7 +673,7 @@ class AutoImportTest : AutoImportTestCase() {
       modifySettingsFile(INTERNAL)
       assertState(refresh = 0, notified = true, autoReloadType = SELECTIVE, event = "internal modification")
 
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 1, notified = false, autoReloadType = SELECTIVE, event = "refresh project")
 
       modifySettingsFile(EXTERNAL)
@@ -723,7 +727,7 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 2, notified = true, autoReloadType = ALL, event = "failure modification with enabled auto-reload")
 
       setRefreshStatus(SUCCESS)
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 3, notified = false, autoReloadType = ALL, event = "refresh project")
 
       setRefreshStatus(FAILURE)
@@ -775,7 +779,7 @@ class AutoImportTest : AutoImportTestCase() {
       onceDuringRefresh {
         assertTrue("explicit reload after explicit scheduling of project reload", it.isExplicitReload)
       }
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project reload")
     }
   }
@@ -796,7 +800,7 @@ class AutoImportTest : AutoImportTestCase() {
         assertEquals(pathsOf(settingsFile1, settingsFile2, settingsFile3), it.settingsFilesContext.created)
         assertEquals(pathsOf(), it.settingsFilesContext.deleted)
       }
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project reload")
 
       settingsFile1.delete()
@@ -810,7 +814,7 @@ class AutoImportTest : AutoImportTestCase() {
         assertEquals(pathsOf(), it.settingsFilesContext.created)
         assertEquals(pathsOf(settingsFile1), it.settingsFilesContext.deleted)
       }
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 3, notified = false, event = "project reload")
 
       settingsFile2.delete()
@@ -824,7 +828,7 @@ class AutoImportTest : AutoImportTestCase() {
         assertEquals(pathsOf(), it.settingsFilesContext.created)
         assertEquals(pathsOf(settingsFile2, settingsFile3), it.settingsFilesContext.deleted)
       }
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 4, notified = false, event = "project reload")
     }
   }
@@ -843,7 +847,7 @@ class AutoImportTest : AutoImportTestCase() {
       val configFile2 = createVirtualFile("file2.config")
       assertState(refresh = 0, settingsAccess = 4, notified = true, event = "non settings files creation")
 
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 1, settingsAccess = 5, notified = false, event = "project reload")
 
       configFile1.modify(INTERNAL)
@@ -856,7 +860,7 @@ class AutoImportTest : AutoImportTestCase() {
       settings2File.modify(INTERNAL)
       assertState(refresh = 1, settingsAccess = 5, notified = true, event = "internal settings files modification")
 
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 2, settingsAccess = 6, notified = false, event = "project reload")
 
       settings1File.modify(EXTERNAL)
@@ -871,7 +875,7 @@ class AutoImportTest : AutoImportTestCase() {
       settings3File.modify(INTERNAL)
       assertState(refresh = 3, settingsAccess = 8, notified = true, event = "internal settings files modification")
 
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 4, settingsAccess = 9, notified = false, event = "project reload")
 
       settings3File.modify(INTERNAL)
@@ -910,7 +914,7 @@ class AutoImportTest : AutoImportTestCase() {
 
       file.replaceContent(byteArrayOf(1, 2, 3))
       assertState(refresh = 0, notified = true, event = "modification")
-      refreshProject()
+      scheduleProjectReload()
       assertState(refresh = 1, notified = false, event = "reload")
 
       file.replaceContent(byteArrayOf(1, 2, 3))
@@ -952,7 +956,7 @@ class AutoImportTest : AutoImportTestCase() {
   fun `test modification during reload`() {
     simpleModificationTest {
       enableAsyncExecution()
-      setAutoReloadDelay(100)
+      setDispatcherMergingSpan(10)
 
       val expectedRefreshes = 10
       duringRefresh(expectedRefreshes - 1) {
@@ -987,6 +991,31 @@ class AutoImportTest : AutoImportTestCase() {
       findOrCreateVirtualFile("settings2.cfg")
         .appendLine("{ type: Java }")
       assertState(refresh = 2, notified = true, event = "internal modification")
+    }
+  }
+
+  @Test
+  fun `test merge project reloads`() {
+    simpleModificationTest {
+      enableAsyncExecution()
+      setDispatcherMergingSpan(100)
+      val alarmFactory = AlarmFactory.getInstance()
+      val alarm = alarmFactory.create()
+      repeat(10) { iteration ->
+        val promise = AsyncPromise<Unit>()
+        alarm.addRequest({
+          waitForProjectRefresh {
+            markDirty()
+            scheduleProjectReload()
+          }
+          promise.setResult(Unit)
+        }, 500)
+        waitForProjectRefresh {
+          modifySettingsFile(EXTERNAL)
+        }
+        PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
+        assertState(refresh = iteration + 1, notified = false, event = "project reload")
+      }
     }
   }
 }
