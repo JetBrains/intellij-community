@@ -222,14 +222,7 @@ class PythonOnboardingTour :
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    task {
-      val needAction = ActionManager.getInstance().getAction("Resume")
-      triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-        val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "MainSingleContentToolbar"
-        if (!b) return@triggerByUiComponentAndHighlight false
-        ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
-      }
-    }
+    highlightDebugActionsToolbar()
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",

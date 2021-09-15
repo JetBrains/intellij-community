@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -300,6 +301,17 @@ object LessonUtil {
 
 fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
+}
+
+fun LessonContext.highlightDebugActionsToolbar() {
+  task {
+    val needAction = ActionManager.getInstance().getAction("Resume")
+    triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
+      val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "MainSingleContentToolbar"
+      if (!b) return@triggerByUiComponentAndHighlight false
+      ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
+    }
+  }
 }
 
 fun TaskContext.proceedLink(additionalAbove: Int = 0) {
