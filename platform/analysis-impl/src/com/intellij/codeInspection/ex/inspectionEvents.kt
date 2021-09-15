@@ -3,12 +3,12 @@ package com.intellij.codeInspection.ex
 
 import java.util.concurrent.Callable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 
 fun reportWhenInspectionFinished(inspectListener: InspectListener,
                                  toolWrapper: InspectionToolWrapper<*, *>,
                                  kind: InspectListener.InspectionKind,
-                                 file: VirtualFile?,
+                                 file: PsiFile?,
                                  project: Project,
                                  inspectAction: Callable<Int>) {
   val start = System.currentTimeMillis()

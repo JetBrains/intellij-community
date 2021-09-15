@@ -232,7 +232,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       // do not save stats for batch process, there could be too many files
       InspectionProfilerDataHolder.getInstance(myProject).saveStats(getFile(), init, System.nanoTime() - start);
     }
-    reportStatsToQodana(isOnTheFly, getFile().getVirtualFile(), init);
+    reportStatsToQodana(isOnTheFly, getFile(), init);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
     ProgressManager.checkCanceled();
 
@@ -278,7 +278,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     });
   }
 
-  private void reportStatsToQodana(boolean isOnTheFly, VirtualFile file, @NotNull List<? extends InspectionContext> contexts) {
+  private void reportStatsToQodana(boolean isOnTheFly, PsiFile file, @NotNull List<? extends InspectionContext> contexts) {
     if (!isOnTheFly) {
       for (InspectionContext context : contexts) {
         InspectionProblemsHolder holder = context.holder;
