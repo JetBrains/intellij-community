@@ -70,9 +70,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression? {
         analyseForUast(ktCallElement) {
-            val resolvedAnnotationCall = ktCallElement.resolveCall() as? KtAnnotationCall ?: return null
             val resolvedAnnotationConstructorSymbol =
-                resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return null
+                ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() as? KtConstructorSymbol ?: return null
             val parameter = resolvedAnnotationConstructorSymbol.valueParameters.find { it.name.asString() == name } ?: return null
             return (parameter.psi as? KtParameter)?.defaultValue
         }
@@ -194,9 +193,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun qualifiedAnnotationName(ktCallElement: KtCallElement): String? {
         analyseForUast(ktCallElement) {
-            val resolvedAnnotationCall = ktCallElement.resolveCall() as? KtAnnotationCall ?: return null
             val resolvedAnnotationConstructorSymbol =
-                resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return null
+                ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() as? KtConstructorSymbol ?: return null
             return resolvedAnnotationConstructorSymbol.containingClassIdIfNonLocal
                 ?.asSingleFqName()
                 ?.toString()
@@ -218,9 +216,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun isAnnotationConstructorCall(ktCallElement: KtCallElement): Boolean {
         analyseForUast(ktCallElement) {
-            val resolvedAnnotationCall = ktCallElement.resolveCall() as? KtAnnotationCall ?: return false
             val resolvedAnnotationConstructorSymbol =
-                resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return false
+                ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() as? KtConstructorSymbol ?: return false
             val ktType = resolvedAnnotationConstructorSymbol.annotatedType.type
             val psiClass = toPsiClass(ktType, ktCallElement, ktCallElement.typeOwnerKind) ?: return false
             return psiClass.isAnnotationType
