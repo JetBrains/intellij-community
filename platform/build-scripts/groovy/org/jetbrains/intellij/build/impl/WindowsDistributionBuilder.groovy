@@ -143,8 +143,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     Path tempZip = Files.createTempDirectory(buildContext.paths.tempDir, "zip-")
     Path tempExe = Files.createTempDirectory(buildContext.paths.tempDir, "exe-")
     try {
-      BuildHelper.runProcess(buildContext, List.of("unzip", "-qq", zipPath), tempZip)
       BuildHelper.runProcess(buildContext, List.of("7z", "x", "-bd", exePath), tempExe)
+      BuildHelper.runProcess(buildContext, List.of("unzip", "-qq", zipPath), tempZip)
       //noinspection SpellCheckingInspection
       FileUtil.delete(tempExe.resolve("\$PLUGINSDIR"))
 
