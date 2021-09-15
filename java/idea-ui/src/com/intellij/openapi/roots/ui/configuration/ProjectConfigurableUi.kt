@@ -15,10 +15,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.isDirectoryBased
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
@@ -88,7 +85,8 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
       group(JavaUiBundle.message("project.structure.java")) {
         row(JavaUiBundle.message("module.module.language.level")) {
           cell(myLanguageLevelCombo)
-        }
+          cell()
+        }.layout(RowLayout.PARENT_GRID)
         row(JavaUiBundle.message("project.structure.compiler.output")) {
           textFieldWithBrowseButton()
             .bindText(compilerOutputProperty)
@@ -99,7 +97,8 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
             }
             .horizontalAlign(HorizontalAlign.FILL)
             .comment(JavaUiBundle.message("project.structure.compiler.output.comment"), 84)
-        }
+          cell()
+        }.layout(RowLayout.PARENT_GRID)
       }
     }.apply {
       withBorder(JBUI.Borders.empty(20, 20))
