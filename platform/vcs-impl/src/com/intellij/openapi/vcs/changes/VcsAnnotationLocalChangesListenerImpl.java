@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -51,6 +52,9 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, new MyRefresher());
+
+    MessageBusConnection appConnection = getApplication().getMessageBus().connect(this);
+    appConnection.subscribe(EditorColorsManager.TOPIC, scheme -> reloadAnnotations());
   }
 
   @Override
@@ -206,6 +210,14 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       if (annotations.isEmpty()) {
         myFileAnnotationMap.remove(file);
       }
+    }
+  }
+
+  @Override
+  public void reloadAnnotations() {
+    synchronized (myLock) {
+      List<FileAnnotation> copy = new ArrayList<>(myFileAnnotationMap.values());
+      invalidateAnnotations(copy, true);
     }
   }
 
