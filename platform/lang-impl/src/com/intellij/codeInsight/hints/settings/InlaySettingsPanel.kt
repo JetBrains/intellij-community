@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
-import com.intellij.codeInsight.hints.ChangeListener
-import com.intellij.codeInsight.hints.InlayHintsProviderExtension
-import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.settings.language.CaseListPanel
 import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
-import com.intellij.codeInsight.hints.withSettings
+import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
@@ -39,15 +38,16 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val langNode = CheckedTreeNode(lang.key)
         groupNode.add(langNode)
 
+        if (group.key == CODE_VISION_GROUP) {
+          val parameterHintsProvider = InlayParameterHintsExtension.forLanguage(lang.key)
+          if (parameterHintsProvider != null) {
+            addModelNode(ParameterInlayProviderSettingsModel(parameterHintsProvider, lang.key), langNode)
+          }
+        }
+
         lang.value.forEach {
           val withSettings = it.provider.withSettings(lang.key, settings)
-          val model = NewInlayProviderSettingsModel(withSettings, settings)
-          model.onChangeListener = object : ChangeListener {
-            override fun settingsChanged() {
-
-            }
-          }
-          langNode.add(CheckedTreeNode(model))
+          addModelNode(NewInlayProviderSettingsModel(withSettings, settings), langNode)
         }
       }
     }
@@ -78,11 +78,22 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     add(splitter, BorderLayout.CENTER)
   }
 
+  private fun addModelNode(model: InlayProviderSettingsModel,
+                           langNode: CheckedTreeNode) {
+    model.onChangeListener = object : ChangeListener {
+      override fun settingsChanged() {
+
+      }
+    }
+    langNode.add(CheckedTreeNode(model))
+  }
+
   private fun updateRightPanel(treeNode: CheckedTreeNode?) {
     rightPanel.removeAll()
     when (val item = treeNode?.userObject) {
       is InlayProviderSettingsModel -> {
         rightPanel.add(JLabel(item.name))
+        rightPanel.add(CaseListPanel(item.cases, item.onChangeListener!!))
         rightPanel.add(item.component)
       }
     }

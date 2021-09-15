@@ -83,7 +83,7 @@ class EntityStorageSerializerImpl(
         val arrayId = input.readInt()
         val clazzInfo = kryo.readClassAndObject(input) as TypeInfo
         val clazz = typesResolver.resolveClass(clazzInfo.name, clazzInfo.pluginId)
-        return EntityId(arrayId, clazz.toClassId())
+        return createEntityId(arrayId, clazz.toClassId())
       }
     })
 

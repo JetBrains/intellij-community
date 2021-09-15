@@ -9,12 +9,15 @@ import org.jetbrains.concurrency.onError
 import org.jetbrains.concurrency.onSuccess
 import org.jetbrains.concurrency.thenAsyncAccept
 
-class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?) : XValueGroup(scope.createScopeNodeName()) {
+class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?, val firstScope: Boolean? = null) : XValueGroup(scope.createScopeNodeName()) {
   private val context = createVariableContext(scope, parentContext, callFrame)
 
   private val callFrame = if (scope.type == ScopeType.LOCAL) callFrame else null
 
-  override fun isAutoExpand(): Boolean = scope.type == ScopeType.BLOCK || scope.type == ScopeType.LOCAL || scope.type == ScopeType.CATCH
+  override fun isAutoExpand(): Boolean = scope.type == ScopeType.BLOCK
+                                         || scope.type == ScopeType.LOCAL
+                                         || scope.type == ScopeType.CATCH
+                                         || firstScope == true
 
   override fun getComment(): String? {
     val className = scope.description
@@ -54,7 +57,7 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
 fun createAndAddScopeList(node: XCompositeNode, scopes: List<Scope>, context: VariableContext, callFrame: CallFrame?) {
   val list = XValueChildrenList(scopes.size)
   for (scope in scopes) {
-    list.addBottomGroup(ScopeVariablesGroup(scope, context, callFrame))
+    list.addBottomGroup(ScopeVariablesGroup(scope, context, callFrame, scope == scopes[0]))
   }
   node.addChildren(list, true)
 }

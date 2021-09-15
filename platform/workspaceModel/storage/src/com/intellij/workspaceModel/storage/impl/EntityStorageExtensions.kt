@@ -94,7 +94,7 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToManyChi
 }
 
 internal fun AbstractEntityStorage.extractOneToManyChildrenIds(connectionId: ConnectionId, parentId: EntityId): Sequence<EntityId> {
-  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { EntityId(it, connectionId.childClass) } ?: emptySequence()
+  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { createEntityId(it, connectionId.childClass) } ?: emptySequence()
 }
 
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,

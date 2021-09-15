@@ -143,15 +143,15 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
         minimumSize = JBDimension(JBUI.scale(40), minHeight, true)
       }
 
-      private val pane = object : JPanel(){
+      private val pane =  object : JPanel(){
         override fun getInsets(): Insets {
-          return JBUI.insets(0, 8, 0, 8)
+          return JBUI.insets(0, 0, 0, 3)
         }
       }.apply {
-        layout = MigLayout("ins 0, fill, gapx 3, novisualpadding", "[][]push")
+        layout = MigLayout("ins 0, fill, novisualpadding", "4[shp 1]3[]")
 
         add(setting, "ay center, pushx, wmin 10")
-        add(process, "ay center, pushx")
+        add(process, "ay center, pushx, wmin 0")
 
        // setting.font = UIUtil.getToolbarFont()
         process.font = UIUtil.getToolbarFont()

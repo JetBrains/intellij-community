@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -33,35 +34,31 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private static final Logger LOG = Logger.getInstance(VcsAnnotationLocalChangesListenerImpl.class);
 
   private final ZipperUpdater myUpdater;
-  private final MessageBusConnection myConnection;
-
-  private final Runnable myUpdateStuff;
-
-  private final Set<String> myDirtyPaths;
-  private final Set<VirtualFile> myDirtyFiles;
-  private final Map<String, VcsRevisionNumber> myDirtyChanges;
   private final LocalFileSystem myLocalFileSystem;
   private final ProjectLevelVcsManager myVcsManager;
-  private final Set<VcsKey> myVcsKeySet;
-  private final Object myLock;
 
-  private final MultiMap<VirtualFile, FileAnnotation> myFileAnnotationMap;
+  private final Set<String> myDirtyPaths = new HashSet<>();
+  private final Set<VirtualFile> myDirtyFiles = new HashSet<>();
+  private final Map<String, VcsRevisionNumber> myDirtyChanges = new HashMap<>();
+  private final Set<VcsKey> myVcsKeySet = new HashSet<>();
+  private final Object myLock = new Object();
+
+  private final MultiMap<VirtualFile, FileAnnotation> myFileAnnotationMap = MultiMap.createSet();
 
   public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project) {
-    myLock = new Object();
-    myUpdateStuff = createUpdateStuff();
-    myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, project);
-    myConnection = project.getMessageBus().connect();
+    myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, this);
     myLocalFileSystem = LocalFileSystem.getInstance();
-    VcsAnnotationRefresher handler = createHandler();
-    myDirtyPaths = new HashSet<>();
-    myDirtyChanges = new HashMap<>();
-    myDirtyFiles = new HashSet<>();
-    myFileAnnotationMap = MultiMap.createSet();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myVcsKeySet = new HashSet<>();
 
-    myConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, handler);
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    busConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, new MyRefresher());
+
+    MessageBusConnection appConnection = getApplication().getMessageBus().connect(this);
+    appConnection.subscribe(EditorColorsManager.TOPIC, scheme -> reloadAnnotations());
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @TestOnly
@@ -76,27 +73,25 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
   }
 
-  private Runnable createUpdateStuff() {
-    return () -> {
-      final Set<String> paths;
-      final Map<String, VcsRevisionNumber> changes;
-      final Set<VirtualFile> files;
-      Set<VcsKey> vcsToRefresh;
-      synchronized (myLock) {
-        vcsToRefresh = new HashSet<>(myVcsKeySet);
+  private void updateStuff() {
+    final Set<String> paths;
+    final Map<String, VcsRevisionNumber> changes;
+    final Set<VirtualFile> files;
+    Set<VcsKey> vcsToRefresh;
+    synchronized (myLock) {
+      vcsToRefresh = new HashSet<>(myVcsKeySet);
 
-        paths = new HashSet<>(myDirtyPaths);
-        changes = new HashMap<>(myDirtyChanges);
-        files = new HashSet<>(myDirtyFiles);
-        myDirtyPaths.clear();
-        myDirtyChanges.clear();
-        myVcsKeySet.clear();
-        myDirtyFiles.clear();
-      }
+      paths = new HashSet<>(myDirtyPaths);
+      changes = new HashMap<>(myDirtyChanges);
+      files = new HashSet<>(myDirtyFiles);
+      myDirtyPaths.clear();
+      myDirtyChanges.clear();
+      myVcsKeySet.clear();
+      myDirtyFiles.clear();
+    }
 
-      closeForVcs(vcsToRefresh);
-      checkByDirtyScope(paths, changes, files);
-    };
+    closeForVcs(vcsToRefresh);
+    checkByDirtyScope(paths, changes, files);
   }
 
   private void checkByDirtyScope(Set<String> removed, Map<String, VcsRevisionNumber> refresh, Set<? extends VirtualFile> files) {
@@ -219,6 +214,14 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   }
 
   @Override
+  public void reloadAnnotations() {
+    synchronized (myLock) {
+      List<FileAnnotation> copy = new ArrayList<>(myFileAnnotationMap.values());
+      invalidateAnnotations(copy, true);
+    }
+  }
+
+  @Override
   public void reloadAnnotationsForVcs(@NotNull VcsKey key) {
     synchronized (myLock) {
       List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> key.equals(it.getVcsKey()));
@@ -226,46 +229,44 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
   }
 
-  @Override
-  public void dispose() {
-    myConnection.disconnect();
-    myUpdater.stop();
-  }
+  private class MyRefresher implements VcsAnnotationRefresher {
+    private final Runnable myUpdateStuff = () -> updateStuff();
 
-  private VcsAnnotationRefresher createHandler() {
-    return new VcsAnnotationRefresher() {
-      @Override
-      public void dirtyUnder(VirtualFile file) {
-        if (file == null) return;
-        synchronized (myLock) {
-          myDirtyFiles.add(file);
-        }
-        myUpdater.queue(myUpdateStuff);
-      }
+    private void scheduleUpdate() {
+      myUpdater.queue(myUpdateStuff);
+    }
 
-      @Override
-      public void dirty(BaseRevision currentRevision) {
-        synchronized (myLock) {
-          myDirtyChanges.put(currentRevision.getPath(), currentRevision.getRevision());
-        }
-        myUpdater.queue(myUpdateStuff);
+    @Override
+    public void dirtyUnder(VirtualFile file) {
+      if (file == null) return;
+      synchronized (myLock) {
+        myDirtyFiles.add(file);
       }
+      scheduleUpdate();
+    }
 
-      @Override
-      public void dirty(String path) {
-        synchronized (myLock) {
-          myDirtyPaths.add(path);
-        }
-        myUpdater.queue(myUpdateStuff);
+    @Override
+    public void dirty(BaseRevision currentRevision) {
+      synchronized (myLock) {
+        myDirtyChanges.put(currentRevision.getPath(), currentRevision.getRevision());
       }
+      scheduleUpdate();
+    }
 
-      @Override
-      public void configurationChanged(VcsKey vcsKey) {
-        synchronized (myLock) {
-          myVcsKeySet.add(vcsKey);
-        }
-        myUpdater.queue(myUpdateStuff);
+    @Override
+    public void dirty(String path) {
+      synchronized (myLock) {
+        myDirtyPaths.add(path);
       }
-    };
+      scheduleUpdate();
+    }
+
+    @Override
+    public void configurationChanged(VcsKey vcsKey) {
+      synchronized (myLock) {
+        myVcsKeySet.add(vcsKey);
+      }
+      scheduleUpdate();
+    }
   }
 }

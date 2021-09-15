@@ -4,6 +4,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.references.ManyToOne
 import com.intellij.workspaceModel.storage.impl.references.MutableManyToOne
 
@@ -106,6 +107,22 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
   }
 
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(link)
+  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    index.index(this, link)
+  }
+
+  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    val previous = prev.singleOrNull()
+    if (previous != null) {
+      if (previous != link) {
+        index.remove(this, previous)
+        index.index(this, link)
+      }
+    }
+    else {
+      index.index(this, link)
+    }
+  }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>): Boolean {
@@ -133,6 +150,26 @@ class WithListSoftLinksEntityData : SoftLinkable, WorkspaceEntityData.WithCalcul
   lateinit var links: MutableList<NameId>
 
   override fun getLinks(): Set<PersistentEntityId<*>> = links.toSet()
+
+  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    for (link in links) {
+      index.index(this, link)
+    }
+  }
+
+  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    val mutablePreviousSet = HashSet(prev)
+
+    for (dependency in links) {
+      val removed = mutablePreviousSet.remove(dependency)
+      if (!removed) {
+        index.index(this, dependency)
+      }
+    }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>): Boolean {
@@ -176,6 +213,23 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
   }
 
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(link)
+
+  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    index.index(this, link)
+  }
+
+  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+    val previous = prev.singleOrNull()
+    if (previous != null) {
+      if (previous != link) {
+        index.remove(this, previous)
+        index.index(this, link)
+      }
+    }
+    else {
+      index.index(this, link)
+    }
+  }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>): Boolean {
