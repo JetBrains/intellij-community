@@ -52,7 +52,7 @@ open class TitledComponentsList(
         fun JComponent.constraints() = layout.getConstraints(this)
 
         val componentsWithLabels = components.mapNotNull { component ->
-            if (!component.shouldBeShow()) return@mapNotNull null
+            if (!component.shouldBeShown()) return@mapNotNull null
             val label = label(component.title?.let { "$it:" }.orEmpty())
             val tooltip = component.tooltipText?.let { ContextHelpLabel.create(component.tooltipText.orEmpty()) }
 
@@ -72,9 +72,10 @@ open class TitledComponentsList(
             is TitleComponentAlignment.AlignFormTopWithPadding -> alignment.padding.asSpring()
         }
 
-        val maxLabelWidth = componentsWithLabels.fold(componentsWithLabels.first().label.width) { spring, row ->
-            Spring.max(spring, row.label.width)
-        }
+        val maxLabelWidth =
+            componentsWithLabels.fold(componentsWithLabels.firstOrNull()?.label?.width ?: Spring.constant(0)) { spring, row ->
+                Spring.max(spring, row.label.width)
+            }
 
         componentsWithLabels.forEach { (_, tooltipConst, component, _, _, componentMaxWidth) ->
             val maxWidth = componentMaxWidth ?: globalMaxWidth
