@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.UtilBundle;
@@ -12,6 +12,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -299,19 +300,13 @@ public final class DateFormatUtil {
       LOG.error(t);
     }
     if (formats == null) {
+      LOG.info("cannot load system formats (JNA=" + JnaLoader.isLoaded() + "), resorting to JRE for " + Locale.getDefault(Locale.Category.FORMAT));
       formats = new DateFormat[]{
         DateFormat.getDateInstance(DateFormat.SHORT),
         DateFormat.getTimeInstance(DateFormat.SHORT),
         DateFormat.getTimeInstance(DateFormat.MEDIUM),
         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
       };
-    }
-
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("formats (OS=" + SystemInfo.OS_NAME + " JNA=" + JnaLoader.isLoaded() + ")");
-      for (DateFormat format: formats) {
-        LOG.trace("'" + (format instanceof SimpleDateFormat ? ((SimpleDateFormat)format).toPattern() : format.toString()) + "'");
-      }
     }
 
     SyncDateFormat[] synced = new SyncDateFormat[4];
@@ -338,6 +333,7 @@ public final class DateFormatUtil {
     }
 
     Pointer CFLocaleCopyCurrent();
+    Pointer CFLocaleGetIdentifier(Pointer locale);
     Pointer CFDateFormatterCreate(Pointer allocator, Pointer locale, long dateStyle, long timeStyle);
     Pointer CFDateFormatterGetFormat(Pointer formatter);
     long CFStringGetLength(Pointer str);
@@ -347,61 +343,68 @@ public final class DateFormatUtil {
 
   private static DateFormat[] getMacFormats() {
     CF cf = Native.load("CoreFoundation", CF.class);
-    Pointer locale = cf.CFLocaleCopyCurrent();
+    Pointer localeRef = cf.CFLocaleCopyCurrent();
     try {
+      String localeId = getMacString(cf, cf.CFLocaleGetIdentifier(localeRef));
+      if (LOG.isTraceEnabled()) LOG.trace("id=" + localeId);
+      Locale locale = getLocaleById(localeId);
       return new DateFormat[]{
-        getMacFormat(cf, locale, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
-        getMacFormat(cf, locale, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
-        getMacFormat(cf, locale, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle),  // medium time
-        getMacFormat(cf, locale, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle)  // short date/time
+        getMacFormat(cf, localeRef, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle, locale),  // short date
+        getMacFormat(cf, localeRef, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle, locale),  // short time
+        getMacFormat(cf, localeRef, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle, locale),  // medium time
+        getMacFormat(cf, localeRef, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle, locale)  // short date/time
       };
     }
     finally {
-      cf.CFRelease(locale);
+      cf.CFRelease(localeRef);
     }
   }
 
-  private static DateFormat getMacFormat(CF cf, Pointer locale, long dateStyle, long timeStyle) {
-    Pointer formatter = cf.CFDateFormatterCreate(null, locale, dateStyle, timeStyle);
+  private static DateFormat getMacFormat(CF cf, Pointer localeRef, long dateStyle, long timeStyle, Locale locale) {
+    Pointer formatter = cf.CFDateFormatterCreate(null, localeRef, dateStyle, timeStyle);
     if (formatter == null) throw new IllegalStateException("CFDateFormatterCreate: null");
     try {
       Pointer format = cf.CFDateFormatterGetFormat(formatter);
-      int length = (int)cf.CFStringGetLength(format);
-      char[] buffer = new char[length];
-      cf.CFStringGetCharacters(format, new CF.CFRange(0, length), buffer);
-      return formatFromString(new String(buffer));
+      return formatFromString(getMacString(cf, format), locale);
     }
     finally {
       cf.CFRelease(formatter);
     }
   }
 
-  private static DateFormat[] getUnixFormats() {
+  private static String getMacString(CF cf, Pointer ref) {
+    int length = (int)cf.CFStringGetLength(ref);
+    char[] buffer = new char[length];
+    cf.CFStringGetCharacters(ref, new CF.CFRange(0, length), buffer);
+    return new String(buffer);
+  }
+
+  private static DateFormat @Nullable [] getUnixFormats() {
     String localeStr = System.getenv("LC_TIME");
     if (LOG.isTraceEnabled()) LOG.trace("LC_TIME=" + localeStr);
     if (localeStr == null) return null;
 
-    localeStr = localeStr.trim();
-    int p = localeStr.indexOf('.');
-    if (p > 0) localeStr = localeStr.substring(0, p);
-    p = localeStr.indexOf('@');
-    if (p > 0) localeStr = localeStr.substring(0, p);
-
-    Locale locale;
-    p = localeStr.indexOf('_');
-    if (p < 0) {
-      locale = new Locale(localeStr);
-    }
-    else {
-      locale = new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
-    }
-
+    Locale locale = getLocaleById(localeStr.trim());
     return new DateFormat[]{
       DateFormat.getDateInstance(DateFormat.SHORT, locale),
       DateFormat.getTimeInstance(DateFormat.SHORT, locale),
       DateFormat.getTimeInstance(DateFormat.MEDIUM, locale),
       DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale)
     };
+  }
+
+  private static Locale getLocaleById(String localeStr) {
+    int p = localeStr.indexOf('.');
+    if (p > 0) localeStr = localeStr.substring(0, p);
+    p = localeStr.indexOf('@');
+    if (p > 0) localeStr = localeStr.substring(0, p);
+    p = localeStr.indexOf('_');
+    if (p < 0) {
+      return new Locale(localeStr);
+    }
+    else {
+      return new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
+    }
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -431,11 +434,12 @@ public final class DateFormatUtil {
     if (rv < 2) throw new IllegalStateException("GetLocaleInfoEx: " + kernel32.GetLastError());
     String mediumTime = fixWindowsFormat(new String(buffer, 0, rv - 1));
 
+    Locale locale = Locale.getDefault(Locale.Category.FORMAT);
     return new DateFormat[]{
-      formatFromString(shortDate),
-      formatFromString(shortTime),
-      formatFromString(mediumTime),
-      formatFromString(shortDate + " " + shortTime)
+      formatFromString(shortDate, locale),
+      formatFromString(shortTime, locale),
+      formatFromString(mediumTime, locale),
+      formatFromString(shortDate + ' ' + shortTime, locale)
     };
   }
 
@@ -445,9 +449,10 @@ public final class DateFormatUtil {
     return format;
   }
 
-  private static DateFormat formatFromString(String format) {
+  private static DateFormat formatFromString(String format, Locale locale) {
     try {
-      return new SimpleDateFormat(format.trim());
+      if (LOG.isTraceEnabled()) LOG.trace("'" + format + "' in " + locale);
+      return new SimpleDateFormat(format.trim(), locale);
     }
     catch (IllegalArgumentException e) {
       throw new IllegalArgumentException("unrecognized format string '" + format + "'");
