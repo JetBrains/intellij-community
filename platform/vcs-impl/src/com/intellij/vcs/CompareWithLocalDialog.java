@@ -11,22 +11,21 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleTreeDiffRequestProcessor;
+import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction.FileRevisionProvider;
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -101,6 +100,8 @@ public class CompareWithLocalDialog {
         return changesLoader.compute();
       }
     };
+    Disposer.register(changesPanel, changesBrowser);
+
     changesPanel.reloadChanges();
     return changesPanel;
   }
@@ -151,13 +152,41 @@ public class CompareWithLocalDialog {
     }
   }
 
-  private static class MyChangesBrowser extends SimpleChangesBrowser {
+  private static class MyChangesBrowser extends SimpleChangesBrowser implements Disposable {
     @NotNull private final CompareWithLocalDialog.LocalContent myLocalContent;
+
+    private final EditorTabPreview myEditorTabPreview;
 
     private MyChangesBrowser(@NotNull Project project, @NotNull LocalContent localContent) {
       super(project, false, true);
       myLocalContent = localContent;
+
+      ChangeViewDiffRequestProcessor processor = new SimpleTreeDiffRequestProcessor(project, "ChangesToolWindowPreview", myViewer, this);
+      myEditorTabPreview = new SimpleTreeEditorDiffPreview(processor, myViewer) {
+        @Override
+        protected String getCurrentName() {
+          String changeName = getChangeViewProcessor().getCurrentChangeName();
+          return changeName != null ? VcsBundle.message("changes.editor.diff.preview.title", changeName)
+                                    : VcsBundle.message("changes.editor.diff.preview.empty.title");
+        }
+
+        @Override
+        public void returnFocusToTree() {
+          ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesBrowserToolWindow.TOOLWINDOW_ID);
+          if (toolWindow != null) toolWindow.activate(null);
+        }
+      };
+
       hideViewerBorder();
+    }
+
+    @Override
+    public void dispose() {
+    }
+
+    @Override
+    protected @Nullable DiffPreview getShowDiffActionPreview() {
+      return myEditorTabPreview;
     }
 
     @NotNull
