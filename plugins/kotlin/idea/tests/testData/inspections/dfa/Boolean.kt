@@ -28,3 +28,8 @@ fun polyadic(x: Boolean, y: Boolean, z: Boolean) {
         if (<warning descr="Condition is always false">!x</warning> || y) {}
     }
 }
+fun falseOrNullElvis(b: Boolean?):Boolean {
+    // TODO: always false; we cannot track (null|false) as a single state. Probably split states at ==?
+    if (b == true) return true
+    return b ?: false
+}
