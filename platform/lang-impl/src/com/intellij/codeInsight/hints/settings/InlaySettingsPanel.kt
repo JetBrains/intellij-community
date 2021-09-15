@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.CaseListPanel
 import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
+import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
@@ -111,6 +112,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         rightPanel.add(JLabel(item.name))
         rightPanel.add(CaseListPanel(item.cases, item.onChangeListener!!))
         rightPanel.add(item.component)
+        if (item.previewText != null) {
+          val editor = createEditor(getModelLanguage(treeNode), project) {}
+          editor.text = item.previewText!!
+          rightPanel.add(editor)
+        }
       }
     }
     rightPanel.revalidate()
@@ -118,7 +124,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun getProviderId(treeNode: CheckedTreeNode): String {
-    val language = (treeNode.parent as DefaultMutableTreeNode).userObject as Language
+    val language = getModelLanguage(treeNode)
     return language.id + "." + (treeNode.userObject as InlayProviderSettingsModel).id
+  }
+
+  private fun getModelLanguage(treeNode: CheckedTreeNode): Language {
+    return (treeNode.parent as DefaultMutableTreeNode).userObject as Language
   }
 }
