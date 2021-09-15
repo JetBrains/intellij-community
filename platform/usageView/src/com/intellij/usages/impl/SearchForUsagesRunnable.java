@@ -263,7 +263,7 @@ final class SearchForUsagesRunnable implements Runnable {
     };
   }
 
-  private static PsiElement getPsiElement(UsageTarget @NotNull [] searchFor) {
+  static PsiElement getPsiElement(UsageTarget @NotNull [] searchFor) {
     final UsageTarget target = searchFor[0];
     if (!(target instanceof PsiElementUsageTarget)) return null;
     return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);
@@ -400,7 +400,20 @@ final class SearchForUsagesRunnable implements Runnable {
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(originalIndicator);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
           myTooManyUsages.set(true);
-          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, originalIndicator, usageView);
+
+          PsiElement element = getPsiElement(mySearchFor);
+          var elementClass = element != null ? element.getClass() : null;
+          var scopeText = myPresentation.getScopeText();
+          var language = element != null ? element.getLanguage() : null;
+
+          UsageViewManagerImpl.showTooManyUsagesWarningLater(
+            myProject, tooManyUsagesStatus, originalIndicator, usageView,
+            r -> UsageViewStatisticsCollector.logTooManyDialog(myProject,
+                r == UsageLimitUtil.Result.ABORT ? TooManyUsagesUserAction.Aborted : TooManyUsagesUserAction.Continued,
+                elementClass, scopeText, language));
+
+          UsageViewStatisticsCollector.logTooManyDialog(myProject, TooManyUsagesUserAction.Shown,
+                                                        elementClass, scopeText, language);
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         if (usageView != null) {

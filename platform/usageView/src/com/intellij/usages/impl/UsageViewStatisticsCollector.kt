@@ -15,10 +15,17 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
 import com.intellij.usages.rules.PsiElementUsage
+import org.jetbrains.annotations.Nls
 
 enum class CodeNavigateSource {
   ShowUsagesPopup,
   FindToolWindow
+}
+
+enum class TooManyUsagesUserAction {
+  Shown,
+  Aborted,
+  Continued
 }
 
 class UsageViewStatisticsCollector : CounterUsagesCollector() {
@@ -58,6 +65,14 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val NEW_SCOPE = EventFields.StringValidatedByCustomRule("new", SCOPE_RULE_ID)
 
     private val scopeChanged = GROUP.registerEvent("scope.changed", PREVIOUS_SCOPE, NEW_SCOPE, SYMBOL_CLASS)
+
+    private val USER_ACTION = EventFields.Enum("userAction", TooManyUsagesUserAction::class.java)
+    private val tooManyUsagesDialog = GROUP.registerVarargEvent("tooManyResultsDialog",
+      USER_ACTION,
+      SYMBOL_CLASS,
+      SEARCH_SCOPE,
+      EventFields.Language
+    )
 
     @JvmStatic
     fun logUsageShown(project: Project?, referenceClass: Class<out Any>?, language: Language?) {
@@ -111,6 +126,18 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
         newScope?.let{ scopeIdMapper.getScopeSerializationId(it.displayName) },
         symbolClass)
     }
+
+    @JvmStatic
+    fun logTooManyDialog(project: Project?,
+                         action: TooManyUsagesUserAction,
+                         targetClass: Class<out PsiElement>?,
+                         @Nls scope: String,
+                         language: Language?) =
+      tooManyUsagesDialog.log(project,
+        USER_ACTION.with(action),
+        SYMBOL_CLASS.with(targetClass),
+        SEARCH_SCOPE.with(ScopeIdMapper.instance.getScopeSerializationId(scope)),
+        EventFields.Language.with(language))
   }
 }
 

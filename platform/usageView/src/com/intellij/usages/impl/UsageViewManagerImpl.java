@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
@@ -179,28 +180,20 @@ public class UsageViewManagerImpl extends UsageViewManager {
       }
 
       private void reportFUS(int count, long firstResultTS, long duration, boolean tooManyUsages) {
-        for (var target : searchFor) {
-          Language language = null;
-          SearchScope scope = null;
-          Class<? extends PsiElement> targetClass = null;
+          PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
+          if (element != null) {
+            Class<? extends PsiElement> targetClass = element.getClass();
+            Language language = element.getLanguage();
+            SearchScope scope = null;
 
-          if (target instanceof PsiElementUsageTarget) {
-            var element = ((PsiElementUsageTarget)target).getElement();
-            if (element != null) {
-              targetClass = element.getClass();
-              language = element.getLanguage();
+            if (element instanceof DataProvider) {
+              scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
             }
-          }
 
-          if (target instanceof DataProvider) {
-            DataProvider dataProvider = (DataProvider)target;
-            scope = UsageView.USAGE_SCOPE.getData(dataProvider);
+            UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language,
+                                                           count, firstResultTS, duration, tooManyUsages,
+                                                           CodeNavigateSource.FindToolWindow);
           }
-
-          UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language,
-                                                         count, firstResultTS, duration, tooManyUsages,
-                                                         CodeNavigateSource.FindToolWindow);
-        }
       }
     };
     ProgressManager.getInstance().run(task);
@@ -254,7 +247,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public static void showTooManyUsagesWarningLater(@NotNull Project project,
                                                    @NotNull TooManyUsagesStatus tooManyUsagesStatus,
                                                    @NotNull ProgressIndicator indicator,
-                                                   @Nullable UsageViewEx usageView) {
+                                                   @Nullable UsageViewEx usageView,
+                                                   @Nullable Consumer<UsageLimitUtil.Result> onUserClicked) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
       String message = UsageViewBundle.message("find.excessive.usage.count.prompt");
@@ -266,6 +260,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
         indicator.cancel();
       }
       tooManyUsagesStatus.userResponded();
+
+      if (onUserClicked != null) {
+        onUserClicked.accept(ret);
+      }
     });
   }
 
