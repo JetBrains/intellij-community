@@ -99,3 +99,12 @@ inline fun runAtLeastOnce(lambda: () -> Unit) {
     lambda()
     lambda()
 }
+class NestedLetWithDivision {
+    var x: Double? = null
+    var y: Int? = null
+    var z: Int? = null
+
+    fun test() {
+        x?.let { ratio -> y = z?.let { (it / ratio).toInt() } }
+    }
+}

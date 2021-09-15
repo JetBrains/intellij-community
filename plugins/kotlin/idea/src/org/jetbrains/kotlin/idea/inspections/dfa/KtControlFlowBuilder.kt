@@ -1146,9 +1146,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (!mathOp.isShift) {
             addImplicitConversion(right, resultType)
         }
-        if (mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) {
+        if ((mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) && resultType != null &&
+            (resultType.isLong() || resultType.isInt())) {
             val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.ArithmeticException")
-            val zero = if (resultType?.isLong() == true) DfTypes.longValue(0) else DfTypes.intValue(0)
+            val zero = if (resultType.isLong() == true) DfTypes.longValue(0) else DfTypes.intValue(0)
             addInstruction(EnsureInstruction(null, RelationType.NE, zero, transfer, true))
         }
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
