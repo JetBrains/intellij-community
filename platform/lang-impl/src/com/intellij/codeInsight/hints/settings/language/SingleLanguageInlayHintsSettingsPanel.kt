@@ -49,7 +49,7 @@ class SingleLanguageInlayHintsSettingsPanel(
   private val config = InlayHintsSettings.instance()
   private val myProviderList = createList()
   private var myCurrentProvider = selectLastViewedProvider()
-  private val myEditorTextField: EditorTextField
+  private val myEditorTextField = createEditor(myLanguage, myProject) { updateHints() }
   private val myCurrentProviderCustomSettingsPane = JBScrollPane().also {
     it.border = null
   }
@@ -67,7 +67,6 @@ class SingleLanguageInlayHintsSettingsPanel(
 
 
   init {
-    myEditorTextField = createEditor(myLanguage, myProject) { updateHints() }
     layout = GridLayout(1, 1)
     val splitter = JBSplitter(true)
     splitter.firstComponent = createTopPanel()
