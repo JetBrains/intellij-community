@@ -10,7 +10,6 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -74,6 +73,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     if (module == null) return false;
     if (!applyTestConfiguration(settings, module, tests, findTestSource, createFilter)) return false;
     configuration.setName(suggestConfigurationName(tests));
+    setUniqueNameIfNeeded(project, configuration);
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
     return true;
   }
@@ -102,7 +102,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
       super.onFirstRun(configuration, context, startRunnable);
       return;
     }
-    ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)configuration.getConfiguration();
+    GradleRunConfiguration runConfiguration = (GradleRunConfiguration)configuration.getConfiguration();
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
     if (tests.isEmpty()) {
@@ -122,6 +122,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
         return;
       }
       runConfiguration.setName(suggestConfigurationName(tests));
+      setUniqueNameIfNeeded(project, runConfiguration);
       super.onFirstRun(configuration, context, startRunnable);
     });
   }

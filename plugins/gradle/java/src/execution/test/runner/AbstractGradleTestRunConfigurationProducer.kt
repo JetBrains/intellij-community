@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 import com.intellij.execution.JavaRunConfigurationExtensionManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -44,6 +43,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     context: ConfigurationContext,
     sourceElement: Ref<PsiElement>
   ): Boolean {
+    val project = context.project ?: return false
     val module = context.module ?: return false
     val externalProjectPath = resolveProjectPath(module) ?: return false
     val location = context.location ?: return false
@@ -53,6 +53,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
     sourceElement.set(element)
     configuration.name = suggestConfigurationName(context, element, emptyList())
+    setUniqueNameIfNeeded(project, configuration)
     configuration.settings.externalProjectPath = externalProjectPath
     configuration.settings.taskNames = tasksAndArguments.toList()
     configuration.settings.scriptParameters = ""
@@ -78,7 +79,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
   override fun onFirstRun(configuration: ConfigurationFromContext, context: ConfigurationContext, startRunnable: Runnable) {
     val project = requireNotNull(context.project)
     val element = requireNotNull(getElement(context))
-    val runConfiguration = configuration.configuration as ExternalSystemRunConfiguration
+    val runConfiguration = configuration.configuration as GradleRunConfiguration
     val dataContext = contextWithLocationName(context.dataContext, getLocationName(context, element))
     chooseSourceElements(context, element) { elements ->
       val allTestsToRun = getAllTestsTaskToRun(context, element, elements)
@@ -91,6 +92,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
           .map { createTasksAndArguments(it.key, it.value) }
 
         runConfiguration.name = suggestConfigurationName(context, element, elements)
+        setUniqueNameIfNeeded(project, runConfiguration)
         runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.toList() }
         runConfiguration.settings.scriptParameters = if (chosenTasksAndArguments.size > 1) "--continue" else ""
 
