@@ -33,22 +33,9 @@ typealias SourcePath = String
 typealias TestName = String
 
 open class TestTasksChooser {
-  @Suppress("CAST_NEVER_SUCCEEDS")
-  private fun error(message: String): Nothing = LOG.error(message) as Nothing
-
-  fun chooseTestTasks(
-    project: Project,
-    context: DataContext,
-    elements: Iterable<PsiElement>,
-    consumer: (List<Map<SourcePath, TasksToRun>>) -> Unit
-  ) {
-    val sources = elements.map { getSourceFile(it) ?: error("Can not find source file for $it") }
-    val testTasks = findAllTestsTaskToRun(sources, project)
-    when {
-      testTasks.isEmpty() -> showTestsNotFoundWarning(project, context)
-      testTasks.size == 1 -> consumer(testTasks.values.toList())
-      else -> chooseTestTasks(project, context, testTasks, consumer)
-    }
+  private fun error(message: String): Nothing {
+    LOG.error(message)
+    throw IllegalArgumentException(message)
   }
 
   fun chooseTestTasks(
@@ -57,7 +44,22 @@ open class TestTasksChooser {
     elements: Iterable<PsiElement>,
     consumer: Consumer<List<Map<SourcePath, TasksToRun>>>
   ) {
-    chooseTestTasks(project, context, elements, consumer::accept)
+    val sources = elements.map { getSourceFile(it) ?: error("Can not find source file for $it") }
+    val testTasks = findAllTestsTaskToRun(sources, project)
+    chooseTestTasks(project, context, testTasks, consumer::accept)
+  }
+
+  open fun <T> chooseTestTasks(
+    project: Project,
+    context: DataContext,
+    testTasks: Map<TestName, T>,
+    consumer: (List<T>) -> Unit
+  ) {
+    when {
+      testTasks.isEmpty() -> showTestTasksNotFoundWarning(project, context)
+      testTasks.size == 1 -> consumer(testTasks.values.toList())
+      else -> showTestTasksPopupChooser(project, context, testTasks, consumer)
+    }
   }
 
   private fun findAllTestsTaskToRun(
@@ -70,18 +72,19 @@ open class TestTasksChooser {
     return testTaskNames.associateWith { name -> testTasks.mapNotNullValues { it.value[name] } }
   }
 
-  open fun <T> chooseTestTasks(
+  protected open fun <T> showTestTasksPopupChooser(
     project: Project,
     context: DataContext,
     testTasks: Map<TestName, T>,
     consumer: (List<T>) -> Unit
   ) {
     assert(!ApplicationManager.getApplication().isCommandLine)
-    val sortedTestTasksNames = testTasks.keys.toList().sortedByDescending { it == TEST_TASK_NAME }
-    val testTaskRenderer = TestTaskListCellRenderer(project)
     JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(sortedTestTasksNames)
-      .setRenderer(testTaskRenderer)
+      .createPopupChooserBuilder(
+        testTasks.keys.toList()
+          .sortedByDescending { it == TEST_TASK_NAME }
+      )
+      .setRenderer(TestTaskListCellRenderer(project))
       .setTitle(suggestPopupTitle(context))
       .setAutoselectOnMouseMove(false)
       .setNamerForFiltering(FunctionUtil.id())
@@ -93,7 +96,7 @@ open class TestTasksChooser {
       .setItemsChosenCallback {
         val choosesTestTasks = it.mapNotNull(testTasks::get)
         when {
-          choosesTestTasks.isEmpty() -> showTestsNotFoundWarning(project, context)
+          choosesTestTasks.isEmpty() -> showTestTasksNotFoundWarning(project, context)
           else -> consumer(choosesTestTasks)
         }
       }
@@ -101,7 +104,7 @@ open class TestTasksChooser {
       .show(getBestPopupPosition(context))
   }
 
-  protected open fun showTestsNotFoundWarning(project: Project, context: DataContext) {
+  protected open fun showTestTasksNotFoundWarning(project: Project, context: DataContext) {
     assert(!ApplicationManager.getApplication().isCommandLine)
     JBPopupFactory.getInstance()
       .createBalloonBuilder(JLabel(GradleBundle.message("gradle.tests.tasks.choosing.warning.text")))
