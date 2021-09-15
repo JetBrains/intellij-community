@@ -1329,6 +1329,10 @@ public final class TreeUtil {
     return path == null ? null : getUserObject(type, path.getLastPathComponent());
   }
 
+  public static @Nullable AbstractTreeNode<?> getAbstractTreeNode(@Nullable Object node) {
+    return getUserObject(AbstractTreeNode.class, node);
+  }
+
   public static @Nullable AbstractTreeNode<?> getAbstractTreeNode(@Nullable TreePath path) {
     return getLastUserObject(AbstractTreeNode.class, path);
   }
