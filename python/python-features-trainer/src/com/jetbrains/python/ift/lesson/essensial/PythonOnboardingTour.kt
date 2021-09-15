@@ -4,7 +4,6 @@ package com.jetbrains.python.ift.lesson.essensial
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
-import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
@@ -14,7 +13,6 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
@@ -45,7 +43,6 @@ import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.xdebugger.XDebuggerBundle
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
@@ -70,7 +67,6 @@ import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.util.invokeActionForFocusContext
 import training.util.learningToolWindow
-import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
@@ -227,23 +223,12 @@ class PythonOnboardingTour :
     }
 
     task {
-      // Need to wait until Debugger tab will be selected
-      stateCheck {
-        val f = UIUtil.getParentOfType(JBRunnerTabs::class.java, focusOwner)
-        f?.selectedInfo?.text == XDebuggerBundle.message("xdebugger.debugger.tab.title")
-      }
-    }
-
-    task {
-      val needFirstAction = ActionManager.getInstance().getAction("ShowExecutionPoint")
+      val needAction = ActionManager.getInstance().getAction("Resume")
       triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-        ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "DebuggerToolbar" && checkFirstButton(ui, needFirstAction)
+        val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "MainSingleContentToolbar"
+        if (!b) return@triggerByUiComponentAndHighlight false
+        ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
       }
-    }
-
-    highlightAllFoundUi(clearPreviousHighlights = false, highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-      ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "DebuggerToolbar" &&
-      checkFirstButton(ui, ActionManager.getInstance().getAction("Rerun"))
     }
 
     task {
@@ -282,15 +267,6 @@ class PythonOnboardingTour :
                                            highlightingComponent = highlightingComponent,
                                            duplicateMessage = false)
     text(message, useBalloon)
-  }
-
-  private fun checkFirstButton(ui: ActionToolbarImpl,
-                               needFirstAction: AnAction?): Boolean {
-    return ui.components.let {
-      it.isNotEmpty<Component?>() && (it[0] as? ActionButton)?.let { first ->
-        first.action == needFirstAction
-      } == true
-    }
   }
 
   private fun LessonContext.waitIndexingTasks() {
