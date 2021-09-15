@@ -76,7 +76,7 @@ class KotlinUAnnotation(
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtAnnotationEntry>(annotationEntry, givenParent), UAnnotation {
 
-    override val javaPsi = annotationEntry.toLightAnnotation()
+    override val javaPsi: PsiAnnotation? by lz { annotationEntry.toLightAnnotation() }
 
     override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
 
