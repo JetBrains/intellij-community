@@ -500,6 +500,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             getEventPublisher(),
             toolWrapper,
             GLOBAL_SIMPLE,
+            file.getVirtualFile(),
             getProject(),
             () -> {
               tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
@@ -647,6 +648,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               eventPublisher,
               toolWrapper,
               GLOBAL,
+              null,
               getProject(),
               () -> {
                 tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
