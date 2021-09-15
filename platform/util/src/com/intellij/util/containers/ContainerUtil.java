@@ -1273,7 +1273,8 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> List<T> append(@NotNull List<? extends T> list, T @NotNull ... values) {
-    return concat(list, Arrays.asList(values));
+    //noinspection unchecked
+    return values.length == 0 ? (List<T>)list : concat(list, Arrays.asList(values));
   }
 
   /**
@@ -1283,7 +1284,8 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> List<T> prepend(@NotNull List<? extends T> list, T @NotNull ... values) {
-    return concat(Arrays.asList(values), list);
+    //noinspection unchecked
+    return values.length == 0 ? (List<T>)list : concat(Arrays.asList(values), list);
   }
 
   /**
