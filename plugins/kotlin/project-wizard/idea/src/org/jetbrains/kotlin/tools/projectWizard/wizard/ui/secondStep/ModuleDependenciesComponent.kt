@@ -76,7 +76,7 @@ class ModuleDependenciesComponent(
             ModuleDependencyType.isDependencyPossible(module!!, to)
         }
 
-    override fun shouldBeShow(): Boolean = module?.let {
+    override fun shouldBeShown(): Boolean = module?.let {
         it.dependencies.isEmpty() && possibleDependencies().isEmpty()
     } != true
 

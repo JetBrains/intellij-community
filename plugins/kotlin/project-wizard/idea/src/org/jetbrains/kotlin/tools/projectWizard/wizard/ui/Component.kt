@@ -84,7 +84,7 @@ abstract class TitledComponent(context: Context) : DynamicComponent(context) {
     open val maximumWidth: Int? = null
     abstract val title: String?
     open val tooltipText: String? = null
-    open fun shouldBeShow(): Boolean = true
+    open fun shouldBeShown(): Boolean = true
 }
 
 sealed class TitleComponentAlignment {

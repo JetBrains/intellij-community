@@ -122,7 +122,7 @@ class DropdownSettingComponent(
         onValueUpdate = handleValueUpdate()
     ).asSubComponent()
 
-    override fun shouldBeShow(): Boolean =
+    override fun shouldBeShown(): Boolean =
         uiComponent.valuesCount > 1
 }
 
