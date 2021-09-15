@@ -60,7 +60,7 @@ final class PlatformModules {
   /**
    * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs.
    */
-  static List<String> PLATFORM_IMPLEMENTATION_MODULES = List.of(
+  static final List<String> PLATFORM_IMPLEMENTATION_MODULES = List.of(
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
@@ -108,6 +108,17 @@ final class PlatformModules {
 
   private static final String UTIL_JAR = "util.jar"
 
+  static jar(String relativeJarPath,
+             Collection<String> moduleNames,
+             ProductModulesLayout productLayout,
+             PlatformLayout layout) {
+    for (String moduleName : moduleNames) {
+      if (!productLayout.excludedModuleNames.contains(moduleName)) {
+        layout.withModule(moduleName, relativeJarPath)
+      }
+    }
+  }
+
   @CompileDynamic
   static PlatformLayout createPlatformLayout(ProductModulesLayout productLayout,
                                              Set<String> allProductDependencies,
@@ -125,22 +136,12 @@ final class PlatformModules {
         }
       }
 
-      productLayout.additionalPlatformJars.entrySet().each {
-        String jarName = it.key
-        it.value.each {
-          addModule(it, jarName)
-        }
+      for (Map.Entry<String, Collection<String>> entry in productLayout.additionalPlatformJars.entrySet()) {
+        jar(entry.key, entry.value, productLayout, layout)
       }
 
-      for (String module in PLATFORM_API_MODULES) {
-        addModule(module, "platform-api.jar")
-      }
-      for (String module in PLATFORM_IMPLEMENTATION_MODULES) {
-        addModule(module, PLATFORM_JAR)
-      }
-      for (String module in productLayout.productApiModules) {
-        addModule(module, "openapi.jar")
-      }
+      jar("platform-api.jar", PLATFORM_API_MODULES, productLayout, layout)
+      jar("openapi.jar", productLayout.productApiModules, productLayout, layout)
 
       for (String module in productLayout.productImplementationModules) {
         boolean isRelocated = module == "intellij.xml.dom.impl" ||
@@ -153,52 +154,61 @@ final class PlatformModules {
         layout.moduleExcludes.putValues(it.key, it.value)
       }
 
-      addModule("intellij.platform.util", UTIL_JAR)
-      addModule("intellij.platform.util.rt", UTIL_JAR)
-      addModule("intellij.platform.util.zip", UTIL_JAR)
-      addModule("intellij.platform.util.classLoader", UTIL_JAR)
-      addModule("intellij.platform.util.text.matching", UTIL_JAR)
-      addModule("intellij.platform.util.base", UTIL_JAR)
-      addModule("intellij.platform.util.xmlDom", UTIL_JAR)
-      addModule("intellij.platform.util.ui", UTIL_JAR)
-      addModule("intellij.platform.util.ex", UTIL_JAR)
-      addModule("intellij.platform.ide.util.io", UTIL_JAR)
-      addModule("intellij.platform.ide.util.io.impl", UTIL_JAR)
-      addModule("intellij.platform.ide.util.netty", UTIL_JAR)
-      addModule("intellij.platform.extensions", UTIL_JAR)
+      jar(UTIL_JAR, List.of(
+        "intellij.platform.util.rt",
+        "intellij.platform.util.zip",
+        "intellij.platform.util.classLoader",
+        "intellij.platform.util",
+        "intellij.platform.util.text.matching",
+        "intellij.platform.util.base",
+        "intellij.platform.util.xmlDom",
+        "intellij.platform.util.ui",
+        "intellij.platform.util.ex",
+        "intellij.platform.ide.util.io",
+        "intellij.platform.ide.util.io.impl",
+        "intellij.platform.ide.util.netty",
+        "intellij.platform.extensions",
+      ), productLayout, layout)
+
+      jar(PLATFORM_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
+      jar(PLATFORM_JAR, List.of(
+        "intellij.relaxng",
+        "intellij.json",
+        "intellij.spellchecker",
+        "intellij.xml.analysis.impl",
+        "intellij.xml.psi.impl",
+        "intellij.xml.structureView.impl",
+        "intellij.xml.impl",
+
+        "intellij.platform.vcs.impl",
+        "intellij.platform.vcs.dvcs.impl",
+        "intellij.platform.vcs.log.graph.impl",
+        "intellij.platform.vcs.log.impl",
+
+        "intellij.platform.collaborationTools",
+
+        "intellij.platform.icons",
+        "intellij.platform.resources",
+        "intellij.platform.resources.en",
+        "intellij.platform.colorSchemes",
+      ), productLayout, layout)
+
+      jar("stats.jar", List.of(
+        "intellij.platform.statistics",
+        "intellij.platform.statistics.uploader",
+        "intellij.platform.statistics.config",
+      ), productLayout, layout)
 
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
-      addModule("intellij.platform.statistics", "stats.jar")
-      addModule("intellij.platform.statistics.uploader", "stats.jar")
-      addModule("intellij.platform.statistics.config", "stats.jar")
       addModule("intellij.platform.statistics.devkit")
-
-      for (String module in List.of("intellij.relaxng",
-                                    "intellij.json",
-                                    "intellij.spellchecker",
-                                    "intellij.xml.analysis.impl",
-                                    "intellij.xml.psi.impl",
-                                    "intellij.xml.structureView.impl",
-                                    "intellij.xml.impl")) {
-        addModule(module, PLATFORM_JAR)
-      }
-
-      addModule("intellij.platform.vcs.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.dvcs.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.log.graph.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.log.impl", PLATFORM_JAR)
-      addModule("intellij.platform.collaborationTools", PLATFORM_JAR)
 
       addModule("intellij.platform.objectSerializer.annotations")
 
-      addModule("intellij.platform.bootstrap")
+      jar("bootstrap.jar", List.of(
+        "intellij.platform.bootstrap",
+        "intellij.platform.boot"
+      ), productLayout, layout)
       addModule("intellij.java.guiForms.rt")
-      addModule("intellij.platform.boot", "bootstrap.jar")
-
-      addModule("intellij.platform.icons", PLATFORM_JAR)
-      addModule("intellij.platform.resources", PLATFORM_JAR)
-      addModule("intellij.platform.colorSchemes", PLATFORM_JAR)
-      addModule("intellij.platform.resources.en", PLATFORM_JAR)
 
       addModule("intellij.platform.jps.model.serialization", "jps-model.jar")
       addModule("intellij.platform.jps.model.impl", "jps-model.jar")

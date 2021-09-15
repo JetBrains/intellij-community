@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.ResourcesGenerator
@@ -36,6 +36,11 @@ abstract class BaseLayout {
   final Set<String> explicitlySetJarPaths = new LinkedHashSet<>()
 
   static String convertModuleNameToFileName(String moduleName) {
-    StringUtil.trimStart(moduleName, "intellij.").replace('.', '-')
+    Strings.trimStart(moduleName, "intellij.").replace('.', '-')
+  }
+
+  void withModule(String moduleName, String relativeJarPath) {
+    moduleJars.putValue(relativeJarPath, moduleName)
+    explicitlySetJarPaths.add(relativeJarPath)
   }
 }

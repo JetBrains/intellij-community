@@ -118,7 +118,7 @@ class ProductModulesLayout {
    * Allows to filter out default platform modules (both api and implementation) as well as product modules.
    * This API is experimental, use with care
    */
-  List<String> excludedModuleNames = []
+  final Set<String> excludedModuleNames = new HashSet<>()
 
   /**
    * @return list of all modules which output is included into the plugin's JARs

@@ -226,7 +226,6 @@ final class JarPackager {
         toMerge.put(library, files)
       }
       else {
-        List sources
         if (libName != "Gradle" && !removeVersionFromJarName) {
           String fileName = libNameToMergedJarFileName(libName)
           buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), files, layoutSpec, buildContext)

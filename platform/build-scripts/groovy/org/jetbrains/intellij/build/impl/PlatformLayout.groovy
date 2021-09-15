@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 
@@ -23,7 +23,7 @@ import java.util.function.Consumer
  */
 @CompileStatic
 final class PlatformLayout extends BaseLayout {
-  List<String> excludedProjectLibraries = []
+  final Set<String> excludedProjectLibraries = new HashSet<>()
   final List<String> projectLibrariesWithRemovedVersionFromJarNames = []
 
   static PlatformLayout platform(Consumer<PlatformLayout> customizer, @DelegatesTo(PlatformLayoutSpec) Closure body = {}) {
@@ -51,7 +51,7 @@ final class PlatformLayout extends BaseLayout {
      * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
      */
     void withoutProjectLibrary(String libraryName) {
-      layout.excludedProjectLibraries << libraryName
+      layout.excludedProjectLibraries.add(libraryName)
     }
 
     /**
