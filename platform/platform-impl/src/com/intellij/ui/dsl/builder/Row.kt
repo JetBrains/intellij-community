@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.*
-import com.intellij.ui.dsl.gridLayout.RowGaps
+import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -178,5 +178,5 @@ interface Row {
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
    */
-  fun customize(customRowGaps: RowGaps): Row
+  fun customize(customRowGaps: VerticalGaps): Row
 }

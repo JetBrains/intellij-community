@@ -4,20 +4,17 @@ package com.intellij.ui.dsl.gridLayout
 import com.intellij.ui.dsl.checkNonNegative
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * Vertical gaps around rows. If row is not visible correspondent gaps disappear
- */
 @ApiStatus.Experimental
-data class RowGaps(val top: Int = 0, val bottom: Int = 0) {
+data class HorizontalGaps(val left: Int = 0, val right: Int = 0) {
   companion object {
-    val EMPTY = RowGaps()
+    val EMPTY = HorizontalGaps()
   }
 
   init {
-    checkNonNegative(::top)
-    checkNonNegative(::bottom)
+    checkNonNegative(::left)
+    checkNonNegative(::right)
   }
 
-  val height: Int
-    get() = top + bottom
+  val width: Int
+    get() = left + right
 }

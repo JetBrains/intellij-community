@@ -24,7 +24,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.gridLayout.RowGaps
+import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.UIUtil
@@ -59,7 +59,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   var internalBottomGap: Int = 0
 
-  var customRowGaps: RowGaps? = null
+  var customRowGaps: VerticalGaps? = null
     private set
 
   val cells = mutableListOf<CellBaseImpl<*>?>()
@@ -339,7 +339,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component)
   }
 
-  override fun customize(customRowGaps: RowGaps): Row {
+  override fun customize(customRowGaps: VerticalGaps): Row {
     this.customRowGaps = customRowGaps
     return this
   }

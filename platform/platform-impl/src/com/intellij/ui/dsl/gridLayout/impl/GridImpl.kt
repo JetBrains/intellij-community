@@ -18,8 +18,8 @@ internal class GridImpl : Grid {
   override val resizableColumns = mutableSetOf<Int>()
   override val resizableRows = mutableSetOf<Int>()
 
-  override val columnsGaps = mutableListOf<ColumnGaps>()
-  override val rowsGaps = mutableListOf<RowGaps>()
+  override val columnsGaps = mutableListOf<HorizontalGaps>()
+  override val rowsGaps = mutableListOf<VerticalGaps>()
 
   val visible: Boolean
     get() = cells.any { it.visible }
@@ -138,10 +138,10 @@ internal class GridImpl : Grid {
       with(cell.constraints) {
         layoutCellData = LayoutCellData(cell = cell,
           preferredSize = preferredSize,
-          columnGaps = ColumnGaps(
+          columnGaps = HorizontalGaps(
             left = columnsGaps.getOrNull(x)?.left ?: 0,
             right = columnsGaps.getOrNull(x + width - 1)?.right ?: 0),
-          rowGaps = RowGaps(
+          rowGaps = VerticalGaps(
             top = rowsGaps.getOrNull(y)?.top ?: 0,
             bottom = rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0)
         )
@@ -404,7 +404,7 @@ private class JBLayoutData {
  * For sub-grids height of [preferredSize] calculated on late steps of [GridImpl.calculateLayoutData]
  */
 private data class LayoutCellData(val cell: Cell, val preferredSize: Dimension,
-                                  val columnGaps: ColumnGaps, val rowGaps: RowGaps) {
+                                  val columnGaps: HorizontalGaps, val rowGaps: VerticalGaps) {
   /**
    * Calculated on step 3
    */

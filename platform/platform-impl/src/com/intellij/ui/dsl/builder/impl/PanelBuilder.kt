@@ -59,7 +59,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       }
 
       val rowGaps = getRowGaps(row)
-      rowsGridBuilder.setRowGaps(RowGaps(top = rowGaps.top))
+      rowsGridBuilder.setRowGaps(VerticalGaps(top = rowGaps.top))
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
@@ -316,7 +316,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     return cells.indexOfFirst { (it as? CellImpl<*>)?.comment != null }
   }
 
-  private fun getRowGaps(row: RowImpl): RowGaps {
+  private fun getRowGaps(row: RowImpl): VerticalGaps {
     row.customRowGaps?.let {
       return it
     }
@@ -331,7 +331,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       null -> row.internalBottomGap
     }
 
-    return if (top > 0 || bottom > 0) RowGaps(top = top, bottom = bottom) else RowGaps.EMPTY
+    return if (top > 0 || bottom > 0) VerticalGaps(top = top, bottom = bottom) else VerticalGaps.EMPTY
   }
 
   private fun warn(message: String) {
