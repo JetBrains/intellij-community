@@ -116,7 +116,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       CompareWithLocalDialog.LocalContent localContentSide = isWithLocal ? CompareWithLocalDialog.LocalContent.AFTER
                                                                          : CompareWithLocalDialog.LocalContent.NONE;
 
-      CompareWithLocalDialog.showDialog(myProject, dialogTitle, localContentSide, () -> {
+      CompareWithLocalDialog.showChanges(myProject, dialogTitle, localContentSide, () -> {
         if (isWithLocal) {
           return GitChangeUtils.getDiffWithWorkingDir(myProject, root, leftRevision.asString(), filePaths, false);
         }
