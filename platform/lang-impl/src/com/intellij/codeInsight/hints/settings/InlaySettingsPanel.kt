@@ -31,6 +31,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
     val settings = InlayHintsSettings.instance()
     val root = CheckedTreeNode()
+    var nodeToSelect: CheckedTreeNode? = null
     for (group in InlayHintsProviderExtension.findProviders().groupBy { it.provider.groupId }) {
       val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
       root.add(groupNode)
@@ -41,13 +42,19 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         if (group.key == CODE_VISION_GROUP) {
           val parameterHintsProvider = InlayParameterHintsExtension.forLanguage(lang.key)
           if (parameterHintsProvider != null) {
-            addModelNode(ParameterInlayProviderSettingsModel(parameterHintsProvider, lang.key), langNode)
+            val node = addModelNode(ParameterInlayProviderSettingsModel(parameterHintsProvider, lang.key), langNode)
+            if (nodeToSelect == null && getProviderId(node) == settings.getLastViewedProviderId()) {
+              nodeToSelect = node
+            }
           }
         }
 
         lang.value.forEach {
           val withSettings = it.provider.withSettings(lang.key, settings)
-          addModelNode(NewInlayProviderSettingsModel(withSettings, settings), langNode)
+          val node = addModelNode(NewInlayProviderSettingsModel(withSettings, settings), langNode)
+          if (nodeToSelect == null && getProviderId(node) == settings.getLastViewedProviderId()) {
+            nodeToSelect = node
+          }
         }
       }
     }
@@ -69,8 +76,13 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         }
       }
     }, root)
-    TreeUtil.expand(tree, 1)
     tree.addTreeSelectionListener(TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
+    if (nodeToSelect == null) {
+      TreeUtil.expand(tree, 1)
+    }
+    else {
+      TreeUtil.selectNode(tree, nodeToSelect)
+    }
 
     val splitter = JBSplitter(false, 0.3f)
     splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree)
@@ -79,19 +91,23 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun addModelNode(model: InlayProviderSettingsModel,
-                           langNode: CheckedTreeNode) {
+                           langNode: CheckedTreeNode): CheckedTreeNode {
     model.onChangeListener = object : ChangeListener {
       override fun settingsChanged() {
 
       }
     }
-    langNode.add(CheckedTreeNode(model))
+    val node = CheckedTreeNode(model)
+    langNode.add(node)
+    return node
   }
 
   private fun updateRightPanel(treeNode: CheckedTreeNode?) {
     rightPanel.removeAll()
     when (val item = treeNode?.userObject) {
       is InlayProviderSettingsModel -> {
+        InlayHintsSettings.instance().saveLastViewedProviderId(getProviderId(treeNode))
+
         rightPanel.add(JLabel(item.name))
         rightPanel.add(CaseListPanel(item.cases, item.onChangeListener!!))
         rightPanel.add(item.component)
@@ -99,5 +115,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
     rightPanel.revalidate()
     rightPanel.repaint()
+  }
+
+  private fun getProviderId(treeNode: CheckedTreeNode): String {
+    val language = (treeNode.parent as DefaultMutableTreeNode).userObject as Language
+    return language.id + "." + (treeNode.userObject as InlayProviderSettingsModel).id
   }
 }
