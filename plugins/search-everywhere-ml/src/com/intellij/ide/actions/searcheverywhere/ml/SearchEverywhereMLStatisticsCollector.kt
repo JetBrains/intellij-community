@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -120,10 +119,7 @@ internal class SearchEverywhereMLStatisticsCollector {
         val result: HashMap<String, Any> = hashMapOf(
           CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
         )
-
-        if (SearchEverywhereElementFeaturesProvider.isElementSupported(it.element)) {
-          addElementFeatures(elementIdProvider, it, state, result, actionManager)
-        }
+        addElementFeatures(elementIdProvider, it, state, result, actionManager)
         result
       }
 

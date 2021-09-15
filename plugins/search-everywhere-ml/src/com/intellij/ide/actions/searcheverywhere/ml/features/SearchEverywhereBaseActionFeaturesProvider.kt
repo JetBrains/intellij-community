@@ -1,10 +1,12 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.util.Time.*
 
-internal abstract class SearchEverywhereBaseActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
+internal abstract class SearchEverywhereBaseActionFeaturesProvider
+  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java) {
   companion object {
     internal const val IS_ENABLED = "isEnabled"
 

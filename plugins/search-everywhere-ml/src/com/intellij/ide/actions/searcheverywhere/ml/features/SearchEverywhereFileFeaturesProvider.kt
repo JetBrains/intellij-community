@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
 import com.intellij.ide.actions.GotoFileItemProvider
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.favoritesTreeView.FavoritesManager
@@ -25,7 +26,7 @@ import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.Time.*
 
-internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
+internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
   companion object {
     internal const val IS_DIRECTORY_DATA_KEY = "isDirectory"
     internal const val FILETYPE_DATA_KEY = "fileType"
@@ -84,14 +85,6 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     return statsCopy
-  }
-
-  override fun isElementSupported(element: Any): Boolean {
-    return when (element) {
-      is PsiFileSystemItem -> element.virtualFile != null
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> isElementSupported(element.item)
-      else -> false
-    }
   }
 
   override fun getElementFeatures(element: Any,
