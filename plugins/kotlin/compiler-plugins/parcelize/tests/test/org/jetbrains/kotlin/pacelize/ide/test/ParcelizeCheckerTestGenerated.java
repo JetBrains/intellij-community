@@ -73,6 +73,11 @@ public class ParcelizeCheckerTestGenerated extends AbstractParcelizeCheckerTest 
         runTest("testData/checker/notMagicParcel.kt");
     }
 
+    @TestMetadata("objectProperties.kt")
+    public void testObjectProperties() throws Exception {
+        runTest("testData/checker/objectProperties.kt");
+    }
+
     @TestMetadata("properties.kt")
     public void testProperties() throws Exception {
         runTest("testData/checker/properties.kt");
