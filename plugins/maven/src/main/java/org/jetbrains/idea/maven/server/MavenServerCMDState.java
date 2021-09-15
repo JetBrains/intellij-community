@@ -12,7 +12,6 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
@@ -114,11 +113,12 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
+    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
+
     Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
     for (String s : classPath) {
       params.getClassPath().add(s);
     }
-    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
 
     String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
     if (embedderXmx != null) {
@@ -280,6 +280,7 @@ public class MavenServerCMDState extends CommandLineState {
     private enum MemoryUnit {
       B(1), K(B.ratio * 1024), M(K.ratio * 1024), G(M.ratio * 1024);
       final int ratio;
+
       MemoryUnit(int ratio) {
         this.ratio = ratio;
       }
@@ -288,6 +289,7 @@ public class MavenServerCMDState extends CommandLineState {
     private enum MemoryPropertyType {
       XMX("-Xmx"), XMS("-Xms");
       private final String type;
+
       MemoryPropertyType(String type) {
         this.type = type;
       }
