@@ -199,11 +199,6 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
           myEvaluateComboBox.requestFocusInEditor();
         }
-
-        @Override
-        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-          addExpressionResultNode();
-        }
       });
       addToWatchesActionRef.get()
         .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE), editorComponent);
