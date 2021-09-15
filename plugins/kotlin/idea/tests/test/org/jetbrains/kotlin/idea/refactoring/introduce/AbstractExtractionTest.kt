@@ -18,6 +18,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager
@@ -190,7 +191,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 localVar,
                 true,
                 suggestedNames.first(),
-                true,
+                IntroduceVariableBase.JavaReplaceChoice.ALL, 
                 IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
                 false,
                 false,

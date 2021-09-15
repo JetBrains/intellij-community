@@ -20,6 +20,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -38,6 +39,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   private final PsiMethod myMethod;
   private final PsiMethod myMethodToSearchFor;
   private final boolean myMustBeFinal;
+  private @NotNull IntroduceVariableBase.JavaReplaceChoice myReplaceChoice;
 
   private int myParameterIndex = -1;
   private final InplaceIntroduceParameterUI myPanel;
@@ -52,12 +54,14 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
                                  final PsiMethod methodToSearchFor,
                                  final PsiExpression[] occurrences,
                                  final IntList parametersToRemove,
-                                 final boolean mustBeFinal) {
+                                 final boolean mustBeFinal,
+                                 final IntroduceVariableBase.@NotNull JavaReplaceChoice replaceChoice) {
     super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getRefactoringName()
     );
     myMethod = method;
     myMethodToSearchFor = methodToSearchFor;
     myMustBeFinal = mustBeFinal;
+    myReplaceChoice = replaceChoice;
 
     myWholePanel.add(getPreviewComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                                    JBInsets.create(0, 5), 0, 0));
@@ -141,7 +145,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   @Override
   public boolean isReplaceAllOccurrences() {
-    return myPanel.isReplaceAllOccurences();
+    return myReplaceChoice.isAll();
   }
 
   @Override
@@ -178,7 +182,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       new IntroduceParameterProcessor(myProject, myMethod,
                                       myMethodToSearchFor, parameterInitializer, myExpr,
                                       (PsiLocalVariable)getLocalVariable(), isDeleteLocalVariable, getInputName(),
-                                      myPanel.isReplaceAllOccurences(),
+                                      myReplaceChoice,
                                       myPanel.getReplaceFieldsWithGetters(), myMustBeFinal || myPanel.isGenerateFinal(),
                                       isGenerateDelegate(),
                                       false,
@@ -195,18 +199,18 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
           super.saveSettings(parameter);
         }
       };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        performRefactoring.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(performRefactoring, myProject.getDisposed());
-      }
+      ApplicationManager.getApplication().invokeLater(performRefactoring, myProject.getDisposed());
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);
   }
 
   public boolean isGenerateDelegate() {
     return myPanel.isGenerateDelegate();
+  }
+
+  @NotNull
+  public IntroduceVariableBase.JavaReplaceChoice getReplaceChoice() {
+    return myReplaceChoice;
   }
 
   @Override
@@ -287,8 +291,8 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   }
 
   @Override
-  public void setReplaceAllOccurrences(boolean replaceAll) {
-    myPanel.setReplaceAllOccurrences(replaceAll);
+  public void setReplaceAllOccurrences(boolean replaceAll) { 
+    myReplaceChoice = replaceAll ? IntroduceVariableBase.JavaReplaceChoice.ALL : IntroduceVariableBase.JavaReplaceChoice.NO;
   }
 
   public PsiMethod getMethodToIntroduceParameter() {

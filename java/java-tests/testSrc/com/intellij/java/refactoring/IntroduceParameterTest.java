@@ -14,6 +14,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -367,20 +368,20 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
 
   public void testEnclosingWithParamDeletion() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-    perform(true, 0, "anObject", false, true, true, false, 1, false);
+    perform(IntroduceVariableBase.JavaReplaceChoice.ALL, 0, "anObject", false, true, true, false, 1, false);
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
   public void testCodeDuplicates() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-    perform(true, 0, "anObject", false, true, true, false, 0, true);
+    perform(IntroduceVariableBase.JavaReplaceChoice.ALL, 0, "anObject", false, true, true, false, 0, true);
     UIUtil.dispatchAllInvocationEvents();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
   public void testCodeDuplicatesFromConstructor() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-    perform(true, 0, "anObject", false, true, true, false, 0, true);
+    perform(IntroduceVariableBase.JavaReplaceChoice.ALL, 0, "anObject", false, true, true, false, 0, true);
     UIUtil.dispatchAllInvocationEvents();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
@@ -408,7 +409,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
       enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
       getEditor().getSettings().setVariableInplaceRenameEnabled(false);
-      perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, generateDelegate);
+      perform(IntroduceVariableBase.JavaReplaceChoice.ALL, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, generateDelegate);
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
       if (conflict != null) {
         fail("Conflict expected");
@@ -424,7 +425,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     }
   }
 
-  private boolean perform(boolean replaceAllOccurrences,
+  private boolean perform(IntroduceVariableBase.JavaReplaceChoice replaceAllOccurrences,
                           int replaceFieldsWithGetters,
                           @NonNls String parameterName,
                           boolean searchForSuper,
@@ -437,7 +438,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     );
   }
 
-  private boolean perform(boolean replaceAllOccurrences,
+  private boolean perform(IntroduceVariableBase.JavaReplaceChoice replaceAllOccurrences,
                           int replaceFieldsWithGetters,
                           @NonNls String parameterName,
                           boolean searchForSuper,
@@ -542,7 +543,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
 
     new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, parameterInitializer, null, localVariable, removeLocalVariable,
-      localVariable.getName(), replaceAllOccurrences, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
+      localVariable.getName(), replaceAllOccurrences ? IntroduceVariableBase.JavaReplaceChoice.ALL : IntroduceVariableBase.JavaReplaceChoice.NO, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       declareFinal, false, false, null, parametersToRemove
     ).run();
   }
