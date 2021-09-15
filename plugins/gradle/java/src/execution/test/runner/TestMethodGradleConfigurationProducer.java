@@ -6,6 +6,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -64,7 +65,9 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
     @NotNull PsiMethod element,
     @NotNull List<? extends PsiClass> chosenElements
   ) {
-    return (chosenElements.size() == 1 ? chosenElements.get(0).getName() + "." : "") + element.getName();
+    PsiClass psiClass = Objects.requireNonNull(element.getContainingClass());
+    List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(psiClass) : chosenElements;
+    return StringUtil.join(elements, aClass -> aClass.getName() + "." + element.getName(), "|");
   }
 
   @Override
