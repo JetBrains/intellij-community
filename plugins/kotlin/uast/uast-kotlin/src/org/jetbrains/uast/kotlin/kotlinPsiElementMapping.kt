@@ -22,9 +22,9 @@ private val checkCanConvert = Registry.`is`("kotlin.uast.use.psi.type.precheck",
 
 internal fun canConvert(element: PsiElement, targets: Array<out Class<out UElement>>): Boolean {
     if (!checkCanConvert) return true
-    val originalCls = element.originalElement.javaClass
+    val originalCls = element.originalElement?.javaClass
 
-    if (targets.any { getPossibleSourceTypes(it).let { originalCls in it } })
+    if (originalCls != null && targets.any { getPossibleSourceTypes(it).let { originalCls in it } })
         return true
 
     val ktOriginalCls = (element as? KtLightElementBase)?.kotlinOrigin?.javaClass ?: return false
