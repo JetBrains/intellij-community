@@ -12,7 +12,7 @@ import java.io.File
 
 fun addParcelizeLibraries(module: Module) {
     ConfigLibraryUtil.addLibrary(module, "androidJar") {
-        addRoot(File(PathManager.getHomePath(), "community/android/android/testData/android.jar"), OrderRootType.CLASSES)
+        addRoot(File(PathManager.getCommunityHomePath(), "android/android/testData/android.jar"), OrderRootType.CLASSES)
     }
     ConfigLibraryUtil.addLibrary(module, "parcelizeRuntime") {
         addRoot(AdditionalKotlinArtifacts.parcelizeRuntime, OrderRootType.CLASSES)
