@@ -258,7 +258,7 @@ class KotlinPluginBuilder {
         // Use 'DownloadAppCodeDependencies' run configuration to download LLDBFrontend
         withBin("../CIDR/cidr-debugger/bin/lldb/linux/bin/LLDBFrontend", "bin/linux", skipIfDoesntExist)
         withBin("../CIDR/cidr-debugger/bin/lldb/mac/LLDBFrontend", "bin/macos", skipIfDoesntExist)
-        withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend", "bin/windows", skipIfDoesntExist)
+        withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
 
         withBin("../mobile-ide/common-native/scripts", "scripts")
       }
