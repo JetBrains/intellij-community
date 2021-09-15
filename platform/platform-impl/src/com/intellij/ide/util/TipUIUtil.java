@@ -170,8 +170,11 @@ public final class TipUIUtil {
             //it will look in i18n first, then fallback to english version
             text.append(tipContent);
 
+            final String tipImagesLocation =
+              String.format("/%s/%s", retriever.myPath, retriever.mySubPath.length() > 0 ? retriever.mySubPath + "/" : "");
+
             //Here and onwards we'll use path properties from successful tip retriever to get images and css
-            updateImages(text, retriever.myLoader, "", component);
+            updateImages(text, retriever.myLoader, tipImagesLocation, component);
             final InputStream cssResourceStream = ResourceUtil.getResourceAsStream(retriever.myLoader, retriever.myPath, cssFile);
             cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
             break;
@@ -187,7 +190,8 @@ public final class TipUIUtil {
       for (final TipEntity entity : ENTITIES) {
         replaced = entity.inline(replaced);
       }
-      final String inlinedCSS = cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground()) + ";overflow:hidden;}";
+      final String inlinedCSS =
+        cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground()) + ";overflow:hidden;}";
       return replaced.replaceFirst("<link.*\\.css\">", "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
     }
     catch (IOException e) {
@@ -295,7 +299,7 @@ public final class TipUIUtil {
 
   private static @NotNull String getImageCanonicalPath(@NotNull String path, @Nullable ClassLoader tipLoader, @NotNull String tipPath) {
     try {
-      URL url = tipLoader == null ? new File(tipPath, path).toURI().toURL() : ResourceUtil.getResource(tipLoader, "tips", path);
+      URL url = tipLoader == null ? new File(tipPath, path).toURI().toURL() : ResourceUtil.getResource(tipLoader, tipPath, path);
       return url == null ? path : url.toExternalForm();
     }
     catch (MalformedURLException e) {
