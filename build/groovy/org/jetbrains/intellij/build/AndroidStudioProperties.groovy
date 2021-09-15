@@ -52,7 +52,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
                                                   ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main"] -
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
-    productLayout.additionalPlatformJars.putAll("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
+    productLayout.withAdditionalPlatformJar("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
 
     productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES + [
       // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
