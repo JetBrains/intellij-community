@@ -32,3 +32,7 @@ fun inlineTakeIfLet(s: String?) {
     val substring = s?.indexOf('a')?.takeIf { it > 0 }?.let { s.substring(0, it) }
     println(substring)
 }
+
+fun letWithUnit(s: String?) {
+    if (s?.let {println(it)} != null) {}
+}

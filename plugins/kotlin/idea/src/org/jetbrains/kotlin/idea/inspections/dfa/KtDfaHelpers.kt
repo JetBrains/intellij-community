@@ -185,7 +185,7 @@ internal fun KotlinType.toPsiType(context: KtElement): PsiType? {
         FqNames._char -> PsiType.CHAR.orBoxed()
         FqNames._double -> PsiType.DOUBLE.orBoxed()
         FqNames._float -> PsiType.FLOAT.orBoxed()
-        FqNames.unit -> PsiType.VOID.orBoxed()
+        FqNames.nothing -> PsiType.VOID.orBoxed()
         FqNames.array -> context.builtIns.getArrayElementType(this).toPsiType(context)?.createArrayType()
         else -> when (val fqNameString = correctFqName(typeFqName)) {
             "kotlin.ByteArray" -> PsiType.BYTE.createArrayType()

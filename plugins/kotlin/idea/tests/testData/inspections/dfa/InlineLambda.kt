@@ -53,7 +53,8 @@ fun nestedLambdas(x : Int): Int {
 fun letInline(x: String?):Boolean {
     // if x is non-null we return from inner condition.
     // as a result, outer one can only evaluate to false.
-    return <warning descr="Condition is always false">x?.let { return x.isEmpty() } ?: false</warning>
+    // We suppress this
+    return x?.let { return x.isEmpty() } ?: false
 }
 fun exactlyOnce(ints: Array<Int>) {
     var x = 0
