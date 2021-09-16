@@ -196,6 +196,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.java.rareRefactorings"),
     plugin("intellij.toml") {
       withModule("intellij.toml.core")
+      withModule("intellij.toml.json")
     }
   ]
 
