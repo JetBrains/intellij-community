@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -152,7 +153,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
     SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     AtomicReference<UsageViewEx> usageViewRef = new AtomicReference<>();
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     AtomicLong firstItemFoundTS = new AtomicLong();
     AtomicBoolean tooManyUsages = new AtomicBoolean();
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
@@ -167,13 +168,14 @@ public class UsageViewManagerImpl extends UsageViewManager {
       public NotificationInfo getNotificationInfo() {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
-        long currentTS = System.currentTimeMillis();
-        long duration = currentTS - start;
+        long currentTS = System.nanoTime();
+        long duration = TimeUnit.MILLISECONDS.convert(currentTS - start, TimeUnit.NANOSECONDS);
 
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
         LOG.debug(notification + " in " + duration + "ms.");
 
-        reportFUS(count, currentTS - firstItemFoundTS.get(), duration, tooManyUsages.get());
+        reportFUS(count, TimeUnit.MILLISECONDS.convert(currentTS - firstItemFoundTS.get(), TimeUnit.NANOSECONDS),
+                  duration, tooManyUsages.get());
 
         return new NotificationInfo("Find Usages",
                                     UsageViewBundle.message("notification.title.find.usages.finished"), notification);

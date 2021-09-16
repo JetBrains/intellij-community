@@ -32,7 +32,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 1)
+    val GROUP = EventLogGroup("usage.view", 2)
 
     private val REFERENCE_CLASS = EventFields.Class("reference_class")
     private val USAGE_SHOWN = GROUP.registerEvent("usage.shown", REFERENCE_CLASS, EventFields.Language)

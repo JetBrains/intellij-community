@@ -15,7 +15,7 @@ class FindUsagesStatisticsCollector : CounterUsagesCollector() {
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("find.usages", 1)
+    val GROUP = EventLogGroup("find.usages", 2)
 
     const val OPTIONS_EVENT_ID = "options"
 

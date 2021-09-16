@@ -504,7 +504,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
         UsageNode nodes = ReadAction.compute(() -> usageView.doAppendUsage(usage));
         usages.add(usage);
-        firstUsageAddedTS.compareAndSet(0, System.currentTimeMillis()); // Successes only once - at first assignment
+        firstUsageAddedTS.compareAndSet(0, System.nanoTime()); // Successes only once - at first assignment
 
         if (nodes != null) {
           visibleUsages.add(nodes.getUsage());
@@ -524,7 +524,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     };
 
     UsageSearcher usageSearcher = actionHandler.createUsageSearcher();
-    long searchStarted = System.currentTimeMillis();
+    long searchStarted = System.nanoTime();
     FindUsagesManager.startProcessUsages(indicator, project, usageSearcher, collect, () -> ApplicationManager.getApplication().invokeLater(
       () -> {
         Disposer.dispose(processIcon);
@@ -572,11 +572,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
         Class<? extends PsiElement> targetClass = parameters.psiElement != null ? parameters.psiElement.getClass() : null;
         Language language = parameters.psiElement != null ? parameters.psiElement.getLanguage() : null;
-        long current = System.currentTimeMillis();
+        long current = System.nanoTime();
 
         UsageViewStatisticsCollector.logSearchFinished(project, targetClass, searchScope, language, usages.size(),
-                                                       current - firstUsageAddedTS.get(), current - searchStarted, tooManyResults.get(),
-                                                       CodeNavigateSource.ShowUsagesPopup);
+           TimeUnit.MILLISECONDS.convert(current - firstUsageAddedTS.get(), TimeUnit.NANOSECONDS),
+           TimeUnit.MILLISECONDS.convert(current - searchStarted, TimeUnit.NANOSECONDS),
+           tooManyResults.get(),
+           CodeNavigateSource.ShowUsagesPopup);
       },
       project.getDisposed()
     ));
