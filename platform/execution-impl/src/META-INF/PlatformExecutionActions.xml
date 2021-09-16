@@ -12,7 +12,7 @@
     <group id="RunToolbarActionsGroup" popup="false">
       <action id="RunToolbarProcessStartedAction" class="com.intellij.execution.runToolbar.RunToolbarProcessStartedAction"/>
       <action id="RunToolbarRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarRunConfigurationsAction"/>
-      <action id="RunToolbarRerunAction" class="com.intellij.execution.runToolbar.RunToolbarRerunAction"/>
+      <action id="RunToolbarRerunAction" class="com.intellij.execution.runToolbar.RunToolbarRerunAction" icon="AllIcons.Actions.Restart"/>
       <group id="RunToolbarAdditionalProcessActions"/>
       <group id="RunToolbarProcessActionGroup"/>
       <action id="RunToolbarStopAction" class="com.intellij.execution.runToolbar.RunToolbarStopAction"/>

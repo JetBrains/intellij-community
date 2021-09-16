@@ -17,7 +17,6 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
     e.presentation.text = ExecutionBundle.message("run.dashboard.rerun.action.name")
     e.presentation.isEnabledAndVisible =
       e.presentation.isEnabled
