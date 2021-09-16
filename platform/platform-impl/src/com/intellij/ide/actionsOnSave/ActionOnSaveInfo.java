@@ -139,6 +139,18 @@ public abstract class ActionOnSaveInfo {
   public @Nullable DropDownLink<?> getInPlaceConfigDropDownLink() { return null; }
 
   /**
+   * Implementations may return a list of {@link DropDownLink}s for quick in-place configuration of the corresponding 'action on save'.
+   * Unlike {@link #getActionLinks()} all {@link DropDownLink}s here are always visible for all rows of the 'actions on save' table.
+   */
+  public @NotNull List<? extends DropDownLink<?>> getDropDownLinks() {
+    DropDownLink<?> dropDownLink = getInPlaceConfigDropDownLink();
+    if (dropDownLink == null)
+      return Collections.emptyList();
+    else
+      return Collections.singletonList(dropDownLink);
+  }
+
+  /**
    * This component is shown in the 'Activated on' column. This is either a label (if there is no choice) or a {@link DropDownLink} with
    * options. By default, it is a label with 'Any save' text. If needed, implementations may override either
    * {@link #getActivatedOnDefaultText()} or {@link #getActivatedOnDropDownLink()}.
