@@ -98,6 +98,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     doTest(false);
   }
 
+  public void testInlineLambdaWithOuterRef() {
+    doTest(false);
+  }
+
   public void testRefThis() {
     doTest(false);
   }
