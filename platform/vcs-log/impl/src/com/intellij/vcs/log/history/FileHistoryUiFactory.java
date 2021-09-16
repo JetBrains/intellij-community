@@ -2,6 +2,8 @@
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;

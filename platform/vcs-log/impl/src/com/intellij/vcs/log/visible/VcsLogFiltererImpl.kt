@@ -150,7 +150,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     if (fileHistoryData.startPaths.size == 1 && fileHistoryData.startPaths.single().isDirectory) {
       val unmatchedRenames = matchingCommits?.let { fileHistoryData.getCommitsWithRenames().subtract(it) } ?: emptySet()
       val preprocessor = FileHistoryBuilder(null, fileHistoryData.startPaths.single(), fileHistoryData,
-                                            EMPTY_HISTORY, unmatchedRenames)
+                                            EMPTY_HISTORY, unmatchedRenames,
+                                            removeTrivialMerges = FileHistoryBuilder.isRemoveTrivialMerges,
+                                            refine = FileHistoryBuilder.isRefine)
       return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits?.union(unmatchedRenames), preprocessor)
     }
 

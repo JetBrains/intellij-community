@@ -191,7 +191,9 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
 
       val commit = (hash ?: getHead(dataPack))?.let { storage.getCommitIndex(it, root) }
-      val historyBuilder = FileHistoryBuilder(commit, filePath, data, oldFileHistory)
+      val historyBuilder = FileHistoryBuilder(commit, filePath, data, oldFileHistory,
+                                              removeTrivialMerges = FileHistoryBuilder.isRemoveTrivialMerges,
+                                              refine = FileHistoryBuilder.isRefine)
       val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.getCommits(), historyBuilder)
       val fileHistory = historyBuilder.fileHistory
 

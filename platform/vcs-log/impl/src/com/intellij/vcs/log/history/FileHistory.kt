@@ -37,7 +37,9 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,
                                   private val fileHistoryData: FileHistoryData,
                                   private val oldFileHistory: FileHistory,
-                                  private val commitsToHide: Set<Int> = emptySet()) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
+                                  private val commitsToHide: Set<Int> = emptySet(),
+                                  private val removeTrivialMerges: Boolean = true,
+                                  private val refine: Boolean = true) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
   private val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
   private val processedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
   private val unmatchedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
@@ -47,7 +49,8 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
     get() = FileHistory(pathsMap, processedAdditionsDeletions, unmatchedAdditionsDeletions, commitToRename)
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
-    val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
+    val needToRepeat = removeTrivialMerges &&
+                       removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
 
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
@@ -89,7 +92,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
                      startCommit: Int?,
                      permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, MaybeDeletedFilePath> {
     val visibleLinearGraph = controller.compiledGraph
-    if (visibleLinearGraph.nodesCount() > 0 && fileHistoryData.hasRenames && Registry.`is`("vcs.history.refine")) {
+    if (visibleLinearGraph.nodesCount() > 0 && fileHistoryData.hasRenames && refine) {
 
       val (row, path) = startCommit?.let {
         findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
@@ -130,6 +133,14 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
   companion object {
     private val LOG = Logger.getInstance(FileHistoryBuilder::class.java)
+
+    @JvmField
+    internal val removeTrivialMergesValue = Registry.get("vcs.history.remove.trivial.merges")
+    @JvmField
+    internal val refineValue = Registry.get("vcs.history.refine")
+
+    internal val isRemoveTrivialMerges get() = removeTrivialMergesValue.asBoolean()
+    internal val isRefine get() = refineValue.asBoolean()
   }
 }
 
@@ -137,8 +148,6 @@ fun removeTrivialMerges(controller: LinearGraphController,
                         permanentGraphInfo: PermanentGraphInfo<Int>,
                         fileHistoryData: FileHistoryData,
                         report: (Set<Int>) -> Unit): Boolean {
-  if (!Registry.`is`("vcs.history.remove.trivial.merges")) return false
-
   val trivialCandidates = IntOpenHashSet()
   val nonTrivialMerges = IntOpenHashSet()
   fileHistoryData.forEach { _, commit, changes ->
