@@ -6,7 +6,9 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.DefaultComboBoxModel
 
@@ -25,7 +27,7 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
 
   private val steps by lazy {
     epName.extensionList
-      .filter { it.isEnabled }
+      .filter { it.isEnabled(context) }
       .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }
   }
 

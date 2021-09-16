@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.util.NlsContexts
 
 /**
@@ -19,6 +20,9 @@ interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> : NewProjec
 
   /**
    * Disabled steps will be excluded from multistep switcher.
+   *
+   * @param context is context of wizard where created step will be displayed
+   * Use [WizardContext.isCreatingNewProject] to filter factory if that cannot create new module.
    */
-  val isEnabled: Boolean get() = true
+  fun isEnabled(context: WizardContext): Boolean = true
 }
