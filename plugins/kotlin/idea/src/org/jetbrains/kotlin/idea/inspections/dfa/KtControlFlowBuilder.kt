@@ -481,7 +481,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless") {
                 val parameter = KtVariableDescriptor.getSingleLambdaParameter(factory, lambda) ?: return false
                 // qualifier is on stack
-                addImplicitConversion(receiver, receiver?.getKotlinType()?.makeNotNullable())
+                val receiverType = receiver?.getKotlinType()
+                val argType = if (expr.parent is KtSafeQualifiedExpression) receiverType?.makeNotNullable() else receiverType
+                addImplicitConversion(receiver, argType)
                 addInstruction(SimpleAssignmentInstruction(null, parameter))
                 when (name) {
                     "let" -> {
@@ -503,7 +505,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                             flow.finishElement(lambda.functionLiteral)
                             addInstruction(PopInstruction())
                         }
-                        addImplicitConversion(receiver, expr.getKotlinType())
+                        addImplicitConversion(receiver, argType, expr.getKotlinType())
                         addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
                     }
                     "takeIf", "takeUnless" -> {
@@ -522,9 +524,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         val endOffset = DeferredOffset()
                         addInstruction(GotoInstruction(endOffset))
                         setOffset(offset)
-                        addImplicitConversion(receiver, expr.getKotlinType())
+                        addImplicitConversion(receiver, argType, expr.getKotlinType())
                         setOffset(endOffset)
-                        addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
                     }
                 }
                 addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))

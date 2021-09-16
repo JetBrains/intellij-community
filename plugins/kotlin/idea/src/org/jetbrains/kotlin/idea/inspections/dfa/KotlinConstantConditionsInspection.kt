@@ -109,6 +109,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
         }
+        if (isAlsoChain(expression)) return true
         when (value) {
             ConstantValue.TRUE -> {
                 if (isSmartCastNecessary(expression, true)) return true
@@ -183,13 +184,22 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         return expression.isUsedAsStatement(expression.analyze(BodyResolveMode.FULL))
     }
 
+    // Do not report on also, as it always returns the qualifier. If necessary, qualifier itself will be reported
+    private fun isAlsoChain(expr: KtExpression): Boolean {
+        val call = (expr as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression ?: return false
+        val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
+        if (descriptor.name.asString() != "also") return false
+        val packageFragment = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+        return packageFragment.fqName.asString() == "kotlin"
+    }
+
     private fun isAssertion(parent: PsiElement?): Boolean {
         val valueArg = parent as? KtValueArgument ?: return false
         val valueArgList = valueArg.parent as? KtValueArgumentList ?: return false
         val call = valueArgList.parent as? KtCallExpression ?: return false
         val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
         val name = descriptor.name.asString()
-        if (name != "assert" && name != "require") return false
+        if (name != "assert" && name != "require" && name != "check") return false
         val pkg = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
         return pkg.fqName.asString() == "kotlin"
     }

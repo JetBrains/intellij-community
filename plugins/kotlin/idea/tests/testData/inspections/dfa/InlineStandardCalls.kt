@@ -16,13 +16,19 @@ fun inlineAlso() {
     val x = 5
     val y = x.also { if (<warning descr="Condition is always true">it == 5</warning>) <warning descr="[UNUSED_EXPRESSION] The expression is unused">1</warning> else <warning descr="[UNUSED_EXPRESSION] The expression is unused">2</warning> }
     if (<warning descr="Condition is always true">y == 5</warning>) {}
+    true.also { println() }
 }
 
 fun inlineTakeIf(x: Int) {
     val x1 = x.takeIf { it > 0 }
     if (x1 != null && <warning descr="Condition is always true when reached">x1 > 0</warning>) {}
     val x2 = x.takeIf { it < 0 }?.takeIf { <warning descr="Condition is always true">it < 1</warning> }
-    if (x2 == null || x2 < 0) {}
+    if (<warning descr="Condition is always true">x2 == null || <warning descr="Condition is always true when reached">x2 < 0</warning></warning>) {}
     val x3 = <weak_warning descr="Value is always null">x.takeUnless { it > 0 }?.<warning descr="Value is always null">takeIf { <warning descr="Condition is always false">it > 0</warning> }</warning></weak_warning>
     println(<weak_warning descr="Value is always null">x3</weak_warning>)
+}
+
+fun inlineTakeIfLet(s: String?) {
+    val substring = s?.indexOf('a')?.takeIf { it > 0 }?.let { s.substring(0, it) }
+    println(substring)
 }
