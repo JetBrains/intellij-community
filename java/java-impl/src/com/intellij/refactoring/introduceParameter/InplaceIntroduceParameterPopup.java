@@ -153,15 +153,25 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
     TextRange currentVariableRange = templateState.getCurrentVariableRange();
     if (currentVariableRange == null) return;
+    
+    IntroduceParameterUsagesCollector.started.log(IntroduceParameterUsagesCollector.replaceAll.with(myReplaceChoice.isAll()));
 
-    SelectableInlayPresentation presentation = TemplateInlayUtil.createSettingsPresentation((EditorImpl)templateState.getEditor());
+    SelectableInlayPresentation presentation = TemplateInlayUtil.createSettingsPresentation((EditorImpl)templateState.getEditor(), 
+                                                                                            IntroduceParameterHelperKt.logStatisticsOnShowCallback(myProject));
 
-    TemplateInlayUtil.SelectableTemplateElement templateElement = new TemplateInlayUtil.SelectableTemplateElement(presentation);
+    TemplateInlayUtil.SelectableTemplateElement templateElement = new TemplateInlayUtil.SelectableTemplateElement(presentation) {
+      @Override
+      public void onSelect(@NotNull TemplateState templateState) {
+        super.onSelect(templateState);
+        IntroduceParameterHelperKt.logStatisticsOnShow(null, myProject);
+      }
+    };
     TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, 
                                                        currentVariableRange.getEndOffset(),
                                                        presentation, 
                                                        myWholePanel, 
-                                                       templateElement);
+                                                       templateElement, 
+                                                       IntroduceParameterHelperKt.logStatisticsOnHideCallback(myProject, myPanel::isGenerateDelegate));
 
     PsiParameter parameter = getParameter();
     if (parameter == null) return;
