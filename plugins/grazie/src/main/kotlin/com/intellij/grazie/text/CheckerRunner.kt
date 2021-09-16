@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
@@ -16,7 +17,9 @@ import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
@@ -53,17 +56,29 @@ internal class CheckerRunner(val text: TextContent) {
       val tooltip = problem.tooltipTemplate
       val description = problem.getDescriptionTemplate(isOnTheFly)
       fileHighlightRanges(problem).map { range ->
-        object : ProblemDescriptorBase(
-          parent, parent, description,
+        GrazieProblemDescriptor(
+          parent, description,
           if (isOnTheFly) toFixes(problem) else LocalQuickFix.EMPTY_ARRAY,
-          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
-          range.shiftLeft(parent.startOffset),
-          true, isOnTheFly) {
-          override fun getTooltipTemplate(): String {
-            return tooltip
-          }
-        }
+          range.shiftLeft(parent.startOffset), isOnTheFly,
+          tooltip)
+
       }
+    }
+  }
+
+  // a non-anonymous class to work around KT-48784
+  private class GrazieProblemDescriptor(psi: PsiElement,
+                                        @InspectionMessage descriptionTemplate: String,
+                                        fixes: Array<out LocalQuickFix>?,
+                                        rangeInElement: TextRange?,
+                                        onTheFly: Boolean,
+                                        @NlsContexts.Tooltip private val tooltip: String
+  ): ProblemDescriptorBase(
+    psi, psi, descriptionTemplate, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
+    rangeInElement, true, onTheFly
+  ) {
+    override fun getTooltipTemplate(): String {
+      return tooltip
     }
   }
 
