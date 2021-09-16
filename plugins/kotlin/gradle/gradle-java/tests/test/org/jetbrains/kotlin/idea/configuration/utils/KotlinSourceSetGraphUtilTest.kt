@@ -190,8 +190,8 @@ private fun createKotlinSourceSetPair(
     declaredDependsOnSourceSets = declaredDependsOnSourceSets,
     allDependsOnSourceSets = allDependsOnSourceSets,
     additionalVisibleSourceSets = emptySet(),
-    defaultActualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
-    defaultIsTestModule = isTestModule
+    actualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
+    isTestModule = isTestModule
 )
 
 private fun Graph<KotlinSourceSet>.nameEdges() = edges()

@@ -52,8 +52,8 @@ class KotlinSourceSetImpl(
     @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
-    defaultActualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
-    defaultIsTestModule: Boolean = false
+    actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
+    isTestModule: Boolean = false
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
@@ -69,15 +69,15 @@ class KotlinSourceSetImpl(
         declaredDependsOnSourceSets = HashSet(kotlinSourceSet.declaredDependsOnSourceSets),
         allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
         additionalVisibleSourceSets = HashSet(kotlinSourceSet.additionalVisibleSourceSets),
-        defaultActualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
+        actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
     ) {
         this.isTestModule = kotlinSourceSet.isTestModule
     }
 
-    override var actualPlatforms: KotlinPlatformContainer = defaultActualPlatforms
+    override var actualPlatforms: KotlinPlatformContainer = actualPlatforms
         internal set
 
-    override var isTestModule: Boolean = defaultIsTestModule
+    override var isTestModule: Boolean = isTestModule
         internal set
 
     override fun toString() = name
