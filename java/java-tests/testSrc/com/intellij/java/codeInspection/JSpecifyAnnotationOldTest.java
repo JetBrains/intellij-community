@@ -56,7 +56,7 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
     }
   }; 
   
-  private static final String PACKAGE_NAME = "org.jspecify.annotations";
+  private static final String PACKAGE_NAME = "org.jspecify.nullness";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/codeanalysis/");
   @Parameterized.Parameter
   public String myFileName;
@@ -83,7 +83,7 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
     String template = "package " + PACKAGE_NAME + ";import java.lang.annotation.*;\n\n@Target(%s)public @interface %s {}";
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NonNull"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "Nullable"));
-    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE", "DefaultNonNull"));
+    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE", "NullMarked"));
   }
 
   @Test
