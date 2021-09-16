@@ -182,7 +182,7 @@ final class CommunityLibraryLicenses {
                          "lucene-queryparser",
                          "lucene-queries",
                          "lucene-analyzers-common",
-                         "lucene-core-2.4.1.jar"
+                         "org.apache.lucene:lucene-core:2.4.1"
                          ]).apache(),
     new LibraryLicense(name: "ASM (JetBrains's fork)", libraryName: "ASM",
                        url: "https://github.com/JetBrains/intellij-deps-asm",

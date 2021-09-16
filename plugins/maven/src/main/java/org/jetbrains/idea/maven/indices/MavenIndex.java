@@ -13,8 +13,10 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.io.*;
-import org.apache.lucene.search.Query;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -598,10 +600,10 @@ public final class MavenIndex implements MavenSearchIndex {
     return cache.computeIfAbsent(value, v -> doIndexTask(() -> map.containsMapping(v), false));
   }
 
-  public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {
+  public synchronized Set<MavenArtifactInfo> search(final String pattern, final int maxResult) {
     if (myNotNexusIndexer != null) return Collections.emptySet();
 
-    return doIndexTask(() -> myData.search(query, maxResult), Collections.emptySet());
+    return doIndexTask(() -> myData.search(pattern, maxResult), Collections.emptySet());
   }
 
   public synchronized Set<MavenArchetype> getArchetypes() {
@@ -729,8 +731,8 @@ public final class MavenIndex implements MavenSearchIndex {
       return myNexusIndexer.addArtifact(indexId, artifactFile);
     }
 
-    public Set<MavenArtifactInfo> search(Query query, int maxResult) throws MavenServerIndexerException {
-      return myNexusIndexer.search(indexId, query, maxResult);
+    public Set<MavenArtifactInfo> search(String pattern, int maxResult) throws MavenServerIndexerException {
+      return myNexusIndexer.search(indexId, pattern, maxResult);
     }
   }
 

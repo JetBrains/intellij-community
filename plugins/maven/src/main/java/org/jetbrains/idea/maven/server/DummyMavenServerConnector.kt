@@ -129,7 +129,7 @@ class DummyIndexer : MavenServerIndexer {
     return IndexedMavenId(null, null, null, null, null)
   }
 
-  override fun search(indexId: Int, query: Any, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
+  override fun search(indexId: Int, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
     return emptySet()
   }
 
