@@ -274,6 +274,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "  <groupId>test</groupId>" +
                        "  <artifactId>project</artifactId>" +
                        "  <version>1</version>" +
+                       "  <packaging>pom</packaging>" +
                        "  <modules>" +
                        "    <module>foo</module>" +
                        "  </modules>" +
@@ -294,6 +295,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                        "  <groupId>test</groupId>" +
                        "  <artifactId>project</artifactId>" +
                        "  <version>1</version>" +
+                       "  <packaging>pom</packaging>" +
                        "  <modules>" +
                        "    <module><error>foo</error></module>" +
                        "  </modules>" +
