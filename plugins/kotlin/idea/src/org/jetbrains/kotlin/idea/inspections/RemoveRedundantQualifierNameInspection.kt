@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -166,7 +167,9 @@ private fun KtExpression.isApplicableReceiver(context: BindingContext): Boolean 
 private fun KtUserType.applicableExpression(context: BindingContext): KtUserType? {
     if (firstChild !is KtUserType) return null
     val referenceExpression = referenceExpression as? KtNameReferenceExpression ?: return null
-    val originalDescriptor = referenceExpression.mainReference.resolveToDescriptors(context).firstOrNull() ?: return null
+    val originalDescriptor = referenceExpression.mainReference.resolveToDescriptors(context).firstOrNull()?.let {
+        it.safeAs<ClassConstructorDescriptor>()?.containingDeclaration ?: it
+    } ?: return null
 
     if (originalDescriptor is ClassDescriptor
         && originalDescriptor.isInner
