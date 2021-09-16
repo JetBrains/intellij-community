@@ -12,15 +12,15 @@ import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineField
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionComboBox
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
+import com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
+import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
@@ -163,7 +163,10 @@ fun <C : RunConfigurationBase<*>> createDistributionFragment(
   getDistribution: C.() -> DistributionInfo,
   setDistribution: C.(DistributionInfo) -> Unit
 ) = createSettingsEditorFragment<C, DistributionComboBox>(
-  DistributionComboBox(project, distributionsInfo),
+  DistributionComboBox(project, distributionsInfo).apply {
+    comboBoxActionName = distributionsInfo.comboBoxActionName
+    distributionsInfo.distributions.forEach(::addItemIfNotExists)
+  },
   distributionsInfo,
   { it, c -> c.selectedDistribution = it.getDistribution() },
   { it, c -> it.setDistribution(c.selectedDistribution) },

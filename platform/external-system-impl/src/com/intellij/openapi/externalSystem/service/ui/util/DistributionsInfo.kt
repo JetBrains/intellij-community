@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.ui.distribution
+package com.intellij.openapi.externalSystem.service.ui.util
 
 import com.intellij.execution.ui.SettingsEditorFragmentType
-import com.intellij.openapi.externalSystem.service.ui.util.FileChooserInfo
-import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
+import com.intellij.openapi.roots.ui.distribution.DistributionInfo
+import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import org.jetbrains.annotations.Nls
 
 interface DistributionsInfo : FileChooserInfo, SettingsFragmentInfo {

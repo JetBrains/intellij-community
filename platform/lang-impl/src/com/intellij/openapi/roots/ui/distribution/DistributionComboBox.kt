@@ -1,11 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.ui.distribution
+package com.intellij.openapi.roots.ui.distribution
 
 import com.intellij.openapi.application.ex.ClipboardUtil
-import com.intellij.openapi.externalSystem.service.ui.whenItemSelected
-import com.intellij.openapi.externalSystem.service.ui.whenTextModified
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.roots.ui.whenItemSelected
+import com.intellij.openapi.roots.ui.whenTextModified
 import com.intellij.openapi.ui.BrowseFolderRunnable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -25,10 +26,10 @@ import javax.swing.text.DefaultEditorKit
 import javax.swing.text.JTextComponent
 
 
-class DistributionComboBox(
-  project: Project,
-  distributionsInfo: DistributionsInfo
-) : ComboBox<DistributionInfo>(CollectionComboBoxModel()) {
+class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<DistributionInfo>(CollectionComboBoxModel()) {
+
+  var comboBoxActionName = ProjectBundle.message("sdk.specify.location")
+  var noDistributionName = ProjectBundle.message("sdk.missing.item")
 
   private val collectionModel: CollectionComboBoxModel<DistributionInfo>
     get() = model as CollectionComboBoxModel
@@ -43,15 +44,26 @@ class DistributionComboBox(
     val distribution = when (anObject) {
       is SpecifyDistributionActionInfo -> LocalDistributionInfo(System.getProperty("user.home", ""))
       is DistributionInfo -> anObject
+      null -> NoDistributionInfo
       else -> return
     }
-    addIfNotExists(distribution)
+    addItemIfNotExists(distribution)
     super.setSelectedItem(distribution)
   }
 
-  private fun addIfNotExists(distribution: DistributionInfo) {
-    if (distribution !in collectionModel.items) {
-      collectionModel.add(distribution)
+  fun addItemIfNotExists(distribution: DistributionInfo) {
+    if (!collectionModel.contains(distribution)) {
+      if (distribution is LocalDistributionInfo) {
+        collectionModel.add(distribution)
+      }
+      else {
+        val index = collectionModel.getElementIndex(SpecifyDistributionActionInfo)
+        collectionModel.add(index, distribution)
+      }
+      if (collectionModel.contains(NoDistributionInfo)) {
+        collectionModel.remove(NoDistributionInfo)
+        super.setSelectedItem(distribution)
+      }
     }
   }
 
@@ -59,21 +71,18 @@ class DistributionComboBox(
     renderer = Optional.ofNullable(popup)
       .map { it.list }
       .map { ExpandableItemsHandlerFactory.install<Int>(it) }
-      .map<ListCellRenderer<DistributionInfo>> { ExpandedItemListCellRendererWrapper(Renderer(), it) }
+      .map<ListCellRenderer<DistributionInfo?>> { ExpandedItemListCellRendererWrapper(Renderer(), it) }
       .orElseGet { Renderer() }
   }
 
   init {
-    val (localDistributions, distributions) = distributionsInfo.distributions
-      .partition { it is LocalDistributionInfo }
-    distributions.forEach { addIfNotExists(it) }
-    addIfNotExists(SpecifyDistributionActionInfo(distributionsInfo.comboBoxActionName))
-    localDistributions.forEach { addIfNotExists(it) }
-    selectedDistribution = collectionModel.items.first()
+    collectionModel.add(NoDistributionInfo)
+    collectionModel.add(SpecifyDistributionActionInfo)
+    selectedDistribution = collectionModel.items.first { it != SpecifyDistributionActionInfo }
   }
 
   init {
-    ComboBoxEditor.installComboBoxEditor(project, distributionsInfo, this)
+    ComboBoxEditor.installComboBoxEditor(project, info, this)
     whenItemSelected {
       setEditable(it is LocalDistributionInfo)
     }
@@ -104,7 +113,7 @@ class DistributionComboBox(
     }
   }
 
-  private class Renderer : ColoredListCellRenderer<DistributionInfo>() {
+  private inner class Renderer : ColoredListCellRenderer<DistributionInfo>() {
     override fun customizeCellRenderer(
       list: JList<out DistributionInfo>,
       value: DistributionInfo?,
@@ -115,21 +124,27 @@ class DistributionComboBox(
       ipad = JBUI.emptyInsets()
       myBorder = null
 
-      val name = value?.name
-      val description = value?.description
-      if (name != null) {
-        append(name)
-      }
-      if (description != null) {
-        append(" ")
-        append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      when (value) {
+        NoDistributionInfo -> append(noDistributionName)
+        SpecifyDistributionActionInfo -> append(comboBoxActionName)
+        else -> {
+          val name = value?.name
+          val description = value?.description
+          if (name != null) {
+            append(name)
+          }
+          if (description != null) {
+            append(" ")
+            append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+          }
+        }
       }
     }
   }
 
   private class ComboBoxEditor(
-    project: Project,
-    distributionsInfo: DistributionsInfo,
+    project: Project?,
+    info: FileChooserInfo,
     component: DistributionComboBox
   ) : ExtendableTextField() {
     init {
@@ -140,10 +155,10 @@ class DistributionComboBox(
         }
       }
       val selectFolderAction = BrowseFolderRunnable<DistributionComboBox>(
-        distributionsInfo.fileChooserTitle,
-        distributionsInfo.fileChooserDescription,
+        info.fileChooserTitle,
+        info.fileChooserDescription,
         project,
-        distributionsInfo.fileChooserDescriptor,
+        info.fileChooserDescriptor,
         component,
         fileBrowserAccessor
       )
@@ -152,7 +167,7 @@ class DistributionComboBox(
 
     init {
       val fileChooserFactory = FileChooserFactory.getInstance()
-      fileChooserFactory.installFileCompletion(this, distributionsInfo.fileChooserDescriptor, true, null)
+      fileChooserFactory.installFileCompletion(this, info.fileChooserDescriptor, true, null)
     }
 
     init {
@@ -161,14 +176,14 @@ class DistributionComboBox(
 
     companion object {
       fun installComboBoxEditor(
-        project: Project,
-        distributionsInfo: DistributionsInfo,
+        project: Project?,
+        info: FileChooserInfo,
         component: DistributionComboBox
       ) {
         val mutex = AtomicBoolean()
         component.setEditor(object : BasicComboBoxEditor() {
           override fun createEditorComponent(): JTextField {
-            return ComboBoxEditor(project, distributionsInfo, component).apply {
+            return ComboBoxEditor(project, info, component).apply {
               whenTextModified {
                 mutex.lockOrSkip {
                   val distribution = component.selectedDistribution
@@ -201,7 +216,13 @@ class DistributionComboBox(
     }
   }
 
-  private class SpecifyDistributionActionInfo(override val name: String) : AbstractDistributionInfo() {
-    override val description: String? = null
+  object NoDistributionInfo : DistributionInfo {
+    override val name: Nothing get() = throw UnsupportedOperationException()
+    override val description: Nothing get() = throw UnsupportedOperationException()
+  }
+
+  private object SpecifyDistributionActionInfo : DistributionInfo {
+    override val name: Nothing get() = throw UnsupportedOperationException()
+    override val description: Nothing get() = throw UnsupportedOperationException()
   }
 }
