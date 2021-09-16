@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
@@ -123,6 +124,23 @@ object GitLessonsUtil {
         }
       })
     }
+  }
+
+  // Returns future that completes when checkout is started
+  fun TaskContext.triggerOnCheckout(checkBranch: (String) -> Boolean = { true }): CompletableFuture<Boolean> {
+    val checkoutStartedFuture = CompletableFuture<Boolean>()
+    addFutureStep {
+      subscribeForMessageBus(BranchChangeListener.VCS_BRANCH_CHANGED, object : BranchChangeListener {
+        override fun branchWillChange(branchName: String) {
+          checkoutStartedFuture.complete(true)
+        }
+
+        override fun branchHasChanged(branchName: String) {
+          if (checkBranch(branchName)) completeStep()
+        }
+      })
+    }
+    return checkoutStartedFuture
   }
 
   fun TaskContext.gotItStep(position: Balloon.Position,
