@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.*
@@ -29,6 +29,11 @@ interface CombinedDiffRequestProducer : DiffRequestProducer {
 open class CombinedDiffRequestProcessor(project: Project?,
                                         private val requestProducer: CombinedDiffRequestProducer) :
   CacheDiffRequestProcessor.Simple(project, DiffUtil.createUserDataHolder(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, true)) {
+
+  init {
+    @Suppress("LeakingThis")
+    context.putUserData(COMBINED_DIFF_PROCESSOR, this)
+  }
 
   override fun getCurrentRequestProvider(): DiffRequestProducer = requestProducer
 
