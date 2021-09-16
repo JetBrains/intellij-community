@@ -68,7 +68,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, P>(
           comboBox(parentComboBoxModel, ParentRenderer())
             .bindItem(parentProperty)
             .columns(COLUMNS_MEDIUM)
-        }.bottomGap(BottomGap.SMALL)
+        }.topGap(TopGap.SMALL)
       }
       collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
