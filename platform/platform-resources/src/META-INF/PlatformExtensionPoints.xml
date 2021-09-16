@@ -35,6 +35,10 @@
                     beanClass="com.intellij.openapi.options.ex.ConfigurableGroupEP"
                     dynamic="true"/>
 
+    <extensionPoint name="configurablesModificator"
+                    interface="com.intellij.ide.actions.ConfigurablesModificator"
+                    dynamic="true"/>
+
     <extensionPoint name="fileType"
                     beanClass="com.intellij.openapi.fileTypes.impl.FileTypeBean"
                     dynamic="true">

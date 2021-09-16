@@ -12,16 +12,7 @@ import java.util.List;
  * 
  * @see SearchableOptionContributor
  */
-public interface SearchableConfigurable extends Configurable {
-
-  /**
-   * Unique configurable id.
-   * Note this id should be THE SAME as the one specified in XML.
-   * @see ConfigurableEP#id
-   */
-  @NotNull
-  @NonNls
-  String getId();
+public interface SearchableConfigurable extends ConfigurableWithId {
 
   /**
    * @param option setting search query
