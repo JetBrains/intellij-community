@@ -439,6 +439,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (editorGutter instanceof EditorGutterComponentEx) {
           EditorGutterComponentEx gutter = (EditorGutterComponentEx)editorGutter;
           if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+            gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             updateActiveLineNumberIcon(gutter, hoverIcon, e.getVisualPosition().line);
           } else {
             updateActiveLineNumberIcon(gutter, null, null);
