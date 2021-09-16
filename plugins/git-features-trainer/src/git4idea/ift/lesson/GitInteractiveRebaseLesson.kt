@@ -20,7 +20,6 @@ import com.intellij.vcs.log.util.findBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
@@ -40,15 +39,13 @@ import javax.swing.KeyStroke
 
 class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessonsBundle.message("git.interactive.rebase.lesson.name")) {
   override val existedFile = "git/martian_cat.yml"
-  private val branchName = "fixes"
+  override val branchName = "fixes"
 
   private var backupRebaseDialogLocation: Point? = null
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch(branchName)
-
     task("ActivateVersionControlToolWindow") {
       text(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it)))
       stateCheck {

@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
@@ -33,7 +32,7 @@ import javax.swing.JEditorPane
 
 class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("git.annotate.lesson.name")) {
   override val existedFile = "git/martian_cat.yml"
-  private val branchName = "main"
+  override val branchName = "main"
   private val propertyName = "ears_number"
   private val editedPropertyName = "ear_number"
   private val firstStateText = "ears_number: 4"
@@ -47,8 +46,6 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch(branchName)
-
     val annotateActionName = ActionsBundle.message("action.Annotate.text").dropMnemonic()
 
     task {
