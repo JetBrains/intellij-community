@@ -83,16 +83,9 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     ParametersListUtil.parse(additionalArguments)
       .filter(String::isNotEmpty)
 
-  override fun getTestSpec(): List<String> {
-    // Parametrized test must add parameter to target.
-    // So, foo.spam becomes foo.spam[param]
-    if (parameters.isNotEmpty() && target.targetType == PyRunTargetVariant.PYTHON) {
-      return super.getTestSpec().toMutableList().apply {
-        this[size - 1] = last() + "[$parameters]"
-      }
-    }
-    return super.getTestSpec()
-  }
+  override val pythonTargetAdditionalParams: String
+    get() =
+      if (parameters.isNotEmpty() && target.targetType == PyRunTargetVariant.PYTHON) "[$parameters]" else ""
 
   override fun setMetaInfo(metaInfo: String) {
     // Metainfo contains test name along with params.

@@ -285,6 +285,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.getTarget().setTarget("test_pytest_parametrized.test_eval");
               configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
+              configuration.setAdditionalArguments("--debug");
               configuration.setMetaInfo("test_eval[three plus file-8]");
             }
           };
