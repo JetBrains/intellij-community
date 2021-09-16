@@ -274,6 +274,18 @@ class Main {
       case 1, <error descr="Duplicate label 'null'">null</error> -> "s";
       case <error descr="Duplicate label 'null'">null</error> -> "null";
     };
+
+    // total pattern duplicates
+    switch (i) {
+      case <error descr="Duplicate total pattern">Object o</error>:
+        break;
+      case <error descr="Duplicate total pattern">((Integer ii && true))</error>:
+        break;
+    }
+    str = switch (i) {
+      case ((Integer ii && false)) -> "";
+      case Number n -> "";
+    };
   }
 
   void fallThroughToPatterns(Object o, Integer ii) {

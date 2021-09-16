@@ -247,25 +247,27 @@ public class SwitchBlockHighlightingModel {
     return Collections.emptyList();
   }
 
-  void checkDuplicates(@NotNull MultiMap<Object, PsiElement> values, @NotNull List<HighlightInfo> results) {
+  final void checkDuplicates(@NotNull MultiMap<Object, PsiElement> values, @NotNull List<HighlightInfo> results) {
     for (Map.Entry<Object, Collection<PsiElement>> entry : values.entrySet()) {
-      if (entry.getValue().size() > 1) {
-        Object value = entry.getKey();
-        String description = value == myDefaultValue ? JavaErrorBundle.message("duplicate.default.switch.label") : JavaErrorBundle
-          .message("duplicate.switch.label", value);
-        for (PsiElement element : entry.getValue()) {
-          HighlightInfo info = createError(element, description);
-          PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatementBase.class);
-          if (labelStatement != null && labelStatement.isDefaultCase()) {
-            QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteDefaultFix(myFile, info));
-          }
-          else {
-            QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)element));
-          }
-          results.add(info);
-        }
+      if (entry.getValue().size() <= 1) continue;
+      Object duplicateKey = entry.getKey();
+      for (PsiElement duplicateElement : entry.getValue()) {
+        HighlightInfo info = createDuplicateInfo(duplicateKey, duplicateElement);
+        results.add(info);
       }
     }
+  }
+
+  @NotNull
+  HighlightInfo createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
+    String description = duplicateKey == myDefaultValue ? JavaErrorBundle.message("duplicate.default.switch.label") :
+                         JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
+    HighlightInfo info = createError(duplicateElement, description);
+    PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(duplicateElement, PsiSwitchLabelStatementBase.class);
+    if (labelStatement != null && labelStatement.isDefaultCase()) {
+      QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteDefaultFix(myFile, info));
+    }
+    return info;
   }
 
   boolean needToCheckCompleteness(@NotNull List<PsiCaseLabelElement> elements) {
@@ -336,6 +338,8 @@ public class SwitchBlockHighlightingModel {
   private enum SelectorKind {INT, ENUM, STRING, CLASS_OR_ARRAY}
 
   public static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
+    private final Object myTotalPattern = new Object();
+
     PatternsInSwitchBlockHighlightingModel(@NotNull LanguageLevel languageLevel,
                                            @NotNull PsiSwitchBlock switchBlock,
                                            @NotNull PsiFile psiFile) {
@@ -488,6 +492,9 @@ public class SwitchBlockHighlightingModel {
         }
         elements.putValue(evaluateConstant(labelElement), labelElement);
       }
+      else if (labelElement instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)labelElement), mySelectorType)) {
+        elements.putValue(myTotalPattern, labelElement);
+      }
     }
 
     private static void fillElementsToCheckFallThroughLegality(@NotNull List<List<PsiSwitchLabelStatementBase>> elements,
@@ -514,6 +521,30 @@ public class SwitchBlockHighlightingModel {
           elements.add(labelElement);
         }
       }
+    }
+
+    @Override
+    @NotNull
+    HighlightInfo createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
+      String description;
+      if (duplicateKey == myDefaultValue) {
+        description = JavaErrorBundle.message("duplicate.default.switch.label");
+      }
+      else if (duplicateKey == myTotalPattern) {
+        description = JavaErrorBundle.message("duplicate.total.pattern.label");
+      }
+      else {
+        description = JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
+      }
+      HighlightInfo info = createError(duplicateElement, description);
+      PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(duplicateElement, PsiSwitchLabelStatementBase.class);
+      if (labelStatement != null && labelStatement.isDefaultCase()) {
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteDefaultFix(myFile, info));
+      }
+      else {
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)duplicateElement));
+      }
+      return info;
     }
 
     /**
