@@ -55,7 +55,7 @@ internal open class StorageIndexes(
 
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
-      for ((id, obj) in mappings.index) {
+      for ((id, _) in mappings.index) {
         assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
       }
     }
@@ -222,6 +222,7 @@ internal class MutableStorageIndexes(
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun updateExternalMappingForEntityId(oldId: EntityId, newId: EntityId = oldId, originStorageIndexes: StorageIndexes) {
     originStorageIndexes.externalMappings.forEach { (id, mapping) ->
       val data = mapping.index[oldId] ?: return@forEach

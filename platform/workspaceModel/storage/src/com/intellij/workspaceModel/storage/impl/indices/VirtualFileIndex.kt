@@ -364,6 +364,7 @@ open class VirtualFileIndex internal constructor(
 
 //---------------------------------------------------------------------
 class VirtualFileUrlProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, VirtualFileUrl> {
+  @Suppress("UNCHECKED_CAST")
   override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl {
     return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
       .get(thisRef.original) as VirtualFileUrl
@@ -382,6 +383,7 @@ class VirtualFileUrlProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEnti
 
 //---------------------------------------------------------------------
 class VirtualFileUrlNullableProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, VirtualFileUrl?> {
+  @Suppress("UNCHECKED_CAST")
   override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl? {
     return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
       .get(thisRef.original) as VirtualFileUrl?
@@ -400,6 +402,7 @@ class VirtualFileUrlNullableProperty<T : ModifiableWorkspaceEntityBase<out Works
 
 //---------------------------------------------------------------------
 class VirtualFileUrlListProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, List<VirtualFileUrl>> {
+  @Suppress("UNCHECKED_CAST")
   override fun getValue(thisRef: T, property: KProperty<*>): List<VirtualFileUrl> {
     return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
       .get(thisRef.original) as List<VirtualFileUrl>
@@ -420,6 +423,7 @@ class VirtualFileUrlListProperty<T : ModifiableWorkspaceEntityBase<out Workspace
  * This delegate was created specifically for the handling VirtualFileUrls from LibraryRoot
  */
 class VirtualFileUrlLibraryRootProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, List<LibraryRoot>> {
+  @Suppress("UNCHECKED_CAST")
   override fun getValue(thisRef: T, property: KProperty<*>): List<LibraryRoot> {
     return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
       .get(thisRef.original) as List<LibraryRoot>

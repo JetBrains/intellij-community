@@ -111,23 +111,27 @@ internal fun AbstractEntityStorage.extractOneToManyChildrenIds(connectionId: Con
   return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { createEntityId(it, connectionId.childClass) } ?: emptySequence()
 }
 
+@Suppress("UNCHECKED_CAST")
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
-                                                                                             parentId: ParentEntityId): Sequence<Child> {
+                                                                                              parentId: ParentEntityId): Sequence<Child> {
   return refs.getOneToAbstractManyChildren(connectionId, parentId)?.asSequence()?.map { pid ->
     entityDataByIdOrDie(pid.id).createEntity(this)
   } as? Sequence<Child> ?: emptySequence()
 }
 
+@Suppress("UNCHECKED_CAST")
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractAbstractOneToOneChild(connectionId: ConnectionId,
                                                                                           parentId: ParentEntityId): Child? {
   return refs.getAbstractOneToOneChildren(connectionId, parentId)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Child }
 }
 
+@Suppress("UNCHECKED_CAST")
 internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractOneParent(connectionId: ConnectionId,
                                                                                             childId: ChildEntityId): Parent? {
   return refs.getOneToAbstractOneParent(connectionId, childId)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Parent }
 }
 
+@Suppress("UNCHECKED_CAST")
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChild(connectionId: ConnectionId, parentId: EntityId): Child? {
   val entitiesList = entitiesByType[connectionId.childClass] ?: return null
   return refs.getOneToOneChild(connectionId, parentId.arrayId) {
@@ -147,6 +151,7 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChil
   }
 }
 
+@Suppress("UNCHECKED_CAST")
 internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOneParent(connectionId: ConnectionId,
                                                                                     childId: EntityId): Parent? {
   val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
@@ -167,6 +172,7 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOnePar
   }
 }
 
+@Suppress("UNCHECKED_CAST")
 internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToManyParent(connectionId: ConnectionId, childId: EntityId): Parent? {
   val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
   return refs.getOneToManyParent(connectionId, childId.arrayId) {

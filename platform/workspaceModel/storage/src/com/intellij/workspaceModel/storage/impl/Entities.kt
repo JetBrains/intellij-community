@@ -196,7 +196,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   internal fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilderImpl): ModifiableWorkspaceEntity<E> {
     val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
-    val res = returnClass.java.newInstance()
+    val res = returnClass.java.getDeclaredConstructor().newInstance()
     res as ModifiableWorkspaceEntityBase
     res.original = this
     res.diff = diff
@@ -205,6 +205,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     return res
   }
 
+  @Suppress("UNCHECKED_CAST")
   public override fun clone(): WorkspaceEntityData<E> = super.clone() as WorkspaceEntityData<E>
 
   override fun equals(other: Any?): Boolean {
@@ -262,6 +263,7 @@ class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteP
   override fun getValue(thisRef: A, property: KProperty<*>): B {
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
     return field.get(thisRef.original) as B
   }
 
@@ -279,6 +281,7 @@ class ModuleDependencyEntityDataDelegation : ReadWriteProperty<ModifiableModuleE
   override fun getValue(thisRef: ModifiableModuleEntity, property: KProperty<*>): List<ModuleDependencyItem> {
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
     return field.get(thisRef.original) as List<ModuleDependencyItem>
   }
 

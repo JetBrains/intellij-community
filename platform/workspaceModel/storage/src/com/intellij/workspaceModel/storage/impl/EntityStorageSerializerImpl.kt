@@ -96,6 +96,7 @@ class EntityStorageSerializerImpl(
         kryo.writeClassAndObject(output, res)
       }
 
+      @Suppress("UNCHECKED_CAST")
       override fun read(kryo: Kryo, input: Input, type: Class<HashMultimap<*, *>>): HashMultimap<*, *> {
         val res = HashMultimap.create<Any, Any>()
         val map = kryo.readClassAndObject(input) as HashMap<*, Collection<*>>
@@ -119,6 +120,7 @@ class EntityStorageSerializerImpl(
         output.writeBoolean(`object`.isParentNullable)
       }
 
+      @Suppress("UNCHECKED_CAST")
       override fun read(kryo: Kryo, input: Input, type: Class<ConnectionId>): ConnectionId {
         val parentClazzInfo = kryo.readClassAndObject(input) as TypeInfo
         val childClazzInfo = kryo.readClassAndObject(input) as TypeInfo
@@ -144,6 +146,7 @@ class EntityStorageSerializerImpl(
         kryo.writeClassAndObject(output, res)
       }
 
+      @Suppress("UNCHECKED_CAST")
       override fun read(kryo: Kryo, input: Input, type: Class<ImmutableEntitiesBarrel>): ImmutableEntitiesBarrel {
         val mutableBarrel = MutableEntitiesBarrel.create()
         val families = kryo.readClassAndObject(input) as HashMap<TypeInfo, EntityFamily<*>>
@@ -161,7 +164,7 @@ class EntityStorageSerializerImpl(
     // TODO Dedup with OCSerializers
     // TODO Reuse OCSerializer.registerUtilitySerializers ?
     // TODO Scan OCSerializer for useful kryo settings and tricks
-    kryo.register(java.util.ArrayList::class.java).instantiator = ObjectInstantiator { ArrayList<Any>() }
+    kryo.register(ArrayList::class.java).instantiator = ObjectInstantiator { ArrayList<Any>() }
     kryo.register(HashMap::class.java).instantiator = ObjectInstantiator { HashMap<Any, Any>() }
     kryo.register(SmartList::class.java).instantiator = ObjectInstantiator { SmartList<Any>() }
     kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }
@@ -176,7 +179,7 @@ class EntityStorageSerializerImpl(
     kryo.register(Object2ObjectOpenHashMap::class.java).instantiator = ObjectInstantiator { Object2ObjectOpenHashMap<Any, Any>() }
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    kryo.register(Arrays.asList("a").javaClass).instantiator = ObjectInstantiator { java.util.ArrayList<Any>() }
+    kryo.register(Arrays.asList("a").javaClass).instantiator = ObjectInstantiator { ArrayList<Any>() }
 
     kryo.register(ByteArray::class.java)
     kryo.register(ImmutableEntityFamily::class.java)
@@ -452,6 +455,7 @@ class EntityStorageSerializerImpl(
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
     return Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
@@ -555,6 +559,7 @@ class EntityStorageSerializerImpl(
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): WorkspaceEntityStorageBuilder? {
     val builder = this.deserializeCache(storeStream) ?: return null
 
@@ -583,6 +588,7 @@ class EntityStorageSerializerImpl(
     return builder
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun deserializeClassToIntConverter(stream: InputStream) {
     Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()

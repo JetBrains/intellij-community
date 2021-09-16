@@ -28,6 +28,7 @@ internal class MutableEntitiesBarrel private constructor(
     return getMutableEntityFamily(id.clazz).getEntityDataForModification(id.arrayId)
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : WorkspaceEntity> add(newEntity: WorkspaceEntityData<T>, clazz: Int) {
     (getMutableEntityFamily(clazz) as MutableEntityFamily<T>).add(newEntity)
   }
@@ -37,12 +38,14 @@ internal class MutableEntitiesBarrel private constructor(
     return createEntityId(arrayId, clazz)
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : WorkspaceEntity> cloneAndAdd(newEntity: WorkspaceEntityData<T>, clazz: Int): WorkspaceEntityData<T> {
     val cloned = newEntity.clone()
     (getMutableEntityFamily(clazz) as MutableEntityFamily<T>).add(cloned)
     return cloned
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : WorkspaceEntity> cloneAndAddAt(newEntity: WorkspaceEntityData<T>, entityId: EntityId): WorkspaceEntityData<T> {
     val cloned = newEntity.clone()
     cloned.id = entityId.arrayId
@@ -50,6 +53,7 @@ internal class MutableEntitiesBarrel private constructor(
     return cloned
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : WorkspaceEntity> replaceById(newEntity: WorkspaceEntityData<T>, clazz: Int) {
     val family = getMutableEntityFamily(clazz) as MutableEntityFamily<T>
     if (!family.exists(newEntity.id)) {
