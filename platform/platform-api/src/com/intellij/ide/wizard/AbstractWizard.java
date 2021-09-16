@@ -62,29 +62,20 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   };
 
-  private boolean myCreatingModule;
-
   public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent) {
     super(dialogParent, true);
     mySteps = new ArrayList<>();
-    initWizard(title, false);
-  }
-
-  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent, @Nullable Project project) {
-    super(dialogParent, true);
-    mySteps = new ArrayList<>();
-    initWizard(title, project != null);
+    initWizard(title);
   }
 
   public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable final Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
-    initWizard(title, project != null);
+    initWizard(title);
   }
 
-  private void initWizard(final @NlsContexts.DialogTitle String title, boolean isCreatingModule) {
+  private void initWizard(final @NlsContexts.DialogTitle String title) {
     setTitle(title);
-    myCreatingModule = isCreatingModule;
     myCurrentStep = 0;
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
@@ -551,8 +542,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   }
 
-  private boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") && !myCreatingModule;
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
   protected boolean isFirstStep() {
