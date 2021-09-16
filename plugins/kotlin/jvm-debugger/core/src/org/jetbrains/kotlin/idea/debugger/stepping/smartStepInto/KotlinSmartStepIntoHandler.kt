@@ -6,15 +6,25 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler
 import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.getTopmostElementAtOffset
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
     override fun isAvailable(position: SourcePosition?) = position?.file is KtFile
+
+    override fun findStepIntoTargets(position: SourcePosition?, session: DebuggerSession?) =
+        if (KotlinDebuggerSettings.getInstance().alwaysDoSmartStepInto) {
+            super.findSmartStepTargetsAsync(position, session)
+        } else {
+            super.findStepIntoTargets(position, session)
+        }
 
     override fun findSmartStepTargets(position: SourcePosition): List<SmartStepTarget> {
         val file = position.file
