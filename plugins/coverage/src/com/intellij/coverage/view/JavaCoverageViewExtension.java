@@ -178,7 +178,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     final List<AbstractTreeNode<?>> topLevelNodes = new ArrayList<>();
     for (PsiPackage aPackage : packages) {
       final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
-      if (aPackage.getClasses(searchScope).length != 0) {
+      if (ReadAction.compute(() -> aPackage.getClasses(searchScope)).length != 0) {
         final CoverageListNode node = new CoverageListNode(myProject, aPackage, mySuitesBundle, myStateBean);
         topLevelNodes.add(node);
       }
