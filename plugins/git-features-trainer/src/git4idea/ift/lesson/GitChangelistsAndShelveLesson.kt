@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
@@ -40,7 +39,7 @@ import javax.swing.JButton
 
 class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLessonsBundle.message("git.changelists.shelf.lesson.name")) {
   override val existedFile = "git/martian_cat.yml"
-  private val branchName = "main"
+  override val branchName = "main"
   private val commentingLineText = "fur_type: long haired"
   private val commentText = "# debug: check another types (short haired, hairless)"
 
@@ -56,8 +55,6 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch(branchName)
-
     val defaultChangelistName = VcsBundle.message("changes.default.changelist.name")
     prepareRuntimeTask {
       resetChangelistsState(project)

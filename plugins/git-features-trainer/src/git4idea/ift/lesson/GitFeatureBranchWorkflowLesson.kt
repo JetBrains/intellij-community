@@ -27,7 +27,6 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.openPushDialogText
 import git4idea.ift.GitLessonsUtil.openUpdateDialogText
@@ -46,7 +45,7 @@ import javax.swing.JList
 class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessonsBundle.message("git.feature.branch.lesson.name")) {
   override val existedFile = "git/simple_cat.yml"
   private val remoteName = "origin"
-  private val branchName = "feature"
+  override val branchName = "feature"
   private val main = "main"
 
   private val fileToCommitName = "sphinx_cat.yml"
@@ -73,8 +72,6 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     prepareRuntimeTask {
       repository = GitRepositoryManager.getInstance(project).repositories.first()
     }
-
-    checkoutBranch(branchName)
 
     task("ActivateVersionControlToolWindow") {
       text(GitLessonsBundle.message("git.feature.branch.introduction.1", strong(branchName), strong(main), action(it)))

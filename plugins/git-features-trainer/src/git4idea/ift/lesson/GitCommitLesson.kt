@@ -27,7 +27,6 @@ import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
@@ -46,7 +45,7 @@ import javax.swing.tree.TreePath
 
 class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.commit.lesson.name")) {
   override val existedFile = "git/puss_in_boots.yml"
-  private val branchName = "feature"
+  override val branchName = "feature"
   private val firstFileName = "simple_cat.yml"
   private val secondFileName = "puss_in_boots.yml"
 
@@ -65,8 +64,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch(branchName)
-
     prepareRuntimeTask {
       modifyFiles()
     }
