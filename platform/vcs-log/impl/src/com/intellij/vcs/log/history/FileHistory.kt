@@ -137,6 +137,8 @@ fun removeTrivialMerges(controller: LinearGraphController,
                         permanentGraphInfo: PermanentGraphInfo<Int>,
                         fileHistoryData: FileHistoryData,
                         report: (Set<Int>) -> Unit): Boolean {
+  if (!Registry.`is`("vcs.history.remove.trivial.merges")) return false
+
   val trivialCandidates = IntOpenHashSet()
   val nonTrivialMerges = IntOpenHashSet()
   fileHistoryData.forEach { _, commit, changes ->
