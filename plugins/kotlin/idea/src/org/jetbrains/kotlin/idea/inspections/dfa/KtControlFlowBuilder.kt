@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.types.*
 import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.TransferTarget
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
@@ -35,8 +36,7 @@ import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.contracts.description.CallsEffectDeclaration
 import org.jetbrains.kotlin.contracts.description.ContractProviderKey
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
-import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.resolveType
@@ -427,6 +427,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
         }
+        if (inlineKnownMethod(expr, argCount, qualifierOnStack)) return
         val lambda = getInlineableLambda(expr)
         if (lambda != null) {
             if (qualifierOnStack && inlineKnownLambdaCall(expr, lambda.lambda)) return
@@ -440,6 +441,30 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
 
         addCall(expr, argCount, qualifierOnStack)
+    }
+
+    private fun inlineKnownMethod(expr: KtCallExpression, argCount: Int, qualifierOnStack: Boolean): Boolean {
+        if (argCount == 0 && qualifierOnStack) {
+            val descriptor = expr.resolveToCall()?.resultingDescriptor ?: return false
+            val name = descriptor.name.asString()
+            if (name == "isEmpty" || name == "isNotEmpty") {
+                val containingDeclaration = descriptor.containingDeclaration
+                val containingPackage = if (containingDeclaration is PackageFragmentDescriptor) containingDeclaration.fqName
+                else (containingDeclaration as? ClassDescriptor)?.containingPackage()
+                if (containingPackage?.asString() == "kotlin.collections") {
+                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.COLLECTION_SIZE))
+                    addInstruction(PushValueInstruction(DfTypes.intValue(0)))
+                    addInstruction(
+                        BooleanBinaryInstruction(
+                            if (name == "isEmpty") RelationType.EQ else RelationType.NE, false,
+                            KotlinExpressionAnchor(expr)
+                        )
+                    )
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
