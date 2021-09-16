@@ -15,12 +15,6 @@ abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiers
         "uast-kotlin/testData/DestructuringDeclaration.kt",
         "uast-kotlin/testData/LambdaReturn.kt",
         "uast-kotlin/testData/WhenAndDestructing.kt",
-        // TODO: incorrect parent chain for annotations?
-        "uast-kotlin/testData/ParameterPropertyWithAnnotation.kt",
-        "uast-kotlin/testData/PropertyWithAnnotation.kt",
-        "uast-kotlin/testData/SimpleAnnotated.kt",
-        "uast-kotlin/testData/ReifiedParameters.kt",
-        "uast-kotlin/testData/ReceiverFun.kt",
     ).mapTo(mutableSetOf()) { KotlinRoot.DIR_PATH.resolve("uast").resolve(it).absolute().normalize().toString() }
 
     override fun isExpectedToFail(filePath: String): Boolean {
