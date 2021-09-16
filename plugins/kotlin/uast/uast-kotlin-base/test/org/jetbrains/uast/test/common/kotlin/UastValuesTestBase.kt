@@ -29,11 +29,14 @@ interface UastValuesTestBase : UastPluginSelection, UastFileComparisonTestBase {
 
         try {
             KotlinTestUtils.assertEqualsToFile(valuesFile, file.asLogValues())
-            if (isExpectedToFail(filePath)) {
-                KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
-            }
         } catch (e: Exception) {
-            if (!isExpectedToFail(filePath)) throw e
+            if (isExpectedToFail(filePath))
+                return
+            else
+                throw e
+        }
+        if (isExpectedToFail(filePath)) {
+            KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
         }
 
         cleanUpIdenticalFile(
