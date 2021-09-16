@@ -31,10 +31,11 @@ import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
+import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.contracts.description.CallsEffectDeclaration
 import org.jetbrains.kotlin.contracts.description.ContractProviderKey
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -428,16 +429,84 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         val lambda = getInlineableLambda(expr)
         if (lambda != null) {
+            if (qualifierOnStack && inlineKnownLambdaCall(expr, lambda.lambda)) return
             val kind = getLambdaOccurrenceRange(expr, lambda.descriptor.original)
             inlineLambda(lambda.lambda, kind)
         } else {
-            for(lambdaArg in expr.lambdaArguments) {
+            for (lambdaArg in expr.lambdaArguments) {
                 processExpression(lambdaArg.getLambdaExpression())
                 argCount++
             }
         }
 
         addCall(expr, argCount, qualifierOnStack)
+    }
+
+    private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
+        // TODO: this-binding methods (apply, run)
+        // TODO: non-qualified methods (run, repeat)
+        // TODO: collection methods (forEach, map, etc.)
+        val resolvedCall = expr.resolveToCall() ?: return false
+        val descriptor = resolvedCall.resultingDescriptor
+        val packageFragment = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+        val bodyExpression = lambda.bodyExpression
+        val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
+        if (packageFragment.fqName.asString() == "kotlin" && resolvedCall.valueArguments.size == 1) {
+            val name = descriptor.name.asString()
+            if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless") {
+                val parameter = KtVariableDescriptor.getSingleLambdaParameter(factory, lambda) ?: return false
+                // qualifier is on stack
+                addImplicitConversion(receiver, receiver?.getKotlinType()?.makeNotNullable())
+                addInstruction(SimpleAssignmentInstruction(null, parameter))
+                when (name) {
+                    "let" -> {
+                        addInstruction(PopInstruction())
+                        val lambdaResultType = lambda.resolveType()?.getReturnTypeFromFunctionType()
+                        val result = flow.createTempVariable(lambdaResultType.toDfType(expr))
+                        inlinedBlock(lambda) {
+                            processExpression(bodyExpression)
+                            flow.finishElement(lambda.functionLiteral)
+                            addInstruction(SimpleAssignmentInstruction(null, result))
+                            addInstruction(PopInstruction())
+                        }
+                        addInstruction(PushInstruction(result, null))
+                        addImplicitConversion(expr, lambdaResultType, expr.getKotlinType())
+                    }
+                    "also" -> {
+                        inlinedBlock(lambda) {
+                            processExpression(bodyExpression)
+                            flow.finishElement(lambda.functionLiteral)
+                            addInstruction(PopInstruction())
+                        }
+                        addImplicitConversion(receiver, expr.getKotlinType())
+                        addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
+                    }
+                    "takeIf", "takeUnless" -> {
+                        val result = flow.createTempVariable(DfTypes.BOOLEAN)
+                        inlinedBlock(lambda) {
+                            processExpression(bodyExpression)
+                            flow.finishElement(lambda.functionLiteral)
+                            addInstruction(SimpleAssignmentInstruction(null, result))
+                            addInstruction(PopInstruction())
+                        }
+                        addInstruction(PushInstruction(result, null))
+                        val offset = DeferredOffset()
+                        addInstruction(ConditionalGotoInstruction(offset, DfTypes.booleanValue(name == "takeIf")))
+                        addInstruction(PopInstruction())
+                        addInstruction(PushValueInstruction(DfTypes.NULL))
+                        val endOffset = DeferredOffset()
+                        addInstruction(GotoInstruction(endOffset))
+                        setOffset(offset)
+                        addImplicitConversion(receiver, expr.getKotlinType())
+                        setOffset(endOffset)
+                        addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
+                    }
+                }
+                addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
+                return true
+            }
+        }
+        return false
     }
 
     private fun getLambdaOccurrenceRange(expr: KtCallExpression, descriptor: ValueParameterDescriptor): EventOccurrencesRange {
@@ -477,16 +546,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val functionLiteral = lambda.functionLiteral
             val bodyExpression = lambda.bodyExpression
             if (bodyExpression != null) {
-                val valueParameters = lambda.valueParameters
-                if (valueParameters.isEmpty()) {
-                    val kotlinType = lambda.resolveType()?.getValueParameterTypesFromFunctionType()?.singleOrNull()?.type
-                    if (kotlinType != null) {
-                        val itVar = factory.varFactory.createVariableValue(KtItVariableDescriptor(functionLiteral, kotlinType))
-                        addInstruction(FlushVariableInstruction(itVar))
+                val singleParameter = KtVariableDescriptor.getSingleLambdaParameter(factory, lambda)
+                if (singleParameter != null) {
+                    addInstruction(FlushVariableInstruction(singleParameter))
+                } else {
+                    for (parameter in lambda.valueParameters) {
+                        flushParameter(parameter)
                     }
-                }
-                for (parameter in valueParameters) {
-                    flushParameter(parameter)
                 }
             }
             processExpression(bodyExpression)

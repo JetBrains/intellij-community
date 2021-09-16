@@ -8,9 +8,11 @@ import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -80,6 +82,16 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
     override fun toString(): String = variable.name ?: "<unknown>"
     
     companion object {
+        fun getSingleLambdaParameter(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
+            val parameters = lambda.valueParameters
+            if (parameters.size > 1) return null
+            if (parameters.size == 1) {
+                return factory.varFactory.createVariableValue(KtVariableDescriptor(parameters[0]))
+            }
+            val kotlinType = lambda.resolveType()?.getValueParameterTypesFromFunctionType()?.singleOrNull()?.type ?: return null
+            return factory.varFactory.createVariableValue(KtItVariableDescriptor(lambda.functionLiteral, kotlinType))
+        }
+
         fun createFromQualified(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             var selector = expr
             while (selector is KtQualifiedExpression) {
