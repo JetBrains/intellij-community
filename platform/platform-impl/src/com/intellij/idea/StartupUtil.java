@@ -857,16 +857,6 @@ public final class StartupUtil {
 
     log.info("args: " + Arrays.toString(args));
 
-    String extDirs = System.getProperty("java.ext.dirs");
-    if (extDirs != null) {
-      for (String dir : extDirs.split(File.pathSeparator)) {
-        String[] content = new File(dir).list();
-        if (content != null && content.length > 0) {
-          log.info("ext: " + dir + ": " + Arrays.toString(content));
-        }
-      }
-    }
-
     log.info("library path: " + System.getProperty("java.library.path"));
     log.info("boot library path: " + System.getProperty("sun.boot.library.path"));
 
@@ -881,12 +871,11 @@ public final class StartupUtil {
       "\n  " + PathManager.PROPERTY_CONFIG_PATH + '=' + logPath(PathManager.getConfigPath()) +
       "\n  " + PathManager.PROPERTY_SYSTEM_PATH + '=' + logPath(PathManager.getSystemPath()) +
       "\n  " + PathManager.PROPERTY_PLUGINS_PATH + '=' + logPath(PathManager.getPluginsPath()) +
-      "\n  " + PathManager.PROPERTY_LOG_PATH + '=' + logPath(PathManager.getLogPath())
-    );
+      "\n  " + PathManager.PROPERTY_LOG_PATH + '=' + logPath(PathManager.getLogPath()));
 
-    log.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
-             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
-             "; factory: " + ForkJoinPool.commonPool().getFactory());
+    int cores = Runtime.getRuntime().availableProcessors();
+    ForkJoinPool pool = ForkJoinPool.commonPool();
+    log.info("CPU cores: " + cores + "; ForkJoinPool.commonPool: " + pool + "; factory: " + pool.getFactory());
 
     activity.end();
   }
