@@ -47,11 +47,14 @@ interface UastIdentifiersTestBase : UastPluginSelection, UastFileComparisonTestB
 
         try {
             file.testIdentifiersParents()
-            if (isExpectedToFail(filePath)) {
-                KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
-            }
         } catch (e: AssertionError) {
-            if (!isExpectedToFail(filePath)) throw e
+            if (isExpectedToFail(filePath))
+                return
+            else
+                throw e
+        }
+        if (isExpectedToFail(filePath)) {
+            KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
         }
 
         cleanUpIdenticalFile(
