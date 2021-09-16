@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
@@ -350,8 +350,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return getSelectedFile();
   }
 
-  @Override
-  public Object getData(@NotNull String dataId) {
+  private @Nullable Object getSlowData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
@@ -374,11 +373,13 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
                                                                     pointer.getValue().getRangeMarker()
                                                                            .getStartOffset());
       }
-      else {
-        return null;
-      }
     }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+    return null;
+  }
+
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       final PsiFile file = getSelectedFile();
       return file != null ? file.getVirtualFile() : null;
     }
@@ -399,6 +400,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
     else if (TODO_PANEL_DATA_KEY.is(dataId)) {
       return this;
+    }
+    else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      return List.of((DataProvider)this::getSlowData);
     }
     return super.getData(dataId);
   }
