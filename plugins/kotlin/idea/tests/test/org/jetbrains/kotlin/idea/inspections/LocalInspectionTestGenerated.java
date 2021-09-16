@@ -9879,6 +9879,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationEntry.kt")
+        public void testAnnotationEntry() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/annotationEntry.kt");
+        }
+
         @TestMetadata("asReceiver.kt")
         public void testAsReceiver() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/asReceiver.kt");
@@ -10267,6 +10272,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("superClass2.kt")
         public void testSuperClass2() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/superClass2.kt");
+        }
+
+        @TestMetadata("superTypeEntry.kt")
+        public void testSuperTypeEntry() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/superTypeEntry.kt");
         }
 
         @TestMetadata("type.kt")
