@@ -68,6 +68,10 @@
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereOptionFeaturesProvider"/>
+    <!-- TODO: Uncomment when there are enough features and we can start collecting the data
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassFeaturesProvider"/>
+    -->
 
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ClassAndFileKeyProvider"/>
