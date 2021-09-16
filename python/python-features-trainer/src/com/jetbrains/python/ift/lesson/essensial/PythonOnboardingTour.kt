@@ -474,32 +474,18 @@ class PythonOnboardingTour :
   }
 
   private fun LessonContext.completionSteps() {
-    val completionPosition = sample.getPosition(2)
-    caret(completionPosition)
     prepareRuntimeTask {
+      setSample(sample.insertAtPosition(2, " / len(<caret>)"))
       FocusManagerImpl.getInstance(project).requestFocusInProject(editor.contentComponent, project)
     }
-    task {
-      text(PythonLessonsBundle.message("python.onboarding.type.division", code(" / l")))
-      proposeRestoreForInvalidText("/len")
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
-        it.toString().contains("string=len;")
-      }
-    }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.choose.len.item",
-                                       code("len(__obj)"), action("EditorChooseLookupItem")))
-      stateCheck {
-        checkEditorModification(completionPosition, "/len()")
-      }
-      restoreByUi()
-    }
-
-    task {
+      text(PythonLessonsBundle.message("python.onboarding.type.division",
+        code(" / len()")))
       text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
-                                       code("values"),
-                                       code("()")))
+        code("values"),
+        code("()"),
+        action("CodeCompletion")))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
         it.toString().contains("values")
       }
@@ -510,7 +496,7 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
                                        code("values"), action("EditorChooseLookupItem")))
       stateCheck {
-        checkEditorModification(completionPosition, "/len(values)")
+        checkEditorModification(sample.getPosition(2), "/len(values)")
       }
       restoreByUi()
     }
