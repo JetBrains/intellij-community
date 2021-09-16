@@ -89,7 +89,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt B",              "NotebookInsertCellBelowAction", "tasks.open.in.browser", "sql.SelectInDatabaseView"},
     { "shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
     { "shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
-    { "shift ctrl C",             "Console.TableResult.CopyAggregatorResult", "CopyPaths", "DatabaseView.CopyDdlAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
+    { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff", "Console.TableResult.CompareCells"},
     { "shift control ENTER",      "EditorCompleteStatement", "Console.Jpa.GenerateSql", "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift control F10",        "Console.Open", "RunClass", "RunTargetAction"},
@@ -237,7 +237,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
-    { "shift ctrl C",             "Console.TableResult.CopyAggregatorResult", "CopyPaths", "DatabaseView.CopyDdlAction", "Terminal.CopySelectedText", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
+    { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction", "Terminal.CopySelectedText", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     { "shift ctrl V",             "PasteMultiple", "Terminal.Paste"},
     });
     put("Default for GNOME", new String[][] {
@@ -312,7 +312,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt F9",             "ChooseDebugConfiguration", "ValidateXml", "ValidateJsp"},
     { "shift alt D",              "ToggleFloatingMode", "hg4idea.QFold"},
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
-    { "shift ctrl C",             "CommentByLineComment", "Console.TableResult.CopyAggregatorResult", "DatabaseView.CopyDdlAction"},
+    { "shift ctrl C",             "CommentByLineComment", "DatabaseView.CopyDdlAction"},
     { "shift control H",          "ChangesView.ShelveSilently", "ReplaceInPath"},
     { "shift control K",          "HippieCompletion", "Vcs.Push"},
     { "shift control M",          "RInsertPipeAction", "ShowBookmarks"},
