@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Path
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 /**
  * Base class for all editions of IntelliJ IDEA
@@ -129,7 +129,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
 
-    productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
+    productLayout.platformLayoutCustomizer = { PlatformLayout layout, _ ->
       layout.customize {
         for (String name : JAVA_IDE_API_MODULES) {
           if (!productLayout.productApiModules.contains(name)) {
@@ -161,7 +161,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
         withoutProjectLibrary("layoutlib")
       }
-    } as Consumer<PlatformLayout>
+    } as BiConsumer<PlatformLayout, BuildContext>
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",

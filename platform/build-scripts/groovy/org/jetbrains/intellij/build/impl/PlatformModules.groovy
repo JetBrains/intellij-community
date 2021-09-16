@@ -140,7 +140,7 @@ final class PlatformModules {
     // used only in modules that packed into Java
     layout.excludedProjectLibraries.add("jps-javac-extension")
     layout.excludedProjectLibraries.add("Eclipse")
-    productLayout.platformLayoutCustomizer.accept(layout)
+    productLayout.platformLayoutCustomizer.accept(layout, buildContext)
 
     Set<String> alreadyPackedModules = new HashSet<>()
     for (Map.Entry<String, Collection<String>> entry in productLayout.additionalPlatformJars.entrySet()) {
@@ -276,8 +276,8 @@ final class PlatformModules {
     return layout
   }
 
-  private static @Nullable List<String> getProductPluginContentModules(@NotNull BuildContext buildContext,
-                                                                       @NotNull String productPluginSourceModuleName) {
+  static @Nullable List<String> getProductPluginContentModules(@NotNull BuildContext buildContext,
+                                                               @NotNull String productPluginSourceModuleName) {
     Path file = buildContext.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
     if (file == null) {
       file = buildContext.findFileInModuleSources(productPluginSourceModuleName,
