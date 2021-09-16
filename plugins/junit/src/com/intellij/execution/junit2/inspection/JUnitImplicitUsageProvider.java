@@ -10,11 +10,11 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.siyeh.ig.junit.JUnitCommonClassNames.*;
 
@@ -39,13 +39,12 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     if (method.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null) return false;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
-    SearchScope useScope = psiClass.getUseScope();
+    SearchScope useScope = method.getUseScope();
     String methodName = method.getName();
     if (isExpensiveSearch(psiClass, methodName, useScope)) return false;
-    Stream<PsiMethod> methodStream = Arrays.stream(psiClass.findMethodsByName(methodName, true))
-      .filter(it -> it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST) != null
-    && it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null);
-    return methodStream.findAny().isPresent();
+    return ContainerUtil.exists(psiClass.findMethodsByName(methodName, true),
+                                it -> it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST) != null &&
+                                      it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null);
   }
   private static boolean isReferencedInsideEnumSourceAnnotation(@NotNull PsiElement element) {
     if (element instanceof PsiEnumConstant) {
@@ -71,10 +70,10 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     return false;
   }
 
-  private static boolean isExpensiveSearch(PsiClass psiClass, String className, SearchScope useScope) {
+  private static boolean isExpensiveSearch(PsiClass psiClass, String name, SearchScope useScope) {
     if (!(useScope instanceof LocalSearchScope)) {
       PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(psiClass.getProject());
-      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(className, (GlobalSearchScope)useScope, null, null);
+      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, null);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ||
           cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
         return true;
