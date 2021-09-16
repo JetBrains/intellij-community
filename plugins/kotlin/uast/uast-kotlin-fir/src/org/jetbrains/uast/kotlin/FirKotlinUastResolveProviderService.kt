@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtLiteralConstantValue
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
@@ -396,7 +397,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun evaluate(uExpression: UExpression): Any? {
         val ktExpression = uExpression.sourcePsi as? KtExpression ?: return null
         analyseForUast(ktExpression) {
-            return ktExpression.evaluate()?.toConst()
+            return (ktExpression.evaluate() as? KtLiteralConstantValue<*>)?.toConst()
         }
     }
 }
