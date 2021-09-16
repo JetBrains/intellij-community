@@ -24,12 +24,8 @@ open class FirUastApiTest : AbstractFirUastTest() {
     }
 
     private val whitelist : Set<String> = setOf(
-        // TODO: psi -> UAST -> psi -> UAST ??
-        "uast-kotlin/testData/AnnotationParameters.kt",
         // TODO: interface method's `hasModifierProperty`
         "uast-kotlin/testData/DefaultImpls.kt",
-        // TODO: vararg, arrayOf call inside annotation
-        "uast-kotlin/testData/AnnotationComplex.kt",
         // TODO: resolve to inline and stdlib
         "uast-kotlin/testData/Resolve.kt",
         // TODO: no lambda call receiver?
