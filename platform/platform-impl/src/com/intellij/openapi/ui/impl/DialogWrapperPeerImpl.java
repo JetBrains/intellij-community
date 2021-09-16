@@ -425,7 +425,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.getWindow().setAutoRequestFocus((getOwner()!=null && getOwner().isActive()) || !ComponentUtil.isDisableAutoRequestFocus());
 
     if (SystemInfo.isMac) {
-      final Disposable tb = TouchbarSupport.showDialogButtons(myDialog.getContentPane());
+      final Disposable tb = TouchbarSupport.showWindowActions(myDialog.getContentPane());
       if (tb != null) {
         myDisposeActions.add(() -> Disposer.dispose(tb));
       }

@@ -32,6 +32,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.FrameState
+import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
@@ -184,6 +185,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       loadFrameState(state)
     }
 
+    if (SystemInfo.isMac)
+      TouchbarSupport.showWindowActions(this, frame)
     frame.isVisible = true
   }
 

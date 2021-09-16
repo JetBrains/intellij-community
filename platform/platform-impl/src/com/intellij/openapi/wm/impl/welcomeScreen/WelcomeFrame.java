@@ -188,7 +188,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       IdeMenuBar.installAppMenuIfNeeded(jFrame);
       ourInstance = frame;
       if (SystemInfoRt.isMac) {
-        ourTouchbar = TouchbarSupport.showDialogButtons(frame.getComponent());
+        ourTouchbar = TouchbarSupport.showWindowActions(frame.getComponent());
       }
     };
   }

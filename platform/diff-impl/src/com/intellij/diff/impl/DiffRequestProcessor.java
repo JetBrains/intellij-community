@@ -48,7 +48,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -130,6 +130,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     // UI
 
     myMainPanel = new MyPanel();
+    Touchbar.setActions(myMainPanel, myTouchbarActionGroup);
+
     myContentPanel = new Wrapper();
     myToolbarStatusPanel = new Wrapper();
     myProgressBar = new MyProgressBar();
@@ -1014,9 +1016,6 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
       else if (DiffDataKeys.DIFF_CONTEXT.is(dataId)) {
         return myContext;
-      }
-      else if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
-        return myTouchbarActionGroup;
       }
 
       data = myState.getData(dataId);

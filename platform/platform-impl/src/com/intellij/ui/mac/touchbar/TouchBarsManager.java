@@ -389,15 +389,11 @@ final class TouchBarsManager {
       // find cached (or create)
       TouchBar tb = ourActions2Touchbar.get(actions);
       if (tb == null && !cachedOnly) {
-        if (isEmptyGroup(actions)) {
-          tb = TouchBar.EMPTY;
-        } else {
-          final Component cmp = component.get();
-          tb = new ActionGroupTouchBar(actions
-                                       + " | "
-                                       + (cmp == null ? "disposed_component" : cmp.getClass().getSimpleName()),
-                                       actions, customizer);
-        }
+        final Component cmp = component.get();
+        tb = new ActionGroupTouchBar(actions
+                                     + " | "
+                                     + (cmp == null ? "disposed_component" : cmp.getClass().getSimpleName()),
+                                     actions, customizer);
         ourActions2Touchbar.put(actions, tb);
       }
       return tb;

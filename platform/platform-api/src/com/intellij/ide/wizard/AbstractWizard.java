@@ -17,7 +17,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -34,10 +34,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.*;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
@@ -132,24 +130,28 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         myHelpButton.putClientProperty("JButton.buttonType", "help");
       }
 
-      int index = 0;
+      final List<JButton> touchbarButtons = new ArrayList<>();
       JPanel leftPanel = new JPanel();
       if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
-        TouchbarDataKeys.putDialogButtonDescriptor(myHelpButton, index++);
+        touchbarButtons.add(myHelpButton);
       }
       leftPanel.add(myCancelButton);
-      TouchbarDataKeys.putDialogButtonDescriptor(myCancelButton, index++);
+      touchbarButtons.add(myCancelButton);
       panel.add(leftPanel, BorderLayout.WEST);
 
+      List<JButton> principalTouchbarButtons = new ArrayList<>();
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
-        TouchbarDataKeys.putDialogButtonDescriptor(myPreviousButton, index++).setMainGroup(true);
+        principalTouchbarButtons.add(myPreviousButton);
       }
       buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myNextButton);
-      TouchbarDataKeys.putDialogButtonDescriptor(myNextButton, index++).setMainGroup(true).setDefault(true);
+      principalTouchbarButtons.add(myNextButton);
+
+      if (SystemInfo.isMac)
+        Touchbar.setButtonActions(panel, touchbarButtons, principalTouchbarButtons, myNextButton);
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);

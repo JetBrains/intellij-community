@@ -142,7 +142,7 @@ final class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    TouchbarSupport.showDialogButtons(this, myController.getSheetPanel());
+    TouchbarSupport.showWindowActions(this, myController.getSheetPanel());
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
 

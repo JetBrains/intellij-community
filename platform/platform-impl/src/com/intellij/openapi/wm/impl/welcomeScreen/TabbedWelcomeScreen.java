@@ -152,11 +152,6 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     };
   }
 
-  @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    return null;
-  }
-
   private static final class MyCellRenderer implements TreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree,

@@ -60,7 +60,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
 import com.intellij.ui.hover.TableHoverListener;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -593,7 +593,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }, FindBundle.message("find.replace.command"), null);
     });
     myOKButton.addActionListener(myOkActionListener);
-    TouchbarDataKeys.putDialogButtonDescriptor(myOKButton, 0, true);
     boolean enterAsOK = Registry.is("ide.find.enter.as.ok", false);
 
     AnAction openInRightSplit = ActionManager.getInstance().getAction(ACTION_OPEN_IN_RIGHT_SPLIT);
@@ -894,6 +893,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     ContainerUtil.addAll(focusOrder, focusableComponents(bottomPanel));
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new ListFocusTraversalPolicy(focusOrder));
+
+    if (SystemInfo.isMac) {
+      List<JButton> principalButtons = new ArrayList<>();
+      principalButtons.add(myOKButton);
+
+      Touchbar.setButtonActions(bottomPanel, null, principalButtons, myOKButton, new DefaultActionGroup(myCaseSensitiveAction, myWholeWordsAction, myRegexAction));
+    }
   }
 
   @Contract("_,!null,_->!null")
