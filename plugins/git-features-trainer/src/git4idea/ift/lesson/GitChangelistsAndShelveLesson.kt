@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
@@ -24,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
@@ -56,10 +58,11 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
   override val lessonContent: LessonContext.() -> Unit = {
     val defaultChangelistName = VcsBundle.message("changes.default.changelist.name")
-    prepareRuntimeTask {
+    prepareRuntimeTask(ModalityState.NON_MODAL) {
       resetChangelistsState(project)
       removeShelvedChangeLists(project)
       modifyFile(virtualFile)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
     showWarningIfModalCommitEnabled()
@@ -224,7 +227,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       }
       text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
       stateCheck { editor.document.text.contains(commentText) }
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
     }
 
     task {

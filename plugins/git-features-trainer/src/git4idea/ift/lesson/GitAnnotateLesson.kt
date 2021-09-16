@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
+import com.intellij.openapi.vcs.changes.ui.CommittedChangeListPanel
 import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsBundle
 import training.dsl.*
@@ -188,7 +189,8 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       text(GitLessonsBundle.message("git.annotate.click.annotation"))
       highlightAnnotation(secondDiffSplitter, secondStateText, highlightRight = true)
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: JEditorPane ->
-        ui.text?.contains(partOfTargetCommitMessage) == true
+        UIUtil.getParentOfType(CommittedChangeListPanel::class.java, ui) != null
+        && ui.text?.contains(partOfTargetCommitMessage) == true
       }
       restoreIfDiffClosed(openSecondDiffTaskId, secondDiffSplitter)
     }
