@@ -30,14 +30,24 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
   public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
     FileHistoryUiProperties properties = project.getService(FileHistoryUiProperties.class);
 
-    VcsLogFilterCollection filters =
-      FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot, properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
-    return new FileHistoryUi(logData, properties,
-                             new VisiblePackRefresherImpl(project, logData,
-                                                          filters,
-                                                          PermanentGraph.SortType.Normal,
-                                                          new FileHistoryFilterer(logData),
-                                                          FileHistoryUi.getFileHistoryLogId(myFilePath, myHash)),
-                             myFilePath, myHash, myRoot);
+    VcsLogFilterCollection filters = FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot,
+                                                                       properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
+    VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData,
+                                                                                 filters,
+                                                                                 PermanentGraph.SortType.Normal,
+                                                                                 new FileHistoryFilterer(logData),
+                                                                                 FileHistoryUi.getFileHistoryLogId(myFilePath, myHash));
+    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot);
+
+    RegistryValueListener registryValueListener = new RegistryValueListener() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        visiblePackRefresher.onRefresh();
+      }
+    };
+    FileHistoryBuilder.refineValue.addListener(registryValueListener, ui);
+    FileHistoryBuilder.removeTrivialMergesValue.addListener(registryValueListener, ui);
+
+    return ui;
   }
 }
