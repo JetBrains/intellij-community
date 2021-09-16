@@ -850,14 +850,12 @@ public final class StartupUtil {
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
 
-    List<String> jvmArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-    if (jvmArguments != null) {
-      log.info("JVM Args: " + String.join(" ", jvmArguments));
+    List<String> jvmOptions = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    if (jvmOptions != null) {
+      log.info("JVM options: " + jvmOptions);
     }
 
-    if (args != null) {
-      log.info("Program Args: " + String.join(" ", args));
-    }
+    log.info("args: " + Arrays.toString(args));
 
     String extDirs = System.getProperty("java.ext.dirs");
     if (extDirs != null) {
