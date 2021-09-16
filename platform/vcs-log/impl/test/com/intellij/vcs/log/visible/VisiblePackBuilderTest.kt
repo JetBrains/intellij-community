@@ -20,7 +20,6 @@ import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Rule
 import org.junit.Test
-import java.util.*
 import java.util.function.Predicate
 import kotlin.random.nextInt
 import kotlin.test.assertEquals

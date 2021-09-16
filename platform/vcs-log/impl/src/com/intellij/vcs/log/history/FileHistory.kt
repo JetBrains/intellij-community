@@ -18,12 +18,9 @@ import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.isAncestor
 import com.intellij.vcsUtil.VcsFileUtil
-import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.function.BiConsumer
 
 class FileHistory internal constructor(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>,
