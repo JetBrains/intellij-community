@@ -200,8 +200,10 @@ interface BaseKotlinConverter {
                         el<UAnnotation> { KotlinUNestedAnnotation.create(element, givenParent) }
                     } else null
                 }
-                is KtLightAnnotationForSourceEntry -> {
-                    convertDeclarationOrElement(element.kotlinOrigin, givenParent, requiredTypes)
+                is KtLightElementBase -> {
+                    element.kotlinOrigin?.let {
+                        convertDeclarationOrElement(it, givenParent, requiredTypes)
+                    }
                 }
                 is KtDelegatedSuperTypeEntry -> {
                     el<KotlinSupertypeDelegationUExpression> {
