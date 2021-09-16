@@ -418,7 +418,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       if (ExperimentalUI.isNewUI()) {
         g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-        float offsetX = getFoldingAreaOffset() + getFoldingAnchorWidth() - JBUIScale.scale(4f);
+        double offsetX = getFoldingAreaOffset() + getFoldingAnchorWidth() - scale(4f);
         LinePainter2D.paint(g, offsetX, clip.y, offsetX, clip.y + clip.height);
       }
     }
@@ -1742,6 +1742,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public int getLineMarkerFreePaintersAreaOffset() {
+    if (ExperimentalUI.isNewUI()) {
+      return getLineNumberAreaOffset() + getLineMarkerAreaWidth() + getGapBetweenAreas();
+    }
     return getIconAreaOffset() + myIconsAreaWidth + getGapAfterIconsArea();
   }
 
@@ -1756,7 +1759,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                                                                   : myForcedRightFreePaintersAreaWidth
                                          : 0;
     if (ExperimentalUI.isNewEditorTabs()) {
-      width += getGapBetweenAreas();
+      if (width == 0) return 0;
+      return FREE_PAINTERS_RIGHT_AREA_WIDTH.get();
     }
     return width;
   }
