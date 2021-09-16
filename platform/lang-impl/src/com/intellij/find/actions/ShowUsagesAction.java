@@ -259,7 +259,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     if (handler == null) return;
     //noinspection deprecation
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
-    showElementUsages(ShowUsagesParameters.initial(project, editor, popupPosition).withPsiElement(element), createActionHandler(handler, options));
+    showElementUsages(ShowUsagesParameters.initial(project, editor, popupPosition), createActionHandler(handler, options));
   }
 
   private static void rulesChanged(@NotNull UsageViewImpl usageView, @NotNull PingEDT pingEDT, JBPopup popup) {
@@ -365,6 +365,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         FindUsagesOptions newOptions = options.clone();
         newOptions.searchScope = searchScope;
         return createActionHandler(handler, newOptions);
+      }
+
+      @Override
+      public @Nullable Language getLanguage() {
+        return handler.getPsiElement().getLanguage();
+      }
+
+      @Override
+      public @NotNull Class<?> getTargetClass() {
+        return handler.getPsiElement().getClass();
       }
     };
   }
@@ -570,11 +580,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
           }
         }
 
-        Class<? extends PsiElement> targetClass = parameters.psiElement != null ? parameters.psiElement.getClass() : null;
-        Language language = parameters.psiElement != null ? parameters.psiElement.getLanguage() : null;
         long current = System.nanoTime();
-
-        UsageViewStatisticsCollector.logSearchFinished(project, targetClass, searchScope, language, usages.size(),
+        UsageViewStatisticsCollector.logSearchFinished(project,
+           actionHandler.getTargetClass(), searchScope, actionHandler.getLanguage(), usages.size(),
            TimeUnit.MILLISECONDS.convert(current - firstUsageAddedTS.get(), TimeUnit.NANOSECONDS),
            TimeUnit.MILLISECONDS.convert(current - searchStarted, TimeUnit.NANOSECONDS),
            tooManyResults.get(),
@@ -788,7 +796,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         SearchScope scope = scopeChooserCombo.getSelectedScope();
         if (scope != null) {
           UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope,
-                                                       parameters.psiElement != null ? parameters.psiElement.getClass() : null);
+                                                       actionHandler.getTargetClass());
           cancel(popupRef.get());
           showElementUsages(parameters, actionHandler.withScope(scope));
         }

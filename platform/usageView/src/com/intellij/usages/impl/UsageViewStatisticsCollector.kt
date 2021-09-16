@@ -94,7 +94,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun logSearchFinished(project: Project?,
-                          targetClass: Class<out PsiElement>?,
+                          targetClass: Class<*>?,
                           scope: SearchScope?,
                           language: Language?,
                           results: Int,
@@ -119,7 +119,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     fun logScopeChanged(project: Project?,
                         previousScope: SearchScope?,
                         newScope: SearchScope?,
-                        symbolClass: Class<out PsiElement>?) {
+                        symbolClass: Class<*>?) {
       val scopeIdMapper = ScopeIdMapper.instance
       scopeChanged.log(project,
         previousScope?.let{ scopeIdMapper.getScopeSerializationId(it.displayName) },

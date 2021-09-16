@@ -10,6 +10,7 @@ import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.lang.LangBundle
+import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
@@ -66,6 +67,10 @@ internal data class ShowTargetUsagesActionHandler<O>(
   override fun getSelectedScope(): SearchScope = allOptions.options.searchScope
 
   override fun getMaximalScope(): SearchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)
+
+  override fun getLanguage(): Language? = null
+
+  override fun getTargetClass(): Class<*> = target::class.java
 
   companion object {
 
