@@ -28,7 +28,7 @@ class FileHistoryTest {
     val baseController = BaseController(permanentGraphInfo)
     val filteredController = object : FilteredController(baseController, permanentGraphInfo, fileNamesData.getCommits()) {}
 
-    val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, EMPTY_HISTORY)
+    val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, FileHistory.EMPTY)
     historyBuilder.accept(filteredController, permanentGraphInfo)
 
     val expectedResultGraph = graph(result)

@@ -18,7 +18,7 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
-import com.intellij.vcs.log.history.EMPTY_HISTORY
+import com.intellij.vcs.log.history.FileHistory
 import com.intellij.vcs.log.history.FileHistoryBuilder
 import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
@@ -150,7 +150,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     if (fileHistoryData.startPaths.size == 1 && fileHistoryData.startPaths.single().isDirectory) {
       val unmatchedRenames = matchingCommits?.let { fileHistoryData.getCommitsWithRenames().subtract(it) } ?: emptySet()
       val preprocessor = FileHistoryBuilder(null, fileHistoryData.startPaths.single(), fileHistoryData,
-                                            EMPTY_HISTORY, unmatchedRenames,
+                                            FileHistory.EMPTY, unmatchedRenames,
                                             removeTrivialMerges = FileHistoryBuilder.isRemoveTrivialMerges,
                                             refine = FileHistoryBuilder.isRefine)
       return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits?.union(unmatchedRenames), preprocessor)

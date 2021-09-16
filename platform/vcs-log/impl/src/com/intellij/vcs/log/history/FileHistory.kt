@@ -29,9 +29,11 @@ import java.util.function.BiConsumer
 class FileHistory internal constructor(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>,
                                        internal val processedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
                                        internal val unmatchedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
-                                       internal val commitToRename: MultiMap<UnorderedPair<Int>, Rename> = MultiMap.empty())
-
-internal val EMPTY_HISTORY = FileHistory(emptyMap())
+                                       internal val commitToRename: MultiMap<UnorderedPair<Int>, Rename> = MultiMap.empty()) {
+  companion object {
+    internal val EMPTY = FileHistory(emptyMap())
+  }
+}
 
 internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,

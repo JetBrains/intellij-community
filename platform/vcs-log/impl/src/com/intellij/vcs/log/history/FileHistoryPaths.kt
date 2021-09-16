@@ -12,8 +12,8 @@ object FileHistoryPaths {
 
   val VcsLogDataPack.fileHistory: FileHistory
     get() {
-      if (this !is VisiblePack) return EMPTY_HISTORY
-      return FILE_HISTORY.get(this) ?: EMPTY_HISTORY
+      if (this !is VisiblePack) return FileHistory.EMPTY
+      return FILE_HISTORY.get(this) ?: FileHistory.EMPTY
     }
 
   private val VcsLogDataPack.commitsToPathsMap: Map<Int, MaybeDeletedFilePath>
