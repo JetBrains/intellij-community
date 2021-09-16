@@ -166,7 +166,12 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return true;
   }
 
-  private boolean doReformat(@NotNull PsiFile fileToProcess, boolean processChangedTextOnly) {
+  private boolean doReformat(@NotNull PsiFile file, boolean processChangedTextOnly) {
+    PsiFile fileToProcess = ensureValid(file);
+    if (fileToProcess == null) {
+      LOG.warn("Invalid file " + file.getName() + ", skipping reformat");
+      return false;
+    }
     FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
     try {
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(fileToProcess);
