@@ -353,7 +353,8 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         } else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
           myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.depends.on.unavailable.value"));
         }
-      } else if (element instanceof PsiParameter) {
+      } else if (element instanceof PsiParameter && 
+                 PsiTreeUtil.isAncestor(((PsiParameter)element).getDeclarationScope(), myInitializer, true)) {
         boolean bound = false;
         for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
           if (parameter.getType().equals(((PsiParameter)element).getType()) && parameter.getName().equals(((PsiParameter)element).getName())) {
