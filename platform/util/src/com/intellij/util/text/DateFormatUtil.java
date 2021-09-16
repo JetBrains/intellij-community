@@ -4,13 +4,15 @@ package com.intellij.util.text;
 import com.intellij.UtilBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +22,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 public final class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
@@ -40,7 +40,6 @@ public final class DateFormatUtil {
   private static final SyncDateFormat TIME_FORMAT;
   private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT;
   private static final SyncDateFormat DATE_TIME_FORMAT;
-  private static final SyncDateFormat ABOUT_DATE_FORMAT;
   private static final SyncDateFormat ISO8601_FORMAT;
 
   static {
@@ -49,8 +48,6 @@ public final class DateFormatUtil {
     TIME_FORMAT = formats[1];
     TIME_WITH_SECONDS_FORMAT = formats[2];
     DATE_TIME_FORMAT = formats[3];
-
-    ABOUT_DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.LONG, Locale.US));
 
     @SuppressWarnings("SpellCheckingInspection") DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     iso8601.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -116,7 +113,8 @@ public final class DateFormatUtil {
   }
 
   public static @NlsSafe @NotNull String formatPrettyDate(long time) {
-    return doFormatPretty(time, false);
+    String pretty = doFormatPretty(time, false);
+    return pretty != null ? pretty : DATE_FORMAT.format(time);
   }
 
   public static @NlsSafe @NotNull String formatDateTime(Date date) {
@@ -132,18 +130,15 @@ public final class DateFormatUtil {
   }
 
   public static @NlsSafe @NotNull String formatPrettyDateTime(long time) {
-    return doFormatPretty(time, true);
+    String pretty = doFormatPretty(time, true);
+    return pretty != null ? pretty : DATE_TIME_FORMAT.format(time);
   }
 
   public static boolean isPrettyFormattingPossible(long time) {
-    return _doFormatPretty(time, true).second;
+    return doFormatPretty(time, true) != null;
   }
 
-  private static String doFormatPretty(long time, boolean formatTime) {
-    return _doFormatPretty(time, formatTime).first;
-  }
-
-  private static Pair<String, Boolean> _doFormatPretty(long time, boolean formatTime) {
+  private static @Nullable String doFormatPretty(long time, boolean formatTime) {
     long currentTime = Clock.getTime();
     Calendar c = Calendar.getInstance();
 
@@ -162,14 +157,14 @@ public final class DateFormatUtil {
     if (formatTime) {
       long delta = currentTime - time;
       if (delta >= 0 && delta <= HOUR + MINUTE) {
-        return pair(UtilBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE)), Boolean.TRUE);
+        return UtilBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
       }
     }
 
     boolean isToday = currentYear == year && currentDayOfYear == dayOfYear;
     if (isToday) {
       String result = UtilBundle.message("date.format.today");
-      return pair(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
+      return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
     }
 
     boolean isYesterdayOnPreviousYear =
@@ -177,10 +172,10 @@ public final class DateFormatUtil {
     boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
     if (isYesterday) {
       String result = UtilBundle.message("date.format.yesterday");
-      return pair(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
+      return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
     }
 
-    return pair(formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time), Boolean.FALSE);
+    return null;
   }
 
   public static @NlsSafe @NotNull String formatFrequency(long time) {
@@ -221,24 +216,22 @@ public final class DateFormatUtil {
     return "";
   }
 
-  /**
-   * @deprecated use NlsMessages.formatDateLong
-   */
+  /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
     return formatAboutDialogDate(date.getTime());
   }
 
-  /**
-   * @deprecated use NlsMessages.formatDateLong
-   */
+  /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static @NlsSafe @NotNull String formatAboutDialogDate(long time) {
-    return ABOUT_DATE_FORMAT.format(time);
+    return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(time);
   }
 
   /**
-   * Return sample date, that can be used to determine preferred string width.
+   * Return sample date that can be used to determine preferred string width.
    * <p>
    * We should not use {@code new Date()} to ensure results are reproducible (and to avoid "Today" for pretty formats).
    * Returned date is expected to return maximum width string for date formats like "d.m.yy H:M".
@@ -249,7 +242,7 @@ public final class DateFormatUtil {
   }
 
   //<editor-fold desc="Helpers.">
-  private static String someTimeAgoMessage(final Period period, final int n) {
+  private static String someTimeAgoMessage(Period period, int n) {
     switch (period) {
       case DAY:
         return UtilBundle.message("date.format.n.days.ago", n);
@@ -266,7 +259,7 @@ public final class DateFormatUtil {
     }
   }
 
-  private static String composeInSomeTimeMessage(final Period period, final int n) {
+  private static String composeInSomeTimeMessage(Period period, int n) {
     switch (period) {
       case DAY:
         return UtilBundle.message("date.format.in.n.days", n);
@@ -286,13 +279,13 @@ public final class DateFormatUtil {
   private static SyncDateFormat[] getDateTimeFormats() {
     DateFormat[] formats = null;
     try {
-      if (SystemInfoRt.isMac && JnaLoader.isLoaded()) {
+      if (SystemInfo.isMac && JnaLoader.isLoaded()) {
         formats = getMacFormats();
       }
-      else if (SystemInfoRt.isUnix) {
+      else if (SystemInfo.isUnix) {
         formats = getUnixFormats();
       }
-      else if (SystemInfoRt.isWindows && JnaLoader.isLoaded() ) {
+      else if (SystemInfo.isWindows && JnaLoader.isLoaded() ) {
         formats = getWindowsFormats();
       }
     }
@@ -444,9 +437,7 @@ public final class DateFormatUtil {
   }
 
   private static String fixWindowsFormat(String format) {
-    format = format.replaceAll("g+", "G");
-    format = StringUtil.replace(format, "tt", "a");
-    return format;
+    return format.replaceAll("g+", "G").replace("tt", "a");
   }
 
   private static DateFormat formatFromString(String format, Locale locale) {
