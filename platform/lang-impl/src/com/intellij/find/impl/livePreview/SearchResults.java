@@ -58,8 +58,6 @@ public class SearchResults implements DocumentListener, CaretListener {
       if (occurrenceAtCaret != null && occurrenceAtCaret != myCursor) {
         moveCursorTo(occurrenceAtCaret, false, false);
         myEditor.getCaretModel().moveToOffset(offset);
-        myEditor.getSelectionModel().removeSelection();
-        notifyCursorMoved();
       }
     }
   }
