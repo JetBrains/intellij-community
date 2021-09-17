@@ -376,7 +376,15 @@ final class ActionUpdater {
     if (!myPreCacheSlowDataKeys) return;
     long start = System.currentTimeMillis();
     for (DataKey<?> key : DataKey.allKeys()) {
-      myDataContext.getData(key);
+      try {
+        myDataContext.getData(key);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
+      }
+      catch (Throwable ex) {
+        LOG.error(ex);
+      }
     }
     myPreCacheSlowDataKeys = false;
     long time = System.currentTimeMillis() - start;
