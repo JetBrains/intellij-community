@@ -11,7 +11,8 @@ import com.intellij.psi.util.PsiTreeUtil.findElementOfClassAtRange
 import com.intellij.util.Function
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -143,7 +144,7 @@ private class KtExpressionPostfixTemplateSelector(
         }
         if (checkCanBeUsedAsValue && !element.canBeUsedAsValue()) return false
 
-        return predicate?.invoke(element, element.analyze(BodyResolveMode.PARTIAL)) ?: true
+        return predicate?.invoke(element, element.safeAnalyze(element.getResolutionFacade(), BodyResolveMode.PARTIAL)) ?: true
     }
 
     private fun KtExpression.canBeUsedAsValue() =

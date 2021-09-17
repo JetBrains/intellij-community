@@ -82,28 +82,23 @@ fun KtParameter.resolveToParameterDescriptorIfAny(
 fun KtElement.resolveToCall(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.PARTIAL
-): ResolvedCall<out CallableDescriptor>? =
-    getResolvedCall(safeAnalyze(resolutionFacade, bodyResolveMode))
+): ResolvedCall<out CallableDescriptor>? = getResolvedCall(safeAnalyze(resolutionFacade, bodyResolveMode))
 
 
 fun KtElement.safeAnalyze(
     resolutionFacade: ResolutionFacade,
-    bodyResolveMode: BodyResolveMode
-): BindingContext {
-    val context = try {
-        analyze(resolutionFacade, bodyResolveMode)
-    } catch (e: Exception) {
-        e.returnIfNoDescriptorForDeclarationException { BindingContext.EMPTY }
-    }
-    return context
+    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
+): BindingContext = try {
+    analyze(resolutionFacade, bodyResolveMode)
+} catch (e: Exception) {
+    e.returnIfNoDescriptorForDeclarationException { BindingContext.EMPTY }
 }
 
 @JvmOverloads
 fun KtElement.analyze(
     resolutionFacade: ResolutionFacade,
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
-): BindingContext =
-    resolutionFacade.analyze(this, bodyResolveMode)
+): BindingContext = resolutionFacade.analyze(this, bodyResolveMode)
 
 fun KtElement.analyzeAndGetResult(resolutionFacade: ResolutionFacade): AnalysisResult =
     AnalysisResult.success(resolutionFacade.analyze(this), resolutionFacade.moduleDescriptor)
