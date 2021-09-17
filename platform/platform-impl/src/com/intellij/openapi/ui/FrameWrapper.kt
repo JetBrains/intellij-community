@@ -57,7 +57,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   private var onCloseHandler: BooleanGetter? = null
   private var frame: Window? = null
   private var project: Project? = null
-  private var focusWatcher: FocusWatcher? = null
   private var isDisposing = false
 
   var isDisposed = false
@@ -171,8 +170,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
         doBindAppMenuOfParent(frame, parentFrame)
       }
     }
-    focusWatcher = FocusWatcher()
-    focusWatcher!!.install(component!!)
   }
 
   fun show(restoreBounds: Boolean) {
@@ -213,10 +210,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     this.frame = null
     preferredFocusedComponent = null
     project = null
-    if (component != null && focusWatcher != null) {
-      focusWatcher!!.deinstall(component)
-    }
-    focusWatcher = null
     component = null
     images = emptyList()
     isDisposed = true
