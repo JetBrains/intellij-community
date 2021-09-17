@@ -487,6 +487,12 @@ public final class ControlFlowUtils {
     return collector.getCollectedStatements();
   }
 
+  public static Instruction @NotNull [] getCaseSectionInstructions(GrCaseSection caseSection) {
+    return CachedValuesManager.getCachedValue(caseSection, () -> {
+      return CachedValueProvider.Result.create(new ControlFlowBuilder().buildControlFlow(caseSection), caseSection);
+    });
+  }
+
   @Nullable
   public static GrExpression extractReturnExpression(GrStatement returnStatement) {
     if (returnStatement instanceof GrReturnStatement) return ((GrReturnStatement)returnStatement).getReturnValue();
