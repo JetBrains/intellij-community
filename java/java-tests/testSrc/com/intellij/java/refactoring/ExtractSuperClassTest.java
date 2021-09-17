@@ -108,6 +108,11 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
            new RefactoringTestUtil.MemberDescriptor("c", PsiField.class)
            );
   }
+  
+  public void testAccessibleClasses() {
+    doTest("a.Test", "TestSubclass", null, "a",
+           new RefactoringTestUtil.MemberDescriptor("a", PsiField.class));
+  }
 
   public void testSameTypeParameterName() {
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("A", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("B", PsiClass.class));
