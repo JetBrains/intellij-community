@@ -406,16 +406,16 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       boolean delegate = false;
       PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, myExpr, myLocalVar);
 
-      final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
+      final var activeIntroducer = (InplaceIntroduceParameterPopup)AbstractInplaceIntroducer.getActiveIntroducer(myEditor);
       if (activeIntroducer != null) {
         activeIntroducer.stopIntroduce(myEditor);
-        myExpr = (PsiExpression)activeIntroducer.getExpr();
+        myExpr = activeIntroducer.getExpr();
         myLocalVar = (PsiLocalVariable)activeIntroducer.getLocalVariable();
-        occurrences = (PsiExpression[])activeIntroducer.getOccurrences();
+        occurrences = activeIntroducer.getOccurrences();
         enteredName = activeIntroducer.getInputName();
-        replaceChoice = ((InplaceIntroduceParameterPopup)activeIntroducer).getReplaceChoice();
-        delegate = ((InplaceIntroduceParameterPopup)activeIntroducer).isGenerateDelegate();
-        initializerType = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
+        replaceChoice = activeIntroducer.getReplaceChoice();
+        delegate = activeIntroducer.isGenerateDelegate();
+        initializerType = activeIntroducer.getType();
       }
 
       boolean mustBeFinal = false;

@@ -64,6 +64,11 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     doTest(null);
   }
 
+  public void testBlockScope() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace 0 occurrences in 'if-then' block")));
+    doTest(null);
+  }
+
   public void testLocalInsideAnonymous() {
     doTest(null);
   }
