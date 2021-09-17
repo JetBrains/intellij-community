@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
-@SuppressWarnings({"OverlyComplexClass"})
+@SuppressWarnings("OverlyComplexClass")
 public final class ControlFlowUtils {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);
 
@@ -72,6 +72,7 @@ public final class ControlFlowUtils {
     if (statement instanceof GrBreakStatement ||
         statement instanceof GrContinueStatement ||
         statement instanceof GrReturnStatement ||
+        statement instanceof GrYieldStatement ||
         statement instanceof GrThrowStatement) {
       return false;
     }

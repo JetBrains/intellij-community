@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.inspections
 
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyFallthroughInspection
 
@@ -8,6 +10,8 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyFallthroughInsp
  * @author Bas Leijdekkers
  */
 class GroovyFallthroughInspectionTest extends LightGroovyTestCase {
+
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_4_0
 
   private void doTest(final String text) {
     myFixture.configureByText('_.groovy', text)
@@ -51,6 +55,32 @@ switch ( x ) {
 
 assert result == "number"
 ''')
+  }
+
+  void testNoInspectionWithArrow() {
+    doTest """
+def x = 1
+switch(x) {
+  case 10 -> 20
+  case 20 -> 30
+  default -> 40
+}
+"""
+  }
+
+  void testCheckYield() {
+    doTest """
+def x = 1
+def y = switch(x) {
+  case 1:
+  <warning>case</warning> 10:
+    yield 20
+  case 20: 
+    yield 30
+  default: 
+    yield 40
+}
+"""
   }
 
 }
