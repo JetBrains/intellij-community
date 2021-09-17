@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -100,8 +101,12 @@ fun KtElement.analyze(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
 ): BindingContext = resolutionFacade.analyze(this, bodyResolveMode)
 
-fun KtElement.analyzeAndGetResult(resolutionFacade: ResolutionFacade): AnalysisResult =
+fun KtElement.analyzeAndGetResult(resolutionFacade: ResolutionFacade): AnalysisResult = try {
     AnalysisResult.success(resolutionFacade.analyze(this), resolutionFacade.moduleDescriptor)
+} catch (e: Exception) {
+    if (e is ControlFlowException) throw e
+    AnalysisResult.internalError(BindingContext.EMPTY, e)
+}
 
 // This function is used on declarations to make analysis not only declaration itself but also it content:
 // body for declaration with body, initializer & accessors for properties
