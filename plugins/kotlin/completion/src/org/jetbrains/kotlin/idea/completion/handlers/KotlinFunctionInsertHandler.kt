@@ -167,7 +167,9 @@ fun createNormalFunctionInsertHandler(
                 "$fooBar<caret>"
                   \- normalizedBeforeFunctionOffset
              */
-            val lookupElementEndPosition = functionStartOffset + functionName.asString().length // NB! It's `asString()` on purpose, do not change to `render()`
+            val lookupElementEndPosition =
+                functionStartOffset + functionName.asString().length // NB! It's `asString()` on purpose, do not change to `render()`
+
             val normalizedBeforeFunctionOffset = functionStartOffset - lookupElementEndPosition
 
             // surroundWithBracesIfInStringTemplate
@@ -183,7 +185,11 @@ fun createNormalFunctionInsertHandler(
                         if (!dollarIsEscaped) {
                             argumentsStringToInsert.append('}')
 
-                            prefixModificationOperation = DeclarativeInsertHandler2.RelativeTextEdit(normalizedBeforeFunctionOffset, normalizedBeforeFunctionOffset, "{")
+                            prefixModificationOperation = DeclarativeInsertHandler2.RelativeTextEdit(
+                                normalizedBeforeFunctionOffset,
+                                normalizedBeforeFunctionOffset,
+                                "{"
+                            )
                         }
                     }
                 }
@@ -204,20 +210,29 @@ fun createNormalFunctionInsertHandler(
                         if (!alreadyHasTickAtFront) {
                             // backtick is not present already, so need to add it manually
                             prefixModificationOperation = when (val operation = prefixModificationOperation) {
-                                null -> DeclarativeInsertHandler2.RelativeTextEdit(normalizedBeforeFunctionOffset, normalizedBeforeFunctionOffset, "`")
+                                null -> DeclarativeInsertHandler2.RelativeTextEdit(
+                                    normalizedBeforeFunctionOffset,
+                                    normalizedBeforeFunctionOffset,
+                                    "`"
+                                )
                                 else -> operation.copy(newText = operation.newText + '`')
                             }
                         }
+
                         if (!alreadyHasBackTickInTheEnd) {
                             argumentsStringToInsert.insert(0, "`")
                             builder.offsetToPutCaret += 1
                         }
-                    }
-                    else {
+                    } else {
                         // no backticks required
                         if (alreadyHasTickAtFront) {
                             prefixModificationOperation = when (val operation = prefixModificationOperation) {
-                                null -> DeclarativeInsertHandler2.RelativeTextEdit(normalizedBeforeFunctionOffset, normalizedBeforeFunctionOffset + 1, "")
+                                null -> DeclarativeInsertHandler2.RelativeTextEdit(
+                                    normalizedBeforeFunctionOffset,
+                                    normalizedBeforeFunctionOffset + 1,
+                                    ""
+                                )
+
                                 else -> operation.copy(rangeTo = operation.rangeTo + 1) // already insert brace in front, now need to turn insertion into replacement
                             }
                         }
@@ -230,8 +245,7 @@ fun createNormalFunctionInsertHandler(
         if (alreadyHasBackTickInTheEnd) {
             builder.addOperation(1, argumentsStringToInsert.toString())
             builder.offsetToPutCaret += 1
-        }
-        else {
+        } else {
             builder.addOperation(0, argumentsStringToInsert.toString())
         }
 
@@ -241,11 +255,14 @@ fun createNormalFunctionInsertHandler(
             // that's why we provide fake context which is adjusted
             // NB: it is important to fork context here and keep the original one intact
             context.forkByOffsetMap().also { forkedContext ->
-                val newStartOffset = if (editor.document.isTextAt(forkedContext.startOffset, "{")) {
-                    forkedContext.startOffset + 1
-                } else if (forkedContext.startOffset > 0 && editor.document.isTextAt(forkedContext.startOffset - 1, "`")) {
-                    forkedContext.startOffset - 1
-                } else forkedContext.startOffset
+                val forkedDocument = forkedContext.document
+                val newStartOffset = when {
+                    forkedDocument.isTextAt(forkedContext.startOffset, "{") -> forkedContext.startOffset + 1
+                    forkedContext.startOffset > 0 && forkedDocument.isTextAt(forkedContext.startOffset - 1, "`") ->
+                        forkedContext.startOffset - 1
+
+                    else -> forkedContext.startOffset
+                }
 
                 val newTailOffset = newStartOffset + functionName.render().length
 
@@ -257,13 +274,13 @@ fun createNormalFunctionInsertHandler(
 
                 // hack for KT-31902
                 if (callType == CallType.DEFAULT) {
-                    val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+                    val psiDocumentManager = PsiDocumentManager.getInstance(forkedContext.project)
 
-                    context.file
+                    forkedContext.file
                         .findElementAt(forkedContext.startOffset)
                         ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
                         ?.createSmartPointer()?.let {
-                            psiDocumentManager.commitDocument(forkedContext.document)
+                            psiDocumentManager.commitDocument(forkedDocument)
                             val dotQualifiedExpression = it.element ?: return@let
                             KotlinCallableInsertHandler.SHORTEN_REFERENCES.process(dotQualifiedExpression)
                         }
