@@ -5,7 +5,8 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.ui.ScalingDeferredSquareImageIcon
+import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
+import com.intellij.ui.ScalingAsyncImageIcon
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.IconUtil
@@ -15,6 +16,7 @@ import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.*
+import java.util.concurrent.CompletableFuture
 import javax.swing.*
 
 class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
@@ -106,11 +108,18 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
 
   private fun getAvatarIcon(account: A): Icon {
     val image = getAvatarImage(account)
-    if (image == null) return IconUtil.resizeSquared(defaultAvatarIcon, 40)
+    val iconSize = 40
+    if (image == null) return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
     return avatarIcons.getOrPut(account) {
-      ScalingDeferredSquareImageIcon(40, defaultAvatarIcon, account) {
-        getAvatarImage(account)
-      }
+      ScalingAsyncImageIcon(
+        iconSize,
+        defaultAvatarIcon,
+        imageLoader = {
+          CompletableFuture<Image?>().completeAsync({
+            getAvatarImage(account)
+          }, CachingAvatarIconsProvider.avatarLoadingExecutor)
+        }
+      )
     }
   }
 
