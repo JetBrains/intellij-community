@@ -221,6 +221,13 @@
         </element>
         <element id="library" level="project" name="kotlinc.analysis-api-providers" />
         <element id="library" level="project" name="kotlinc.symbol-light-classes" />
+        <element id="archive" name="fir-fe10-binding.jar">
+          <element id="module-output" name="kotlin.fir.fir-fe10-binding" />
+        </element>
+        <element id="library" level="project" name="kotlinc.kotlin-compiler-ir" />
+        <element id="library" level="project" name="kotlinc.kotlin-compiler-fir" />
+        <element id="library" level="project" name="kotlinc.kotlin-compiler-common" />
+        <element id="library" level="project" name="kotlinc.kotlin-compiler-fe10" />
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.4.30-dev-local-2/kotlin-dist-for-ide-1.4.30-dev-local-2.jar" path-in-jar="/" />
