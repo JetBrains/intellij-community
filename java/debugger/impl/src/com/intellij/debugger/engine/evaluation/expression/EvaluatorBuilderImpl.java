@@ -788,6 +788,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitConditionalExpression " + expression);
       }
+      final PsiType expectedType = expression.getType();
       final PsiExpression thenExpression = expression.getThenExpression();
       final PsiExpression elseExpression = expression.getElseExpression();
       if (thenExpression == null || elseExpression == null){
@@ -809,7 +810,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         throwExpressionInvalid(elseExpression);
       }
       Evaluator elseEvaluator = myResult;
-      myResult = new ConditionalExpressionEvaluator(conditionEvaluator, thenEvaluator, elseEvaluator);
+      myResult = new ConditionalExpressionEvaluator(conditionEvaluator,
+                                                    thenEvaluator,
+                                                    elseEvaluator,
+                                                    expectedType == null ? null : expectedType.getCanonicalText());
     }
 
     @Override
