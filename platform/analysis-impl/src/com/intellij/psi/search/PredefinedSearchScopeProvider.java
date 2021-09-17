@@ -21,6 +21,8 @@ public abstract class PredefinedSearchScopeProvider {
   }
 
   /**
+   * Don't use this method with option {@code usageView } enabled as it may cause UI freezes.
+   * Prefer to use {@link PredefinedSearchScopeProvider#getPredefinedScopesAsync} instead wherever possible.
    * @param suggestSearchInLibs  add <i>Project and Libraries</i> scope
    * @param prevSearchFiles  add <i>Files in Previous Search Result</i> instead of <i>Previous Search Result</i> (only if {@code usageView == true})
    * @param currentSelection  add <i>Selection</i> scope if text is selected in the editor
