@@ -15,10 +15,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManagerEx;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
@@ -72,7 +69,10 @@ import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -1464,15 +1464,7 @@ public class MavenUtil {
   }
 
   public static File getMavenPluginParentFile() {
-    java.nio.file.Path path = Paths.get(StringUtils.EMPTY).toAbsolutePath();
-    if (path.endsWith("maven")) return path.toFile();
-    File mavenPluginRootDirectory = path.getParent().resolve("community/plugins/maven").toFile();
-    if (mavenPluginRootDirectory.exists()) return mavenPluginRootDirectory;
-    return path.resolve("community/plugins/maven").toFile();
-  }
-
-  public static MavenDistribution getEffectiveMavenHome(Project project, String workingDirectory) {
-    return MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirectory);
+    return Paths.get(PathManager.getCommunityHomePath(), "plugins", "maven").toFile();
   }
 
   @ApiStatus.Internal
