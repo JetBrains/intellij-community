@@ -74,6 +74,7 @@ public final class ThreadTracker {
       "AWT-Shutdown",
       "AWT-Windows",
       "Batik CleanerThread",
+      "Cidr Symbol Building Thread", // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
       "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
       "CompilerThread0",
       "dockerjava-netty",
@@ -106,8 +107,7 @@ public final class ThreadTracker {
       "UserActivityMonitor thread",
       "VM Periodic Task Thread",
       "VM Thread",
-      "YJPAgent-Telemetry",
-      "Cidr Symbol Building Thread" // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
+      "YJPAgent-Telemetry"
     );
     List<String> sorted = new ArrayList<>(offenders);
     sorted.sort(String::compareToIgnoreCase);
