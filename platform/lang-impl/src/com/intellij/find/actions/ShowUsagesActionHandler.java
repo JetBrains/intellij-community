@@ -30,7 +30,7 @@ interface ShowUsagesActionHandler {
 
   @NotNull SearchScope getMaximalScope();
 
-  @Nullable Language getLanguage();
+  @Nullable Language getTargetLanguage();
 
   @NotNull Class<?> getTargetClass();
 

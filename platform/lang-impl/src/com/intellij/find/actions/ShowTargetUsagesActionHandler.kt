@@ -68,7 +68,7 @@ internal data class ShowTargetUsagesActionHandler<O>(
 
   override fun getMaximalScope(): SearchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)
 
-  override fun getLanguage(): Language? = null
+  override fun getTargetLanguage(): Language? = null
 
   override fun getTargetClass(): Class<*> = target::class.java
 

@@ -368,7 +368,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
 
       @Override
-      public @Nullable Language getLanguage() {
+      public Language getTargetLanguage() {
         return handler.getPsiElement().getLanguage();
       }
 
