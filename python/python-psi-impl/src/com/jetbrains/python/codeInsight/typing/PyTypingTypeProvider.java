@@ -786,7 +786,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
     PsiFile file = element.getContainingFile();
     if (file instanceof PyFile && ((PyFile)file).hasImportFromFuture(FutureFeature.ANNOTATIONS)) {
-      return file == element || PsiTreeUtil.getParentOfType(element, PyAnnotation.class, false, ScopeOwner.class) != null;
+      return file == element || PsiTreeUtil.getParentOfType(element, PyAnnotation.class, false, PyStatement.class) != null;
     }
 
     return false;
@@ -1729,16 +1729,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static boolean isInsideTypeHint(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
-    if (PsiTreeUtil.getParentOfType(realContext, PyAnnotation.class, false, ScopeOwner.class) != null) {
+    if (PsiTreeUtil.getParentOfType(realContext, PyAnnotation.class, false, PyStatement.class) != null) {
       return true;
     }
 
-    final PsiComment comment = PsiTreeUtil.getParentOfType(realContext, PsiComment.class, false, ScopeOwner.class);
+    final PsiComment comment = PsiTreeUtil.getParentOfType(realContext, PsiComment.class, false, PyStatement.class);
     if (comment != null && getTypeCommentValue(comment.getText()) != null) {
       return true;
     }
 
-    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(realContext, PyAssignmentStatement.class);
+    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(realContext, PyAssignmentStatement.class, false, PyStatement.class);
     if (assignment != null &&
         PsiTreeUtil.isAncestor(assignment.getAssignedValue(), realContext, false) &&
         isExplicitTypeAlias(assignment, context)) {
