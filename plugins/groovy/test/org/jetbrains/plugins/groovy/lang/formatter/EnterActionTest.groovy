@@ -338,6 +338,19 @@ switch(x) {
 """
   }
 
+  void testWrapAfterSwitchArrowedExpression() {
+    doTest """
+switch(x) {
+  case 0 -> zzz<caret>
+}
+""", """
+switch(x) {
+  case 0 -> zzz
+  <caret>
+}
+"""
+  }
+
   void testAlmostBeforeClosingClosureBrace() throws Throwable {
     doTest  """
 def c = { a ->

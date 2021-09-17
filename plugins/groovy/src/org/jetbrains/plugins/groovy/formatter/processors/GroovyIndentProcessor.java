@@ -540,10 +540,13 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   public static boolean isFinishedCase(GrCaseSection psiParent, int newIndex) {
-    final PsiElement[] children = psiParent.getChildren();
+    GrStatement[] statements = psiParent.getStatements();
     newIndex--;
-    for (int i = 0; i < children.length && i < newIndex; i++) {
-      PsiElement child = children[i];
+    if (psiParent.getArrow() != null && statements.length == 1) {
+      return true;
+    }
+    for (int i = 0; i < statements.length && i < newIndex; i++) {
+      PsiElement child = statements[i];
       if (child instanceof GrBreakStatement ||
           child instanceof GrContinueStatement ||
           child instanceof GrReturnStatement ||
