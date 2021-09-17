@@ -272,12 +272,14 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyListCompExpression(final @NotNull PyListCompExpression node) {
     super.visitPyListCompExpression(node);
 
-    registerForAllMatchingVersions(
-      level -> registerForLanguageLevel(level) && UnsupportedFeaturesUtil.listComprehensionIteratesOverNonParenthesizedTuple(node, level),
-      PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax.in.list.comprehensions"),
-      ContainerUtil.map(node.getForComponents(), PyComprehensionForComponent::getIteratedList),
-      new ReplaceListComprehensionsQuickFix()
-    );
+    for (PyComprehensionForComponent component : node.getForComponents()) {
+      registerForAllMatchingVersions(
+        level -> registerForLanguageLevel(level) && UnsupportedFeaturesUtil.listComprehensionIteratesOverNonParenthesizedTuple(node, level),
+        PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax.in.list.comprehensions"),
+        component.getIteratedList(),
+        new ReplaceListComprehensionsQuickFix()
+      );
+    }
   }
 
   @Override
@@ -503,48 +505,23 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
                                                 @NotNull @Nls String suffix,
-                                                @NotNull Iterable<Pair<? extends PsiElement, TextRange>> nodesWithRanges,
+                                                @NotNull PsiElement node,
+                                                @NotNull TextRange range,
                                                 boolean asError,
-                                                LocalQuickFix... fixes) {
-    final List<String> levels = myVersionsToProcess
-      .stream()
-      .filter(levelPredicate)
-      .map(LanguageLevel::toString)
-      .collect(Collectors.toList());
-
+                                                LocalQuickFix @NotNull ... fixes) {
+    final List<LanguageLevel> levels = ContainerUtil.filter(myVersionsToProcess, levelPredicate::test);
     if (!levels.isEmpty()) {
-      @NlsSafe String versions = StringUtil.join(levels, ", ");
+      @NlsSafe String versions = StringUtil.join(levels,", ");
       @InspectionMessage String message = PyPsiBundle.message("INSP.compatibility.inspection.unsupported.feature.prefix",
                                                               levels.size(), versions, suffix);
-      for (Pair<? extends PsiElement, TextRange> nodeWithRange : nodesWithRanges) {
-        registerProblem(nodeWithRange.first, nodeWithRange.second, message, asError, fixes);
-      }
+      registerProblem(node, range, message, asError, fixes);
     }
   }
 
   protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
                                                 @NotNull @Nls String suffix,
-                                                @NotNull Iterable<? extends PsiElement> nodes,
-                                                LocalQuickFix... fixes) {
-    final List<Pair<? extends PsiElement, TextRange>> nodesWithRanges =
-      ContainerUtil.map(nodes, node -> Pair.createNonNull(node, node.getTextRange()));
-    registerForAllMatchingVersions(levelPredicate, suffix, nodesWithRanges, true, fixes);
-  }
-
-  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
-                                                @NotNull @Nls String suffix,
                                                 @NotNull PsiElement node,
-                                                @NotNull TextRange range,
-                                                boolean asError,
-                                                LocalQuickFix... fixes) {
-    final List<Pair<? extends PsiElement, TextRange>> nodesWithRanges = Collections.singletonList(Pair.createNonNull(node, range));
-    registerForAllMatchingVersions(levelPredicate, suffix, nodesWithRanges, asError, fixes);
-  }
-
-  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
-                                                @NotNull @Nls String suffix,
-                                                @NotNull PsiElement node,
-                                                LocalQuickFix... fixes) {
+                                                LocalQuickFix @NotNull... fixes) {
     registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), true, fixes);
   }
 
