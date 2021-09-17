@@ -5,6 +5,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtExecutorService
+import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
@@ -32,8 +33,11 @@ class ScalingAsyncImageIcon(
   // so it is better to cache icon for each
   private val scaledIconCache = ScaleContext.Cache { scaleCtx ->
     val imageIcon = imageLoader()
-      .thenApplyAsync({
-        it?.convertToIcon(size, scaleCtx)
+      .thenApplyAsync({ image ->
+        image?.let {
+          val resizedImage = ImageUtil.resize(it, size, scaleCtx)
+          IconUtil.createImageIcon(resizedImage)
+        }
       }, resizeExecutor)
 
     DelegatingIcon(baseIcon, imageIcon)
