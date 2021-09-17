@@ -168,7 +168,6 @@ public final class BuildManager implements Disposable {
   private final Executor myAutomakeTrigger = AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildManager Auto-Make Trigger", 1);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
-  private boolean myGeneratePortableCachesEnabled = false;
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
@@ -1406,7 +1405,7 @@ public final class BuildManager implements Disposable {
     }
 
     // portable caches
-    if (isGeneratePortableCachesEnabled()) {
+    if (Registry.is("compiler.process.use.portable.caches")) {
       //cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
       //cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");
       cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");
@@ -1718,17 +1717,6 @@ public final class BuildManager implements Disposable {
     myBuildProcessDebuggingEnabled = buildProcessDebuggingEnabled;
     if (myBuildProcessDebuggingEnabled) {
       cancelAllPreloadedBuilds();
-    }
-  }
-
-  public boolean isGeneratePortableCachesEnabled() {
-    return myGeneratePortableCachesEnabled;
-  }
-
-  public void setGeneratePortableCachesEnabled(boolean generatePortableCachesEnabled) {
-    if (myGeneratePortableCachesEnabled != generatePortableCachesEnabled) {
-      myGeneratePortableCachesEnabled = generatePortableCachesEnabled;
-      clearState();
     }
   }
 

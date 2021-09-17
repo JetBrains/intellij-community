@@ -122,6 +122,14 @@ public final class CmdlineProtoUtil {
     return builder.build();
   }
 
+  public static CmdlineRemoteProto.Message.ControllerMessage createRequestParamsCommand(@NotNull Map<String, String> headers) {
+    CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParam =
+      CmdlineRemoteProto.Message.ControllerMessage.RequestParams.newBuilder().putAllAuthHeaders(headers).build();
+    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
+      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.AUTHENTICATION_TOKEN)
+      .setRequestParams(requestParam).build();
+  }
+
   public static CmdlineRemoteProto.Message.ControllerMessage createCancelCommand() {
     return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
       .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.CANCEL_BUILD_COMMAND).build();
@@ -239,6 +247,10 @@ public final class CmdlineProtoUtil {
 
   public static BuilderMessage createParamRequest() {
     return BuilderMessage.newBuilder().setType(BuilderMessage.Type.PARAM_REQUEST).build();
+  }
+
+  public static BuilderMessage createAuthTokenRequest() {
+    return BuilderMessage.newBuilder().setType(BuilderMessage.Type.AUTH_TOKEN_REQUEST).build();
   }
 
   public static CmdlineRemoteProto.Message toMessage(UUID sessionId, BuilderMessage builderMessage) {

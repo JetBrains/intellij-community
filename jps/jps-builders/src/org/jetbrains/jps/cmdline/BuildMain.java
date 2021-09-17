@@ -239,7 +239,11 @@ public final class BuildMain {
             }
             return;
           }
-
+          case AUTHENTICATION_TOKEN: {
+            CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParams = controllerMessage.getRequestParams();
+            System.out.println("Got request params: " + requestParams.getAuthHeadersMap());
+            return;
+          }
           case CONSTANT_SEARCH_RESULT: {
             // ignored, functionality deprecated
             return;

@@ -34,6 +34,7 @@ message Message {
       CANCEL_BUILD_COMMAND = 2;
       FS_EVENT = 3;
       CONSTANT_SEARCH_RESULT = 4;
+      AUTHENTICATION_TOKEN = 5;
     }
 
     message FSEvent {
@@ -75,10 +76,15 @@ message Message {
       repeated string path = 4;
     }
 
+    message RequestParams {
+      map<string, string> auth_headers = 1;
+    }
+
     required Type type = 1;
     optional ParametersMessage params_message = 2;
     optional FSEvent fs_event = 3;
     optional ConstantSearchResult constant_search_result = 4;
+    optional RequestParams request_params = 5;
   }
 
   message BuilderMessage {
@@ -87,6 +93,7 @@ message Message {
       BUILD_EVENT = 2;
       COMPILE_MESSAGE = 3;
       CONSTANT_SEARCH_TASK = 4;
+      AUTH_TOKEN_REQUEST = 5;
     }
 
     message BuildEvent {

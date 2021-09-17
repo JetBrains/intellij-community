@@ -1,13 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
+import com.intellij.compiler.cache.client.JpsServerAuthUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
+import java.util.Map;
 import java.util.UUID;
 
 public abstract class DefaultMessageHandler implements BuilderMessageHandler {
@@ -44,6 +47,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         if (compileMessage.getKind() == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.INTERNAL_BUILDER_ERROR) {
           LOG.error("Internal build error:\n" + compileMessage.getText());
         }
+        break;
+      case AUTH_TOKEN_REQUEST:
+        Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
+        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestParamsCommand(headers)));
+        System.out.println("Message got");
         break;
       case CONSTANT_SEARCH_TASK:
         // ignored, because the functionality is deprecated

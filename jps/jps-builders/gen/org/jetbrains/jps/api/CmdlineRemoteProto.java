@@ -1544,6 +1544,17 @@ public final class CmdlineRemoteProto {
        * @return The constantSearchResult.
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getConstantSearchResult();
+
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+       * @return Whether the requestParams field is set.
+       */
+      boolean hasRequestParams();
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+       * @return The requestParams.
+       */
+      org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getRequestParams();
     }
     /**
      * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage}
@@ -1577,6 +1588,10 @@ public final class CmdlineRemoteProto {
          * <code>CONSTANT_SEARCH_RESULT = 4;</code>
          */
         CONSTANT_SEARCH_RESULT(4),
+        /**
+         * <code>AUTHENTICATION_TOKEN = 5;</code>
+         */
+        AUTHENTICATION_TOKEN(5),
         ;
 
         /**
@@ -1595,6 +1610,10 @@ public final class CmdlineRemoteProto {
          * <code>CONSTANT_SEARCH_RESULT = 4;</code>
          */
         public static final int CONSTANT_SEARCH_RESULT_VALUE = 4;
+        /**
+         * <code>AUTHENTICATION_TOKEN = 5;</code>
+         */
+        public static final int AUTHENTICATION_TOKEN_VALUE = 5;
 
 
         @java.lang.Override
@@ -1618,6 +1637,7 @@ public final class CmdlineRemoteProto {
             case 2: return CANCEL_BUILD_COMMAND;
             case 3: return FS_EVENT;
             case 4: return CONSTANT_SEARCH_RESULT;
+            case 5: return AUTHENTICATION_TOKEN;
             default: return null;
           }
         }
@@ -5334,6 +5354,415 @@ public final class CmdlineRemoteProto {
         }
       }
 
+      public interface RequestParamsOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
+          com.google.protobuf.MessageLiteOrBuilder {
+
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+        int getAuthHeadersCount();
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+        boolean containsAuthHeaders(
+            java.lang.String key);
+        /**
+         * Use {@link #getAuthHeadersMap()} instead.
+         */
+        @java.lang.Deprecated
+        java.util.Map<java.lang.String, java.lang.String>
+        getAuthHeaders();
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+        java.util.Map<java.lang.String, java.lang.String>
+        getAuthHeadersMap();
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+
+        java.lang.String getAuthHeadersOrDefault(
+            java.lang.String key,
+            java.lang.String defaultValue);
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+
+        java.lang.String getAuthHeadersOrThrow(
+            java.lang.String key);
+      }
+      /**
+       * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams}
+       */
+      public  static final class RequestParams extends
+          com.google.protobuf.GeneratedMessageLite<
+              RequestParams, RequestParams.Builder> implements
+          // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
+          RequestParamsOrBuilder {
+        private RequestParams() {
+        }
+        public static final int AUTH_HEADERS_FIELD_NUMBER = 1;
+        private static final class AuthHeadersDefaultEntryHolder {
+          static final com.google.protobuf.MapEntryLite<
+              java.lang.String, java.lang.String> defaultEntry =
+                  com.google.protobuf.MapEntryLite
+                  .<java.lang.String, java.lang.String>newDefaultInstance(
+                      com.google.protobuf.WireFormat.FieldType.STRING,
+                      "",
+                      com.google.protobuf.WireFormat.FieldType.STRING,
+                      "");
+        }
+        private com.google.protobuf.MapFieldLite<
+            java.lang.String, java.lang.String> authHeaders_ =
+                com.google.protobuf.MapFieldLite.emptyMapField();
+        private com.google.protobuf.MapFieldLite<java.lang.String, java.lang.String>
+        internalGetAuthHeaders() {
+          return authHeaders_;
+        }
+        private com.google.protobuf.MapFieldLite<java.lang.String, java.lang.String>
+        internalGetMutableAuthHeaders() {
+          if (!authHeaders_.isMutable()) {
+            authHeaders_ = authHeaders_.mutableCopy();
+          }
+          return authHeaders_;
+        }
+        @java.lang.Override
+
+        public int getAuthHeadersCount() {
+          return internalGetAuthHeaders().size();
+        }
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+        @java.lang.Override
+
+        public boolean containsAuthHeaders(
+            java.lang.String key) {
+          key.getClass();
+          return internalGetAuthHeaders().containsKey(key);
+        }
+        /**
+         * Use {@link #getAuthHeadersMap()} instead.
+         */
+        @java.lang.Override
+        @java.lang.Deprecated
+        public java.util.Map<java.lang.String, java.lang.String> getAuthHeaders() {
+          return getAuthHeadersMap();
+        }
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+        @java.lang.Override
+
+        public java.util.Map<java.lang.String, java.lang.String> getAuthHeadersMap() {
+          return java.util.Collections.unmodifiableMap(
+              internalGetAuthHeaders());
+        }
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+        @java.lang.Override
+
+        public java.lang.String getAuthHeadersOrDefault(
+            java.lang.String key,
+            java.lang.String defaultValue) {
+          key.getClass();
+          java.util.Map<java.lang.String, java.lang.String> map =
+              internalGetAuthHeaders();
+          return map.containsKey(key) ? map.get(key) : defaultValue;
+        }
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+        @java.lang.Override
+
+        public java.lang.String getAuthHeadersOrThrow(
+            java.lang.String key) {
+          key.getClass();
+          java.util.Map<java.lang.String, java.lang.String> map =
+              internalGetAuthHeaders();
+          if (!map.containsKey(key)) {
+            throw new java.lang.IllegalArgumentException();
+          }
+          return map.get(key);
+        }
+        /**
+         * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+         */
+        private java.util.Map<java.lang.String, java.lang.String>
+        getMutableAuthHeadersMap() {
+          return internalGetMutableAuthHeaders();
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+
+        public static Builder newBuilder() {
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
+        }
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams prototype) {
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+        }
+
+        /**
+         * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams}
+         */
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams, Builder> implements
+            // @@protoc_insertion_point(builder_implements:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParamsOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.newBuilder()
+          private Builder() {
+            super(DEFAULT_INSTANCE);
+          }
+
+
+          @java.lang.Override
+
+          public int getAuthHeadersCount() {
+            return instance.getAuthHeadersMap().size();
+          }
+          /**
+           * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+           */
+          @java.lang.Override
+
+          public boolean containsAuthHeaders(
+              java.lang.String key) {
+            key.getClass();
+            return instance.getAuthHeadersMap().containsKey(key);
+          }
+
+          public Builder clearAuthHeaders() {
+            copyOnWrite();
+            instance.getMutableAuthHeadersMap().clear();
+            return this;
+          }
+          /**
+           * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+           */
+
+          public Builder removeAuthHeaders(
+              java.lang.String key) {
+            key.getClass();
+            copyOnWrite();
+            instance.getMutableAuthHeadersMap().remove(key);
+            return this;
+          }
+          /**
+           * Use {@link #getAuthHeadersMap()} instead.
+           */
+          @java.lang.Override
+          @java.lang.Deprecated
+          public java.util.Map<java.lang.String, java.lang.String> getAuthHeaders() {
+            return getAuthHeadersMap();
+          }
+          /**
+           * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+           */
+          @java.lang.Override
+          public java.util.Map<java.lang.String, java.lang.String> getAuthHeadersMap() {
+            return java.util.Collections.unmodifiableMap(
+                instance.getAuthHeadersMap());
+          }
+          /**
+           * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+           */
+          @java.lang.Override
+
+          public java.lang.String getAuthHeadersOrDefault(
+              java.lang.String key,
+              java.lang.String defaultValue) {
+            key.getClass();
+            java.util.Map<java.lang.String, java.lang.String> map =
+                instance.getAuthHeadersMap();
+            return map.containsKey(key) ? map.get(key) : defaultValue;
+          }
+          /**
+           * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+           */
+          @java.lang.Override
+
+          public java.lang.String getAuthHeadersOrThrow(
+              java.lang.String key) {
+            key.getClass();
+            java.util.Map<java.lang.String, java.lang.String> map =
+                instance.getAuthHeadersMap();
+            if (!map.containsKey(key)) {
+              throw new java.lang.IllegalArgumentException();
+            }
+            return map.get(key);
+          }
+          /**
+           * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+           */
+          public Builder putAuthHeaders(
+              java.lang.String key,
+              java.lang.String value) {
+            key.getClass();
+            value.getClass();
+            copyOnWrite();
+            instance.getMutableAuthHeadersMap().put(key, value);
+            return this;
+          }
+          /**
+           * <code>map&lt;string, string&gt; auth_headers = 1;</code>
+           */
+          public Builder putAllAuthHeaders(
+              java.util.Map<java.lang.String, java.lang.String> values) {
+            copyOnWrite();
+            instance.getMutableAuthHeadersMap().putAll(values);
+            return this;
+          }
+
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
+        }
+        @java.lang.Override
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
+            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+            java.lang.Object arg0, java.lang.Object arg1) {
+          switch (method) {
+            case NEW_MUTABLE_INSTANCE: {
+              return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams();
+            }
+            case NEW_BUILDER: {
+              return new Builder();
+            }
+            case BUILD_MESSAGE_INFO: {
+                java.lang.Object[] objects = new java.lang.Object[] {
+                  "authHeaders_",
+                  AuthHeadersDefaultEntryHolder.defaultEntry,
+                };
+                java.lang.String info =
+                    "\u0001\u0001\u0000\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u00012";
+                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+            }
+            // fall through
+            case GET_DEFAULT_INSTANCE: {
+              return DEFAULT_INSTANCE;
+            }
+            case GET_PARSER: {
+              com.google.protobuf.Parser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams> parser = PARSER;
+              if (parser == null) {
+                synchronized (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.class) {
+                  parser = PARSER;
+                  if (parser == null) {
+                    parser =
+                        new DefaultInstanceBasedParser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams>(
+                            DEFAULT_INSTANCE);
+                    PARSER = parser;
+                  }
+                }
+              }
+              return parser;
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return (byte) 1;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            return null;
+          }
+          }
+          throw new UnsupportedOperationException();
+        }
+
+
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
+        private static final org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams DEFAULT_INSTANCE;
+        static {
+          RequestParams defaultInstance = new RequestParams();
+          // New instances are implicitly immutable so no need to make
+          // immutable.
+          DEFAULT_INSTANCE = defaultInstance;
+          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+            RequestParams.class, defaultInstance);
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getDefaultInstance() {
+          return DEFAULT_INSTANCE;
+        }
+
+        private static volatile com.google.protobuf.Parser<RequestParams> PARSER;
+
+        public static com.google.protobuf.Parser<RequestParams> parser() {
+          return DEFAULT_INSTANCE.getParserForType();
+        }
+      }
+
       private int bitField0_;
       public static final int TYPE_FIELD_NUMBER = 1;
       private int type_;
@@ -5506,6 +5935,52 @@ public final class CmdlineRemoteProto {
        */
       private void clearConstantSearchResult() {  constantSearchResult_ = null;
         bitField0_ = (bitField0_ & ~0x00000008);
+      }
+
+      public static final int REQUEST_PARAMS_FIELD_NUMBER = 5;
+      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParams_;
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+       */
+      @java.lang.Override
+      public boolean hasRequestParams() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+       */
+      @java.lang.Override
+      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getRequestParams() {
+        return requestParams_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.getDefaultInstance() : requestParams_;
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+       */
+      private void setRequestParams(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams value) {
+        value.getClass();
+  requestParams_ = value;
+        bitField0_ |= 0x00000010;
+        }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+       */
+      @java.lang.SuppressWarnings({"ReferenceEquality"})
+      private void mergeRequestParams(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams value) {
+        value.getClass();
+  if (requestParams_ != null &&
+            requestParams_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.getDefaultInstance()) {
+          requestParams_ =
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.newBuilder(requestParams_).mergeFrom(value).buildPartial();
+        } else {
+          requestParams_ = value;
+        }
+        bitField0_ |= 0x00000010;
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+       */
+      private void clearRequestParams() {  requestParams_ = null;
+        bitField0_ = (bitField0_ & ~0x00000010);
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage parseFrom(
@@ -5780,6 +6255,53 @@ public final class CmdlineRemoteProto {
           return this;
         }
 
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+         */
+        @java.lang.Override
+        public boolean hasRequestParams() {
+          return instance.hasRequestParams();
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+         */
+        @java.lang.Override
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getRequestParams() {
+          return instance.getRequestParams();
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+         */
+        public Builder setRequestParams(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams value) {
+          copyOnWrite();
+          instance.setRequestParams(value);
+          return this;
+          }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+         */
+        public Builder setRequestParams(
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.Builder builderForValue) {
+          copyOnWrite();
+          instance.setRequestParams(builderForValue.build());
+          return this;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+         */
+        public Builder mergeRequestParams(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams value) {
+          copyOnWrite();
+          instance.mergeRequestParams(value);
+          return this;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
+         */
+        public Builder clearRequestParams() {  copyOnWrite();
+          instance.clearRequestParams();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
       private byte memoizedIsInitialized = 2;
@@ -5803,10 +6325,11 @@ public final class CmdlineRemoteProto {
                 "paramsMessage_",
                 "fsEvent_",
                 "constantSearchResult_",
+                "requestParams_",
               };
               java.lang.String info =
-                  "\u0001\u0004\u0000\u0001\u0001\u0004\u0004\u0000\u0000\u0004\u0001\u150c\u0000\u0002" +
-                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003";
+                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0004\u0001\u150c\u0000\u0002" +
+                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1009\u0004";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -5942,6 +6465,10 @@ public final class CmdlineRemoteProto {
          * <code>CONSTANT_SEARCH_TASK = 4;</code>
          */
         CONSTANT_SEARCH_TASK(4),
+        /**
+         * <code>AUTH_TOKEN_REQUEST = 5;</code>
+         */
+        AUTH_TOKEN_REQUEST(5),
         ;
 
         /**
@@ -5960,6 +6487,10 @@ public final class CmdlineRemoteProto {
          * <code>CONSTANT_SEARCH_TASK = 4;</code>
          */
         public static final int CONSTANT_SEARCH_TASK_VALUE = 4;
+        /**
+         * <code>AUTH_TOKEN_REQUEST = 5;</code>
+         */
+        public static final int AUTH_TOKEN_REQUEST_VALUE = 5;
 
 
         @java.lang.Override
@@ -5983,6 +6514,7 @@ public final class CmdlineRemoteProto {
             case 2: return BUILD_EVENT;
             case 3: return COMPILE_MESSAGE;
             case 4: return CONSTANT_SEARCH_TASK;
+            case 5: return AUTH_TOKEN_REQUEST;
             default: return null;
           }
         }

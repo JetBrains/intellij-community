@@ -79,7 +79,7 @@ public class JpsOutputLoaderManager implements Disposable {
     myWorkspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     // Configure build manager
     BuildManager buildManager = BuildManager.getInstance();
-    if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
+    //if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
   }
 
   public void load(boolean isForceUpdate, boolean verbose) {

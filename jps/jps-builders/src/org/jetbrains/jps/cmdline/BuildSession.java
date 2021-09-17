@@ -28,6 +28,7 @@ import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException;
@@ -157,6 +158,11 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (Utils.IS_PROFILING_MODE) {
         profilingHelper = new ProfilingHelper();
         profilingHelper.startProfiling();
+      }
+
+      if (ProjectStamps.PORTABLE_CACHES) {
+        // Try to download caches
+        myChannel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createAuthTokenRequest()));
       }
 
       runBuild(new MessageHandler() {
