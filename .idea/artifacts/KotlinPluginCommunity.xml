@@ -229,6 +229,9 @@
         <element id="archive" name="kotlin-jvm-run-configurations.jar">
           <element id="module-output" name="kotlin.jvm-run-configurations" />
         </element>
+        <element id="library" level="project" name="kotlinc.kotlin-compiler-common" />
+        <element id="library" level="project" name="kotlinc.kotlin-compiler-ir" />
+        <element id="library" level="project" name="kotlinc.kotlin-compiler-fe10" />
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-dist-for-ide/1.6.255/kotlin-dist-for-ide-1.6.255.jar" path-in-jar="/" />
