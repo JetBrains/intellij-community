@@ -9974,6 +9974,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumEntry.kt");
         }
 
+        @TestMetadata("enumInEnumWithPackageNames.kt")
+        public void testEnumInEnumWithPackageNames() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnumWithPackageNames.kt");
+        }
+
+        @TestMetadata("enumInEnumWithPackageNames2.kt")
+        public void testEnumInEnumWithPackageNames2() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnumWithPackageNames2.kt");
+        }
+
+        @TestMetadata("enumInEnumWithPackageNames3.kt")
+        public void testEnumInEnumWithPackageNames3() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnumWithPackageNames3.kt");
+        }
+
         @TestMetadata("expression.kt")
         public void testExpression() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/expression.kt");
