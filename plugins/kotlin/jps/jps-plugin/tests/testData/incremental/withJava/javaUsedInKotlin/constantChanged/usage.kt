@@ -1,2 +1,5 @@
-@Deprecated(JavaClass.CONST + JavaClass.CONST)
-class Usage
+import org.jetbrains.JavaClass.Inner.CONST
+
+fun main() {
+    val myKotlinConst = CONST
+}
