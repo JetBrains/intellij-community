@@ -63,8 +63,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   private final TabbedContentAction.CloseAllAction closeAllAction;
   private final TabbedContentAction.MyNextTabAction nextTabAction;
   private final TabbedContentAction.MyPreviousTabAction previousTabAction;
-  private final TabbedContentAction.SplitTabAction splitTabAction;
-  private final TabbedContentAction.UnsplitTabAction unsplitTabAction;
+  private TabbedContentAction.SplitTabAction splitRightTabAction;
+  private TabbedContentAction.SplitTabAction splitDownTabAction;
+  private TabbedContentAction.UnsplitTabAction unsplitTabAction;
 
   private final ShowContentAction showContent;
 
@@ -138,7 +139,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     closeAllAction = new TabbedContentAction.CloseAllAction(contentManager);
     nextTabAction = new TabbedContentAction.MyNextTabAction(contentManager);
     previousTabAction = new TabbedContentAction.MyPreviousTabAction(contentManager);
-    splitTabAction = new TabbedContentAction.SplitTabAction(contentManager);
+    splitRightTabAction = new TabbedContentAction.SplitTabAction(contentManager, true);
+    splitDownTabAction = new TabbedContentAction.SplitTabAction(contentManager, false);
     unsplitTabAction = new TabbedContentAction.UnsplitTabAction(contentManager);
     showContent = new ShowContentAction(window, contentComponent, contentManager);
   }
@@ -379,18 +381,17 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
+        if (e.isPopupTrigger() || UIUtil.isCloseClick(e)) return;
         PointerInfo info = MouseInfo.getPointerInfo();
-        if (!e.isPopupTrigger() && !isToolWindowDrag(e)) {
-          if (!UIUtil.isCloseClick(e)) {
+        if (!isToolWindowDrag(e)) {
             myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
             myPressPoint.set(myLastPoint.get());
             myDragTracker.set(LocationOnDragTracker.startDrag(e));
             if (allowResize && ui.isResizeable()) {
               arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
             }
-            ui.window.fireActivated(ToolWindowEventSource.Content);
-          }
         }
+        ui.window.fireActivated(ToolWindowEventSource.ToolWindowHeader);
       }
 
       @Override
@@ -503,8 +504,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     group.add(nextTabAction);
     group.add(previousTabAction);
-    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false)) {
-      group.add(splitTabAction);
+    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false) &&splitRightTabAction != null) {
+      group.add(splitRightTabAction);
+      group.add(splitDownTabAction);
       group.add(unsplitTabAction);
     }
     group.add(showContent);

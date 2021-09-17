@@ -8,11 +8,15 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
+import com.intellij.openapi.wm.impl.content.ContentTabLabel;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 public abstract class TabbedContentAction extends AnAction implements DumbAware {
   protected final ContentManager myManager;
@@ -169,23 +173,28 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
   @ApiStatus.Experimental
   public static class SplitTabAction extends TabbedContentAction {
-    public SplitTabAction(@NotNull ContentManager manager) {
-      super(manager, new EmptyAction(ActionsBundle.actionText("MoveTabRight"), null, null), manager);
+    private final boolean myHorizontal;
+
+    public SplitTabAction(@NotNull ContentManager manager, boolean horizontal) {
+      super(manager, new EmptyAction(ActionsBundle.actionText(horizontal ? "MoveTabRight" : "MoveTabDown"), null, null), manager);
+      myHorizontal = horizontal;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-      Content content = myManager.getSelectedContent();
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(component);
+      ContentManager manager = ObjectUtils.notNull(e.getData(PlatformDataKeys.CONTENT_MANAGER), myManager);
+      Content content = ObjectUtils.chooseNotNull(ObjectUtils.doIfCast(component, ContentTabLabel.class, o -> o.getContent()),
+                                                  manager.getSelectedContent());
       if (content != null) {
-        decorator.splitWithContent(content);
+        decorator.splitWithContent(content, myHorizontal);
       }
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContents().length > 1);
-      e.getPresentation().setText(ActionsBundle.actionText(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
     }
   }
 

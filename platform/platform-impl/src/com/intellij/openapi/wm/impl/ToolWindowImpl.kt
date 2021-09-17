@@ -166,7 +166,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       }
     })
 
-    toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, contentComponent)
+    toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, decorator)
 
     // after init, as it was before contentManager creation was changed to be lazy
     pendingContentManagerListeners?.let { list ->
@@ -198,6 +198,17 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   fun setFocusedComponent(component: Component) {
     toolWindowFocusWatcher?.setFocusedComponentImpl(component)
+  }
+
+  fun getLastFocusedContent() : Content? {
+    val lastFocusedComponent = toolWindowFocusWatcher?.focusedComponent
+    if (lastFocusedComponent is JComponent) {
+      if (!lastFocusedComponent.isShowing) return null
+      val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(lastFocusedComponent)
+      val content = nearestDecorator?.contentManager?.getContent(lastFocusedComponent)
+      if (content != null && content.isSelected) return content
+    }
+    return null
   }
 
   override fun getDisposable() = parentDisposable

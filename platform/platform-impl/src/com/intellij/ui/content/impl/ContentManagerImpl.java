@@ -9,7 +9,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ActiveRunnable;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
@@ -175,6 +178,18 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       myContents.remove(content);
       myContents.add(index == -1 ? myContents.size() : index, content);
       return;
+    }
+
+    if (!Content.TEMPORARY_REMOVED_KEY.get(content, false) && getContentCount() == 0 && !isEmpty()) {
+      ContentManager oldManager = content.getManager();
+      for (ContentManagerImpl nestedManager : myNestedManagers) {
+        if (nestedManager.getContentCount() > 0) {
+          nestedManager.doAddContent(content, index);
+          if (content.getManager() != oldManager) {
+            return;
+          }
+        }
+      }
     }
 
     ((ContentImpl)content).setManager(this);
@@ -358,6 +373,14 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myContents.toArray(new Content[0]);
   }
 
+  public List<Content> getContentsRecursively() {
+    SmartList<Content> list = new SmartList<>(myContents);
+    for (ContentManagerImpl nestedManager : myNestedManagers) {
+      list.addAll(nestedManager.getContentsRecursively());
+    }
+    return list;
+  }
+
   @Override
   public Content findContent(String displayName) {
     for (Content content : myContents) {
@@ -377,7 +400,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public Content getContent(@NotNull JComponent component) {
     Content[] contents = getContents();
     for (Content content : contents) {
-      if (Comparing.equal(component, content.getComponent())) {
+      if (SwingUtilities.isDescendingFrom(component, content.getComponent())) {
         return content;
       }
     }
@@ -504,7 +527,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return ActionCallback.REJECTED;
     }
     if (!myContents.contains(content)) {
-      throw new IllegalArgumentException("Cannot find content:" + content.getDisplayName());
+      for (ContentManagerImpl manager : myNestedManagers) {
+        ActionCallback nestedCallback = manager.setSelectedContent(content, requestFocus, forcedFocus, implicit);
+        if (nestedCallback != ActionCallback.REJECTED) return nestedCallback;
+      }
+      return ActionCallback.REJECTED;
     }
 
     final boolean focused = isSelectionHoldsFocus();
