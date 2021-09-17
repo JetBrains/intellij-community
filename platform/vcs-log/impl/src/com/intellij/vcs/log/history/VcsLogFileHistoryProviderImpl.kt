@@ -38,7 +38,7 @@ class VcsLogFileHistoryProviderImpl(project: Project) : VcsLogFileHistoryProvide
 
 private class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileHistoryProvider {
   override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
-    if (!isNewHistoryEnabled()) return false
+    if (!Registry.`is`("vcs.history.show.directory.history.in.log")) return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
     return createPathsFilter(project, dataManager, paths) != null
   }
