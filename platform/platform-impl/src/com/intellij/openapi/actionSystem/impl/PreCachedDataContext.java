@@ -143,6 +143,13 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
+  static void clearAllCaches() {
+    for (Map<String, Object> map : ourPrevMaps.values()) {
+      map.clear();
+    }
+    ourPrevMaps.clear();
+  }
+
   private static void preGetAllData(@NotNull Component component, @NotNull Map<String, Object> cachedData) {
     long start = System.currentTimeMillis();
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.*;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
 
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
-  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
+  static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
 
   private final boolean myModalContext;
@@ -335,6 +336,19 @@ final class ActionUpdater {
     for (CancellablePromise<?> promise : copy) {
       cancelPromise(promise, reason + " (cancelling all updates)");
     }
+  }
+
+  static void waitForAllUpdatesToFinish() {
+    int executorThreads = 2;
+    Semaphore semaphore = new Semaphore(executorThreads + 1);
+    Runnable upAndWait = () -> {
+      semaphore.up();
+      semaphore.waitFor();
+    };
+    for (int i = 0; i < executorThreads; i++) {
+      ourExecutor.execute(upAndWait);
+    }
+    upAndWait.run();
   }
 
   private void waitTheTestDelay() {
