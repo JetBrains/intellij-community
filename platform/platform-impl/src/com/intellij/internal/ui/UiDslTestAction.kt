@@ -51,6 +51,7 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Groups", JScrollPane(createGroupsPanel()))
     result.addTab("Segmented Button", createSegmentedButton())
     result.addTab("Visible/Enabled", createVisibleEnabled())
+    result.addTab("Cells With Sub-Panels", createCellsWithPanels())
 
     return result
   }
@@ -281,6 +282,40 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     }
   }
 
+  fun createCellsWithPanels(): JPanel {
+    return panel {
+      row("Row") {
+        textField()
+          .columns(20)
+      }
+      row("Row 2") {
+        val subPanel = com.intellij.ui.dsl.builder.panel {
+          row {
+            textField()
+              .columns(20)
+              .applyToComponent { text = "Sub-Paneled Row" }
+          }
+        }
+        cell(subPanel)
+      }
+      row("Row 3") {
+        textField()
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row("Row 4") {
+        val subPanel = com.intellij.ui.dsl.builder.panel {
+          row {
+            textField()
+              .horizontalAlign(HorizontalAlign.FILL)
+              .applyToComponent { text = "Sub-Paneled Row" }
+          }
+        }
+        cell(subPanel)
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+    }
+  }
+
   fun createCommentsPanel(): JPanel {
     var type = CommentComponentType.CHECKBOX
     val placeholder = JPanel(BorderLayout())
@@ -291,7 +326,7 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
       placeholder.add(builder.build(), BorderLayout.CENTER)
     }
 
-    val result: DialogPanel = panel {
+    val result = panel {
       row("Component type") {
         comboBox(CollectionComboBoxModel(CommentComponentType.values().asList()))
           .applyToComponent {

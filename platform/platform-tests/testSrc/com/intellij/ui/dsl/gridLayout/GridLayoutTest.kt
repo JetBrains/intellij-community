@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.gridLayout
 
+import com.intellij.ui.dsl.doLayout
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.junit.Assert
 import org.junit.Test
@@ -8,6 +9,7 @@ import java.awt.Dimension
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
+import kotlin.math.max
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
@@ -50,9 +52,10 @@ class GridLayoutTest {
     RowsGridBuilder(panel)
       .cell(label, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    assertEquals(-visualPaddings.left, label.x)
-    assertEquals(-visualPaddings.top, label.y)
-    assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH - visualPaddings.width, PREFERRED_HEIGHT - visualPaddings.height))
+    // Visual paddings are compensated by layout, so whole component is fit
+    assertEquals(0, label.x)
+    assertEquals(0, label.y)
+    assertEquals(panel.preferredSize, PREFERRED_SIZE)
     assertEquals(PREFERRED_SIZE, label.size)
 
     panel.removeAll()
@@ -61,10 +64,11 @@ class GridLayoutTest {
       .cell(label, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.BOTTOM,
             resizableColumn = true, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    assertEquals(-visualPaddings.left, label.x)
-    assertEquals(100 - PREFERRED_HEIGHT + visualPaddings.bottom, label.y)
-    assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH - visualPaddings.width, PREFERRED_HEIGHT - visualPaddings.height))
-    assertEquals(200 + visualPaddings.width, label.width)
+    // Visual paddings are compensated by layout, so whole component is fit
+    assertEquals(0, label.x)
+    assertEquals(100 - PREFERRED_HEIGHT, label.y)
+    assertEquals(panel.preferredSize, PREFERRED_SIZE)
+    assertEquals(200, label.width)
     assertEquals(PREFERRED_HEIGHT, label.height)
   }
 
@@ -150,7 +154,8 @@ class GridLayoutTest {
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.preferredSize)
-    assertEquals(gaps.left - visualPaddings.left, label.x)
+    // Visual paddings are compensated by layout, so whole component is fit
+    assertEquals(max(0, gaps.left - visualPaddings.left), label.x)
     assertEquals(gaps.top + (100 - PREFERRED_HEIGHT - gaps.height + visualPaddings.height) / 2 - visualPaddings.top, label.y)
 
     panel.removeAll()
@@ -159,9 +164,10 @@ class GridLayoutTest {
       .cell(label, horizontalAlign = HorizontalAlign.RIGHT, verticalAlign = VerticalAlign.FILL, resizableColumn = true, gaps = gaps,
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    assertEquals(Dimension(PREFERRED_WIDTH, 100 - gaps.height + visualPaddings.height), label.size)
-    assertEquals(200 - PREFERRED_WIDTH - gaps.right + visualPaddings.right, label.x)
-    assertEquals(gaps.top - visualPaddings.top, label.y)
+    // Visual paddings are compensated by layout, so whole component is fit
+    assertEquals(Dimension(PREFERRED_WIDTH, 100), label.size)
+    assertEquals(200 - PREFERRED_WIDTH, label.x)
+    assertEquals(0, label.y)
   }
 
   @Test
@@ -304,11 +310,6 @@ class GridLayoutTest {
         }
       }
     }
-  }
-
-  private fun doLayout(panel: JPanel, width: Int, height: Int) {
-    panel.setSize(width, height)
-    (panel.layout as GridLayout).layoutContainer(panel)
   }
 
   private fun label(preferredWidth: Int = PREFERRED_WIDTH, preferredHeight: Int = PREFERRED_HEIGHT): JLabel {
