@@ -155,6 +155,13 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     }
   }
 
+  @Override
+  public void visitExpressionList(@NotNull GrExpressionList expressionList) {
+    if (myChildType != T_COMMA) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+  }
+
   public void visitSwitchElement() {
     if (myChildType == GroovyElementTypes.CASE_SECTION) {
       myResult = getSwitchCaseIndent(getGroovySettings());
