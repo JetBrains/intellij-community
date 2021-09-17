@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -588,6 +589,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   public void testUndoFallbackToLocalStack() throws Exception{
+    Registry.get("ide.undo.fallback").setValue(true, getTestRootDisposable());
     Pair<Editor, Editor> pair = prepareTestUndoFallback();
     var barEditor = pair.first;
     var fooEditor = pair.second;
@@ -599,6 +601,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
   }
   public void testUndoFallbackToLocalStackAndRedo() throws Exception{
+    Registry.get("ide.undo.fallback").setValue(true, getTestRootDisposable());
     Pair<Editor, Editor> pair = prepareTestUndoFallback();
     var barEditor = pair.first;
     var fooEditor = pair.second;
