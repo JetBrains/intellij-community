@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteSemilattice;
@@ -209,5 +210,21 @@ public final class ControlFlowBuilderUtil {
       }
     }
     return true;
+  }
+
+  public static boolean isCertainlyYieldStatement(GrStatement statement) {
+    final PsiElement parent = statement.getParent();
+    if (parent instanceof GrOpenBlock || parent instanceof GrCaseSection) {
+      if (statement != ArrayUtil.getLastElement(((GrStatementOwner)parent).getStatements())) return false;
+
+      PsiElement pparent = parent.getParent();
+      if (parent instanceof GrCaseSection && pparent instanceof GrSwitchElement) {
+        return true;
+      }
+      if (pparent instanceof GrStatement) {
+        return isCertainlyYieldStatement((GrStatement)pparent);
+      }
+    }
+    return false;
   }
 }

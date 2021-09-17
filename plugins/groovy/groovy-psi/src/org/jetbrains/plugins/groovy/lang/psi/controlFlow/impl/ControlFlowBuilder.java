@@ -111,6 +111,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (!(block.getParent() instanceof GrBlockStatement && block.getParent().getParent() instanceof GrLoopStatement)) {
       final GrStatement[] statements = block.getStatements();
       if (statements.length > 0) {
+        handlePossibleYield(statements[statements.length - 1]);
         handlePossibleReturn(statements[statements.length - 1]);
       }
     }
@@ -908,22 +909,31 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  @Override
-  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
-    final GrCondition condition = switchStatement.getCondition();
+  private void visitSwitchElement(@NotNull GrSwitchElement switchElement) {
+    final GrCondition condition = switchElement.getCondition();
     if (condition != null) {
       condition.accept(this);
     }
-    final InstructionImpl instruction = startNode(switchStatement);
-    final GrCaseSection[] sections = switchStatement.getCaseSections();
-    if (!containsAllCases(switchStatement)) {
-      addPendingEdge(switchStatement, instruction);
+    final InstructionImpl instruction = startNode(switchElement);
+    final GrCaseSection[] sections = switchElement.getCaseSections();
+    if (!containsAllCases(switchElement)) {
+      addPendingEdge(switchElement, instruction);
     }
     for (GrCaseSection section : sections) {
       myHead = instruction;
       section.accept(this);
     }
     finishNode(instruction);
+  }
+
+  @Override
+  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+    visitSwitchElement(switchStatement);
+  }
+
+  @Override
+  public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+    visitSwitchElement(switchExpression);
   }
 
   @Override
@@ -971,7 +981,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private static boolean containsAllCases(GrSwitchStatement statement) {
+  private static boolean containsAllCases(GrSwitchElement statement) {
     final GrCaseSection[] sections = statement.getCaseSections();
     for (GrCaseSection section : sections) {
       if (section.isDefault()) return true;
@@ -1001,7 +1011,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         if (sections.length == enumConstantCount) return true;
       }
     }
-
+    // todo: sealed classes
     return false;
   }
 
@@ -1027,9 +1037,33 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (j == i) handlePossibleReturn(statement);
     }
 
+    if (statements.length > 0) {
+      handlePossibleYield(statements[statements.length - 1]);
+    }
+
     if (myHead != null) {
       addPendingEdge(caseSection, myHead);
     }
+  }
+
+  private void handlePossibleYield(GrStatement statement) {
+    if (statement instanceof GrExpression && ControlFlowBuilderUtil.isCertainlyYieldStatement(statement)) {
+      addNodeAndCheckPending(new MaybeYieldInstruction((GrExpression)statement));
+    }
+  }
+
+  @Override
+  public void visitYieldStatement(@NotNull GrYieldStatement yieldStatement) {
+    GrExpression value = yieldStatement.getYieldedValue();
+    if (value != null) {
+      value.accept(this);
+    }
+    if (myHead != null) {
+      GrSwitchElement correspondingSwitch = PsiTreeUtil.getParentOfType(yieldStatement, GrSwitchElement.class);
+      addNode(new InstructionImpl(yieldStatement));
+      addPendingEdge(correspondingSwitch, myHead);
+    }
+    interruptFlow();
   }
 
   @Override

@@ -2,10 +2,13 @@
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 
 class DefaultSwitchExpressionTypeCalculator : GrTypeCalculator<GrSwitchExpression> {
@@ -15,18 +18,15 @@ class DefaultSwitchExpressionTypeCalculator : GrTypeCalculator<GrSwitchExpressio
 
   companion object {
     private fun getCaseSectionType(section : GrCaseSection) : PsiType {
-      if (section.arrow != null) {
-        val statements = section.statements
-        val rootStatement = statements.getOrNull(0) ?: return PsiType.NULL
-        if (rootStatement is GrExpression) {
-          return rootStatement.type ?: PsiType.NULL
-        } else if (rootStatement is GrCodeBlock){
-          return inferYieldedType(rootStatement.statements)
+      val flow = ControlFlowBuilder().buildControlFlow(section)
+      val yields = ControlFlowUtils.collectYields(flow).takeIf(List<*>::isNotEmpty) ?: return PsiType.NULL
+      return TypesUtil.getLeastUpperBoundNullable(yields.map { stmt: GrStatement ->
+        when (stmt) {
+          is GrYieldStatement -> stmt.yieldedValue?.type
+          is GrExpression -> stmt.type
+          else -> PsiType.NULL
         }
-      } else {
-        return inferYieldedType(section.statements)
-      }
-      return PsiType.NULL
+      }, section.manager) ?: PsiType.NULL
     }
   }
 }

@@ -18,7 +18,7 @@ x<caret>x
   }
 
 
-  void _testLUB() {
+  void testLUB() {
     doTest """
 class A {}
 class B extends A {}
@@ -26,10 +26,12 @@ class C extends A {}
 def xx = switch(10) {
   case 10 -> new B()
   case 20 -> new C()
-}""", "A"
+}
+x<caret>x
+""", "A"
   }
 
-  void _testBlock() {
+  void testBlock() {
     doTest """
 class A {}
 class B extends A {}
@@ -39,10 +41,12 @@ def xx = switch(10) {
     new B()
   }
   case 20 -> new C()
-}""", "A"
+}
+x<caret>x
+""", "A"
   }
 
-  void _testYield() {
+  void testYield() {
     doTest """
 def xx = switch(10) {
     case 10 -> yield 10
@@ -52,7 +56,7 @@ x<caret>x
   }
 
 
-  void _testYieldInBlock() {
+  void testYieldInBlock() {
     doTest """
 def xx = switch(10) {
     case 10 -> {
@@ -63,19 +67,7 @@ x<caret>x
 """, "java.lang.Integer"
   }
 
-  void _testYieldBeforeLastStatement() {
-    doTest """
-def xx = switch(10) {
-    case 10 -> {
-      yield 10
-      "20"
-    }
-}
-x<caret>x
-""", "java.lang.Integer"
-  }
-
-  void _testConditionalYield() {
+  void testConditionalYield() {
     doTest """
 class A {}
 class B extends A {}
@@ -87,7 +79,6 @@ def xx = switch(10) {
       } else {
         yield new C()
       }
-      "20"
     }
 }
 x<caret>x
