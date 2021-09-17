@@ -386,6 +386,39 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testKeywords() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/keywords",
+                                                                SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_test.py", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull final PyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setKeywords("not spam");
+            }
+          };
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all,
+                                        final int exitCode) {
+          assertEquals("Test tree:\n" +
+                       "[root](+)\n" +
+                       ".test_test(+)\n" +
+                       "..test_eggs(+)\n", runner.getFormattedTestTree());
+          assertEquals(0, exitCode);
+        }
+      });
+  }
+
+  @Test
   public void testKeywordsIgnoredInCustom() {
     runTestWithJunkKeywords(true);
   }
