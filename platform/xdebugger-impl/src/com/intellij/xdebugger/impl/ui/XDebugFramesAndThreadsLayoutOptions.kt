@@ -56,6 +56,11 @@ class XDebugFramesAndThreadsLayoutOptions(
   override fun getDefaultOptionKey(): String = Registry.stringValue("debugger.default.selected.view.key")
 
   override fun getAvailableOptions() = options
+
+  override fun onHide() {
+    super.onHide()
+    XDebugThreadsFramesViewChangeCollector.framesViewSelected(HIDE_OPTION_KEY)
+  }
 }
 
 
@@ -110,12 +115,13 @@ class XDebugThreadsFramesViewChangeCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("debugger.frames.view", 1)
+    private val GROUP = EventLogGroup("debugger.frames.view", 2)
 
     private const val UNKNOWN_KEY = "UNKNOWN"
 
     private val VIEW_IDS = listOf(
       UNKNOWN_KEY,
+      PersistentContentCustomLayoutOptions.HIDE_OPTION_KEY,
       XDebugFramesAndThreadsLayoutOptions.DEFAULT_VIEW_KEY,
       XDebugFramesAndThreadsLayoutOptions.THREADS_VIEW_KEY,
       XDebugFramesAndThreadsLayoutOptions.SIDE_BY_SIDE_VIEW_KEY,
