@@ -1,20 +1,15 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-
-    <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
-                    serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinFirIdeModificationTrackerFactory"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory"
                     serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinIdeDeclarationProviderFactory"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory"
                     serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinIdePackageProviderFactory"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModuleInfoProvider"
-                    serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinIdeModuleInfoProvider"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
+                    serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinFirIdeModificationTrackerFactory"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.trackers.KotlinFirModificationTrackerService"/>
-
 
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.analysis.providers.ide.trackers.KotlinOutOfBlockPsiTreeChangePreprocessor"/>

@@ -16,6 +16,7 @@ import junit.framework.Assert
 import org.jetbrains.kotlin.analysis.providers.createModuleWithoutDependenciesOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
+import org.jetbrains.kotlin.idea.fir.analysis.project.structure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
@@ -164,7 +165,7 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
     }
 
     private class ModuleWithModificationTracker(module: Module) : WithModificationTracker(
-        module.productionSourceInfo()!!.createModuleWithoutDependenciesOutOfBlockModificationTracker(module.project)
+        module.getMainKtSourceModule()!!.createModuleWithoutDependenciesOutOfBlockModificationTracker(module.project)
     )
 
     private class ProjectWithModificationTracker(project: Project) : WithModificationTracker(
