@@ -76,14 +76,26 @@ else
 class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getResolutionFacade(element: KtElement): ResolutionFacade {
         val file = element.fileForElement()
-        val platform = TargetPlatformDetector.getPlatform(file)
-        return getFacadeToAnalyzeFile(file, platform)
+        if (file.isScript()) {
+            // Scripts support seem to modify some of the important aspects via file user data without triggering PsiModificationTracker.
+            // If in doubt, run ScriptDefinitionsOrderTestGenerated
+            return getFacadeToAnalyzeFile(file, TargetPlatformDetector.getPlatform(file))
+        }
+        else {
+            return CachedValuesManager.getCachedValue(file) {
+                CachedValueProvider.Result(
+                    getFacadeToAnalyzeFile(file, TargetPlatformDetector.getPlatform(file)),
+                    PsiModificationTracker.MODIFICATION_COUNT
+                )
+            }
+        }
     }
 
     override fun getResolutionFacade(elements: List<KtElement>): ResolutionFacade {
         val files = getFilesForElements(elements)
-        val platform = TargetPlatformDetector.getPlatform(files.first())
-        return getFacadeToAnalyzeFiles(files, platform)
+
+        if (files.size == 1) return getResolutionFacade(files.single())
+        return getFacadeToAnalyzeFiles(files, TargetPlatformDetector.getPlatform(files.first()))
     }
 
     override fun getResolutionFacade(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade {
@@ -94,7 +106,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     private fun getFilesForElements(elements: List<KtElement>): List<KtFile> {
         return elements.map {
             it.fileForElement()
-        }
+        }.distinct()
     }
 
     private fun KtElement.fileForElement() = try {
@@ -521,6 +533,11 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     private fun KtFile.filterScript(): KtFile? {
         val contextFile = if (this is KtCodeFragment) this.getContextFile() else this
         return contextFile?.takeIf { it.isScript() }
+    }
+
+    private fun KtFile.isScript(): Boolean {
+        val contextFile = if (this is KtCodeFragment) this.getContextFile() else this
+        return contextFile?.isScript() ?: false
     }
 
     private fun KtCodeFragment.getContextFile(): KtFile? {
