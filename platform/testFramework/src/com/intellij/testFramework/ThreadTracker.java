@@ -106,7 +106,8 @@ public final class ThreadTracker {
       "UserActivityMonitor thread",
       "VM Periodic Task Thread",
       "VM Thread",
-      "YJPAgent-Telemetry"
+      "YJPAgent-Telemetry",
+      "Cidr Symbol Building Thread" // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
     );
     List<String> sorted = new ArrayList<>(offenders);
     sorted.sort(String::compareToIgnoreCase);
