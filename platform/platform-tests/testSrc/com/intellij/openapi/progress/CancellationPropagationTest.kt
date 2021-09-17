@@ -206,7 +206,10 @@ class CancellationPropagationTest {
       childFuture2 = service.submit {
         lock.up()
         childFuture2CanFinish.waitUp()
-        ProgressManager.checkCanceled()
+        repeat(5) {
+          ProgressManager.checkCanceled()
+          Thread.sleep(50)
+        }
       }
       lock.up()
     }

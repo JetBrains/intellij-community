@@ -14,6 +14,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 public final class Cancellation {
 
   private static final ThreadLocal<Job> ourJob = new ThreadLocal<>();
+  private static long lastTimeChecked = -1L;
 
   private Cancellation() { }
 
@@ -29,6 +30,10 @@ public final class Cancellation {
   }
 
   public static void checkCancelled() {
+    long now = System.nanoTime();
+    if (now - lastTimeChecked < 50000000) return;
+    lastTimeChecked = now;
+
     Job job = ourJob.get();
     if (job != null) {
       JobKt.ensureActive(job);
