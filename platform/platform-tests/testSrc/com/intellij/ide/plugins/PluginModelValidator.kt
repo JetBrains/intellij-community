@@ -29,8 +29,7 @@ private val moduleSkipList = java.util.Set.of(
   "fleet",
   "intellij.indexing.shared.ultimate.plugin.internal.generator",
   "intellij.indexing.shared.ultimate.plugin.public",
-  "kotlin-ultimate.mobile-native.overrides",
-  "kotlin-ultimate.appcode-with-mobile",
+  "kotlin-ultimate.appcode-kmm.main", /* Used only when running from sources */
   "intellij.javaFX.community",
   "intellij.lightEdit",
   "intellij.webstorm",
