@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -37,6 +37,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     if (!(element instanceof PsiMethod)) return false;
     PsiMethod method = (PsiMethod) element;
     if (method.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null) return false;
+    if (method.getParameterList().getParametersCount() != 0) return false;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
     String methodName = method.getName();
