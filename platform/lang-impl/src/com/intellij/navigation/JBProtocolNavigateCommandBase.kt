@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
+import com.intellij.util.containers.ComparatorUtil.max
 import java.io.File
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -230,9 +231,12 @@ class PathNavigator(val project: Project, val parameters: Map<String, String>, v
   fun performEditorAction(textEditor: TextEditor, line: String?, column: String?) {
     val editor = textEditor.editor
 
-    val position = LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)
+    val lineLogicalCoords = line?.let {max(it.toInt() - 1, 0)} ?: 0
+    val offsetOfLine = editor.logicalPositionToOffset(LogicalPosition(lineLogicalCoords, 0))
+    val offsetInsideLine = max(column?.toInt() ?: 0, 0)
+
     editor.caretModel.removeSecondaryCarets()
-    editor.caretModel.moveToLogicalPosition(position)
+    editor.caretModel.moveToOffset(offsetOfLine + offsetInsideLine)
     editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
     editor.selectionModel.removeSelection()
     IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
