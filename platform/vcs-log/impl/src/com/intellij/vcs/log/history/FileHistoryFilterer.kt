@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.logger
@@ -47,10 +47,15 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       sortType: PermanentGraph.SortType,
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
-    val filePath = getFilePath(filters) ?: return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
-    LOG.assertTrue(!filePath.isDirectory)
-    val root = VcsLogUtil.getActualRoot(project, filePath)!!
-    return MyWorker(root, filePath, getHash(filters)).filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
+    val filePath = getFilePath(filters)
+    val root = filePath?.let { VcsLogUtil.getActualRoot(project, filePath) }
+    val hash = getHash(filters)
+    if (root != null && !filePath.isDirectory) {
+      val result = MyWorker(root, filePath, hash).filter(dataPack, oldVisiblePack, sortType, filters,
+                                                         commitCount)
+      if (result != null) return result
+    }
+    return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
   }
 
   override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean = true
@@ -63,7 +68,7 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                oldVisiblePack: VisiblePack,
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
-               commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
+               commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
       val start = System.currentTimeMillis()
 
       if (index.isIndexed(root) && dataPack.isFull) {
@@ -77,22 +82,21 @@ class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
       ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
         if (vcs.vcsHistoryProvider != null) {
-          return@filter try {
+          try {
             val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters)
             LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                       " for computing history for $filePath with history provider")
             checkNotEmpty(dataPack, visiblePack, false)
-            Pair(visiblePack, commitCount)
+            return@filter Pair(visiblePack, commitCount)
           }
           catch (e: VcsException) {
             LOG.error(e)
-            vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
           }
         }
       }
 
       LOG.warn("Could not find vcs or history provider for file $filePath")
-      return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
+      return null
     }
 
     private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean): Boolean {
