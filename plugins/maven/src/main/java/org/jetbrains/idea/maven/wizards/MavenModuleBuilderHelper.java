@@ -35,7 +35,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class MavenModuleBuilderHelper {
   private final MavenId myProjectId;
@@ -210,7 +213,7 @@ public class MavenModuleBuilderHelper {
 
   private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project, String artifactId) {
     try {
-      artifactId = Objects.requireNonNullElse(artifactId, myProjectId.getArtifactId());
+      artifactId = artifactId != null ? artifactId : myProjectId.getArtifactId();
       if (artifactId != null) {
         FileUtil.copyDir(new File(workingDir, artifactId), new File(pom.getParent().getPath()));
       }
