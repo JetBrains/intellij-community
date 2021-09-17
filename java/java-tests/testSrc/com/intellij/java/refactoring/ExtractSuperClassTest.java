@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -98,6 +98,15 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
 
   public void testParameterNameEqualsFieldName() {    // IDEADEV-10629
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("a", PsiField.class), new RefactoringTestUtil.MemberDescriptor("b", PsiField.class));
+  }
+
+
+  public void testDependentFields() {
+    doTest("Test", "TestSubclass",
+           new RefactoringTestUtil.MemberDescriptor("b", PsiField.class),
+           new RefactoringTestUtil.MemberDescriptor("a", PsiField.class),
+           new RefactoringTestUtil.MemberDescriptor("c", PsiField.class)
+           );
   }
 
   public void testSameTypeParameterName() {
