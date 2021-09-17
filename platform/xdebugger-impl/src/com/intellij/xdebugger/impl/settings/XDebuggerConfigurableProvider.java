@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
@@ -29,7 +30,7 @@ class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
 
     if (category == DebuggerSettingsCategory.ROOT) {
       XDebuggerSettings.EXTENSION_POINT.forEachExtensionSafe(settings -> {
-        list.add(settings.createConfigurable());
+        ObjectUtils.consumeIfNotNull(settings.createConfigurable(), list::add);
       });
     }
     return list;
