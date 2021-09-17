@@ -266,7 +266,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-      return TargetEnvironmentType.EXTENSION_NAME.extensionList
+      return TargetEnvironmentType.getTargetTypesForRunConfigurations()
         .filter { it.isSystemCompatible() }
         .map { CreateNewTargetAction(project, it) }
         .toArray(AnAction.EMPTY_ARRAY)
