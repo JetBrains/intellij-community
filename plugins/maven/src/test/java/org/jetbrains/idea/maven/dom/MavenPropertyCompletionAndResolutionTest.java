@@ -781,7 +781,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                           "    <artifactId>something</artifactId>" +
                           "  </dependency>" +
                           "</dependencies>");
-    importProject();
+    importProjectWithErrors();
 
 
     MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(myProject, myProjectPom, MavenDomProjectModel.class);
