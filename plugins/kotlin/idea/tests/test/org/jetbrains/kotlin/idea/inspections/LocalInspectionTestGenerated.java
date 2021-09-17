@@ -9974,21 +9974,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumEntry.kt");
         }
 
-        @TestMetadata("enumInEnum.kt")
-        public void testEnumInEnum() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnum.kt");
-        }
-
-        @TestMetadata("enumInEnum2.kt")
-        public void testEnumInEnum2() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnum2.kt");
-        }
-
-        @TestMetadata("enumInEnum3.kt")
-        public void testEnumInEnum3() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnum3.kt");
-        }
-
         @TestMetadata("expression.kt")
         public void testExpression() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/expression.kt");
@@ -10152,6 +10137,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notApplicableEnumInEnum2.kt")
         public void testNotApplicableEnumInEnum2() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumInEnum2.kt");
+        }
+
+        @TestMetadata("notApplicableEnumInEnum3.kt")
+        public void testNotApplicableEnumInEnum3() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumInEnum3.kt");
+        }
+
+        @TestMetadata("notApplicableEnumInEnum4.kt")
+        public void testNotApplicableEnumInEnum4() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumInEnum4.kt");
+        }
+
+        @TestMetadata("notApplicableEnumInEnum5.kt")
+        public void testNotApplicableEnumInEnum5() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumInEnum5.kt");
         }
 
         @TestMetadata("notApplicableEnumValueOf.kt")
