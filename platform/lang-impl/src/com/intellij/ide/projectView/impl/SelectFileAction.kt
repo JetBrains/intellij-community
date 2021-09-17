@@ -63,7 +63,7 @@ internal class SelectFileAction : DumbAwareAction() {
     event.project?.let { ProjectView.getInstance(it) as? ProjectViewImpl }
 
   private fun getActionId(event: AnActionEvent) =
-    when (TOOL_WINDOW.getData(event.dataContext)?.id) {
+    when (event.getData(TOOL_WINDOW)?.id) {
       PROJECT_VIEW -> SELECT_OPENED_FILE
       else -> SELECT_CONTEXT_FILE
     }
