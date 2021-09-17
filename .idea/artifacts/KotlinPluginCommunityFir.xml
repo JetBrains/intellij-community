@@ -228,6 +228,10 @@
         <element id="library" level="project" name="kotlinc.kotlin-compiler-fir" />
         <element id="library" level="project" name="kotlinc.kotlin-compiler-common" />
         <element id="library" level="project" name="kotlinc.kotlin-compiler-fe10" />
+        <element id="archive" name="analysis-project-structure-ide-impl.jar">
+          <element id="module-output" name="kotlin.fir.analysis-project-structure-ide-impl" />
+        </element>
+        <element id="library" level="project" name="kotlinc.analysis-project-structure" />
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.4.30-dev-local-2/kotlin-dist-for-ide-1.4.30-dev-local-2.jar" path-in-jar="/" />

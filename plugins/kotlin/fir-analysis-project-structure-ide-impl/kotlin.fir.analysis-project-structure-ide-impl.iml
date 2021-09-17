@@ -21,22 +21,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base" />
-    <orderEntry type="module" module-name="intellij.platform.util.ex" />
-    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
+    <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.uast" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir.analysis-project-structure-ide-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.common" />
   </component>
 </module>

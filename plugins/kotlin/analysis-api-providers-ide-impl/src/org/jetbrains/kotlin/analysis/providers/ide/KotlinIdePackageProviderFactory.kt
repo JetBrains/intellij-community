@@ -28,7 +28,7 @@ private class KotlinPackageProviderIdeImpl(
         project.createProjectWideOutOfBlockModificationTracker()
     ) { ConcurrentHashMap<FqName, Boolean>() }
 
-    override fun isPackageExists(packageFqName: FqName): Boolean {
+    override fun doKotlinPackageExists(packageFqName: FqName): Boolean {
         return cache[packageFqName] ?: PackageIndexUtil.packageExists(packageFqName, searchScope, project).also {
             cache.putIfAbsent(packageFqName, it)
         }

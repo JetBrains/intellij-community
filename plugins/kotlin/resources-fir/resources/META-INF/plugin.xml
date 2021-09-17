@@ -41,6 +41,8 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <xi:include href="fe10Binding.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsigts.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="analysisApiProviders.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="analysisProjectStructure.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <xi:include href="extensions/ide-frontend-independent.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
@@ -125,8 +127,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <!-- fir-specific -->
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.fir.AndroidPluginIncompatibilityCheckerStartupActivity"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveStateConfigurator"
-                    serviceImplementation="org.jetbrains.kotlin.idea.fir.low.level.api.ide.FirModuleResolveStateConfiguratorIdeImpl"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.KtAnalysisSessionProvider"
                         serviceImplementation="org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSessionProvider"/>
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"

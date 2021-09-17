@@ -68,3 +68,4 @@ internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvi
         return JavaDirectoryService.getInstance().getPackage(directory)
     }
 }
+

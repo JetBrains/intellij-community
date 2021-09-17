@@ -7,16 +7,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
 import junit.framework.Assert
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSessionProviderStorage
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.moduleSourceInfo
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.idea.fir.analysis.project.structure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureReader
 import org.jetbrains.kotlin.idea.fir.analysis.providers.incModificationTracker
-import org.jetbrains.kotlin.fir.moduleData
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.test.KotlinRoot
@@ -49,7 +48,7 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
                 ?: error("$it is not present in the list of modules")
         }
 
-        val rootModuleSourceInfo = rootModule.productionSourceInfo()!!
+        val rootModuleSourceInfo = rootModule.getMainKtSourceModule()!!
 
         val storage = FirIdeSessionProviderStorage(project)
 
@@ -62,15 +61,19 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
         changedSessions.addAll(sessionsAfterOOBM)
         changedSessions.removeAll(intersection)
         val changedSessionsModulesNamesSorted = changedSessions
-            .map { (it.moduleData.moduleSourceInfo as ModuleSourceInfo).module.name }
+            .map { session ->
+                val moduleSession = session as FirIdeModuleSession
+                val module = moduleSession.module as KtSourceModule
+                module.moduleName
+            }
             .distinct()
             .sorted()
 
         Assert.assertEquals(testStructure.expectedInvalidatedModules, changedSessionsModulesNamesSorted)
     }
 
-    private fun FirIdeSessionProviderStorage.getFirSessions(rootModuleInfo: ModuleSourceInfo): Set<FirIdeSession> {
-        val sessionProvider = getSessionProvider(rootModuleInfo)
+    private fun FirIdeSessionProviderStorage.getFirSessions(module: KtSourceModule): Set<FirIdeSession> {
+        val sessionProvider = getSessionProvider(module)
         return sessionProvider.sessions.values.toSet()
     }
 
