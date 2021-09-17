@@ -1,16 +1,17 @@
 ================ Step #1 =================
 
 Cleaning output files:
-  out/production/module/JavaClass.class
+  out/production/module/org/jetbrains/JavaClass$Inner.class
+  out/production/module/org/jetbrains/JavaClass.class
 End of files
 Exit code: NOTHING_DONE
 ------------------------------------------
 Compiling files:
-  src/JavaClass.java
+  src/org/jetbrains/JavaClass.java
 End of files
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
-  out/production/module/Usage.class
+  out/production/module/UsageKt.class
 End of files
 Compiling files:
   src/usage.kt
