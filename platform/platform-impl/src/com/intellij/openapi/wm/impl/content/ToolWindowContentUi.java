@@ -63,9 +63,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   private final TabbedContentAction.CloseAllAction closeAllAction;
   private final TabbedContentAction.MyNextTabAction nextTabAction;
   private final TabbedContentAction.MyPreviousTabAction previousTabAction;
-  private TabbedContentAction.SplitTabAction splitRightTabAction;
-  private TabbedContentAction.SplitTabAction splitDownTabAction;
-  private TabbedContentAction.UnsplitTabAction unsplitTabAction;
+  private final TabbedContentAction.SplitTabAction splitRightTabAction;
+  private final TabbedContentAction.SplitTabAction splitDownTabAction;
+  private final TabbedContentAction.UnsplitTabAction unsplitTabAction;
 
   private final ShowContentAction showContent;
 
@@ -504,7 +504,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     group.add(nextTabAction);
     group.add(previousTabAction);
-    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false) &&splitRightTabAction != null) {
+    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false)) {
       group.add(splitRightTabAction);
       group.add(splitDownTabAction);
       group.add(unsplitTabAction);
