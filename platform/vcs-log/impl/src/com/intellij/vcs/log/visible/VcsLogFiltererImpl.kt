@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.diagnostic.Logger
@@ -133,11 +133,11 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return result
   }
 
-  fun createVisibleGraph(dataPack: DataPack,
-                         sortType: PermanentGraph.SortType,
-                         matchingHeads: Set<Int>?,
-                         matchingCommits: Set<Int>?,
-                         fileHistoryData: FileHistoryData? = null): VisibleGraph<Int> {
+  private fun createVisibleGraph(dataPack: DataPack,
+                                 sortType: PermanentGraph.SortType,
+                                 matchingHeads: Set<Int>?,
+                                 matchingCommits: Set<Int>?,
+                                 fileHistoryData: FileHistoryData?): VisibleGraph<Int> {
     if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
       return EmptyVisibleGraph.getInstance()
     }
