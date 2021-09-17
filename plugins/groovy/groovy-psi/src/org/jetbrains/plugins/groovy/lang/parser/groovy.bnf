@@ -1161,7 +1161,8 @@ switch_expression ::= 'switch' '(' expression ')' mb_nl ('{' mb_nl <<insideSwitc
 private general_switch_section ::= !'}' (case_section | default_section) { pin = 1 recoverWhile = case_section_recovery }
 private case_section_recovery ::= !('}' | 'case' | 'default')
 
-case_section ::= 'case' <<forbidLambdaExpressions expression_list>> switch_expr_remainder { pin = 1 }
+case_section ::= 'case' <<forbidLambdaExpressions switch_expression_list>> switch_expr_remainder { pin = 1 }
+switch_expression_list ::= expression (',' mb_nl expression)* { elementType = expression_list }
 default_section ::= 'default' switch_expr_remainder { elementType = case_section pin = 1 }
 private switch_expr_remainder ::= case_arrow_remainder | case_colon_remainder
 // we need to enable yield here because groovy does not have such entity as switch statement with arrows, so technically yield is allowed there

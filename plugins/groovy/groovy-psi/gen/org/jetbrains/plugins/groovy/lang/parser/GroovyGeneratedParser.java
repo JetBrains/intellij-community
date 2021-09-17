@@ -1888,7 +1888,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'case' <<forbidLambdaExpressions expression_list>> switch_expr_remainder
+  // 'case' <<forbidLambdaExpressions switch_expression_list>> switch_expr_remainder
   public static boolean case_section(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_section")) return false;
     if (!nextTokenIs(b, KW_CASE)) return false;
@@ -1896,7 +1896,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CASE_SECTION, null);
     r = consumeToken(b, KW_CASE);
     p = r; // pin = 1
-    r = r && report_error_(b, forbidLambdaExpressions(b, l + 1, GroovyGeneratedParser::expression_list));
+    r = r && report_error_(b, forbidLambdaExpressions(b, l + 1, GroovyGeneratedParser::switch_expression_list));
     r = p && switch_expr_remainder(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -6866,6 +6866,41 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     boolean r;
     r = case_arrow_remainder(b, l + 1);
     if (!r) r = case_colon_remainder(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // expression (',' mb_nl expression)*
+  public static boolean switch_expression_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_list")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, EXPRESSION_LIST, "<switch expression list>");
+    r = expression(b, l + 1, -1);
+    r = r && switch_expression_list_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (',' mb_nl expression)*
+  private static boolean switch_expression_list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_list_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!switch_expression_list_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "switch_expression_list_1", c)) break;
+    }
+    return true;
+  }
+
+  // ',' mb_nl expression
+  private static boolean switch_expression_list_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_list_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_COMMA);
+    r = r && mb_nl(b, l + 1);
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, m, null, r);
     return r;
   }
 

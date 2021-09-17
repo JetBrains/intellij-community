@@ -60,4 +60,8 @@ class SwitchExpressionParsingTest extends GroovyParsingTestCase {
   void testCustom1() { doTest() }
 
   void testCustom2() { doTest() }
+
+  void testCustom3() { doTest() }
+
+  void testCustom4() { doTest() }
 }
