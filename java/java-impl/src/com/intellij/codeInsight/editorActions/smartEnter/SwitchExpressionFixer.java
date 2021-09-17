@@ -25,9 +25,9 @@ import com.intellij.util.IncorrectOperationException;
 public class SwitchExpressionFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PsiSwitchStatement) {
+    if (psiElement instanceof PsiSwitchBlock) {
       final Document doc = editor.getDocument();
-      final PsiSwitchStatement switchStatement = (PsiSwitchStatement)psiElement;
+      final PsiSwitchBlock switchStatement = (PsiSwitchBlock)psiElement;
       final PsiJavaToken rParenth = switchStatement.getRParenth();
       final PsiJavaToken lParenth = switchStatement.getLParenth();
       final PsiExpression condition = switchStatement.getExpression();
