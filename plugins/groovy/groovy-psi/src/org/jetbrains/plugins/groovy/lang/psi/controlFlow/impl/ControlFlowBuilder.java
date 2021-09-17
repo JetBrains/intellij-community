@@ -1044,6 +1044,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (myHead != null) {
       addPendingEdge(caseSection, myHead);
     }
+    if (caseSection.getArrow() != null) {
+      // arrow-style switch expressions are not fall-through
+      var parent = caseSection.getParent();
+      if (parent instanceof GrSwitchElement) {
+        readdPendingEdge((GroovyPsiElement)parent);
+      }
+      interruptFlow();
+    }
   }
 
   private void handlePossibleYield(GrStatement statement) {

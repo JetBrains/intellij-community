@@ -84,4 +84,19 @@ def xx = switch(10) {
 x<caret>x
 """, "A"
   }
+
+  void testFlowThroughSwitch() {
+    doTest """
+class A {}
+class B extends A {}
+class C extends A {}
+
+def bb = 0
+
+def x = switch (a) {
+    case 20 -> bb = new B()
+    default -> bb = new C()
+}
+b<caret>b""", 'A'
+  }
 }
