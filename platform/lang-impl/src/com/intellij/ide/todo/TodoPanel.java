@@ -350,12 +350,8 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return getSelectedFile();
   }
 
-  private @Nullable Object getSlowData(@NotNull String dataId) {
+  private @Nullable Object getNavigatable(@NotNull String dataId, @NotNull TreePath path) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      TreePath path = myTree.getSelectionPath();
-      if (path == null) {
-        return null;
-      }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = node.getUserObject();
       if (!(userObject instanceof NodeDescriptor)) {
@@ -402,7 +398,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return this;
     }
     else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return List.of((DataProvider)this::getSlowData);
+      TreePath path = myTree.getSelectionPath();
+      if (path == null) {
+        return null;
+      }
+      return List.of((DataProvider)realDataId -> getNavigatable(realDataId, path));
     }
     return super.getData(dataId);
   }
