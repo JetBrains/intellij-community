@@ -1,16 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.addAnnotation
+import org.jetbrains.kotlin.idea.util.addAnnotationWithUseSiteTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -60,7 +58,10 @@ open class ReplaceAnnotationFix(
                 ?: existingEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), existingEntry.lastChild)
             ShortenReferences.DEFAULT.process(existingEntry)
         } else {
-            owner.addAnnotation(annotationFqName, annotationInnerText, useSiteTarget = useSiteTarget)
+            if (useSiteTarget != null)
+                owner.addAnnotationWithUseSiteTarget(annotationFqName, useSiteTarget, annotationInnerText)
+            else
+                owner.addAnnotation(annotationFqName, annotationInnerText)
         }
     }
 }
