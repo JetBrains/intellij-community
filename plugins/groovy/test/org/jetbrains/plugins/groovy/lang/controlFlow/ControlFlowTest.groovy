@@ -60,6 +60,8 @@ class ControlFlowTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testNestedSwitch4() { doTest() }
 
+  void testSwitchexpr1() { doTest() }
+
   void testSwitchWithinFor() { doTest() }
 
   void testSwitchWithinLabeledFor() { doTest() }
