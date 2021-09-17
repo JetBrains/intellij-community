@@ -147,6 +147,14 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicator(AddToStringFixFactories.assignmentTypeMismatch)
         registerApplicator(AddToStringFixFactories.returnTypeMismatch)
         registerApplicator(AddToStringFixFactories.initializerTypeMismatch)
+
+        registerApplicator(CastExpressionFixFactories.smartcastImpossible)
+        registerApplicator(CastExpressionFixFactories.typeMismatch)
+        registerApplicator(CastExpressionFixFactories.throwableTypeMismatch)
+        registerApplicator(CastExpressionFixFactories.argumentTypeMismatch)
+        registerApplicator(CastExpressionFixFactories.assignmentTypeMismatch)
+        registerApplicator(CastExpressionFixFactories.returnTypeMismatch)
+        registerApplicator(CastExpressionFixFactories.initializerTypeMismatch)
     }
 
 
