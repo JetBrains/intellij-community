@@ -463,7 +463,7 @@
       "SearchField.background": "#FFFFFF",
       "SearchField.borderColor": "#C5C5C5",
 
-      "SectionHeader.background": "#C5C5C5",
+      "SectionHeader.background": "#F7F7F7",
       "SectionHeader.foreground": "#787878"
 
     },
