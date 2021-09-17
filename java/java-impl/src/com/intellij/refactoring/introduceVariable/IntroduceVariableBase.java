@@ -59,7 +59,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.NotInSuperCallOccurrenceFilter;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,7 +135,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         @Override
         public PsiExpression[] filter(ExpressionOccurrenceManager manager) {
           return StreamEx.of(manager.getOccurrences())
-            .filter(expr -> PsiTreeUtil.isAncestor(parent, ObjectUtils.notNull(expr.getUserData(ElementToWorkOn.PARENT), expr), true))
+            .filter(expr -> PsiTreeUtil.isAncestor(parent, getPhysicalElement(expr), true))
             .toArray(PsiExpression.EMPTY_ARRAY);
         }
 
