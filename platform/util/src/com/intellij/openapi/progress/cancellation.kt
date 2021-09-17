@@ -3,5 +3,9 @@ package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.ThrowableComputable
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.job
+import kotlin.coroutines.coroutineContext
 
 fun <X> withJob(job: Job, action: () -> X): X = Cancellation.withJob(job, ThrowableComputable(action))
+
+suspend fun <X> withJob(action: () -> X): X = withJob(coroutineContext.job, action)
