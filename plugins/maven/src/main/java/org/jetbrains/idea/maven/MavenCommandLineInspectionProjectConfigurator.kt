@@ -1,13 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven
 
+import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildViewManager
+import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.OutputBuildEvent
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ExceptionUtil
@@ -16,6 +25,8 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.BufferedWriter
+import java.io.FileWriter
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -25,6 +36,8 @@ private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "mave
 private val LOG = Logger.getInstance(MavenCommandLineInspectionProjectConfigurator::class.java)
 private const val DISABLE_MAVEN_AUTO_IMPORT = "external.system.auto.import.disabled"
 private const val MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS = "maven.command.line.configurator.exit.on.unresolved.plugins"
+private val mavenLogWriter = BufferedWriter(FileWriter(PathManager.getLogPath() + "/maven-import.log"))
+private val MAVEN_OUTPUT_LOG = Logger.getInstance("MavenOutput")
 
 class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProjectConfigurator {
   override fun getName(): String = "maven"
@@ -46,6 +59,16 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
     LOG.info("maven project: ${project.name} is linked: $isMavenProjectLinked")
 
+    val disposable = Disposer.newDisposable()
+    val progressListener = LogBuildProgressListener()
+    val externalSystemRunConfigurationViewManager = project.service<ExternalSystemRunConfigurationViewManager>()
+    val buildViewManager = project.service<BuildViewManager>()
+    val syncViewManager = project.service<SyncViewManager>()
+
+    externalSystemRunConfigurationViewManager.addListener(progressListener,disposable)
+    buildViewManager.addListener(progressListener, disposable)
+    syncViewManager.addListener(progressListener, disposable)
+
     if (!isMavenProjectLinked) {
       ApplicationManager.getApplication().invokeAndWait {
         mavenProjectAware.linkAndLoadProject(project, basePath)
@@ -64,6 +87,9 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
       }
       ProgressManager.checkCanceled()
     }
+
+    Disposer.dispose(disposable)
+    mavenLogWriter.flush()
 
     for (mavenProject in mavenProjectsManager.projects) {
       val hasReadingProblems = mavenProject.hasReadingProblems()
@@ -84,12 +110,21 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
           MavenArtifactUtil.hasArtifactFile(mavenProject.localRepository, plugin.mavenId)
         }
         val errorMessage = "maven project: ${mavenProject.name} has unresolved plugins: $unresolvedPlugins"
-        if(System.getProperty(MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS, "false").toBoolean()) {
+        if (System.getProperty(MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS, "false").toBoolean()) {
           throw IllegalStateException(errorMessage)
         } else {
           LOG.warn(errorMessage)
         }
       }
+    }
+  }
+
+  class LogBuildProgressListener : BuildProgressListener {
+    override fun onEvent(buildId: Any, event: BuildEvent) {
+      val outputBuildEvent = event as? OutputBuildEvent ?: return
+      val prefix = if (outputBuildEvent.isStdOut) "" else "stderr: "
+      mavenLogWriter.write(prefix + outputBuildEvent.message)
+      MAVEN_OUTPUT_LOG.debug(prefix + outputBuildEvent.message)
     }
   }
 }
