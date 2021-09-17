@@ -2161,6 +2161,74 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/casts")
+    public static class Casts extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("castQualifiedArgument.kt")
+        public void testCastQualifiedArgument() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/castQualifiedArgument.kt");
+        }
+
+        @TestMetadata("castToFunctionType.kt")
+        public void testCastToFunctionType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/castToFunctionType.kt");
+        }
+
+        @TestMetadata("preferExclExcl.kt")
+        public void testPreferExclExcl() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/preferExclExcl.kt");
+        }
+
+        @TestMetadata("smartcastImpossible1.kt")
+        public void testSmartcastImpossible1() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/smartcastImpossible1.kt");
+        }
+
+        @TestMetadata("smartcastImpossible2.kt")
+        public void testSmartcastImpossible2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/smartcastImpossible2.kt");
+        }
+
+        @TestMetadata("smartcastImpossible3.kt")
+        public void testSmartcastImpossible3() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/smartcastImpossible3.kt");
+        }
+
+        @TestMetadata("typeMismatch1.kt")
+        public void testTypeMismatch1() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch1.kt");
+        }
+
+        @TestMetadata("typeMismatch2.kt")
+        public void testTypeMismatch2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch2.kt");
+        }
+
+        @TestMetadata("typeMismatch3.kt")
+        public void testTypeMismatch3() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch3.kt");
+        }
+
+        @TestMetadata("typeMismatch4.kt")
+        public void testTypeMismatch4() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch4.kt");
+        }
+
+        @TestMetadata("typeMismatchLongNameRuntime.kt")
+        public void testTypeMismatchLongNameRuntime() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatchLongNameRuntime.kt");
+        }
+
+        @TestMetadata("unsigned.kt")
+        public void testUnsigned() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/unsigned.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/componentFunctionReturnTypeMismatch")
     public static class ComponentFunctionReturnTypeMismatch extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
