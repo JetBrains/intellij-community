@@ -56,5 +56,7 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
+    <orderEntry type="module" module-name="kotlin.fir.analysis-project-structure-ide-impl" />
+    <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
   </component>
 </module>

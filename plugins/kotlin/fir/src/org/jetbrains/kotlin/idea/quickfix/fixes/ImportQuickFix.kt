@@ -16,7 +16,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -26,7 +25,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.stateConfigurator
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModuleOfTypeSafe
+import org.jetbrains.kotlin.analysis.project.structure.moduleScopeProvider
 import org.jetbrains.kotlin.idea.quickfix.QuickFixActionBase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.module
@@ -147,12 +148,13 @@ internal class ImportQuickFix(
         }
 
         private fun createSearchScope(element: PsiElement): GlobalSearchScope {
-            val moduleInfo = element.getModuleInfo()
-            val contentScope = moduleInfo.contentScope()
-            //todo do not use internal stateConfigurator here
-            val librariesScope = element.module?.project?.stateConfigurator
-                ?.createScopeForModuleLibraries(moduleInfo as ModuleSourceInfoBase)
-                ?: GlobalSearchScope.EMPTY_SCOPE
+            val project = element.project
+            val module = element.getKtModuleOfTypeSafe<KtSourceModule>(project) ?: return GlobalSearchScope.EMPTY_SCOPE
+            val contentScope = module.contentScope
+
+            val librariesScope = project
+                .moduleScopeProvider
+                .getModuleLibrariesScope(module)
 
             return contentScope.uniteWith(librariesScope)
         }
