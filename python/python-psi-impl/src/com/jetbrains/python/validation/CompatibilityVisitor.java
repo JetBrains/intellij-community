@@ -273,7 +273,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyListCompExpression(node);
 
     registerForAllMatchingVersions(
-      level -> registerForLanguageLevel(level) && UnsupportedFeaturesUtil.visitPyListCompExpression(node, level),
+      level -> registerForLanguageLevel(level) && UnsupportedFeaturesUtil.listComprehensionIteratesOverNonParenthesizedTuple(node, level),
       PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax.in.list.comprehensions"),
       ContainerUtil.map(node.getForComponents(), PyComprehensionForComponent::getIteratedList),
       new ReplaceListComprehensionsQuickFix()
