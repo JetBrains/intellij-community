@@ -32,7 +32,9 @@ import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 var PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
 
-fun PsiElement.getModuleInfo(): IdeaModuleInfo = this.collectInfos(ModuleInfoCollector.NotNullTakeFirst)
+@JvmOverloads
+fun PsiElement.getModuleInfo(createSourceLibraryInfoForLibraryBinaries: Boolean = true): IdeaModuleInfo =
+    this.collectInfos(ModuleInfoCollector.NotNullTakeFirst, createSourceLibraryInfoForLibraryBinaries)
 
 fun PsiElement.getNullableModuleInfo(): IdeaModuleInfo? = this.collectInfos(ModuleInfoCollector.NullableTakeFirst)
 
@@ -138,7 +140,10 @@ private sealed class ModuleInfoCollector<out T>(
     )
 }
 
-private fun <T> PsiElement.collectInfos(c: ModuleInfoCollector<T>): T {
+private fun <T> PsiElement.collectInfos(
+    c: ModuleInfoCollector<T>,
+    createSourceLibraryInfoForLibraryBinaries: Boolean = true
+): T {
     (containingFile?.forcedModuleInfo as? IdeaModuleInfo)?.let {
         return c.onResult(it)
     }
@@ -189,11 +194,18 @@ private fun <T> PsiElement.collectInfos(c: ModuleInfoCollector<T>): T {
             }
         }
     }
+    val isCompiled = (containingFile as? KtFile)?.isCompiled
+
+    val isLibrarySource = if (createSourceLibraryInfoForLibraryBinaries) {
+        isCompiled ?: false
+    } else {
+        isCompiled == false
+    }
 
     return c.virtualFileProcessor(
         project,
         virtualFile,
-        (containingFile as? KtFile)?.isCompiled ?: false
+        isLibrarySource
     )
 }
 

@@ -7,19 +7,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.providers.ide.trackers.KotlinFirModificationTrackerService
-import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.fir.analysis.project.structure.ideaModule
 
 internal class KotlinFirIdeModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory() {
     override fun createProjectWideOutOfBlockModificationTracker(): ModificationTracker =
         KotlinFirOutOfBlockModificationTracker(project)
 
-    override fun createModuleWithoutDependenciesOutOfBlockModificationTracker(moduleInfo: ModuleSourceInfoBase): ModificationTracker {
-        require(moduleInfo is ModuleSourceInfo)
-        return KotlinFirOutOfBlockModuleModificationTracker(moduleInfo.module)
+    override fun createModuleWithoutDependenciesOutOfBlockModificationTracker(module: KtSourceModule): ModificationTracker {
+        return KotlinFirOutOfBlockModuleModificationTracker(module.ideaModule)
     }
 
     override fun createLibrariesModificationTracker(): ModificationTracker {

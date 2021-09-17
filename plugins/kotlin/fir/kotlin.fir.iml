@@ -44,5 +44,7 @@
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.symbol-light-classes" level="project" />
+    <orderEntry type="module" module-name="kotlin.fir.analysis-project-structure-ide-impl" />
+    <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
   </component>
 </module>
