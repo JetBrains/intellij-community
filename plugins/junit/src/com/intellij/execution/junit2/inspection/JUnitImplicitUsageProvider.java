@@ -39,10 +39,8 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     if (method.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null) return false;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
-    SearchScope useScope = method.getUseScope();
     String methodName = method.getName();
-    if (isExpensiveSearch(psiClass, methodName, useScope)) return false;
-    return ContainerUtil.exists(psiClass.findMethodsByName(methodName, true),
+    return ContainerUtil.exists(psiClass.findMethodsByName(methodName, false),
                                 it -> it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST) != null &&
                                       it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null);
   }
