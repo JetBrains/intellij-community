@@ -21,11 +21,9 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -123,13 +121,11 @@ public class GroovyStatementMover extends StatementUpDownMover {
         if (stmtLevel && element instanceof GrCodeBlock) {
           final PsiElement lBrace = ((GrCodeBlock)element).getLBrace();
           if (nlsAfter(lBrace)) {
-            assert lBrace != null;
             addRange(new LineRange(lBrace).endLine);
           }
           addChildRanges(((GrCodeBlock)element).getStatements());
           final PsiElement rBrace = ((GrCodeBlock)element).getRBrace();
           if (nlsAfter(rBrace)) {
-            assert rBrace != null;
             final int endLine = new LineRange(rBrace).endLine;
             if (lastStart >= 0) {
               for (int i = lastStart + 1; i < endLine; i++) {
@@ -140,11 +136,21 @@ public class GroovyStatementMover extends StatementUpDownMover {
         }
         else if (stmtLevel && element instanceof GrCaseSection) {
           PsiElement delimiter = ((GrCaseSection)element).getColon();
-          if (delimiter == null) delimiter = ((GrCaseSection)element).getArrow();
-          if (delimiter != null && nlsAfter(delimiter)) {
-            addRange(new LineRange(element.getFirstChild(), delimiter).endLine);
+          if (delimiter != null) {
+            if (nlsAfter(delimiter)) {
+              addRange(new LineRange(element.getFirstChild(), delimiter).endLine);
+            }
+            addChildRanges(((GrCaseSection)element).getStatements());
+          } else {
+            var statements = ((GrCaseSection)element).getStatements();
+            if (statements.length == 1 && statements[0] instanceof GrBlockStatement) {
+              GrOpenBlock block = ((GrBlockStatement)statements[0]).getBlock();
+              if (nlsAfter(block.getLBrace())) {
+                addRange(new LineRange(element.getFirstChild(), block.getLBrace()).endLine);
+              }
+              addChildRanges(block.getStatements());
+            }
           }
-          addChildRanges(((GrCaseSection)element).getStatements());
         }
         else if (element instanceof GroovyFileBase) {
           addChildRanges(((GroovyFileBase)element).getTopStatements());
