@@ -350,14 +350,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return getSelectedFile();
   }
 
-  private @Nullable Object getNavigatable(@NotNull String dataId, @NotNull TreePath path) {
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull NodeDescriptor nodeDescriptor) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      Object userObject = node.getUserObject();
-      if (!(userObject instanceof NodeDescriptor)) {
-        return null;
-      }
-      Object element = ((NodeDescriptor)userObject).getElement();
+      Object element = nodeDescriptor.getElement();
       if (!(element instanceof TodoFileNode || element instanceof TodoItemNode)) { // allow user to use F4 only on files an TODOs
         return null;
       }
@@ -402,7 +397,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (path == null) {
         return null;
       }
-      return List.of((DataProvider)realDataId -> getNavigatable(realDataId, path));
+      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
+      if (!(userObject instanceof NodeDescriptor)) {
+        return null;
+      }
+      return List.of((DataProvider)realDataId -> getSlowData(realDataId, (NodeDescriptor)userObject));
     }
     return super.getData(dataId);
   }
