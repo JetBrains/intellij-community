@@ -43,4 +43,12 @@ def x = switch (10) {
     <error>return 40</error>
 }'''
   }
+
+  void 'test throw in colon-style switch expression'() {
+    doTest '''
+def x = switch (10) {
+    case 20: 
+        throw new IOException()
+}'''
+  }
 }

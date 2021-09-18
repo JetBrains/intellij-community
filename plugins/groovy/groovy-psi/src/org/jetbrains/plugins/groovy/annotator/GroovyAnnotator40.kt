@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
@@ -196,16 +197,15 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
   override fun visitCaseSection(caseSection: GrCaseSection) {
     if (caseSection.parent is GrSwitchExpression && caseSection.colon != null) {
       val flow = ControlFlowUtils.getCaseSectionInstructions(caseSection)
-      val yields = ControlFlowUtils.collectYields(flow)
-      if (yields.all { it !is GrYieldStatement }) {
+      if (flow.all { it.element !is GrYieldStatement && it.element !is GrThrowStatement }) {
         val errorOwner = caseSection.firstChild ?: caseSection // try to hang the error on case keyword
         holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.yield.or.throw.expected.in.case.section")).range(errorOwner).create()
       }
       val returns = ControlFlowUtils.collectReturns(flow, false)
-      for (returnStatement in returns) {
-        if (returnStatement is GrReturnStatement) {
-          holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.switch.expressions.do.not.support.return")).range(returnStatement).withFix(GrReplaceReturnWithYield()).create()
-        }
+      for (returnStatement in returns.filterIsInstance<GrReturnStatement>()) {
+        holder.newAnnotation(HighlightSeverity.ERROR,
+          GroovyBundle.message("inspection.message.switch.expressions.do.not.support.return"))
+          .range(returnStatement).withFix(GrReplaceReturnWithYield()).create()
       }
     }
     return super.visitCaseSection(caseSection)
