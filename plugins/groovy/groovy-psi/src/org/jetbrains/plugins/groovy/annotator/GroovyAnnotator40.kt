@@ -195,7 +195,8 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
   }
 
   override fun visitCaseSection(caseSection: GrCaseSection) {
-    if (caseSection.parent is GrSwitchExpression && caseSection.colon != null) {
+    val parent = caseSection.parent as? GrSwitchExpression ?: return super.visitCaseSection(caseSection)
+    if (caseSection.colon != null && (caseSection.statements.size > 1 || parent.caseSections.indexOf(caseSection) == parent.caseSections.lastIndex)) {
       val flow = ControlFlowUtils.getCaseSectionInstructions(caseSection)
       if (flow.all { it.element !is GrYieldStatement && it.element !is GrThrowStatement }) {
         val errorOwner = caseSection.firstChild ?: caseSection // try to hang the error on case keyword

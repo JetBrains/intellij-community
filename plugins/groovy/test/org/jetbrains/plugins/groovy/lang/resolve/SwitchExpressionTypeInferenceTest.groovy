@@ -155,4 +155,19 @@ def foo(xx) {
 }""", 'java.lang.Integer'
   }
 
+  void testMatchingWithColons() {
+    doTest """
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo(xx) {
+    def _ = switch (xx) {
+        case B: 
+        case C:
+          yield x<caret>x
+    }
+}""", 'A'
+  }
+
 }

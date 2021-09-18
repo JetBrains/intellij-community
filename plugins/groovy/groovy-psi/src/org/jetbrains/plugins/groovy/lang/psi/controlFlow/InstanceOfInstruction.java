@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstructi
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt;
 
 import java.util.List;
@@ -91,9 +92,8 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
       // this branch corresponds to an arm of switch expression that is of a kind 'case Integer, String, Foo -> ...'
       var switchElement = (GrSwitchElement)element.getParent().getParent();
       GrCondition condition = switchElement.getCondition();
-      // todo: colons
       if (condition instanceof GrReferenceExpression) {
-        List<GrExpression> expressions = ((GrExpressionList)element).getExpressions();
+        List<GrExpression> expressions = PsiUtil.getAllPatternsForCaseSection((GrCaseSection)element.getParent());
         List<PsiClass> patternClasses = ContainerUtil.mapNotNull(expressions, expr -> (PsiClass)((GrReferenceExpression)expr).resolve());
         var classTypes = ContainerUtil.map(patternClasses, InferenceKt::type);
         PsiType commonType = TypesUtil.getLeastUpperBoundNullable(classTypes, element.getManager());
