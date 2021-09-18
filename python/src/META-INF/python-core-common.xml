@@ -395,6 +395,16 @@
     <suggestedRefactoringSupport language="Python"
                                  implementationClass="com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport"/>
 
+    <!-- Poetry -->
+    <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PyProjectTomlWatcher"/>
+    <projectService serviceImplementation="com.jetbrains.python.sdk.poetry.PoetryConfigService"/>
+    <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
+    <runLineMarkerContributor language="TOML"
+                              implementationClass="com.jetbrains.python.sdk.poetry.PoetryExtrasLineMarkerContributor"/>
+    <runLineMarkerContributor language="TOML"
+                              implementationClass="com.jetbrains.python.sdk.poetry.PoetryScriptsLineMarkerContributor"/>
+    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.poetry.PoetryVersionInspection" displayName="Poetry Package versions"  bundle="messages.PyPsiBundle"  groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersion" shortName="PoetryPackageVersion"/>
+
     <!-- Targets API -->
     <experimentalFeature id="python.use.targets.api.for.run.configurations">
       <description>Switches Python Run Configurations to Targets API. This might be unstable.</description>
@@ -555,6 +565,10 @@
     <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
 
+    <!-- Poetry -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.poetry.PyAddPoetrySdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
+
     <!-- SDK Flavors -->
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor"/>
@@ -579,6 +593,9 @@
     <!-- Experimental packaging extensions-->
     <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>
     <packageManagerProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipenvPackageManagerProvider"/>
+
+    <pySdkProvider implementation="com.jetbrains.python.sdk.poetry.PoetrySdkProvider"/>
+    <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
