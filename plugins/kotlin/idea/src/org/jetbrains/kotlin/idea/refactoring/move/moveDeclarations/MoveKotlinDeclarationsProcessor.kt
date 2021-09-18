@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveCallback
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendants
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.deleteSingle
 import org.jetbrains.kotlin.idea.core.quoteIfNeeded
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.refactoring.move.*
@@ -59,6 +61,11 @@ import kotlin.math.min
 interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
     object Default : Mover {
         override fun invoke(originalElement: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
+            fun KtObjectDeclaration.hasNoUsages(): Boolean {
+                return KotlinFindUsagesHandlerFactory(project).createFindUsagesHandler(this, false)
+                    .findReferencesToHighlight(this, LocalSearchScope(containingFile)).isEmpty()
+            }
+
             return when (targetContainer) {
                 is KtFile -> {
                     val declarationContainer: KtElement =
@@ -71,7 +78,8 @@ interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
                 val container = originalElement.containingClassOrObject
                 if (container is KtObjectDeclaration &&
                     container.isCompanion() &&
-                    container.declarations.singleOrNull() == originalElement
+                    container.declarations.singleOrNull() == originalElement &&
+                    container.hasNoUsages()
                 ) {
                     container.deleteSingle()
                 } else {
