@@ -177,6 +177,11 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
   private fun visitSwitchElement(switchElement : GrSwitchElement) {
     val caseSections = switchElement.caseSections ?: emptyArray()
     checkArrowColonConsistency(caseSections)
+    val jointFlow = caseSections.asSequence().flatMap { ControlFlowUtils.getCaseSectionInstructions(it).asSequence() }
+    if (jointFlow.all { it.element !is GrYieldStatement && it.element !is GrThrowStatement } ) {
+      val errorOwner = switchElement.firstChild ?: switchElement // try to hang the error on switch keyword
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.yield.or.throw.expected.in.case.section")).range(errorOwner).create()
+    }
     if (switchElement is GrSwitchExpression) {
       super.visitSwitchExpression(switchElement)
     } else if (switchElement is GrSwitchStatement) {
@@ -198,10 +203,6 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     val parent = caseSection.parent as? GrSwitchExpression ?: return super.visitCaseSection(caseSection)
     if (caseSection.colon != null && (caseSection.statements.size > 1 || parent.caseSections.indexOf(caseSection) == parent.caseSections.lastIndex)) {
       val flow = ControlFlowUtils.getCaseSectionInstructions(caseSection)
-      if (flow.all { it.element !is GrYieldStatement && it.element !is GrThrowStatement }) {
-        val errorOwner = caseSection.firstChild ?: caseSection // try to hang the error on case keyword
-        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.yield.or.throw.expected.in.case.section")).range(errorOwner).create()
-      }
       val returns = ControlFlowUtils.collectReturns(flow, false)
       for (returnStatement in returns.filterIsInstance<GrReturnStatement>()) {
         holder.newAnnotation(HighlightSeverity.ERROR,
