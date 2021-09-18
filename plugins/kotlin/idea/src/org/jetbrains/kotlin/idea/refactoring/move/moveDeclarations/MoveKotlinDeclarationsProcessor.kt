@@ -61,11 +61,6 @@ import kotlin.math.min
 interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
     object Default : Mover {
         override fun invoke(originalElement: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
-            fun KtObjectDeclaration.hasNoUsages(): Boolean {
-                return KotlinFindUsagesHandlerFactory(project).createFindUsagesHandler(this, false)
-                    .findReferencesToHighlight(this, LocalSearchScope(containingFile)).isEmpty()
-            }
-
             return when (targetContainer) {
                 is KtFile -> {
                     val declarationContainer: KtElement =
@@ -79,7 +74,8 @@ interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
                 if (container is KtObjectDeclaration &&
                     container.isCompanion() &&
                     container.declarations.singleOrNull() == originalElement &&
-                    container.hasNoUsages()
+                    KotlinFindUsagesHandlerFactory(container.project).createFindUsagesHandler(container, false)
+                        .findReferencesToHighlight(container, LocalSearchScope(container.containingFile)).isEmpty()
                 ) {
                     container.deleteSingle()
                 } else {
