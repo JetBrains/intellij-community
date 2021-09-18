@@ -79,5 +79,7 @@
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" name="apache.tuweni.toml" level="project" />
+    <orderEntry type="module" module-name="intellij.toml" />
   </component>
 </module>
