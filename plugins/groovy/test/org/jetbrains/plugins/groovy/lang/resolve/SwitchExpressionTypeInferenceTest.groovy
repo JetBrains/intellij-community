@@ -99,4 +99,17 @@ def x = switch (a) {
 }
 b<caret>b""", 'A'
   }
+
+  void testNestedYields() {
+    doTest """
+def xx = switch (10)  {
+    case 1..10 -> {
+        def r = switch (40) {
+            case 20 -> yield ""
+        }
+    }
+    default -> yield 50
+}
+x<caret>x""", 'java.lang.Integer'
+  }
 }
