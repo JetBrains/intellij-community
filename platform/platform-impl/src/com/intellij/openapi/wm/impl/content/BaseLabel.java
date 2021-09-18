@@ -110,7 +110,7 @@ public class BaseLabel extends JLabel {
     return myPassiveFg;
   }
 
-  protected void updateTextAndIcon(Content content, boolean isSelected) {
+  protected void updateTextAndIcon(Content content, boolean isSelected, boolean isBold) {
     if (content == null) {
       setText(null);
       setIcon(null);
@@ -142,7 +142,7 @@ public class BaseLabel extends JLabel {
         setIcon(null);
       }
 
-      myBold = false; //isSelected;
+      myBold = isBold;
     }
   }
 

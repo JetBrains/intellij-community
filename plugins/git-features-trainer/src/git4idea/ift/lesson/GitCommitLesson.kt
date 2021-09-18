@@ -9,31 +9,34 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.table.JBTable
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitOptionsPanel
+import com.intellij.vcs.commit.allOptions
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import training.dsl.*
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
@@ -46,7 +49,7 @@ import javax.swing.tree.TreePath
 
 class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.commit.lesson.name")) {
   override val existedFile = "git/puss_in_boots.yml"
-  private val branchName = "feature"
+  override val branchName = "feature"
   private val firstFileName = "simple_cat.yml"
   private val secondFileName = "puss_in_boots.yml"
 
@@ -65,8 +68,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch(branchName)
-
     prepareRuntimeTask {
       modifyFiles()
     }
@@ -105,7 +106,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {
-      text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName), strong(secondFileName)))
+      text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName), strong(firstFileName)))
       text(GitLessonsBundle.message("git.commit.choose.files.balloon"),
            LearningBalloonConfig(Balloon.Position.below, 300, cornerToPointerDistance = 55))
       highlightVcsChange(firstFileName)
@@ -132,11 +133,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     val reformatCodeButtonText = VcsBundle.message("checkbox.checkin.options.reformat.code").dropMnemonic()
     task {
       triggerByUiComponentAndHighlight { ui: JBCheckBox ->
-        if (ui.text == reformatCodeButtonText) {
-          ui.isSelected = false
-          true
-        }
-        else false
+        ui.text == reformatCodeButtonText
       }
     }
 
@@ -163,7 +160,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: JBOptionButton ->
         ui.text?.contains(commitButtonText) == true
       }
-      triggerOnCommitPerformed()
+      triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
       showWarningIfCommitWindowClosed()
     }
 
@@ -221,7 +218,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       triggerByUiComponentAndHighlight { ui: JBOptionButton ->
         ui.text?.contains(amendButtonText) == true
       }
-      triggerOnCommitPerformed()
+      triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
       showWarningIfCommitWindowClosed()
     }
 
@@ -251,28 +248,8 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
   private fun TaskContext.triggerOnTopCommitSelected() {
     highlightSubsequentCommitsInGitLog(0)
-    triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
+    triggerByUiComponentAndHighlight(false, false) { ui: VcsLogGraphTable ->
       ui.isCellSelected(0, 1)
-    }
-  }
-
-  private fun TaskContext.triggerOnCommitPerformed() {
-    addFutureStep {
-      val commitWorkflowHandler: NonModalCommitWorkflowHandler<*, *> = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler
-                                                                       ?: error("Changes view not initialized")
-      commitWorkflowHandler.workflow.addListener(object : CommitWorkflowListener {
-        override fun vcsesChanged() {}
-
-        override fun executionStarted() {}
-
-        override fun executionEnded() {
-          completeStep()
-        }
-
-        override fun beforeCommitChecksStarted() {}
-
-        override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {}
-      }, taskDisposable)
     }
   }
 
@@ -281,6 +258,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       val projectRoot = ProjectUtils.getProjectRoot(project)
       appendToFile(projectRoot, firstFileName, firstFileAddition)
       appendToFile(projectRoot, secondFileName, secondFileAddition)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
   }
 

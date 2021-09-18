@@ -2154,4 +2154,13 @@ class Foo {
 }
 """, UnusedDefInspection
   }
+
+  void 'test closure with null mapping'() {
+    testHighlighting """
+class A {
+    static def cl = {}
+}
+
+A.cl()""", GroovyAssignabilityCheckInspection
+  }
 }

@@ -58,6 +58,16 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     return logger.getLogFilesProvider()
   }
 
+  /**
+   * Merge strategy defines which successive events should be merged and recorded as a single event.
+   * The amount of merged events is reflected in `com.intellij.internal.statistic.eventLog.LogEventAction#count` field.
+   *
+   * By default, only events with the same values in group id, event id and all event data fields are merged.
+   */
+  open fun createEventsMergeStrategy(): StatisticsEventMergeStrategy {
+    return FilteredEventMergeStrategy(emptySet())
+  }
+
   private fun createLogger(): StatisticsEventLogger {
     if (!isRecordEnabled()) {
       return EmptyStatisticsEventLogger()
@@ -76,8 +86,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     )
 
     val logger = StatisticsFileEventLogger(
-      recorderId, config.sessionId, isHeadless, eventLogConfiguration.build, config.bucket.toString(), version.toString(), throttledWriter,
-      UsageStatisticsPersistenceComponent.getInstance()
+      recorderId, config.sessionId, isHeadless, eventLogConfiguration.build, config.bucket.toString(), version.toString(),
+      throttledWriter, UsageStatisticsPersistenceComponent.getInstance(), createEventsMergeStrategy()
     )
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger

@@ -16,7 +16,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.NO_PROGRESS_SYNC
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
@@ -133,7 +133,7 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
       scriptParameters = gradleArguments
       externalSystemIdString = SYSTEM_ID.id
     }
-    ExternalSystemUtil.runTask(settings, EXECUTOR_ID, myProject, SYSTEM_ID, null, MODAL_SYNC)
+    ExternalSystemUtil.runTask(settings, EXECUTOR_ID, myProject, SYSTEM_ID, null, NO_PROGRESS_SYNC)
   }
 
   fun performRerunFailedTestsAction(): Boolean = invokeAndWaitIfNeeded {

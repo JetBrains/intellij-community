@@ -33,13 +33,14 @@ internal class MarkdownExportDialog(
   init {
     title = MarkdownBundle.message("markdown.export.from.docx.dialog.title")
     setOKButtonText(MarkdownBundle.message("markdown.export.dialog.ok.button"))
+    okAction.isEnabled = selectedFileType.validate(project, targetFile).isNullOrEmpty()
   }
 
   override fun doAction(selectedFileUrl: String) {
     val provider = supportedExportProviders.find { it == selectedFileType } ?: return
     val outputFile = "$selectedFileUrl.${provider.formatDescription.extension}"
 
-    provider.exportFile(project, targetFile, outputFile)
+    provider.exportFile(project, file, outputFile)
   }
 
   override fun getFileNameIfExist(dir: String, fileNameWithoutExtension: String): String? {
@@ -50,7 +51,10 @@ internal class MarkdownExportDialog(
   override fun LayoutBuilder.createFileTypeField() = row {
     val model = DefaultComboBoxModel(supportedExportProviders.toTypedArray())
     val fileTypeProperty = PropertyGraph().graphProperty { selectedFileType }
-    fileTypeProperty.afterChange { selectedFileType = it }
+    fileTypeProperty.afterChange {
+      selectedFileType = it
+      okAction.isEnabled = it.validate(project, file).isNullOrEmpty()
+    }
 
     selectedFileType = findFirstValidProvider() ?: supportedExportProviders.first()
     label(MarkdownBundle.message("markdown.export.dialog.filetype.label"))
@@ -74,7 +78,7 @@ internal class MarkdownExportDialog(
   }
 
   private fun findFirstValidProvider(): MarkdownExportProvider? =
-    supportedExportProviders.find { it.validate(project, targetFile) == null }
+    supportedExportProviders.find { it.validate(project, file) == null }
 
   private fun JComponent.visible(predicate: ComponentPredicate) {
     isVisible = predicate()
@@ -83,7 +87,7 @@ internal class MarkdownExportDialog(
 
   private fun ValidationInfoBuilder.validateFileType(combobox: ComboBox<MarkdownExportProvider>): ValidationInfo? {
     val provider = combobox.item
-    val errorMessage = provider.validate(project, targetFile)
+    val errorMessage = provider.validate(project, file)
     return errorMessage?.let(::error)
   }
 
@@ -99,7 +103,7 @@ internal class MarkdownExportDialog(
         return
       }
       text = value.formatDescription.formatName
-      val errorMessage = value.validate(project, targetFile)
+      val errorMessage = value.validate(project, file)
       if (errorMessage != null) {
         isEnabled = false
         toolTipText = errorMessage

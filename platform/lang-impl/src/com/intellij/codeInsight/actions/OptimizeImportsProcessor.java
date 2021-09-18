@@ -5,8 +5,9 @@ package com.intellij.codeInsight.actions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.FutureTask;
 
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.NOTHING_CHANGED_NOTIFICATION;
@@ -106,10 +106,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   static @NotNull List<Runnable> collectOptimizers(@NotNull PsiFile file) {
-    Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
+    FormattingService service = FormattingServiceUtil.findImportsOptimizingService(file);
     List<Runnable> runnables = new ArrayList<>();
     List<PsiFile> files = file.getViewProvider().getAllFiles();
-    for (ImportOptimizer optimizer : optimizers) {
+    for (ImportOptimizer optimizer : service.getImportOptimizers(file)) {
       for (PsiFile psiFile : files) {
         if (optimizer.supports(psiFile)) {
           runnables.add(optimizer.processFile(psiFile));

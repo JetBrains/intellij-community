@@ -7,7 +7,7 @@ import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -56,7 +56,7 @@ class ServiceViewDeleteProvider implements DeleteProvider {
       return false;
     }
     JComponent detailsComponent = myServiceView.getUi().getDetailsComponent();
-    return detailsComponent == null || !UIUtil.isAncestor(detailsComponent, dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    return detailsComponent == null || !UIUtil.isAncestor(detailsComponent, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
   @NotNull

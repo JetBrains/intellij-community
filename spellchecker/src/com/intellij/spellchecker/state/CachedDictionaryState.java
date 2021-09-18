@@ -7,7 +7,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -43,13 +42,6 @@ public final class CachedDictionaryState extends DictionaryState implements Pers
     }
     super.loadState(state);
     myDictListenerEventDispatcher.getMulticaster().dictChanged(getDictionary());
-  }
-
-  /** @deprecated Use {@link CachedDictionaryState#addCachedDictListener(DictionaryStateListener, Disposable)} instead.*/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") // Use overload with parentDisposable
-  public void addCachedDictListener(DictionaryStateListener listener) {
-    myDictListenerEventDispatcher.addListener(listener);
   }
 
   public void addCachedDictListener(DictionaryStateListener listener, Disposable parentDisposable) {

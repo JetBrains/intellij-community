@@ -26,7 +26,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings
+import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
@@ -100,7 +100,7 @@ object MarkdownImportExportUtils {
 
       private val dirToImport = File(selectedFileUrl).parent
       private val newFileName = File(selectedFileUrl).nameWithoutExtension
-      private val resourcesDir = PandocApplicationSettings.getInstance().state.myPathToImages ?: project.basePath!!
+      private val resourcesDir = PandocSettings.getInstance(project).pathToImages ?: project.basePath!!
 
       override fun run(indicator: ProgressIndicator) {
         val filePath = FileUtil.join(dirToImport, "${newFileName}.${MarkdownFileType.INSTANCE.defaultExtension}")

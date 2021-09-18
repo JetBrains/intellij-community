@@ -18,6 +18,8 @@ package com.intellij.openapi.externalSystem.service.project.settings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +33,36 @@ import java.util.Map;
 public interface RunConfigurationImporter {
   ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.runConfigurationImporter");
 
-  void process(@NotNull Project project,
-                       @NotNull RunConfiguration runConfiguration,
-                       @NotNull Map<String, Object> cfg,
-                       @NotNull IdeModifiableModelsProvider modelsProvider);
+  /**
+   * Checks that this importer can create/update run configuration with given type.
+   * Possible type names are specified only by reply part on external build tool side.
+   *
+   * @param typeName is run configuration type name.
+   * @see ConfigurationData
+   * @see ProjectKeys#CONFIGURATION
+   */
   boolean canImport(@NotNull String typeName);
+
+  /**
+   * Provides run configuration factory for creating instance run configuration with predefined configuration type name.
+   *
+   * @see RunConfigurationImporter#canImport
+   */
   @NotNull ConfigurationFactory getConfigurationFactory();
+
+  /**
+   * Given a map of configuration settings,
+   * optionally create relevant BeforeRunTask if it is missing from beforeRunTasks list.
+   *
+   * @param project          is a project into which this run configuration will be added.
+   * @param modelsProvider   is a IDE project structure modifiable model.
+   * @param runConfiguration is a run configuration to process.
+   * @param cfg              is a map of configuration settings.
+   */
+  void process(
+    @NotNull Project project,
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull Map<String, Object> cfg,
+    @NotNull IdeModifiableModelsProvider modelsProvider
+  );
 }

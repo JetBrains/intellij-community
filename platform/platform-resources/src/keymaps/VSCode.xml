@@ -33,7 +33,7 @@
   </action>
   <action id="ChangesView.GroupBy.Directory" />
   <action id="ChangesView.Rename">
-    <keyboard-shortcut first-keystroke="shift f6" />
+    <keyboard-shortcut first-keystroke="f2" />
   </action>
   <action id="ChangesView.SetDefault" />
   <action id="CheckinProject" />
@@ -257,7 +257,7 @@
   <action id="Generate.Missing.Members.ES6" />
   <action id="Generate.Missing.Members.TypeScript" />
   <action id="Git.Reword.Commit">
-    <keyboard-shortcut first-keystroke="shift f6" />
+    <keyboard-shortcut first-keystroke="f2" />
   </action>
   <action id="GoToClass" />
   <action id="GotoAction">
@@ -467,7 +467,7 @@
   <action id="SendEOF" />
   <action id="ShelveChanges.UnshelveWithDialog" />
   <action id="ShelvedChanges.Rename">
-    <keyboard-shortcut first-keystroke="shift f6" />
+    <keyboard-shortcut first-keystroke="f2" />
   </action>
   <action id="ShowBookmarks" />
   <action id="ShowContent" />

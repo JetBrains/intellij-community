@@ -47,18 +47,36 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
   @Nullable
   public ByteArraySequence serializeIndexedData(@Nullable DataType data) throws IOException {
     if (data == null) return null;
-    return serializeToByteSeq(data, myDataTypeExternalizer, getBufferInitialSize(data));
+    return serializeValueToByteSeq(data, myDataTypeExternalizer, getBufferInitialSize(data));
   }
 
   protected int getBufferInitialSize(@NotNull DataType dataType) {
     return 4;
   }
 
-  private static final ThreadLocalCachedByteArray ourSpareByteArray = new ThreadLocalCachedByteArray();
-  public static <Data> ByteArraySequence serializeToByteSeq(/*must be not null if externalizer doesn't support nulls*/ Data data,
+  private static final ThreadLocalCachedByteArray ourSpareByteArrayForKeys = new ThreadLocalCachedByteArray();
+  private static final ThreadLocalCachedByteArray ourSpareByteArrayForValues = new ThreadLocalCachedByteArray();
+
+  public static <Data> ByteArraySequence serializeKeyToByteSeq(/*must be not null if externalizer doesn't support nulls*/ Data data,
                                                             @NotNull DataExternalizer<Data> externalizer,
                                                             int bufferInitialSize) throws IOException {
-    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(ourSpareByteArray.getBuffer(bufferInitialSize));
+    return serializeToByteSeq(data, externalizer, bufferInitialSize, ourSpareByteArrayForKeys);
+  }
+
+  public static <Data> ByteArraySequence serializeValueToByteSeq(/*must be not null if externalizer doesn't support nulls*/ Data data,
+                                                            @NotNull DataExternalizer<Data> externalizer,
+                                                            int bufferInitialSize) throws IOException {
+    return serializeToByteSeq(data, externalizer, bufferInitialSize, ourSpareByteArrayForValues);
+  }
+
+  @Nullable
+  public static <Data> ByteArraySequence serializeToByteSeq(Data data,
+                                                             @NotNull DataExternalizer<Data> externalizer,
+                                                             int bufferInitialSize,
+                                                             @NotNull ThreadLocalCachedByteArray cachedBufferToUse) throws IOException {
+    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(s -> {
+      return cachedBufferToUse.getBuffer(s);
+    }, bufferInitialSize);
     DataOutputStream stream = new DataOutputStream(out);
     externalizer.save(stream, data);
     return out.size() == 0 ? null : out.toByteArraySequence();

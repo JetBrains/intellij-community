@@ -29,7 +29,7 @@ internal class GoogleDocsImportTask(project: Project,
 
   override fun onFinished() {
     if (loadedFile != null && loadedFile!!.exists()) {
-      loadedFile!!.delete(this)
+      deleteFile()
     }
   }
 
@@ -40,6 +40,12 @@ internal class GoogleDocsImportTask(project: Project,
       val fullFilePath = File(suggestedFilePath, loadedFile!!.name).path
 
       MarkdownImportDocxDialog(loadedFile!!, importTaskTitle, importDialogTitle, project, fullFilePath).show()
+      deleteFile()
+    }
+  }
+
+  private fun deleteFile() {
+    ApplicationManager.getApplication().runWriteAction {
       loadedFile!!.delete(this)
     }
   }

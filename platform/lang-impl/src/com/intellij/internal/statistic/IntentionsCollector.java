@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId3;
@@ -44,6 +45,7 @@ public final class IntentionsCollector extends CounterUsagesCollector {
     final Class<?> clazz = getOriginalHandlerClass(action);
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
     eventId.log(project, clazz, info, language);
+    FeatureUsageTracker.getInstance().triggerFeatureUsedByIntention(clazz);
   }
 
   @NotNull

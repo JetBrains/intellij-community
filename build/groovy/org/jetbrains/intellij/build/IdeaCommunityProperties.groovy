@@ -20,7 +20,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productImplementationModules = ["intellij.platform.main"]
+    productLayout.productImplementationModules = ["intellij.platform.main", "intellij.notebooks.visualization"]
     productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
@@ -48,6 +48,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     ]
 
     versionCheckerConfig = CE_CLASS_VERSIONS
+    addRemoteDevelopmentLibraries = false
   }
 
   @Override

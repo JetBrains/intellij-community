@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -71,14 +72,27 @@ class CollectorWithSettings<T : Any>(
    * Use only for settings preview.
    */
   fun collectTraversingAndApply(editor: Editor, file: PsiFile, enabled: Boolean) {
+    val hintsBuffer = collectTraversing(editor, file, enabled)
+    applyToEditor(file, editor, hintsBuffer)
+  }
+
+  fun collectTraversingAndApplyOnEdt(editor: Editor, file: PsiFile, enabled: Boolean) {
+    val hintsBuffer = collectTraversing(editor, file, enabled)
+    invokeLater { applyToEditor(file, editor, hintsBuffer) }
+  }
+
+  fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
     if (enabled) {
       val traverser = SyntaxTraverser.psiTraverser(file)
       traverser.forEach {
         collectHints(it, editor)
       }
     }
-    val buffer = sink.complete()
-    InlayHintsPass.applyCollected(buffer, file, editor)
+    return sink.complete()
+  }
+
+  fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
+    InlayHintsPass.applyCollected(hintsBuffer, file, editor)
   }
 }
 

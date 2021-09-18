@@ -172,13 +172,13 @@ public final class JBCefApp {
     }
     if (proxyArgs != null) args = ArrayUtil.mergeArrays(args, proxyArgs);
 
-    // Add possibility to disable GPU (see IDEA-248140)
     if (Registry.is("ide.browser.jcef.gpu.disable")) {
-      // NOTE: also can try
-      // --override-use-software-gl-for-tests - Forces the use of software GL instead of hardware gpu.
-      // --disable-gpu-rasterization - 	Disable GPU rasterization, i.e. rasterize on the CPU only. Overrides the kEnableGpuRasterization flag.
+      // Add possibility to disable GPU (see IDEA-248140)
       args = ArrayUtil.mergeArrays(args, "--disable-gpu", "--disable-gpu-compositing");
     }
+
+    final boolean trackGPUCrashes = Registry.is("ide.browser.jcef.gpu.infinitecrash");
+    if (trackGPUCrashes) args = ArrayUtil.mergeArrays(args, "--disable-gpu-process-crash-limit");
 
     // Sometimes it's useful to be able to pass any additional keys (see IDEA-248140)
     // NOTE: List of keys: https://peter.sh/experiments/chromium-command-line-switches/
@@ -191,7 +191,7 @@ public final class JBCefApp {
       }
     }
 
-    CefApp.addAppHandler(new MyCefAppHandler(args));
+    CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
     myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
@@ -420,8 +420,13 @@ public final class JBCefApp {
   }
 
   private static class MyCefAppHandler extends CefAppHandlerAdapter {
-    MyCefAppHandler(String @Nullable[] args) {
+    private final int myGPUCrashLimit;
+    private int myGPUCrashCounter = 0;
+    private boolean myNotificationShown = false;
+
+    MyCefAppHandler(String @Nullable[] args, boolean trackGPUCrashes) {
       super(args);
+      myGPUCrashLimit = trackGPUCrashes ? Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10) : -1;
     }
 
     @Override
@@ -451,6 +456,37 @@ public final class JBCefApp {
 
       getInstance().myCefApp.registerSchemeHandlerFactory(
         JBCefFileSchemeHandlerFactory.FILE_SCHEME_NAME, "", new JBCefFileSchemeHandlerFactory());
+    }
+
+    @Override
+    public void onBeforeChildProcessLaunch(String command_line) {
+      if (myGPUCrashLimit >= 0 && command_line != null && command_line.contains("--type=gpu-process")) {
+        if (++myGPUCrashCounter > myGPUCrashLimit && !myNotificationShown) {
+          Notification notification = NOTIFICATION_GROUP.getValue().createNotification(
+            IdeBundle.message("notification.content.jcef.gpucrash.title"),
+            IdeBundle.message("notification.content.jcef.gpucrash.message"),
+            NotificationType.ERROR);
+          //noinspection DialogTitleCapitalization
+          notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.restart")) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+              ApplicationManager.getApplication().restart();
+            }
+          });
+          //noinspection DialogTitleCapitalization
+          if (!Registry.is("ide.browser.jcef.gpu.disable")) {
+            notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.disable")) {
+              @Override
+              public void actionPerformed(@NotNull AnActionEvent e) {
+                Registry.get("ide.browser.jcef.gpu.disable").setValue(true);
+                ApplicationManager.getApplication().restart();
+              }
+            });
+          }
+          notification.notify(null);
+          myNotificationShown = true;
+        }
+      }
     }
   }
 

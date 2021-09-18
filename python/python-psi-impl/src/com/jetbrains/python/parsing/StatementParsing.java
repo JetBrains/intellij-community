@@ -147,8 +147,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     SyntaxTreeBuilder.Marker mark = myBuilder.mark();
     myBuilder.remapCurrentToken(PyTokenTypes.MATCH_KEYWORD);
     myBuilder.advanceLexer();
-    myContext.getExpressionParser().parseExpression();
-    if (!matchToken(PyTokenTypes.COLON)) {
+    boolean followedBySubject = myContext.getExpressionParser().parseExpressionOptional();
+    if (!followedBySubject || !matchToken(PyTokenTypes.COLON)) {
       mark.rollbackTo();
       myBuilder.remapCurrentToken(PyTokenTypes.IDENTIFIER);
       return false;
@@ -173,7 +173,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
         }
         if (!myBuilder.eof()) {
-          assert matchToken(PyTokenTypes.DEDENT);
+          assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+          myBuilder.advanceLexer();
         }
       }
       else {
@@ -940,7 +941,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         endMarker.done(elType);
       }
       if (indentFound && !myBuilder.eof()) {
-        assert matchToken(PyTokenTypes.DEDENT);
+        assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+        myBuilder.advanceLexer();
       }
     }
     else {

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.process.ProcessService;
 import com.intellij.execution.process.PtyCommandLineOptions;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +11,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtilRt;
-import com.pty4j.PtyProcessBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +22,10 @@ import java.util.Map;
 
 /**
  * A flavor of GeneralCommandLine to start processes with Pseudo-Terminal (PTY).
- *
+ * <p>
  * Warning: PtyCommandLine works with ProcessHandler only in blocking read mode.
  * Please make sure that you use appropriate ProcessHandler implementation.
- *
+ * <p>
  * Works for Linux, macOS, and Windows.
  * On Windows, PTY is emulated by creating an invisible console window (see Pty4j and WinPty implementation).
  */
@@ -163,17 +163,8 @@ public class PtyCommandLine extends GeneralCommandLine {
     String directory = workDirectory != null ? workDirectory.getPath() : null;
     PtyCommandLineOptions options = myOptionsBuilder.build();
     Application app = ApplicationManager.getApplication();
-    PtyProcessBuilder builder = new PtyProcessBuilder(command)
-      .setEnvironment(env)
-      .setDirectory(directory)
-      .setInitialColumns(options.getInitialColumns() > 0 ? options.getInitialColumns() : null)
-      .setInitialRows(options.getInitialRows() > 0 ? options.getInitialRows() : null)
-      .setConsole(options.getConsoleMode())
-      .setCygwin(options.getUseCygwinLaunch() && SystemInfo.isWindows)
-      .setLogFile(app != null && app.isEAP() ? new File(PathManager.getLogPath(), "pty.log") : null)
-      .setRedirectErrorStream(isRedirectErrorStream())
-      .setWindowsAnsiColorEnabled(myWindowsAnsiColorEnabled)
-      .setUnixOpenTtyToPreserveOutputAfterTermination(myUnixOpenTtyToPreserveOutputAfterTermination);
-    return builder.start();
+    return ProcessService.getInstance()
+      .startPtyProcess(command, directory, env, options, app, isRedirectErrorStream(), myWindowsAnsiColorEnabled,
+                       myUnixOpenTtyToPreserveOutputAfterTermination);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.changeSignature;
 
@@ -162,9 +162,15 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
     if (StringUtil.isEmpty(defaultValue)) return null;
-    final PsiExpression expression =
-      JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText(defaultValue, expr);
-    return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
+    try {
+      final PsiExpression expression =
+        JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText(defaultValue, expr);
+      return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
+    }
+    catch (IncorrectOperationException e) {
+      //e.g when default value is a kotlin expression
+      return null;
+    }
   }
 
   @Override

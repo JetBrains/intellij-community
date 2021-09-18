@@ -13,35 +13,9 @@ import kotlin.math.pow
 class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
     private val logger = Logger.getLogger(DockerLauncher::class.java)
-    private val random = Random()
-  }
-
-  private val UBUNTU_18_04_WITH_USER_TEMPLATE = "ubuntu-18-04-docker-launcher"
-
-  fun assertCanRun() = dockerInfo()
-
-  fun runInContainer(cmd: List<String>): Process {
-    // we try to make everything the same as on the host folder, e.g. UID, paths
-    val username = System.getProperty("user.name")
-    val uid = UnixSystem().uid.toString()
-    val userHomePath = File(System.getProperty("user.home"))
 
     // e.g. ~/.m2/ will be /mnt/cache/.m2 on TC
-    fun File.pathNotResolvingSymlinks() = this.absoluteFile.normalize().path
-
-    if (!userHomePath.exists()) error("Home directory ${userHomePath.pathNotResolvingSymlinks()} of user=$username, uid=$uid does not exist")
-
-    val imageName = "$UBUNTU_18_04_WITH_USER_TEMPLATE-user-$username-uid-$uid"
-
-    val buildArgs = mapOf(
-      "USER_NAME" to username,
-      "USER_ID" to UnixSystem().uid.toString(),
-      "USER_HOME" to userHomePath.pathNotResolvingSymlinks()
-    )
-
-    dockerBuild(imageName, buildArgs)
-
-    val containerIdFile = File.createTempFile("cwm.docker.cid", "")
+    fun File.pathNotResolvingSymlinks(): String = this.absoluteFile.normalize().path
 
     fun MutableList<String>.addVolume(volume: File, isWritable: Boolean) {
       fun volumeParameter(volume: String, isWritable: Boolean) = "--volume=$volume:$volume:${if (isWritable) "rw" else "ro"}"
@@ -57,6 +31,34 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     fun MutableList<String>.addReadonly(volume: File) = addVolume(volume, false)
     fun MutableList<String>.addWriteable(volume: File) = addVolume(volume, true)
+
+  }
+
+  private val UBUNTU_18_04_WITH_USER_TEMPLATE = "ubuntu-18-04-docker-launcher"
+
+  fun assertCanRun() = dockerInfo()
+
+  fun runInContainer(cmd: List<String>): Process {
+    // we try to make everything the same as on the host folder, e.g. UID, paths
+    val username = System.getProperty("user.name")
+    val uid = UnixSystem().uid.toString()
+    val userHomePath = File(System.getProperty("user.home"))
+
+
+
+    if (!userHomePath.exists()) error("Home directory ${userHomePath.pathNotResolvingSymlinks()} of user=$username, uid=$uid does not exist")
+
+    val imageName = "$UBUNTU_18_04_WITH_USER_TEMPLATE-user-$username-uid-$uid"
+
+    val buildArgs = mapOf(
+      "USER_NAME" to username,
+      "USER_ID" to UnixSystem().uid.toString(),
+      "USER_HOME" to userHomePath.pathNotResolvingSymlinks()
+    )
+
+    dockerBuild(imageName, buildArgs)
+
+    val containerIdFile = File.createTempFile("cwm.docker.cid", "")
 
     val dockerCmd = mutableListOf(
       "docker",

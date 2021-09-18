@@ -144,6 +144,27 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testModuleDependencies() throws IOException {
+    createSettingsFile("include 'project1', 'project2'");
+    createProjectSubFile("project1/build.gradle", script(it -> it.withJavaPlugin()
+      .addImplementationDependency(it.project(":"))));
+    createProjectSubFile("project2/build.gradle", script(it -> it.withJavaPlugin()
+      .addImplementationDependency(it.project(":project1"))));
+    importProject(script(it -> it.withJavaPlugin()));
+
+    assertModules("project", "project.main", "project.test",
+                  "project.project1", "project.project1.main", "project.project1.test",
+                  "project.project2", "project.project2.main", "project.project2.test");
+
+    assertModuleModuleDeps("project.main");
+    assertModuleModuleDeps("project.test", "project.main");
+    assertModuleModuleDeps("project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project1.test", "project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.main");
+  }
+
+  @Test
   public void testDependencyScopeMerge() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
 

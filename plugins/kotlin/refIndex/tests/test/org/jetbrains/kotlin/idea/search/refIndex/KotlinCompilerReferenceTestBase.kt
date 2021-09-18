@@ -13,6 +13,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.runAll
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import kotlin.properties.Delegates
 
@@ -53,4 +54,23 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
             fromJavaIndex?.mapTo(this, VirtualFile::getName)
         }
     }
+
+    protected fun findSubOrSuperTypes(name: String, deep: Boolean, subtypes: Boolean): List<String>? {
+        val service = KotlinCompilerReferenceIndexService[project]
+        val fqName = FqName(name)
+        val sequence = if (subtypes)
+            service.getSubtypesOfInTests(fqName, deep)
+        else
+            throw NotImplementedError("supertypes not supported")
+
+        return sequence?.map { it.asString() }?.sorted()?.toList()
+    }
+
+    protected fun findHierarchy(hierarchyElement: PsiElement): List<String> = KotlinCompilerReferenceIndexService[project]
+        .getSubtypesOfInTests(hierarchyElement)
+        .map(FqName::asString)
+        .sorted()
+        .toList()
+
+    protected fun forEachBoolean(action: (Boolean) -> Unit) = listOf(true, false).forEach(action)
 }

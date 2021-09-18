@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
@@ -75,13 +77,22 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       if (customizer.buildOnlyBareTarGz) return
 
       Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
-      buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "")
+      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "")
 
       if (jreDirectoryPath != null) {
         buildSnapPackage(jreDirectoryPath.toString(), osSpecificDistPath)
       }
       else {
         buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
+      }
+      Path tempTar = Files.createTempDirectory(buildContext.paths.tempDir, "tar-")
+      try {
+        BuildHelper.runProcess(buildContext, ["tar", "xzf", tarGzPath.toString(), "--directory", tempTar.toString()])
+        def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+        RepairUtilityBuilder.generateManifest(buildContext, tempTar.resolve(tarRoot).toString(), tarGzPath.fileName.toString())
+      }
+      finally {
+        FileUtil.delete(tempTar)
       }
     }
   }
@@ -100,7 +111,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.ant.copy(todir: distBinDir.toString()) {
-      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts") {
+        if (!buildContext.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")) {
+          exclude(name: "remote-dev-server.sh")
+        }
+      }
 
       filterset(begintoken: "__", endtoken: "__") {
         filter(token: "product_full", value: fullName)
@@ -166,7 +181,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void buildTarGz(String jreDirectoryPath, Path unixDistPath, String suffix) {
+  private Path buildTarGz(String jreDirectoryPath, Path unixDistPath, String suffix) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
     def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz"
@@ -212,6 +227,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
       ProductInfoValidator.checkInArchive(buildContext, tarPath, tarRoot)
       buildContext.notifyArtifactBuilt(tarPath)
+      return Paths.get(tarPath)
     }
   }
 
@@ -323,14 +339,22 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     name.startsWith("jetbrains-") ? name : "jetbrains-" + name
   }
 
-  static void copyFile(Path source, Path target) {
+  static void copyFile(Path source, Path target, CopyOption... options) {
     Path parent = target.parent
-    if (parent != null)
+    if (parent != null) {
       Files.createDirectories(parent)
+    }
 
-    if (Files.isSymbolicLink(source))
-      Files.copy(source, target, LinkOption.NOFOLLOW_LINKS)
-    else
-      Files.copy(source, target)
+    List<CopyOption> optionsList = options.toList()
+
+    if (Files.isSymbolicLink(source)) {
+      // Append 'NOFOLLOW_LINKS' copy option to be able to copy symbolic links.
+      if (!optionsList.contains(LinkOption.NOFOLLOW_LINKS)) {
+        optionsList.add(LinkOption.NOFOLLOW_LINKS)
+      }
+    }
+
+    CopyOption[] copyOptions = optionsList.toArray(new CopyOption[optionsList.size()])
+    Files.copy(source, target, copyOptions)
   }
 }

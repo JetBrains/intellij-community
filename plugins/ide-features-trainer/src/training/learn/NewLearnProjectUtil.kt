@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.Messages
 import training.lang.LangSupport
 import training.learn.exceptons.NoSdkException
@@ -14,13 +15,16 @@ import training.project.ProjectUtils
 object NewLearnProjectUtil {
   private val LOG = logger<NewLearnProjectUtil>()
 
-  fun createLearnProject(projectToClose: Project?, langSupport: LangSupport, postInitCallback: (learnProject: Project) -> Unit) {
+  fun createLearnProject(projectToClose: Project?,
+                         langSupport: LangSupport,
+                         selectedSdk: Sdk?,
+                         postInitCallback: (learnProject: Project) -> Unit) {
     val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
 
     ProjectUtils.importOrOpenProject(langSupport, projectToClose) { newProject ->
       TipDialog.DISABLE_TIPS_FOR_PROJECT.set(newProject, true)
       try {
-        val sdkForProject = langSupport.getSdkForProject(newProject)
+        val sdkForProject = langSupport.getSdkForProject(newProject, selectedSdk)
         if (sdkForProject != null) {
           langSupport.applyProjectSdk(sdkForProject, newProject)
         }

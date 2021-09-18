@@ -3,8 +3,6 @@ package com.intellij.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
@@ -13,7 +11,6 @@ import java.util.List;
  */
 @Service
 public final class ChooseByNameRegistry {
-  private final List<ChooseByNameContributor> myGotoSymbolContributors = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * Returns the singleton instance of the registry.
@@ -22,18 +19,6 @@ public final class ChooseByNameRegistry {
    */
   public static ChooseByNameRegistry getInstance() {
     return ApplicationManager.getApplication().getService(ChooseByNameRegistry.class);
-  }
-
-  /**
-   * Registers a component which contributes items to the "Goto Symbol" list.
-   *
-   * @param contributor the contributor instance.
-   * @deprecated use {@link ChooseByNameContributor#SYMBOL_EP_NAME} extension point instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void contributeToSymbols(ChooseByNameContributor contributor) {
-    myGotoSymbolContributors.add(contributor);
   }
 
   /**
@@ -51,11 +36,6 @@ public final class ChooseByNameRegistry {
    * @return the array of contributors.
    */
   public List<ChooseByNameContributor> getSymbolModelContributors() {
-    List<ChooseByNameContributor> extensions = ChooseByNameContributor.SYMBOL_EP_NAME.getExtensionList();
-    if (myGotoSymbolContributors.isEmpty()) {
-      return extensions;
-    }
-
-    return ContainerUtil.concat(myGotoSymbolContributors, extensions);
+    return ChooseByNameContributor.SYMBOL_EP_NAME.getExtensionList();
   }
 }

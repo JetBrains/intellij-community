@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -1504,7 +1504,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
       MavenActionsUsagesCollector
-        .trigger(myProject, MavenActionsUsagesCollector.ActionID.ExecuteMavenRunConfigurationAction, TOOL_WINDOW_PLACE_ID, false, null);
+        .trigger(myProject, MavenActionsUsagesCollector.EXECUTE_MAVEN_CONFIGURATION, TOOL_WINDOW_PLACE_ID, false, null);
       ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
     }
   }

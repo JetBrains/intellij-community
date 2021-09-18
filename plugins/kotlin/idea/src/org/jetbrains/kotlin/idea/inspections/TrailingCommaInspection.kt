@@ -8,6 +8,8 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -24,6 +26,8 @@ import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.idea.formatter.trailingComma.addTrailingCommaIsAllowedFor
 import org.jetbrains.kotlin.idea.formatter.trailingCommaAllowedInModule
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.isComma
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
@@ -112,8 +116,8 @@ class TrailingCommaInspection(
 
         private fun reportProblem(
             commaOrElement: PsiElement,
-            message: String,
-            fixMessage: String,
+            @InspectionMessage message: String,
+            @IntentionFamilyName fixMessage: String,
             highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             checkTrailingCommaSettings: Boolean = true,
         ) {
@@ -155,21 +159,21 @@ class TrailingCommaInspection(
         private fun commonParent(commaOwner: PsiElement, elementForTextRange: PsiElement): PsiElement =
             PsiTreeUtil.findCommonParent(commaOwner, elementForTextRange)
                 ?: throw KotlinExceptionWithAttachments("Common parent not found")
-                    .withAttachment("commaOwner", commaOwner.text)
+                    .withPsiAttachment("commaOwner", commaOwner)
                     .withAttachment("commaOwnerRange", commaOwner.textRange)
-                    .withAttachment("elementForTextRange", elementForTextRange.text)
+                    .withPsiAttachment("elementForTextRange", elementForTextRange)
                     .withAttachment("elementForTextRangeRange", elementForTextRange.textRange)
-                    .withAttachment("parent", commaOwner.parent.text)
+                    .withPsiAttachment("parent", commaOwner.parent)
                     .withAttachment("parentRange", commaOwner.parent.textRange)
 
         private fun ProblemHighlightType.applyCondition(condition: Boolean): ProblemHighlightType = when {
-            ApplicationManager.getApplication().isUnitTestMode -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+            isUnitTestMode() -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
             condition -> this
             else -> ProblemHighlightType.INFORMATION
         }
 
         private fun createQuickFix(
-            fixMessage: String,
+            @IntentionFamilyName fixMessage: String,
             commaOwner: KtElement,
         ): LocalQuickFix = object : LocalQuickFix {
             val commaOwnerPointer = commaOwner.createSmartPointer()

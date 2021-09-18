@@ -454,7 +454,7 @@ public class CommanderPanel extends JPanel {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteElementProvider;
     }
-    if (LangDataKeys.MODULE.is(dataId)) {
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
       return selectedValue instanceof Module ? selectedValue : null;
     }
     if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {

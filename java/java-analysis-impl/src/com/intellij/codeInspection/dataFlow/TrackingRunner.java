@@ -1311,46 +1311,58 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
     if (contracts.isEmpty()) return null;
     MethodContract contract = contracts.get(0);
+    PsiElement anchor = getCallAnchor(call);
+    if (anchor == null) return null;
+    if (contracts.size() == 1 && contract.isTrivial() && contractReturnValue.isSuperValueOf(contract.getReturnValue())) {
+      String message = JavaAnalysisBundle.message("dfa.find.cause.contract.trivial",
+                                                  getContractKind(call),
+                                                  JavaElementKind.fromElement(method).lessDescriptive().subject(),
+                                                  method.getName(),
+                                                  contract.getReturnValue());
+      return new CauseItem(message, anchor);
+    }
+    List<? extends MethodContract> nonIntersecting = MethodContract.toNonIntersectingContracts(contracts);
+    if (nonIntersecting != null) {
+      Condition<MethodContract> condition = contractReturnValue instanceof ContractReturnValue.ParameterReturnValue ?
+                                            mc -> contractReturnValue.equals(mc.getReturnValue()) :
+                                            mc -> contractReturnValue.isSuperValueOf(mc.getReturnValue());
+      MethodContract onlyContract = ContainerUtil.getOnlyItem(ContainerUtil.filter(nonIntersecting, condition));
+      if (onlyContract != null) {
+        return fromSingleContract(history, call, method, onlyContract);
+      }
+    }
+    List<MethodContract> unsureContracts = new ArrayList<>();
+    for (MethodContract c : contracts) {
+      ThreeState applies = contractApplies(call, c);
+      switch (applies) {
+        case NO:
+          break;
+        case UNSURE:
+          unsureContracts.add(c);
+          break;
+        case YES:
+          if (unsureContracts.isEmpty() && contractReturnValue.isSuperValueOf(c.getReturnValue())) {
+            return fromSingleContract(history, call, method, c);
+          }
+          break;
+      }
+    }
+    if (unsureContracts.size() == 1) {
+      MethodContract c = unsureContracts.get(0);
+      if (contractReturnValue.isSuperValueOf(c.getReturnValue())) {
+        return fromSingleContract(history, call, method, c);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiElement getCallAnchor(PsiCallExpression call) {
     if (call instanceof PsiMethodCallExpression) {
-      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
-      String name = methodExpression.getReferenceName();
-      if (contracts.size() == 1 && contract.isTrivial() && contractReturnValue.isSuperValueOf(contract.getReturnValue())) {
-        String message = JavaAnalysisBundle.message("dfa.find.cause.contract.trivial", getContractKind(call),
-                                                    name, contract.getReturnValue());
-        return new CauseItem(message, methodExpression.getReferenceNameElement());
-      }
-      List<? extends MethodContract> nonIntersecting = MethodContract.toNonIntersectingContracts(contracts);
-      if (nonIntersecting != null) {
-        Condition<MethodContract> condition = contractReturnValue instanceof ContractReturnValue.ParameterReturnValue ?
-                                              mc -> contractReturnValue.equals(mc.getReturnValue()) :
-                                              mc -> contractReturnValue.isSuperValueOf(mc.getReturnValue());
-        MethodContract onlyContract = ContainerUtil.getOnlyItem(ContainerUtil.filter(nonIntersecting, condition));
-        if (onlyContract != null) {
-          return fromSingleContract(history, (PsiMethodCallExpression)call, method, onlyContract);
-        }
-      }
-      List<MethodContract> unsureContracts = new ArrayList<>();
-      for (MethodContract c : contracts) {
-        ThreeState applies = contractApplies((PsiMethodCallExpression)call, c);
-        switch (applies) {
-          case NO:
-            break;
-          case UNSURE:
-            unsureContracts.add(c);
-            break;
-          case YES:
-            if (unsureContracts.isEmpty() && contractReturnValue.isSuperValueOf(c.getReturnValue())) {
-              return fromSingleContract(history, (PsiMethodCallExpression)call, method, c);
-            }
-            break;
-        }
-      }
-      if (unsureContracts.size() == 1) {
-        MethodContract c = unsureContracts.get(0);
-        if (contractReturnValue.isSuperValueOf(c.getReturnValue())) {
-          return fromSingleContract(history, (PsiMethodCallExpression)call, method, c);
-        }
-      }
+      return ((PsiMethodCallExpression)call).getMethodExpression().getReferenceNameElement();
+    }
+    if (call instanceof PsiNewExpression) {
+      return ((PsiNewExpression)call).getClassOrAnonymousClassReference();
     }
     return null;
   }
@@ -1371,7 +1383,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @NotNull
-  private ThreeState contractApplies(@NotNull PsiMethodCallExpression call, @NotNull MethodContract contract) {
+  private ThreeState contractApplies(@NotNull PsiCallExpression call, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
     for (ContractValue condition : conditions) {
       DfaCondition cond = condition.fromCall(getFactory(), call);
@@ -1382,24 +1394,25 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @NotNull
-  private CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiMethodCallExpression call,
+  private CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiCallExpression call,
                                        @NotNull PsiMethod method, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
     Collector<String, ?, @Nls String> collector = Collectors.collectingAndThen(Collectors.toList(), list -> ListFormatter.getInstance(
       DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE).format(list));
     String conditionsText = conditions.stream().map(c -> c.getPresentationText(call)).collect(collector);
     String message;
+    String objectType = JavaElementKind.fromElement(method).lessDescriptive().subject();
     if (contract.getReturnValue().isFail()) {
       message = JavaAnalysisBundle.message("dfa.find.cause.contract.throws.on.condition",
-                                           getContractKind(call), method.getName(), conditionsText);
+                                           getContractKind(call), objectType, method.getName(), conditionsText);
     }
     else {
       PsiExpression place = contract.getReturnValue().findPlace(call);
       String placeText = place == null ? contract.getReturnValue().toString() : PsiExpressionTrimRenderer.render(place);
       message = JavaAnalysisBundle.message("dfa.find.cause.contract.returns.on.condition",
-                                           getContractKind(call), method.getName(), placeText, conditionsText);
+                                           getContractKind(call), objectType, method.getName(), placeText, conditionsText);
     }
-    CauseItem causeItem = new CauseItem(message, call.getMethodExpression().getReferenceNameElement());
+    CauseItem causeItem = new CauseItem(message, getCallAnchor(call));
     for (ContractValue contractValue : conditions) {
       if (!(contractValue instanceof ContractValue.Condition)) {
         continue;

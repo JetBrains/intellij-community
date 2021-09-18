@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -145,7 +146,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         ApplicationManager.getApplication().invokeLater(() -> {
             kotlinVersionComboBox.removeAllItems();
             kotlinVersionComboBox.setEnabled(true);
-            for (String newItem : newItems) {
+            for (@NlsSafe String newItem : newItems) {
                 kotlinVersionComboBox.addItem(newItem);
             }
             kotlinVersionComboBox.setSelectedIndex(0);

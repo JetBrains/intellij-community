@@ -15,7 +15,10 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -692,8 +695,8 @@ public final class ActionsTree {
         if (node instanceof DefaultMutableTreeNode) {
           Object data = ((DefaultMutableTreeNode)node).getUserObject();
           if (!(data instanceof Hyperlink)) {
-            Pair<Shortcut[], Set<String>>  rowData = extractRowData(data);
-            Shortcut[] shortcuts = rowData.first;
+            RowData rowData = extractRowData(data);
+            Shortcut[] shortcuts = rowData.shortcuts;
             if (shortcuts != null && shortcuts.length > 0) {
               StringBuilder sb = new StringBuilder();
               for (Shortcut shortcut : shortcuts) {
@@ -715,28 +718,39 @@ public final class ActionsTree {
   }
 
   @NotNull
-  private Pair<Shortcut[], Set<String>> extractRowData(Object data) {
+  private RowData extractRowData(Object data) {
+    String actionId = null;
     if (data instanceof String) {
-      String actionId = (String)data;
-      return Pair.create(myKeymap.getShortcuts(actionId), AbbreviationManager.getInstance().getAbbreviations(actionId));
+      actionId = (String)data;
     }
-
-    Shortcut[] shortcuts = null;
-    if (data instanceof QuickList) {
-      shortcuts = myKeymap.getShortcuts(((QuickList)data).getActionId());
+    else if (data instanceof QuickList) {
+      actionId = ((QuickList)data).getActionId();
     }
     else if (data instanceof Group) {
-      shortcuts = myKeymap.getShortcuts(((Group)data).getId());
+      actionId = ((Group)data).getId();
     }
+    if (actionId == null) return new RowData(null, null);
+    Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
+    Set<String> abbreviations = data instanceof String ?
+                          AbbreviationManager.getInstance().getAbbreviations(actionId) : null;
+    return new RowData(shortcuts, abbreviations);
+  }
 
-    return Pair.create(shortcuts, null);
+  private static final class RowData {
+    public final Shortcut[] shortcuts;
+    public final Set<String> abbreviations;
+
+    private RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
+      this.shortcuts = shortcuts;
+      this.abbreviations = abbreviations;
+    }
   }
 
   @SuppressWarnings("UseJBColor")
   private void paintRowData(Tree tree, Object data, Rectangle bounds, Graphics2D g) {
-    Pair<Shortcut[], Set<String>> rowData = extractRowData(data);
-    Shortcut[] shortcuts = rowData.first;
-    Set<String> abbreviations = rowData.second;
+    RowData rowData = extractRowData(data);
+    Shortcut[] shortcuts = rowData.shortcuts;
+    Set<String> abbreviations = rowData.abbreviations;
 
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
@@ -768,7 +782,7 @@ public final class ActionsTree {
       }
       g.translate(0, -bounds.y + 1);
     }
-    if (Registry.is("actionSystem.enableAbbreviations") && abbreviations != null && abbreviations.size() > 0) {
+    if (abbreviations != null && abbreviations.size() > 0) {
       for (String abbreviation : abbreviations) {
         totalWidth += metrics.stringWidth(abbreviation);
         totalWidth += 10;

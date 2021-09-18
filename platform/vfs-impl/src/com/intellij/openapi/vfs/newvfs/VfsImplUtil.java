@@ -125,6 +125,13 @@ public final class VfsImplUtil {
   }
 
   private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    Pair<NewVirtualFile, String> pair = extractRootFromPath(vfs, path);
+    if (pair == null) return null;
+    Iterable<String> parts = StringUtil.tokenize(pair.second, FILE_SEPARATORS);
+    return new Pair<>(pair.first, parts);
+  }
+
+  public static Pair<NewVirtualFile, String> extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     String normalizedPath = vfs.normalize(path);
     if (StringUtil.isEmptyOrSpaces(normalizedPath)) {
       return null;
@@ -141,8 +148,7 @@ public final class VfsImplUtil {
       return null;
     }
 
-    Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
-    return new Pair<>(root, parts);
+    return Pair.create(root, normalizedPath.substring(basePath.length()));
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
@@ -271,7 +277,7 @@ public final class VfsImplUtil {
   private static @Nullable InvalidationState invalidate(@Nullable InvalidationState state, @NotNull String path) {
     Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.remove(path);
     if (handlerPair != null) {
-      handlerPair.second.dispose();
+      handlerPair.second.clearCaches();
 
       forEachDirectoryComponent(path, containingDirectoryPath -> {
         Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
@@ -408,7 +414,7 @@ public final class VfsImplUtil {
           Runnable runnable = () -> {
             Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
             if (pair != null) {
-              pair.second.dispose();
+              pair.second.clearCaches();
               synchronized (ourLock) {
                 forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
                   Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);

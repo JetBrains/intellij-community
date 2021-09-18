@@ -32,14 +32,17 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
     myOutOfScopeVariable = variable;
   }
 
-  static @Nullable BringVariableIntoScopeFix fromReference(PsiReferenceExpression unresolvedReference) {
+  public PsiLocalVariable getVariable() {
+    return myOutOfScopeVariable;
+  }
+
+  public static @Nullable BringVariableIntoScopeFix fromReference(PsiReferenceExpression unresolvedReference) {
     if (unresolvedReference.isQualified()) return null;
     final String referenceName = unresolvedReference.getReferenceName();
     if (referenceName == null) return null;
 
-    PsiElement container = PsiTreeUtil.getParentOfType(unresolvedReference, PsiCodeBlock.class, PsiClass.class);
-    if (!(container instanceof PsiCodeBlock)) return null;
-    while(container.getParent() instanceof PsiStatement || container.getParent() instanceof PsiCatchSection) container = container.getParent();
+    PsiElement container = getContainer(unresolvedReference);
+    if (container == null) return null;
 
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       int variableCount = 0;
@@ -69,6 +72,15 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
 
     if (visitor.variableCount != 1 || visitor.myOutOfScopeVariable instanceof PsiResourceVariable) return null;
     return new BringVariableIntoScopeFix(unresolvedReference, visitor.myOutOfScopeVariable);
+  }
+
+  public static @Nullable PsiElement getContainer(PsiElement unresolvedReference) {
+    PsiElement container = PsiTreeUtil.getParentOfType(unresolvedReference, PsiCodeBlock.class, PsiClass.class);
+    if (!(container instanceof PsiCodeBlock)) return null;
+    while (container.getParent() instanceof PsiStatement || container.getParent() instanceof PsiCatchSection) {
+      container = container.getParent();
+    }
+    return container;
   }
 
   @Override

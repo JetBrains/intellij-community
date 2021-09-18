@@ -16,25 +16,41 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
       // force generating "Groovy" inner class to preserve backward compatiblity
       "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "JetgroovyIcons", iconDirectory = "icons")
       "intellij.clouds.docker" -> IntellijIconClassGeneratorModuleConfig(className = "DockerIcons", packageName = "com.intellij.docker")
-      "intellij.struts2.ognl" -> IntellijIconClassGeneratorModuleConfig(className = "OgnlIcons", packageName = "com.intellij.lang.ognl",
-                                                                        iconDirectory = "icons")
-      "intellij.struts2.dom" -> IntellijIconClassGeneratorModuleConfig(className = "Struts2Icons", packageName = "com.intellij.struts2",
-                                                                       iconDirectory = "icons")
-      "intellij.css" -> IntellijIconClassGeneratorModuleConfig(className = "CssIcons", packageName = "com.intellij.lang.css",
-                                                               iconDirectory = "icons/css")
-      "intellij.properties.psi" -> IntellijIconClassGeneratorModuleConfig(className = "PropertiesIcons",
-                                                                          packageName = "com.intellij.lang.properties",
-                                                                          iconDirectory = "icons")
+      "intellij.struts2.ognl" -> IntellijIconClassGeneratorModuleConfig(
+        className = "OgnlIcons",
+        packageName = "com.intellij.lang.ognl",
+        iconDirectory = "icons",
+      )
+      "intellij.struts2.dom" -> IntellijIconClassGeneratorModuleConfig(
+        className = "Struts2Icons",
+        packageName = "com.intellij.struts2",
+        iconDirectory = "icons",
+      )
+      "intellij.css" -> IntellijIconClassGeneratorModuleConfig(
+        className = "CssIcons",
+        packageName = "com.intellij.lang.css",
+        iconDirectory = "icons/css",
+      )
+      "intellij.properties.psi" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PropertiesIcons",
+        packageName = "com.intellij.lang.properties",
+        iconDirectory = "icons",
+      )
       "intellij.spring" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringApiIcons",
         packageName = "com.intellij.spring",
       )
-      "intellij.spring.mvc" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.spring.mvc.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringMvcApiIcons",
         packageName = "com.intellij.spring.mvc",
       )
+      "intellij.spring.persistence" -> IntellijIconClassGeneratorModuleConfig(
+        className = "SpringPersistenceIntegrationIcons",
+        packageName = "com.intellij.spring.persistence.integration",
+      )
       // default name 'com.goide.GOIcons' clashes with existing 'com.goide.GoIcons'
       "intellij.go.impl" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
+      "intellij.tide.impl" -> IntellijIconClassGeneratorModuleConfig(className = "TideIcons", packageName = "com.jetbrains.test.ide")
       else -> super.getConfigForModule(moduleName)
     }
   }

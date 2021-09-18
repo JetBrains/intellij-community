@@ -35,6 +35,7 @@ import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,11 +55,14 @@ import static com.intellij.util.ArrayUtil.getFirstElement;
 import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
-public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
+public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider, ProblemsViewTab {
+  static final DataKey<ProblemsViewPanel> SELECTED = DataKey.create("ProblemsView/SelectedPanel");
+
   protected final ClientId myClientId = ClientId.getCurrent();
 
   private final Project myProject;
-  protected final ProblemsViewState myState;
+  private final String myId;
+  private final ProblemsViewState myState;
   private final Supplier<@NlsContexts.TabTitle String> myName;
   private final ProblemsTreeModel myTreeModel = new ProblemsTreeModel(this);
   private final DescriptorPreview myPreview = new DescriptorPreview(this, true, myClientId);
@@ -172,9 +176,13 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     }
   };
 
-  public ProblemsViewPanel(@NotNull Project project, @NotNull ProblemsViewState state, @NotNull Supplier<String> name) {
+  public ProblemsViewPanel(@NotNull Project project,
+                           @NotNull String id,
+                           @NotNull ProblemsViewState state,
+                           @NotNull Supplier<String> name) {
     super(false, .5f, .1f, .9f);
     myProject = project;
+    this.myId = id;
     myState = state;
     myName = name;
 
@@ -223,7 +231,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       // this code allows to perform Editor's Undo action from the Problems View
       Editor editor = getPreview();
       if (editor != null) return TextEditorProvider.getInstance().getTextEditor(editor);
@@ -233,7 +241,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     }
     Node node = getSelectedNode();
     if (node != null) {
-      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) return node;
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) return node;
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
       if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
@@ -332,6 +340,13 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
       if (time != null) ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
       IntentionsUI.getInstance(getProject()).hide();
     }
+  }
+
+  @NotNull
+  @Override
+  @NonNls
+  public String getTabId() {
+    return myId;
   }
 
   private static @Nullable Node getNode(@Nullable TreePath path) {

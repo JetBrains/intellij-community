@@ -15,10 +15,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
@@ -52,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.util.*;
@@ -211,13 +208,7 @@ public final class HighlightClassUtil {
       }
     }
     if (dupFileName == null) return null;
-    String message = JavaErrorBundle.message("duplicate.class.in.other.file", dupFileName);
-    PsiIdentifier identifier = aClass.getNameIdentifier();
-    if (identifier == null) return null;
-    TextRange textRange = identifier.getTextRange();
-    HighlightInfo info =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(message).create();
-    registerRenameFix(aClass, info);
+    HighlightInfo info = createInfoAndRegisterRenameFix(aClass, dupFileName, "duplicate.class.in.other.file");
     QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix(dupClass));
     return info;
   }
@@ -258,25 +249,11 @@ public final class HighlightClassUtil {
     }
 
     if (duplicateFound) {
-      String message = JavaErrorBundle.message("duplicate.class", name);
-      PsiIdentifier identifier = aClass.getNameIdentifier();
-      if (identifier == null) return null;
-      TextRange textRange = identifier.getTextRange();
-      HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(message).create();
-      registerRenameFix(aClass, info);
+      HighlightInfo info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix((PsiClass)element));
       return info;
     }
     return null;
-  }
-
-  static void registerRenameFix(@Nullable PsiElement element, @Nullable HighlightInfo info) {
-    if (info == null || element == null) return;
-    final ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(element.getContainingFile(), info);
-    if (descriptor == null) return;
-    final LocalQuickFix fix = QUICK_FIX_FACTORY.createRenameFix();
-    QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor));
   }
 
   static HighlightInfo checkPublicClassInRightFile(@NotNull PsiClass aClass) {
@@ -309,7 +286,7 @@ public final class HighlightClassUtil {
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     return errorResult;
   }
-  
+
   static HighlightInfo checkClassMemberDeclaredOutside(@NotNull PsiErrorElement errorElement) {
     PsiJavaFile file = ObjectUtils.tryCast(errorElement.getContainingFile(), PsiJavaFile.class);
     if (file == null) return null;
@@ -349,8 +326,8 @@ public final class HighlightClassUtil {
         firstChild = sibling.getFirstChild();
       }
     }
-    return firstChild instanceof PsiComment && 
-           ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT && 
+    return firstChild instanceof PsiComment &&
+           ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT &&
            firstChild.getText().startsWith("#!");
   }
 
@@ -381,9 +358,7 @@ public final class HighlightClassUtil {
     String name = aClass.getQualifiedName();
 
     if (CommonClassNames.DEFAULT_PACKAGE.equals(name)) {
-      String message = JavaErrorBundle.message("class.clashes.with.package", name);
-      TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
+      return createInfoAndRegisterRenameFix(aClass, name, "class.clashes.with.package");
     }
 
     PsiElement file = aClass.getParent();
@@ -393,14 +368,25 @@ public final class HighlightClassUtil {
         String simpleName = aClass.getName();
         PsiDirectory subDirectory = ((PsiDirectory)directory).findSubdirectory(simpleName);
         if (subDirectory != null && simpleName.equals(subDirectory.getName()) && PsiTreeUtil.findChildOfType(subDirectory, PsiJavaFile.class) != null) {
-          String message = JavaErrorBundle.message("class.clashes.with.package", name);
-          TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
+          return createInfoAndRegisterRenameFix(aClass, name, "class.clashes.with.package");
         }
       }
     }
 
     return null;
+  }
+
+  @Nullable
+  private static HighlightInfo createInfoAndRegisterRenameFix(@NotNull PsiClass aClass,
+                                                              String name,
+                                                              @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
+    String message = JavaErrorBundle.message(key, name);
+    PsiIdentifier identifier = aClass.getNameIdentifier();
+    if (identifier == null) return null;
+    TextRange textRange = identifier.getTextRange();
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(message).create();
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameFix(aClass, info));
+    return info;
   }
 
   private static HighlightInfo checkStaticFieldDeclarationInInnerClass(@NotNull PsiKeyword keyword) {

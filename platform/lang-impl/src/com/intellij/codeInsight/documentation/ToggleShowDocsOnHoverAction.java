@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import org.jetbrains.annotations.NotNull;
 
-final class ToggleShowDocsOnHoverAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+public final class ToggleShowDocsOnHoverAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
 
-  ToggleShowDocsOnHoverAction() {
+  public ToggleShowDocsOnHoverAction() {
     super(CodeInsightBundle.messagePointer("javadoc.show.on.mouse.move"));
   }
 

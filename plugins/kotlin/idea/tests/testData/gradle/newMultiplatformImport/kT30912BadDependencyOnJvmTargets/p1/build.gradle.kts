@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion(26)
+    compileSdkVersion({{compile_sdk_version}})
 }
 
 dependencies {

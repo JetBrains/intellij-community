@@ -36,7 +36,12 @@ class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val id: C
     if (oldDescriptor !== newDescriptor) {
       val newEditor = when (newDescriptor?.file) {
         oldDescriptor?.file -> editor
-        else -> newDescriptor?.preparePreviewEditor(editor).also { editor = it }
+        else -> newDescriptor?.preparePreviewEditor(editor).also {
+          editor = it
+          // validate splitter immediately to resize added editor
+          // otherwise descriptor.navigateIn(editor) will not scroll properly
+          splitter.validate()
+        }
       }
       if (newEditor != null && newDescriptor?.rangeMarker != null) {
         getApplication().invokeLater({

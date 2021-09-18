@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
@@ -25,6 +25,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.OpenUntrustedProjectChoice;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -35,6 +36,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
@@ -69,10 +71,7 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -209,29 +208,10 @@ public final class ExternalSystemUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force) {
-    refreshProjects(project, externalSystemId, force, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
-  }
-
-  /**
-   * Asks to refresh all external projects of the target external system linked to the given ide project.
-   * <p/>
-   * 'Refresh' here means 'obtain the most up-to-date version and apply it to the ide'.
-   *
-   * @param project          target ide project
-   * @param externalSystemId target external system which projects should be refreshed
-   * @param force            flag which defines if external project refresh should be performed if it's config is up-to-date
-   * @deprecated use {@link  ExternalSystemUtil#refreshProjects(ImportSpecBuilder)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void refreshProjects(@NotNull final Project project,
-                                     @NotNull final ProjectSystemId externalSystemId,
-                                     boolean force,
-                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
     refreshProjects(
       new ImportSpecBuilder(project, externalSystemId)
         .forceWhenUptodate(force)
-        .use(progressExecutionMode)
+        .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
     );
   }
 
@@ -636,11 +616,11 @@ public final class ExternalSystemUtil {
             exception = e;
           }
         }
-        String message = "Sync finish event has not been received";
-        LOG.warn(message, exception);
+        if (!(exception instanceof ControlFlowException)) {
+          LOG.warn("Sync finish event has not been received", exception);
+        }
         return new FinishBuildEventImpl(resolveProjectTask.getId(), null, System.currentTimeMillis(),
-                                        BuildBundle.message("build.status.failed"),
-                                        new FailureResultImpl(new Exception(message, exception)));
+                                        BuildBundle.message("build.status.cancelled"), new FailureResultImpl());
       }
 
       private void cancelImport() {
@@ -753,11 +733,10 @@ public final class ExternalSystemUtil {
 
 
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
-    List<String> projectTypeNames = new HashSet<>(systemIds).stream()
+    return new HashSet<>(systemIds).stream()
       .map(it -> it.getReadableName())
       .sorted(NaturalComparator.INSTANCE)
-      .collect(Collectors.toList());
-    return StringUtil.naturalJoin(projectTypeNames);
+      .collect(NlsMessages.joiningAnd());
   }
 
   public static boolean isNewProject(Project project) {

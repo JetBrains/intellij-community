@@ -68,7 +68,7 @@ public class Notification {
   private @Nullable List<AnAction> myActions;
   private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
   private @Nullable AnAction myContextHelpAction;
-  private @Nullable Runnable myWhenExpired;
+  private @Nullable List<Runnable> myWhenExpired;
   private @Nullable Boolean myImportant;
 
   private final AtomicBoolean myExpired = new AtomicBoolean(false);
@@ -262,12 +262,18 @@ public class Notification {
     UIUtil.invokeLaterIfNeeded(this::hideBalloon);
     NotificationsManager.getNotificationsManager().expire(this);
 
-    Runnable whenExpired = myWhenExpired;
-    if (whenExpired != null) whenExpired.run();
+    if (myWhenExpired != null) {
+      for (Runnable each : myWhenExpired) {
+        each.run();
+      }
+    }
   }
 
   public Notification whenExpired(@Nullable Runnable whenExpired) {
-    myWhenExpired = whenExpired;
+    if (myWhenExpired == null) {
+      myWhenExpired = new ArrayList<>();
+    }
+    myWhenExpired.add(whenExpired);
     return this;
   }
 

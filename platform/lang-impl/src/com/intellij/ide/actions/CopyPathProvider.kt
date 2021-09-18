@@ -46,7 +46,7 @@ abstract class CopyPathProvider : AnAction(), UpdateInBackground {
   }
 
   private fun createCustomDataContext(dataContext: DataContext): DataContext {
-    val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
     if (component !is TabLabel) return dataContext
 
     val file = component.info.`object`

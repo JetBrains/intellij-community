@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
@@ -34,6 +35,7 @@ internal class KtDeclarationTreeNode(
 
         private fun String?.orErrorName() = if (!isNullOrBlank()) this else ERROR_NAME
 
+        @NlsSafe
         fun tryGetRepresentableText(declaration: KtDeclaration): String? {
             val settings = declaration.containingKtFile.kotlinCustomSettings
             fun StringBuilder.appendColon() {

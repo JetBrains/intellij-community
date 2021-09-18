@@ -10,6 +10,11 @@ object FileTextMatchers {
       return actualText == expectedText
     }
   }
+  val lines = object : FileTextMatcher {
+    override fun matches(actualText: String, expectedText: String): Boolean {
+      return actualText.lines() == expectedText.lines()
+    }
+  }
   val ignoreBlankLines = object : FileTextMatcher {
     override fun matches(actualText: String, expectedText: String): Boolean {
       return actualText.lines().filter { it.isNotBlank() } == expectedText.lines().filter { it.isNotBlank() }

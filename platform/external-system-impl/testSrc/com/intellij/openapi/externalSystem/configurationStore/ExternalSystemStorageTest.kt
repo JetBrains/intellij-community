@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
@@ -689,6 +690,23 @@ class ExternalSystemStorageTest {
     checkFacetAndSubFacet(module, "web", null, MOCK_EXTERNAL_SOURCE)
   }
 
+  @Test(expected = Test.None::class)
+  fun `get modifiable models of renamed module`() = loadProjectAndCheckResults("singleModuleWithImportedSubFacet") { project ->
+    runWriteActionAndWait {
+      val newModule = ModuleManager.getInstance(project).newModule("myModule", EmptyModuleType.EMPTY_MODULE)
+
+      val provider = IdeModifiableModelsProviderImpl(project)
+
+      val anotherModifiableModel = provider.modifiableModuleModel
+      anotherModifiableModel.renameModule(newModule, "newName")
+
+      // Assert no exceptions
+      provider.getModifiableRootModel(newModule)
+
+      anotherModifiableModel.dispose()
+    }
+  }
+
   private fun createFacetAndSubFacet(module: Module, name: String, facetSource: ProjectModelExternalSource?,
                                      subFacetSource: ProjectModelExternalSource?) {
     val facetManager = FacetManager.getInstance(module)
@@ -828,18 +846,12 @@ class ExternalSystemStorageTest {
 
   private fun isFolderWithoutFiles(root: File): Boolean = root.walk().none { it.isFile }
 
-  private inline fun suppressLogs(action: () -> Unit) {
-    val oldInstance = LoggedErrorProcessor.getInstance()
-    try {
-      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
-          message == null || !message.contains("Trying to load multiple modules with the same name.")
-      })
-
+  private fun suppressLogs(action: () -> Unit) {
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
+        message == null || !message.contains("Trying to load multiple modules with the same name.")
+    }) {
       action()
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(oldInstance)
     }
   }
 }

@@ -20,7 +20,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -32,7 +32,7 @@ public class PsiElementFromSelectionsRule implements GetDataRule {
 
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
-    Object items = PlatformDataKeys.SELECTED_ITEMS.getData(dataProvider);
+    Object items = PlatformCoreDataKeys.SELECTED_ITEMS.getData(dataProvider);
     if (items == null) return null;
 
     //noinspection ConstantConditions

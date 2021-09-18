@@ -14,12 +14,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public abstract class DockManager {
-  /**
-   * @deprecated Use {@link #register(DockContainer, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void register(@NotNull DockContainer container);
 
   public abstract void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable);
 

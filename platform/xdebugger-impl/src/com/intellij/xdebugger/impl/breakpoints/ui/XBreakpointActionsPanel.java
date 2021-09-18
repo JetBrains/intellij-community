@@ -1,12 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -34,7 +33,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   private JPanel myExpressionPanel;
   private JPanel myLanguageChooserPanel;
   private JCheckBox myLogStack;
-  private XDebuggerExpressionComboBox myLogExpressionComboBox;
+  private @Nullable XDebuggerExpressionComboBox myLogExpressionComboBox;
 
   public void init(Project project, XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
     init(project, breakpointManager, breakpoint);
@@ -46,21 +45,27 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
         }
       };
       myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, LOG_EXPRESSION_HISTORY_ID,
-                                                                myBreakpoint.getSourcePosition(), true, false);
+                                                                null, true, false);
       myLanguageChooserPanel.add(myLogExpressionComboBox.getLanguageChooser(), BorderLayout.CENTER);
       myLogExpressionPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myLogExpressionCheckBox)));
       myLogExpressionPanel.add(myLogExpressionComboBox.getComponent(), BorderLayout.CENTER);
       myLogExpressionComboBox.setEnabled(false);
-      boolean isLineBreakpoint = breakpoint instanceof XLineBreakpoint;
-      myTemporaryCheckBox.setVisible(isLineBreakpoint);
-      if (isLineBreakpoint) {
-        myTemporaryCheckBox.addActionListener(e -> ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected()));
-      }
       myLogExpressionCheckBox.addActionListener(listener);
       DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionComboBox.getEditorComponent());
     }
     else {
       myExpressionPanel.getParent().remove(myExpressionPanel);
+    }
+    boolean isLineBreakpoint = breakpoint instanceof XLineBreakpoint;
+    myTemporaryCheckBox.setVisible(isLineBreakpoint);
+    if (isLineBreakpoint) {
+      myTemporaryCheckBox.addActionListener(e -> ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected()));
+    }
+  }
+
+  void setSourcePosition(XSourcePosition sourcePosition) {
+    if (myLogExpressionComboBox != null) {
+      myLogExpressionComboBox.setSourcePosition(sourcePosition);
     }
   }
 

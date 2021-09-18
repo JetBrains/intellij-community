@@ -220,6 +220,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             oldModuleNames[module] = oldId.name
           }
         }
+        else if (getImlFileDirectory(change.oldEntity) != getImlFileDirectory(change.newEntity)) {
+          val module = event.storageBefore.findModuleByEntity(change.newEntity)
+          val imlFilePath = getModuleVirtualFileUrl(change.newEntity)
+          if (module != null && imlFilePath != null) {
+            module.onImlFileMoved(imlFilePath)
+          }
+        }
       }
     }
   }

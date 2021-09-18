@@ -43,14 +43,6 @@ public interface DataConstants {
   String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
 
   /**
-   * Returns array of {@link com.intellij.openapi.vfs.VirtualFile}
-   *
-   * @deprecated use {@link PlatformDataKeys#VIRTUAL_FILE_ARRAY} instead
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  String VIRTUAL_FILE_ARRAY = CommonDataKeys.VIRTUAL_FILE_ARRAY.getName();
-
-  /**
    * Returns {@link com.intellij.openapi.editor.Editor}
    *
    * @deprecated use {@link PlatformDataKeys#EDITOR} instead

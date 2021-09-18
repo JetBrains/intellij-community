@@ -2,7 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
@@ -41,7 +41,7 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
   }
 
   override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val contextComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     val tabLabel = if (contextComponent is BaseLabel) contextComponent else e.getData(ToolWindowContentUi.SELECTED_CONTENT_TAB_LABEL)
     val tabLabelContent = tabLabel?.content ?: return
     showContentRenamePopup(tabLabel, tabLabelContent)

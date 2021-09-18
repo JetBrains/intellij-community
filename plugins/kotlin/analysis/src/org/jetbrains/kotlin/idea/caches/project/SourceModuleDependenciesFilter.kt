@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -22,7 +23,8 @@ internal interface SourceModuleDependenciesFilter {
     fun isSupportedDependency(dependency: IdeaModuleInfo): Boolean
 }
 
-internal class HmppSourceModuleDependencyFilter(
+@IntellijInternalApi
+class HmppSourceModuleDependencyFilter(
     private val dependeePlatform: TargetPlatform,
 ) : SourceModuleDependenciesFilter {
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui.command.line
 
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.project.Project
@@ -79,7 +79,7 @@ class CommandLineDialog(
 
   init {
     title = commandLineInfo.dialogTitle
-    setOKButtonText(IdeBundle.message("button.insert"))
+    setOKButtonText(IdeCoreBundle.message("button.insert"))
     init()
   }
 

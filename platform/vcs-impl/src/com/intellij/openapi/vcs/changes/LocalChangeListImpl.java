@@ -119,11 +119,6 @@ public final class LocalChangeListImpl extends LocalChangeList {
 
 
   @Override
-  public void setName(@NotNull String name) {
-    ChangeListManager.getInstance(myProject).editName(myName, name);
-  }
-
-  @Override
   public void setComment(@Nullable String comment) {
     ChangeListManager.getInstance(myProject).editComment(myName, comment);
   }

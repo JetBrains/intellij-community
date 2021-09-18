@@ -16,6 +16,33 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
+/**
+ * Represents nodes of the {@link InspectionTree}.
+ *
+ * <ul>
+ *   <li>Nodes for sorting:</li>
+ *     <ul>
+ *       <li>{@link InspectionRootNode}</li>
+ *       <li>{@link InspectionPackageNode}</li>
+ *       <li>{@link InspectionModuleNode}</li>
+ *       <li>{@link InspectionSeverityGroupNode}</li>
+ *       <li>{@link InspectionGroupNode} for <b>Editor | Inspections</b> categories</li>
+ *     </ul>
+ *   <li>Nodes for inspection tools:</li>
+ *     <ul>
+ *       <li> {@link InspectionNode}</li>
+ *     </ul>
+ *   <li>Nodes for problems:</li>
+ *     <ul>
+ *       <li>{@link SuppressableInspectionTreeNode}</li>
+ *       <ul>
+ *         <li>{@link RefElementNode} for the element concerned by the problem</li>
+ *         <li>{@link ProblemDescriptionNode} for the description of the problem</li>
+ *         <li>{@link com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode}</li>
+ *       </ul>
+ *     </ul>
+ * </ul>
+ */
 public abstract class InspectionTreeNode implements TreeNode {
   private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new HashingStrategy<>() {
     @Override

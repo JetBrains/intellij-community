@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.xml.XmlTokenType
 import com.intellij.util.text.CharArrayUtil
+import com.intellij.util.text.CharSequenceSubSequence
 
 abstract class HtmlTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : BaseHtmlEmbeddedContentProvider(lexer) {
 
@@ -41,7 +42,7 @@ abstract class HtmlTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : BaseHtmlEm
       XmlTokenType.XML_NAME -> {
         val baseLexer = lexer.delegate
         if (!myTagNameRead) {
-          val tagName = range.subSequence(baseLexer.bufferSequence)
+          val tagName = CharSequenceSubSequence(baseLexer.bufferSequence, range.startOffset, range.endOffset)
           myWithinTag = isInterestedInTag(tagName)
           if (myWithinTag) {
             myTagName = tagName
@@ -54,7 +55,7 @@ abstract class HtmlTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : BaseHtmlEm
           myAttributeValue = null
         }
         else if (myWithinTag) {
-          val attributeName = range.subSequence(baseLexer.bufferSequence)
+          val attributeName = CharSequenceSubSequence(baseLexer.bufferSequence, range.startOffset, range.endOffset)
           myReadAttributeValue = isInterestedInAttribute(attributeName)
           if (myReadAttributeValue) {
             this.myAttributeName = attributeName
@@ -65,7 +66,7 @@ abstract class HtmlTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : BaseHtmlEm
       }
       XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN -> {
         if (myReadAttributeValue) {
-          myAttributeValue = range.subSequence(lexer.delegate.bufferSequence)
+          myAttributeValue = CharSequenceSubSequence(lexer.delegate.bufferSequence, range.startOffset, range.endOffset)
         }
       }
       XmlTokenType.XML_TAG_END, XmlTokenType.XML_EMPTY_ELEMENT_END -> {
@@ -134,8 +135,10 @@ abstract class HtmlTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : BaseHtmlEm
       }
       if (baseLexer.tokenType == null) break
       if (baseLexer.tokenType === XmlTokenType.XML_NAME) {
-        val tokenText = buf.subSequence(baseLexer.tokenStart, baseLexer.tokenEnd)
-        if (namesEqual(tagName, tokenText)
+        val tokenText = CharSequenceSubSequence(buf, baseLexer.tokenStart, baseLexer.tokenEnd)
+        if ((baseLexer.tokenEnd < buf.length
+             && buf[baseLexer.tokenEnd].let { it == '>' || it == '/' || it.isWhitespace() }
+             && namesEqual(tagName, tokenText))
             || namesEqual(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED, tokenText)) {
           break // really found end
         }

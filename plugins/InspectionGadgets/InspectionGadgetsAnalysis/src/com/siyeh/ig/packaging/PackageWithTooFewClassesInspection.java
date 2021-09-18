@@ -19,50 +19,44 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.PackageGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
-public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
+public class PackageWithTooFewClassesInspection extends PackageGlobalInspection {
 
   @SuppressWarnings("PublicField")
   public int limit = 3;
 
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(
-    @NotNull RefEntity refEntity,
-    @NotNull AnalysisScope analysisScope,
-    @NotNull InspectionManager inspectionManager,
-    @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefPackage)) {
+  public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage refPackage,
+                                                           @NotNull AnalysisScope analysisScope,
+                                                           @NotNull InspectionManager inspectionManager,
+                                                           @NotNull GlobalInspectionContext globalInspectionContext) {
+    int numClasses = ReadAction.compute(() -> {
+      final Project project = inspectionManager.getProject();
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(refPackage.getQualifiedName());
+      if (aPackage == null || aPackage.getSubPackages().length > 0) {
+        return -1;
+      }
+      return aPackage.getClasses(GlobalSearchScope.projectScope(project)).length;
+    });
+    if (numClasses < 0 || numClasses >= limit) {
       return null;
     }
-    final List<RefEntity> children = refEntity.getChildren();
-    int numClasses = 0;
-    boolean subpackage = false;
-    for (RefEntity child : children) {
-      if (child instanceof RefClass) {
-        numClasses++;
-      }
-      else if (child instanceof RefPackage) {
-        subpackage = true;
-      }
-    }
-    if (numClasses >= limit || subpackage) {
-      return null;
-    }
-    final String errorString = InspectionGadgetsBundle.message(
-      "package.with.too.few.classes.problem.descriptor",
-      refEntity.getQualifiedName(), Integer.valueOf(numClasses),
-      Integer.valueOf(limit));
+    final String errorString = InspectionGadgetsBundle.message("package.with.too.few.classes.problem.descriptor",
+                                                               refPackage.getQualifiedName(), Integer.valueOf(numClasses),
+                                                               Integer.valueOf(limit));
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(errorString)
     };
@@ -70,9 +64,6 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "package.with.too.few.classes.min.option"),
-      this, "limit");
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("package.with.too.few.classes.min.option"), this, "limit");
   }
 }

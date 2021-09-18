@@ -4,12 +4,16 @@ package com.intellij.util.gist;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ModalityUiUtil;
@@ -68,6 +72,14 @@ public final class GistManagerImpl extends GistManager {
     return new PsiFileGistImpl<>(id, version, externalizer, calculator);
   }
 
+  @Override
+  public @NotNull <Data> PsiFileGist<Data> newPsiFileProjectIndependentGist(@NotNull String id,
+                                                                            int version,
+                                                                            @NotNull DataExternalizer<Data> externalizer,
+                                                                            @NotNull NullableFunction<? super PsiFile, ? extends Data> calcData) {
+    return new PsiFileProjectIndependentGist<>(id, version, externalizer, calcData);
+  }
+
   int getReindexCount() {
     return myReindexCount.get();
   }
@@ -83,7 +95,8 @@ public final class GistManagerImpl extends GistManager {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Invalidating gist " + file);
     }
-    invalidateData(); // should be more granular in future
+    file.putUserDataIfAbsent(VirtualFileGistImpl.GIST_INVALIDATION_COUNT_KEY, new AtomicInteger()).incrementAndGet();
+    invalidateDependentCaches();
   }
 
   private void invalidateGists() {
@@ -101,6 +114,15 @@ public final class GistManagerImpl extends GistManager {
         PsiManager.getInstance(project).dropPsiCaches();
       }
     });
+  }
+
+  @Override
+  public boolean shouldUseMemoryStorage(@NotNull PsiFile file) {
+    if (!(PsiFileGistImpl.getVirtualFile(file) instanceof NewVirtualFile)) return true;
+
+    PsiDocumentManager pdm = PsiDocumentManager.getInstance(file.getProject());
+    Document document = pdm.getCachedDocument(file);
+    return document != null && (pdm.isUncommited(document) || FileDocumentManager.getInstance().isDocumentUnsaved(document));
   }
 
   @TestOnly

@@ -3,11 +3,17 @@ package com.intellij.grazie.detection
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.DetectionContext
-import com.intellij.grazie.detector.chain.ChainDetectorBuilder
+import com.intellij.grazie.detector.DefaultLanguageDetectors
 import com.intellij.grazie.detector.model.Language
+import com.intellij.grazie.detector.utils.resources.JVMResourceLoader
+import com.intellij.grazie.detector.utils.words
+import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.util.Ref
+import com.intellij.util.containers.ContainerUtil
 
 object LangDetector {
-  private val detector by lazy { ChainDetectorBuilder.standard() }
+  private val detector by lazy { DefaultLanguageDetectors.standard(JVMResourceLoader) }
+  private val cache = ContainerUtil.createConcurrentWeakMap<String, Ref<Lang>>()
 
   /**
    * Get natural language of text.
@@ -18,7 +24,7 @@ object LangDetector {
    */
   @Suppress("MemberVisibilityCanBePrivate")
   fun getLanguage(text: String): Language? {
-    val detected = detector.detect(text.take(1_000))
+    val detected = detector.detect(text.take(1_000), isReliable = false)
 
     if (detected.preferred == Language.UNKNOWN) return null
 
@@ -30,15 +36,22 @@ object LangDetector {
    *
    * @return Lang that is detected and enabled in grazie
    */
-  fun getLang(text: String) = getLanguage(text)?.let {
-    GrazieConfig.get().availableLanguages.find { lang -> lang.equalsTo(it) }
+  fun getLang(text: String): Lang? {
+    val ref = cache.computeIfAbsent(text) {
+      Ref.create(getLanguage(text)?.let { language ->
+        GrazieConfig.get().availableLanguages.find { lang -> lang.equalsTo(language) }
+      })
+    }
+    return ref.get()
   }
 
   /**
    * Update local detection context from text
    */
   fun updateContext(text: CharSequence, context: DetectionContext.Local) {
-    val details = detector.detectWithDetails(text.take(1_000))
-    context.update(text.length, details)
+    val textToDetect = text.take(1_000)
+    val details = detector.detectWithDetails(textToDetect, isReliable = true)
+    val wordsCount = textToDetect.words().count()
+    context.update(text.length, wordsCount, details)
   }
 }

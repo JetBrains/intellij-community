@@ -80,6 +80,8 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.actualsForExpected
+import org.jetbrains.kotlin.idea.util.application.invokeLater
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.idea.util.string.collapseSpaces
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -214,7 +216,7 @@ fun Project.checkConflictsInteractively(
     onAccept: () -> Unit
 ) {
     if (!conflicts.isEmpty) {
-        if (ApplicationManager.getApplication()!!.isUnitTestMode) throw ConflictsInTestsException(conflicts.values())
+        if (isUnitTestMode()) throw ConflictsInTestsException(conflicts.values())
 
         val dialog = ConflictsDialog(this, conflicts) { onAccept() }
         dialog.show()
@@ -451,7 +453,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
         true
     }
 
-    ApplicationManager.getApplication().invokeLater {
+    invokeLater {
         popup.showInBestPositionFor(editor)
     }
 }
@@ -483,7 +485,7 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
 ) {
     when {
         containers.isEmpty() -> return
-        containers.size == 1 || ApplicationManager.getApplication()!!.isUnitTestMode -> onSelect(containers.first())
+        containers.size == 1 || isUnitTestMode() -> onSelect(containers.first())
         toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
         else -> {
             @Suppress("UNCHECKED_CAST")
@@ -1011,7 +1013,7 @@ fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?)
 fun checkSuperMethodsWithPopup(
     declaration: KtNamedDeclaration,
     deepestSuperMethods: List<PsiElement>,
-    actionString: String,
+    actionStringPrefixKey: String,
     editor: Editor,
     action: (List<PsiElement>) -> Unit
 ) {
@@ -1026,32 +1028,32 @@ fun checkSuperMethodsWithPopup(
     } ?: return action(listOf(declaration))
     if (superClass == null) return action(listOf(declaration))
 
-    if (ApplicationManager.getApplication().isUnitTestMode) return action(deepestSuperMethods)
+    if (isUnitTestMode()) return action(deepestSuperMethods)
 
-    val kind = when (declaration) {
-        is KtNamedFunction -> "function"
-        is KtProperty, is KtParameter -> "property"
+    val kindIndex = when (declaration) {
+        is KtNamedFunction -> 1 // "function"
+        is KtProperty, is KtParameter -> 2 // "property"
         else -> return
     }
 
     val unwrappedSupers = deepestSuperMethods.mapNotNull { it.namedUnwrappedElement }
     val hasJavaMethods = unwrappedSupers.any { it is PsiMethod }
     val hasKtMembers = unwrappedSupers.any { it is KtNamedDeclaration }
-    val superKind = when {
-        hasJavaMethods && hasKtMembers -> "member"
-        hasJavaMethods -> "method"
-        else -> kind
+    val superKindIndex = when {
+        hasJavaMethods && hasKtMembers -> 3 // "member"
+        hasJavaMethods -> 4 // "method"
+        else -> kindIndex
     }
 
-    val renameBase = actionString + " base $superKind" + (if (deepestSuperMethods.size > 1) "s" else "")
-    val renameCurrent = "$actionString only current $kind"
-    val title = buildString {
-        append(declaration.name)
-        append(if (isAbstract) " implements " else " overrides ")
-        append(ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE))
-        append(" of ")
-        append(SymbolPresentationUtil.getSymbolPresentableText(superClass))
-    }
+    val renameBase = KotlinBundle.message("$actionStringPrefixKey.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
+    val renameCurrent = KotlinBundle.message("$actionStringPrefixKey.only.current.0", kindIndex)
+    val title = KotlinBundle.message(
+        "$actionStringPrefixKey.declaration.title.0.implements.1.2.of.3",
+        declaration.name ?: "",
+        if (isAbstract) 1 else 2,
+        ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),
+        SymbolPresentationUtil.getSymbolPresentableText(superClass)
+    )
 
     JBPopupFactory.getInstance()
         .createPopupChooserBuilder(listOf(renameBase, renameCurrent))

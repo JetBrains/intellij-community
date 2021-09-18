@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.InputValidator
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.setupEditorSelection
 import org.jetbrains.kotlin.idea.testIntegration.findSuitableFrameworks
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
@@ -56,7 +56,7 @@ abstract class KotlinGenerateTestSupportActionBase(
             frameworks.ifEmpty { return }
             frameworks.singleOrNull()?.let { return consumer(it) }
 
-            if (ApplicationManager.getApplication().isUnitTestMode) return consumer(frameworks.first())
+            if (isUnitTestMode()) return consumer(frameworks.first())
 
             val list = JBList<TestFramework>(*frameworks.toTypedArray())
             list.cellRenderer = TestFrameworkListCellRenderer()
@@ -134,7 +134,7 @@ abstract class KotlinGenerateTestSupportActionBase(
 
     private fun doGenerate(editor: Editor, file: PsiFile, klass: KtClassOrObject, framework: TestFramework) {
         val project = file.project
-        val commandName = KotlinBundle.message("action.generate.test.support.generate.test.function")
+        val commandName = KotlinBundle.message("command.generate.test.support.generate.test.function")
 
         val fileTemplateDescriptor = methodKind.getFileTemplateDescriptor(framework)
         val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(fileTemplateDescriptor.fileName)
@@ -142,7 +142,7 @@ abstract class KotlinGenerateTestSupportActionBase(
         var name: String? = null
         if (templateText.contains(NAME_VAR)) {
             name = if (templateText.contains("test$NAME_VAR")) "Name" else "name"
-            if (!ApplicationManager.getApplication().isUnitTestMode) {
+            if (!isUnitTestMode()) {
                 val message = KotlinBundle.message("action.generate.test.support.choose.test.name")
                 name = Messages.showInputDialog(message, commandName, null, name, NAME_VALIDATOR) ?: return
             }

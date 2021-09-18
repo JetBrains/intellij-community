@@ -13,7 +13,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -252,7 +251,8 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createRenameFileFix(@NotNull String newName);
 
-  public abstract @NotNull LocalQuickFix createRenameFix();
+  @Nullable
+  public abstract IntentionAction createRenameFix(@NotNull PsiElement element, @Nullable Object highlightInfo);
 
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
@@ -320,6 +320,11 @@ public abstract class QuickFixFactory {
   }
 
   @NotNull
+  public abstract IntentionAction createReplaceWithTypePatternFix(@NotNull PsiReferenceExpression exprToReplace,
+                                                                  @NotNull PsiClass resolvedExprClass,
+                                                                  @NotNull String patternVarName);
+
+  @NotNull
   public abstract IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression call);
 
   @NotNull
@@ -355,14 +360,6 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createInitializeFinalFieldInConstructorFix(@NotNull PsiField field);
 
-  /**
-   * @deprecated use {@link #createDeleteFix(PsiElement)} on {@link PsiReferenceParameterList} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public abstract IntentionAction createRemoveTypeArgumentsFix(@NotNull PsiElement variable);
-
   @NotNull
   public abstract IntentionAction createChangeClassSignatureFromUsageFix(@NotNull PsiClass owner,
                                                                          @NotNull PsiReferenceParameterList parameterList);
@@ -389,7 +386,9 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
 
-  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
+  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter,
+                                                       @NotNull Object highlightInfo,
+                                                       boolean excludingHierarchy);
 
   @NotNull
   public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName);
@@ -401,7 +400,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field);
 
   @NotNull
-  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement);
+  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix);
 
   @NotNull
   public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();
@@ -473,6 +472,11 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases);
 
   @NotNull
+  public abstract IntentionAction createAddMissingSealedClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
+                                                                         @NotNull Set<String> missingCases,
+                                                                         @NotNull List<String> allNames);
+
+  @NotNull
   public abstract IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @Nullable String message);
 
   @Nullable
@@ -537,7 +541,8 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createIterateFix(@NotNull PsiExpression expression);
 
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
+  public abstract @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
 
-  public abstract @NotNull LocalQuickFix createDeleteDefaultFix();
+  @Nullable
+  public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo);
 }

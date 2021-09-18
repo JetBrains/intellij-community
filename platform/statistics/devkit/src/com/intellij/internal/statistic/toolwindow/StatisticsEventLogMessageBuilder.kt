@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.toolwindow
 
 import com.google.gson.Gson
-import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.util.text.DateFormatUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 
 class StatisticsEventLogMessageBuilder {
   fun buildLogMessage(logEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?): String {

@@ -3,10 +3,24 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.VcsCodeAuthorInlayHintsProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class KotlinCodeAuthorInlayHintsProvider : VcsCodeAuthorInlayHintsProvider() {
 
-    override fun isAccepted(element: PsiElement): Boolean = element is KtClass || element is KtNamedFunction
+    override fun isAccepted(element: PsiElement): Boolean =
+        when (element) {
+            is KtClassOrObject -> isAcceptedClassOrObject(element)
+            is KtNamedFunction -> element.isTopLevel || isAcceptedClassOrObject(element.containingClassOrObject)
+            is KtSecondaryConstructor -> true
+            is KtClassInitializer -> true
+            else -> false
+        }
+
+    private fun isAcceptedClassOrObject(element: KtClassOrObject?): Boolean =
+        when (element) {
+            is KtClass -> element !is KtEnumEntry
+            is KtObjectDeclaration -> !element.isObjectLiteral()
+            else -> false
+        }
 }

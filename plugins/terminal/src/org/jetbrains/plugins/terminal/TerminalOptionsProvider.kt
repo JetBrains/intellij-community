@@ -3,15 +3,12 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
 
-@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
+@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml", roamingType = RoamingType.DISABLED))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var myState = State()
 
@@ -118,14 +115,18 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   fun setEnvData(envData: EnvironmentVariablesData) {
   }
 
-  // replace with property delegate when Kotlin 1.4 arrives (KT-8658)
+  // Or replace with `var shellPath: String? by myState::myShellPath`, but `myState` must be `val` in this case
   var shellPath: String?
     get() = myState.myShellPath
     set(value) {
       myState.myShellPath = value
     }
 
-  var useOptionAsMetaKey: Boolean by myState::useOptionAsMetaKey
+  var useOptionAsMetaKey: Boolean
+    get() = myState.useOptionAsMetaKey
+    set(value) {
+      myState.useOptionAsMetaKey = value
+    }
 
   var cursorShape: TerminalUiSettingsManager.CursorShape
     get() = service<TerminalUiSettingsManager>().cursorShape

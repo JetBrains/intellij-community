@@ -94,6 +94,10 @@ public class CopyReferencePopup extends NonTrivialActionGroup implements AlwaysP
               qualifiedName = ((CopyPathProvider)action).getQualifiedName(getProject(), elements, editor, dataContext);
             }
 
+            if (action instanceof CopyReferenceAction) {
+              qualifiedName = ((CopyReferenceAction)action).getQualifiedName(editor, elements);
+            }
+
             myInfoLabel.setText("");
             if (qualifiedName != null) {
               myInfoLabel.setText(qualifiedName);

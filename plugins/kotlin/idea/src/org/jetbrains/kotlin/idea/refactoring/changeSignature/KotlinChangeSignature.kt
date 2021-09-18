@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -31,6 +30,8 @@ import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
@@ -125,8 +126,8 @@ class KotlinChangeSignature(
             }
 
             else -> throw KotlinExceptionWithAttachments("Unexpected declaration: ${baseDeclaration::class}")
-                .withAttachment("element", baseDeclaration.text)
-                .withAttachment("file", baseDeclaration.containingFile.text)
+                .withPsiAttachment("element.kt", baseDeclaration)
+                .withPsiAttachment("file.kt", baseDeclaration.containingFile)
         }
     }
 
@@ -189,7 +190,7 @@ class KotlinChangeSignature(
             },
         ) ?: return
 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             try {
                 dialog.performOKAction()
             } finally {

@@ -31,7 +31,7 @@ public final class GradleExternalTaskConfigurationType extends AbstractExternalS
 
   @NotNull
   @Override
-  protected ExternalSystemRunConfiguration doCreateConfiguration(@NotNull ProjectSystemId externalSystemId,
+  protected GradleRunConfiguration doCreateConfiguration(@NotNull ProjectSystemId externalSystemId,
                                                                  @NotNull Project project,
                                                                  @NotNull ConfigurationFactory factory,
                                                                  @NotNull String name) {

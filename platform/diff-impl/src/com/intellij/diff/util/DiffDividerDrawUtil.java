@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -167,6 +167,9 @@ public final class DiffDividerDrawUtil {
 
       boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
                                 @NotNull TextDiffType type, boolean excluded, boolean skipped);
+
+      boolean processAligned(int startLine1, int endLine1, int startLine2, int endLine2,
+                             @NotNull TextDiffType type);
     }
   }
 
@@ -209,13 +212,29 @@ public final class DiffDividerDrawUtil {
       return process(startLine1, endLine1, startLine2, endLine2, new ExcludablePainter(type, excluded, skipped));
     }
 
+    @Override
+    public boolean processAligned(int startLine1, int endLine1, int startLine2, int endLine2,
+                                  @NotNull TextDiffType type) {
+      if (type == TextDiffType.INSERTED || type == TextDiffType.DELETED) {
+        return process(startLine1, endLine1, startLine2, endLine2, new DefaultPainter(type), true);
+      }
+      else {
+        return process(startLine1, endLine1, startLine2, endLine2, type);
+      }
+    }
+
     private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
                             @NotNull Painter painter) {
+      return process(startLine1, endLine1, startLine2, endLine2, painter, false);
+    }
+
+    private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+                            @NotNull Painter painter, boolean withAlignedHeight) {
       if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
       if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
 
-      ContainerUtil.addIfNotNull(myPolygons, createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2,
-                                                           painter));
+      DividerPolygon polygon = createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2, painter);
+      ContainerUtil.addIfNotNull(myPolygons, polygon != null && withAlignedHeight ? polygon.withAlignedHeight() : polygon);
       return true;
     }
 
@@ -414,14 +433,48 @@ public final class DiffDividerDrawUtil {
         g.setStroke(BOLD_DOTTED_STROKE);
       }
 
-      if (curve) {
-        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
-      }
-      else {
-        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
-      }
+      drawTrapezium(g, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor, curve);
 
       g.setStroke(oldStroke);
+    }
+
+    private static void drawTrapezium(@NotNull Graphics2D g,
+                                      int width,
+                                      int startY1, int endY1,
+                                      int startY2, int endY2,
+                                      @Nullable Color fillColor, @Nullable Color borderColor,
+                                      boolean curve) {
+      if (curve) {
+        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+      }
+      else {
+        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+      }
+    }
+
+    @NotNull
+    public DividerPolygon withAlignedHeight() {
+      int delta = (myEnd2 - myStart2) - (myEnd1 - myStart1);
+      if (delta == 0) return this;
+
+      if (myStart2 == myEnd1 && myEnd1 == myEnd2) { //correspond to the last line DELETED change (e.g. last line deleted)
+        return new DividerPolygon(myStart1, myStart2 - (myEnd2 - myStart1), myEnd1, myEnd2, myFillColor, myBorderColor, myDottedBorder);
+      }
+      else if (myEnd1 == myEnd2 && myStart1 == myEnd1) { //correspond to the last line INSERTED change (e.g. added new lines after last line)
+        return new DividerPolygon(myStart1 - (myEnd2 - myStart2), myStart2, myEnd1, myEnd2, myFillColor, myBorderColor, myDottedBorder);
+      }
+      if (delta < 0) {
+        int startDelta = myStart2 == myEnd2 ? 0 : -delta;
+        int endDelta = myStart2 == myEnd2 ? -delta : 0;
+        return new DividerPolygon(myStart1, myStart2 - startDelta, myEnd1, myEnd2 + endDelta, myFillColor, myBorderColor, myDottedBorder);
+      }
+      else {
+        int startDelta = myStart1 == myEnd1 ? 0 : delta;
+        int endDelta = myStart1 == myEnd1 ? delta : 0;
+        int firstLineOffset = (myStart1 == myEnd1 && myStart2 == 0) ? -1 : 0;
+        return new DividerPolygon(myStart1 - startDelta + firstLineOffset, myStart2, myEnd1 + endDelta + firstLineOffset, myEnd2,
+                                  myFillColor, myBorderColor, myDottedBorder);
+      }
     }
 
     public String toString() {

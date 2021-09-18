@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.find.FindManager;
@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.CommonProcessors;
@@ -168,6 +169,16 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
     ContentEntry contentRoot = getContentRoot(moduleName);
     doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
+  }
+
+  protected void assertExcludePatterns(String moduleName, String... expectedPatterns) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    assertUnorderedElementsAreEqual(contentRoot.getExcludePatterns(), Arrays.asList(expectedPatterns));
+  }
+
+  protected void assertNoExcludePatterns(String moduleName, String... nonExpectedPatterns) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    assertDoesntContain(contentRoot.getExcludePatterns(), nonExpectedPatterns);
   }
 
   protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
@@ -466,21 +477,11 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void importProject(Boolean skipIndexing) {
-    String indexingPropertyName = "idea.skip.indices.initialization";
-    String previousIndexingState = System.getProperty(indexingPropertyName);
-    try {
-      if (skipIndexing != null) {
-        System.setProperty(indexingPropertyName, skipIndexing.toString());
-      }
+    if (skipIndexing != null) {
+      PlatformTestUtil.withSystemProperty("idea.skip.indices.initialization", skipIndexing.toString(), () -> doImportProject());
+    }
+    else {
       doImportProject();
-    } finally {
-      if (skipIndexing != null) {
-        if (previousIndexingState == null) {
-          System.clearProperty(indexingPropertyName);
-        } else {
-          System.setProperty(indexingPropertyName, previousIndexingState);
-        }
-      }
     }
   }
 

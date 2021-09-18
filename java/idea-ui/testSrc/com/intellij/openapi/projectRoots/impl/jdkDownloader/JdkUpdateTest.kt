@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.application.subscribe
@@ -15,32 +15,35 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.SystemProperties
 import com.intellij.util.ui.UIUtil
 import org.junit.Assert
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import java.awt.event.KeyEvent
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import javax.swing.JPanel
 
-class JdkUpdateTest : LightPlatformTestCase() {
+@RunsInEdt
+class JdkUpdateTest : BareTestFixtureTestCase() {
   private val myNotifications = Collections.synchronizedList(ArrayList<Notification>())
 
-  override fun setUp() {
-    super.setUp()
+  @Rule @JvmField val tempDir = TempDirectory()
+  @Rule @JvmField val runInEdt = EdtRule()
+
+  @Before fun setUp() {
     service<JdkInstallerStore>().loadState(JdkInstallerState())
 
     val key = "jdk.downloader.home"
-    val oldHome = System.getProperty(key)
-    System.setProperty(key, createTempDir("jdk-install-home").toString())
-    disposeOnTearDown(Disposable {
-      if (oldHome != null) {
-        System.setProperty(key, oldHome)
-      } else {
-        System.clearProperty(key)
-      }
-    })
+    val oldHome = System.setProperty(key, tempDir.newDirectory("jdk-install-home").toString())
+    Disposer.register(testRootDisposable, Disposable { SystemProperties.setProperty(key, oldHome) })
 
     Notifications.TOPIC.subscribe(testRootDisposable, object: Notifications {
       override fun notify(notification: Notification) {
@@ -65,7 +68,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
   private fun newNotification(sdkName: String, oldVersion: JdkItem = mockZipOld, newVersion: JdkItem = mockZipNew): JdkUpdateNotification? {
     val oldSdk = ProjectJdkTable.getInstance().findJdk(sdkName) ?: ProjectJdkTable.getInstance().createSdk(sdkName, JavaSdk.getInstance())
     oldSdk.sdkModificator.apply {
-      homePath = createTempDir("mock-old-home").toString()
+      homePath = tempDir.newDirectory().toString()
       versionString = oldVersion.versionString
     }.commitChanges()
 
@@ -78,7 +81,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
     return notification
   }
 
-  fun `test the same popup is not shown twice`() {
+  @Test fun `test the same popup is not shown twice`() {
     newNotification("old-sdk")
 
     val actions = listOurActions()
@@ -87,7 +90,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertEquals("$actions", 1, actions.size)
   }
 
-  fun `test jdk update`() {
+  @Test fun `test jdk update`() {
     val update = newNotification("old-sdk2")!!
     Assert.assertEquals(setOf(update), listOurActions().toSet())
 
@@ -107,7 +110,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertEquals(service<JdkInstallerStore>().findInstallations(update.oldItem), listOf<Path>())
   }
 
-  fun `test jdk update failed`() {
+  @Test fun `test jdk update failed`() {
     val update = newNotification("old-sdk2", newVersion = mockZipNewBroken)!!
     Assert.assertEquals(setOf(update), listOurActions().toSet())
 
@@ -123,7 +126,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertTrue(!update.isTerminated())
   }
 
-  fun `test merge notifications correctly`() {
+  @Test fun `test merge notifications correctly`() {
     val old1 = newNotification("old-1")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
@@ -133,7 +136,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertEquals("$actions", 1, actions.size)
   }
 
-  fun `test merge notifications correctly 2`() {
+  @Test fun `test merge notifications correctly 2`() {
     val old1 = newNotification("old-1")!!
     val old2 = newNotification("old-2")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
@@ -145,7 +148,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertEquals("$actions", 2, actions.size)
   }
 
-  fun `test replace notifications correctly 2`() {
+  @Test fun `test replace notifications correctly 2`() {
     val old1 = newNotification("old-1")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem.copy(jdkVersion = "17.0.777"))
@@ -155,7 +158,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertTrue("$actions", actions.single().newItem.jdkVersion == "17.0.777")
   }
 
-  fun `test replace notifications correctly 3`() {
+  @Test fun `test replace notifications correctly 3`() {
     val old1 = newNotification("old-1")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 
@@ -171,7 +174,7 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertEquals(1, listOurActions().size)
   }
 
-  fun `test replace notifications correctly 4`() {
+  @Test fun `test replace notifications correctly 4`() {
     val old1 = newNotification("old-1")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 
@@ -238,7 +241,6 @@ private fun jdkItemForTest(url: String,
   saveToFile = {}
 )
 
-
 private fun doEventsWhile(iterations: Int = Int.MAX_VALUE / 2,
                           condition: () -> Boolean = { true }) {
   repeat(iterations) {
@@ -253,7 +255,6 @@ private fun doEventsWhile(iterations: Int = Int.MAX_VALUE / 2,
     Thread.sleep(30)
   }
 }
-
 
 private fun runAction(theAction: AnAction) {
   ApplicationManager.getApplication().invokeAndWait {

@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.asNullable
 import org.jetbrains.kotlin.tools.projectWizard.core.safe
@@ -38,7 +38,7 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
     }
 
     private fun getPatchedKotlinVersion() =
-        if (ApplicationManager.getApplication().isInternal) {
+        if (isApplicationInternalMode()) {
             System.getProperty(KOTLIN_COMPILER_VERSION_TAG)?.let { Version.fromString(it) }
         } else {
             null

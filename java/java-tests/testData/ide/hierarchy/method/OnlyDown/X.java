@@ -1,14 +1,14 @@
 class X {
-  Object m(String s) {}
+  Object m(String s) { return null; }
 }
 class Y extends X {
 }
 class Z extends Y {
-  String m(String s) {}
+  String m(String s) { return null; }
 }
 class YY extends X {
-  Object m(String s) {}
+  Object m(String s) { return null; }
 }
 class YYY extends X {
-  String m(Object s) {}
+  String m(Object s) { return null; }
 }

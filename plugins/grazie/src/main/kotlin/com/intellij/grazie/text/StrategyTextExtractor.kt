@@ -62,7 +62,7 @@ internal class StrategyTextExtractor(private val strategy: GrammarCheckingStrate
         null,
         strategy.javaClass)
     }
-    return TextContentBuilder.excludeRanges(content, filtered)
+    return content.excludeRanges(filtered.map { TextContent.Exclusion(it.first, it.last + 1, false) })
   }
 
   internal companion object {

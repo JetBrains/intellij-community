@@ -1,5 +1,5 @@
 // WITH_RUNTIME
-// SUGGESTED_NAMES: triple, getT
+// SUGGESTED_NAMES: triple, intIntIntTriple, intIntTriple, intTriple, getT
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int

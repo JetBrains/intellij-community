@@ -40,7 +40,8 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
       g.fillRect(r.x + getStripeIndent(), r.y, getStripeWidth(), r.height);
     }
     else {
-      g.fillRect(r.x, r.y + getStripeIndent(), r.width, getStripeWidth());
+      int withToEdge = getWithToEdge();
+      g.fillRect(r.x + withToEdge, r.y + getStripeIndent(), r.width - withToEdge * 2, getStripeWidth());
     }
   }
 
@@ -56,6 +57,10 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
 
   protected int getStripeWidth() {
     return STRIPE_WIDTH.get();
+  }
+
+  protected int getWithToEdge() {
+    return 0;
   }
 
   protected String getColorResourceName() {

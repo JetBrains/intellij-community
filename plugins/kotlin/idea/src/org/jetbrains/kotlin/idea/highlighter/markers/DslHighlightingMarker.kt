@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.application.options.colors.ColorAndFontOptions
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.ide.DataManager
@@ -42,14 +40,16 @@ fun collectHighlightingColorsMarkers(
 
     val anchor = ktClass.nameIdentifier ?: return
 
+    @Suppress("MoveLambdaOutsideParentheses")
     result.add(
-        LineMarkerInfo<PsiElement>(
+        LineMarkerInfo(
             anchor,
             anchor.textRange,
             createDslStyleIcon(styleId),
-            Pass.LINE_MARKERS,
-            toolTipHandler, navHandler,
-            GutterIconRenderer.Alignment.RIGHT
+            toolTipHandler,
+            navHandler,
+            GutterIconRenderer.Alignment.RIGHT,
+            { KotlinBundle.message("highlighter.tool.tip.marker.annotation.for.dsl") }
         )
     )
 }

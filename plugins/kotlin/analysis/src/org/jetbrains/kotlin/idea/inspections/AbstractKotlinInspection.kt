@@ -3,19 +3,15 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtPropertyAccessor
-import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 
 abstract class AbstractKotlinInspection : LocalInspectionTool() {
     fun ProblemsHolder.registerProblemWithoutOfflineInformation(
         element: PsiElement,
-        description: String,
+        @InspectionMessage description: String,
         isOnTheFly: Boolean,
         highlightType: ProblemHighlightType,
         vararg fixes: LocalQuickFix
@@ -25,7 +21,7 @@ abstract class AbstractKotlinInspection : LocalInspectionTool() {
 
     fun ProblemsHolder.registerProblemWithoutOfflineInformation(
         element: PsiElement,
-        description: String,
+        @InspectionMessage description: String,
         isOnTheFly: Boolean,
         highlightType: ProblemHighlightType,
         range: TextRange?,

@@ -3,10 +3,10 @@ package training.ui.views
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalBox
@@ -32,6 +32,8 @@ import javax.swing.border.MatteBorder
 import kotlin.math.max
 
 internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
+  private val sideOffsetBeforeScaling = 18
+
   private val lessonPanel = JPanel()
 
   private val moduleNameLabel: JLabel = LinkLabelWithBackArrow<Any> { _, _ ->
@@ -58,6 +60,10 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun reinitMe(lesson: Lesson) {
+    with(UISettings.instance) {
+      border = EmptyBorder(northInset, JBUI.scale(sideOffsetBeforeScaling), southInset, JBUI.scale(sideOffsetBeforeScaling))
+    }
+
     scrollToNewMessages = true
     clearMessages()
     footer.removeAll()
@@ -75,11 +81,18 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       initFooterPanel(lesson)
       add(footer, BorderLayout.PAGE_END)
     }
+  }
 
-    preferredSize = Dimension(UISettings.instance.width, 100)
-    with(UISettings.instance) {
-      border = EmptyBorder(northInset, JBUI.scale(18), southInset, JBUI.scale(18))
-    }
+  fun updatePanelSize(viewAreaWidth: Int) {
+    val width = max(UISettings.instance.panelWidth, viewAreaWidth) - 2 * sideOffsetBeforeScaling
+    lessonMessagePane.preferredSize = null
+    lessonMessagePane.setBounds(0, 0, width, 10000)
+    lessonMessagePane.revalidate()
+    lessonMessagePane.repaint()
+    lessonMessagePane.preferredSize = Dimension(width, lessonMessagePane.preferredSize.height)
+
+    lessonPanel.revalidate()
+    lessonPanel.repaint()
   }
 
   private fun initFooterPanel(lesson: Lesson) {
@@ -136,7 +149,6 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
     lessonMessagePane.margin = JBUI.emptyInsets()
     lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(20), JBUI.scale(14))
-    lessonMessagePane.maximumSize = Dimension(UISettings.instance.width, 10000)
 
     //Set Next Button UI
     listOf(nextButton, prevButton).forEach {
@@ -156,7 +168,11 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     updateNavigationButtons()
 
     lessonPanel.add(createHeaderPanel())
-    lessonPanel.add(Box.createVerticalStrut(JBUI.scale(19)))
+    val rigidWidth = JBUI.scale(UISettings.instance.panelWidth - 2 * sideOffsetBeforeScaling)
+    val rigid = (Box.createRigidArea(Dimension(rigidWidth, JBUI.scale(19))) as JComponent).also {
+      it.alignmentX = Component.LEFT_ALIGNMENT
+    }
+    lessonPanel.add(rigid)
     lessonPanel.add(lessonNameLabel)
     lessonPanel.add(lessonMessagePane)
     lessonPanel.add(buttonPanel)
@@ -181,8 +197,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           if (!StatisticBase.isLearnProjectCloseLogged) {
             StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
           }
-          val action = ActionManager.getInstance().getAction("CloseProject")
-          invokeActionForFocusContext(action)
+          CloseProjectWindowHelper().windowClosing(learnToolWindow.project)
         }
       })
       linksPanel.add(exitLink)
@@ -215,7 +230,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   fun addMessage(@Language("HTML") text: String, properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
     val messages = MessageFactory.convert(text)
-    MessageFactory.setLinksHandlers(learnToolWindow.project, messages)
+    MessageFactory.setLinksHandlers(messages)
     addMessages(messages, properties)
   }
 
@@ -244,16 +259,10 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
   }
 
-  /** This important magic method is needed for [getPreferredSize]: it calculates the `lessonPanel.minimumSize`  */
   private fun adjustMessagesArea() {
-    //invoke #getPreferredSize explicitly to update actual size of LessonMessagePane
-    lessonMessagePane.preferredSize
-
-    //Pack lesson panel
-    lessonPanel.repaint()
-    //run to update LessonMessagePane.getMinimumSize and LessonMessagePane.getPreferredSize
-    lessonPanelBoxLayout.invalidateLayout(lessonPanel)
-    lessonPanelBoxLayout.layoutContainer(lessonPanel)
+    updatePanelSize(learnToolWindow.getVisibleAreaWidth())
+    revalidate()
+    repaint()
   }
 
   fun resetMessagesNumber(number: Int) {
@@ -322,13 +331,6 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   @NlsSafe
   private fun getNextLessonKeyStrokeText() = "Enter"
-
-  /** It is a magic implementation and need to invoke [adjustMessagesArea] before the use of this method (from Swing library code) */
-  override fun getPreferredSize(): Dimension {
-    if (lessonPanel.minimumSize == null) return Dimension(10, 10)
-    return Dimension(lessonPanel.minimumSize.getWidth().toInt() + UISettings.instance.westInset + UISettings.instance.eastInset,
-                     lessonPanel.minimumSize.getHeight().toInt() + footer.minimumSize.getHeight().toInt() + UISettings.instance.northInset + UISettings.instance.southInset)
-  }
 
   fun makeNextButtonSelected() {
     rootPane?.defaultButton = nextButton

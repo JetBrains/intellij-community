@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.suggested.endOffset
@@ -27,6 +26,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuoteImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
  * This handler does three things to the current list item:
@@ -39,8 +39,11 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
 
   private var marker: String? = null
 
-  override fun invokeInsideIndent(newLineCharOffset: Int, editor: Editor, dataContext: DataContext) =
-    PsiEditorUtil.getPsiFile(editor) is MarkdownFile
+  override fun invokeInsideIndent(newLineCharOffset: Int, editor: Editor, dataContext: DataContext): Boolean {
+    val project = editor.project ?: return false
+    return MarkdownSettings.getInstance(project).isEnhancedEditingEnabled &&
+           PsiDocumentManager.getInstance(project).getPsiFile(editor.document) is MarkdownFile
+  }
 
   override fun preprocessEnter(file: PsiFile,
                                editor: Editor,
@@ -49,8 +52,10 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
                                dataContext: DataContext,
                                originalHandler: EditorActionHandler?): EnterHandlerDelegate.Result {
     marker = null // if last post-processing ended with an exception, clear the state
-    if (file !is MarkdownFile || isInBlockQuoteOrCodeFence(caretOffset.get(), file))
+    if (file !is MarkdownFile || isInBlockQuoteOrCodeFence(caretOffset.get(), file)
+        || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
       return EnterHandlerDelegate.Result.Continue
+    }
 
     if (DataManager.getInstance().loadFromDataContext(dataContext, AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY) == true) {
       editor.putUserData(AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY, true)

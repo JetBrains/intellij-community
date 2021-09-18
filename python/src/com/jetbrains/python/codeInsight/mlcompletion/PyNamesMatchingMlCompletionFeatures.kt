@@ -54,7 +54,7 @@ object PyNamesMatchingMlCompletionFeatures {
     val names = contextFeatures.getUserData(PyReceiverMlCompletionFeatures.receiverNamesKey) ?: return null
     if (names.isEmpty()) return null
     val matchesWithReceiver = names.any { it == element.lookupString }
-    val maxMatchedToken = names.maxBy { tokensMatched(element.lookupString, it) } ?: ""
+    val maxMatchedToken = names.maxByOrNull { tokensMatched(element.lookupString, it) } ?: ""
     val numMatchedTokens = tokensMatched(maxMatchedToken, element.lookupString)
     val receiverTokensNum = getNumTokensFeature(maxMatchedToken)
     return MatchingWithReceiverFeatures(matchesWithReceiver, receiverTokensNum, numMatchedTokens)

@@ -61,4 +61,7 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
                                                                                                                                                                   boolean checkBaseClassAmbiguity,
                                                                                                                                                                   boolean includeAnonymous,
                                                                                                                                                                   int interruptNumber);
+  public @NotNull SearchId @Nullable[] getDirectInheritorsNames(CompilerRef hierarchyElement) throws StorageException {
+    return null;
+  }
 }

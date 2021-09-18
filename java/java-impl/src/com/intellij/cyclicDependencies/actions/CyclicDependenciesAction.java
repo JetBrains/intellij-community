@@ -62,7 +62,7 @@ public class CyclicDependenciesAction extends AnAction{
     if (project == null) {
       return;
     }
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     AnalysisScope scope = getInspectionScope(dataContext);
     if (scope == null || scope.getScopeType() != AnalysisScope.MODULES) {
       ProjectModuleOrPackageDialog dlg = null;
@@ -103,7 +103,7 @@ public class CyclicDependenciesAction extends AnAction{
   @Nullable
   private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: package, project, module.
-    Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
+    Project projectContext = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
       return null;
     }
@@ -128,7 +128,7 @@ public class CyclicDependenciesAction extends AnAction{
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs.length == 0) return null;
-      return new JavaAnalysisScope(pack, LangDataKeys.MODULE.getData(dataContext));
+      return new JavaAnalysisScope(pack, PlatformCoreDataKeys.MODULE.getData(dataContext));
     }
 
     return null;
@@ -145,7 +145,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   @Nullable
   private static AnalysisScope getModuleScope(DataContext dataContext) {
-    final Module data = LangDataKeys.MODULE.getData(dataContext);
+    final Module data = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (data == null) {
       return null;
     }

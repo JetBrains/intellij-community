@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
@@ -47,6 +48,7 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
         get() = JavaRuntimeLibraryDescription.LIBRARY_CAPTION
 
     override val messageForOverrideDialog: String
+        @Nls
         get() = JavaRuntimeLibraryDescription.JAVA_RUNTIME_LIBRARY_CREATION
 
     override val presentableText: String

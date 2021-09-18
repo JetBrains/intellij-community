@@ -280,7 +280,7 @@ class MoveKotlinMethodProcessor(
 
     private fun targetVariableIsMethodParameter(): Boolean = targetVariable is KtParameter && !targetVariable.hasValOrVar()
 
-    override fun getCommandName(): String = KotlinBundle.message("text.move.method")
+    override fun getCommandName(): String = KotlinBundle.message("title.move.method")
 }
 
 internal fun getThisClassesToMembers(method: KtNamedFunction) = traverseOuterInstanceReferences(method)

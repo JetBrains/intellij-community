@@ -62,7 +62,6 @@ class EventLogConfiguration {
 
   val build: String by lazy { ApplicationInfo.getInstance().build.asBuildNumber() }
 
-  @Deprecated("Use bucket from configuration created with getOrCreate method")
   val bucket: Int = defaultConfiguration.bucket
 
   @Deprecated("Call method on configuration created with getOrCreate method")

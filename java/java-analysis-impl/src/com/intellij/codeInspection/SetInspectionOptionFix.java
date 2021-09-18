@@ -17,20 +17,39 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Function;
 
 public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityAction, Iconable {
   private final String myID;
   private final String myProperty;
   private final @IntentionName String myMessage;
   private final boolean myValue;
+  @Nullable
+  private final Function<InspectionProfileEntry, InspectionProfileEntry> myExtractor;
 
   public SetInspectionOptionFix(LocalInspectionTool inspection, @NonNls String property, @IntentionName String message, boolean value) {
-    myID = inspection.getID();
+    this(inspection.getID(), property, message, value, null);
+  }
+
+  private SetInspectionOptionFix(@NotNull String id, @NonNls String property, @IntentionName String message, boolean value,
+                                 @Nullable Function<InspectionProfileEntry, InspectionProfileEntry> extractor) {
+    myID = id;
     myProperty = property;
     myMessage = message;
     myValue = value;
+    myExtractor = extractor;
+  }
+
+  /**
+   * @param extractor may be useful for composed inspections e.g. unused declaration, when you need to unwrap a nested inspection's instance
+   */
+  @NotNull
+  public static SetInspectionOptionFix createFix(@NotNull String id, @NonNls String property, @IntentionName String message, boolean value,
+                                                 @NotNull Function<InspectionProfileEntry, InspectionProfileEntry> extractor) {
+    return new SetInspectionOptionFix(id, property, message, value, extractor);
   }
 
   @NotNull
@@ -52,7 +71,11 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    VirtualFile vFile = descriptor.getPsiElement().getContainingFile().getVirtualFile();
+    applyFix(project, descriptor.getPsiElement().getContainingFile());
+  }
+
+  public void applyFix(@NotNull Project project, @NotNull PsiFile psiFile) {
+    VirtualFile vFile = psiFile.getVirtualFile();
     setOption(project, vFile, myValue);
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
       @Override
@@ -72,8 +95,11 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
     if (file == null) return;
     InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
       InspectionToolWrapper tool = model.getToolById(myID, file);
-      if(tool == null) return;
+      if (tool == null) return;
       InspectionProfileEntry inspection = tool.getTool();
+      if (myExtractor != null) {
+        inspection = myExtractor.apply(inspection);
+      }
       ReflectionUtil.setField(inspection.getClass(), inspection, boolean.class, myProperty, value);
     });
   }

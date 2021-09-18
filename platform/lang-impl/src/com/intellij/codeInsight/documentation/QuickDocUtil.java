@@ -70,6 +70,7 @@ public final class QuickDocUtil {
   }
 
 
+  @Nls
   @Contract("_, _, _, null -> null")
   public static String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,
                                                       PsiElement element,

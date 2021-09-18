@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.indexing.roots.kind.IndexableSetContributorOriginImpl
+import com.intellij.util.indexing.roots.origin.IndexableSetContributorOriginImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 
 internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor,
@@ -48,6 +48,10 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
       else indexableSetContributor.additionalRootsToIndex
     }
     return IndexableFilesIterationMethods.iterateRoots(project, allRoots, fileIterator, fileFilter, excludeNonProjectRoots = false)
+  }
+
+  override fun getRootUrls(): Set<String> {
+    return indexableSetContributor.additionalRootsToIndex.map { it.url }.toSet()
   }
 
 }

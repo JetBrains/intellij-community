@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.GRADLE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -27,7 +28,8 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
  * Also, [KotlinNativeLibrariesFixer] makes sure that all KLIBs from Kotlin/Native distribution are added to IDE project model
  * as project-level libraries. This is necessary until the appropriate fix in IDEA will be implemented (for details see IDEA-211451).
  */
-internal object KotlinNativeLibrariesFixer {
+@IntellijInternalApi
+object KotlinNativeLibrariesFixer {
     fun applyTo(ownerNode: DataNode<GradleSourceSetData>, ideProject: DataNode<ProjectData>, resolverCtx: ProjectResolverContext) {
         for (libraryDependencyNode in ExternalSystemApiUtil.findAll(ownerNode, ProjectKeys.LIBRARY_DEPENDENCY)) {
             val libraryData = libraryDependencyNode.data.target

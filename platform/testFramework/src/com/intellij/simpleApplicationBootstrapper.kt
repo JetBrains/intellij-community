@@ -4,8 +4,8 @@ package com.intellij
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
 import com.intellij.idea.Main
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.initConfigurationStore
@@ -19,8 +19,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.util.SystemProperties
 import java.awt.EventQueue
-import java.util.concurrent.*
-import java.util.function.Supplier
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 fun loadHeadlessAppInUnitTestMode() {
   doLoadApp {
@@ -43,9 +45,8 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
   PluginManagerCore.isUnitTestMode = true
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
 
-  val loadedPluginFuture = CompletableFuture.supplyAsync(Supplier {
-    PluginManagerCore.getLoadedPlugins(PathManager::class.java.classLoader)
-  }, ForkJoinPool.commonPool())
+  PluginManagerCore.scheduleDescriptorLoading()
+  val loadedModuleFuture = PluginManagerCore.initPlugins(PathManager::class.java.classLoader)
 
   setupEventQueue()
 
@@ -55,15 +56,15 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
     RecursionManager.assertOnMissedCache(app)
   }
 
-  val plugins: List<IdeaPluginDescriptorImpl>
+  val pluginSet: PluginSet
   try {
     // 40 seconds - tests maybe executed on cloud agents where IO speed is a very slow
-    plugins = loadedPluginFuture.get(40, TimeUnit.SECONDS)
-    app.registerComponents(plugins, app, null, null)
+    pluginSet = loadedModuleFuture.get(40, TimeUnit.SECONDS)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
     initConfigurationStore(app)
     RegistryKeyBean.addKeysFromPlugins()
     Registry.markAsLoaded()
-    val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "")
+    val preloadServiceFuture = preloadServices(pluginSet.getEnabledModules(), app, activityPrefix = "")
     app.loadComponents(null)
 
     preloadServiceFuture.get(40, TimeUnit.SECONDS)

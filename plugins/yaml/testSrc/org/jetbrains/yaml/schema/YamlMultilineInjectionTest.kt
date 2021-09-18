@@ -228,6 +228,41 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
                 
     """.trimIndent())
   }
+  
+  
+  fun testNewLineInPlainTextInjectedXMLinNested() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            #language=XML
+            abc:
+              <xml1>
+                  <xml2>
+                      <xml3><caret></xml3>
+                  </xml2>
+              </xml1>
+        
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=XML
+            abc:
+              <xml1>
+                  <xml2>
+                      <xml3>
+                          
+                      </xml3>
+                  </xml2>
+              </xml1>
+        
+    """.trimIndent())
+  }
 
   fun testNewLineInInjectedXMLinNestedAndUndoInMultithreading() {
     // reuse testNewLineInInjectedXMLinNested fixture
@@ -731,6 +766,40 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         Y: 12
     """.trimIndent())
   }
+  
+  fun testFEinPlainText() {
+    myFixture.configureByText("test.yaml", """
+        myyaml:
+          #language=XML
+          xml:
+            <xml>
+                <caret><aaa></aaa>
+            </xml>
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val fe = myInjectionFixture.openInFragmentEditor()
+    fe.type(" ")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    myFixture.checkResult("""
+      myyaml:
+        #language=XML
+        xml:
+          <xml>
+               <aaa></aaa>
+          </xml>
+    """.trimIndent())  
+    fe.type(" ")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    myFixture.checkResult("""
+      myyaml:
+        #language=XML
+        xml:
+          <xml>
+                <aaa></aaa>
+          </xml>
+    """.trimIndent())
+  }
 
   fun testSplitHtmlFromEmpty() {
     myFixture.configureByText("test.yaml", """
@@ -807,7 +876,39 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
               \  "
     """.trimIndent())
   }
-  
+
+  fun testMultilineInQuotedFragment() {
+    myFixture.configureByText("test.yaml", """
+        X: "<caret>"
+        
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val fe = myInjectionFixture.openInFragmentEditor()
+    fe.type("""
+      <html>
+      <body>
+      <h1>
+    """.trimIndent())
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", """
+      <html>
+          <body>
+              <h1></h1>
+          </body>
+      </html>
+    """.trimIndent(), fe.file.text)
+    myFixture.checkResult("""
+      X: "<html>\n\
+         \    <body>\n\
+         \        <h1></h1>\n\
+         \    </body>
+         </html>"
+      
+    """.trimIndent())
+  }
+
+
   fun testYamlToYamlQuotedMultiline() {
     myFixture.configureByText("test.yaml", """
         myyaml: "abc: \<caret>

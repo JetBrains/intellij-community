@@ -21,15 +21,18 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
@@ -72,7 +75,7 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public void systemNotify(String title, String text) {
+  public void systemNotify(@NlsContexts.SystemNotificationTitle String title, @NlsContexts.SystemNotificationText String text) {
     SystemNotifications.getInstance().notify("SessionLogger", title, StringUtil.stripHtml(text, true));
   }
 
@@ -108,7 +111,7 @@ public class IdeUiServiceImpl extends IdeUiService {
   public void notifyByBalloon(Project project,
                               String toolWindowId,
                               MessageType messageType,
-                              String title, String fullMessage, String description,
+                              @Nls String title, @Nls String fullMessage, @Nls String description,
                               Icon icon, HyperlinkListener listener) {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (toolWindowManager.canShowNotification(toolWindowId)) {
@@ -142,6 +145,14 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
+  public VirtualFile chooseFile(FileChooserDescriptor descriptor,
+                                JComponent component,
+                                Project project,
+                                VirtualFile dir) {
+    return FileChooser.chooseFile(descriptor, component, project, dir);
+  }
+
+  @Override
   public SSLContext getSslContext() {
     return CertificateManager.getInstance().getSslContext();
   }
@@ -164,5 +175,15 @@ public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public List<Proxy> getProxyList(URL url) {
     return CommonProxy.getInstance().select(url);
+  }
+
+  @Override
+  public void prepareURL(String url) throws IOException {
+    HttpConfigurable.getInstance().prepareURL(url);
+  }
+
+  @Override
+  public boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DetailedDescription String message) {
+    return IOExceptionDialog.showErrorDialog(title, message);
   }
 }

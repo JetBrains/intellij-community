@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.ReadAction;
@@ -20,9 +20,8 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.*;
 
-
+@SuppressWarnings("UElementAsPsi")
 public class TestDataReferenceCollector {
-  
   private final String myTestDataPath;
   private final String myTestName;
   private final List<String> myLogMessages = new ArrayList<>();
@@ -37,13 +36,11 @@ public class TestDataReferenceCollector {
     myTestName = testName;
   }
 
-  @NotNull
-  List<TestDataFile> collectTestDataReferences(@NotNull final PsiMethod method) {
+  @NotNull List<TestDataFile> collectTestDataReferences(@NotNull PsiMethod method) {
     return collectTestDataReferences(method, true);
   }
 
-  @NotNull
-  List<TestDataFile> collectTestDataReferences(@NotNull final PsiMethod method, boolean collectByExistingFiles) {
+  @NotNull List<TestDataFile> collectTestDataReferences(@NotNull PsiMethod method, boolean collectByExistingFiles) {
     myContainingClass = ReadAction.compute(() -> method.getContainingClass());
     List<TestDataFile> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
     if (!myFoundTestDataParameters) {
@@ -58,15 +55,11 @@ public class TestDataReferenceCollector {
     return result;
   }
 
-  @NotNull
   private List<TestDataFile> collectTestDataReferences(PsiMethod method,
                                                       Map<String, Computable<UValue>> argumentMap,
                                                       HashSet<Pair<PsiMethod, Set<UExpression>>> proceed) {
-    final List<TestDataFile> result = new ArrayList<>();
-    if (myTestDataPath == null) {
-      return result;
-    }
-    return ReadAction.compute(() -> {
+    List<TestDataFile> result = new ArrayList<>();
+    return myTestDataPath == null ? result : ReadAction.compute(() -> {
       UMethod uMethod = (UMethod)UastContextKt.toUElement(method);
       if (uMethod == null) {
         return result;
@@ -148,13 +141,12 @@ public class TestDataReferenceCollector {
 
   private Map<String, Computable<UValue>> buildArgumentMap(UCallExpression expression, PsiMethod method) {
     Map<String, Computable<UValue>> result = new HashMap<>();
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final List<UExpression> arguments = expression.getValueArguments();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    List<UExpression> arguments = expression.getValueArguments();
     for (int i = 0; i < arguments.size() && i < parameters.length; i++) {
-      final int finalI = i;
-      result.put(parameters [i].getName(),
-                 (NullableComputable<UValue>)() -> UEvaluationContextKt.uValueOf(arguments.get(finalI),
-                                                                                 new TestDataEvaluatorExtension(Collections.emptyMap())));
+      UExpression arg = arguments.get(i);
+      TestDataEvaluatorExtension extension = new TestDataEvaluatorExtension(Collections.emptyMap());
+      result.put(parameters[i].getName(), (NullableComputable<UValue>)() -> UEvaluationContextKt.uValueOf(arg, extension));
     }
     return result;
   }
@@ -175,10 +167,7 @@ public class TestDataReferenceCollector {
       if (target.getName().equals("getTestName") && argumentValues.size() == 1) {
         UValue lowercaseArg = argumentValues.get(0);
         boolean lowercaseArgValue = lowercaseArg instanceof UBooleanConstant && ((UBooleanConstant)lowercaseArg).getValue();
-        if (lowercaseArgValue && !StringUtil.isEmpty(myTestName)) {
-          return lowercaseFirstLetter(myTestName);
-        }
-        return myTestName;
+        return lowercaseArgValue && !myTestName.isEmpty() ? lowercaseFirstLetter(myTestName) : myTestName;
       }
       return super.evaluateMethodCall(target, argumentValues);
     }
@@ -196,25 +185,20 @@ public class TestDataReferenceCollector {
       return super.evaluateVariable(variable);
     }
 
-    // copied from com.intellij.testFramework.PlatformTestUtil
-    private @NotNull String lowercaseFirstLetter(@NotNull String name) {
-      if (!isAllUppercaseName(name)) {
-        name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
-      }
-      return name;
-    }
-
-    private boolean isAllUppercaseName(@NotNull String name) {
+    /** see {@link com.intellij.testFramework.PlatformTestUtil#lowercaseFirstLetter} */
+    private String lowercaseFirstLetter(String name) {
+      boolean lowercaseChars = false;
       int uppercaseChars = 0;
       for (int i = 0; i < name.length(); i++) {
         if (Character.isLowerCase(name.charAt(i))) {
-          return false;
+          lowercaseChars = true;
+          break;
         }
         if (Character.isUpperCase(name.charAt(i))) {
           uppercaseChars++;
         }
       }
-      return uppercaseChars >= 3;
+      return !lowercaseChars && uppercaseChars >= 3 ? name : Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
   }
 }

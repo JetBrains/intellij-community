@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.ui
 
 import com.intellij.execution.util.ListTableWithButtons
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnActionButton
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.util.ui.ListTableModel
@@ -18,7 +19,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
 
   val stop = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.stop"), AllIcons.Debugger.KillProcess) {
     override fun actionPerformed(e: AnActionEvent) {
-      MavenActionsUsagesCollector.trigger(e.project, MavenActionsUsagesCollector.ActionID.KillMavenConnector)
+      MavenActionsUsagesCollector.trigger(e.project, MavenActionsUsagesCollector.KILL_MAVEN_CONNECTOR)
       val connector = tableView.selectedObject ?: return;
       connector.shutdown(true)
       this@ConnectorTable.refreshValues()
@@ -65,7 +66,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     return arrayOf(refresh, stop)
   }
 
-  private class TableColumn(name: String, val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
+  private class TableColumn(@NlsContexts.ColumnName name: String, val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
     name) {
 
     override fun getDescription(element: MavenServerConnector?): String? = null;

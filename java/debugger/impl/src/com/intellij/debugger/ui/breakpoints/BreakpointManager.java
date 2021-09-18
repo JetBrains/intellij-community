@@ -12,7 +12,6 @@ import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
-import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -40,6 +39,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
@@ -145,7 +145,7 @@ public class BreakpointManager {
         if (highlighter != null) {
           GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
           if (renderer != null) {
-            DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
+            DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
               myProject, editor, breakpoint.myXBreakpoint, renderer
             );
           }
@@ -602,8 +602,7 @@ public class BreakpointManager {
   }
 
   public void reloadBreakpoints() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    getBreakpoints().forEach(Breakpoint::reload);
+    ReadAction.run(() -> DebuggerUtilsImpl.forEachSafe(getBreakpoints(), Breakpoint::reload));
   }
 
   public void fireBreakpointChanged(Breakpoint breakpoint) {

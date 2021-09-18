@@ -2,6 +2,7 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.impl.DiffRequestProcessorListener
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.FileEditorBase
@@ -9,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,6 +39,8 @@ open class DiffRequestProcessorEditor(
     Disposer.register(processor, Disposable {
       firePropertyChange(FileEditor.PROP_VALID, true, false)
     })
+
+    processor.addListener(MyProcessorListener(), this)
 
     DiffRequestProcessorEditorCustomizer.customize(file, this, processor)
   }
@@ -70,6 +74,13 @@ open class DiffRequestProcessorEditor(
           LOG.error("DiffRequestProcessor cannot be shown twice, see com.intellij.ide.actions.SplitAction.FORBID_TAB_SPLIT, file: $file")
         }
       })
+    }
+  }
+
+  private inner class MyProcessorListener : DiffRequestProcessorListener {
+    override fun onViewerChanged() {
+      val project = processor.project ?: return
+      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
     }
   }
 }

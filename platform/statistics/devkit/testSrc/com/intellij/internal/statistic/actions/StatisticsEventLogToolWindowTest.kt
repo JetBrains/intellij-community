@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.internal.statistic.eventLog.LogEvent
-import com.intellij.internal.statistic.eventLog.LogEventAction
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
 import com.intellij.internal.statistic.toolwindow.StatisticsEventLogFilter.Companion.LOG_PATTERN
@@ -12,6 +10,9 @@ import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow
 import com.intellij.internal.statistic.toolwindow.StatisticsLogFilterModel
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import org.junit.Test
 
 class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
@@ -23,37 +24,30 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
 
   @Test
   fun testShortenProjectId() {
-    val action = LogEventAction(eventId)
-    val data = hashMapOf(
+    val data: MutableMap<String, Any> = hashMapOf(
       "project" to "5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea",
       "plugin_type" to "PLATFORM"
     )
-    for ((key, value) in data) {
-      action.addData(key, value)
-    }
+    val action = LogEventAction(eventId, data = data)
 
     doTestCountCollector("{\"plugin_type\":\"PLATFORM\", \"project\":\"5410c65e...ea\"}", action, data)
   }
 
   @Test
   fun testNotShortenProjectId() {
-    val action = LogEventAction(eventId)
     val projectId = "12345"
-    action.addData("project", projectId)
+    val action = LogEventAction(eventId, data = hashMapOf("project" to projectId))
 
     doTestCountCollector("{\"project\":\"$projectId\"}", action, hashMapOf("project" to projectId))
   }
 
   @Test
   fun testFilterSystemFields() {
-    val action = LogEventAction(eventId)
-    val data = hashMapOf(
+    val data: MutableMap<String, Any> = hashMapOf(
       "last" to "1564643442610",
       "created" to "1564643442610"
     )
-    for ((key, value) in data) {
-      action.addData(key, value)
-    }
+    val action = LogEventAction(eventId, data = data)
 
     doTestCountCollector("{}", action, data)
   }
@@ -72,9 +66,9 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
 
   @Test
   fun testLogIncorrectEventDataAsError() {
-    val action = LogEventAction(eventId)
-    action.addData("test", INCORRECT_RULE.description)
-    action.addData("project", UNDEFINED_RULE.description)
+    val data: MutableMap<String, Any> = hashMapOf("test" to INCORRECT_RULE.description,
+      "project" to UNDEFINED_RULE.description)
+    val action = LogEventAction(eventId, data = data)
 
     val filterModel = StatisticsLogFilterModel()
     val rawData = hashMapOf(
@@ -91,12 +85,13 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
 
   @Test
   fun testLogIncorrectEventDataWithoutRawData() {
-    val action = LogEventAction(eventId)
-    action.addData("test", INCORRECT_RULE.description)
-    action.addData("project", UNDEFINED_RULE.description)
-    action.addData("map", hashMapOf("foo" to "bar"))
-    action.addData("list", listOf("foo"))
-
+    val data = mutableMapOf(
+      "test" to INCORRECT_RULE.description,
+      "project" to UNDEFINED_RULE.description,
+      "list" to listOf("foo"),
+      "map" to hashMapOf("foo" to "bar")
+    )
+    val action = LogEventAction(eventId, data = data)
     val filterModel = StatisticsLogFilterModel()
     val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), null, null)
     val expectedLine = buildExpectedLine(
@@ -117,8 +112,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
 
   @Test
   fun testHandleCollectionsInEventData() {
-    val action = LogEventAction(eventId)
-    action.addData("dataKey", listOf("1", "2", "3"))
+    val action = LogEventAction(eventId, data = hashMapOf("dataKey" to listOf("1", "2", "3")))
 
     doTestCountCollector("{\"dataKey\":[\"1\",\"2\",\"3\"]}", action, hashMapOf("dataKey" to listOf("1", "2", "3")))
   }
@@ -126,7 +120,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   @Test
   fun testLogCountCollectors() {
     val count = 2
-    val action = LogEventAction(eventId, false, count)
+    val action = LogEventAction(eventId, false, count = count)
 
     val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" (count=${count}) {}", actual)
@@ -134,7 +128,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
 
   @Test
   fun testLogLineWithCountMatchesRegexpPattern() {
-    val action = LogEventAction(eventId, false, 2)
+    val action = LogEventAction(eventId, false, count = 2)
 
     val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     val matcher = LOG_PATTERN.matcher(logLineWithCount)
@@ -146,8 +140,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
 
   @Test
   fun testLogLineMatchesRegexpPattern() {
-    val action = LogEventAction(eventId, true)
-    action.addData("plugin_type", "PLATFORM")
+    val action = LogEventAction(eventId, true, hashMapOf("plugin_type" to "PLATFORM"))
 
     val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     val matcher = LOG_PATTERN.matcher(logLineWithCount)
@@ -166,5 +159,5 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     "$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" $expectedEventDataPart"
 
   private fun buildLogEvent(action: LogEventAction, groupId: String = eventGroup) = LogEvent("2e5b2e32e061", "193.1801", "176", eventTime,
-                                                                                             groupId, groupVersion, "32", action)
+                                                                                             LogEventGroup(groupId, groupVersion), "32", action)
 }

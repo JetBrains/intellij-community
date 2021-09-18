@@ -27,6 +27,7 @@ import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -489,6 +490,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         return eval;
       }
       throw ex;
+    }
+    catch (IndexNotReadyException ex) {
+      throw new EvaluateException(JavaDebuggerBundle.message("evaluation.error.during.indexing"), ex);
     }
   }
 

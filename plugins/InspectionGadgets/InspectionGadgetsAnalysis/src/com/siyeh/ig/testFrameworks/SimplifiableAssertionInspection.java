@@ -42,7 +42,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
     return (checkTrue ? PsiKeyword.TRUE : PsiKeyword.FALSE).equals(position.getText());
   }
 
-  boolean isAssertEqualsThatCouldBeAssertLiteral(AssertHint<PsiExpression> assertHint) {
+  boolean isAssertEqualsThatCouldBeAssertLiteral(AssertHint assertHint) {
     final PsiExpression firstTestArgument = assertHint.getFirstArgument();
     final PsiExpression secondTestArgument = assertHint.getSecondArgument();
     return isSimpleLiteral(firstTestArgument, secondTestArgument) ||
@@ -124,12 +124,12 @@ public class SimplifiableAssertionInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)parent.getParent();
-      final AssertHint<PsiExpression> assertHint = AssertHint.createAssertEqualsHint(callExpression);
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(callExpression);
       if (assertHint != null && isAssertEqualsThatCouldBeAssertLiteral(assertHint)) {
         replaceAssertEqualsWithAssertLiteral(assertHint);
       }
       else {
-        final AssertHint<PsiExpression> assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(callExpression);
+        final AssertHint assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(callExpression);
         if (assertTrueFalseHint == null) {
           return;
         }
@@ -159,7 +159,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       }
     }
 
-    private void addStaticImportOrQualifier(String methodName, AssertHint<PsiExpression> assertHint, StringBuilder out) {
+    private void addStaticImportOrQualifier(String methodName, AssertHint assertHint, StringBuilder out) {
       final PsiMethodCallExpression originalMethodCall = (PsiMethodCallExpression)assertHint.getOriginalExpression();
       final PsiReferenceExpression methodExpression = originalMethodCall.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -184,7 +184,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       }
     }
 
-    private void replaceWithFail(AssertHint<PsiExpression> assertHint) {
+    private void replaceWithFail(AssertHint assertHint) {
       @NonNls final StringBuilder newExpression = new StringBuilder();
       addStaticImportOrQualifier("fail", assertHint, newExpression);
       newExpression.append("fail(");
@@ -202,7 +202,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
      * <code>assertFalse</code> -> <code>assertNotEquals</code> (do not replace for junit 5 Assertions
      * as there is no primitive overloads for <code>assertNotEquals</code> and boxing would be enforced if replaced)
      */
-    private void replaceWithAssertEquals(AssertHint<PsiExpression> assertHint, final @NonNls String methodName) {
+    private void replaceWithAssertEquals(AssertHint assertHint, final @NonNls String methodName) {
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression lhs = null;
       PsiExpression rhs = null;
@@ -290,7 +290,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
              (PsiType.DOUBLE.equals(rhsType) && PsiType.FLOAT.equals(rhsType));
     }
 
-    private void replaceWithNegatedBooleanAssertion(AssertHint<PsiExpression> assertHint) {
+    private void replaceWithNegatedBooleanAssertion(AssertHint assertHint) {
       final PsiPrefixExpression expression = (PsiPrefixExpression)assertHint.getFirstArgument();
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
       if (operand == null) {
@@ -301,7 +301,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private void replaceAssertWithAssertNull(AssertHint<PsiExpression> assertHint) {
+    private void replaceAssertWithAssertNull(AssertHint assertHint) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)assertHint.getFirstArgument();
       final PsiExpression lhs = binaryExpression.getLOperand();
       PsiExpression rhs = binaryExpression.getROperand();
@@ -324,7 +324,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private String compoundMethodCall(@NonNls String methodName, AssertHint<PsiExpression> assertHint, String args) {
+    private String compoundMethodCall(@NonNls String methodName, AssertHint assertHint, String args) {
       final PsiExpression message = assertHint.getMessage();
       final StringBuilder newExpression = new StringBuilder();
       addStaticImportOrQualifier(methodName, assertHint, newExpression);
@@ -341,7 +341,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       return newExpression.toString();
     }
 
-    private void replaceWithAssertSame(AssertHint<PsiExpression> assertHint) {
+    private void replaceWithAssertSame(AssertHint assertHint) {
       final PsiBinaryExpression firstArgument = (PsiBinaryExpression)assertHint.getFirstArgument();
       PsiExpression lhs = firstArgument.getLOperand();
       PsiExpression rhs = firstArgument.getROperand();
@@ -366,7 +366,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private void replaceAssertEqualsWithAssertLiteral(AssertHint<PsiExpression> assertHint) {
+    private void replaceAssertEqualsWithAssertLiteral(AssertHint assertHint) {
       final PsiExpression firstTestArgument = assertHint.getFirstArgument();
       final PsiExpression secondTestArgument = assertHint.getSecondArgument();
       final String literalValue;
@@ -391,12 +391,12 @@ public class SimplifiableAssertionInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final AssertHint<PsiExpression> assertHint = AssertHint.createAssertEqualsHint(expression);
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression);
       if (assertHint != null && isAssertEqualsThatCouldBeAssertLiteral(assertHint)) {
         registerMethodCallError(expression, getReplacementMethodName(assertHint));
       }
       else {
-        final AssertHint<PsiExpression> assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(expression);
+        final AssertHint assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(expression);
         if (assertTrueFalseHint == null) {
           return;
         }
@@ -431,7 +431,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       }
     }
 
-    private boolean hasPrimitiveOverload(AssertHint<PsiExpression> assertHint) {
+    private boolean hasPrimitiveOverload(AssertHint assertHint) {
       final PsiClass containingClass = assertHint.getMethod().getContainingClass();
       if (containingClass == null) {
         return false;
@@ -446,7 +446,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
     }
 
     @NonNls
-    private String getReplacementMethodName(AssertHint<PsiExpression> assertHint) {
+    private String getReplacementMethodName(AssertHint assertHint) {
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       final PsiExpression secondArgument = assertHint.getSecondArgument();
       final PsiLiteralExpression literalExpression;

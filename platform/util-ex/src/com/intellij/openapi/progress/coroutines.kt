@@ -84,8 +84,9 @@ fun <T> runSuspendingAction(indicator: ProgressIndicator?, action: suspend Corou
  * @see runSuspendingAction
  * @see ProgressManager.runProcess
  */
-fun <T> CoroutineScope.runUnderIndicator(action: () -> T): T {
-  return runUnderIndicator(coroutineContext.job, coroutineContext.progressSink, action)
+suspend fun <T> runUnderIndicator(action: () -> T): T {
+  val ctx = coroutineContext
+  return runUnderIndicator(ctx.job, ctx.progressSink, action)
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE_ERROR")

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
-import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
@@ -61,6 +60,11 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 
   override fun toString() = "userName: $userName, password size: ${password?.length ?: 0}"
+
+  companion object {
+    val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
+    val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
+  }
 }
 
 /** @deprecated Use [CredentialAttributes] instead. */

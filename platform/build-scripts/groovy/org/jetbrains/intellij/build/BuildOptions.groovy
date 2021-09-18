@@ -44,12 +44,12 @@ class BuildOptions {
   /**
    * Pass comma-separated names of build steps (see below) to this system property to skip them.
    */
-  public static final String BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
+  private static final String BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
 
   /**
-   * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
+   * Pass comma-separated names of build steps (see below) to {@link BuildOptions#BUILD_STEPS_TO_SKIP_PROPERTY} system property to skip them when building locally.
    */
-  Set<String> buildStepsToSkip = new HashSet<>(Arrays.asList(System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(",")))
+  Set<String> buildStepsToSkip = new HashSet<>(Arrays.asList(System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(",")).findAll {!it.isBlank() })
   /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
   static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
@@ -96,6 +96,16 @@ class BuildOptions {
    * @see org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
    */
   static final String FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
+
+  /**
+   * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+   */
+  static final String REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
+
+  /**
+   * May be useful to skip this step in TeamCity build to use experimental JBR provided via artifact dependency.
+   */
+  static final String RUNTIME_DOWNLOADING_STEP = "runtime_downloading_step"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
@@ -155,6 +165,11 @@ class BuildOptions {
   String outputRootPath = System.getProperty("intellij.build.output.root")
 
   String logPath = System.getProperty("intellij.build.log.root")
+
+  /**
+   * If {@code true} write a separate compilation.log for all compilation messages
+   */
+  Boolean compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
 
   static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
   boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
@@ -229,16 +244,10 @@ class BuildOptions {
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
 
-  /**
-   * Path to prebuilt Kotlin plugin (not zipped).
-   * Currently fully-fledged Kotlin plugin distribution is being on TeamCity only via kombo.gant script.
-   * If this path is not specified then distribution without LLDB debugger is going to be built locally (for tests only).
-   */
-  static final String PREBUILT_KOTLIN_PLUGIN_PATH = "intellij.build.kotlin.plugin.path"
-  String prebuiltKotlinPluginPath = System.getProperty(PREBUILT_KOTLIN_PLUGIN_PATH)
+  static final String TARGET_OS = "intellij.build.target.os"
 
   BuildOptions() {
-    targetOS = System.getProperty("intellij.build.target.os")
+    targetOS = System.getProperty(TARGET_OS)
     if (targetOS == OS_CURRENT) {
       targetOS = SystemInfo.isWindows ? OS_WINDOWS :
                  SystemInfo.isMac ? OS_MAC :

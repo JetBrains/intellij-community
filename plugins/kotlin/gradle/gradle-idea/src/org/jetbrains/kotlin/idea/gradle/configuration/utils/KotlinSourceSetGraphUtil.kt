@@ -2,12 +2,13 @@
 package org.jetbrains.kotlin.idea.gradle.configuration.utils
 
 import com.google.common.graph.*
-import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
-import org.jetbrains.kotlin.gradle.KotlinPlatform
-import org.jetbrains.kotlin.gradle.KotlinSourceSet
-import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
+import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 
-internal fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {
+@IntellijInternalApi
+fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {
     val graph = createSourceSetDependsOnGraph(model)
     graph.putInferredTestToProductionEdges()
     return graph.immutable
@@ -17,7 +18,7 @@ internal fun createSourceSetDependsOnGraph(model: KotlinMPPGradleModel): Mutable
     return createSourceSetDependsOnGraph(model.sourceSetsByName)
 }
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 fun createSourceSetDependsOnGraph(
     sourceSetsByName: Map<String, KotlinSourceSet>
 ): MutableGraph<KotlinSourceSet> {
@@ -36,7 +37,7 @@ fun createSourceSetDependsOnGraph(
     return graph
 }
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 fun MutableGraph<KotlinSourceSet>.putInferredTestToProductionEdges() {
     val sourceSets = this.nodes()
     for (sourceSet in sourceSets) {
@@ -78,9 +79,11 @@ private fun getFixedDependsOnSourceSets(
 /**
  * @see Graphs.transitiveClosure
  */
-internal val <T> Graph<T>.transitiveClosure: Graph<T> get() = Graphs.transitiveClosure(this)
+@IntellijInternalApi
+val <T> Graph<T>.transitiveClosure: Graph<T> get() = Graphs.transitiveClosure(this)
 
 /**
  * @see ImmutableGraph.copyOf
  */
-internal val <T> Graph<T>.immutable: ImmutableGraph<T> get() = ImmutableGraph.copyOf(this)
+@IntellijInternalApi
+val <T> Graph<T>.immutable: ImmutableGraph<T> get() = ImmutableGraph.copyOf(this)

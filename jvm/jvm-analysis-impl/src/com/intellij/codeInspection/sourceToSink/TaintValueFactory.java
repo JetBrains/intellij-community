@@ -72,16 +72,14 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     return info;
   }
 
-  @NotNull
-  static TaintValue of(PsiModifierListOwner annotationOwner) {
-    PsiAnnotation annotation =
-      AnnotationUtil.findAnnotationInHierarchy(annotationOwner, TaintValue.NAMES, false);
+  static @NotNull TaintValue of(@NotNull PsiModifierListOwner annotationOwner) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(annotationOwner, TaintValue.NAMES, false);
     if (annotation == null) return TaintValue.UNKNOWN;
     TaintValue value = fromAnnotation(annotation);
     return value == null ? TaintValue.UNKNOWN : value;
   }
 
-  private static TaintValue of(PsiMember member) {
+  private static @NotNull TaintValue of(@NotNull PsiMember member) {
     PsiClass containingClass = member.getContainingClass();
     while (containingClass != null) {
       TaintValue classInfo = INSTANCE.fromAnnotationOwner(containingClass.getModifierList());

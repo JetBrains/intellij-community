@@ -50,7 +50,7 @@ public class GenerateCopyrightAction extends AnAction {
     DataContext context = e.getDataContext();
     Project project = e.getProject();
     assert project != null;
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
 

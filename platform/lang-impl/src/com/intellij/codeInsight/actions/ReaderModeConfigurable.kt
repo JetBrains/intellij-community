@@ -61,7 +61,7 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
             commentNoWrap(LangBundle.message("checkbox.reader.mode.line.height.comment")).withLargeLeftGap()
           }.enableIf(enabled.selected)
           row {
-            checkBox(cdInlays).enableIf(enabled.selected).visible(PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaEducational() || PlatformUtils.isIdeaUltimate())
+            checkBox(cdInlays).enableIf(enabled.selected).visible(PlatformUtils.isIntelliJ())
           }
         }.enableIf(enabled.selected)
       }

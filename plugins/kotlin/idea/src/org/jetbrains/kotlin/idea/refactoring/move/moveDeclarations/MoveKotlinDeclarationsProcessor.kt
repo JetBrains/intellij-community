@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
+import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.project.Project
@@ -21,7 +22,6 @@ import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.IncorrectOperationException
@@ -121,7 +121,7 @@ private object ElementHashingStrategy : HashingStrategy<PsiElement> {
         if (e1 is KtLightDeclaration<*, *> && e2 is KtLightDeclaration<*, *>) {
             return e1.kotlinOrigin == e2.kotlinOrigin && e1.name == e2.name
         }
-        return e1 == e2
+        return false
     }
 
     override fun hashCode(e: PsiElement?): Int {
@@ -159,8 +159,8 @@ class MoveKotlinDeclarationsProcessor(
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
         val targetContainerFqName = descriptor.moveTarget.targetContainerFqName?.let {
-            if (it.isRoot) UsageViewBundle.message("default.package.presentable.name") else it.asString()
-        } ?: UsageViewBundle.message("default.package.presentable.name")
+            if (it.isRoot) IdeDeprecatedMessagesBundle.message("default.package.presentable.name") else it.asString()
+        } ?: IdeDeprecatedMessagesBundle.message("default.package.presentable.name")
         return MoveMultipleElementsViewDescriptor(elementsToMove.toTypedArray(), targetContainerFqName)
     }
 
@@ -401,5 +401,5 @@ class MoveKotlinDeclarationsProcessor(
         }
     }
 
-    override fun getCommandName(): String = KotlinBundle.message("text.move.declarations")
+    override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
 }

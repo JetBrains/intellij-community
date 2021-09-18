@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -17,14 +18,15 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -39,34 +41,27 @@ import org.fest.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.ui.LearningUiHighlightingManager
-import training.ui.LearningUiManager
-import training.ui.LearningUiUtil
-import training.ui.UISettings
+import training.ui.*
 import training.util.learningToolWindow
-import java.awt.Component
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.Window
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
 import javax.swing.KeyStroke
 
 object LessonUtil {
-  val productName: String
-    get() = ApplicationNamesInfo.getInstance().fullProductName
+  val productName: String get() {
+    val name = ApplicationNamesInfo.getInstance().fullProductName
+    return if (name == "DataSpell") "JetBrains DataSpell" else name
+    }
 
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManager.getInstance(project)
-    val declaredFields = ToolWindowId::class.java.declaredFields
-    for (field in declaredFields) {
-      if (Modifier.isStatic(field.modifiers) && field.type == String::class.java) {
-        val id = field.get(null) as String
-        windowManager.getToolWindow(id)?.hide(null)
+    for (id in windowManager.toolWindowIds) {
+      if (id != LearnToolWindowFactory.LEARN_TOOL_WINDOW) {
+        windowManager.getToolWindow(id)?.hide()
       }
     }
   }
@@ -211,12 +206,19 @@ object LessonUtil {
     return x != 0
   }
 
-  fun LessonContext.highlightBreakpointGutter(logicalPosition: () -> LogicalPosition) {
+
+  val breakpointXRange: (width: Int) -> IntRange = { IntRange(20, it - 27) }
+
+  fun LessonContext.highlightBreakpointGutter(xRange: (width: Int) -> IntRange = breakpointXRange,
+                                              logicalPosition: () -> LogicalPosition
+
+  ) {
     task {
       triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
-        return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
+        val range = xRange(ui.width)
+        return@l Rectangle(range.first, y, range.last - range.first + 1, editor.lineHeight)
       }
     }
   }
@@ -278,10 +280,38 @@ object LessonUtil {
     }
     return true
   }
+
+  inline fun<reified T: Component> findUiParent(start: Component, predicate: (Component) -> Boolean): T? {
+    if (start is T && predicate(start)) return start
+    var ui: Container? = start.parent
+    while (ui != null) {
+      if (ui is T && predicate(ui)) {
+        return ui
+      }
+      ui = ui.parent
+    }
+    return null
+  }
+
+  fun returnToWelcomeScreenRemark(): String {
+    val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
+    return if (isSingleProject) LessonsBundle.message("onboarding.return.to.welcome.remark") else ""
+  }
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
+}
+
+fun LessonContext.highlightDebugActionsToolbar() {
+  task {
+    val needAction = ActionManager.getInstance().getAction("Resume")
+    triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
+      val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "MainSingleContentToolbar"
+      if (!b) return@triggerByUiComponentAndHighlight false
+      ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
+    }
+  }
 }
 
 fun TaskContext.proceedLink(additionalAbove: Int = 0) {
@@ -349,7 +379,16 @@ fun @Nls String.dropMnemonic(): @Nls String {
   return TextWithMnemonic.parse(this).dropMnemonic(true).text
 }
 
-val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
+
+fun TaskContext.waitSmartModeStep() {
+  val future = CompletableFuture<Boolean>()
+  addStep(future)
+  DumbService.getInstance(project).runWhenSmart {
+    future.complete(true)
+  }
+}
+
+private val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
 
 fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
   if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
@@ -385,7 +424,7 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
     }
     ApplicationManager.getApplication().executeOnPooledThread {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, ActionButton::class.java, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
           ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
         }
       taskInvokeLater {
@@ -423,7 +462,7 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
     if (clearPreviousHighlights) LearningUiHighlightingManager.clearHighlights()
     invokeInBackground {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, componentClass, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(project, componentClass, seconds01) { ui ->
           finderFunction(ui)
         }
 

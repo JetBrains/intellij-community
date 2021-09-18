@@ -42,10 +42,7 @@ public class NavBarBorder implements Border {
   @Override
   public Insets getBorderInsets(final Component c) {
     if (!UISettings.getInstance().getShowMainToolbar()) {
-      if (NavBarRootPaneExtension.runToolbarExists()) {
-        return JBUI.insets(1, 0, 1, 4);
-      }
-      return JBUI.insetsRight(4);
+      return JBUI.insets(1, 0, 1, 4);
     }
     return JBUI.insets(1, 0, 0, 4);
   }

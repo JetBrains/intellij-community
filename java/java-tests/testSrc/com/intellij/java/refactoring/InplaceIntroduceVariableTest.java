@@ -201,6 +201,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTestReplaceChoice("Replace 0 occurrences in 'else' block");
   }
 
+  public void testSubExpression() {
+    doTestReplaceChoice("Replace 0 occurrences in 'if' block");
+  }
+
   public void testInBlock2() {
     doTestReplaceChoice("Replace 0 occurrences in 'if-then' block");
   }

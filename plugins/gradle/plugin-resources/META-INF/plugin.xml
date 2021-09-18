@@ -74,6 +74,7 @@
     <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.GradleTaskTriggersImporter"/>
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.ActionDelegateConfigImporter"/>
+    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.IDEAProjectFilesPostProcessor"/>
     <externalSystem.beforeRunTaskImporter implementation="org.jetbrains.plugins.gradle.service.project.GradleBeforeRunTaskImporter"/>
     <internalFileTemplate name="Gradle Build Script"/>
     <internalFileTemplate name="Gradle Build Script with wrapper"/>
@@ -90,6 +91,7 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.CompositeBuildDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.PerformanceTraceDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExcludeBuildFilesDataService"/>
     <externalProjectStructureCustomizer implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectStructureCustomizer"/>
     <externalIconProvider key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.ui.GradleIconProvider"/>
     <externalExecutionAware id="gradleOnWsl" order="before gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.wsl.GradleOnWslExecutionAware"/>
@@ -147,7 +149,10 @@
                  description="Change IDE user.dir system property during the Gradle tooling API call to have expected Gradle daemon CWD."/>
     <registryKey key="gradle.improved.hotswap.detection" defaultValue="false"
                  description="Enable improved hotswap detection when build is delegated to Gradle"/>
-
+    <registryKey key="gradle.exclude.build.files.when.in.source.set" defaultValue="false"
+                 description="If build.gradle[.kts] and settings.gradle[.kts] files should be excluded from content root, if they are in source set"/>
+    <registryKey key="gradle.report.recently.saved.paths" defaultValue="false"
+                 description="Send information on recently saved files to Gradle Daemon right before executing a task"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>
   </extensions>
@@ -196,4 +201,8 @@
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
   </actions>
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.gradle.service.GradleFileModificationListener"
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+  </projectListeners>
 </idea-plugin>

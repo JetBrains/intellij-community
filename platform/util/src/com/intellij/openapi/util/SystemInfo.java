@@ -199,11 +199,6 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final boolean isIntel64 = CpuArch.isIntel64();
 
-  /** @deprecated moved; please use {@link CpuArch#isArm64()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final boolean isArm64 = CpuArch.isArm64();
-
   /** @deprecated trivial and mostly outdated */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")

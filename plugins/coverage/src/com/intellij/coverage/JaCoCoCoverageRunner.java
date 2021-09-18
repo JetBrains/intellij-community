@@ -6,6 +6,10 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.java.JavaTargetParameter;
+import com.intellij.java.coverage.JavaCoverageBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -57,6 +61,19 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
         loadExecutionData(sessionDataFile, data, mainModule, project, baseCoverageSuite);
       }
+    }
+    catch (IOException e) {
+      if ("Invalid execution data file.".equals(e.getMessage())) {
+        final String path = sessionDataFile.getAbsolutePath();
+        Notifications.Bus.notify(new Notification("Coverage",
+                                                  CoverageBundle.message("coverage.error.loading.report"),
+                                                  JavaCoverageBundle.message("coverage.error.jacoco.report.format", path),
+                                                  NotificationType.ERROR));
+        LOG.info(e);
+        return data;
+      }
+      LOG.error(e);
+      return data;
     }
     catch (Exception e) {
       LOG.error(e);

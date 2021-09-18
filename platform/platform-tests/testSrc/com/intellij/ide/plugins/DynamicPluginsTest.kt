@@ -111,7 +111,7 @@ class DynamicPluginsTest {
 
     DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir())
     val newDescriptor = loadDescriptorInTest(path)
-    ClassLoaderConfigurator(PluginManagerCore.getPluginSet().enablePlugin(newDescriptor)).configure(newDescriptor)
+    ClassLoaderConfigurator(PluginManagerCore.getPluginSet().enablePlugin(newDescriptor)).configureModule(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor)
     try {
       assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNotNull()
@@ -201,7 +201,7 @@ class DynamicPluginsTest {
       Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null),
     )
     assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor))
-      .isEqualTo("Plugin ${descriptor.id} is not unload-safe because of extension to non-dynamic EP $epName")
+      .isEqualTo("Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName")
   }
 
   @Test
@@ -298,9 +298,9 @@ class DynamicPluginsTest {
         """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
       .module("intellij.foo.sub",
               PluginBuilder()
-                              .extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
-                              .packagePrefix("foo1")
-                              .pluginDependency(barBuilder.id)
+                .extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
+                .packagePrefix("foo1")
+                .pluginDependency(barBuilder.id)
       )
     loadPluginWithText(fooBuilder).use {
       val ep = ApplicationManager.getApplication().extensionArea.getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("foo.barExtension")

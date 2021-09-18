@@ -104,7 +104,7 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   @TestOnly
   public void markDirtyAndRefreshVirtualFileDeepInsideJarForTest(@NotNull VirtualFile file) {
     // clear caches in ArchiveHandler so that refresh will actually refresh something
-    getHandler(file).dispose();
+    getHandler(file).clearCaches();
     VfsUtil.markDirtyAndRefresh(false, true, true, file);
   }
 

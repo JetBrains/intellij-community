@@ -433,7 +433,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
       TreePath path = getPathForRow(eachRow);
-      PresentableNodeDescriptor node = toPresentableNode(path.getLastPathComponent());
+      PresentableNodeDescriptor<?> node = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, path);
       if (node == null) continue;
 
       if (!node.isContentHighlighted()) continue;
@@ -497,7 +497,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
             if (child instanceof PresentableNodeDescriptor) {
               PresentableNodeDescriptor nextKid = (PresentableNodeDescriptor)child;
               int nextRow = getRowForPath(getPath(nextKid));
-              last = toPresentableNode(getPathForRow(nextRow - 1).getLastPathComponent());
+              last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(nextRow - 1));
             }
           }
           else {
@@ -510,7 +510,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                 int nextRow = getRowForPath(getPath(nextChild));
                 TreePath prevPath = getPathForRow(nextRow - 1);
                 if (prevPath != null) {
-                  last = toPresentableNode(prevPath.getLastPathComponent());
+                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, prevPath);
                 }
               }
               else {
@@ -518,7 +518,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                 PresentableNodeDescriptor lastParent = last;
                 boolean lastWasFound = false;
                 for (int i = lastRow + 1; i < getRowCount(); i++) {
-                  PresentableNodeDescriptor eachNode = toPresentableNode(getPathForRow(i).getLastPathComponent());
+                  PresentableNodeDescriptor<?> eachNode = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(i));
                   if (!node.isParentOf(eachNode)) {
                     last = lastParent;
                     lastWasFound = true;
@@ -527,7 +527,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                   lastParent = eachNode;
                 }
                 if (!lastWasFound) {
-                  last = toPresentableNode(getPathForRow(getRowCount() - 1).getLastPathComponent());
+                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(getRowCount() - 1));
                 }
               }
             }
@@ -578,14 +578,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     return new int[]{y, x};
-  }
-
-  @Nullable
-  private static PresentableNodeDescriptor toPresentableNode(Object pathComponent) {
-    if (!(pathComponent instanceof DefaultMutableTreeNode)) return null;
-    Object userObject = ((DefaultMutableTreeNode)pathComponent).getUserObject();
-    if (!(userObject instanceof PresentableNodeDescriptor)) return null;
-    return (PresentableNodeDescriptor)userObject;
   }
 
   public TreePath getPath(@NotNull PresentableNodeDescriptor node) {

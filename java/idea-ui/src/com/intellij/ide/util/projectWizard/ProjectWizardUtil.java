@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -16,6 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,33 +89,51 @@ public final class ProjectWizardUtil {
   public static void preselectJdkForNewModule(@Nullable Project project,
                                               @Nullable String lastUsedSdk,
                                               @NotNull JdkComboBox jdkComboBox,
-                                              @NotNull ModuleBuilder moduleBuilder,
+                                              @NotNull Condition<? super SdkTypeId> sdkTypeFilter) {
+    preselectJdkForNewModule(project, lastUsedSdk, jdkComboBox, null, sdkTypeFilter);
+  }
+
+  private static Condition<? super SdkTypeId> getSdkTypeFilter(@Nullable ModuleBuilder moduleBuilder,
+                                                               @NotNull Condition<? super SdkTypeId> defaultSdkTypeFilter) {
+    return ObjectUtils.chooseNotNull(
+      ObjectUtils.<ModuleBuilder, Condition<SdkTypeId>>doIfNotNull(moduleBuilder, it -> it::isSuitableSdkType),
+      defaultSdkTypeFilter
+    );
+  }
+
+  public static void preselectJdkForNewModule(@Nullable Project project,
+                                              @Nullable String lastUsedSdk,
+                                              @NotNull JdkComboBox jdkComboBox,
+                                              @Nullable ModuleBuilder moduleBuilder,
                                               @NotNull Condition<? super SdkTypeId> sdkFilter) {
+    Condition<? super SdkTypeId> sdkTypeFilter = getSdkTypeFilter(moduleBuilder, sdkFilter);
+
     jdkComboBox.reloadModel();
 
     if (project != null) {
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
-        // use project SDK
+      if (sdk != null && sdkTypeFilter.value(sdk.getSdkType())) {
+        // select project SDK
         jdkComboBox.setSelectedItem(jdkComboBox.showProjectSdkItem());
         return;
       }
     }
 
-    if (lastUsedSdk != null) {
-      Sdk sdk = ProjectJdkTable.getInstance().findJdk(lastUsedSdk);
-      if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
-        jdkComboBox.setSelectedJdk(sdk);
-        return;
-      }
-    }
-
-    // set default project SDK
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     Sdk selected = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (selected != null && sdkFilter.value(selected.getSdkType())) {
+      // select default project SDK
       jdkComboBox.setSelectedJdk(selected);
       return;
+    }
+
+    if (lastUsedSdk != null) {
+      Sdk sdk = ProjectJdkTable.getInstance().findJdk(lastUsedSdk);
+      if (sdk != null && sdkTypeFilter.value(sdk.getSdkType())) {
+        // select last used SDK
+        jdkComboBox.setSelectedJdk(sdk);
+        return;
+      }
     }
 
     Sdk best = null;
@@ -146,5 +166,9 @@ public final class ProjectWizardUtil {
     else {
       jdkComboBox.setSelectedItem(jdkComboBox.showNoneSdkItem());
     }
+  }
+
+  public static @NotNull String getPreselectedJdkPropertyName(@Nullable ModuleType<?> moduleType) {
+    return "jdk.selected." + (moduleType == null ? "" : moduleType.getId());
   }
 }

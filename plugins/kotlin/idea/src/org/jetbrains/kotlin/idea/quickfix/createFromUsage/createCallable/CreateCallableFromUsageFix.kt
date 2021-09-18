@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -27,7 +28,7 @@ import java.lang.ref.WeakReference
 
 class CreateExtensionCallableFromUsageFix<E : KtElement>(
     originalExpression: E,
-    private val callableInfosFactory: () -> List<CallableInfo>?
+    private val callableInfosFactory: (E) -> List<CallableInfo>?
 ) : CreateCallableFromUsageFixBase<E>(originalExpression, true), LowPriorityAction {
 
     init {
@@ -35,12 +36,12 @@ class CreateExtensionCallableFromUsageFix<E : KtElement>(
     }
 
     override val callableInfos: List<CallableInfo>
-        get() = callableInfosFactory() ?: emptyList()
+        get() = element?.let { callableInfosFactory(it) } ?: emptyList()
 }
 
 class CreateCallableFromUsageFix<E : KtElement>(
     originalExpression: E,
-    private val callableInfosFactory: () -> List<CallableInfo>?
+    private val callableInfosFactory: (E) -> List<CallableInfo>?
 ) : CreateCallableFromUsageFixBase<E>(originalExpression, false) {
 
     init {
@@ -48,13 +49,13 @@ class CreateCallableFromUsageFix<E : KtElement>(
     }
 
     override val callableInfos: List<CallableInfo>
-        get() = callableInfosFactory() ?: emptyList()
+        get() = element?.let { callableInfosFactory(it) } ?: emptyList()
 
 }
 
 abstract class AbstractCreateCallableFromUsageFixWithTextAndFamilyName<E : KtElement>(
     providedText: String,
-    private val familyName: String,
+    @Nls private val familyName: String,
     originalExpression: E
 ): CreateCallableFromUsageFixBase<E>(originalExpression, false) {
 

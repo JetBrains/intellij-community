@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  @Nls public static final String METHOD_TYPE = "Method {0}";
-
   /** @deprecated Use {@link #HIERARCHY_BROWSER} data key instead. */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
@@ -49,8 +47,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   @Override
   protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
-    HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(METHOD_TYPE, MethodHierarchyBrowserBase::getMethodType);
+    Map<String, Supplier<String>> map = new HashMap<>();
+    map.put(getMethodType(), MethodHierarchyBrowserBase::getMethodType);
     return map;
   }
 

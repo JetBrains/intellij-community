@@ -7,22 +7,22 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.actions.ConfigurePluginUpdatesAction
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.UserDataProperty
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.event.HyperlinkEvent
@@ -37,7 +37,7 @@ fun notifyOutdatedBundledCompilerIfNecessary(project: Project) {
 
     val message: String = createOutdatedBundledCompilerMessage(project) ?: return
 
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (isUnitTestMode()) {
         return
     }
 
@@ -68,6 +68,7 @@ fun notifyOutdatedBundledCompilerIfNecessary(project: Project) {
 
 private var alreadyNotified = ConcurrentHashMap<String, String>()
 
+@Nls
 fun createOutdatedBundledCompilerMessage(project: Project, bundledCompilerVersion: String = KotlinCompilerVersion.VERSION): String? {
     val bundledCompilerMajorVersion = createKotlinVersion(bundledCompilerVersion) ?: return null
 
@@ -97,7 +98,7 @@ fun createOutdatedBundledCompilerMessage(project: Project, bundledCompilerVersio
 
     val lastProjectNotified = alreadyNotified[project.name]
     if (lastProjectNotified == maxCompilerInfo.externalCompilerVersion) {
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
+        if (!isUnitTestMode()) {
             return null
         }
     }

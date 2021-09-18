@@ -22,7 +22,6 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.LocalFileUrl
 import com.intellij.util.Urls
 import com.intellij.util.io.exists
-import icons.MarkdownIcons
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.TitledSeparator;
@@ -120,7 +121,7 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
                             boolean isSelected,
                             boolean cellHasFocus
                     ) {
-                        String tokenValue = value != null ? ((KtModifierKeywordToken) value).getValue() : null;
+                        @NlsSafe String tokenValue = value != null ? ((KtModifierKeywordToken) value).getValue() : null;
                         return super.getListCellRendererComponent(list, tokenValue, index, isSelected, cellHasFocus);
                     }
                 }

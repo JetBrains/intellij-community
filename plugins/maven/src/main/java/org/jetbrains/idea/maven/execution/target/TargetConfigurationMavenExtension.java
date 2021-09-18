@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.execution.target;
 import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 /**
  * Extension point for create upload root for target configuration.
  */
+@ApiStatus.Experimental
 public interface TargetConfigurationMavenExtension {
   @Nullable
   TargetEnvironment.UploadRoot createUploadRoot(@Nullable MavenRuntimeTargetConfiguration mavenRuntimeConfiguration,

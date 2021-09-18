@@ -70,6 +70,14 @@ class KotlinNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testNoCamelNamesForBacktickedNonId() = doTest()
 
+    fun testListOfInts() = doTest()
+
+    fun testListOfClasses() = doTest()
+
+    fun testStringIntMap() = doTest()
+
+    fun testIterable() = doTest()
+
     private fun doTest() {
         try {
             myFixture.configureByFile(getTestName(false) + ".kt")

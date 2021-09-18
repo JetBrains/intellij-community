@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ public class JsonCopyPointerAction extends CopyReferenceAction {
   }
 
   @Override
+  @NlsSafe
   protected String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
     if (elements.size() != 1) return null;
     return JsonQualifiedNameProvider.generateQualifiedName(elements.get(0), JsonQualifiedNameKind.JsonPointer);

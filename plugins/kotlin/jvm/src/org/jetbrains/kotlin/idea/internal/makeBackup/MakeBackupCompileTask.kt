@@ -13,10 +13,11 @@ val random = Random()
 val HISTORY_LABEL_KEY = Key.create<String>("history label")
 
 class MakeBackupCompileTask : CompileTask {
+    @Suppress("HardCodedStringLiteral")
     override fun execute(context: CompileContext?): Boolean {
         val project = context!!.project
 
-        val localHistory = LocalHistory.getInstance()!!
+        val localHistory = LocalHistory.getInstance()
         val label = HISTORY_LABEL_PREFIX + Integer.toHexString(random.nextInt())
         localHistory.putSystemLabel(project, label)
 

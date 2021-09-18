@@ -9,12 +9,16 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.MultiMap
 import com.intellij.xml.util.XmlStringUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -22,16 +26,17 @@ import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AnnotationPresentationInfo(
     val ranges: List<TextRange>,
-    val nonDefaultMessage: String? = null,
+    @Nls val nonDefaultMessage: String? = null,
     val highlightType: ProblemHighlightType? = null,
     val textAttributes: TextAttributesKey? = null
 ) {
 
     companion object {
-        private const val KOTLIN_SUPPRESS_OPTIONS_ID = "KotlinSuppressOptions"
+        private const val KOTLIN_COMPILER_WARNING_ID = "KotlinSuppressOptions"
     }
 
     fun processDiagnostics(
@@ -64,19 +69,28 @@ class AnnotationPresentationInfo(
         diagnostic: Diagnostic,
         info: HighlightInfo
     ) {
-        val fixes = fixesMap[diagnostic]
-        val keyForSuppressOptions = HighlightDisplayKey.findOrRegister(
-            KOTLIN_SUPPRESS_OPTIONS_ID, KotlinIdeaAnalysisBundle.message("kotlin.suppress.options")
-        )
-        fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach {
-            QuickFixAction.registerQuickFixAction(info, it, keyForSuppressOptions)
+        val fixes = run {
+            fixesMap[diagnostic].takeIf { it.isNotEmpty() } ?: if (diagnostic.severity == Severity.WARNING) {
+                listOf(EmptyIntentionAction(diagnostic.factory.name))
+            } else emptyList()
         }
+        val keyForSuppressOptions = HighlightDisplayKey.findOrRegister(
+            KOTLIN_COMPILER_WARNING_ID, KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning")
+        )
 
-        if (diagnostic.severity == Severity.WARNING) {
-            if (fixes.isEmpty()) {
-                // if there are no quick fixes we need to register an EmptyIntentionAction to enable 'suppress' actions
-                QuickFixAction.registerQuickFixAction(info, EmptyIntentionAction(diagnostic.factory.name), keyForSuppressOptions)
+        fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach { action ->
+            val options = mutableListOf<IntentionAction>()
+            action.safeAs<IntentionActionWithOptions>()?.options?.let { options += it }
+            info.problemGroup.safeAs<SuppressableProblemGroup>()?.let { group ->
+                options += group.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
             }
+            info.registerFix(
+                action,
+                options,
+                KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning"),
+                null,
+                keyForSuppressOptions
+            )
         }
     }
 
@@ -97,11 +111,13 @@ class AnnotationPresentationInfo(
             .also(consumer)
     }
 
+    @NlsContexts.Tooltip
     private fun getMessage(diagnostic: Diagnostic): String {
         var message = IdeErrorMessages.render(diagnostic)
         if (isApplicationInternalMode() || isUnitTestMode()) {
             val factoryName = diagnostic.factory.name
             message = if (message.startsWith("<html>")) {
+                @Suppress("HardCodedStringLiteral")
                 "<html>[$factoryName] ${message.substring("<html>".length)}"
             } else {
                 "[$factoryName] $message"

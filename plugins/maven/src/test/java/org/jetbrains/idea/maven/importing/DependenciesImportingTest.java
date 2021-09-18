@@ -26,11 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
   @Test
   public void testLibraryDependency() {
     importProject("<groupId>test</groupId>" +

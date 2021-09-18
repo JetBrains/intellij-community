@@ -13,8 +13,8 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.isMultiLine
@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.*
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnificationResult.StronglyMatched
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnificationResult.WeaklyMatched
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -75,7 +74,8 @@ private fun buildSignature(config: ExtractionGeneratorConfiguration, renderer: D
             config.descriptor.annotations.joinToString(separator = "\n", postfix = "\n") { renderer.renderAnnotation(it) }
         }
         val extraModifiers = config.descriptor.modifiers.map { it.value } +
-                listOfNotNull(if (shouldBeInline) KtTokens.INLINE_KEYWORD.value else null)
+                listOfNotNull(if (shouldBeInline) KtTokens.INLINE_KEYWORD.value else null) +
+                listOfNotNull(if (config.generatorOptions.isConst) KtTokens.CONST_KEYWORD.value else null)
         val modifiers = if (visibility.isNotEmpty()) listOf(visibility) + extraModifiers else extraModifiers
         modifier(annotations + modifiers.joinToString(separator = " "))
 

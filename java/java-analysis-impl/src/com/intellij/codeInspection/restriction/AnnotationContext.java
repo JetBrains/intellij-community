@@ -153,8 +153,8 @@ public final class AnnotationContext {
       else if (jumpTarget instanceof ULambdaExpression) {
         next = getFunctionalParameter((ULambdaExpression)jumpTarget);
         PsiType type = ((ULambdaExpression)jumpTarget).getFunctionalInterfaceType();
-        returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
         if (type == null) return fromModifierListOwner(next);
+        returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
         method = LambdaUtil.getFunctionalInterfaceMethod(type);
       }
       else {
@@ -162,7 +162,7 @@ public final class AnnotationContext {
       }
     }
     if (method == null) return EMPTY;
-    AnnotationContext result = fromModifierListOwner(method).withType(returnType);
+    AnnotationContext result = returnType == null ? fromModifierListOwner(method) : fromModifierListOwner(method).withType(returnType);
     if (next != null) {
       PsiModifierListOwner finalNext = next;
       return new AnnotationContext(result.myOwner, result.myType, () -> StreamEx.of(finalNext).append(result.secondaryItems()));

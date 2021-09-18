@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class KotlinIfElseSurrounder extends KotlinIfSurrounderBase {
 
+    @SuppressWarnings("DialogTitleCapitalization")
     @Override
     public String getTemplateDescription() {
         return CodeInsightBundle.message("surround.with.ifelse.template");

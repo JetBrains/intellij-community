@@ -28,6 +28,11 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/Comment.kt");
     }
 
+    @TestMetadata("ErrorOnFunReturnTypeInFun.kt")
+    public void testErrorOnFunReturnTypeInFun() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/ErrorOnFunReturnTypeInFun.kt");
+    }
+
     @TestMetadata("FunBlock.kt")
     public void testFunBlock() throws Exception {
         runTest("testData/codeInsight/outOfBlock/FunBlock.kt");

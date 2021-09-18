@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.Java11Shim
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -55,6 +57,10 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     return descriptor != null && set.contains(descriptor.version)
   }
 
+  fun isBroken(descriptor: IdeaPluginDescriptorImpl): Boolean {
+    return (brokenPluginVersions.get(descriptor.pluginId) ?: return false).contains(descriptor.version)
+  }
+
   internal fun getPluginErrors(): Map<PluginId, PluginLoadingError> = Collections.unmodifiableMap(pluginErrors)
 
   fun getGlobalErrors(): List<Supplier<String>> {
@@ -64,22 +70,22 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
   }
 
   internal fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
-    if (!idMap.containsKey(plugin.pluginId)) {
-      val existingIncompletePlugin = incompletePlugins.get(plugin.pluginId)
-      if (existingIncompletePlugin == null || VersionComparatorUtil.compare(plugin.version, existingIncompletePlugin.version) > 0) {
-        incompletePlugins.put(plugin.pluginId, plugin)
-      }
-    }
-    if (error != null) {
-      pluginErrors.put(plugin.pluginId, error)
-    }
-  }
-
-  internal fun reportIncompatiblePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError) {
     // do not report if some compatible plugin were already added
     // no race condition here: plugins from classpath are loaded before and not in parallel to loading from plugin dir
-    if (!idMap.containsKey(plugin.pluginId)) {
-      pluginErrors.put(plugin.pluginId, error)
+    if (idMap.containsKey(plugin.pluginId)) {
+      return
+    }
+
+    val existingIncompletePlugin = incompletePlugins.putIfAbsent(plugin.pluginId, plugin)
+    if (existingIncompletePlugin != null && VersionComparatorUtil.compare(plugin.version, existingIncompletePlugin.version) > 0) {
+      incompletePlugins.put(plugin.pluginId, plugin)
+      if (error != null) {
+        // force put
+        pluginErrors.put(plugin.pluginId, error)
+      }
+    }
+    else if (error != null) {
+      pluginErrors.putIfAbsent(plugin.pluginId, error)
     }
   }
 
@@ -99,15 +105,12 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     if (checkModuleDependencies &&
         !descriptor.isBundled && descriptor.packagePrefix == null &&
         !PluginManagerCore.hasModuleDependencies(descriptor)) {
-      val error = PluginLoadingError(plugin = descriptor,
-                                     detailedMessageSupplier = {
-                                       CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name)
-                                     },
-                                     shortMessageSupplier = {
-                                       CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")
-                                     },
-                                     isNotifyUser = true)
-      addIncompletePlugin(descriptor, error)
+      addIncompletePlugin(descriptor, PluginLoadingError(
+        plugin = descriptor,
+        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
+        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only") },
+        isNotifyUser = true
+      ))
       return false
     }
 
@@ -161,4 +164,15 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     list.add(descriptor)
     duplicateModuleMap!!.put(id, list)
   }
+}
+
+// todo merge into PluginSetState?
+@ApiStatus.Internal
+class PluginManagerState internal constructor(@JvmField val pluginSet: PluginSet,
+                                              disabledRequiredIds: Set<IdeaPluginDescriptorImpl>,
+                                              effectiveDisabledIds: Set<IdeaPluginDescriptorImpl>) {
+  @JvmField val effectiveDisabledIds: Set<PluginId> =
+    Java11Shim.INSTANCE.copyOf(effectiveDisabledIds.mapTo(HashSet(effectiveDisabledIds.size), IdeaPluginDescriptorImpl::getPluginId))
+  @JvmField val disabledRequiredIds: Set<PluginId> =
+    Java11Shim.INSTANCE.copyOf(disabledRequiredIds.mapTo(HashSet(disabledRequiredIds.size), IdeaPluginDescriptorImpl::getPluginId))
 }

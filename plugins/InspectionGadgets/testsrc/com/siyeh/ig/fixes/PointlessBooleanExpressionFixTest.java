@@ -12,7 +12,9 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new PointlessBooleanExpressionInspection());
+    PointlessBooleanExpressionInspection inspection = new PointlessBooleanExpressionInspection();
+    inspection.m_ignoreExpressionsContainingConstants = false;
+    myFixture.enableInspections(inspection);
     myRelativePath = "pointlessboolean";
     myDefaultHint = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
   }

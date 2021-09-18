@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,7 +22,22 @@ public interface BlockingMethodChecker {
    */
   boolean isApplicable(@NotNull PsiFile file);
 
-  boolean isMethodBlocking(@NotNull PsiMethod method);
+  /**
+   * @deprecated Override {@link #isMethodBlocking(MethodContext)} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  default boolean isMethodBlocking(@NotNull PsiMethod method) {
+    return false;
+  }
+
+  default boolean isMethodBlocking(@NotNull MethodContext methodContext) {
+    return isMethodBlocking(methodContext.getMethod());
+  }
+
+  default boolean isMethodNonBlocking(@NotNull MethodContext methodContext) {
+    return false;
+  }
 
   /**
    * @param element PsiElement (e.g. method call or reference) which is located in "non-blocking" code fragment

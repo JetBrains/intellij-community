@@ -79,17 +79,6 @@ public final class DvcsUtil {
     return ContainerUtil.mapNotNull(files, file -> VfsUtil.findFileByIoFile(file, false));
   }
 
-  /**
-   * @deprecated use {@link VcsImplUtil#getShortVcsRootName}
-   */
-  @NlsSafe
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {
-    return VcsImplUtil.getShortVcsRootName(project, root);
-  }
-
   @NlsSafe
   @NotNull
   public static String getShortRepositoryName(@NotNull Repository repository) {

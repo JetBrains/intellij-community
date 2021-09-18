@@ -596,41 +596,6 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testFormatDurationApproximate() {
-    assertEquals("0 ms", StringUtil.formatDurationApproximate(0));
-
-    assertEquals("59 s 999 ms", StringUtil.formatDurationApproximate(60000 - 1));
-    assertEquals("1 m", StringUtil.formatDurationApproximate(60000));
-    assertEquals("1 m 0 s", StringUtil.formatDurationApproximate(60000 + 1));
-
-    assertEquals("2 m", StringUtil.formatDurationApproximate(120000 - 1));
-    assertEquals("2 m", StringUtil.formatDurationApproximate(120000));
-    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 1));
-    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 499));
-    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 500));
-    assertEquals("2 m 1 s", StringUtil.formatDurationApproximate(120000 + 501));
-
-    assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123000));
-    assertEquals("2 m 4 s", StringUtil.formatDurationApproximate(123789));
-    assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123456));
-    assertEquals("1 h 1 m", StringUtil.formatDurationApproximate(3659009));
-    assertEquals("2 h", StringUtil.formatDurationApproximate(7199000));
-    assertEquals("1 d", StringUtil.formatDurationApproximate((23 * 60 * 60 + 59 * 60 + 59) * 1000L));
-    assertEquals("391 d 1 h", StringUtil.formatDurationApproximate(33786061001L));
-  }
-
-  @Test
-  public void testFormatDurationPadded() {
-    assertEquals("0 ms", StringUtil.formatDurationPadded(0, " "));
-    assertEquals("1 s 000 ms", StringUtil.formatDurationPadded(1000, " "));
-    assertEquals("1 s 001 ms", StringUtil.formatDurationPadded(1001, " "));
-    assertEquals("2 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.MINUTES.toMillis(2), " "));
-    assertEquals("2 h 00 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.HOURS.toMillis(2), " "));
-    assertEquals("2 d 00 h 00 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.DAYS.toMillis(2), " "));
-    assertEquals("1434852 d 16 h 13 m 50 s 987 ms", StringUtil.formatDurationPadded(123971271230987L, " "));
-  }
-
-  @Test
   public void testXmlWrapInCDATA() {
     assertEquals("<![CDATA[abc]]>", XmlStringUtil.wrapInCDATA("abc"));
     assertEquals("<![CDATA[abc]]]><![CDATA[]>]]>", XmlStringUtil.wrapInCDATA("abc]]>"));

@@ -442,7 +442,7 @@ public class MavenProjectImporter {
     if (obsoleteModules.isEmpty()) {
       return false;
     }
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || MavenUtil.isMavenUnitTestModeEnabled()) {
       final int[] result = new int[1];
       MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
                               () -> result[0] = Messages.showYesNoDialog(myProject,
@@ -516,7 +516,7 @@ public class MavenProjectImporter {
       if (each.isResolved()) files.add(each.getFile());
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
       doRefreshFiles(files);
     }
     else {

@@ -224,7 +224,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         DfaVariableValue staticValue =
           ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, arrayStore), DfaVariableValue.class);
         addInstruction(new ArrayAccessInstruction(
-          transfer, new JavaExpressionAnchor(arrayStore), new ArrayIndexProblem(arrayStore), staticValue));
+          new JavaExpressionAnchor(arrayStore), new ArrayIndexProblem(arrayStore), transfer, staticValue));
       } else {
         addInstruction(new DupInstruction());
       }
@@ -239,7 +239,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (arrayStore != null) {
       DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-      addInstruction(new ArrayStoreInstruction(arrayStore, rExpr, transfer));
+      var staticVariable = ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, arrayStore), DfaVariableValue.class);
+      addInstruction(new JavaArrayStoreInstruction(arrayStore, rExpr, transfer, staticVariable));
     } else {
       addInstruction(new AssignInstruction(rExpr, JavaDfaValueFactory.getExpressionDfaValue(myFactory, lExpr)));
     }
@@ -1254,7 +1255,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
     DfaVariableValue staticValue =
       ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression), DfaVariableValue.class);
-    addInstruction(new ArrayAccessInstruction(transfer, new JavaExpressionAnchor(expression), new ArrayIndexProblem(expression),
+    addInstruction(new ArrayAccessInstruction(new JavaExpressionAnchor(expression), new ArrayIndexProblem(expression), transfer,
                                               staticValue));
     addNullCheck(expression);
     finishElement(expression);
@@ -1854,7 +1855,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       addConditionalErrorThrow();
       DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
-      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
+      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
+                                                 JavaMethodContractUtil.getMethodCallContracts(constructor, null);
       contracts = DfaUtil.addRangeContracts(constructor, contracts);
       addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
       processFailResult(contracts, expression);
@@ -2272,7 +2274,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     new OptionalChainInliner(), new LambdaInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
-    new TransformInliner()
+    new TransformInliner(), new EnumCompareInliner()
   };
 }
 

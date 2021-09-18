@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.console.gutter.ConsoleIndicatorRenderer
 import org.jetbrains.kotlin.console.gutter.IconWithTooltip
 import org.jetbrains.kotlin.console.gutter.ReplIcons
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import kotlin.math.max
 
 class ReplOutputProcessor(
@@ -63,7 +63,7 @@ class ReplOutputProcessor(
     }
 
     fun printBuildInfoWarningIfNeeded() {
-        if (ApplicationManager.getApplication().isUnitTestMode) return
+        if (isUnitTestMode()) return
         if (runner.previousCompilationFailed) return printWarningMessage(
             KotlinIdeaReplBundle.message("there.were.compilation.errors.in.module.0", runner.module.name),
             false

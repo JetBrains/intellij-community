@@ -169,9 +169,10 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     PluginManagerUsageCollector.pluginsStateChanged(project, pluginIds, action)
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
-        PluginEnabler.HEADLESS.enablePlugins(descriptors)
         stopTrackingPerProject()
-        loadPlugins()
+        val loaded = loadPlugins()
+        PluginEnabler.HEADLESS.enablePlugins(descriptors)
+        loaded
       }
       PluginEnableDisableAction.ENABLE_FOR_PROJECT -> {
         startTrackingPerProject(true)
@@ -184,9 +185,10 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         true
       }
       PluginEnableDisableAction.DISABLE_GLOBALLY -> {
+        val unloaded = unloadPlugins()
         PluginEnabler.HEADLESS.disablePlugins(descriptors)
         stopTrackingPerProject()
-        unloadPlugins()
+        unloaded
       }
       PluginEnableDisableAction.DISABLE_FOR_PROJECT -> {
         startTrackingPerProject(false)

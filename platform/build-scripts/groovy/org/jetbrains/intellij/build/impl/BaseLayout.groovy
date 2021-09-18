@@ -24,6 +24,7 @@ abstract class BaseLayout {
   final MultiMap<String, String> moduleExcludes = MultiMap.createLinked()
   final LinkedHashSet<ProjectLibraryData> includedProjectLibraries = []
   final LinkedHashSet<ModuleLibraryData> includedModuleLibraries = []
+  /** module name to name of the module library */
   final MultiMap<String, String> excludedModuleLibraries = MultiMap.createLinked()
   /** JAR name -> name of project library which content should be unpacked */
   final MultiMap<String, String> projectLibrariesToUnpack = MultiMap.createLinked()

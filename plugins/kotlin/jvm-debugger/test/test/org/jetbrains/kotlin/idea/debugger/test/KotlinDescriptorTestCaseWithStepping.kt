@@ -68,21 +68,20 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         myCommandProvider = JvmSteppingCommandProvider.EP_NAME.extensions.firstIsInstance<KotlinSteppingCommandProvider>()
     }
 
-    private fun SuspendContextImpl.getKotlinStackFrame(): KotlinStackFrame? {
-        val proxy = frameProxy ?: return null
+    protected fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
+        val proxy = frameProxy ?: return emptyList()
         if (myInProgress) {
             val positionManager = KotlinPositionManager(debugProcess)
-            val stackFrame = positionManager.createStackFrame(
+            return positionManager.createStackFrames(
                 proxy, debugProcess, proxy.location()
-            )
-            return stackFrame as? KotlinStackFrame
+            ).filterIsInstance<KotlinStackFrame>()
         }
-        return null
+        return emptyList()
     }
 
     override fun createEvaluationContext(suspendContext: SuspendContextImpl): EvaluationContextImpl? {
         return try {
-            val proxy = suspendContext.getKotlinStackFrame()?.stackFrameProxy ?: suspendContext.frameProxy
+            val proxy = suspendContext.getKotlinStackFrames().firstOrNull()?.stackFrameProxy ?: suspendContext.frameProxy
             assertNotNull(proxy)
             EvaluationContextImpl(suspendContext, proxy, proxy?.thisObject())
         } catch (e: EvaluateException) {
@@ -183,11 +182,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val filters = createSmartStepIntoFilters()
         if (chooseFromList == 0) {
             filters.forEach {
-                dp.managerThread.schedule(dp.createStepIntoCommand(this, ignoreFilters, it))
+                doStepInto(ignoreFilters, it)
             }
         } else {
             try {
-                dp.managerThread.schedule(dp.createStepIntoCommand(this, ignoreFilters, filters[chooseFromList - 1]))
+                doStepInto(ignoreFilters, filters[chooseFromList - 1])
             } catch (e: IndexOutOfBoundsException) {
                 val elementText = runReadAction { debuggerContext.sourcePosition.elementAt.getElementTextWithContext() }
                 throw AssertionError("Couldn't find smart step into command at: \n$elementText", e)
@@ -224,15 +223,18 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
     }
 
-    protected fun processStackFrameOnPooledThread(callback: XStackFrame.() -> Unit) {
+    protected fun processStackFramesOnPooledThread(callback: List<XStackFrame>.() -> Unit) {
         val frameProxy = debuggerContext.frameProxy ?: error("Frame proxy is absent")
         val debugProcess = debuggerContext.debugProcess ?: error("Debug process is absent")
         val nodeManager = debugProcess.xdebugProcess!!.nodeManager
         val descriptor = nodeManager.getStackFrameDescriptor(null, frameProxy)
-        val stackFrame = debugProcess.positionManager.createStackFrame(descriptor) ?: error("Can't create stack frame for $descriptor")
+        val stackFrames = debugProcess.positionManager.createStackFrames(descriptor)
+        if (stackFrames.isEmpty()) {
+            error("Can't create stack frame for $descriptor")
+        }
 
         ApplicationManager.getApplication().executeOnPooledThread {
-            stackFrame.callback()
+            stackFrames.callback()
         }
     }
 

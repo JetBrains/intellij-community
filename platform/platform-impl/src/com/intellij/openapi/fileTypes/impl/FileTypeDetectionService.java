@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -36,13 +36,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -72,15 +72,15 @@ final class FileTypeDetectionService implements Disposable {
     new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE",
                       PropertiesComponent.getInstance().getInt(FILE_TYPE_CHANGED_COUNTER_PROPERTY, 0), true);
 
+  private static final int CHUNK_SIZE = 10;
+  private static final int OUR_MAX_FILE_SIZE_TO_LOG = 512;
+
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
-  private static final int CHUNK_SIZE = 10;
   private boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
-  private final Executor reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool",
-                                                                            AppExecutorUtil.getAppExecutorService(),
-                                                                            1,
-                                                                            this);
+  private final Executor reDetectExecutor =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
   private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();
 
   private volatile FileAttribute autoDetectedAttribute;
@@ -118,7 +118,7 @@ final class FileTypeDetectionService implements Disposable {
                 " (file: " + file +
                 "; wasAutoDetectedBefore(file): " + (file == null ? null : wasAutoDetectedBefore(file)) +
                 "; isDetectable(file): " + (file == null ? null : isDetectable(file)) +
-                "; file.getLength(): " + (file == null ? null : file.getLength()) +
+                "; file.getLength(): " + (file == null ? null : file.isDirectory() ? "-" : file.getLength()) +
                 "; file.isValid(): " + (file == null ? null : file.isValid()) +
                 "; file.is(VFileProperty.SPECIAL): " + (file == null ? null : file.is(VFileProperty.SPECIAL)) +
                 "; packedFlags.get(id): " + (file instanceof VirtualFileWithId ? readableFlags(packedFlags.get(((VirtualFileWithId)file).getId())) : null) +
@@ -191,8 +191,7 @@ final class FileTypeDetectionService implements Disposable {
     myFileTypeManager.log(s);
   }
 
-  @NotNull
-  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
+  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
     if (!isDetectable(file)) {
       if (myFileTypeManager.getFileTypeByFileName(file.getName()) == DetectedByContentFileType.INSTANCE) {
         //allow to open empty file in IDEA's editor
@@ -695,15 +694,14 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   // for diagnostics
-  @NonNls
   private static Object streamInfo(@NotNull InputStream stream) throws IOException {
     if (stream instanceof BufferedInputStream) {
       InputStream in = ReflectionUtil.getField(stream.getClass(), stream, InputStream.class, "in");
       byte[] buf = ReflectionUtil.getField(stream.getClass(), stream, byte[].class, "buf");
       int count = ReflectionUtil.getField(stream.getClass(), stream, int.class, "count");
       int pos = ReflectionUtil.getField(stream.getClass(), stream, int.class, "pos");
-      return "BufferedInputStream(buf=" + (buf == null ? null : Arrays.toString(Arrays.copyOf(buf, count))) +
-             ", count=" + count + ", pos=" + pos + ", in=" + streamInfo(in) + ")";
+      String buffer = buf == null ? null : Arrays.toString(Arrays.copyOf(buf, Math.min(count, OUR_MAX_FILE_SIZE_TO_LOG)));
+      return "BufferedInputStream(buf=" + buffer + ", count=" + count + ", pos=" + pos + ", in=" + streamInfo(in) + ")";
     }
     if (stream instanceof FileInputStream) {
       String path = ReflectionUtil.getField(stream.getClass(), stream, String.class, "path");
@@ -711,11 +709,30 @@ final class FileTypeDetectionService implements Disposable {
       boolean closed = ReflectionUtil.getField(stream.getClass(), stream, boolean.class, "closed");
       int available = stream.available();
       File file = new File(path);
+      Long channelSize = channel == null ? null : channel.size();
+      String fileContent = loadFile(file, OUR_MAX_FILE_SIZE_TO_LOG);
       return "FileInputStream(path=" + path + ", available=" + available + ", closed=" + closed +
-             ", channel=" + channel + ", channel.size=" + (channel == null ? null : channel.size()) +
-             ", file.exists=" + file.exists() + ", file.content='" + FileUtil.loadFile(file) + "')";
+             ", channel=" + channel + ", channel.size=" + channelSize +
+             ", file.exists=" + file.exists() + ", file.content='" + fileContent + "')";
     }
     return stream;
+  }
+
+  private static @NotNull String loadFile(@NotNull File file, int maxLength) throws IOException {
+    Reader reader = new InputStreamReader(new FileInputStream(file), Charset.defaultCharset());
+    try {
+      int length = Math.min((int)file.length(), maxLength);
+      char[] result = FileUtil.loadText(reader, length);
+      if (file.length() > maxLength) {
+        return new String(result) + "\n\n+" + (file.length() - maxLength) + " bytes more";
+      }
+      else {
+        return new String(result);
+      }
+    }
+    finally {
+      reader.close();
+    }
   }
 
   @TestOnly
@@ -729,8 +746,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   @TestOnly
-  @NotNull
-  Collection<VirtualFile> dumpReDetectQueue() {
+  @NotNull Collection<VirtualFile> dumpReDetectQueue() {
     synchronized (filesToRedetect) {
       return new ArrayList<>(filesToRedetect);
     }

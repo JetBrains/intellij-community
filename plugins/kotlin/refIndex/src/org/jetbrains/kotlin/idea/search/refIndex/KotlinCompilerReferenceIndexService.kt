@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
 import com.intellij.compiler.backwardRefs.DirtyScopeHolder
+import com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
@@ -36,13 +36,16 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
+import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.backwardRefs.CompilerRef
+import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
+import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -50,9 +53,6 @@ import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.incremental.LookupStorage
-import org.jetbrains.kotlin.incremental.LookupSymbol
-import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -62,24 +62,24 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.io.File
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
+import kotlin.system.measureNanoTime
 
 /**
  * Based on [com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase] and [com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl]
  */
 @Service(Service.Level.PROJECT)
 class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, ModificationTracker {
-    private var storage: LookupStorage? = null
+    private var storage: KotlinCompilerReferenceIndexStorage? = null
     private var activeBuildCount = 0
     private val compilationCounter = LongAdder()
     private val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
@@ -124,7 +124,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         dirtyScopeHolder.installVFSListener(this)
 
         val compilerManager = CompilerManager.getInstance(project)
-        val isUpToDate = compilerManager.takeIf { kotlinDataContainer != null }
+        val isUpToDate = compilerManager.takeIf { hasIncrementalIndex }
             ?.createProjectCompileScope(project)
             ?.let(compilerManager::isUpToDate)
             ?: false
@@ -195,24 +195,34 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         closeStorage()
     }
 
-    private val kotlinDataContainer: Path?
-        get() = BuildDataPathsImpl(BuildManager.getInstance().getProjectSystemDirectory(project)).targetsDataRoot
-            .toPath()
-            .resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
-            .takeIf { it.exists() && it.isDirectory() }
+    private val buildDataPaths: BuildDataPaths?
+        get() = BuildManager.getInstance().getProjectSystemDirectory(project)?.let(::BuildDataPathsImpl)
+
+    private val BuildDataPaths.kotlinDataContainer: Path?
+        get() = targetsDataRoot
+            ?.toPath()
+            ?.resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
+            ?.takeIf { it.exists() && it.isDirectory() }
             ?.listDirectoryEntries("${SettingConstants.KOTLIN_DATA_CONTAINER_ID}*")
             ?.firstOrNull()
 
+    private val hasIncrementalIndex: Boolean get() = buildDataPaths?.kotlinDataContainer != null
+
     private fun openStorage() {
-        val basePath = runReadAction { projectIfNotDisposed?.basePath } ?: return
-        val pathConverter = RelativeFileToPathConverter(File(basePath))
-        val targetDataDir = kotlinDataContainer?.toFile() ?: run {
+        val projectPath = runReadAction { projectIfNotDisposed?.basePath } ?: return
+        val buildDataPaths = buildDataPaths
+        val kotlinDataPath = buildDataPaths?.kotlinDataContainer ?: run {
             LOG.warn("try to open storage without index directory")
             return
         }
 
-        storage = LookupStorage(targetDataDir, pathConverter)
-        LOG.info("kotlin CRI storage is opened")
+        val initializationTime = measureNanoTime {
+            storage = KotlinCompilerReferenceIndexStorage(kotlinDataPath, projectPath).apply {
+                initialize(buildDataPaths)
+            }
+        }
+
+        LOG.info("kotlin CRI storage is opened (initialization time: ${TimeUnit.NANOSECONDS.toMillis(initializationTime)} ms)")
     }
 
     private fun closeStorage() {
@@ -239,59 +249,135 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     }
 
     @TestOnly
+    fun getSubtypesOfInTests(fqName: FqName, deep: Boolean): Sequence<FqName>? = storage?.getSubtypesOf(fqName, deep)
+
+    @TestOnly
+    fun getSubtypesOfInTests(hierarchyElement: PsiElement, isFromLibrary: Boolean = false): Sequence<FqName> = getSubtypesOf(
+        hierarchyElement,
+        isFromLibrary,
+    )
+
+    @TestOnly
     fun findReferenceFilesInTests(element: PsiElement): Set<VirtualFile>? = referentFiles(element)
 
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
-        val originalFqNames = extractFqNames(element) ?: return null
+        val originalElement = element.unwrapped ?: return null
+        val originalFqNames = extractFqNames(originalElement) ?: return null
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
-        if (projectFileIndex.isInLibrary(virtualFile)) return null
 
-        return originalFqNames.flatMapTo(mutableSetOf()) { currentFqName ->
-            val name = currentFqName.shortName().asString()
-            val scope = currentFqName.parent().takeUnless(FqName::isRoot)?.asString() ?: ""
-            storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }
-        }
-    })
-
-    private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
-    private fun isInsideLibraryScope(): Boolean = CompilerReferenceService.getInstanceIfEnabled(project)
-        ?.safeAs<CompilerReferenceServiceBase<*>>()
-        ?.isInsideLibraryScope
-        ?: isInsideLibraryScopeThreadLocal.get()
-
-    private fun <T> computeInLibraryScope(action: () -> T): T = CompilerReferenceService.getInstanceIfEnabled(project)
-        ?.safeAs<CompilerReferenceServiceBase<*>>()
-        ?.computeInLibraryScope<T, Throwable>(action)
-        ?: run {
-            isInsideLibraryScopeThreadLocal.set(true)
-            try {
-                action()
-            } finally {
-                isInsideLibraryScopeThreadLocal.set(false)
+        val isFromLibrary = projectFileIndex.isInLibrary(virtualFile)
+        originalFqNames.takeIf { isFromLibrary }?.singleOrNull()?.asString()?.let { fqName ->
+            // "Any" is not in the subtypes storage
+            if (fqName.startsWith(CommonClassNames.JAVA_LANG_OBJECT) || fqName.startsWith("kotlin.Any")) {
+                return null
             }
         }
 
-    private fun findHierarchyInLibrary(basePsiElement: PsiElement): List<FqName> {
-        val baseClass = when (basePsiElement) {
-            is KtClassOrObject, is PsiClass -> basePsiElement
-            is PsiMember -> basePsiElement.containingClass
-            is KtDeclaration -> basePsiElement.containingClassOrObject
+        val additionalFqNames = findSubclassesFqNamesIfApplicable(originalElement, isFromLibrary)?.let { subclassesFqNames ->
+            subclassesFqNames.flatMap { subclass -> originalFqNames.map { subclass.child(it.shortName()) } }
+        }.orEmpty()
+
+        return originalFqNames.toSet().plus(additionalFqNames).flatMapTo(mutableSetOf(), storage::getUsages)
+    })
+
+    private fun findSubclassesFqNamesIfApplicable(element: PsiElement, isFromLibrary: Boolean): Sequence<FqName>? {
+        val hierarchyElement = when (element) {
+            is KtClassOrObject -> null
+            is PsiMember -> element.containingClass
+            is KtCallableDeclaration -> element.containingClassOrObject?.takeUnless { it is KtObjectDeclaration }
             else -> null
-        } ?: return emptyList()
+        } ?: return null
 
-        val overridden: MutableList<FqName> = baseClass.getKotlinFqName()?.let { mutableListOf(it) } ?: mutableListOf()
+        return getSubtypesOf(hierarchyElement, isFromLibrary)
+    }
+
+    private fun getSubtypesOf(hierarchyElement: PsiElement, isFromLibrary: Boolean): Sequence<FqName> =
+        generateRecursiveSequence(computeInitialElementsSequence(hierarchyElement, isFromLibrary)) { fqNameWrapper ->
+            val javaValues = getDirectSubtypesOfFromJava { CompilerRef.JavaCompilerClassRef(it.tryEnumerate(fqNameWrapper.jvmFqName)) }
+            val kotlinValues = getDirectSubtypesOfFromKotlin(fqNameWrapper.fqName)
+            kotlinValues + javaValues
+        }.map(FqNameWrapper::fqName)
+
+    private fun computeInitialElementsSequence(hierarchyElement: PsiElement, isFromLibrary: Boolean): Sequence<FqNameWrapper> {
+        val initialElements = if (isFromLibrary) {
+            computeInLibraryScope { findHierarchyInLibrary(hierarchyElement) }
+        } else {
+            setOf(hierarchyElement)
+        }
+
+        val kotlinInitialValues = initialElements.asSequence().mapNotNull(PsiElement::getKotlinFqName).flatMap { fqName ->
+            fqName.computeDirectSubtypes(
+                withSelf = isFromLibrary,
+                selfAction = { FqNameWrapper.createFromFqName(it) },
+                subtypesAction = { getDirectSubtypesOfFromKotlin(it) }
+            )
+        }
+
+        val javaInitialValues = initialElements.asSequence().flatMap { currentHierarchyElement ->
+            currentHierarchyElement.computeDirectSubtypes(
+                withSelf = isFromLibrary,
+                selfAction = { FqNameWrapper.createFromPsiElement(it) },
+                subtypesAction = { getDirectSubtypesOfFromJava(it) }
+            )
+        }
+
+        return kotlinInitialValues + javaInitialValues
+    }
+
+    private fun <T> T.computeDirectSubtypes(
+        withSelf: Boolean,
+        selfAction: (T) -> FqNameWrapper?,
+        subtypesAction: (T) -> Sequence<FqNameWrapper>,
+    ): Sequence<FqNameWrapper> {
+        val directSubtypesFromJava = subtypesAction(this)
+        return selfAction.takeIf { withSelf }?.invoke(this)?.let { sequenceOf(it) + directSubtypesFromJava } ?: directSubtypesFromJava
+    }
+
+    private fun getDirectSubtypesOfFromKotlin(fqName: FqName): Sequence<FqNameWrapper> = storage?.getSubtypesOf(fqName, false)
+        ?.map(FqNameWrapper.Companion::createFromFqName)
+        .orEmpty()
+
+    private fun getDirectSubtypesOfFromJava(compilerRefProvider: (NameEnumerator) -> CompilerRef?): Sequence<FqNameWrapper> =
+        compilerReferenceServiceBase?.getDirectInheritorsNames(compilerRefProvider)
+            ?.asSequence()
+            ?.map(FqNameWrapper.Companion::createFromSearchId)
+            .orEmpty()
+
+    private fun getDirectSubtypesOfFromJava(hierarchyElement: PsiElement): Sequence<FqNameWrapper> =
+        LanguageCompilerRefAdapter.findAdapter(hierarchyElement, true)?.let { adapter ->
+            getDirectSubtypesOfFromJava { adapter.asCompilerRef(hierarchyElement, it) }
+        }.orEmpty()
+
+    private val compilerReferenceServiceBase: CompilerReferenceServiceBase<*>?
+        get() = CompilerReferenceService.getInstanceIfEnabled(project)?.safeAs()
+
+    private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
+    private fun isInsideLibraryScope(): Boolean =
+        compilerReferenceServiceBase?.isInsideLibraryScope
+            ?: isInsideLibraryScopeThreadLocal.get()
+
+    private fun <T> computeInLibraryScope(action: () -> T): T =
+        compilerReferenceServiceBase?.computeInLibraryScope<T, Throwable>(action)
+            ?: run {
+                isInsideLibraryScopeThreadLocal.set(true)
+                try {
+                    action()
+                } finally {
+                    isInsideLibraryScopeThreadLocal.set(false)
+                }
+            }
+
+    private fun findHierarchyInLibrary(hierarchyElement: PsiElement): Set<PsiElement> {
+        val overridden: MutableSet<PsiElement> = linkedSetOf(hierarchyElement)
         val processor = Processor { clazz: PsiClass ->
-            clazz.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }
-                ?.let { runReadAction { it.qualifiedName } }
-                ?.let { overridden += FqName(it) }
-
+            clazz.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }?.let { overridden += clazz }
             true
         }
 
         HierarchySearchRequest(
-            originalElement = baseClass,
+            originalElement = hierarchyElement,
             searchScope = ProjectScope.getLibrariesScope(project),
             searchDeeply = true,
         ).searchInheritors().forEach(processor)
@@ -368,11 +454,10 @@ private fun executeOnBuildThread(compilationFinished: () -> Unit): Unit =
     }
 
 private fun extractFqNames(element: PsiElement): List<FqName>? {
-    val originalElement = element.unwrapped ?: return null
-    extractFqName(originalElement)?.let { return listOf(it) }
-    return when (originalElement) {
-        is PsiMethod -> extractFqNamesFromPsiMethod(originalElement)
-        is KtParameter -> extractFqNamesFromParameter(originalElement)
+    extractFqName(element)?.let { return listOf(it) }
+    return when (element) {
+        is PsiMethod -> extractFqNamesFromPsiMethod(element)
+        is KtParameter -> extractFqNamesFromParameter(element)
         else -> null
     }
 }
@@ -381,14 +466,14 @@ private fun extractFqName(element: PsiElement): FqName? = when (element) {
     is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
     is KtConstructor<*> -> element.getContainingClassOrObject().fqName
     is KtNamedFunction -> element.fqName
-    is KtProperty -> element.takeUnless(KtProperty::isOverridable)?.fqName
-    is PsiField -> element.takeIf { it.hasModifier(JvmModifier.STATIC) }?.getKotlinFqName()
+    is KtProperty -> element.fqName
+    is PsiField -> element.getKotlinFqName()
     else -> null
 }
 
 private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName>? {
     val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return null
-    if (parameter.containingClass()?.isData() == false) return parameterFqName.takeUnless { parameter.isOverridable }?.let(::listOf)
+    if (parameter.containingClass()?.isData() == false) return parameterFqName.let(::listOf)
 
     val parameterIndex = parameter.parameterIndex().takeUnless { it == -1 }?.plus(1) ?: return null
     return listOf(parameterFqName, FqName(parameterFqName.parent().asString() + ".component$parameterIndex"))

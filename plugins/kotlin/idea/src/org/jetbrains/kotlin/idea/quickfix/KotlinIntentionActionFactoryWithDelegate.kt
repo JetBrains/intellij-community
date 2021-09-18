@@ -21,10 +21,10 @@ abstract class KotlinSingleIntentionActionFactoryWithDelegate<E : KtElement, D :
     override fun createFixes(
         originalElementPointer: SmartPsiElementPointer<E>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> D?
+        quickFixDataFactory: (E) -> D?
     ): List<QuickFixWithDelegateFactory> = QuickFixWithDelegateFactory(actionPriority) factory@{
         val originalElement = originalElementPointer.element ?: return@factory null
-        val data = quickFixDataFactory() ?: return@factory null
+        val data = quickFixDataFactory(originalElement) ?: return@factory null
         createFix(originalElement, data)
     }.let(::listOf)
 }
@@ -35,7 +35,7 @@ abstract class KotlinIntentionActionFactoryWithDelegate<E : KtElement, D : Any> 
     protected abstract fun createFixes(
         originalElementPointer: SmartPsiElementPointer<E>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> D?
+        quickFixDataFactory: (E) -> D?
     ): List<QuickFixWithDelegateFactory>
 
     abstract fun extractFixData(element: E, diagnostic: Diagnostic): D?

@@ -7,6 +7,7 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,10 +17,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -373,7 +371,7 @@ public final class TextPatchBuilder {
   }
 
   @Nullable
-  private static String getRevisionName(@NotNull AirContentRevision revision) {
+  private static @NlsSafe String getRevisionName(@NotNull AirContentRevision revision) {
     String revisionName = revision.getRevisionNumber();
     if (!StringUtil.isEmptyOrSpaces(revisionName)) {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);

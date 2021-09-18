@@ -350,12 +350,6 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     public void dispose() { }
 
     @Override
-    public void selectNotify() { }
-
-    @Override
-    public void deselectNotify() { }
-
-    @Override
     public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override

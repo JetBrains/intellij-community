@@ -184,7 +184,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     if (message.startsWith(ioExceptionPrefix)){
       return message.substring(ioExceptionPrefix.length());
     }
-    if (message.contains("File already exists")){
+    if (message.contains(IdeBundle.message("dialog.message.file.already.exists"))){
       return message;
     }
 

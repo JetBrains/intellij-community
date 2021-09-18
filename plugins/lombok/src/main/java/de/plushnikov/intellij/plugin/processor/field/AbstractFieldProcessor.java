@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -10,9 +11,11 @@ import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,4 +124,59 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   protected abstract void generatePsiElements(@NotNull PsiField psiField,
                                               @NotNull PsiAnnotation psiAnnotation,
                                               @NotNull List<? super PsiElement> target);
+
+  protected boolean validateExistingMethods(@NotNull PsiField psiField,
+                                            @NotNull ProblemBuilder builder,
+                                            boolean isGetter) {
+
+    boolean result = true;
+    final PsiClass psiClass = psiField.getContainingClass();
+    if (null != psiClass) {
+      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+      final String fieldName = psiField.getName();
+      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+
+      filterByAccessorName(isGetter, isBoolean, accessorsInfo, fieldName, classMethods);
+
+      filterToleratedElements(classMethods);
+
+      Collection<String> allAccessorsNames = isGetter ? LombokUtils.toAllGetterNames(accessorsInfo, fieldName, isBoolean)
+                                                      : LombokUtils.toAllSetterNames(accessorsInfo, fieldName, isBoolean);
+      for (String methodName : allAccessorsNames) {
+        if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, isGetter ? 0 : 1)) {
+          final String accessorName = isGetter ? LombokUtils.getGetterName(psiField)
+                                                   : LombokUtils.getSetterName(psiField, isBoolean);
+
+          builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists"),
+                             accessorName, methodName);
+          result = false;
+        }
+      }
+    }
+    return result;
+  }
+
+  private static void filterByAccessorName(boolean isGetter,
+                                           boolean isBoolean,
+                                           AccessorsInfo accessorsInfo,
+                                           String fieldName,
+                                           Collection<PsiMethod> classMethods) {
+    String baseFieldName = StringUtil.trimStart(accessorsInfo.removePrefix(fieldName), "is");
+    classMethods.removeIf(method -> {
+      String methodName = method.getName();
+      if (!StringUtil.containsIgnoreCase(methodName, baseFieldName)) {
+        return true;
+      }
+
+      return !accessorsInfo.isFluent() && !isAccessorName(isGetter, isBoolean, methodName);
+    });
+  }
+
+  private static boolean isAccessorName(boolean isGetter, boolean isBoolean, String methodName) {
+    if (isGetter) {
+      return isBoolean && methodName.startsWith("is") || methodName.startsWith("get");
+    }
+    return methodName.startsWith("set");
+  }
 }

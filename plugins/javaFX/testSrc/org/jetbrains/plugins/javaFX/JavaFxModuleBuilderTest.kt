@@ -109,6 +109,12 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                               <id>default-cli</id>
                               <configuration>
                                   <mainClass>com.example.demo/com.example.demo.HelloApplication</mainClass>
+                                  <launcher>app</launcher>
+                                  <jlinkZipName>app</jlinkZipName>
+                                  <jlinkImageName>app</jlinkImageName>
+                                  <noManPages>true</noManPages>
+                                  <stripDebug>true</stripDebug>
+                                  <noHeaderFiles>true</noHeaderFiles>
                               </configuration>
                           </execution>
                       </executions>
@@ -144,12 +150,13 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
           }
       }
     """.trimIndent())
-
+    val dlr = "\$"
     expectFile("build.gradle", """
       plugins {
           id 'java'
           id 'application'
           id 'org.openjfx.javafxplugin' version '0.0.10'
+          id 'org.beryx.jlink' version '2.24.1'
       }
 
       group 'com.example'
@@ -183,6 +190,18 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
       test {
           useTestNG()
+      }
+      
+      jlink {
+          imageZip = project.file("${dlr}{buildDir}/distributions/app-${dlr}{javafx.platform.classifier}.zip")
+          options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+          launcher {
+              name = 'app'
+          }
+      }
+
+      jlinkZip {
+          group = 'distribution'
       }
     """.trimIndent())
 

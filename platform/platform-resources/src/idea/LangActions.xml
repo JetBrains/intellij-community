@@ -277,6 +277,14 @@
 
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
     </group>
+    <action id="Documentation.ToggleShowInPopup"
+            class="com.intellij.lang.documentation.ide.actions.ToggleShowDocsInPopupAction"/>
+    <action id="Documentation.TurnOffAutoUpdate"
+            class="com.intellij.lang.documentation.ide.actions.TurnOffAutoUpdateAction"
+            icon="AllIcons.Toolbar.Pin"
+            use-shortcut-of="QuickJavaDoc">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
 
     <group id="CodeEditorBaseGroup">
       <group id="CodeEditorViewGroup">
@@ -627,19 +635,25 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
+    <action id="SmallSpacer" class="com.intellij.ide.navigationToolbar.experimental.SmallSpacerAction"/>
+    <action id="BigSpacer" class="com.intellij.ide.navigationToolbar.experimental.BigSpacerAction"/>
+    <action id="TinySpacer" class="com.intellij.ide.navigationToolbar.experimental.TinySpacerAction"/>
 
     <group id="NewToolbarActions">
       <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
-        <separator/>
+        <reference id="BigSpacer"/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
+        <reference id="SmallSpacer"/>
         <action id="SegmentedSearchEverywhereAction" class="com.intellij.ide.navigationToolbar.experimental.SegmentedSearchEverywhereAction"/>
       </group>
       <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
+        <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
+        <reference id="SmallSpacer"/>
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
@@ -1039,8 +1053,7 @@
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"
               use-shortcut-of="EditSource"/>
-      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"
-              use-shortcut-of="Debugger.EditTypeSource"/>
+      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"/>
 
       <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
 
@@ -1100,18 +1113,19 @@
       <separator/>
       <reference ref="ViewBreakpoints"/>
       <reference ref="XDebugger.MuteBreakpoints"/>
-      <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
-        <reference ref="ForceStepOver"/>
-        <reference ref="ForceStepInto"/>
-        <reference ref="SmartStepInto"/>
-        <separator/>
-        <reference ref="RunToCursor"/>
-        <reference ref="ForceRunToCursor"/>
-        <separator/>
-        <reference ref="Pause"/>
-        <reference ref="ShowExecutionPoint"/>
-        <separator/>
-      </group>
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
+      <reference ref="ForceStepOver"/>
+      <reference ref="ForceStepInto"/>
+      <reference ref="SmartStepInto"/>
+      <separator/>
+      <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
+      <separator/>
+      <reference ref="Pause"/>
+      <reference ref="ShowExecutionPoint"/>
+      <separator/>
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -1563,8 +1577,7 @@
     <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
 
     <action id="SwitchFileBasedIndexStorageAction"
-            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"
-            text="Switch File-Based Index Storage"/>
+            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
 
     <action id="ClickLink" class="com.intellij.codeInsight.navigation.actions.ClickLinkAction"
             use-shortcut-of="GotoDeclaration" />

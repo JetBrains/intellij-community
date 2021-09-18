@@ -20,6 +20,8 @@ import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
 import training.ui.views.LearnPanel
 import training.ui.views.ModulesPanel
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.util.concurrent.TimeUnit
 import javax.swing.JLabel
 
@@ -45,6 +47,18 @@ class LearnToolWindow internal constructor(val project: Project, private val who
       setLearnPanel()
     }
     setContent(scrollPane)
+    scrollPane.addComponentListener(object: ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        if (scrollPane.viewport.view == learnPanel) {
+          learnPanel.updatePanelSize(getVisibleAreaWidth())
+        }
+      }
+    })
+  }
+
+  fun getVisibleAreaWidth(): Int {
+    val scrollWidth = scrollPane.verticalScrollBar?.size?.width ?: 0
+    return scrollPane.viewport.extentSize.width - scrollWidth
   }
 
   private fun reinitViewsInternal() {
@@ -66,7 +80,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
       val needToFindButton = restartAction() ?: return
       ApplicationManager.getApplication().executeOnPooledThread {
         val button = LearningUiUtil.findShowingComponentWithTimeout(
-          null, ActionButton::class.java, Timeout.timeout(500, TimeUnit.MILLISECONDS)
+          project, ActionButton::class.java, Timeout.timeout(500, TimeUnit.MILLISECONDS)
         ) { it.action == needToFindButton }
         invokeLater {
           gotIt.show(button, GotItTooltip.BOTTOM_MIDDLE)

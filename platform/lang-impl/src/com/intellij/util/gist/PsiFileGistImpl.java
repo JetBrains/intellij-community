@@ -16,16 +16,12 @@
 package com.intellij.util.gist;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -33,9 +29,13 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -62,27 +62,38 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   public Data getFileData(@NotNull PsiFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    if (shouldUseMemoryStorage(file)) {
+    if (GistManager.getInstance().shouldUseMemoryStorage(file)) {
       return CachedValuesManager.getManager(file.getProject()).getCachedValue(
         file, myCacheKey, () -> {
-          Data data = myCalculator.calcData(file.getProject(), file.getViewProvider().getVirtualFile());
+          Data data = myCalculator.calcData(getProjectForPersistence(file), getVirtualFile(file));
           return CachedValueProvider.Result.create(data, file, ourReindexTracker);
         }, false);
     }
 
     file.putUserData(myCacheKey, null);
-    return myPersistence.getFileData(file.getProject(), file.getVirtualFile());
+    return myPersistence.getFileData(getProjectForPersistence(file), getVirtualFile(file));
   }
 
-  private static boolean shouldUseMemoryStorage(PsiFile file) {
-    if (!(file.getVirtualFile() instanceof NewVirtualFile)) return true;
+  @Override
+  @RequiresReadLock
+  public @Nullable Supplier<Data> getUpToDateOrNull(@NotNull PsiFile file) {
+    if (GistManager.getInstance().shouldUseMemoryStorage(file)) {
+      CachedValue<Data> data = file.getUserData(myCacheKey);
+      return data != null ? data.getUpToDateOrNull() : null;
+    }
 
-    PsiDocumentManager pdm = PsiDocumentManager.getInstance(file.getProject());
-    Document document = pdm.getCachedDocument(file);
-    return document != null && (pdm.isUncommited(document) || FileDocumentManager.getInstance().isDocumentUnsaved(document));
+    return ((VirtualFileGistImpl<Data>)myPersistence).getUpToDateOrNull(getProjectForPersistence(file), getVirtualFile(file));
   }
 
-  private static PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
+  static @NotNull VirtualFile getVirtualFile(@NotNull PsiFile file) {
+    return file.getViewProvider().getVirtualFile();
+  }
+
+  protected @Nullable Project getProjectForPersistence(@NotNull PsiFile file) {
+    return file.getProject();
+  }
+
+  protected @Nullable PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFile psi = PsiManager.getInstance(project).findFile(file);
     if (!(psi instanceof PsiFileImpl) || ((PsiFileImpl)psi).isContentsLoaded()) {
       return psi;

@@ -25,7 +25,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   private long myRemoteProcessIdleTtlInMs;
   private boolean myVerboseProcessing;
   private final @NotNull List<String> myJvmArguments;
-  private @NotNull List<String> myArguments;
+  private final @NotNull List<String> myArguments;
   private final @NotNull Map<String, String> myEnv;
   private boolean myPassParentEnvs = true;
 
@@ -66,10 +66,6 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   @NotNull
   public List<String> getArguments() {
     return Collections.unmodifiableList(myArguments);
-  }
-
-  public void setArguments(@NotNull List<String> arguments) {
-    myArguments = new ArrayList<>(arguments);
   }
 
   @NotNull

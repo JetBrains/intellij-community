@@ -117,4 +117,13 @@ class KotlinSSRFunctionReplaceTest : KotlinSSRReplaceTest() {
                 """.trimIndent()
         )
     }
+
+    fun testTrailingComment() {
+        doTest(
+            searchPattern = "fun '_ID()",
+            replacePattern = "fun '_ID()",
+            match = "public fun foo() = Unit // comment",
+            result = "public fun foo() = Unit // comment"
+        )
+    }
 }

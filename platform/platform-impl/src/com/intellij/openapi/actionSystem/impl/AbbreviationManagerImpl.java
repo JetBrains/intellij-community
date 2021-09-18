@@ -12,7 +12,13 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "AbbreviationManager", storages = @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS), category = ComponentCategory.KEYMAP)
+@State(
+  name = "AbbreviationManager", storages =
+  {
+    @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS, deprecated = true),
+    @Storage("abbrevs.xml")
+  },
+  category = SettingsCategory.KEYMAP)
 public final class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
   private final Map<String, List<String>> myAbbreviation2ActionId = new HashMap<>();
   private final Map<String, Set<String>> myActionId2Abbreviations = new HashMap<>();

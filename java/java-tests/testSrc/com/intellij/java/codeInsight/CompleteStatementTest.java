@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorActionTestCase;
@@ -33,11 +32,6 @@ public class CompleteStatementTest extends EditorActionTestCase {
     super.setUp();
     mySettings = CodeStyle.getSettings(getProject());
     myJavaSettings = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_15_PREVIEW;
   }
 
   public void testAddMissingSemicolon() { doTest(); }
@@ -192,6 +186,21 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testOverloadedMethodOneOrThree3() { doTest(); }
   public void testMissingComma() { doTest(); }
   public void testInInjection() { doTest(); }
+  public void testNativeMethod() {
+    doTest();
+  }
+  public void testNativePrivateMethod() {
+    doTest();
+  }
+  public void testReturnSwitchExpression() {
+    doTest();
+  }
+  public void testReturnSwitchExpression2() {
+    doTest();
+  }
+  public void testReturnSwitchExpression3() {
+    doTest();
+  }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

@@ -55,7 +55,7 @@ kotlin {
 }
 
 application {
-    mainClass.set("ServerKt")
+    mainClass.set("me.user.application.ServerKt")
 }
 
 tasks.named<Copy>("jvmProcessResources") {

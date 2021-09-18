@@ -122,8 +122,11 @@ public class CustomDictionariesPanel extends JPanel {
   }
 
   public void apply() {
-    mySettings.setCustomDictionariesPaths(new ArrayList<>(ContainerUtil.filter(myCustomDictionariesTableView.getItems(),
-                                                                               dict -> !defaultDictionaries.contains(dict))));
+    final List<String> oldPaths = mySettings.getCustomDictionariesPaths();
+    final List<String> newPaths = new ArrayList<>(ContainerUtil.filter(myCustomDictionariesTableView.getItems(),
+                                                                       dict -> !defaultDictionaries.contains(dict)));
+    mySettings.setCustomDictionariesPaths(newPaths);
+    myManager.updateBundledDictionaries(ContainerUtil.filter(oldPaths, o -> !newPaths.contains(o)));
   }
 
   public List<String> getValues() {

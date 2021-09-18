@@ -120,19 +120,5 @@ public class MavenServerManagerTest extends MavenTestCase {
     connectorFirst.shutdown(true);
   }
 
-  private static MavenServerConnector ensureConnected(MavenServerConnector connector) {
-    assertTrue("Connector is Dummy!", connector instanceof MavenServerConnectorImpl);
-    long timeout = TimeUnit.SECONDS.toMillis(10);
-    long start = System.currentTimeMillis();
-    while (connector.getState() == MavenServerConnectorImpl.State.STARTING) {
-      if (System.currentTimeMillis() > start + timeout) {
-        throw new RuntimeException("Server connector not connected in 10 seconds");
-      }
-      EdtTestUtil.runInEdtAndWait(() -> {
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-      });
-    }
-    assertTrue(connector.checkConnected());
-    return connector;
-  }
+
 }

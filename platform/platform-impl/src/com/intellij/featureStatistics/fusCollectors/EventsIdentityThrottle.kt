@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors
 
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap
@@ -9,6 +9,7 @@ class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long
   private var oldestIdentityCache: Int = 0
   private var oldestTimestampCache: Long = Long.MAX_VALUE
 
+  @Synchronized
   fun tryPass(identity: Int, now: Long): Boolean {
 
     clearObsolete(now)
@@ -27,11 +28,13 @@ class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long
     }
   }
 
+  @Synchronized
   fun size(now: Long): Int {
     clearObsolete(now)
     return identities.size
   }
 
+  @Synchronized
   fun getOldest(now: Long): Int? {
     clearObsolete(now)
     return withOldest { oldestIdentity, _ -> oldestIdentity }

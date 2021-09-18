@@ -113,7 +113,10 @@ class JavaUSwitchEntry(
         listOf(JavaUDefaultCaseExpression(it, this))
       }
       else {
-        it.caseLabelElementList?.elements.orEmpty().filterIsInstance<PsiExpression>().map { JavaConverter.convertOrEmpty(it, this) }
+        it.caseLabelElementList?.elements.orEmpty().map { element ->
+          if (element is PsiExpression) JavaConverter.convertOrEmpty(element, this)
+          else UnknownJavaExpression(element, this)
+        }
       }
     }
   }

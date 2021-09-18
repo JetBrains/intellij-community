@@ -5,11 +5,11 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsConfigurable
+import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable
 
 internal class ConfigurePandocAction: AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.getData(CommonDataKeys.PROJECT)
-    ShowSettingsUtilImpl.showSettingsDialog(project, PandocSettingsConfigurable.ID, "")
+    ShowSettingsUtilImpl.showSettingsDialog(project, MarkdownSettingsConfigurable.ID, "")
   }
 }

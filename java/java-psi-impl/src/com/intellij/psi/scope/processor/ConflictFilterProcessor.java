@@ -96,10 +96,10 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myName = name;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == NameHint.KEY) {
-      //noinspection unchecked
       return myName != null ? (T)this : null;
     }
     return super.getHint(hintKey);

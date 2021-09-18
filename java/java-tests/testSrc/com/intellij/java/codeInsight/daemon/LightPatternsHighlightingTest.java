@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -18,7 +18,7 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
+    return JAVA_16;
   }
 
   public void testInstanceOfBasics() {
@@ -36,9 +36,6 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   public void testInstanceOfInSwitch() {
     doTest();
   }
-  public void testReassignPatternVariableJava15() {
-    doTest();
-  }
   public void testReassignPatternVariable() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
   }
@@ -49,11 +46,8 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   public void testInstanceOfNonReified() {
     doTest();
   }
-  public void testInstanceOfSubtypeJava15() {
-    doTest();
-  }
   public void testInstanceOfSubtype() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
+    doTest();
   }
 
   private void doTest() {

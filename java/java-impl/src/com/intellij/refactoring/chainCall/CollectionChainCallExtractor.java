@@ -20,10 +20,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CollectionChainCallExtractor implements ChainCallExtractor {
   @Override
-  public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType) {
+  public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, @NotNull PsiExpression expression, @Nullable PsiType expressionType) {
     PsiReferenceExpression methodExpression = call.getMethodExpression();
     if (!StreamApiUtil.isSupportedStreamElement(expressionType) ||
         !"forEach".equals(methodExpression.getReferenceName()) ||

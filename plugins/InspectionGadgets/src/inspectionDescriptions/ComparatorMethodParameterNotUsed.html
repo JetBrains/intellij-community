@@ -4,18 +4,21 @@ Reports problems in <code>Comparator.compare()</code> implementations.
 <p>The following cases are reported:</p>
 <ul>
   <li>
-    When a parameter is not used. Most likely this is a typo and the other parameter is compared
+    A parameter is not used. Most likely this is a typo and the other parameter is compared
     with itself, or the method is not implemented correctly.
   </li>
   <li>
-    When it's evident that the comparator does not return <code>0</code> for the same elements. Such comparator violates the contract
+    It's evident that the comparator does not return <code>0</code> for the same elements. Such a comparator violates the contract
     and can produce unpredictable results when equal elements are encountered. In particular,
-    sorting may fail with an exception on some data sets.</li>
+    sorting may fail with an exception on some data.</li>
 </ul>
 <p><b>Example:</b></p>
-<pre>  Comparator&lt;String&gt; lambda = (a, b) -&gt; (a.length() &gt; b.length() ? 0 :
-                Math.random() &gt; 0.5 ? (-1) : (1));
-</pre>
+<pre><code>
+  Comparator&lt;String&gt; lambda =
+    (a, b) -&gt; a.length() &gt; b.length()
+              ? 0
+              : Math.random() &gt; 0.5 ? -1 : 1;
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

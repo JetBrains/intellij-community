@@ -2,8 +2,11 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.ModifiableChildSourceEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntitySource
+import com.intellij.workspaceModel.storage.entities.SourceEntity
 import com.intellij.workspaceModel.storage.entities.addSourceEntity
+import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
+import com.intellij.workspaceModel.storage.impl.assertConsistency
+import com.intellij.workspaceModel.storage.impl.createEntityId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -105,5 +108,16 @@ class EntitySourceIndexTest {
 
     entities = builder.indexes.entitySourceIndex.getIdsByEntry(entitySource)
     assertNull(entities)
+  }
+
+  @Test(expected = AssertionError::class)
+  fun `test incorrect index`() {
+    val oldSource = SampleEntitySource("oldSource")
+    val builder = createEmptyBuilder()
+    builder.addSourceEntity("hello", oldSource)
+
+    builder.indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.getInt(SourceEntity::class.java)), oldSource)
+
+    builder.assertConsistency()
   }
 }

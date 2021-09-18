@@ -31,6 +31,13 @@ public interface VariableDescriptor {
   boolean isStable();
 
   /**
+   * @return true if the value can be captured in closure
+   */
+  default boolean canBeCapturedInClosure() {
+    return isStable();
+  }
+
+  /**
    * @return true if the value behind this descriptor is a method call which result might be computed from other sources
    */
   default boolean isCall() {

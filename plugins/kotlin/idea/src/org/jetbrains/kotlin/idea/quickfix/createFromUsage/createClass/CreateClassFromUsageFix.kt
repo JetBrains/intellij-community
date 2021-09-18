@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.ide.util.DirectoryChooserUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -29,9 +28,7 @@ import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.*
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -119,7 +116,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
             }
         }
 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             val targetParent = applicableParents.firstOrNull { element ->
                 if (element is PsiPackage) false else element.allChildren.any { it is PsiComment && it.text == "// TARGET_PARENT:" }
             } ?: classInfo.applicableParents.last()
@@ -149,7 +146,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
             directories.firstOrNull { ModuleUtilCore.findModuleForPsiElement(it) == currentModule }
                 ?: directories.firstOrNull()
 
-        val targetDirectory = if (directories.size > 1 && !ApplicationManager.getApplication().isUnitTestMode) {
+        val targetDirectory = if (directories.size > 1 && !isUnitTestMode()) {
             DirectoryChooserUtil.chooseDirectory(directories.toTypedArray(), preferredDirectory, originalFile.project, HashMap())
         } else {
             preferredDirectory
@@ -174,7 +171,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
         val className = classInfo.name
 
         if (selectedParent is SeparateFileWrapper) {
-            if (ApplicationManager.getApplication().isUnitTestMode) {
+            if (isUnitTestMode()) {
                 return doInvoke(file, editor, file)
             }
 
@@ -216,7 +213,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
                         is KtElement, is PsiClass -> selectedParent
                         is PsiPackage -> createFileByPackage(selectedParent, editor, file)
                         else -> throw KotlinExceptionWithAttachments("Unexpected element: ${selectedParent::class.java}")
-                            .withAttachment("selectedParent", selectedParent.text)
+                            .withPsiAttachment("selectedParent", selectedParent)
                     } ?: return@runWriteAction
                 val constructorInfo = ClassWithPrimaryConstructorInfo(
                     classInfo,

@@ -21,8 +21,10 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -140,7 +143,8 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
           infoLines.add(Pair.create(JavaBundle.message("type.information.locality"),
                                     refType.isLocal() ? JavaBundle.message("type.information.local.object") : ""));
           SpecialField field = refType.getSpecialField();
-          if (field != null) {
+          // ENUM_ORDINAL is not precise enough yet, and could be confusing for users
+          if (field != null && field != SpecialField.ENUM_ORDINAL) {
             infoLines.add(Pair.create(field.getPresentationName(), field.getPresentationText(refType.getSpecialFieldType(), type)));
           }
         }

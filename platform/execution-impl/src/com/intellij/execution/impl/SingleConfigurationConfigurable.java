@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.statistics.FusCollectSettingChangesRunConfiguration;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
@@ -140,8 +141,23 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
-
     RunConfiguration runConfiguration = settings.getConfiguration();
+
+    if (runConfiguration instanceof FusCollectSettingChangesRunConfiguration) {
+      RunConfiguration oldRunConfiguration = runConfiguration.clone();
+
+      performApply(settings, runConfiguration);
+      
+      ((FusCollectSettingChangesRunConfiguration)runConfiguration)
+        .collectSettingChangesOnApply((FusCollectSettingChangesRunConfiguration)oldRunConfiguration);
+    }
+    else {
+      performApply(settings, runConfiguration);
+    }
+  }
+
+  private void performApply(@NotNull RunnerAndConfigurationSettings settings,
+                            @NotNull RunConfiguration runConfiguration) throws ConfigurationException {
     settings.setName(getNameText());
     runConfiguration.setAllowRunningInParallel(myIsAllowRunningInParallel);
     myRunOnTargetPanel.apply();

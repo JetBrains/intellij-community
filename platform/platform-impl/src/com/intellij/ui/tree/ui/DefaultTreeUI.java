@@ -44,6 +44,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.SystemInfo.isMac;
@@ -160,6 +161,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   // non static
 
   private final Control control = new DefaultControl();
+  private final AtomicBoolean painting = new AtomicBoolean();
   private final DispatchThreadValidator validator = new DispatchThreadValidator();
 
   @Nullable
@@ -202,6 +204,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
   }
 
+  private void removeCachedRenderers() {
+    CellRendererPane pane = painting.get() ? null : rendererPane;
+    if (pane != null) pane.removeAll();
+  }
+
   // ComponentUI
 
   @Override
@@ -212,6 +219,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (!isValid(tree)) return;
     g = g.create();
     try {
+      painting.set(true);
       Rectangle paintBounds = g.getClipBounds();
       Insets insets = tree.getInsets();
       TreePath path = cache.getPathClosestTo(0, paintBounds.y - insets.top);
@@ -283,8 +291,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
     }
     finally {
       g.dispose();
-      // remove all renderers
-      rendererPane.removeAll();
+      painting.set(false);
+      removeCachedRenderers();
     }
   }
 
@@ -468,6 +476,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           if (component != null) {
             component.validate();
             size = component.getPreferredSize();
+            removeCachedRenderers();
           }
         }
         if (size == null) return null;

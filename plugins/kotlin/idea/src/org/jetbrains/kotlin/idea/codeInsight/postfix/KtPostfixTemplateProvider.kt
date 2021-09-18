@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
@@ -12,9 +11,11 @@ import com.intellij.psi.util.PsiTreeUtil.findElementOfClassAtRange
 import com.intellij.util.Function
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
@@ -143,7 +144,7 @@ private class KtExpressionPostfixTemplateSelector(
         }
         if (checkCanBeUsedAsValue && !element.canBeUsedAsValue()) return false
 
-        return predicate?.invoke(element, element.analyze(BodyResolveMode.PARTIAL)) ?: true
+        return predicate?.invoke(element, element.safeAnalyze(element.getResolutionFacade(), BodyResolveMode.PARTIAL)) ?: true
     }
 
     private fun KtExpression.canBeUsedAsValue() =
@@ -180,7 +181,7 @@ private class KtExpressionPostfixTemplateSelector(
 
         val result = filteredByOffset.filter(this::filterElement)
 
-        if (ApplicationManager.getApplication().isUnitTestMode && result.size > 1) {
+        if (isUnitTestMode() && result.size > 1) {
             KtPostfixTemplateProvider.previouslySuggestedExpressions = result.map { it.text }
         }
 

@@ -10,7 +10,6 @@ import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
@@ -28,6 +27,7 @@ import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBe
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.shuffledSequence
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.core.util.getLineCount
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
 import javax.swing.JFileChooser
@@ -205,6 +205,6 @@ class HighlightingBenchmarkAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
+        e.presentation.isEnabledAndVisible = isApplicationInternalMode()
     }
 }

@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.ResourcesGenerator
 import java.nio.file.Path
 import java.util.function.BiFunction
 import java.util.function.BiPredicate
+import java.util.function.Consumer
 
 /**
  * Describes layout of a plugin in the product distribution
@@ -19,7 +20,9 @@ import java.util.function.BiPredicate
 final class PluginLayout extends BaseLayout {
   final String mainModule
   String directoryName
-  BiFunction<Path, String, String> versionEvaluator = { pluginXmlFile, ideVersion -> ideVersion } as BiFunction<Path, String, String>
+  VersionEvaluator versionEvaluator = { pluginXmlFile, ideVersion, context -> ideVersion } as VersionEvaluator
+  Consumer<Path> pluginXmlPatcher = { } as Consumer<Path>
+  List<Pair<String, ResourcesGenerator>> moduleOutputPatches = []
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
   final List<String> pathsToScramble = new ArrayList<>()
@@ -139,6 +142,23 @@ final class PluginLayout extends BaseLayout {
     }
 
     /**
+     * @param binPathRelativeToCommunity path to resource file or directory relative to the intellij-community repo root
+     * @param outputPath target path relative to the plugin root directory
+     */
+    def withBin(String binPathRelativeToCommunity, String outputPath, boolean skipIfDoesntExist = false) {
+      withGeneratedResources(new ResourcesGenerator() {
+        @Override
+        File generateResources(BuildContext context) {
+          def file = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).toFile()
+          if (!skipIfDoesntExist && !file.exists()) {
+            throw new IllegalStateException("'$file' doesn't exist")
+          }
+          return file.exists() ? file : null
+        }
+      }, outputPath)
+    }
+
+    /**
      * @param resourcePath path to resource file or directory relative to the plugin's main module content root
      * @param relativeOutputPath target path relative to the plugin root directory
      */
@@ -170,15 +190,21 @@ final class PluginLayout extends BaseLayout {
     }
 
     /**
-     * By default, version of a plugin is equal to the build number of the IDE it's built with. This method allows to specify custom version evaluator.
-     * In {@linkplain BiFunction}:
-     * <ol>
-     *   <li> the first {@linkplain File} argument is the plugin.xml file.
-     *   <li> the second {@linkplain String} argument is the default version (build number of the IDE).
-     * </ol>
+     * Patches module output with content produced {@code generator}
      */
-    void withCustomVersion(BiFunction<Path, String, String> versionEvaluator) {
+    void withModuleOutputPatches(String moduleName, ResourcesGenerator generator) {
+      layout.moduleOutputPatches.add(Pair.create(moduleName, generator))
+    }
+
+    /**
+     * By default, version of a plugin is equal to the build number of the IDE it's built with. This method allows to specify custom version evaluator.
+     */
+    void withCustomVersion(VersionEvaluator versionEvaluator) {
       layout.versionEvaluator = versionEvaluator
+    }
+
+    void withPluginXmlPatcher(Consumer<Path> pluginXmlPatcher) {
+      layout.pluginXmlPatcher = pluginXmlPatcher
     }
 
     /**
@@ -254,5 +280,9 @@ final class PluginLayout extends BaseLayout {
     void filterScrambleClasspath(BiPredicate<BuildContext, File> filter) {
       layout.scrambleClasspathFilter = filter
     }
+  }
+
+  interface VersionEvaluator {
+    String evaluate(Path pluginXml, String ideBuildVersion, BuildContext context)
   }
 }

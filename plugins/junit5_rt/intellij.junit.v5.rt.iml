@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="module" module-name="intellij.java.rt" />
-    <orderEntry type="library" scope="PROVIDED" name="junit5_rt" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
   </component>
 </module>

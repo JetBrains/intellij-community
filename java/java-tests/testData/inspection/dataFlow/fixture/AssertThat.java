@@ -106,7 +106,7 @@ class Contracts {
   void testString(String str, String str2) {
     if (Math.random() > 0.5) {
       Assertions.assertThat(str).isEmpty();
-      System.out.println(str.<warning descr="The call to 'charAt' always fails as index is out of bounds">charAt</warning>(0));
+      System.out.println(str.<warning descr="The call to 'charAt' always fails as an argument is out of bounds">charAt</warning>(0));
     }
     Assertions.assertThat(str2).isNotEmpty();
     if (<warning descr="Condition 'str2.length() == 0' is always 'false'">str2.length() == 0</warning>) {}
@@ -116,7 +116,7 @@ class Contracts {
   void testList(List<String> list, List<String> list2) {
     if (Math.random() > 0.5) {
       Assertions.assertThat(list).isEmpty();
-      System.out.println(list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(0));
+      System.out.println(list.<warning descr="The call to 'get' always fails as an argument is out of bounds">get</warning>(0));
     }
     Assertions.assertThat(list2).isNotEmpty();
     if (<warning descr="Condition 'list2.size() == 0' is always 'false'">list2.size() == 0</warning>) {}

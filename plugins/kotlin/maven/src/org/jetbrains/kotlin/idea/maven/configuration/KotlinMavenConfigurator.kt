@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -276,7 +277,7 @@ protected constructor(
         module: Module,
         feature: LanguageFeature,
         state: LanguageFeature.State,
-        messageTitle: String
+        @NlsContexts.DialogTitle messageTitle: String
     ): PsiElement? {
         val psi = findModulePomFile(module) as? XmlFile ?: return null
         val pom = PomFile.forFileOrNull(psi) ?: return null
@@ -316,7 +317,7 @@ protected constructor(
             return WritingAccessProvider.isPotentiallyWritable(file.virtualFile, null)
         }
 
-        private fun showErrorMessage(project: Project, message: String?) {
+        private fun showErrorMessage(project: Project, @NlsContexts.DialogMessage message: String?) {
             val cantConfigureAutomatically = KotlinMavenBundle.message("error.cant.configure.maven.automatically")
             val seeInstructions = KotlinMavenBundle.message("error.see.installation.instructions")
 

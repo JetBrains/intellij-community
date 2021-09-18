@@ -206,13 +206,13 @@ public class LongRangeKnownMethods {
 
   void testEmptyListGet(List<String> list) {
     if (list.isEmpty()) {
-      System.out.println(list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(0));
+      System.out.println(list.<warning descr="The call to 'get' always fails as an argument is out of bounds">get</warning>(0));
     }
   }
 
   void testBoundError(List<String> list) {
     if (list.size() < 10) {
-      System.out.println(list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(10));
+      System.out.println(list.<warning descr="The call to 'get' always fails as an argument is out of bounds">get</warning>(10));
     }
   }
 
@@ -328,7 +328,7 @@ public class LongRangeKnownMethods {
   }
 
   void testDate(Date d) {
-    d.<warning descr="The call to 'setMonth' always fails as index is out of bounds">setMonth</warning>(12);
+    d.<warning descr="The call to 'setMonth' always fails as an argument is out of bounds">setMonth</warning>(12);
   }
 
   void testSkip(InputStream is, int amount) throws IOException {

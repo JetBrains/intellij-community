@@ -25,7 +25,7 @@ class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15
+    return JAVA_16
   }
 
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"

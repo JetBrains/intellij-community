@@ -5,7 +5,6 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.openapi.util.TextRange
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 fun html(body: BODY.() -> Unit) = createHTML(false).html { body { body(this) } }
@@ -53,11 +52,5 @@ fun removeHtml(_content: TextContent?): TextContent? {
     content = content.markUnknown(TextRange(if (openingTag < 0) matcher.start() else openingTag, matcher.end()))
   }
 
-  while (true) {
-    val matcher: Matcher = anyTag.matcher(content)
-    if (!matcher.find()) break
-
-    content = content.markUnknown(TextRange(matcher.start(), matcher.end()))
-  }
-  return content
+  return content.excludeRanges(Text.allOccurrences(anyTag, content).map { TextContent.Exclusion.markUnknown(it) })
 }

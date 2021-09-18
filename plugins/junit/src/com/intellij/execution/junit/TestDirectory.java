@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -172,6 +173,12 @@ class TestDirectory extends TestPackage {
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
     final PsiDirectory directory = getDirectory(data);
     return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
+  }
+
+  @Override
+  protected @NotNull String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+    PsiPackage aPackage = getPackage(data);
+    return aPackage != null ? aPackage.getQualifiedName() : "";
   }
 
   private PsiDirectory getDirectory(JUnitConfiguration.Data data) throws CantRunException {

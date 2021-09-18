@@ -962,11 +962,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     }
 
     @Override
-    public void refresh() {
-      myOptionsUi.refresh();
-    }
-
-    @Override
     public void saveState() {
       myOptionsUi.saveState();
     }

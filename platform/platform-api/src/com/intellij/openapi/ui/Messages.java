@@ -39,7 +39,6 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * Provides several default notification dialogs ("OK|Cancel") as well as simple input dialogs.
  */
 @ApiStatus.NonExtendable
-@SuppressWarnings("DeprecatedIsStillUsed")
 public class Messages {
   public static final int OK = MessageConstants.OK;
   public static final int YES = MessageConstants.YES;
@@ -291,7 +290,7 @@ public class Messages {
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    return showDialog(message, title, options, defaultOptionIndex, defaultOptionIndex, icon, doNotAskOption);
+    return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
   }
 
   /**

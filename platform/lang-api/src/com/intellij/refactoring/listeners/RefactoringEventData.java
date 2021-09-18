@@ -30,7 +30,7 @@ public class RefactoringEventData extends UserDataHolderBase {
   public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("element");
   public static final Key<String[]> STRING_PROPERTIES = Key.create("stringProperties");
   public static final Key<PsiElement[]> PSI_ELEMENT_ARRAY_KEY = Key.create("elementArray");
-  public static final Key<Collection<UsageInfo>> USAGE_INFOS_KEY = Key.create("usageInfos");
+  public static final Key<Collection<? extends UsageInfo>> USAGE_INFOS_KEY = Key.create("usageInfos");
 
   public void addElement(PsiElement element) {
     putUserData(PSI_ELEMENT_KEY, element);
@@ -44,7 +44,7 @@ public class RefactoringEventData extends UserDataHolderBase {
     addElements(elements);
   }
   
-  public void addElements(Collection<PsiElement> elements) {
+  public void addElements(Collection<? extends PsiElement> elements) {
     putUserData(PSI_ELEMENT_ARRAY_KEY, elements.toArray(PsiElement.EMPTY_ARRAY));
   }
   
@@ -52,7 +52,7 @@ public class RefactoringEventData extends UserDataHolderBase {
     putUserData(PSI_ELEMENT_ARRAY_KEY, elements);
   }
 
-  public void addUsages(Collection<UsageInfo> usageInfos) {
+  public void addUsages(Collection<? extends UsageInfo> usageInfos) {
     putUserData(USAGE_INFOS_KEY, usageInfos);
   }
 

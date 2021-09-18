@@ -24,7 +24,7 @@ class PackageBasedCallChecker(private val supportedPackage: String) : StreamCall
         shouldSupportResult: Boolean
     ): Boolean {
         val resultType = expression.resolveType()
-        return shouldSupportResult == isSupportedType(resultType)
+        return resultType != null &&  shouldSupportResult == isSupportedType(resultType)
     }
 
     private fun checkReceiverSupported(expression: KtCallExpression): Boolean {

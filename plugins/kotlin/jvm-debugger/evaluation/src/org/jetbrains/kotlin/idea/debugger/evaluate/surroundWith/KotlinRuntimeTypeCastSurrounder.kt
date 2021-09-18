@@ -6,8 +6,7 @@ import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.impl.DebuggerContextImpl
-import com.intellij.openapi.application.Result
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.progress.ProgressIndicator
@@ -52,6 +51,7 @@ class KotlinRuntimeTypeCastSurrounder : KotlinExpressionSurrounder() {
         return null
     }
 
+    @Suppress("DialogTitleCapitalization")
     override fun getTemplateDescription(): String {
         return KotlinDebuggerEvaluationBundle.message("surround.with.runtime.type.cast.template")
     }
@@ -70,28 +70,26 @@ class KotlinRuntimeTypeCastSurrounder : KotlinExpressionSurrounder() {
 
             val project = myEditor.project
             DebuggerInvocationUtil.invokeLater(project, Runnable {
-                object : WriteCommandAction<Any>(project, JavaDebuggerBundle.message("command.name.surround.with.runtime.cast")) {
-                    override fun run(result: Result<in Any>) {
-                        try {
-                            val factory = KtPsiFactory(myElement.project)
+                writeCommandAction(project).withName(JavaDebuggerBundle.message("command.name.surround.with.runtime.cast")).run<Nothing> {
+                    try {
+                        val factory = KtPsiFactory(myElement.project)
 
-                            val fqName = DescriptorUtils.getFqName(type.constructor.declarationDescriptor!!)
-                            val parentCast = factory.createExpression("(expr as " + fqName.asString() + ")") as KtParenthesizedExpression
-                            val cast = parentCast.expression as KtBinaryExpressionWithTypeRHS
-                            cast.left.replace(myElement)
-                            val expr = myElement.replace(parentCast) as KtExpression
+                        val fqName = DescriptorUtils.getFqName(type.constructor.declarationDescriptor!!)
+                        val parentCast = factory.createExpression("(expr as " + fqName.asString() + ")") as KtParenthesizedExpression
+                        val cast = parentCast.expression as KtBinaryExpressionWithTypeRHS
+                        cast.left.replace(myElement)
+                        val expr = myElement.replace(parentCast) as KtExpression
 
-                            ShortenReferences.DEFAULT.process(expr)
+                        ShortenReferences.DEFAULT.process(expr)
 
-                            val range = expr.textRange
-                            myEditor.selectionModel.setSelection(range.startOffset, range.endOffset)
-                            myEditor.caretModel.moveToOffset(range.endOffset)
-                            myEditor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
-                        } finally {
-                            release()
-                        }
+                        val range = expr.textRange
+                        myEditor.selectionModel.setSelection(range.startOffset, range.endOffset)
+                        myEditor.caretModel.moveToOffset(range.endOffset)
+                        myEditor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+                    } finally {
+                        release()
                     }
-                }.execute()
+                }
             }, myProgressIndicator.modalityState)
         }
 

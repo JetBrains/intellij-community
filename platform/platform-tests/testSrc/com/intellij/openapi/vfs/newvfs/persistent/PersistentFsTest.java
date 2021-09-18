@@ -199,14 +199,13 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     String entryUrl = rootUrl + JarFile.MANIFEST_NAME;
 
     int[] logCount = {0};
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public boolean processWarn(@NotNull String category, String message, Throwable t) {
         if (message.contains(jarFile.getName())) logCount[0]++;
         return super.processWarn(category, message, t);
       }
-    });
-    try {
+    }, () -> {
       VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(rootUrl);
       assertNotNull(jarRoot);
       assertTrue(jarRoot.isValid());
@@ -220,10 +219,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       assertTrue(jarRoot.isValid());
       assertEquals(1, jarRoot.getChildren().length);
       assertNotNull(VirtualFileManager.getInstance().findFileByUrl(entryUrl));
-    }
-    finally {
-      LoggedErrorProcessor.restoreDefaultProcessor();
-    }
+    });
 
     assertEquals(1, logCount[0]);
   }
@@ -329,6 +325,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     ManagingFS managingFS = ManagingFS.getInstance();
     int globalModCount = managingFS.getFilesystemModificationCount();
     int parentModCount = managingFS.getModificationCount(vFile.getParent());
+    int fileModCount = managingFS.getModificationCount(vFile);
     int inSessionModCount = managingFS.getModificationCount();
 
     FSRecords.force();
@@ -341,7 +338,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       }
     });
 
-    assertEquals(globalModCount, managingFS.getModificationCount(vFile));
+    assertEquals(fileModCount, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
@@ -354,7 +351,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     FSRecords.setTimestamp(fileId, FSRecords.getTimestamp(fileId));
     FSRecords.setLength(fileId, FSRecords.getLength(fileId));
 
-    assertEquals(globalModCount, managingFS.getModificationCount(vFile));
+    assertEquals(fileModCount, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());

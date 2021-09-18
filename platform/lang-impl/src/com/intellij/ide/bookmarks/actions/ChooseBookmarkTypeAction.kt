@@ -4,7 +4,7 @@ package com.intellij.ide.bookmarks.actions
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmarks.BookmarkBundle.message
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.popup.PopupState

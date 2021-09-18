@@ -72,7 +72,9 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
         String relativePath = VfsUtilCore.getRelativePath(fromParent, fromContentRoot, File.separatorChar);
         assert relativePath != null;
 
-        relativePath += File.separatorChar;
+        if (!relativePath.isEmpty()) {
+          relativePath += File.separatorChar;
+        }
         if (!fromPath.getName().equals(toPath.getName())) {
           relativePath += fromPath.getName();
         }
@@ -100,10 +102,8 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     result.append(module.getName());
     result.append("] ");
     result.append(contentRoot.getName());
-    if (!relativePath.isEmpty()) {
-      result.append(File.separatorChar);
-      result.append(relativePath);
-    }
+    result.append(File.separatorChar);
+    result.append(relativePath);
     return result.toString();
   }
 }

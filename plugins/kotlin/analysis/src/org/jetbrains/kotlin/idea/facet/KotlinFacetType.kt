@@ -7,6 +7,7 @@ import com.intellij.facet.FacetTypeId
 import com.intellij.facet.FacetTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
 import org.jetbrains.kotlin.idea.KotlinIcons
 import javax.swing.Icon
@@ -16,6 +17,7 @@ abstract class KotlinFacetType<C : KotlinFacetConfiguration> :
     companion object {
         const val ID = "kotlin-language"
         val TYPE_ID = FacetTypeId<KotlinFacet>(ID)
+        @NlsSafe
         const val NAME = "Kotlin"
 
         val INSTANCE

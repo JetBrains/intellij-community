@@ -79,7 +79,7 @@ public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
       checkConvertibleTypes(call, call.getArgumentList().getExpressions()[0], qualifierCall.getArgumentList().getExpressions()[0]);
     }
 
-    private void processAssertHint(@Nullable AssertHint<PsiExpression> assertHint, @NotNull PsiMethodCallExpression expression) {
+    private void processAssertHint(@Nullable AssertHint assertHint, @NotNull PsiMethodCallExpression expression) {
       if (assertHint == null) return;
       PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression secondArgument = assertHint.getSecondArgument();

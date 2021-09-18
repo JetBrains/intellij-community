@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
 
 @ApiStatus.Internal
-public final class UnindexedFilesUpdater extends DumbModeTask {
+public class UnindexedFilesUpdater extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
@@ -345,7 +345,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private List<IndexableFilesIterator> getOrderedProviders() {
     if (myPredefinedIndexableFilesIterators != null) return myPredefinedIndexableFilesIterators;
 
-    List<IndexableFilesIterator> originalOrderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
+    List<IndexableFilesIterator> originalOrderedProviders = myIndex.getIndexableFilesProviders(myProject);
 
     List<IndexableFilesIterator> orderedProviders = new ArrayList<>();
     originalOrderedProviders.stream()
@@ -401,9 +401,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
       List<FilePropertyPusher<?>> pushers;
       Object[] moduleValues;
-      if (origin instanceof ModuleRootOrigin) {
+      if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
         pushers = FilePropertyPusher.EP_NAME.getExtensionList();
-        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, (ModuleRootOrigin)origin));
+        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
       }
       else {
         pushers = null;
@@ -505,6 +505,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
     delayIndexingInTestsIfNecessary();
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
+    performScanningAndIndexing(indicator);
+  }
+
+  protected @NotNull ProjectIndexingHistory performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
     ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject, myIndexingReason);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject);
@@ -526,6 +530,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       projectIndexingHistory.getTimes().setTotalUpdatingTime(System.nanoTime() - projectIndexingHistory.getTimes().getTotalUpdatingTime());
       IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
     }
+    return projectIndexingHistory;
   }
 
   private static void delayIndexingInTestsIfNecessary() {

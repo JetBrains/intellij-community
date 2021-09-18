@@ -385,13 +385,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
   }
 
   private void scheduleStructureRequest(final Runnable r) {
-    if (isUnitTestMode()) {
-      if (myStructure != null) {
-        r.run();
-      }
-      return;
-    }
-
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID);
     if (toolWindow == null) return;
 

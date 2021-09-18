@@ -34,6 +34,7 @@ class AndroidPlugin(context: Context) : Plugin(context) {
             KotlinNewProjectWizardBundle.message("plugin.android.setting.sdk"),
             neededAtPhase = GenerationPhase.PROJECT_GENERATION,
         ) {
+            tooltipText=KotlinNewProjectWizardBundle.message("plugin.android.setting.sdk.tooltip")
             isSavable = true
             isAvailable = isAndroidContainingProject
             shouldExists()

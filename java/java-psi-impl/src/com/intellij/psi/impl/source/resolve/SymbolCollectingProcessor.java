@@ -16,10 +16,10 @@ public class SymbolCollectingProcessor implements PsiScopeProcessor, ElementClas
   private final MostlySingularMultiMap<String, ResultWithContext> myResult = new MostlySingularMultiMap<>();
   private PsiElement myCurrentFileContext;
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
-      //noinspection unchecked
       return (T)this;
     }
     return null;

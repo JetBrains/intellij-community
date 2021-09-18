@@ -7,7 +7,7 @@ import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -92,13 +92,13 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
     result.add(ScratchesSearchScope.getScratchesScope(project));
 
-    GlobalSearchScope recentFilesScope = recentFilesScope(project, false);
+    SearchScope recentFilesScope = recentFilesScope(project, false);
     ContainerUtil.addIfNotNull(
-      result, recentFilesScope != GlobalSearchScope.EMPTY_SCOPE ? recentFilesScope :
+      result, !SearchScope.isEmptyScope(recentFilesScope) ? recentFilesScope :
               showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()) : null);
-    GlobalSearchScope recentModFilesScope = recentFilesScope(project, true);
+    SearchScope recentModFilesScope = recentFilesScope(project, true);
     ContainerUtil.addIfNotNull(
-      result, recentModFilesScope != GlobalSearchScope.EMPTY_SCOPE ? recentModFilesScope :
+      result, !SearchScope.isEmptyScope(recentModFilesScope) ? recentModFilesScope :
               showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName()) : null);
     GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
     ContainerUtil.addIfNotNull(
@@ -126,7 +126,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
         if (!PlatformUtils.isCidr() && !PlatformUtils.isRider()) { // TODO: have an API to disable module scopes.
           Module module = ModuleUtilCore.findModuleForPsiElement(dataContextElement);
           if (module == null) {
-            module = LangDataKeys.MODULE.getData(dataContext);
+            module = PlatformCoreDataKeys.MODULE.getData(dataContext);
           }
           if (module != null && !ModuleType.isInternal(module)) {
             result.add(module.getModuleScope());
@@ -236,13 +236,13 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
   }
 
   @NotNull
-  public static GlobalSearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
+  public static SearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
     String name = changedOnly ? getRecentlyChangedFilesScopeName() : getRecentlyViewedFilesScopeName();
     List<VirtualFile> files = changedOnly ? IdeDocumentHistory.getInstance(project).getChangedFiles() :
                               JBIterable.from(EditorHistoryManager.getInstance(project).getFileList())
                                 .append(FileEditorManager.getInstance(project).getOpenFiles()).unique().toList();
 
-    return files.isEmpty() ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.filesScope(project, files, name);
+    return files.isEmpty() ? LocalSearchScope.EMPTY : GlobalSearchScope.filesScope(project, files, name);
   }
 
   @Nullable

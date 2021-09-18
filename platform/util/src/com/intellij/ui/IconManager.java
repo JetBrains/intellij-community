@@ -44,16 +44,6 @@ public interface IconManager {
   @ApiStatus.Internal
   @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags);
 
-  /**
-   * @deprecated Method just for backward compatibility (old generated icon classes).
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
-    return loadRasterizedIcon(path.startsWith("/") ? path.substring(1) : path, aClass.getClassLoader(), cacheKey, flags);
-  }
-
   default @NotNull Icon createEmptyIcon(@NotNull Icon icon) {
     return icon;
   }

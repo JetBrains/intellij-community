@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 
 /**
  * Extension point for create additional UI configuration for maven import settings.
+ * Use on maven import UI tab (File | Settings | Build, Execution, Deployment | Build Tools | Maven | Importing)
+ * {@link MavenImportingConfigurable}
  */
 public interface AdditionalMavenImportingSettings {
 

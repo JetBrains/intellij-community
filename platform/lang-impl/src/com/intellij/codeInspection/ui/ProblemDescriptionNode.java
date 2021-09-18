@@ -89,7 +89,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (descriptor == null) return null;
 
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-    String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, false);
+    String message = ProblemDescriptorUtil.renderDescriptor(descriptor, element, ProblemDescriptorUtil.NONE).getTooltip();
     myMessage = XmlStringUtil.isWrappedInHtml(message) ? message : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
     return myMessage;
   }

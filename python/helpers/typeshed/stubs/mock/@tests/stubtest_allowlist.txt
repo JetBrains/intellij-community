@@ -1,0 +1,7 @@
+mock.NonCallableMock.__new__
+mock.NonCallableMock.assert_called
+mock.NonCallableMock.assert_called_once
+mock.NonCallableMock.assert_called_once_with
+mock.NonCallableMock.assert_called_with
+mock.NonCallableMock.assert_not_called
+mock.patch

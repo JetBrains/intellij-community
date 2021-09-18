@@ -43,7 +43,7 @@ static def splitJbrBuild(String jreBuild, String version) {
 
 def jbrTasks(String defaultBuild, int version, String targetOs, String targetArch, String forcedPrefix) {
   platformsToDownload(targetOs).each { platform ->
-    archToDownload(platform, targetArch).each { arch ->
+    archToDownload(platform, targetArch, version).each { arch ->
       prefixes(arch, forcedPrefix).each { prefix ->
         def jbrBuild = project.ext.has("jreBuild_${platform}_${arch}") ? project.ext["jreBuild_${platform}_${arch}"] :
                        (project.ext.has("jreBuild_${platform}") ? project.ext["jreBuild_${platform}"] : defaultBuild)
@@ -55,12 +55,6 @@ def jbrTasks(String defaultBuild, int version, String targetOs, String targetArc
   }
 }
 
-@SuppressWarnings("GrMethodMayBeStatic")
-def jreUrl() {
-  // base url of TeamCity build to download JRE from
-  System.getProperty('intellij.jre.teamcity.build.url') ?: 'https://cache-redirector.jetbrains.com/intellij-jbr'
-}
-
 def downloadJbrTask(String artifactName, String build) {
   def outputFile = "${jbreOutputDir}/${artifactName}.tar.gz"
   task("download${artifactName.capitalize()}") {
@@ -69,7 +63,7 @@ def downloadJbrTask(String artifactName, String build) {
     doLast {
       logger.info("Downloading $artifactName to $outputFile")
       download {
-        src "${jreUrl()}/${artifactName}.tar.gz"
+        src "https://cache-redirector.jetbrains.com/intellij-jbr/${artifactName}.tar.gz"
         dest outputFile
         tempAndMove true
         connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
@@ -96,11 +90,17 @@ enum Arch {
   x86, x64, aarch64
 }
 
-static def archToDownload(String platform, String targetArch) {
+static def archToDownload(String platform, String targetArch, int jbrVersion) {
   if (targetArch != null) {
     return [Arch.valueOf(targetArch)]
   }
-  platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64, Arch.aarch64]
+  if (platform == 'osx') {
+    return [Arch.x64, Arch.aarch64]
+  }
+  if (jbrVersion > 11) {
+    return [Arch.x64]
+  }
+  return [Arch.x86, Arch.x64]
 }
 
 /**

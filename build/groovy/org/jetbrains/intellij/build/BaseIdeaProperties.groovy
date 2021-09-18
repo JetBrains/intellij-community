@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -74,7 +75,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.eclipse",
     "intellij.platform.langInjection",
     "intellij.java.debugger.streams",
-    "intellij.android.androidCwm",
     "intellij.android.smali",
     "intellij.completionMlRanking",
     "intellij.completionMlRankingModels",
@@ -87,7 +87,9 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.grazie",
     "intellij.featuresTrainer",
     "intellij.vcs.git.featuresTrainer",
-    "intellij.lombok"
+    "intellij.lombok",
+    "intellij.searchEverywhereMl",
+    KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   ]
 
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
@@ -101,7 +103,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/java/lib/jshell-frontend.jar"                      : "9",
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
-    "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
     "plugins/Groovy/lib/groovy-rt.jar"                          : "1.6",
     "plugins/Groovy/lib/groovy-constants-rt.jar"                : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",
@@ -161,17 +162,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",
-      "kotlin.idea"
     ]
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
 
     isAntRequired = true
-  }
-
-  @Override
-  List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
-    return [context.kotlinBinaries.setUpPlugin(context)]
   }
 
   @Override

@@ -3,65 +3,32 @@ package org.intellij.plugins.markdown.settings.pandoc
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
 import java.io.File
 
-class PandocExecutableDetector {
-  private val UNIX_PATHS = listOf("/usr/local/bin", "/opt/local/bin", "/usr/bin", "/opt/bin")
-  private val UNIX_EXECUTABLE = "pandoc"
-  private val WIN_EXECUTABLE = "pandoc.exe"
-  private val WIN_PANDOC_DIR_NAME = "Pandoc"
-  private val WIN_PATHS = lazy {
+object PandocExecutableDetector {
+  private const val WIN_EXECUTABLE = "pandoc.exe"
+  private const val WIN_PANDOC_DIR_NAME = "Pandoc"
+  private const val UNIX_EXECUTABLE = "pandoc"
+
+  private val UNIX_PATHS by lazy {
     listOf(
-      EnvironmentUtil.getValue("LOCALAPPDATA"),
-      EnvironmentUtil.getValue("ProgramFiles"),
-      EnvironmentUtil.getValue("ProgramFiles(x86)"),
-      EnvironmentUtil.getValue("HOMEPATH")
+      "/usr/local/bin",
+      "/opt/local/bin",
+      "/usr/bin",
+      "/opt/bin"
     )
   }
 
-  var isCanceled = false
-    private set
-
-  fun tryToGetPandocVersion(project: Project, executable: String = "pandoc"): String? {
-    val cmd = GeneralCommandLine(executable, "-v")
-    var pandocVersion: String? = null
-
-    object : Task.Modal(project, MarkdownBundle.message("markdown.settings.pandoc.executable.version.process"), true) {
-      private lateinit var output: ProcessOutput
-
-      override fun run(indicator: ProgressIndicator) {
-        output = ExecUtil.execAndGetOutput(cmd)
-      }
-
-      override fun onThrowable(error: Throwable) {
-        MarkdownNotifier.notifyPandocNotDetected(project)
-      }
-
-      override fun onCancel() {
-        isCanceled = true
-      }
-
-      override fun onSuccess() {
-        if (output.stderr.isEmpty()) {
-          MarkdownNotifier.notifyPandocDetected(project)
-          pandocVersion = output.stdoutLines.first()
-        }
-        else {
-          MarkdownNotifier.notifyPandocDetectionFailed(project, output.stderr)
-        }
-      }
-    }.queue()
-
-    return pandocVersion
+  fun obtainPandocVersion(project: Project, executable: String = "pandoc"): String? {
+    return ProgressManager.getInstance().run(GetVersionPandocTask(project, executable))
   }
 
   fun detect(): String {
@@ -78,24 +45,49 @@ class PandocExecutableDetector {
     }
   }
 
-  private fun detectForUnix(): String? {
-    UNIX_PATHS.forEach {
-      val file = File(it, UNIX_EXECUTABLE)
-      if (file.exists()) return file.path
-    }
-
-    return null
-  }
-
-  private fun detectForWindows(): String? {
-    WIN_PATHS.value.forEach {
-      it?.let { basePath ->
-        val path = File(basePath, WIN_PANDOC_DIR_NAME)
-        val file = File(path, WIN_EXECUTABLE)
-        if (file.exists()) return file.path
+  private class GetVersionPandocTask(project: Project, private val executableName: String = "pandoc"): Task.WithResult<String?, Exception>(
+    project,
+    MarkdownBundle.message("markdown.settings.pandoc.executable.version.process"),
+    true
+  ) {
+    override fun compute(indicator: ProgressIndicator): String? {
+      val command = GeneralCommandLine(executableName, "-v")
+      try {
+        val output = ExecUtil.execAndGetOutput(command).takeIf { it.stderr.isEmpty() }
+        return output?.stdoutLines?.let(::extractVersion)
+      } catch (exception: Throwable) {
+        return null
       }
     }
 
+    private fun extractVersion(lines: List<String>): String? {
+      val line = lines.first()
+      val firstLinePrefix = "pandoc "
+      if (!line.startsWith(firstLinePrefix)) {
+        return null
+      }
+      return line.substringAfter(firstLinePrefix)
+    }
+  }
+
+  private fun detectForUnix(): String? {
+    return UNIX_PATHS.asSequence().map { File(it, UNIX_EXECUTABLE) }.firstOrNull { it.exists() }?.path
+  }
+
+  private fun detectForWindows(): String? {
+    val paths = listOf(
+      EnvironmentUtil.getValue("LOCALAPPDATA"),
+      EnvironmentUtil.getValue("ProgramFiles"),
+      EnvironmentUtil.getValue("ProgramFiles(x86)"),
+      EnvironmentUtil.getValue("HOMEPATH")
+    )
+    for (basePath in paths) {
+      val path = File(basePath, WIN_PANDOC_DIR_NAME)
+      val file = File(path, WIN_EXECUTABLE)
+      if (file.exists()) {
+        return file.path
+      }
+    }
     return null
   }
 }

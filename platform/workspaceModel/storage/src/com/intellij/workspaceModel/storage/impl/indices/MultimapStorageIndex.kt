@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl.indices
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.copy
 import com.intellij.workspaceModel.storage.impl.containers.putAll
 import org.jetbrains.annotations.TestOnly
@@ -22,7 +23,7 @@ open class MultimapStorageIndex private constructor(
   class MutableMultimapStorageIndex private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
     override var index: BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
-  ) : MultimapStorageIndex(index) {
+  ) : MultimapStorageIndex(index), WorkspaceMutableIndex<PersistentEntityId<*>> {
 
     private var freezed = true
 
@@ -73,6 +74,16 @@ open class MultimapStorageIndex private constructor(
         if (other is MutableMultimapStorageIndex) other.freezed = true
         return MutableMultimapStorageIndex(other.index)
       }
+    }
+
+    override fun index(entity: WorkspaceEntityData<*>, data: PersistentEntityId<*>) {
+      val id = entity.createEntityId()
+      this.index(id, data)
+    }
+
+    override fun remove(entity: WorkspaceEntityData<*>, data: PersistentEntityId<*>) {
+      val id = entity.createEntityId()
+      this.remove(id, data)
     }
   }
 }

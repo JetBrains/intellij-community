@@ -148,7 +148,12 @@ def jbrUrl(String jbrVersion, String jbrBuild, String jbrArtifactPrefix) {
   def (update, buildNumber) = splitJbrBuild(jbrBuild, jbrVersion)
   // base url of TeamCity build to download JBR from
   def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build.url')
-  "${teamCityBuild ?: jbrRepo}/${jbrArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+  if (teamCityBuild != null) {
+    "${teamCityBuild}/${jbrArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz?guest=1"
+  }
+  else {
+    "${jbrRepo}/${jbrArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+  }
 }
 
 static def currentPlatformName() {

@@ -41,7 +41,7 @@ public class InheritorRenamer extends AutomaticRenamer {
 
   @Override
   public String getDialogDescription() {
-    return JavaRefactoringBundle.message("rename.inheritors.with.the.following.names.to");
+    return JavaRefactoringBundle.message("rename.inheritors.with.the.following.names.to.title");
   }
 
   @Override

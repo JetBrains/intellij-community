@@ -9,6 +9,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -510,6 +511,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
               if (myShowComponent == component) {
                 stopLoading();
                 showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
+                PluginManagerUsageCollector.pluginCardOpened(component.getPluginDescriptor(), component.getGroup());
+
               }
             }, ModalityState.stateForComponent(component));
           });
@@ -518,6 +521,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
       if (syncLoading) {
         showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
+        PluginManagerUsageCollector.pluginCardOpened(component.getPluginDescriptor(), component.getGroup());
       }
     }
   }
@@ -528,6 +532,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
     myIsPluginAllowed = org.isPluginAllowed(!myMarketplace, pluginDescriptor);
     showPlugin();
+
     select(0, true);
   }
 

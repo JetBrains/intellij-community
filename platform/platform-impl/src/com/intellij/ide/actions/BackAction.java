@@ -4,7 +4,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
@@ -34,7 +34,7 @@ public class BackAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     History history = e.getData(History.KEY);
-    boolean isModalContext = e.getData(PlatformDataKeys.IS_MODAL_CONTEXT) == Boolean.TRUE;
+    boolean isModalContext = e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) == Boolean.TRUE;
 
     Presentation presentation = e.getPresentation();
     if (history != null) {

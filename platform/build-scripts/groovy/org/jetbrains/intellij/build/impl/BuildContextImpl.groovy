@@ -89,6 +89,7 @@ final class BuildContextImpl extends BuildContext {
       messages.error("System selector must not contain spaces: " + systemSelector)
     }
 
+    options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
@@ -157,11 +158,6 @@ final class BuildContextImpl extends BuildContext {
   @Override
   JpsCompilationData getCompilationData() {
     compilationContext.compilationData
-  }
-
-  @Override
-  KotlinBinaries getKotlinBinaries() {
-    return compilationContext.kotlinBinaries
   }
 
   @Override
@@ -357,6 +353,10 @@ final class BuildContextImpl extends BuildContext {
       jvmArgs.add('-Didea.jre.check=true')
     }
 
+    if (productProperties.useSplash) {
+      //noinspection SpellCheckingInspection
+      jvmArgs.add('-Dsplash=true')
+    }
     return jvmArgs
   }
 }

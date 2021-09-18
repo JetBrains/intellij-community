@@ -362,7 +362,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return set != null && processVirtualFiles(set, filter, processor);
   }
 
-  private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+  private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                                @NotNull GlobalSearchScope filter,
                                                                Processor<? super VirtualFile> processor,
                                                                IdFilter filesSet) {
@@ -404,7 +404,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+  public boolean processFilesContainingAllKeys(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                @NotNull GlobalSearchScope filter,
                                                @NotNull Processor<? super VirtualFile> processor) {
     Project project = filter.getProject();
@@ -451,7 +451,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
-    List<IndexableFilesIterator> providers = getOrderedIndexableFilesProviders(project);
+    List<IndexableFilesIterator> providers = getIndexableFilesProviders(project);
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
     for (IndexableFilesIterator provider : providers) {
       if (indicator != null) {
@@ -464,24 +464,21 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   /**
-   * Returns providers of files to be indexed. Indexing is performed in the order corresponding to the resulting list.
+   * Returns providers of files to be indexed.
    */
   @NotNull
-  public List<IndexableFilesIterator> getOrderedIndexableFilesProviders(@NotNull Project project) {
+  public List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
     if (LightEdit.owns(project)) {
       return Collections.emptyList();
     }
-    return ReadAction.compute(() -> {
-      if (project.isDisposed()) {
-        return Collections.emptyList();
-      }
 
-      return IndexableFilesContributor.EP_NAME
-        .getExtensionList()
-        .stream()
-        .flatMap(c -> c.getIndexableFiles(project).stream())
-        .collect(Collectors.toList());
-    });
+    return IndexableFilesContributor.EP_NAME
+      .getExtensionList()
+      .stream()
+      .flatMap(c -> {
+        return ReadAction.nonBlocking(() -> c.getIndexableFiles(project)).expireWith(project).executeSynchronously().stream();
+      })
+      .collect(Collectors.toList());
   }
 
   @Nullable
@@ -600,11 +597,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     List<VirtualFile> filesInScope;
     filesInScope = new SmartList<>();
     if (scope.contains(file)) filesInScope.add(file);
+    ProgressManager.checkCanceled();
     for (ModelBranch branch : scope.getModelBranchesAffectingScope()) {
       VirtualFile copy = branch.findFileCopy(file);
       if (!((ModelBranchImpl)branch).hasModifications(copy) && scope.contains(copy)) {
         filesInScope.add(copy);
       }
+      ProgressManager.checkCanceled();
     }
     return filesInScope;
   }

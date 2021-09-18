@@ -26,7 +26,6 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList
-import git4idea.GitNotificationIdsHolder.Companion.BRANCH_OPERATION_SUCCESS
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.gotItStep
@@ -34,6 +33,7 @@ import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.openPushDialogText
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.triggerOnCheckout
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepositoryManager
@@ -42,6 +42,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
+import training.util.toNullableString
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
@@ -51,6 +52,7 @@ import javax.swing.tree.TreePath
 
 class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message("git.quick.start.lesson.name")) {
   override val existedFile = "git/puss_in_boots.yml"
+  override val branchName = "main"
   private val fileToChange = existedFile.substringAfterLast('/')
   private val textToHighlight = "green"
 
@@ -86,7 +88,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
       text(GitLessonsBundle.message("git.quick.start.type.clone", code(StringUtil.removeEllipsisSuffix(cloneActionText))))
       triggerByListItemAndHighlight { item ->
-        item.toString().contains(cloneActionText)
+        item.toNullableString()?.contains(cloneActionText) == true
       }
       triggerStart(it)
       restoreByUi(delayMillis = defaultRestoreDelay)
@@ -180,8 +182,10 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     task {
       text(GitLessonsBundle.message("git.quick.start.name.new.branch", LessonUtil.rawEnter(), strong(createButtonText)))
-      triggerOnNotification { it.displayId == BRANCH_OPERATION_SUCCESS }
-      restoreByUi(showBranchesTaskId, delayMillis = defaultRestoreDelay)
+      val checkoutStartedFuture = triggerOnCheckout()
+      restoreState(showBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
+        previous.ui?.isShowing != true && !checkoutStartedFuture.isDone
+      }
     }
 
     prepareRuntimeTask {
@@ -202,6 +206,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
       text(GitLessonsBundle.message("git.quick.start.modify.file", code("green")))
       triggerByPartOfComponent l@{ ui: EditorComponentImpl ->
+        if (ui.editor != editor) return@l null
         val endOffset = ui.editor.caretModel.offset
         if (endOffset < startOffset || ui.editor.document.getLineNumber(endOffset) != line) return@l null
         val startPoint = ui.editor.offsetToXY(startOffset)
@@ -211,7 +216,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       stateCheck {
         val lineEndOffset = editor.document.getLineEndOffset(line)
         val color = editor.document.charsSequence.subSequence(startOffset, lineEndOffset).removeSuffix("]").trim()
-        !textToHighlight.startsWith(color) && color.length >= 3
+        !textToHighlight.startsWith(color) && color.length >= 3 && !ChangeListManager.getInstance(project).allChanges.isEmpty()
       }
       proposeRestore {
         val caretOffset = editor.caretModel.offset
@@ -249,6 +254,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
+      before { LearningUiHighlightingManager.clearHighlights() }
       val commitButtonText = GitBundle.message("commit.action.name").dropMnemonic()
       text(GitLessonsBundle.message("git.quick.start.perform.commit", strong(commitButtonText)))
       triggerByUiComponentAndHighlight(highlightInside = false) { _: CommitMessage -> true }
@@ -271,7 +277,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
     }
   }
 

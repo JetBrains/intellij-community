@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
@@ -32,6 +32,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -277,9 +278,8 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   /**
    * Used by speedsearch, copy-to-clipboard and default renderer.
    */
-  @Nls
-  public String getTextPresentation() {
-    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getTextPresentation", "A proper implementation required");
+  public @Nls String getTextPresentation() {
+    PluginException.reportDeprecatedDefault(getClass(), "getTextPresentation", "A proper implementation required");
     return userObject == null ? "" : userObject.toString(); //NON-NLS
   }
 
@@ -391,27 +391,21 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     }
   }
 
-  public static class WrapperTag implements Tag {
+  public static class WrapperTag extends ValueTag<Object> {
     public static Tag wrap(@Nullable Object object) {
       if (object == null) return null;
       if (object instanceof Tag) return (Tag)object;
       return new WrapperTag(object);
     }
 
-    private final @NotNull Object myValue;
-
-    public WrapperTag(@NotNull Object value) {
-      myValue = value;
-    }
-
-    public @NotNull Object getValue() {
-      return myValue;
+    private WrapperTag(@NotNull Object value) {
+      super(value);
     }
 
     @Nls
     @Override
     public String toString() {
-      return myValue.toString(); //NON-NLS
+      return value.toString(); //NON-NLS
     }
   }
 
@@ -428,6 +422,32 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     @Override
     public String toString() {
       return VcsBundle.message(myKey);
+    }
+  }
+
+  public static abstract class ValueTag<T> implements ChangesBrowserNode.Tag {
+    public final T value;
+
+    public ValueTag(@NotNull T value) {
+      this.value = value;
+    }
+
+    @NotNull
+    protected T getValue() {
+      return value;
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ValueTag<?> tag = (ValueTag<?>)o;
+      return Objects.equals(value, tag.value);
+    }
+
+    @Override
+    public final int hashCode() {
+      return Objects.hash(value);
     }
   }
 }

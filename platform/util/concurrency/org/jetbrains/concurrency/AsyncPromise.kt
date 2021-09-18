@@ -21,7 +21,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
   constructor() : this(CompletableFuture(), AtomicBoolean(), addExceptionHandler = false)
 
   init {
-    // cannot be performed outside of AsyncPromise constructor because this instance `hasErrorHandler` must be checked
+    // cannot be performed outside AsyncPromise constructor because this instance `hasErrorHandler` must be checked
     this.f = when {
       addExceptionHandler -> {
         f.exceptionally { originalError ->

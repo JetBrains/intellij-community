@@ -179,17 +179,6 @@ public class JBUI {
     return JBUIScale.scaleIcon(icon);
   }
 
-  /**
-   * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static <T extends JBIcon> T scale(@NotNull T icon) {
-    //noinspection unchecked
-    return (T)icon.withIconPreScaled(false);
-  }
-
   @NotNull
   public static JBDimension emptySize() {
     return new JBDimension(0, 0);
@@ -420,7 +409,7 @@ public class JBUI {
     }
 
     public static final class ActionsList {
-      public static final Color MNEMONIC_FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+      public static final Color MNEMONIC_FOREGROUND = JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
 
       @NotNull
       public static Insets numberMnemonicInsets() {
@@ -439,7 +428,7 @@ public class JBUI {
 
       @NotNull
       public static int mnemonicIconGap() {
-        return new JBValue.UIInteger("ActionsList.mnemonic.icon.gap", scale(4)).get();
+        return new JBValue.UIInteger("ActionsList.mnemonic.icon.gap", scale(6)).get();
       }
 
       @NotNull
@@ -688,6 +677,11 @@ public class JBUI {
 
     public static final class ToolWindow {
       @NotNull
+      public static Color background() {
+        return JBColor.namedColor("ToolWindow.background", JBColor.background());
+      }
+
+      @NotNull
       public static Color borderColor() {
         return JBColor.namedColor("ToolWindow.HeaderTab.borderColor", DefaultTabs.borderColor());
       }
@@ -729,6 +723,11 @@ public class JBUI {
         return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", underlinedTabForeground());
       }
 
+      @NotNull
+      public static int headerTabPadding() {
+        return getInt("ToolWindow.HeaderTab.padding", JBUIScale.scale(6));
+      }
+
       /**
        * @deprecated obsolete UI
        */
@@ -752,16 +751,6 @@ public class JBUI {
         return hoverInactiveBackground();
       }
 
-      /**
-       * @deprecated obsolete UI
-       */
-      @Deprecated
-      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-      @NotNull
-      public static Color tabHoveredBackground(boolean active) {
-        return active ? hoverBackground() : hoverInactiveBackground();
-      }
-
       @NotNull
       public static Color headerBackground(boolean active) {
         return active ? headerActiveBackground() : headerBackground();
@@ -780,6 +769,10 @@ public class JBUI {
       @NotNull
       public static Color headerActiveBackground() {
         return JBColor.namedColor("ToolWindow.Header.background", JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC));
+      }
+
+      public static int headerPadding() {
+        return getInt("ToolWindow.Header.padding", JBUIScale.scale(6));
       }
 
       /**
@@ -1432,21 +1425,6 @@ public class JBUI {
     @Override
     public boolean update(@Nullable BaseScaleContext context) {
       return super.update(context);
-    }
-  }
-
-  /**
-   * @deprecated Use {@link JBScalableIcon}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public abstract static class JBIcon<T extends JBScalableIcon> extends JBScalableIcon {
-    public JBIcon() {
-      super();
-    }
-    public JBIcon(T icon) {
-      super(icon);
     }
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
@@ -37,6 +38,7 @@ public final class PopupMenuPreloader implements Runnable {
   private final String myPlace;
   private final WeakReference<JComponent> myComponentRef;
   private final WeakReference<PopupHandler> myPopupHandlerRef;
+  private int myRetries;
   private boolean myDisposed;
 
   public static void install(@NotNull JComponent component,
@@ -95,9 +97,14 @@ public final class PopupMenuPreloader implements Runnable {
     DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(contextComponent));
     boolean isInModalContext = ModalityState.stateForComponent(component).dominates(ModalityState.NON_MODAL);
     long start = System.nanoTime();
+    myRetries ++;
     CancellablePromise<List<AnAction>> promise = Utils.expandActionGroupAsync(
       isInModalContext, actionGroup, new PresentationFactory(), dataContext, myPlace);
     promise.onSuccess(__ -> dispose(TimeoutUtil.getDurationMillis(start)));
+    promise.onError(__ -> {
+      int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
+      if (myRetries > retries) dispose(-1);
+    });
   }
 
   private void dispose(long millis) {

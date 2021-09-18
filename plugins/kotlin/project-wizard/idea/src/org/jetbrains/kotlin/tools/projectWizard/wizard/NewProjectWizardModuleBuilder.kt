@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.SystemProperties
 import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
@@ -41,7 +42,6 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardStepComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
-import java.io.File
 import javax.swing.JButton
 import javax.swing.JComponent
 import com.intellij.openapi.module.Module as IdeaModule
@@ -57,14 +57,16 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     override fun isOpenProjectSettingsAfter(): Boolean = false
     override fun canCreateModule(): Boolean = false
     override fun getPresentableName(): String = moduleType.name
-    override fun getDescription(): String? = moduleType.description
-    override fun getGroupName(): String? = moduleType.name
+    override fun getDescription(): String = moduleType.description
+    override fun getGroupName(): String = moduleType.name
     override fun isTemplateBased(): Boolean = false
 
     companion object {
         const val MODULE_BUILDER_ID = "kotlin.newProjectWizard.builder"
         private val projectNameValidator = StringValidators.shouldBeValidIdentifier("Project name", setOf('-', '_'))
-        private const val INVALID_PROJECT_NAME_MESSAGE = "Invalid project name"
+        private val INVALID_PROJECT_NAME_MESSAGE
+            @NlsContexts.DialogTitle
+            get() = KotlinNewProjectWizardUIBundle.message("dialog.title.invalid.project.name")
     }
 
     override fun isAvailable(): Boolean = isCreatingNewProject()
@@ -194,7 +196,7 @@ abstract class WizardStep(protected val wizard: IdeWizard, private val phase: Ge
         }
 
     protected open fun handleErrors(error: ValidationResult.ValidationError) {
-        throw ConfigurationException(error.asHtml(), "Validation Error")
+        throw ConfigurationException(error.asHtml(), KotlinNewProjectWizardUIBundle.message("dialog.title.validation.error"))
     }
 
     companion object {
@@ -275,7 +277,7 @@ class ModuleNewWizardSecondStep(
     }
 
     override fun getPreferredFocusedComponent(): JComponent? {
-        wizardContext.getNextButton()?.text = "Finish"
+        wizardContext.getNextButton()?.text = KotlinNewProjectWizardUIBundle.message("finish.button.text")
         return super.getPreferredFocusedComponent()
     }
 

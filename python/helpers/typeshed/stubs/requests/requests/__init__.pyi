@@ -13,6 +13,8 @@ from .api import (
 )
 from .exceptions import (
     ConnectionError as ConnectionError,
+    ConnectTimeout as ConnectTimeout,
+    FileModeWarning as FileModeWarning,
     HTTPError as HTTPError,
     ReadTimeout as ReadTimeout,
     RequestException as RequestException,

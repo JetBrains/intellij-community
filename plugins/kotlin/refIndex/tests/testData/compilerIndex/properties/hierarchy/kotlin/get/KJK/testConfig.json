@@ -1,8 +1,8 @@
 {
     "mainFile": "KJK.kt",
-    "shouldBeUsage" : [
-        "jkjk_.kt",
+    "usages": [
         "kjk_.kt",
-        "kkjk_.kt"
+        "kkjk_.kt",
+        "jkjk_.kt"
     ]
 }

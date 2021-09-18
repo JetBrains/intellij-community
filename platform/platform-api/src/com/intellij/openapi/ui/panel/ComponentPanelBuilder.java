@@ -319,6 +319,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return new CommentLabel(commentText);
   }
 
+  public static Font getCommentFont(Font font) {
+    if (SystemInfo.isMac) {
+      return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
+    }
+    return font;
+  }
+
   private static void setCommentText(@NotNull JLabel component,
                                      @Nullable @NlsContexts.DetailedDescription String commentText,
                                      boolean isCommentBelow,
@@ -358,7 +365,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       super.setUI(ui);
 
       if (SystemInfo.isMac) {
-        setFont(new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(getFont())));
+        setFont(getCommentFont(getFont()));
       }
     }
   }

@@ -28,7 +28,7 @@ public abstract class ContractReturnValue {
   private static final int MAX_SUPPORTED_PARAMETER = 100;
 
   @Nullable
-  public PsiExpression findPlace(@NotNull PsiMethodCallExpression call) {
+  public PsiExpression findPlace(@NotNull PsiCallExpression call) {
     return null;
   }
 
@@ -126,8 +126,13 @@ public abstract class ContractReturnValue {
       memState.meetDfType(newValue, result);
       return newValue;
     }
-    if (defaultValue instanceof DfaWrappedValue && newType.isSuperType(defaultValue.getDfType())) {
-      return defaultValue;
+    if (defaultValue instanceof DfaWrappedValue) {
+      if (newType.isSuperType(defaultValue.getDfType())) {
+        return defaultValue;
+      }
+      DerivedVariableDescriptor field = ((DfaWrappedValue)defaultValue).getSpecialField();
+      return defaultValue.getFactory().getWrapperFactory()
+        .createWrapper(result.getBasicType(), field, ((DfaWrappedValue)defaultValue).getWrappedValue());
     }
     if (defaultValue instanceof DfaVariableValue) {
       memState.meetDfType(defaultValue, result);
@@ -468,8 +473,11 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public @Nullable PsiExpression findPlace(@NotNull PsiMethodCallExpression call) {
-      return ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+    public @Nullable PsiExpression findPlace(@NotNull PsiCallExpression call) {
+      if (call instanceof PsiMethodCallExpression) {
+        return ExpressionUtils.getEffectiveQualifier(((PsiMethodCallExpression)call).getMethodExpression());
+      }
+      return null;
     }
 
     @Override
@@ -546,9 +554,11 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    public @Nullable PsiExpression findPlace(@NotNull PsiMethodCallExpression call) {
+    public @Nullable PsiExpression findPlace(@NotNull PsiCallExpression call) {
       int number = this.getParameterNumber();
-      PsiExpression[] args = call.getArgumentList().getExpressions();
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) return null;
+      PsiExpression[] args = argumentList.getExpressions();
       if (args.length <= number) return null;
       if (args.length == number + 1 && MethodCallUtils.isVarArgCall(call)) return null;
       return args[number];

@@ -74,17 +74,6 @@ public abstract class ChangeListManager implements ChangeListModification {
                                          @Nullable @Nls String title,
                                          @Nullable ModalityState state);
 
-  /**
-   * @deprecated use {@link #invokeAfterUpdate(Runnable, InvokeAfterUpdateMode, String, ModalityState)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                         @NotNull InvokeAfterUpdateMode mode,
-                                         @Nullable @Nls String title,
-                                         @Nullable Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
-                                         @Nullable ModalityState state);
-
 
   public abstract boolean areChangeListsEnabled();
 

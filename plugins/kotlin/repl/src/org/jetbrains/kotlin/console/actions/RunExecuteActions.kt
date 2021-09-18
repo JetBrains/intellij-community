@@ -10,12 +10,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.console.KotlinConsoleKeeper
 import org.jetbrains.kotlin.console.KotlinConsoleRunner
 
-fun errorNotification(project: Project?, message: String) {
+fun errorNotification(project: Project?, @NlsContexts.NotificationContent message: String) {
     val errorTag = "KOTLIN REPL ERROR"
     val errorTitle = KotlinIdeaReplBundle.message("kotlin.repl.configuration.error")
     Notifications.Bus.notify(Notification(errorTag, errorTitle, message, NotificationType.ERROR), project)
@@ -43,7 +44,7 @@ class KtExecuteCommandAction(private val consoleFile: VirtualFile) : AnAction() 
 class BuildAndRestartConsoleAction(
     private val runner: KotlinConsoleRunner
 ) : AnAction(
-    KotlinIdeaReplBundle.message("build.and.restart"),
+    KotlinIdeaReplBundle.message("title.build.and.restart"),
     KotlinIdeaReplBundle.message("build.module.0.and.restart", runner.module.name),
     AllIcons.Actions.Restart
 ) {

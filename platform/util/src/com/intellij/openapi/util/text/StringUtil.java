@@ -2,7 +2,6 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
@@ -1581,26 +1580,6 @@ public class StringUtil extends StringUtilRt {
   @Deprecated
   public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
     return Formats.formatDuration(duration, unitSeparator);
-  }
-
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull @NonNls String formatDurationPadded(long millis, @NotNull String unitSeparator) {
-    return Formats.formatDurationPadded(millis, unitSeparator);
-  }
-
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull @NonNls String formatDurationApproximate(long duration) {
-    return Formats.formatDurationApproximate(duration);
   }
 
   /**
@@ -3207,6 +3186,11 @@ public class StringUtil extends StringUtilRt {
     return c == ' ' || c == '\t';
   }
 
+  /**
+   * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
+  @Deprecated
   @Nls
   @NotNull
   public static String naturalJoin(List<String> strings) {
@@ -3214,6 +3198,6 @@ public class StringUtil extends StringUtilRt {
     if (strings.size() == 1) return strings.get(0);
     String lastWord = strings.get(strings.size() - 1);
     String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
-    return UtilBundle.message("natural.join", leadingWords, lastWord);
+    return leadingWords + " and " + lastWord;
   }
 }

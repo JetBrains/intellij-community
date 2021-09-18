@@ -18,7 +18,7 @@ class PluginData @JvmOverloads constructor(
 
   val pluginId: PluginId get() = PluginId.getId(pluginIdString)
 
-  val pluginName = nullablePluginName ?: pluginIdString
+  val pluginName: String get() = nullablePluginName ?: pluginIdString
 
   constructor(descriptor: PluginDescriptor) : this(
     descriptor.pluginId.idString,

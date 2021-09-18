@@ -189,7 +189,7 @@ abstract class ProductProperties {
   /**
    * Determines sources of which modules should be included into the sources archive if {@link #buildSourcesArchive} is {@code true}
    */
-  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { true } as BiPredicate<JpsModule, BuildContext>
+  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true } as BiPredicate<JpsModule, BuildContext>
 
   /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
@@ -255,4 +255,9 @@ abstract class ProductProperties {
    * If {@code true} a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   boolean addRemoteDevelopmentLibraries = true
+
+  /**
+   * Build steps which are always skipped for this product. Can be extended via {@link org.jetbrains.intellij.build.BuildOptions#buildStepsToSkip} but not overridden.
+   */
+  List<String> incompatibleBuildSteps = []
 }

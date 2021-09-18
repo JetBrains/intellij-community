@@ -57,6 +57,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 final class SearchForUsagesRunnable implements Runnable {
@@ -77,6 +78,8 @@ final class SearchForUsagesRunnable implements Runnable {
   private final UsageViewManager.UsageViewStateListener myListener;
   private final UsageViewManagerImpl myUsageViewManager;
   private final AtomicInteger myOutOfScopeUsages = new AtomicInteger();
+  private final AtomicLong myFirstItemFoundTS;
+  private final AtomicBoolean myTooManyUsages;
 
   SearchForUsagesRunnable(@NotNull UsageViewManagerImpl usageViewManager,
                           @NotNull Project project,
@@ -86,7 +89,9 @@ final class SearchForUsagesRunnable implements Runnable {
                           @NotNull Factory<? extends UsageSearcher> searcherFactory,
                           @NotNull FindUsagesProcessPresentation processPresentation,
                           @NotNull SearchScope searchScopeToWarnOfFallingOutOf,
-                          @Nullable UsageViewManager.UsageViewStateListener listener) {
+                          @Nullable UsageViewManager.UsageViewStateListener listener,
+                          @NotNull AtomicLong firstItemFoundTS,
+                          @NotNull AtomicBoolean tooManyUsages) {
     myProject = project;
     myUsageViewRef = usageViewRef;
     myPresentation = presentation;
@@ -96,6 +101,8 @@ final class SearchForUsagesRunnable implements Runnable {
     mySearchScopeToWarnOfFallingOutOf = searchScopeToWarnOfFallingOutOf;
     myListener = listener;
     myUsageViewManager = usageViewManager;
+    myFirstItemFoundTS = firstItemFoundTS;
+    myTooManyUsages = tooManyUsages;
   }
 
   @NotNull
@@ -256,7 +263,7 @@ final class SearchForUsagesRunnable implements Runnable {
     };
   }
 
-  private static PsiElement getPsiElement(UsageTarget @NotNull [] searchFor) {
+  static PsiElement getPsiElement(UsageTarget @NotNull [] searchFor) {
     final UsageTarget target = searchFor[0];
     if (!(target instanceof PsiElementUsageTarget)) return null;
     return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);
@@ -356,9 +363,11 @@ final class SearchForUsagesRunnable implements Runnable {
     }
     TooManyUsagesStatus.createFor(indicator);
     AtomicBoolean showBalloon = new AtomicBoolean(true);
+    EdtScheduledExecutorService edtExecutorService = EdtScheduledExecutorService.getInstance();
 
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (!myProject.isDisposed() && showBalloon.get()) {
+    edtExecutorService.schedule(() -> {
+      if (!myProject.isDisposed() && showBalloon.get() &&
+          ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND) == null) { // Don't show balloon if there is another one
         notifyByFindBalloon(null, MessageType.WARNING,
                             Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
         findStartedBalloonShown.set(true);
@@ -384,12 +393,27 @@ final class SearchForUsagesRunnable implements Runnable {
         if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
           myFirstUsage.compareAndSet(null, usage);
         }
+        myFirstItemFoundTS.compareAndSet(0, System.currentTimeMillis()); // Successes only once - at first assignment
 
         UsageViewEx usageView = getUsageView(originalIndicator, startSearchStamp);
 
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(originalIndicator);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, originalIndicator, usageView);
+          myTooManyUsages.set(true);
+
+          PsiElement element = getPsiElement(mySearchFor);
+          var elementClass = element != null ? element.getClass() : null;
+          var scopeText = myPresentation.getScopeText();
+          var language = element != null ? element.getLanguage() : null;
+
+          UsageViewManagerImpl.showTooManyUsagesWarningLater(
+            myProject, tooManyUsagesStatus, originalIndicator, usageView,
+            r -> UsageViewStatisticsCollector.logTooManyDialog(myProject,
+                r == UsageLimitUtil.Result.ABORT ? TooManyUsagesUserAction.Aborted : TooManyUsagesUserAction.Continued,
+                elementClass, scopeText, language));
+
+          UsageViewStatisticsCollector.logTooManyDialog(myProject, TooManyUsagesUserAction.Shown,
+                                                        elementClass, scopeText, language);
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         if (usageView != null) {
@@ -401,15 +425,16 @@ final class SearchForUsagesRunnable implements Runnable {
     if (getUsageView(indicator, startSearchStamp) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (findStartedBalloonShown.get()) {
+
+    edtExecutorService.schedule(() -> {
+      if (!myProject.isDisposed() && findStartedBalloonShown.get()) {
         Balloon balloon = ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND);
         if (balloon != null) {
           balloon.hide();
         }
       }
       showBalloon.set(false);
-    }, myProject.getDisposed());
+    }, ModalityState.NON_MODAL, 3000, TimeUnit.MILLISECONDS);
   }
 
   private void endSearchForUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {

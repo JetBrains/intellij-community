@@ -112,20 +112,26 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         if (!isFirPlugin) {
             invalidateLibraryCache(project)
         }
+    }
 
+    override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
         if (captureExceptions) {
-            LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+            LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
                 override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
                     exceptions.addIfNotNull(t)
                     return super.processError(category, message, t, details)
                 }
-            })
+            }) {
+                super.runBare(testRunnable)
+            }
+        }
+        else {
+            super.runBare(testRunnable)
         }
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { LoggedErrorProcessor.restoreDefaultProcessor() },
             ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
             ThrowableRunnable { super.tearDown() },
         )
@@ -461,7 +467,7 @@ private fun configureLanguageAndApiVersion(
             compilerArguments.apiVersion = null
         }
 
-        facet.configureFacet(languageVersion, null, modelsProvider)
+        facet.configureFacet(languageVersion, null, modelsProvider, emptySet())
         if (apiVersion != null) {
             facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion)
         }

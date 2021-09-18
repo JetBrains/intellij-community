@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -255,13 +256,14 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
 
   private void updateDefaultJrePresentation() {
     ReadAction
-      .nonBlocking(() -> myDefaultJreSelector.getDescriptionString())
-      .finishOnUiThread(ModalityState.any(), result -> {
+      .nonBlocking(myDefaultJreSelector::getDescriptionString)
+      .finishOnUiThread(ModalityState.stateForComponent(this), (@Nls String result) -> {
         StatusText text = myComboboxEditor.getEmptyText();
         text.clear();
         text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         text.appendText(result, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       })
+      .expireWhen(() -> !myDefaultJreSelector.isValid())
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 

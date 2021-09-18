@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -69,6 +70,7 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
     companion object : FeatureSupportIntentionActionsFactory() {
         private val supportedFeatures = listOf(LanguageFeature.InlineClasses)
 
+        @NlsContexts.DialogTitle
         fun getFixText(feature: LanguageFeature, state: LanguageFeature.State) = getFixText(state, feature.presentableName)
 
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {

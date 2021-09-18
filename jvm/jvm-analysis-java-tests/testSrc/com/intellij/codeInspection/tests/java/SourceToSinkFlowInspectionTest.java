@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.tests.java;
 
 import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection;
-import com.intellij.jvm.analysis.JvmAnalysisTestsUtil;
+import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -18,29 +18,31 @@ public class SourceToSinkFlowInspectionTest extends LightJavaCodeInsightFixtureT
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass(
-      "  package org.checkerframework.checker.tainting.qual;\n" +
-      "      import java.lang.annotation.ElementType;\n" +
-      "      import java.lang.annotation.Target;\n" +
-      "      @Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})\n" +
-      "      public @interface Tainted {\n" +
-      "      }");
-    myFixture.addClass(
-      "      package org.checkerframework.checker.tainting.qual;\n" +
-      "      import java.lang.annotation.ElementType;\n" +
-      "      import java.lang.annotation.Target;\n" +
-      "      @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})\n" +
-      "      public @interface Untainted {\n" +
-      "      }");
+    myFixture.addClass("      package org.checkerframework.checker.tainting.qual;\n" +
+                       "      import java.lang.annotation.ElementType;\n" +
+                       "      import java.lang.annotation.Target;\n" +
+                       "      @Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})\n" +
+                       "      public @interface Tainted {\n" +
+                       "      }");
+    myFixture.addClass("      package org.checkerframework.checker.tainting.qual;\n" +
+                       "      import java.lang.annotation.ElementType;\n" +
+                       "      import java.lang.annotation.Target;\n" +
+                       "      @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})\n" +
+                       "      public @interface Untainted {\n" +
+                       "      }");
     myFixture.enableInspections(new SourceToSinkFlowInspection());
   }
 
   @Override
-  protected String getTestDataPath() {
-    return JvmAnalysisTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/sourceToSinkFlow";
+  protected String getBasePath() {
+    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/sourceToSinkFlow";
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     myFixture.testHighlighting("Simple.java");
+  }
+
+  public void testLocalInference() {
+    myFixture.testHighlighting("LocalInference.java");
   }
 }

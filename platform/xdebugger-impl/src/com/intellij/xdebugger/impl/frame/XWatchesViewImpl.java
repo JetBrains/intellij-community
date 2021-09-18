@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -12,17 +14,19 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -31,9 +35,11 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
@@ -47,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
@@ -125,14 +132,44 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @Override
-  JComponent createTopPanel() {
+  protected JPanel createMainPanel(@NotNull JComponent localsPanelComponent) {
+    var variablesPanel = new BorderLayoutPanel().addToCenter(localsPanelComponent);
+    var top = createTopPanel();
+    if (top == null)
+      return variablesPanel;
+    return variablesPanel.addToTop(top);
+  }
+
+  private JComponent createTopPanel() {
     if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
+      Ref<AnAction> addToWatchesActionRef = new Ref<>();
       myEvaluateComboBox =
-        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
+        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateExpression", null, false, true) {
           @Override
           protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
-            return new XDebuggerEmbeddedComboBox<>(model, width);
+            AnAction addToWatchesAction =
+              new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.Watch) {
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                  myEvaluateComboBox.saveTextInHistory();
+                  addWatchExpression(getExpression(), -1, false);
+                }
+
+                @Override
+                public void update(@NotNull AnActionEvent e) {
+                  e.getPresentation().setEnabled(!XDebuggerUtilImpl.isEmptyExpression(getExpression()));
+                }
+              };
+            ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+              .createActionToolbar("DebuggerVariablesEvaluate", new DefaultActionGroup(addToWatchesAction), true);
+            addToWatchesActionRef.set(addToWatchesAction);
+            toolbar.setOpaque(false);
+            toolbar.setReservePlaceAutoPopupIcon(false);
+            toolbar.setTargetComponent(tree);
+            XDebuggerEmbeddedComboBox<XExpression> comboBox = new XDebuggerEmbeddedComboBox<>(model, width);
+            comboBox.setExtension(toolbar);
+            return comboBox;
           }
 
           @Override
@@ -147,17 +184,39 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          myEvaluateComboBox.saveTextInHistory();
-          XDebugSession session = getSession(getTree());
-          myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, myEvaluateComboBox.getExpression());
+          // This listener overrides one from BasicComboBoxUI$Actions
+          // Close popup manually instead of default handler
+          if (myEvaluateComboBox.getComboBox().isPopupVisible()) {
+            myEvaluateComboBox.getComboBox().setPopupVisible(false);
+          }
+          else {
+            addExpressionResultNode();
+          }
         }
       });
+      myEvaluateComboBox.getComboBox().addPopupMenuListener(new PopupMenuListenerAdapter() {
+        @Override
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+          myEvaluateComboBox.requestFocusInEditor();
+        }
+      });
+      addToWatchesActionRef.get()
+        .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE), editorComponent);
       JComponent component = myEvaluateComboBox.getComponent();
       //component.setBackground(tree.getBackground());
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       return component;
     }
     return null;
+  }
+
+  private void addExpressionResultNode() {
+    XExpression expression = myEvaluateComboBox.getExpression();
+    if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
+      myEvaluateComboBox.saveTextInHistory();
+      XDebugSession session = getSession(getTree());
+      myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
+    }
   }
 
   @Override
@@ -379,13 +438,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
     else {
       XDebuggerTreeNode root = tree.getRoot();
-      List<? extends WatchNode> current = root instanceof WatchesRootNode
-                                          ? ((WatchesRootNode)tree.getRoot()).getWatchChildren() : Collections.emptyList();
-      List<XExpression> list = new SmartList<>();
-      for (WatchNode child : current) {
-        list.add(child.getExpression());
-      }
-      expressions = list;
+      expressions = root instanceof WatchesRootNode ? ((WatchesRootNode)root).getWatchExpressions() : Collections.emptyList();
     }
     return expressions;
   }
@@ -456,19 +509,14 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   public void updateSessionData() {
-    List<XExpression> expressions = new SmartList<>();
-    List<? extends WatchNode> children = myRootNode.getWatchChildren();
-    for (WatchNode child : children) {
-      expressions.add(child.getExpression());
-    }
     XDebugSession session = getSession(getTree());
     if (session != null) {
-      ((XDebugSessionImpl)session).setWatchExpressions(expressions);
+      ((XDebugSessionImpl)session).setWatchExpressions(myRootNode.getWatchExpressions());
     }
     else {
       XDebugSessionData data = getData(XDebugSessionData.DATA_KEY, getTree());
       if (data != null) {
-        data.setWatchExpressions(expressions);
+        data.setWatchExpressions(myRootNode.getWatchExpressions());
       }
     }
   }

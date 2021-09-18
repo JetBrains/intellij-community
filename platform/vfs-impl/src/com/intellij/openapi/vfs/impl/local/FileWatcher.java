@@ -210,11 +210,6 @@ public final class FileWatcher {
     }
 
     @Override
-    public void notifyManualWatchRoots(@NotNull Collection<String> roots) {
-      registerManualWatchRoots(new Object(), roots);
-    }
-
-    @Override
     public void notifyManualWatchRoots(@NotNull PluggableFileWatcher watcher, @NotNull Collection<String> roots) {
       registerManualWatchRoots(watcher, roots);
     }

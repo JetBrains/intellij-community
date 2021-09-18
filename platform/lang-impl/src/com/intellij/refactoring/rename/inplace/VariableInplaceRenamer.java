@@ -323,11 +323,18 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       }
 
       try {
-        ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+        stopDumbLaterIfPossible();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
       }
+    }
+  }
+
+  private void stopDumbLaterIfPossible() {
+    Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+    if (editor instanceof EditorImpl) {
+      ((EditorImpl)editor).stopDumbLater();
     }
   }
 
@@ -369,7 +376,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       revertStateOnFinish();
     }
     else {
-      ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+      stopDumbLaterIfPossible();
     }
   }
 

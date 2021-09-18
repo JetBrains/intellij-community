@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public enum CompilerHierarchySearchType {
     }
 
     @Override
-    SearchId[] convertToIds(Collection<CompilerRef> compilerRef, PersistentStringEnumerator nameEnumerator) throws IOException {
+    @NotNull SearchId @NotNull[] convertToIds(Collection<? extends CompilerRef> compilerRef, PersistentStringEnumerator nameEnumerator) throws IOException {
       List<SearchId> list = new ArrayList<>();
       for (CompilerRef r : compilerRef) {
         SearchId id = r instanceof CompilerRef.JavaCompilerAnonymousClassRef
@@ -54,7 +55,7 @@ public enum CompilerHierarchySearchType {
     }
 
     @Override
-    SearchId[] convertToIds(Collection<CompilerRef> compilerRef, PersistentStringEnumerator nameEnumerator) {
+    @NotNull SearchId @NotNull[] convertToIds(Collection<? extends CompilerRef> compilerRef, PersistentStringEnumerator nameEnumerator) {
       return compilerRef.stream().map(r -> ((CompilerRef.CompilerFunExprDef) r).getId()).map(SearchId::new).toArray(SearchId[]::new);
     }
   };
@@ -66,6 +67,6 @@ public enum CompilerHierarchySearchType {
 
   abstract Class<? extends CompilerRef> getRequiredClass(LanguageCompilerRefAdapter adapter);
 
-  abstract SearchId[] convertToIds(Collection<CompilerRef> compilerRef, PersistentStringEnumerator nameEnumerator) throws IOException;
+  abstract @NotNull SearchId @NotNull[] convertToIds(Collection<? extends CompilerRef> compilerRef, PersistentStringEnumerator nameEnumerator) throws IOException;
 
 }

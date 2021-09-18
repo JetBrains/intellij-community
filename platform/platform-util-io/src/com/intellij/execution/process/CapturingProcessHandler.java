@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.io.BaseOutputReader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,14 +19,6 @@ public class CapturingProcessHandler extends OSProcessHandler {
   public CapturingProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
     myProcessRunner = new CapturingProcessRunner(this, processOutput -> createProcessAdapter(processOutput));
-  }
-
-  /** @deprecated Use {@link #CapturingProcessHandler(Process, Charset, String)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public CapturingProcessHandler(@NotNull Process process) {
-    this(process, null, "");
-    DeprecatedMethodException.report("Use CapturingProcessHandler(Process, Charset, String) instead");
   }
 
   /**

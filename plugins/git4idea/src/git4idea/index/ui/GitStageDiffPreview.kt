@@ -58,8 +58,7 @@ class GitStageDiffPreview(project: Project,
     TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
   }
 
-  override fun getSelectedChanges(): Stream<Wrapper> =
-    if (tree.isSelectionEmpty) allChanges else wrap(VcsTreeModelData.selected(tree))
+  override fun getSelectedChanges(): Stream<Wrapper> = wrap(VcsTreeModelData.selected(tree))
 
   override fun getAllChanges(): Stream<Wrapper> = wrap(VcsTreeModelData.all(tree))
 

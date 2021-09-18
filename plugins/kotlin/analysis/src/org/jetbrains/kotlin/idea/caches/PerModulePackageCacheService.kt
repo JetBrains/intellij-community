@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -34,6 +33,7 @@ import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
@@ -413,7 +413,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
 }
 
 private fun Logger.debugIfEnabled(project: Project, withCurrentTrace: Boolean = false, message: () -> String) {
-    if (ApplicationManager.getApplication().isUnitTestMode && project.DEBUG_LOG_ENABLE_PerModulePackageCache) {
+    if (isUnitTestMode() && project.DEBUG_LOG_ENABLE_PerModulePackageCache) {
         val msg = message()
         if (withCurrentTrace) {
             val e = Exception().apply { fillInStackTrace() }

@@ -12,7 +12,7 @@ import com.intellij.ui.JBColor
 import java.awt.*
 import javax.swing.JComponent
 
-internal class LayoutActionsFloatingToolbar(
+class LayoutActionsFloatingToolbar(
   parentComponent: JComponent,
   actionGroup: ActionGroup
 ) : ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true), Disposable {

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchableConfigurable {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
@@ -229,11 +229,13 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return myEp;
   }
 
+  @Override
   public String getParentId() {
     return myEp.parentId;
   }
 
-  public ConfigurableWrapper addChild(Configurable configurable) {
+  @Override
+  public HierarchableConfigurable addChild(Configurable configurable) {
     return new CompositeWrapper(myEp, configurable);
   }
 
@@ -336,7 +338,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     }
 
     @Override
-    public ConfigurableWrapper addChild(Configurable configurable) {
+    public HierarchableConfigurable addChild(Configurable configurable) {
       if (myComparator != null) {
         int index = Arrays.binarySearch(myKids, configurable, myComparator);
         LOG.assertTrue(index < 0, "similar configurable is already exist");

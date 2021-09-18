@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveMethod;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -133,7 +134,7 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
     }
 
     private void initTargetVariableList() {
-        AbstractListModel<KtNamedDeclaration> listModel = new AbstractListModel<KtNamedDeclaration>() {
+        AbstractListModel<KtNamedDeclaration> listModel = new AbstractListModel<>() {
             @Override
             public int getSize() {
                 return variables.length;
@@ -163,7 +164,8 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
                     setText(variable.getName());
                     KotlinType type = MoveKotlinMethodProcessorKt.type(variable);
                     if (type != null) {
-                        setText(getText() + ": " + renderer.renderType(type));
+                        @NlsSafe String renderType = renderer.renderType(type);
+                        setText(getText() + ": " + renderType);
                     }
                 }
                 return this;
@@ -257,7 +259,8 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
         for (KtClass ktClass : thisClassesToMembers.keySet()) {
             KotlinType type = MoveKotlinMethodProcessorKt.defaultType(ktClass);
             if (type == null) continue;
-            String text = KotlinBundle.message("text.select.a.name.for.this.parameter", ktClass.getName());
+            @SuppressWarnings("DialogTitleCapitalization")
+            String text = KotlinBundle.message("title.select.a.name.for.this.parameter", ktClass.getName());
             parametersPanel.add(new TitledSeparator(text, null));
             List<String> suggestedNames = KotlinNameSuggester.INSTANCE.suggestNamesByType(type, validator, null);
             String suggestedName = suggestedNames.isEmpty() ? "parameter" : suggestedNames.get(0);

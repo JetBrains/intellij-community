@@ -8,17 +8,26 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,11 +37,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Extend this class if there is a long lasting formatting operation which may block EDT. The actual formatting code is placed then
+ * Extend this class if there is a long-lasting formatting operation which may block EDT. The actual formatting code is placed then
  * in {@link FormattingTask#run()} method which may be slow.
  * <p>
  * If another {@code formatDocument()} call is made for the same document, the previous request is cancelled. On success, if
- * {@code cancel()} returns {@code true}, another request replaces the previous one. Otherwise the newer request is rejected.
+ * {@code cancel()} returns {@code true}, another request replaces the previous one. Otherwise, the newer request is rejected.
  * <p>
  * Before the actual formatting starts, {@link #createFormattingTask(AsyncFormattingRequest)} method is called. It should be fast enough not to
  * block EDT. If it succeeds (doesn't return null), further formatting is started using the created runnable on a separate thread.
@@ -64,6 +73,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     FormattingTask formattingTask = createFormattingTask(formattingRequest);
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask);
+      myPendingRequests.add(formattingRequest);
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         runAsyncFormat(formattingRequest, null);
       }
@@ -88,7 +98,6 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   private void runAsyncFormat(@NotNull FormattingRequestImpl formattingRequest, @Nullable ProgressIndicator indicator) {
-    myPendingRequests.add(formattingRequest);
     try {
       formattingRequest.runTask(indicator);
     }
@@ -133,6 +142,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   private class FormattingRequestImpl implements AsyncFormattingRequest {
+    private final static String TEMP_FILE_PREFIX = "ij-format-temp";
+
     private final Document          myDocument;
     private final List<TextRange>   myRanges;
     private final long              myInitialModificationStamp;
@@ -142,6 +153,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     private final Semaphore         myTaskSemaphore = new Semaphore(1);
 
     private volatile @Nullable FormattingTask myTask;
+
+    private @Nullable String myResult;
 
     private final AtomicReference<FormattingRequestState> myStateRef = new AtomicReference<>(FormattingRequestState.NOT_STARTED);
 
@@ -156,6 +169,39 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
       myInitialModificationStamp = document.getModificationStamp();
       myQuickFormat = quickFormat;
+      FileDocumentManager.getInstance().saveDocument(myDocument);
+    }
+
+    @Override
+    public @Nullable File getIOFile() {
+      VirtualFile originalFile = myContext.getVirtualFile();
+      String ext;
+      Charset charset;
+      if (originalFile != null) {
+        if (originalFile.isInLocalFileSystem()) {
+          Path localPath = originalFile.getFileSystem().getNioPath(originalFile);
+          if (localPath != null) {
+            return localPath.toFile();
+          }
+        }
+        ext = originalFile.getExtension();
+        charset = originalFile.getCharset();
+      }
+      else {
+        ext = myContext.getContainingFile().getFileType().getDefaultExtension();
+        charset = EncodingManager.getInstance().getDefaultCharset();
+      }
+      try {
+        File tempFile = FileUtilRt.createTempFile(TEMP_FILE_PREFIX, "." + ext, true);
+        try (FileWriter writer = new FileWriter(tempFile, charset)) {
+          writer.write(getDocumentText());
+        }
+        return tempFile;
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        return null;
+      }
     }
 
     @Override
@@ -218,10 +264,40 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
               getNotificationGroupId(), getName(),
               CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())));
           }
+          else if (myResult != null) {
+            if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+              updateDocument(myResult);
+            }
+            else {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+                  try {
+                    WriteAction.run((ThrowableRunnable<Throwable>)() -> {
+                      updateDocument(myResult);
+                    });
+                  }
+                  catch (Throwable throwable) {
+                    LOG.error(throwable);
+                  }
+                });
+              });
+            }
+          }
         }
         catch (InterruptedException ie) {
           LOG.warn("Interrupted formatting thread.");
         }
+      }
+    }
+
+    private void updateDocument(@NotNull String newText) {
+      if (myDocument.getModificationStamp() > myInitialModificationStamp) {
+        for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
+          if (merger.updateDocument(myDocument, newText)) break;
+        }
+      }
+      else {
+        myDocument.setText(newText);
       }
     }
 
@@ -233,26 +309,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     @Override
     public void onTextReady(@NotNull final String updatedText) {
       if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myResult = updatedText;
         myTaskSemaphore.release();
-        ApplicationManager.getApplication().invokeLater(() -> {
-          CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-            try {
-              WriteAction.run((ThrowableRunnable<Throwable>)() -> {
-                if (myDocument.getModificationStamp() > myInitialModificationStamp) {
-                  for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
-                    if (merger.updateDocument(myDocument, updatedText)) break;
-                  }
-                }
-                else {
-                  myDocument.setText(updatedText);
-                }
-              });
-            }
-            catch (Throwable throwable) {
-              LOG.error(throwable);
-            }
-          });
-        });
       }
     }
 
@@ -274,8 +332,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     boolean cancel();
 
     /**
-     * @return True if the task must be run under progress (a progress indicator is created automatically). Otherwise the task is
-     * responsible of visualizing the progress by itself, it is just started on a background thread.
+     * @return True if the task must be run under progress (a progress indicator is created automatically). Otherwise, the task is
+     * responsible for visualizing the progress by itself, it is just started on a background thread.
      */
     default boolean isRunUnderProgress() {
       return false;

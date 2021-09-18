@@ -19,9 +19,26 @@ fun addKotlinStdlibDebugFilterIfNeeded() {
     val settings = DebuggerSettings.getInstance() ?: return
     val existingFilters = settings.steppingFilters
 
-    if (existingFilters.any { it.pattern == KOTLIN_STDLIB_FILTER }) {
-        return
-    }
+    when (val kotlinFilterCount = existingFilters.count { it.pattern == KOTLIN_STDLIB_FILTER }) {
+        0 -> settings.steppingFilters = existingFilters + ClassFilter(KOTLIN_STDLIB_FILTER)
+        1 -> return
+        else -> {
+            // Older versions of the Kotlin plugin added several filters for Kotlin stdlib
+            val newFilters = ArrayList<ClassFilter>(existingFilters.size - kotlinFilterCount + 1)
 
-    settings.steppingFilters = settings.steppingFilters + ClassFilter(KOTLIN_STDLIB_FILTER)
+            var firstOccurrenceFound = false
+            for (filter in existingFilters) {
+                if (filter.pattern == KOTLIN_STDLIB_FILTER) {
+                    if (!firstOccurrenceFound) {
+                        newFilters += filter
+                        firstOccurrenceFound = true
+                    }
+                } else {
+                    newFilters += filter
+                }
+            }
+
+            settings.steppingFilters = newFilters.toTypedArray()
+        }
+    }
 }

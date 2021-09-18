@@ -535,6 +535,7 @@
     <refactoring.moveInnerHandler language="Groovy"
                                   implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyInnerHandler"/>
     <refactoring.moveClassToInnerHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.GroovyMoveClassToInnerHandler"/>
+    <refactoring.moveHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyStaticInnerClassHandler" id="groovy"/>
     <moveFileHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyFileHandler"/>
     <refactoring.moveMemberHandler language="Groovy"
                                    implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyMemberHandler"/>
@@ -898,6 +899,12 @@
                      key="inspection.display.name.unnecessary.def.modifier" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
+                     key="inspection.display.name.unnecessary.sealed.modifier" cleanupTool="true" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySealedModifierInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
+                     key="inspection.display.name.unnecessary.non.sealed.modifier" cleanupTool="true" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryNonSealedModifierInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.public.modifier" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryPublicModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
@@ -1060,6 +1067,11 @@
                      key="inspection.display.name.annotation.references.unknown.identifier"
                      groupKey="inspection.annotations" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrAnnotationReferencingUnknownIdentifiers"/>
+    <localInspection language="Groovy" groupPath="Groovy"
+                     key="inspection.display.name.non.extending.permitted.subclasses"
+                     level="ERROR"
+                     groupKey="inspection.bugs" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrPermitsClauseInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.unresolved.labels.in.named.variant"
                      groupKey="inspection.annotations" enabledByDefault="true"

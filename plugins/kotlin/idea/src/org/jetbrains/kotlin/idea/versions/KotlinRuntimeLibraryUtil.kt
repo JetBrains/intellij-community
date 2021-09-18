@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -23,6 +23,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ScalarIndexExtension
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -121,6 +122,7 @@ enum class LibraryJarDescriptor(
     fun getPathInPlugin() = getPath(KotlinArtifacts.instance)
 }
 
+@NlsSafe
 fun bundledRuntimeVersion(): String = KotlinCompilerVersion.VERSION
 
 /**
@@ -251,7 +253,7 @@ data class DeprecatedLibInfo(
     val old: LibInfo,
     val new: LibInfo,
     val outdatedAfterVersion: String,
-    val message: String
+    @Nls val message: String
 )
 
 private fun deprecatedLib(
@@ -260,7 +262,7 @@ private fun deprecatedLib(
     newGroupId: String = oldGroupId,
     newName: String = oldName,
     outdatedAfterVersion: String,
-    message: String
+    @Nls message: String
 ): DeprecatedLibInfo {
     return DeprecatedLibInfo(
         old = LibInfo(groupId = oldGroupId, name = oldName),

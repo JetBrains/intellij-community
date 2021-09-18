@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -48,7 +48,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -83,16 +82,6 @@ public final class FindUsagesManager {
   private final UsageHistory myHistory = new UsageHistory();
 
   public FindUsagesManager(@NotNull Project project) {
-    myProject = project;
-  }
-
-  /**
-   * @deprecated Use {@link #FindUsagesManager(Project)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public FindUsagesManager(@NotNull Project project, @SuppressWarnings("unused") UsageViewManager anotherManager) {
-    DeprecatedMethodException.report("Please use FindUsagesManager(Project) instead");
     myProject = project;
   }
 
@@ -485,6 +474,7 @@ public final class FindUsagesManager {
     String longName = UsageViewUtil.getLongName(psiElement);
     UsageViewPresentation presentation = new UsageViewPresentation();
     String scopeString = options.searchScope.getDisplayName();
+    presentation.setCodeUsagesString(options.generateUsagesString());
     presentation.setScopeText(scopeString);
     presentation.setSearchString(FindBundle.message("find.usages.of.element.tab.name", usagesString, longName));
     presentation.setTabText(FindBundle.message("find.usages.of.element.in.scope.panel.title", longName, scopeString));

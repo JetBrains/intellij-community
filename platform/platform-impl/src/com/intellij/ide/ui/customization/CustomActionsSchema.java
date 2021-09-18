@@ -2,13 +2,14 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -44,7 +45,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"), category = ComponentCategory.UI)
+@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"), category = SettingsCategory.UI)
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
 
@@ -173,10 +174,8 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   public boolean isModified(CustomActionsSchema schema) {
     List<ActionUrl> storedActions = schema.getActions();
     if (ApplicationManager.getApplication().isUnitTestMode() && !storedActions.isEmpty()) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("stored: " + storedActions.toString());
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("actual: " + getActions().toString());
+      LOG.error(IdeBundle.message("custom.action.stored", storedActions));
+      LOG.error(IdeBundle.message("custom.action.actual", getActions()));
     }
     if (storedActions.size() != getActions().size()) {
       return true;
@@ -219,8 +218,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("read custom actions: " + myActions.toString());
+      LOG.error(IdeBundle.message("custom.option.testmode", myActions.toString()));
     }
 
     for (Element action : element.getChildren(ELEMENT_ACTION)) {

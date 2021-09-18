@@ -62,8 +62,7 @@ abstract class JTextCompletionContributor<C : JTextComponent>(completionType: Co
     fun <C : JTextComponent> create(
       completionType: CompletionType = CompletionType.INSERT,
       completionVariants: (String) -> List<TextCompletionInfo>
-    ) = object : JTextCompletionContributor<C>(
-      completionType) {
+    ) = object : JTextCompletionContributor<C>(completionType) {
       override fun getCompletionVariants(owner: C, textToComplete: String): List<TextCompletionInfo> {
         return completionVariants(textToComplete)
       }

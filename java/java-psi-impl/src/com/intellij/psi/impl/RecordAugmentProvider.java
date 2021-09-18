@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,10 +12,12 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -75,7 +77,12 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     String sb = className + recordHeader.getText() + "{"
                 + StringUtil.join(recordHeader.getRecordComponents(), c -> "this." + c.getName() + "=" + c.getName() + ";", "\n")
                 + "}";
-    PsiMethod nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
+    PsiMethod nonPhysical;
+    try {
+      nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
+    } catch (IncorrectOperationException e) {
+      return null;
+    }
     PsiModifierList classModifierList = aClass.getModifierList();
     AccessModifier modifier = classModifierList == null ? AccessModifier.PUBLIC : AccessModifier.fromModifierList(classModifierList);
     nonPhysical.getModifierList().setModifierProperty(modifier.toPsiModifier(), true);
@@ -100,9 +107,9 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     for (PsiRecordComponent component : components) {
       PsiField recordField = createRecordField(component, factory);
       if (recordField == null) continue;
-      LightRecordField field = new LightRecordField(aClass.getManager(), recordField, aClass, component);
-      //noinspection unchecked
-      fields.add((Psi)field);
+      @SuppressWarnings("unchecked")
+      Psi field = (Psi)new LightRecordField(aClass.getManager(), recordField, aClass, component);
+      fields.add(field);
     }
     return fields;
   }

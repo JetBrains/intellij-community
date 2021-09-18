@@ -105,6 +105,7 @@ private val ProjectTemplate.icon: Icon?
         NodeJsApplicationProjectTemplate -> KotlinIcons.Wizard.NODE_JS
         ComposeDesktopApplicationProjectTemplate -> KotlinIcons.Wizard.COMPOSE
         ComposeMultiplatformApplicationProjectTemplate -> KotlinIcons.Wizard.COMPOSE
+        ComposeWebApplicationProjectTemplate -> KotlinIcons.Wizard.COMPOSE
         else -> null
     }
 

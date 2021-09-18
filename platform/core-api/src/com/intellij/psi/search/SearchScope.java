@@ -64,4 +64,11 @@ public abstract class SearchScope {
 
   @Contract(pure = true)
   public abstract boolean contains(@NotNull VirtualFile file);
+
+  /**
+   * @return true if the scope is a special constant denoting an empty GlobalSearchScope or LocalSearchScope
+   */
+  public static boolean isEmptyScope(@NotNull SearchScope scope) {
+    return scope == GlobalSearchScope.EMPTY_SCOPE || scope == LocalSearchScope.EMPTY;
+  }
 }

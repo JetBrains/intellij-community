@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,15 +46,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
                                 String title,
                                 ModalityState state) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                @NotNull InvokeAfterUpdateMode mode,
-                                String title,
-                                Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
-                                ModalityState state) {
-    afterUpdate.run();
   }
 
   @Override

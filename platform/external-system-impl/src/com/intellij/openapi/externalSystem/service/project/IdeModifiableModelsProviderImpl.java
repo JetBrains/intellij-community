@@ -42,7 +42,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +53,6 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   public static final Logger LOG = Logger.getInstance(IdeModifiableModelsProviderImpl.class);
   public static final Key<IdeModifiableModelsProviderImpl> MODIFIABLE_MODELS_PROVIDER_KEY = Key.create("IdeModelsProvider");
   private LibraryTable.ModifiableModel myLibrariesModel;
-  private WorkspaceEntityStorage initialStorage;
   private WorkspaceEntityStorageBuilder diff;
 
   public IdeModifiableModelsProviderImpl(Project project) {
@@ -98,7 +96,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
     return ReadAction.compute(() -> {
       ModuleRootManagerEx rootManager = ModuleRootManagerEx.getInstanceEx(module);
-      return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), initialStorage, rootConfigurationAccessor);
+      return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), rootConfigurationAccessor);
     });
   }
 
@@ -218,7 +216,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   public WorkspaceEntityStorageBuilder getActualStorageBuilder() {
     if (diff != null) return diff;
-    initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+    var initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
     return diff = WorkspaceEntityStorageBuilder.from(initialStorage);
   }
 

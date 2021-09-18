@@ -111,13 +111,21 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                       Union:
                         Project and Libraries
                         Scratches and Consoles
-                      Union:
-                        Files: [/one/JavaClass.java, /one/JavaClass2.java]; search in libraries: false
-                        NOT:
-                          Restricted by file types: [com.intellij.ide.highlighter.JavaClassFileType@aec9c14, com.intellij.ide.highlighter.JavaFileType@e99bb56] in
-                            NOT:
-                              EMPTY
-                        Libraries
+                      Intersection:
+                        Union:
+                          Files: [/one/JavaClass2.java, /one/JavaClass.java]
+                          NOT:
+                            Restricted by file types: [com.intellij.ide.highlighter.JavaFileType@6f940297, com.intellij.ide.highlighter.JavaClassFileType@51d6ced9] in
+                              NOT:
+                                EMPTY
+                          Libraries
+                        Union:
+                          Files: [/two/KotlinClass.kt, /two/Main.kt]
+                          NOT:
+                            Restricted by file types: [org.jetbrains.kotlin.idea.KotlinFileType@e1715c6] in
+                              NOT:
+                                EMPTY
+                          Libraries
                     
                 """.trimIndent(),
             )

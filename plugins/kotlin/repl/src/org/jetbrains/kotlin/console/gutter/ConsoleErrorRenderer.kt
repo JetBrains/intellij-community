@@ -16,6 +16,7 @@ class ConsoleErrorRenderer(private val messages: List<SeverityDetails>) : Gutter
 
     override fun getTooltipText(): String {
         val htmlTooltips = messages.map { "<b>${msgType(it.severity)}</b> ${it.description}" }
+        @Suppress("HardCodedStringLiteral")
         return "<html>${htmlTooltips.joinToString("<hr size=1 noshade>")}</html>"
     }
 

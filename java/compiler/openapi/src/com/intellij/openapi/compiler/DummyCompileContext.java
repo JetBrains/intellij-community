@@ -48,17 +48,6 @@ public class DummyCompileContext implements CompileContext {
     myProject = project;
   }
 
-  /**
-   * @deprecated use {@link #create(Project)} instead
-   * @return
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static DummyCompileContext getInstance() {
-    return new DummyCompileContext(ProjectManager.getInstance().getDefaultProject());
-  }
-
   @NotNull
   public static DummyCompileContext create(@NotNull Project project) {
     return new DummyCompileContext(project);

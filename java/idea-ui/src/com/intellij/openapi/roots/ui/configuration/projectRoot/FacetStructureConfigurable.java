@@ -337,7 +337,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public String getHelpTopic() {
-    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(DataManager.getInstance().getDataContext());
+    final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(DataManager.getInstance().getDataContext());
     if (myTree.equals(component)) {
       final NamedConfigurable selectedConfigurable = getSelectedConfigurable();
       if (selectedConfigurable instanceof FacetTypeConfigurable) {

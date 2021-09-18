@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
@@ -165,6 +165,10 @@ public final class MethodSignatureUtil {
     PsiClass superClassCandidate = superMethodCandidate.getContainingClass();
     PsiClass derivedClass = derivedMethod.getContainingClass();
     if (derivedClass == null || superClassCandidate == null || derivedClass == superClassCandidate) return false;
+    if (superMethodCandidate.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+        !JavaPsiFacade.getInstance(derivedClass.getProject()).arePackagesTheSame(superClassCandidate, derivedClass)) {
+      return false;
+    }
     final PsiSubstitutor superSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClassCandidate, derivedClass,
                                                                                              PsiSubstitutor.EMPTY);
     if (superSubstitutor == null) return false;

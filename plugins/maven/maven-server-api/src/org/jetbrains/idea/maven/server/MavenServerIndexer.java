@@ -48,7 +48,7 @@ public interface MavenServerIndexer extends Remote {
 
   IndexedMavenId addArtifact(int indexId, File artifactFile, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
-  Set<MavenArtifactInfo> search(int indexId, Object query, int maxResult, MavenToken token) throws RemoteException, MavenServerIndexerException;
+  Set<MavenArtifactInfo> search(int indexId, String pattern, int maxResult, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
   Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException;
 

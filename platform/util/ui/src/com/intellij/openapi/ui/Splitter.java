@@ -3,7 +3,6 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -55,7 +54,6 @@ public class Splitter extends JPanel implements Splittable {
   protected final Divider myDivider;
   private JComponent mySecondComponent;
   private JComponent myFirstComponent;
-  private final FocusWatcher myFocusWatcher;
   private boolean myShowDividerIcon;
   private boolean myShowDividerControls;
   private boolean mySkipNextLayout;
@@ -120,8 +118,6 @@ public class Splitter extends JPanel implements Splittable {
     setProportion(proportion);
     myDividerWidth = 7;
     super.add(myDivider);
-    myFocusWatcher = new FocusWatcher();
-    myFocusWatcher.install(this);
     setOpaque(false);
   }
 
@@ -206,7 +202,6 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   public void dispose() {
-    myFocusWatcher.deinstall(this);
   }
 
   protected Divider createDivider() {

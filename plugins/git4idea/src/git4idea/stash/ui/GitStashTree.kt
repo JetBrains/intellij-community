@@ -97,7 +97,6 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
   override fun getData(dataId: String): Any? {
     if (STASH_INFO.`is`(dataId)) return selectedStashes().toList()
-    if (GIT_STASH_TREE_FLAG.`is`(dataId)) return true
     if (CommonDataKeys.PROJECT.`is`(dataId)) return myProject
     return super.getData(dataId)
   }

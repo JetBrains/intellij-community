@@ -36,6 +36,7 @@ class MavenRunConfigurationSettings : Cloneable {
   var jreName: String? = null
   var vmOptions: String? = null
   var environment: Map<String, String> = HashMap()
+  var mavenProperties: Map<String, String> = HashMap()
   var isPassParentEnvs: Boolean = true
   var isSkipTests: Boolean = false
 
@@ -67,6 +68,7 @@ class MavenRunConfigurationSettings : Cloneable {
     jreName = settings.jreName
     vmOptions = settings.vmOptions
     environment = settings.environment
+    mavenProperties = settings.mavenProperties
     isPassParentEnvs = settings.isPassParentEnvs
     isSkipTests = settings.isSkipTests
   }
@@ -125,6 +127,7 @@ class MavenRunConfigurationSettings : Cloneable {
     jreName = settings.jreName
     vmOptions = settings.vmOptions
     environment = settings.environmentProperties
+    mavenProperties = settings.mavenProperties
     isPassParentEnvs = settings.isPassParentEnv
     isSkipTests = settings.isSkipTests
   }

@@ -58,4 +58,7 @@ public interface FileDocumentManagerListener extends EventListener {
 
   default void unsavedDocumentsDropped() {
   }
+
+  default void afterDocumentUnbound(@NotNull VirtualFile file, @NotNull Document document) {
+  }
 }

@@ -10,10 +10,7 @@ import com.intellij.ide.ui.PopupLocator;
 import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -565,7 +562,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       }
     }
     RelativePoint location;
-    Component contextComponent = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component contextComponent = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (contextComponent == myComponent) {
       location = new RelativePoint(myComponent, new Point());
     }
@@ -1554,11 +1551,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return !key.startsWith(WindowStateService.USE_APPLICATION_WIDE_STORE_KEY_PREFIX) ? myProject : null;
   }
 
+  public final @NotNull Dimension getContentSize() {
+    Dimension size = myContent.getSize();
+    JBInsets.removeFrom(size, myContent.getInsets());
+    return size;
+  }
+
   public void storeDimensionSize() {
     if (myDimensionServiceKey != null) {
-      Dimension size = myContent.getSize();
-      JBInsets.removeFrom(size, myContent.getInsets());
-      getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).putSize(myDimensionServiceKey, size);
+      getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).putSize(myDimensionServiceKey, getContentSize());
     }
   }
 

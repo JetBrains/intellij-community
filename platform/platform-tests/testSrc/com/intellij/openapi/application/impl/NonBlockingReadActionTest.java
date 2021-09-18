@@ -42,6 +42,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
@@ -356,14 +357,11 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
   public void testExceptionInsideAsyncComputationIsLogged() throws Exception {
     BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("TestExceptionInsideAsyncComputationIsLogged", 10);
-
-    AtomicReference<Throwable> loggedError = watchLoggedExceptions();
-
     Callable<Object> throwUOE = () -> {
       throw new UnsupportedOperationException();
     };
 
-    try {
+    watchLoggedExceptions(loggedError -> {
       CancellablePromise<Object> promise = ReadAction.nonBlocking(throwUOE).submit(executor);
       assertLogsAndThrowsUOE(promise, loggedError, executor);
 
@@ -380,16 +378,11 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
       promise = ReadAction.nonBlocking(throwUOE).submit(AppExecutorUtil.getAppExecutorService()).onError(__ -> {});
       assertLogsAndThrowsUOE(promise, loggedError, executor);
-    }
-    finally {
-      LoggedErrorProcessor.restoreDefaultProcessor();
-    }
+    });
   }
 
   public void testDoNotLogSyncExceptions() {
-    AtomicReference<Throwable> loggedError = watchLoggedExceptions();
-
-    try {
+    watchLoggedExceptions(loggedError -> {
       // unchecked is rethrown
       assertThrows(UnsupportedOperationException.class, () -> ReadAction.nonBlocking(() -> {
         throw new UnsupportedOperationException();
@@ -401,26 +394,23 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
         throw new IOException();
       }).executeSynchronously());
       assertNull(loggedError.get());
-    }
-    finally {
-      LoggedErrorProcessor.restoreDefaultProcessor();
-    }
+    });
   }
 
-  private static AtomicReference<Throwable> watchLoggedExceptions() {
+  private static void watchLoggedExceptions(Consumer<? super AtomicReference<Throwable>> runnable) {
     AtomicReference<Throwable> loggedError = new AtomicReference<>();
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
         assertNotNull(t);
         loggedError.set(t);
         return false;
       }
-    });
-    return loggedError;
+    }, ()->runnable.accept(loggedError));
   }
 
-  private static void assertLogsAndThrowsUOE(CancellablePromise<Object> promise, AtomicReference<Throwable> loggedError, BoundedTaskExecutor executor) throws Exception {
+  private static void assertLogsAndThrowsUOE(CancellablePromise<Object> promise, AtomicReference<Throwable> loggedError, BoundedTaskExecutor executor) {
     Throwable cause = null;
     try {
       waitForFuture(promise);
@@ -429,7 +419,12 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       cause = ExceptionUtil.getRootCause(e);
     }
     assertInstanceOf(cause, UnsupportedOperationException.class);
-    executor.waitAllTasksExecuted(1, TimeUnit.SECONDS);
+    try {
+      executor.waitAllTasksExecuted(1, TimeUnit.SECONDS);
+    }
+    catch (ExecutionException | InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
     assertSame(cause, loggedError.getAndSet(null));
   }
 

@@ -137,7 +137,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       Project project = task.getProject();
       return project != null && project.isDisposed() ? new EmptyProgressIndicator() : new BackgroundableProcessIndicator(task);
     };
-    Executor executor = ApplicationManager.getApplication().isDispatchThread() ? SameThreadExecutor.INSTANCE : EdtExecutorService.getInstance();
+    Executor executor = ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isHeadlessEnvironment()
+                        ? SameThreadExecutor.INSTANCE : EdtExecutorService.getInstance();
     CompletableFuture<@NotNull ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(supplier, executor);
     return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
   }

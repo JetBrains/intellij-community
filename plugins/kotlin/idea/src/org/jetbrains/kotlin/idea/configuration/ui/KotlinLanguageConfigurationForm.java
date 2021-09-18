@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.configuration.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.AsyncProcessIcon;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinPluginUtil;
 import org.jetbrains.kotlin.idea.PlatformVersion;
@@ -33,6 +35,7 @@ public class KotlinLanguageConfigurationForm {
     public KotlinLanguageConfigurationForm() {
         showVerifierDisabledStatus();
         experimentalFeaturesPanelContainer.setVisible(ExperimentalFeaturesPanel.Companion.shouldBeShown());
+        @NlsSafe
         String pluginVersion = KotlinPluginUtil.getPluginVersion();
 
         if (KotlinPluginUtil.isPatched()) {
@@ -44,6 +47,7 @@ public class KotlinLanguageConfigurationForm {
         }
 
         if (ApplicationManager.getApplication().isInternal()) {
+            @NlsSafe
             String buildNumber = VersioningKt.getBuildNumber();
             compilerVersion.setText(buildNumber);
         } else {
@@ -54,9 +58,9 @@ public class KotlinLanguageConfigurationForm {
         compilerVersion.setBackground(bundledCompilerVersionPanel.getBackground());
     }
 
-    public void initChannels(List<String> channels) {
+    public void initChannels(List<@NlsSafe String> channels) {
         channelCombo.removeAllItems();
-        for (String channel : channels) {
+        for (@NlsSafe String channel : channels) {
             channelCombo.addItem(channel);
         }
 
@@ -81,7 +85,7 @@ public class KotlinLanguageConfigurationForm {
         installStatusLabel.setVisible(false);
     }
 
-    public void setUpdateStatus(String message, boolean showInstallButton) {
+    public void setUpdateStatus(@Nls String message, boolean showInstallButton) {
         installButton.setEnabled(true);
         installButton.setVisible(showInstallButton);
 

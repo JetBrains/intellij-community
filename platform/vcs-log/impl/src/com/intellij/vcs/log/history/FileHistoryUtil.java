@@ -67,7 +67,9 @@ public final class FileHistoryUtil {
     ContentRevision afterRevision = createContentRevision(commitHash, commitIndex, visiblePack, diffHandler);
 
     List<Integer> parentCommits = map(parentRows, r -> visiblePack.getVisibleGraph().getRowInfo(r).getCommit());
-    if (parentCommits.isEmpty() && commitRow + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
+    if (parentCommits.isEmpty() &&
+        FileHistoryFilterer.NO_PARENTS_INFO.get(visiblePack, false) &&
+        commitRow + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
       parentCommits = Collections.singletonList(visiblePack.getVisibleGraph().getRowInfo(commitRow + 1).getCommit());
     }
     if (parentCommits.isEmpty()) {

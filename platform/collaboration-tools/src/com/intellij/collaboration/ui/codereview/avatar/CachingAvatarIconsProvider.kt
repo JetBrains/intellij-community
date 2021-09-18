@@ -2,11 +2,14 @@
 package com.intellij.collaboration.ui.codereview.avatar
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.ui.ScalingDeferredSquareImageIcon
+import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.ui.ScalingAsyncImageIcon
 import com.intellij.util.IconUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import java.awt.Image
 import java.time.Duration
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 abstract class CachingAvatarIconsProvider<T : Any>(private val defaultIcon: Icon) : AvatarIconsProvider<T> {
@@ -14,7 +17,15 @@ abstract class CachingAvatarIconsProvider<T : Any>(private val defaultIcon: Icon
   private val iconsCache = Caffeine.newBuilder()
     .expireAfterAccess(Duration.of(5, ChronoUnit.MINUTES))
     .build<Pair<T, Int>, Icon> { (key, size) ->
-      ScalingDeferredSquareImageIcon(size, defaultIcon, key, ::loadImage)
+      ScalingAsyncImageIcon(
+        size,
+        defaultIcon,
+        imageLoader = {
+          CompletableFuture<Image?>().completeAsync({
+            loadImage(key)
+          }, avatarLoadingExecutor)
+        }
+      )
     }
 
   override fun getIcon(key: T?, iconSize: Int): Icon {
@@ -23,4 +34,12 @@ abstract class CachingAvatarIconsProvider<T : Any>(private val defaultIcon: Icon
   }
 
   protected abstract fun loadImage(key: T): Image?
+
+  companion object {
+    internal val avatarLoadingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+      "Collaboration Tools avatars loading executor",
+      ProcessIOExecutorService.INSTANCE,
+      3
+    )
+  }
 }

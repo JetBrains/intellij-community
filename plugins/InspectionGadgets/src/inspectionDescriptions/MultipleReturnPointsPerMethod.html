@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports a method where the number of <code>return</code> points exceeds the specified maximum.
+Reports methods whose number of <code>return</code> points exceeds the specified maximum.
+Methods with too many <code>return</code> points may be confusing
+and hard to refactor.
 <p>A <code>return</code> point is either a <code>return</code> statement or a falling through the bottom of a
   <code>void</code> method or constructor.</p>
-<p>Methods with too many <code>return</code> points may be confusing
-  and hard to refactor.</p>
 <p><b>Example:</b></p>
 <p>The method below is reported if only two <code>return</code> statements are allowed:</p>
 <pre><code>

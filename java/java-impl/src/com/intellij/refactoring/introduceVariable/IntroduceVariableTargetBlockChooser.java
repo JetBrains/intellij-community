@@ -61,17 +61,17 @@ final class IntroduceVariableTargetBlockChooser {
     return parent != null ? parent.getParent() : lastItem.getParent();
   }
 
-   private static List<PsiElement> getContainers(PsiElement anchor, PsiExpression expr) {
-    List<PsiElement> containers = new ArrayList<>();
-    containers.add(anchor);
-    PsiElement container = PsiTreeUtil.getParentOfType(anchor, PsiLambdaExpression.class, true, PsiCodeBlock.class);
-    if (container == null) return containers;
-    Set<PsiElement> dependencies = 
-      PsiTreeUtil.collectElementsOfType(expr, PsiReferenceExpression.class)
-        .stream()
-        .map(ref -> ref.resolve())
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+   static List<PsiElement> getContainers(PsiElement anchor, PsiExpression expr) {
+     List<PsiElement> containers = new ArrayList<>();
+     containers.add(anchor);
+     PsiElement container = PsiTreeUtil.getParentOfType(anchor, PsiLambdaExpression.class, true, PsiCodeBlock.class);
+     if (container == null) return containers;
+     Set<PsiElement> dependencies =
+       PsiTreeUtil.collectElementsOfType(expr, PsiReferenceExpression.class)
+         .stream()
+         .map(ref -> ref.resolve())
+         .filter(Objects::nonNull)
+         .collect(Collectors.toSet());
     while (container instanceof PsiLambdaExpression) {
       if (ContainerUtil.intersects(dependencies, Arrays.asList(((PsiLambdaExpression)container).getParameterList().getParameters()))) {
         break;

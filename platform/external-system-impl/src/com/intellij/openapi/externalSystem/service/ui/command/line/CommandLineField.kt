@@ -23,8 +23,6 @@ class CommandLineField(
   commandLineInfo: CommandLineInfo
 ) : ExtendableTextField() {
 
-  private val textCompletetionPopup: TextCompletionPopup<CommandLineField>
-
   private val propertyGraph = PropertyGraph()
   private val commandLineProperty = propertyGraph.graphProperty { "" }
 
@@ -43,12 +41,9 @@ class CommandLineField(
     val textCompletionContributor = JTextCompletionContributor.create<CommandLineField> {
       commandLineInfo.tablesInfo.flatMap { it.completionInfo }
     }
-    textCompletetionPopup = TextCompletionPopup(project, this, textCompletionContributor)
-  }
-
-  init {
+    val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor)
     val action = Runnable {
-      textCompletetionPopup.updatePopup(TextCompletionPopup.UpdatePopupType.HIDE)
+      textCompletionPopup.updatePopup(TextCompletionPopup.UpdatePopupType.HIDE)
       val dialog = CommandLineDialog(project, commandLineInfo)
       dialog.whenVariantChosen {
         val separator = if (text.endsWith(" ") || text.isEmpty()) "" else " "

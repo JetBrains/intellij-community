@@ -124,6 +124,7 @@ internal sealed class ChangeEntry {
     val sourceChange: ChangeEntitySource<E>,
   ) : ChangeEntry() {
     companion object {
+      @Suppress("UNCHECKED_CAST")
       fun <T : WorkspaceEntity> from(dataChange: ReplaceEntity<T>, sourceChange: ChangeEntitySource<*>): ReplaceAndChangeSource<T> {
         return ReplaceAndChangeSource(dataChange, sourceChange as ChangeEntitySource<T>)
       }

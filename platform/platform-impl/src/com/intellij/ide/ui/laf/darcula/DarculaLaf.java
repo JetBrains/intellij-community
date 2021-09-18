@@ -47,7 +47,6 @@ import java.util.function.Function;
  * @author Konstantin Bulenkov
  */
 public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
-  private static final Object SYSTEM = new Object();
   public static final @NlsSafe String NAME = "Darcula";
   private static final @NlsSafe String DESCRIPTION = "IntelliJ Dark Look and Feel";
   private LookAndFeel base;
@@ -56,6 +55,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   protected Disposable myDisposable;
   private final UserDataHolderBase myUserData = new UserDataHolderBase();
   private static boolean myAltPressed;
+  protected final UIDefaults baseDefaults = new UIDefaults();
 
   public DarculaLaf(@NotNull LookAndFeel base) {
     this.base = base;
@@ -110,6 +110,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     try {
       UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       UIDefaults defaults = base.getDefaults();
+      baseDefaults.putAll(defaults);
 
       if (SystemInfoRt.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
         defaults.keySet().stream().
@@ -270,11 +271,15 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
-  protected Object parseValue(String key, @NotNull String value) {
-    if ("system".equals(value)) {
-      return SYSTEM;
-    }
+  public Color getBaseColor(String key) {
+    return baseDefaults.getColor(key);
+  }
 
+  /**
+   * @deprecated Use {@link UITheme#parseValue(String, String, ClassLoader)}
+   */
+  @Deprecated
+  protected Object parseValue(String key, @NotNull String value) {
     return UITheme.parseValue(key, value, getClass().getClassLoader());
   }
 

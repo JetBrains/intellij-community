@@ -835,6 +835,13 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     public boolean IPythonEditor(String path, String line) {
       return execIPythonEditor(path);
     }
+
+    @Override
+    public void sendRichOutput(Map<String, String> data) throws TException {
+      if (myConsoleView == null) return;
+      if (data.isEmpty()) return;
+      PyConsoleOutputCustomizer.Companion.getInstance().showRichOutput(myConsoleView, data);
+    }
   }
 
   protected static class CommunicationClosedException extends RuntimeException {

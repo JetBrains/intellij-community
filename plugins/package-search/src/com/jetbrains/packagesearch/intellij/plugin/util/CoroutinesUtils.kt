@@ -1,12 +1,9 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -14,6 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,23 +35,13 @@ internal fun <T, R> Flow<T>.map(context: CoroutineContext, action: suspend (T) -
 internal val Dispatchers.AppUI
     get() = AppUIExecutor.onUiThread().coroutineDispatchingContext()
 
-@Suppress("unused") // The receiver is technically unused
-internal val Dispatchers.ReadActions: CoroutineDispatcher
-    get() = ReadActionsCoroutineDispatcher
-
-internal object ReadActionsCoroutineDispatcher : CoroutineDispatcher() {
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        ApplicationManager.getApplication().runReadAction(block)
-    }
-}
-
-internal fun <T> Flow<T>.replayOnSignal(signal: Flow<Any>) = channelFlow {
+internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlow {
     var lastValue: T? = null
     onEach { send(it) }
         .onEach { lastValue = it }
         .launchIn(this)
 
-    signal.mapNotNull { lastValue }
+    merge(*signals).mapNotNull { lastValue }
         .onEach { send(it) }
         .launchIn(this)
 }

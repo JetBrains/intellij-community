@@ -43,6 +43,7 @@ class ParameterInlayProviderSettingsModel(
 
   override fun collectAndApply(editor: Editor, file: PsiFile) = throw UnsupportedOperationException()
 
+  override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) = throw UnsupportedOperationException()
 
   override fun toString(): String = name
 

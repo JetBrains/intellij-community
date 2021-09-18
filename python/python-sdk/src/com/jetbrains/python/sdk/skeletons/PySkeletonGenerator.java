@@ -107,7 +107,7 @@ public class PySkeletonGenerator {
    */
   // TODO get rid of skeletonPath and currentFolder parameters and configure generator explicitly with builder
   public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
-    mySkeletonsPath = skeletonPath;
+    mySkeletonsPath = StringUtil.trimTrailing(skeletonPath, '\\');
     mySdk = pySdk;
     myCurrentFolder = currentFolder;
   }
@@ -395,10 +395,11 @@ public class PySkeletonGenerator {
   public void prepare() {
   }
 
-  protected ProcessOutput getProcessOutput(String homePath,
+  @NotNull
+  protected ProcessOutput getProcessOutput(@Nullable String homePath,
                                            String @NotNull [] commandLine,
                                            @Nullable String stdin,
-                                           Map<String, String> extraEnv,
+                                           @Nullable Map<String, String> extraEnv,
                                            int timeout) throws InvalidSdkException {
     final byte[] bytes = stdin != null ? stdin.getBytes(StandardCharsets.UTF_8) : null;
     return PySdkUtil.getProcessOutput(homePath, commandLine, extraEnv, timeout, bytes, true);

@@ -4,7 +4,7 @@ Reports implementations of <code>InvocationHandler</code> that do not proxy stan
 <code>Object</code> methods like <code>hashCode()</code>, <code>equals()</code>, and <code>toString()</code>.
 <p>Failing to handle these methods might cause unexpected problems upon calling them on a proxy instance.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   InvocationHandler myHandler = (proxy, method, params) -&gt; {
     System.out.println("Hello World!");
     <b>return</b> null;
@@ -13,7 +13,7 @@ Reports implementations of <code>InvocationHandler</code> that do not proxy stan
     Thread.currentThread().getContextClassLoader(),
     <b>new</b> Class[] {Runnable.class}, myHandler
   );
-</pre>
+</code></pre>
 <p>
   This code snippet is designed to only proxy the <code>Runnable.run()</code> method.
   However, calls to any <code>Object</code> methods, like <code>hashCode()</code>, are proxied as well.

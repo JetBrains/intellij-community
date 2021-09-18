@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
 
-  public FlatSpeedSearchPopup(@NlsContexts.PopupTitle String title,
+  public FlatSpeedSearchPopup(@Nullable @NlsContexts.PopupTitle String title,
                               @NotNull ActionGroup actionGroup,
                               @NotNull DataContext dataContext,
                               @Nullable Condition<? super AnAction> preselectActionCondition, boolean showDisableActions) {

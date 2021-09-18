@@ -114,6 +114,11 @@ abstract class RunManager {
   abstract var selectedConfiguration: RunnerAndConfigurationSettings?
 
   /**
+   * should set selected configuration from context
+   */
+  abstract fun shouldSetRunConfigurationFromContext(): Boolean
+
+  /**
    * Creates a configuration of the specified type with the specified name. Note that you need to call
    * [.addConfiguration] if you want the configuration to be persisted in the project.
    * @param name the name of the configuration to create (should be unique and not equal to any other existing configuration)

@@ -31,7 +31,7 @@ val INLINED_THIS_REGEX = run {
  * the additional metadata that is only used for disambiguating inline
  * stack frames.
  */
-class InlineStackFrame private constructor(
+class InlineStackFrameVariableHolder private constructor(
     // Visible variables sorted by start offset.
     private val sortedVariables: List<LocalVariableProxyImpl>,
     // Map from variable index to frame id. Every frame corresponds to a call to
@@ -43,17 +43,14 @@ class InlineStackFrame private constructor(
     // This function hides scope introduction variables and strips inline metadata suffixes.
     val visibleVariables: List<LocalVariableProxyImpl>
         get() = sortedVariables.mapIndexedNotNull { index, variable ->
-            if (variableFrameIds[index] == currentFrameId && !isFakeLocalVariableForInline(variable.name())) {
-                val name = dropInlineSuffix(variable.name())
-                if (name != variable.name()) {
-                    object : LocalVariableProxyImpl(variable.frame, variable.variable) {
-                        override fun name() = name
-                    }
-                } else variable
-            } else null
+            if (variableFrameIds[index] == currentFrameId) {
+                variable
+            } else {
+                null
+            }
         }
 
-    val parentFrame: InlineStackFrame?
+    val parentFrame: InlineStackFrameVariableHolder?
         get() {
             val scopeVariableIndex = sortedVariables.indexOfLast {
                 isFakeLocalVariableForInline(it.name())
@@ -67,7 +64,7 @@ class InlineStackFrame private constructor(
             val parentFrameId = parentSortedVariables.indexOfLast {
                 isFakeLocalVariableForInline(it.name())
             }.takeIf { it >= 0 }?.let { variableFrameIds[it] } ?: 0
-            return InlineStackFrame(parentSortedVariables, parentVariableFrameIds, parentFrameId)
+            return InlineStackFrameVariableHolder(parentSortedVariables, parentVariableFrameIds, parentFrameId)
         }
 
     companion object {
@@ -118,7 +115,7 @@ class InlineStackFrame private constructor(
         // is either associated to one of the currently active stack frames or to the next
         // inline function call (since the arguments of inline functions appear before the
         // corresponding scope introduction variable).
-        private fun fromSortedVisibleVariables(sortedVariables: List<LocalVariableProxyImpl>): InlineStackFrame {
+        private fun fromSortedVisibleVariables(sortedVariables: List<LocalVariableProxyImpl>): InlineStackFrameVariableHolder {
             // Map from variables to frame ids
             val variableFrameIds = IntArray(sortedVariables.size)
             // Stack of currently active frames
@@ -183,10 +180,10 @@ class InlineStackFrame private constructor(
                 }
             }
 
-            return InlineStackFrame(sortedVariables, variableFrameIds, activeFrames.last())
+            return InlineStackFrameVariableHolder(sortedVariables, variableFrameIds, activeFrames.last())
         }
 
-        fun fromStackFrame(frame: StackFrameProxyImpl): InlineStackFrame {
+        fun fromStackFrame(frame: StackFrameProxyImpl): InlineStackFrameVariableHolder {
             val allVariables = if (frame.virtualMachine.virtualMachine.isDexDebug()) {
                 frame.location().method().safeVariables()
             } else null

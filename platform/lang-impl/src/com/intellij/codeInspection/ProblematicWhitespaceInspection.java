@@ -93,7 +93,8 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
       if (!(fileType instanceof LanguageFileType)) {
         return;
       }
-      if (file != file.getViewProvider().getAllFiles().get(0)) {
+      if (file.getViewProvider().getBaseLanguage() != file.getLanguage()) {
+        // don't warn multiple times on files which have multiple views like PHP and JSP
         return;
       }
       final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());

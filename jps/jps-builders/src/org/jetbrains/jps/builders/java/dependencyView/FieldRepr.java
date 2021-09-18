@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * @author: db
  */
-class FieldRepr extends ProtoMember {
+class FieldRepr extends ProtoMember implements ProtoFieldEntity {
   public void updateClassUsages(final DependencyContext context, final int owner, final Set<? super UsageRepr.Usage> s) {
     myType.updateClassUsages(context, owner, s);
   }

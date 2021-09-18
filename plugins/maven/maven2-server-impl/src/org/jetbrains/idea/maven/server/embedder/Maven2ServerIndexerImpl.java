@@ -5,15 +5,15 @@ import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.*;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 import org.apache.maven.archetype.source.ArchetypeDataSource;
 import org.apache.maven.archetype.source.ArchetypeDataSourceException;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.wagon.events.TransferEvent;
+import org.codehaus.plexus.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -268,7 +268,7 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
   }
 
   @Override
-  public Set<MavenArtifactInfo> search(int indexId, Object query, int maxResult, MavenToken token) throws MavenServerIndexerException {
+  public Set<MavenArtifactInfo> search(int indexId, String pattern, int maxResult, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
@@ -276,7 +276,8 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
       TopDocs docs = null;
       try {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
-        docs = index.getIndexSearcher().search((Query)query, null, maxResult);
+        Query query = StringUtils.isEmpty(pattern) ? new MatchAllDocsQuery() : getWildcardQuery(pattern);
+        docs = index.getIndexSearcher().search(query, null, maxResult);
       }
       catch (BooleanQuery.TooManyClauses ignore) {
         // this exception occurs when too wide wildcard is used on too big data.
@@ -393,5 +394,10 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
         doc.add(new Field(ArtifactInfo.DESCRIPTION, ai.description, Field.Store.YES, Field.Index.NO));
       }
     }
+  }
+
+  @NotNull
+  private static WildcardQuery getWildcardQuery(String pattern) {
+    return new WildcardQuery(new Term(SEARCH_TERM_CLASS_NAMES, "*/" + pattern.replaceAll("\\.", "/")));
   }
 }

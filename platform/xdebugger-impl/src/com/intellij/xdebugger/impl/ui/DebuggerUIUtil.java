@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -387,20 +387,7 @@ public final class DebuggerUIUtil {
   }
 
   /**
-   * Checks if value has evaluation expression ready, or calculation is pending
-   */
-  public static boolean hasEvaluationExpression(@NotNull XValueNodeImpl value) {
-    Promise<XExpression> promise = value.calculateEvaluationExpression();
-    try {
-      return promise.getState() == Promise.State.PENDING || promise.blockingGet(0) != null;
-    }
-    catch (ExecutionException | TimeoutException e) {
-      return true;
-    }
-  }
-
-  /**
-   * @deprecated use {@link #hasEvaluationExpression(XValueNodeImpl)}
+   * @deprecated avoid, {@link XValue#calculateEvaluationExpression()} may produce side effects
    */
   @Deprecated
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
@@ -496,19 +483,30 @@ public final class DebuggerUIUtil {
     return event.getData(XDebugSessionTab.TAB_KEY) == null;
   }
 
+  @Nullable
   public static XDebugSessionData getSessionData(AnActionEvent e) {
     XDebugSessionData data = e.getData(XDebugSessionData.DATA_KEY);
     if (data == null) {
-      Project project = e.getProject();
-      if (project != null) {
-        XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-        if (session != null) {
-          data = ((XDebugSessionImpl)session).getSessionData();
-        }
+      XDebugSession session = getSession(e);
+      if (session != null) {
+        data = ((XDebugSessionImpl)session).getSessionData();
       }
     }
     return data;
   }
+
+  @Nullable
+  public static XDebugSession getSession(@NotNull AnActionEvent e) {
+    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+    if (session == null) {
+      Project project = e.getProject();
+      if (project != null) {
+        session = XDebuggerManager.getInstance(project).getCurrentSession();
+      }
+    }
+    return session;
+  }
+
 
   public static void repaintCurrentEditor(Project project) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();

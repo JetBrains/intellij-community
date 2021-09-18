@@ -15,19 +15,21 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
 
-internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet(), isBundled: Boolean = false): IdeaPluginDescriptorImpl {
+internal fun loadDescriptorInTest(dir: Path,
+                                  disabledPlugins: Set<PluginId> = emptySet(),
+                                  isBundled: Boolean = false): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
   val buildNumber = BuildNumber.fromString("2042.42")!!
   val parentContext = DescriptorListLoadingContext(disabledPlugins = disabledPlugins,
                                                    result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   val result = loadDescriptorFromFileOrDir(file = dir,
-                                           pathName = PluginManagerCore.PLUGIN_XML,
                                            context = parentContext,
                                            pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
                                            isBundled = isBundled,
                                            isEssential = true,
-                                           isDirectory = Files.isDirectory(dir))
+                                           isDirectory = Files.isDirectory(dir),
+                                           useCoreClassLoader = false)
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()

@@ -43,6 +43,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
   private fun canShowSingleFileHistory(project: Project, dataManager: VcsLogData, path: FilePath, isRevisionHistory: Boolean): Boolean {
     val root = VcsLogUtil.getActualRoot(project, path) ?: return false
     return dataManager.index.isIndexingEnabled(root) ||
+           Registry.`is`("vcs.force.new.history") ||
            canShowHistoryInLog(dataManager, getCorrectedPath(project, path, root, isRevisionHistory), root)
   }
 

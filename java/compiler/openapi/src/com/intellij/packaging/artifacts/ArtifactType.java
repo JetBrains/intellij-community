@@ -21,16 +21,6 @@ public abstract class ArtifactType {
   private final String myId;
   private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTitle;
 
-  /**
-   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
-   * Please use the constructor that accepts a messagePointer for {@link ArtifactType#myTitle}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected ArtifactType(@NonNls String id, @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
-    this(id, () -> title);
-  }
-
   protected ArtifactType(@NonNls String id, Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> title) {
     myId = id;
     myTitle = title;

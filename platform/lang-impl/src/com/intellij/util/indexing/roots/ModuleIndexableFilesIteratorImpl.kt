@@ -5,14 +5,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.ModuleFileIndexImpl
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
-import com.intellij.util.indexing.roots.kind.ModuleRootOriginImpl
+import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
+import org.jetbrains.annotations.NonNls
 
 open class ModuleIndexableFilesPolicy {
   companion object {
@@ -24,8 +28,9 @@ open class ModuleIndexableFilesPolicy {
 
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
                                                 private val roots: List<VirtualFile>,
-                                                private val shouldPrintSingleRootInDebugName: Boolean) : ModuleIndexableFilesIterator {
+                                                private val printRootsInDebugName: Boolean) : ModuleIndexableFilesIterator {
   companion object {
+
     @JvmStatic
     fun getModuleIterators(module: Module): Collection<ModuleIndexableFilesIteratorImpl> {
       val fileIndex = ModuleRootManager.getInstance(module).fileIndex as ModuleFileIndexImpl
@@ -40,12 +45,29 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
   }
 
   override fun getDebugName(): String =
-    "Module '${module.name}'" + if (shouldPrintSingleRootInDebugName) {
-      " (" + roots.first().name + ")"
+    if (printRootsInDebugName) {
+      "Module '" + module.name + "' (" +
+      if (roots.isEmpty()) "empty"
+      else roots.joinToString(", ") { it.name } +
+           ")"
     }
     else {
-      ""
+      "Module '${module.name}'"
     }
+
+  fun getDebugDescription(): @NonNls String {
+    val sb = StringBuilder("ModuleIndexableFilesIteratorImpl ")
+    if (roots.isEmpty()) {
+      sb.append("with no roots")
+    }
+    else {
+      sb.append("with roots:")
+      for (root in roots) {
+        sb.append("\n   ").append(root)
+      }
+    }
+    return sb.toString()
+  }
 
   override fun getIndexingProgressText(): String =
     if (ModuleType.isInternal(module)) {
@@ -68,9 +90,12 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean {
+    if (module.isDisposed) return false
     for (root in roots) {
       ModuleRootManager.getInstance(module).fileIndex.iterateContentUnderDirectory(root, fileIterator, fileFilter)
     }
     return true
   }
+
+  override fun getRootUrls(): Set<String> = module.rootManager.contentRootUrls.toSet()
 }

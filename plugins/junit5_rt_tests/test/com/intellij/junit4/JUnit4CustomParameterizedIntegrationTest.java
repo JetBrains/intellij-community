@@ -57,19 +57,28 @@ public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFramew
 
   @Test
   public void executeOneParameter() throws ExecutionException {
-    ProcessOutput processOutput = doStartProcess();
+    ProcessOutput processOutput = doStartProcess(myParamString);
     String testOutput = processOutput.out.toString();
     assertEmpty(processOutput.err);
     assertTrue(testOutput, testOutput.contains("Test1"));
     assertFalse(testOutput, testOutput.contains("Test2"));
   }
 
-  private ProcessOutput doStartProcess() throws ExecutionException {
+  @Test
+  public void executeNoParameters() throws ExecutionException {
+    ProcessOutput processOutput = doStartProcess(null);
+    String testOutput = processOutput.out.toString();
+    assertEmpty(processOutput.err);
+    assertTrue(testOutput, testOutput.contains("Test1"));
+    assertTrue(testOutput, testOutput.contains("Test2"));
+  }
+
+  private ProcessOutput doStartProcess(String paramString) throws ExecutionException {
     PsiClass psiClass = findClass(myModule, CLASS_NAME);
     assertNotNull(psiClass);
     PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, false)[0];
     JUnitConfiguration configuration = createConfiguration(testMethod);
-    configuration.setProgramParameters(myParamString);
+    configuration.setProgramParameters(paramString);
     return doStartTestsProcess(configuration);
   }
 }

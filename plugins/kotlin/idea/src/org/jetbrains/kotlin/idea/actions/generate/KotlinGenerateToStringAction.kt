@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.actions.generate
 
 import com.intellij.ide.util.MemberChooser
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -11,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
@@ -53,7 +54,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
         val project: Project
     )
 
-    enum class Generator(val text: String) {
+    enum class Generator(@Nls val text: String) {
         SINGLE_TEMPLATE(KotlinBundle.message("action.generate.tostring.template.single")) {
             override fun generate(info: Info): String {
                 val className = info.classDescriptor.name.asString()
@@ -141,7 +142,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
         }
 
         val properties = getPropertiesToUseInGeneratedMember(klass)
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             val info = Info(
                 classDescriptor,
                 properties.map { context[BindingContext.DECLARATION_TO_DESCRIPTOR, it] as VariableDescriptor },
@@ -175,7 +176,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
                     project)
     }
 
-    private fun generateToString(targetClass: KtClassOrObject, info: Info): KtNamedFunction? {
+    private fun generateToString(targetClass: KtClassOrObject, info: Info): KtNamedFunction {
         val superToString = info.classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
         return generateFunctionSkeleton(superToString, targetClass).apply {
             replaceBody {
@@ -186,7 +187,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
 
     override fun generateMembers(project: Project, editor: Editor?, info: Info): List<KtDeclaration> {
         val targetClass = info.classDescriptor.source.getPsi() as KtClass
-        val prototype = generateToString(targetClass, info) ?: return emptyList()
+        val prototype = generateToString(targetClass, info)
         val anchor = with(targetClass.declarations) { lastIsInstanceOrNull<KtNamedFunction>() ?: lastOrNull() }
         return insertMembersAfter(editor, targetClass, listOf(prototype), anchor)
     }

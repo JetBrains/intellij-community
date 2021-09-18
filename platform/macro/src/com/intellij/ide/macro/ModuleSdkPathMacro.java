@@ -3,7 +3,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.util.PlatformUtils;
@@ -29,7 +29,7 @@ public class ModuleSdkPathMacro extends Macro {
   @Nullable
   @Override
   public String expand(@NotNull DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module == null) {
       return null;
     }

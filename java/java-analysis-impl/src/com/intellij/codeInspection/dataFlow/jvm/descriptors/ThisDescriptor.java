@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -81,10 +83,14 @@ public final class ThisDescriptor extends PsiVarDescriptor {
     if (context != null) {
       PsiMethod method = ObjectUtils.tryCast(context.getParent(), PsiMethod.class);
       if (method != null && myQualifier.equals(method.getContainingClass())) {
+        if (myQualifier instanceof PsiEnumConstantInitializer) {
+          PsiEnumConstant constant = ((PsiEnumConstantInitializer)myQualifier).getEnumConstant();
+          return DfTypes.referenceConstant(constant, TypeConstraints.exactClass(myQualifier));
+        }
         if (!method.isConstructor() && MutationSignature.fromMethod(method).preservesThis()) {
           return dfType.meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
         }
-        else if (method.isConstructor()) {
+        if (method.isConstructor()) {
           return dfType.meet(DfTypes.LOCAL_OBJECT);
         }
       }

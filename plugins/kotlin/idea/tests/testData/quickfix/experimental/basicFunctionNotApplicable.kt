@@ -2,6 +2,7 @@
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 // ACTION: Add '@MyExperimentalAPI' annotation to containing class 'Bar'
+// ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to containing file 'basicFunctionNotApplicable.kt'
 // ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to 'bar'
 // ACTION: Add '-Xopt-in=MyExperimentalAPI' to module light_idea_test_case compiler arguments
 // ERROR: This declaration is experimental and its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'

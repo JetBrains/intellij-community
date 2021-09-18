@@ -35,11 +35,6 @@ public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
    * @deprecated See {@link LegacyCodeStyleSettings}
    */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean KEEP_FIRST_COLUMN_COMMENT = true;
-  /**
-   * @deprecated See {@link LegacyCodeStyleSettings}
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public int KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
   /**
    * @deprecated See {@link LegacyCodeStyleSettings}
@@ -56,11 +51,6 @@ public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
    */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean INDENT_CASE_FROM_SWITCH = true;
-  /**
-   * @deprecated See {@link LegacyCodeStyleSettings}
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean ALIGN_MULTILINE_BINARY_OPERATION = false;
   /**
    * @deprecated See {@link LegacyCodeStyleSettings}
    */
@@ -216,11 +206,6 @@ public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
    */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean SPACE_AFTER_COLON = true;
-  /**
-   * @deprecated See {@link LegacyCodeStyleSettings}
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
 
   public LegacyCodeStyleSettings() {
     super(null);

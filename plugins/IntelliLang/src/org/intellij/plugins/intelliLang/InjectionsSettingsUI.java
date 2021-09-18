@@ -712,7 +712,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     descriptor.setDescription(IntelliLangBundle.message("dialog.file.chooser.description.please.select.the.configuration.file"));
     descriptor.setTitle(IntelliLangBundle.message("dialog.file.chooser.title.import.configuration"));
 
-    descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, LangDataKeys.MODULE.getData(dataContext));
+    descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, PlatformCoreDataKeys.MODULE.getData(dataContext));
 
     final SplitterProportionsData splitterData = new SplitterProportionsDataImpl();
     splitterData.externalizeFromDimensionService("IntelliLang.ImportSettingsKey.SplitterProportions");

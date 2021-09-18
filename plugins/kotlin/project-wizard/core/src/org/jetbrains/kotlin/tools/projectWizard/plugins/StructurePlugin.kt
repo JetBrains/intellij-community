@@ -41,6 +41,8 @@ class StructurePlugin(context: Context) : Plugin(context) {
                     KotlinNewProjectWizardBundle.message("plugin.structure.setting.location.error.is.not.empty")
                 }
             }
+
+            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.location.tooltip")
         }
         val name by stringSetting(
             KotlinNewProjectWizardBundle.message("plugin.structure.setting.name"),
@@ -48,6 +50,7 @@ class StructurePlugin(context: Context) : Plugin(context) {
         ) {
             shouldNotBeBlank()
             validate(StringValidators.shouldBeValidIdentifier(title, Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES))
+            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.name.tooltip")
         }
 
         val groupId by stringSetting(
@@ -57,6 +60,7 @@ class StructurePlugin(context: Context) : Plugin(context) {
             isSavable = true
             shouldNotBeBlank()
             validate(StringValidators.shouldBeValidIdentifier(title, ALLOWED_SPECIAL_CHARS_IN_GROUP_ID))
+            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.group.id.tooltip")
         }
         val artifactId by stringSetting(
             KotlinNewProjectWizardBundle.message("plugin.structure.setting.artifact.id"),
@@ -64,6 +68,7 @@ class StructurePlugin(context: Context) : Plugin(context) {
         ) {
             shouldNotBeBlank()
             validate(StringValidators.shouldBeValidIdentifier(title, ALLOWED_SPECIAL_CHARS_IN_ARTIFACT_ID))
+            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.artifact.id.tooltip")
         }
         val version by stringSetting(
             KotlinNewProjectWizardBundle.message("plugin.structure.setting.version"),
@@ -72,6 +77,7 @@ class StructurePlugin(context: Context) : Plugin(context) {
             shouldNotBeBlank()
             validate(StringValidators.shouldBeValidIdentifier(title, ALLOWED_SPECIAL_CHARS_IN_VERSION))
             defaultValue = value("1.0-SNAPSHOT")
+            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.version.tooltip")
         }
 
         val renderPomIR by booleanSetting(

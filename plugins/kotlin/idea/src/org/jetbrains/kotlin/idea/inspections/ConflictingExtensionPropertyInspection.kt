@@ -189,7 +189,7 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
             val fqName = declaration.unsafeResolveToDescriptor(BodyResolveMode.PARTIAL).importableFqName
             if (fqName != null) {
                 ProgressManager.getInstance().run(
-                    object : Task.Modal(project, KotlinBundle.message("searching.for.imports.to.delete"), true) {
+                    object : Task.Modal(project, KotlinBundle.message("searching.for.imports.to.delete.title"), true) {
                         override fun run(indicator: ProgressIndicator) {
                             val importsToDelete = runReadAction {
                                 val searchScope = KotlinSourceFilterScope.projectSources(GlobalSearchScope.projectScope(project), project)

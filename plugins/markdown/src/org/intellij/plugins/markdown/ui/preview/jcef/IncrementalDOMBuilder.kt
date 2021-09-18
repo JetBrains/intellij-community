@@ -52,9 +52,14 @@ internal class IncrementalDOMBuilder(html: String, private val basePath: Path? =
       for (attribute in node.attributes()) {
         append(",'")
         append(attribute.key)
-        append("','")
-        append(encodeArgument(attribute.value))
-        append("'")
+        append('\'')
+        val value = attribute.value
+        @Suppress("SENSELESS_COMPARISON")
+        if (value != null) {
+          append(",'")
+          append(encodeArgument(value))
+          append("'")
+        }
       }
       append(");")
     }
