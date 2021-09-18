@@ -112,4 +112,47 @@ def xx = switch (10)  {
 }
 x<caret>x""", 'java.lang.Integer'
   }
+
+  void testTypeSwitching() {
+    doTest """
+def xx
+
+def _ = switch (xx) {
+    case String -> x<caret>x
+}""", 'java.lang.String'
+  }
+
+  void testSwitchOnSeveralTypes() {
+    doTest """
+class A {}
+class B extends A {}
+class C extends A {}
+
+def xx
+
+def _ = switch (xx) {
+    case B, C -> x<caret>x
+}""", 'A'
+  }
+
+  void testMatchInOtherBranch() {
+    doTest """
+def foo(xx) {
+    def _ = switch (xx) {
+        case String  -> xx.charAt(10)
+        case Integer -> x<caret>x
+    }
+}""", 'java.lang.Integer'
+  }
+
+  void testMatchOnTypesInSwitchStatement() {
+    doTest """
+def foo(xx) {
+    switch (xx) {
+        case String  -> xx.charAt(10)
+        case Integer -> x<caret>x
+    }
+}""", 'java.lang.Integer'
+  }
+
 }

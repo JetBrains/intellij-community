@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -919,10 +920,25 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (!containsAllCases(switchElement)) {
       addPendingEdge(switchElement, instruction);
     }
+    FList<ConditionInstruction> conditionsBefore = myConditions;
     for (GrCaseSection section : sections) {
+      myConditions = conditionsBefore;
       myHead = instruction;
+      GrExpression[] expressionPatterns = section.getExpressions();
+      if (!section.isDefault() &&
+          expressionPatterns.length > 0 &&
+          ContainerUtil.and(expressionPatterns, expr -> expr instanceof GrReferenceExpression &&
+                                                        ((GrReferenceExpression)expr).resolve() instanceof PsiClass)) {
+        GrExpression expressionPattern = expressionPatterns[0];
+        if (expressionPattern != null && expressionPattern.getParent() instanceof GrExpressionList) {
+          ConditionInstruction cond = registerCondition(section, false);
+          addNodeAndCheckPending(cond);
+          addNode(new InstanceOfInstruction((GroovyPsiElement)expressionPattern.getParent(), cond));
+        }
+      }
       section.accept(this);
     }
+    myConditions = conditionsBefore;
     finishNode(instruction);
   }
 
