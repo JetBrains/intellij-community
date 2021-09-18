@@ -1157,7 +1157,7 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) <<disableNlBeforeClosure>> ex
 }
 
 // region Switch expression
-switch_expression ::= 'switch' '(' expression ')' mb_nl ('{' mb_nl <<insideSwitchExpression general_switch_section>>* '}') { pin = 1 }
+switch_expression ::= 'switch' '(' mb_nl expression mb_nl ')' mb_nl ('{' mb_nl <<insideSwitchExpression general_switch_section>>* '}') { pin = 1 }
 private general_switch_section ::= !'}' (case_section | default_section) { pin = 1 recoverWhile = case_section_recovery }
 private case_section_recovery ::= !('}' | 'case' | 'default')
 

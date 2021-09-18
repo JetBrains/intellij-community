@@ -8233,7 +8233,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // 'switch' '(' expression ')' mb_nl ('{' mb_nl <<insideSwitchExpression general_switch_section>>* '}')
+  // 'switch' '(' mb_nl expression mb_nl ')' mb_nl ('{' mb_nl <<insideSwitchExpression general_switch_section>>* '}')
   public static boolean switch_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_expression")) return false;
     if (!nextTokenIsSmart(b, KW_SWITCH)) return false;
@@ -8241,34 +8241,36 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, SWITCH_EXPRESSION, null);
     r = consumeTokensSmart(b, 1, KW_SWITCH, T_LPAREN);
     p = r; // pin = 1
-    r = r && report_error_(b, expression(b, l + 1, -1));
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && report_error_(b, expression(b, l + 1, -1)) && r;
+    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
-    r = p && switch_expression_5(b, l + 1) && r;
+    r = p && switch_expression_7(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // '{' mb_nl <<insideSwitchExpression general_switch_section>>* '}'
-  private static boolean switch_expression_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switch_expression_5")) return false;
+  private static boolean switch_expression_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_7")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_LBRACE);
     r = r && mb_nl(b, l + 1);
-    r = r && switch_expression_5_2(b, l + 1);
+    r = r && switch_expression_7_2(b, l + 1);
     r = r && consumeToken(b, T_RBRACE);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // <<insideSwitchExpression general_switch_section>>*
-  private static boolean switch_expression_5_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switch_expression_5_2")) return false;
+  private static boolean switch_expression_7_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_7_2")) return false;
     while (true) {
       int c = current_position_(b);
       if (!insideSwitchExpression(b, l + 1, GroovyGeneratedParser::general_switch_section)) break;
-      if (!empty_element_parsed_guard_(b, "switch_expression_5_2", c)) break;
+      if (!empty_element_parsed_guard_(b, "switch_expression_7_2", c)) break;
     }
     return true;
   }
