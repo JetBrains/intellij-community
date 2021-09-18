@@ -138,6 +138,7 @@ object CodeWithMeClientDownloader {
       override val compatibleJreUrl = jreDownloadUrl
       override val hostFeaturesToEnable: Set<String>? = null
       override val stunTurnServers: List<StunTurnServerInfo>? = null
+      override val turnAllocationServerInfo: StunTurnServerInfo? = null
       override val downloadPgpPublicKeyUrl: String? = null
     }
 

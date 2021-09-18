@@ -50,6 +50,7 @@ object ThinClientSessionInfoFetcher {
           override val compatibleJreUrl = sessionInfo["compatibleJreUrl"].asText()
           override val hostFeaturesToEnable: Set<String>? = null
           override val stunTurnServers: List<StunTurnServerInfo>? = null
+          override val turnAllocationServerInfo: StunTurnServerInfo? = null
           override val downloadPgpPublicKeyUrl: String? = null
         }
       }
