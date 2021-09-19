@@ -3,9 +3,13 @@ package com.jetbrains.python.testing
 
 import com.intellij.execution.Location
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.RuntimeConfigurationException
+import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
@@ -16,7 +20,9 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration
  * @author Ilya.Kazakevich
  */
 abstract class AbstractPythonTestRunConfiguration<T : AbstractPythonTestRunConfiguration<T>>
-protected constructor(project: Project, factory: ConfigurationFactory) : AbstractPythonRunConfiguration<T>(project, factory) {
+@JvmOverloads
+protected constructor(project: Project, factory: ConfigurationFactory, val requiredPackage: String? = null) :
+  AbstractPythonRunConfiguration<T>(project, factory) {
   /**
    * Create test spec (string to be passed to runner, probably glued with [TEST_NAME_PARTS_SPLITTER])
    *
@@ -44,6 +50,25 @@ protected constructor(project: Project, factory: ConfigurationFactory) : Abstrac
     }
     return null
   }
+
+  @Throws(RuntimeConfigurationException::class)
+  override fun checkConfiguration() {
+    super.checkConfiguration()
+    if (requiredPackage != null && !isFrameworkInstalled()) {
+      throw RuntimeConfigurationWarning(
+        PyBundle.message("runcfg.testing.no.test.framework", requiredPackage))
+    }
+  }
+
+  /**
+   * Check if framework is available on SDK
+   */
+  fun isFrameworkInstalled(): Boolean {
+    val sdk = sdk ?: return false // No SDK -- no tests
+    val requiredPackage = this.requiredPackage ?: return true // Installed by default
+    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+  }
+
 
   companion object {
     /**
