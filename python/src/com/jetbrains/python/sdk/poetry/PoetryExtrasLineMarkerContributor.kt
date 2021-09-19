@@ -15,12 +15,7 @@ object PoetryExtrasLineMarkerContributor : RunLineMarkerContributor() {
   override fun getInfo(element: PsiElement): Info? {
     val sdk = element.project.pythonSdk ?: return null
     if (!sdk.isPoetry) return null
-    try {
-      if (element !is TomlKey) return null
-    }
-    catch (e: NoClassDefFoundError) {
-      return null //Toml plugin is installed. But, PyCharm has not restarted yet.
-    }
+    if (element !is TomlKey) return null
     val keyValue = element.parent as? TomlKeyValue ?: return null
     val header = (keyValue.parent as? TomlTable)?.header ?: return null
     if (header.key?.text != "tool.poetry.extras") return null
