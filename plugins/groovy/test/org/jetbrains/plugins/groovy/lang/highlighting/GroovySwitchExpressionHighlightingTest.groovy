@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrSwitchExhaustivenessCheckInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 
 @CompileStatic
@@ -50,5 +51,65 @@ def x = switch (10) {
     case 20: 
         throw new IOException()
 }'''
+  }
+
+  void 'test empty switch'() {
+    doTest '''
+def x = <error>switch</error> (10) {}'''
+  }
+
+  void 'test check boolean exhaustiveness'() {
+    highlightingTest """
+def foo(boolean b) {
+  def x = switch (b) {
+    case true -> 1
+    case false -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+
+    highlightingTest """
+def foo(boolean b) {
+  def x = <weak_warning>switch</weak_warning> (b) {
+    case false -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+
+    highlightingTest """
+def foo(boolean b) {
+  def x = <weak_warning>switch</weak_warning> (b) {
+    case true -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+
+    highlightingTest """
+def foo(boolean b) {
+  def x = switch (b) {
+    default -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+  }
+
+  void 'test numerical range exhaustiveness'() {
+    highlightingTest """
+def foo(byte b) {
+  def x = switch (b) {
+    case -128..<0 -> 1
+    case 0..127 -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+
+    highlightingTest """
+def foo(byte b) {
+  def x = <weak_warning>switch</weak_warning> (b) {
+    case -128..<0 -> 1
+    case 0..126 -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
   }
 }

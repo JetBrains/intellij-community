@@ -1076,6 +1076,11 @@
                      groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrPermitsClauseInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
+                     key="inspection.display.name.switch.exhaustiveness.check"
+                     level="WEAK WARNING"
+                     groupKey="inspection.bugs" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrSwitchExhaustivenessCheckInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.unresolved.labels.in.named.variant"
                      groupKey="inspection.annotations" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrNamedVariantLabelsInspection"/>
