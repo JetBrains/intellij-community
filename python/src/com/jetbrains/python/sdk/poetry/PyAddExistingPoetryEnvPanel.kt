@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("DialogTitleCapitalization")
+
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.module.Module

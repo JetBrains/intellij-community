@@ -148,19 +148,10 @@ class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
     return if (Regex("^[0-9]").containsMatchIn(version)) "==$version" else version
   }
 
-  private fun toRequirements(packages: List<PyPackage>): List<PyRequirement> =
-    packages
-      .asSequence()
-      //                    .filterNot { (_, pkg) -> pkg.editable ?: false }
-      // TODO: Support requirements markers (PEP 496), currently any packages with markers are ignored due to PY-30803
-      //                    .filter { (_, pkg) -> pkg.markers == null }
-      .flatMap { it -> this.parseRequirements("${it.name}${it.version?.let { getVersion(it) } ?: ""}").asSequence() }
-      .toList()
-
   /**
    * Parses the output of `poetry install --dry-run ` into a list of packages.
    */
-  fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {
+  private fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {
     fun getNameAndVersion(line: String): Triple<String, String, String> {
       return line.split(" ").let {
         val installedVersion = it[5].replace(Regex("[():]"), "")

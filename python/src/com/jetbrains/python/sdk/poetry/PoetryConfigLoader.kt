@@ -22,7 +22,7 @@ class PoetryConfigLoader : StartupActivity {
       try {
         project.sdks
           .filterNot { it.isPoetry }
-          .filter { isPoetryFromConfig(project, it) }
+          .filter { PoetryConfigService.getInstance(project).poetryVirtualenvPaths.contains(it.homePath)}
           .forEach { it.isPoetry = true }
       }
       catch (e: AlreadyDisposedException) {
