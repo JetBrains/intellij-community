@@ -304,6 +304,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             pos = targets.size();
           }
           final PsiMethod psiMethod = expression.resolveMethod();
+          boolean isSmartStepSupported = true;
           boolean isMethodCall = expression instanceof PsiMethodCallExpression;
           if (isMethodCall) {
             PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
@@ -312,7 +313,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
             visitArguments(expression.getArgumentList(), psiMethod);
           }
-          if (psiMethod != null) {
+          if (psiMethod != null && (isSmartStepSupported = DebuggerUtilsEx.isSmartStepIntoSupported(psiMethod, DebuggerSettings.getInstance()
+            .getSteppingFilters()))) {
             myContextStack.push(psiMethod);
             MethodSmartStepTarget target = new MethodSmartStepTarget(
               psiMethod,
@@ -341,7 +343,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
           }
           finally {
-            if (psiMethod != null) {
+            if (psiMethod != null && isSmartStepSupported) {
               myContextStack.pop();
             }
           }

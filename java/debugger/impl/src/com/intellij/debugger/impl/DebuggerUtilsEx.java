@@ -1145,4 +1145,24 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     });
   }
+
+  public static boolean isSmartStepIntoSupported(@NotNull PsiMethod psiMethod, ClassFilter[] steppingFilters) {
+    if (steppingFilters.length == 0) {
+      return true;
+    }
+
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass == null || StringUtil.isEmpty(containingClass.getQualifiedName())) {
+      return true;
+    }
+
+    final String qualifiedName = containingClass.getQualifiedName();
+    for (final ClassFilter classFilter : steppingFilters) {
+      if (classFilter.isEnabled() && classFilter.matches(qualifiedName)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }
