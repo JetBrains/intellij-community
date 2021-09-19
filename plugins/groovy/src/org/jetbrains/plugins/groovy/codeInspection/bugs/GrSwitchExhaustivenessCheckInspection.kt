@@ -6,6 +6,7 @@ import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -52,37 +53,46 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       val resolvedPatterns = patterns.mapNotNull { (it as? GrReferenceExpression)?.resolve() }
       if (clazz is GrEnumTypeDefinition) {
         val constants = clazz.enumConstants
-        insertErrors(switchElement, !constants.all { it in resolvedPatterns })
+        val necessaryConstants = constants.asList() - resolvedPatterns
+        insertErrors(switchElement, necessaryConstants.isNotEmpty(), necessaryConstants)
         return
       }
       val resolvedClasses = resolvedPatterns.filterIsInstance<PsiClass>()
       val permittedSubclasses = getAllPermittedClasses(clazz)
+      val necessarySubclasses = permittedSubclasses - resolvedClasses
       if (permittedSubclasses.isNotEmpty()) {
-        insertErrors(switchElement, !resolvedClasses.containsAll(permittedSubclasses))
+        insertErrors(switchElement, necessarySubclasses.isNotEmpty(), necessarySubclasses)
       }
       else {
         val allTypesCovered = resolvedClasses.any { clazz.isInheritor(it, true) }
                               // not sure if we need to enable this by default
                               //&& patterns.any { it is GrLiteral && it.isNullLiteral() }
-        insertErrors(switchElement, allTypesCovered)
+        insertErrors(switchElement, allTypesCovered, emptyList())
       }
     }
 
     private fun handlePrimitiveType(switchElement: GrSwitchElement,
                                     conditionalType: PsiPrimitiveType,
                                     patterns: List<GrExpression>) = when (conditionalType) {
-      PsiType.BOOLEAN -> insertErrors(switchElement, !patterns.map { it.text }.containsAll(listOf("true", "false")))
+      PsiType.BOOLEAN -> {
+        val factory = GroovyPsiElementFactory.getInstance(switchElement.project)
+        val patternTexts = patterns.map { it.text }
+        val trueLiteral = if ("true" !in patternTexts) factory.createLiteralFromValue(true) else null
+        val falseLiteral = if ("false" !in patternTexts) factory.createLiteralFromValue(false) else null
+        val necessaryPatterns = listOfNotNull(trueLiteral, falseLiteral)
+        insertErrors(switchElement, necessaryPatterns.isNotEmpty(), necessaryPatterns)
+      }
       PsiType.BYTE, PsiType.SHORT, PsiType.INT, PsiType.LONG -> {
         val definedRanges = glueRange(patterns)
-        insertErrors(switchElement, definedRanges.size > 1)
+        insertErrors(switchElement, definedRanges.size > 1, emptyList())
         val expectedRange = calculateActualRange(conditionalType)
         if (definedRanges.size == 1) {
-          insertErrors(switchElement, definedRanges[0] != expectedRange)
+          insertErrors(switchElement, definedRanges[0] != expectedRange, emptyList())
         }
         Unit
       }
       else -> {
-        insertErrors(switchElement, true)
+        insertErrors(switchElement, true, emptyList())
       }
     }
 
@@ -108,7 +118,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
           val left = evaluator.computeConstantExpression(pattern.from) as? Number
           val right = evaluator.computeConstantExpression(pattern.to) as? Number
           if (left != null && right != null) {
-            // todo: proper ranges
+            // todo: proper ranges, fix with IDEA-278456
             ranges.add(Range(left.toLong(), right.toLong()))
           }
         }
@@ -127,10 +137,11 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       return collapsedRanges
     }
 
-    private fun insertErrors(switchElement: GrSwitchElement, reallyInsert: Boolean) {
+    private fun insertErrors(switchElement: GrSwitchElement, reallyInsert: Boolean, missingExpressions : List<PsiElement>) {
       if (reallyInsert) {
         registerError(switchElement.firstChild,
-          GroovyBundle.message("inspection.message.switch.expression.does.not.cover.all.possible.outcomes"), emptyArray(),
+          GroovyBundle.message("inspection.message.switch.expression.does.not.cover.all.possible.outcomes"),
+          arrayOf(GrAddMissingCaseSectionsFix(missingExpressions, switchElement)),
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
     }
