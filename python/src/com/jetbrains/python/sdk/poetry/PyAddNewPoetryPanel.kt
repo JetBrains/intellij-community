@@ -5,9 +5,9 @@ import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
@@ -20,7 +20,6 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
@@ -92,7 +91,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
 
     val modules = allModules(project)
 
-    moduleField = JComboBox(modules.toTypedArray()).apply {
+    moduleField = ComboBox(modules.toTypedArray()).apply {
       renderer = ModuleListCellRenderer()
       preferredSize = Dimension(Int.MAX_VALUE, preferredSize.height)
       addItemListener {
@@ -199,7 +198,6 @@ class PyAddNewPoetryPanel(private val project: Project?,
    */
   private fun validatePoetryIsNotAdded(): ValidationInfo? {
     val path = projectPath ?: return null
-    val project = project ?: return null
     val addedPoetry = isPoetry[path] ?: return null
     if (addedPoetry.homeDirectory == null) return null
     // TODO: check existing envs
