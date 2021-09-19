@@ -176,6 +176,10 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
 
   private fun visitSwitchElement(switchElement : GrSwitchElement) {
     val caseSections = switchElement.caseSections ?: emptyArray()
+    if (caseSections.isEmpty()) {
+      switchElement.firstChild?.let { holder.newAnnotation(HighlightSeverity.ERROR,
+        GroovyBundle.message("inspection.message.case.or.default.branches.are.expected")).range(it).create() }
+    }
     checkArrowColonConsistency(caseSections)
     caseSections.forEach(this::visitCaseSection)
     val jointFlow = caseSections.asSequence().flatMap { ControlFlowUtils.getCaseSectionInstructions(it).asSequence() }
