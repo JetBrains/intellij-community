@@ -333,6 +333,11 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveMethod/moveToClass/propertyAsReference/propertyAsReference.test");
     }
 
+    @TestMetadata("kotlin/moveMethod/moveToClass/sameMethodNameDifferentParameters/sameMethodNameDifferentParameters.test")
+    public void testKotlin_moveMethod_moveToClass_sameMethodNameDifferentParameters_SameMethodNameDifferentParameters() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveMethod/moveToClass/sameMethodNameDifferentParameters/sameMethodNameDifferentParameters.test");
+    }
+
     @TestMetadata("kotlin/moveMethod/moveToObject/moveToObject.test")
     public void testKotlin_moveMethod_moveToObject_MoveToObject() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveMethod/moveToObject/moveToObject.test");

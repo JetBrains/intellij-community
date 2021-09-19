@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.postProcessing.type
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -289,8 +290,19 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
     MOVE_KOTLIN_METHOD {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
             val project = mainFile.project
-            val method =
-                KotlinFunctionShortNameIndex.getInstance().get(config.getString("methodToMove"), project, project.projectScope()).first()
+            val potentialMethods =
+                KotlinFunctionShortNameIndex.getInstance().get(config.getString("methodToMove"), project, project.projectScope())
+            val method = if (potentialMethods.size == 1 || !config.has("methodToMoveParameters")) {
+                potentialMethods.first()
+            } else {
+                val methodToMoveParameters = config.getAsJsonArray("methodToMoveParameters")!!
+                potentialMethods.first {
+                    it.valueParameters.size == methodToMoveParameters.size()
+                            && it.valueParameters.zip(methodToMoveParameters)
+                        .all { (actual, expected) -> actual.type().toString() == expected.asString }
+
+                }
+            }
             val methodParameterName = config.getNullableString("methodParameter")
             val sourcePropertyName = config.getNullableString("sourceProperty")
             val targetObjectName = config.getNullableString("targetObject")

@@ -84,6 +84,7 @@ import org.jetbrains.kotlin.util.isJavaDescriptor
 import org.jetbrains.kotlin.util.supertypesWithAny
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import java.util.*
 
 class MoveConflictChecker(
     private val project: Project,
@@ -603,7 +604,9 @@ class MoveConflictChecker(
         fun <T> equivalent(a: T, b: T): Boolean = when (a) {
             is DeclarationDescriptor -> when (a) {
                 is FunctionDescriptor -> b is FunctionDescriptor
-                        && equivalent(a.name, b.name) && a.valueParameters.zip(b.valueParameters).all { equivalent(it.first, it.second) }
+                        && equivalent(a.name, b.name)
+                        && a.valueParameters.size == b.valueParameters.size
+                        && a.valueParameters.zip(b.valueParameters).all { equivalent(it.first, it.second) }
                 is ValueParameterDescriptor -> b is ValueParameterDescriptor
                         && equivalent(a.type, b.type)
                 else -> b is DeclarationDescriptor && equivalent(a.name, b.name)

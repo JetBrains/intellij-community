@@ -1,0 +1,7 @@
+{
+  "mainFile": "a/A.kt",
+  "type": "MOVE_KOTLIN_METHOD",
+  "methodToMove": "toMove",
+  "methodToMoveParameters": [],
+  "sourceProperty": "b"
+}
