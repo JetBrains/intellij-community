@@ -1,62 +1,55 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.testing;
+package com.jetbrains.python.testing
 
-import com.intellij.execution.Location;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.Location
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.openapi.project.Project
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
 
 /**
  * Parent of all test configurations
  *
  * @author Ilya.Kazakevich
  */
-public abstract class AbstractPythonTestRunConfiguration<T extends AbstractPythonTestRunConfiguration<T>>
-  extends AbstractPythonRunConfiguration<T> {
+abstract class AbstractPythonTestRunConfiguration<T : AbstractPythonTestRunConfiguration<T>>
+protected constructor(project: Project, factory: ConfigurationFactory) : AbstractPythonRunConfiguration<T>(project, factory) {
   /**
-   * When passing path to test to runners, you should join parts with this char.
-   * I.e.: file.py::PyClassTest::test_method
-   */
-  protected static final String TEST_NAME_PARTS_SPLITTER = "::";
-
-  protected AbstractPythonTestRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
-    super(project, factory);
-  }
-
-  /**
-   * Create test spec (string to be passed to runner, probably glued with {@link AbstractPythonLegacyTestRunConfiguration#TEST_NAME_PARTS_SPLITTER})
+   * Create test spec (string to be passed to runner, probably glued with [TEST_NAME_PARTS_SPLITTER])
    *
    * @param location   test location as reported by runner
    * @param failedTest failed test
    * @return string spec or null if spec calculation is impossible
    */
-  @Nullable
-  public String getTestSpec(@NotNull final Location<?> location, @NotNull final AbstractTestProxy failedTest) {
-    PsiElement element = location.getPsiElement();
-    PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    if (location instanceof PyPsiLocationWithFixedClass) {
-      pyClass = ((PyPsiLocationWithFixedClass)location).getFixedClass();
+  open fun getTestSpec(location: Location<*>, failedTest: AbstractTestProxy): String? {
+    val element = location.psiElement
+    var pyClass = PsiTreeUtil.getParentOfType(element, PyClass::class.java, false)
+    if (location is PyPsiLocationWithFixedClass) {
+      pyClass = location.fixedClass
     }
-    PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-    final VirtualFile virtualFile = location.getVirtualFile();
+    val pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction::class.java, false)
+    val virtualFile = location.virtualFile
     if (virtualFile != null) {
-      String path = virtualFile.getCanonicalPath();
+      var path = virtualFile.canonicalPath
       if (pyClass != null) {
-        path += TEST_NAME_PARTS_SPLITTER + pyClass.getName();
+        path += TEST_NAME_PARTS_SPLITTER + pyClass.name
       }
       if (pyFunction != null) {
-        path += TEST_NAME_PARTS_SPLITTER + pyFunction.getName();
+        path += TEST_NAME_PARTS_SPLITTER + pyFunction.name
       }
-      return path;
+      return path
     }
-    return null;
+    return null
+  }
+
+  companion object {
+    /**
+     * When passing path to test to runners, you should join parts with this char.
+     * I.e.: file.py::PyClassTest::test_method
+     */
+    protected const val TEST_NAME_PARTS_SPLITTER = "::"
   }
 }
