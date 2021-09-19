@@ -21,10 +21,11 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression;
 
 import java.util.*;
 
@@ -43,13 +44,11 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
   }
 
   private static class Visitor extends BaseInspectionVisitor {
-    @Override
-    public void visitSwitchStatement(@NotNull GrSwitchStatement grSwitchStatement) {
-      super.visitSwitchStatement(grSwitchStatement);
+    private void visitSwitchElement(@NotNull GrSwitchElement switchElement) {
       final Set<GrExpression> duplicateExpressions = new HashSet<>();
-      final List<GrCaseSection> labels = collectCaseSections(grSwitchStatement);
-      final List<GrExpression> allMatchingExpressions = new ArrayList<>();
-      for (final GrCaseSection label : labels) {
+      final GrCaseSection[] sections = switchElement.getCaseSections();
+      final List<GrExpression> allMatchingExpressions = new ArrayList<>(sections.length);
+      for (final GrCaseSection label : sections) {
         final GrExpression[] expressions = label.getExpressions();
         allMatchingExpressions.addAll(Arrays.asList(expressions));
       }
@@ -67,26 +66,18 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
         registerError(duplicateExpression);
       }
     }
-  }
 
-  private static List<GrCaseSection> collectCaseSections(final GrSwitchStatement containingStatelent) {
-    final List<GrCaseSection> labels = new ArrayList<>();
-    final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
 
-      @Override
-      public void visitCaseSection(@NotNull GrCaseSection caseSection) {
-        super.visitCaseSection(caseSection);
-        labels.add(caseSection);
-      }
+    @Override
+    public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+      super.visitSwitchExpression(switchExpression);
+      visitSwitchElement(switchExpression);
+    }
 
-      @Override
-      public void visitSwitchStatement(@NotNull GrSwitchStatement grSwitchStatement) {
-        if (containingStatelent.equals(grSwitchStatement)) {
-          super.visitSwitchStatement(grSwitchStatement);
-        }
-      }
-    };
-    containingStatelent.accept(visitor);
-    return labels;
+    @Override
+    public void visitSwitchStatement(@NotNull GrSwitchStatement grSwitchStatement) {
+      super.visitSwitchStatement(grSwitchStatement);
+      visitSwitchElement(grSwitchStatement);
+    }
   }
 }
