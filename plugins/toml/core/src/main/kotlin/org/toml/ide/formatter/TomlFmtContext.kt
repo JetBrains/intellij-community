@@ -9,16 +9,19 @@ import com.intellij.formatting.SpacingBuilder
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.toml.ide.formatter.impl.createSpacingBuilder
+import org.toml.ide.formatter.settings.TomlCodeStyleSettings
 import org.toml.lang.TomlLanguage
 
 data class TomlFmtContext(
-    val commonSettings: CommonCodeStyleSettings,
-    val spacingBuilder: SpacingBuilder
+  val commonSettings: CommonCodeStyleSettings,
+  val tomlSettings: TomlCodeStyleSettings,
+  val spacingBuilder: SpacingBuilder
 ) {
-    companion object {
-        fun create(settings: CodeStyleSettings): TomlFmtContext {
-            val commonSettings = settings.getCommonSettings(TomlLanguage)
-            return TomlFmtContext(commonSettings, createSpacingBuilder(commonSettings))
-        }
+  companion object {
+    fun create(settings: CodeStyleSettings): TomlFmtContext {
+      val commonSettings = settings.getCommonSettings(TomlLanguage)
+      val tomlSettings = settings.toml
+      return TomlFmtContext(commonSettings, tomlSettings, createSpacingBuilder(commonSettings))
     }
+  }
 }

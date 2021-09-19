@@ -8,7 +8,7 @@ package org.toml.ide.formatter
 import org.toml.ide.typing.TomlTypingTestBase
 
 class TomlAutoIndentTest : TomlTypingTestBase() {
-    fun `test new array element`() = doTestByText("""
+  fun `test new array element`() = doTestByText("""
         [key]
         foo = [
             "text",<caret>
@@ -19,5 +19,27 @@ class TomlAutoIndentTest : TomlTypingTestBase() {
             "text",
             <caret>
         ]
+    """)
+
+  fun `test new key value inside table`() = doOptionTest(tomlSettings()::INDENT_TABLE_KEYS, """
+        [foo]
+        bar = 1
+
+        [key]
+            foo = 1<caret>
+    """, """
+        [foo]
+        bar = 1
+
+        [key]
+            foo = 1
+            <caret>
+    """, """
+        [foo]
+        bar = 1
+
+        [key]
+            foo = 1
+        <caret>
     """)
 }
