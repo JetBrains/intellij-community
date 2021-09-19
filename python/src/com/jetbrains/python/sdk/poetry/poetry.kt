@@ -15,6 +15,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
@@ -46,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
@@ -98,7 +100,7 @@ val Module.pyProjectToml: VirtualFile?
   get() =
     baseDir?.findChild(PY_PROJECT_TOML)?.let { virtualFile ->
       (this.name + virtualFile.path).let { key ->
-        pyProjectTomlCache.getOrPut(key, { getPyProjectTomlForPoetry(virtualFile) }).let { pair ->
+        pyProjectTomlCache.getOrPut(key) { getPyProjectTomlForPoetry(virtualFile) }.let { pair ->
           when (virtualFile.modificationStamp) {
             pair.first -> pair.second
             else -> pyProjectTomlCache.put(key, getPyProjectTomlForPoetry(virtualFile))?.second
@@ -141,7 +143,7 @@ fun getPoetryExecutable(): File? =
 
 fun validatePoetryExecutable(poetryExecutable: @SystemDependent String?): ValidationInfo? {
   val message = if (poetryExecutable.isNullOrBlank()) {
-    "Poetry executable is not found"
+    PyBundle.message("python.sdk.poetry.executable.not.found")
   }
   else {
     val file = File(poetryExecutable)
@@ -265,7 +267,7 @@ var Sdk.isPoetry: Boolean
  */
 fun runPoetry(sdk: Sdk, vararg args: String): String {
   val projectPath = sdk.associatedModulePath
-                    ?: throw PyExecutionException("Cannot find the project associated with this Poetry environment",
+                    ?: throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.project.message"),
                       "Poetry", emptyList(), ProcessOutput())
   runPoetry(projectPath, "env", "use", sdk.homePath!!)
   return runPoetry(projectPath, *args)
@@ -276,7 +278,8 @@ fun runPoetry(sdk: Sdk, vararg args: String): String {
  */
 fun runPoetry(projectPath: @SystemDependent String?, vararg args: String): String {
   val executable = getPoetryExecutable()?.path
-                   ?: throw PyExecutionException("Cannot find Poetry", "poetry", emptyList(), ProcessOutput())
+                   ?: throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"), "poetry",
+                     emptyList(), ProcessOutput())
 
   val command = listOf(executable) + args
   val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
@@ -297,7 +300,8 @@ fun runPoetry(projectPath: @SystemDependent String?, vararg args: String): Strin
       isCancelled ->
         throw RunCanceledByUserException()
       exitCode != 0 ->
-        throw PyExecutionException("Error Running Poetry", executable, args.asList(),
+        throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.error.running.poetry.message"), executable,
+          args.asList(),
           stdout, stderr, exitCode, emptyList())
       else -> stdout.trim()
     }
@@ -312,11 +316,13 @@ fun runCommand(projectPath: @SystemDependent String, command: String, vararg arg
     runProcess()
   }
   return with(result) {
+    @Suppress("DialogTitleCapitalization")
     when {
       isCancelled ->
         throw RunCanceledByUserException()
       exitCode != 0 ->
-        throw PyExecutionException("Error Running", command, args.asList(),
+        throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.error.running.poetry.message"), command,
+          args.asList(),
           stdout, stderr, exitCode, emptyList())
       else -> stdout
     }
@@ -353,8 +359,8 @@ val Sdk.poetrySources: List<String>
  */
 class UsePoetryQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
   private val quickFixName = when {
-    sdk != null && sdk.isAssociatedWithAnotherModule(module) -> "Fix Poetry interpreter"
-    else -> "Use Poetry interpreter"
+    sdk != null && sdk.isAssociatedWithAnotherModule(module) -> PyBundle.message("python.sdk.poetry.quickfix.fix.pipenv.name")
+    else -> PyBundle.message("python.sdk.poetry.quickfix.use.pipenv.name")
   }
 
   companion object {
@@ -427,10 +433,10 @@ class PyProjectTomlWatcher : EditorFactoryListener {
   private val changeListenerKey = Key.create<DocumentListener>("PyProjectToml.change.listener")
   private val notificationActive = Key.create<Boolean>("PyProjectToml.notification.active")
   private val content: String = if (poetryVersion?.let { it < "1.1.1" } == true) {
-    "Run <a href='#lock'>poetry lock</a> or <a href='#update'>poetry update</a>"
+    PyBundle.message("python.sdk.poetry.pip.file.notification.content")
   }
   else {
-    "Run <a href='#lock'>poetry lock</a>, <a href='#noupdate'>poetry lock --no-update</a> or <a href='#update'>poetry update</a>"
+    PyBundle.message("python.sdk.poetry.pip.file.notification.content.without.updating")
   }
 
   override fun editorCreated(event: EditorFactoryEvent) {
@@ -472,21 +478,21 @@ class PyProjectTomlWatcher : EditorFactoryListener {
 
   private fun notifyPyProjectTomlChanged(module: Module) {
     if (module.getUserData(notificationActive) == true) return
-    val what = when {
-      module.poetryLock == null -> "not found"
-      else -> "out of date"
+    @Suppress("DialogTitleCapitalization") val title = when (module.poetryLock) {
+      null -> PyBundle.message("python.sdk.poetry.pip.file.lock.not.found")
+      else -> PyBundle.message("python.sdk.poetry.pip.file.lock.out.of.date")
     }
-    val title = "$POETRY_LOCK is $what"
-    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title = title, content = content,
-      listener = NotificationListener { notification, event ->
+    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION).setListener(
+      NotificationListener { notification, event ->
         FileDocumentManager.getInstance().saveAllDocuments()
         when (event.description) {
           "#lock" ->
-            runPoetryInBackground(module, listOf("lock"), "Locking $POETRY_LOCK")
+            runPoetryInBackground(module, listOf("lock"), PyBundle.message("python.sdk.poetry.pip.file.notification.locking"))
           "#noupdate" ->
-            runPoetryInBackground(module, listOf("lock", "--no-update"), "Locking $POETRY_LOCK without updating")
+            runPoetryInBackground(module, listOf("lock", "--no-update"),
+              PyBundle.message("python.sdk.poetry.pip.file.notification.locking.without.updating"))
           "#update" ->
-            runPoetryInBackground(module, listOf("update"), "Updating Poetry environment")
+            runPoetryInBackground(module, listOf("update"), PyBundle.message("python.sdk.poetry.pip.file.notification.updating"))
         }
         notification.expire()
         module.putUserData(notificationActive, null)
@@ -515,7 +521,8 @@ private val Document.virtualFile: VirtualFile?
 private fun VirtualFile.getModule(project: Project): Module? =
   ModuleUtil.findModuleForFile(this, project)
 
-private val LOCK_NOTIFICATION_GROUP = NotificationGroup("$PY_PROJECT_TOML Watcher", NotificationDisplayType.STICKY_BALLOON, false)
+private val LOCK_NOTIFICATION_GROUP = NotificationGroup(PyBundle.message("python.sdk.poetry.pip.file.watcher"),
+  NotificationDisplayType.STICKY_BALLOON, false)
 
 //private val Sdk.packageManager: PyPoetryPackageManager
 //    get() = PyPoetryPackageManager.getInstance(this)
@@ -603,7 +610,7 @@ fun runPoetryInBackground(module: Module, args: List<String>, description: Strin
       catch (e: RunCanceledByUserException) {
       }
       catch (e: ExecutionException) {
-        showSdkExecutionException(sdk, e, "Error Running Poetry")
+        showSdkExecutionException(sdk, e, PyBundle.message("python.sdk.poetry.execution.exception.error.running.poetry.message"))
       }
       finally {
         PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)
