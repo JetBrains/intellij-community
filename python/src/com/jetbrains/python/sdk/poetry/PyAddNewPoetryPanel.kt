@@ -110,12 +110,17 @@ class PyAddNewPoetryPanel(private val project: Project?,
 
     val builder = FormBuilder.createFormBuilder().apply {
       if (module == null && modules.size > 1) {
-        val associatedObject = if (PlatformUtils.isPyCharm()) "project" else "module"
-        addLabeledComponent("Associated $associatedObject", moduleField)
+        val associatedObjectLabel = if (PlatformUtils.isPyCharm()) {
+          PyBundle.message("python.sdk.poetry.associated.module")
+        }
+        else {
+          PyBundle.message("python.sdk.poetry.associated.project")
+        }
+        addLabeledComponent(associatedObjectLabel, moduleField)
       }
       addLabeledComponent(PySdkBundle.message("python.venv.base.label"), baseSdkField)
       addComponent(installPackagesCheckBox)
-      addLabeledComponent("Poetry executable:", poetryPathField)
+      addLabeledComponent(PyBundle.message("python.sdk.poetry.executable"), poetryPathField)
     }
     add(builder.panel, BorderLayout.NORTH)
     update()
@@ -167,7 +172,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
   private fun validatePoetryExecutable(): ValidationInfo? {
     val executable = poetryPathField.text.nullize()?.let { File(it) }
                      ?: detectPoetryExecutable()
-                     ?: return ValidationInfo("Poetry executable is not found")
+                     ?: return ValidationInfo(PyBundle.message("python.sdk.poetry.executable.not.found"))
     return when {
       !executable.exists() -> ValidationInfo(PyBundle.message("python.sdk.file.not.found", executable.absolutePath))
       !Files.isExecutable(executable.toPath()) || !executable.isFile -> ValidationInfo(

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.PyBundle
 import org.jetbrains.annotations.SystemDependent
 import java.awt.BorderLayout
 import javax.swing.JPanel
@@ -27,7 +28,7 @@ class PyAddNewPoetryFromFilePanel(private val module: Module) : JPanel() {
       getPoetryExecutable()?.absolutePath?.also { text = it }
 
       addBrowseFolderListener(
-        "Select Path to Poetry Executable",
+        PyBundle.message("python.sdk.poetry.select.executable.title"),
         null,
         module.project,
         FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
@@ -36,7 +37,7 @@ class PyAddNewPoetryFromFilePanel(private val module: Module) : JPanel() {
 
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Poetry executable:", poetryPathField)
+      .addLabeledComponent(PyBundle.message("python.sdk.poetry.executable"), poetryPathField)
       .panel
     add(formPanel, BorderLayout.NORTH)
   }
