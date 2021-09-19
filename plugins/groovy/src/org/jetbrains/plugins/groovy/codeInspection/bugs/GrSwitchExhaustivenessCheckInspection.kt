@@ -2,18 +2,19 @@
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClasses
 import kotlin.math.max
 
 class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
@@ -29,7 +30,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       if (cases.any { it.isDefault }) {
         return
       }
-      val conditionalType = switchElement.condition?.type ?: return
+      val conditionalType = switchElement.condition?.type ?: PsiType.NULL
       val patterns = cases.flatMap { it.expressions?.asList() ?: emptyList() }.filterNotNull()
       when (conditionalType) {
         is PsiPrimitiveType -> handlePrimitiveType(switchElement, conditionalType, patterns)
@@ -47,7 +48,24 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
 
 
     private fun handleClassType(switchElement: GrSwitchElement, conditionalType: PsiClassType, patterns: List<GrExpression>) {
-      // check enums and sealed classes
+      val clazz = conditionalType.resolve() as? GrTypeDefinition ?: return
+      val resolvedPatterns = patterns.mapNotNull { (it as? GrReferenceExpression)?.resolve() }
+      if (clazz is GrEnumTypeDefinition) {
+        val constants = clazz.enumConstants
+        insertErrors(switchElement, !constants.all { it in resolvedPatterns })
+        return
+      }
+      val resolvedClasses = resolvedPatterns.filterIsInstance<PsiClass>()
+      val permittedSubclasses = getAllPermittedClasses(clazz)
+      if (permittedSubclasses.isNotEmpty()) {
+        insertErrors(switchElement, !resolvedClasses.containsAll(permittedSubclasses))
+      }
+      else {
+        val allTypesCovered = resolvedClasses.any { clazz.isInheritor(it, true) }
+                              // not sure if we need to enable this by default
+                              //&& patterns.any { it is GrLiteral && it.isNullLiteral() }
+        insertErrors(switchElement, allTypesCovered)
+      }
     }
 
     private fun handlePrimitiveType(switchElement: GrSwitchElement,
@@ -58,9 +76,13 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
         val definedRanges = glueRange(patterns)
         insertErrors(switchElement, definedRanges.size > 1)
         val expectedRange = calculateActualRange(conditionalType)
-        insertErrors(switchElement, definedRanges[0] != expectedRange)
+        if (definedRanges.size == 1) {
+          insertErrors(switchElement, definedRanges[0] != expectedRange)
+        }
+        Unit
       }
       else -> {
+        insertErrors(switchElement, true)
       }
     }
 

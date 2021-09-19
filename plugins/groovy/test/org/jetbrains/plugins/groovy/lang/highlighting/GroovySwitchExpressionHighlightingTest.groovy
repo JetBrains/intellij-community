@@ -112,4 +112,78 @@ def foo(byte b) {
 }
 """, GrSwitchExhaustivenessCheckInspection
   }
+
+  void 'test incomplete enum'() {
+    highlightingTest """
+enum A { X, Y }
+
+def foo(A b) {
+  def x = <weak_warning>switch</weak_warning> (b) {
+    case A.X -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+  }
+
+  void 'test complete enum'() {
+    highlightingTest """
+enum A { X, Y }
+
+def foo(A b) {
+  def x = switch (b) {
+    case A.X -> 1
+    case A.Y -> 2
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+  }
+
+  void 'test incomplete sealed class'() {
+    highlightingTest """
+sealed class A {}
+class B extends A {}
+class C extends A {}
+
+def foo(A b) {
+  def x = <weak_warning>switch</weak_warning> (b) {
+    case B -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+  }
+
+  void 'test complete sealed class'() {
+    highlightingTest """
+sealed class A {}
+class B extends A {}
+class C extends A {}
+
+def foo(A b) {
+  def x = switch (b) {
+    case B -> 1
+    case C -> 2
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+  }
+
+  void 'test complete matching on types'() {
+    highlightingTest """
+def foo(IOException b) {
+  def x = switch (b) {
+    case Throwable -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+  }
+
+  void 'test untyped condition'() {
+    highlightingTest"""
+def foo(b) {
+  def x = <weak_warning>switch</weak_warning> (b) {
+    case 10 -> 1
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
+  }
 }
