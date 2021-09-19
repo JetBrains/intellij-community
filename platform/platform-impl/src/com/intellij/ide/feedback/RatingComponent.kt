@@ -12,7 +12,7 @@ import javax.swing.JComponent
 class RatingComponent : JComponent() {
   private val myIconSize = 32
   private val myIconGap = 4
-  private val myIconCount = 5
+  public val myIconCount = 5
   private val myActiveIcon = AllIcons.Ide.FeedbackRatingOn
   private val myInactiveIcon = AllIcons.Ide.FeedbackRating
   private var myHoverRating = 0

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.feedback.state.createdProject.NewProjectInfoEntry;
+import com.intellij.feedback.state.createdProject.NewProjectStatisticService;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.TrustedProjectSettings;
@@ -13,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -23,6 +26,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +47,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -241,6 +246,15 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
     logProjectGeneratedEvent(generator, project);
+
+    if (Registry.is("platform.feedback", false)) {
+      final var newProjectStatisticService = ApplicationManager.getApplication().getService(NewProjectStatisticService.class);
+      if (newProjectStatisticService != null && generator != null) {
+        final var newProjectInfoState = newProjectStatisticService.getState();
+        newProjectInfoState.getCreatedProjectInfo().add(
+          new NewProjectInfoEntry(generator.getName(), LocalDateTime.now(), false, false));
+      }
+    }
 
     return project;
   }
