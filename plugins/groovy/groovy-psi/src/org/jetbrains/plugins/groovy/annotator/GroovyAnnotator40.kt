@@ -183,7 +183,8 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     checkArrowColonConsistency(caseSections)
     caseSections.forEach(this::visitCaseSection)
     val jointFlow = caseSections.asSequence().flatMap { ControlFlowUtils.getCaseSectionInstructions(it).asSequence() }
-    if (caseSections.isNotEmpty() &&
+    if (!(switchElement is GrSwitchStatement && caseSections.all { it.colon != null }) &&
+        caseSections.isNotEmpty() &&
         caseSections.all { it.colon != null } &&
         jointFlow.all { it.element !is GrYieldStatement && it.element !is GrThrowStatement }) {
       val errorOwner = switchElement.firstChild ?: switchElement // try to hang the error on switch keyword
