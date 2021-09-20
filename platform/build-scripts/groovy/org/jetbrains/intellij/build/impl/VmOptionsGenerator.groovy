@@ -31,7 +31,7 @@ final class VmOptionsGenerator {
     Map<String, String> memory =  new LinkedHashMap<>()
     memory.putAll(MEMORY_OPTIONS)
     memory.putAll(productProperties.customJvmMemoryOptions)
-    memory.each {k,v -> result.add(k + v) }
+    memory.each { k, v -> result.add(k + v) }
 
     if (isEAP) {
       // must be consistent with `com.intellij.openapi.application.ConfigImportHelper#updateVMOptions`

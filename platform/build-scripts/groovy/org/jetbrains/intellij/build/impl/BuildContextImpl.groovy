@@ -333,7 +333,7 @@ final class BuildContextImpl extends BuildContext {
   @NotNull List<String> getAdditionalJvmArguments() {
     List<String> jvmArgs = new ArrayList<>()
 
-    def classLoader = productProperties.classLoader
+    String classLoader = productProperties.classLoader
     if (classLoader != null) {
       jvmArgs.add('-Djava.system.class.loader=' + classLoader)
     }
