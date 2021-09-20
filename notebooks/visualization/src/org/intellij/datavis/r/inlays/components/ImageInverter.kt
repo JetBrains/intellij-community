@@ -38,18 +38,28 @@ class ImageInverter(foreground: Color, background: Color) {
     val colors = IntArray(numberOfPixels)
     image.getRGB(0, 0, image.width, image.height, colors, 0, image.width)
 
-    val averageBrightness = colors.map { argb ->
-      val color = Color(argb, image.colorModel.hasAlpha())
-      val hsb = FloatArray(3)
-      Color.RGBtoHSB(color.red, color.green, color.blue, hsb)
-      hsb[2]
-    }.sum() / (numberOfPixels)
-
+    val averageBrightness = colors.map { getBrightness(it, image) }.sum() / numberOfPixels
     val numberOfColors = colors.toSet()
-
-    return averageBrightness > brightnessThreshold && numberOfColors.size < numberOfColorsThreshold
+    
+    return (averageBrightness > brightnessThreshold && numberOfColors.size < numberOfColorsThreshold) ||
+           hasLightBackground(colors, image, brightnessThreshold) == true
   }
 
+  private fun getBrightness(argb: Int, image: BufferedImage): Float {
+    val color = Color(argb, image.colorModel.hasAlpha())
+    val hsb = FloatArray(3)
+    Color.RGBtoHSB(color.red, color.green, color.blue, hsb)
+    return hsb[2]
+  }
+  
+  private fun hasLightBackground(colors: IntArray, image: BufferedImage, brightnessThreshold: Double): Boolean? {
+    val dominantColorPair = colors.groupBy { it }.maxByOrNull { it.value.size } ?: return null
+    val dominantColor = dominantColorPair.key
+    val dominantPixels = dominantColorPair.value
+    
+    return dominantPixels.size.toDouble() / colors.size > 0.5 && getBrightness(dominantColor, image) > brightnessThreshold
+  }
+  
   fun invert(color: Color): Color {
     val alpha = invert(color.rgb)
     val argb = convertHSLtoRGB(hsl, alpha)
