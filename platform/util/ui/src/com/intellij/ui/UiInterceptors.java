@@ -11,6 +11,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class UiInterceptors {
@@ -18,7 +20,7 @@ public final class UiInterceptors {
   private static final Queue<UiInterceptor<?>> ourInterceptors = new ConcurrentLinkedQueue<>();
 
   // persistent interceptors used for redirecting real component display to different place.
-  private static final Queue<PersistentUiInterceptor<?>> ourPersistentInterceptors = new ConcurrentLinkedQueue<>();
+  private static final Set<PersistentUiInterceptor<?>> ourPersistentInterceptors = ConcurrentHashMap.newKeySet();
 
   /**
    * Called from UI component
@@ -30,6 +32,13 @@ public final class UiInterceptors {
     return tryIntercept(uiComponent, null);
   }
 
+  /**
+   * Called from UI component
+   *
+   * @param uiComponent UI component which is about to be displayed
+   * @param relativePoint point where this ui component should be shown
+   * @return true if interception was successful, in this case no UI should be actually shown
+   */
   public static boolean tryIntercept(@NotNull Object uiComponent, @Nullable RelativePoint relativePoint) {
     UiInterceptor<?> interceptor = ourInterceptors.poll();
     if (interceptor != null) {
