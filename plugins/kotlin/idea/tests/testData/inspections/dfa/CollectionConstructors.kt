@@ -109,3 +109,12 @@ fun mutableInMethodReference(x: Int?) {
 fun modifyList(list: MutableList<Int>) {
     list.add(2)
 }
+
+fun fromArray(arr: Array<Int>) {
+    val list = mutableListOf(*arr)
+    if (list.isEmpty()) {}
+    if (arr.size == 0) return
+    val list2 = mutableListOf(*arr)
+    if (<warning descr="Condition is always false">list2.isEmpty()</warning>) {}
+}
+

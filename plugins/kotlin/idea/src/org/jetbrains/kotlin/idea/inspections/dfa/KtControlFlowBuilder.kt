@@ -52,6 +52,9 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -443,16 +446,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
-        val args = expr.valueArgumentList?.arguments
-        var argCount = 0
-        if (args != null) {
-            for (arg: KtValueArgument in args) {
-                val argExpr = arg.getArgumentExpression()
-                if (argExpr != null) {
-                    processExpression(argExpr)
-                    argCount++
-                }
-            }
+        val call = expr.resolveToCall()
+        var argCount: Int
+        if (call != null) {
+            argCount = pushResolvedCallArguments(call, expr)
+        } else {
+            argCount = pushUnresolvedCallArguments(expr)
         }
         if (inlineKnownMethod(expr, argCount, qualifierOnStack)) return
         val lambda = getInlineableLambda(expr)
@@ -468,6 +467,55 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
 
         addCall(expr, argCount, qualifierOnStack)
+    }
+
+    private fun pushUnresolvedCallArguments(expr: KtCallExpression): Int {
+        val args = expr.valueArgumentList?.arguments
+        var argCount = 0
+        if (args != null) {
+            for (arg: KtValueArgument in args) {
+                val argExpr = arg.getArgumentExpression()
+                if (argExpr != null) {
+                    processExpression(argExpr)
+                    argCount++
+                }
+            }
+        }
+        return argCount
+    }
+
+    private fun pushResolvedCallArguments(call: ResolvedCall<out CallableDescriptor>, expr: KtCallExpression): Int {
+        val valueArguments = call.valueArguments
+        var argCount = 0
+        for ((descriptor, valueArg) in valueArguments) {
+            when (valueArg) {
+                is VarargValueArgument -> {
+                    val arguments = valueArg.arguments
+                    val singleArg = arguments.singleOrNull()
+                    if (singleArg?.getSpreadElement() != null) {
+                        processExpression(singleArg.getArgumentExpression())
+                    } else {
+                        for (arg in arguments) {
+                            processExpression(arg.getArgumentExpression())
+                        }
+                        addInstruction(FoldArrayInstruction(null, descriptor.type.toDfType(expr), arguments.size))
+                    }
+                    argCount++
+                }
+                is ExpressionValueArgument -> {
+                    val valueArgument = valueArg.valueArgument
+                    if (valueArgument !is KtLambdaArgument) {
+                        processExpression(valueArgument?.getArgumentExpression())
+                        argCount++
+                    }
+                }
+                else -> {
+                    pushUnknown()
+                    argCount++
+                }
+            }
+        }
+        return argCount
     }
 
     private fun inlineKnownMethod(expr: KtCallExpression, argCount: Int, qualifierOnStack: Boolean): Boolean {

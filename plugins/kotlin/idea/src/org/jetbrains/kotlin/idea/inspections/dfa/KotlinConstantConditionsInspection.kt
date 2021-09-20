@@ -81,7 +81,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
-        // TODO: suppress when condition is required for a smart cast
+        // TODO: suppress when constant initial value of mutable variable is used and variable is declared just before
+        //      like var x = 0; x = x or y
         var parent = expression.parent
         if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
             // Will be reported for parent qualified expression

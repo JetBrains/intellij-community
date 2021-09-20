@@ -8,12 +8,12 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -82,48 +82,57 @@ class KotlinFunctionCallInstruction(
         }
         val descriptor = call.resolveToCall()?.resultingDescriptor
         if (descriptor != null) {
-            val type = fromKnownDescriptor(descriptor, arguments)
+            val type = fromKnownDescriptor(descriptor, arguments, stateBefore)
             if (type != null) return MethodEffect(factory.fromDfType(type.meet(getExpressionDfType(call))), true)
         }
         return MethodEffect(factory.fromDfType(getExpressionDfType(call)), pure)
     }
 
-    private fun fromKnownDescriptor(descriptor: CallableDescriptor, arguments: DfaCallArguments): DfType? {
+    private fun fromKnownDescriptor(descriptor: CallableDescriptor, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
         val name = descriptor.name.asString()
         val containingPackage = (descriptor.containingDeclaration as? PackageFragmentDescriptor)?.fqName?.asString() ?: return null
         if (containingPackage == "kotlin.collections") {
-            val size = arguments.arguments.size
+            val args = arguments.arguments
+            if (args.size > 1) return null
+            val size =
+                if (args.isEmpty()) DfTypes.intValue(0)
+                else state.getDfType(SpecialField.ARRAY_LENGTH.createValue(args[0].factory, args[0]))
             return when (name) {
                 "arrayOf", "booleanArrayOf", "byteArrayOf", "shortArrayOf", "charArrayOf",
                 "floatArrayOf", "intArrayOf", "doubleArrayOf", "longArrayOf" ->
-                    SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(size))
+                    SpecialField.ARRAY_LENGTH.asDfType(size)
                 "emptyList", "emptySet", "emptyMap" ->
                     SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
                         .meet(Mutability.UNMODIFIABLE.asDfType())
                 "listOf" ->
-                    SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(size))
+                    SpecialField.COLLECTION_SIZE.asDfType(size)
                         .meet(Mutability.UNMODIFIABLE.asDfType())
                 "listOfNotNull", "setOfNotNull", "mapOfNotNull" ->
-                    SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intRange(LongRangeSet.range(0, size.toLong())))
+                    SpecialField.COLLECTION_SIZE.asDfType(
+                        size.fromRelation(RelationType.LE).meet(DfTypes.intValue(0).fromRelation(RelationType.GE))
+                    )
                         .meet(Mutability.UNMODIFIABLE.asDfType())
                 "setOf", "mapOf" ->
-                    SpecialField.COLLECTION_SIZE.asDfType(if (size == 0) DfTypes.intValue(0) else DfTypes.intRange(LongRangeSet.range(1, size.toLong())))
+                    SpecialField.COLLECTION_SIZE.asDfType(size.toSetSize())
                         .meet(Mutability.UNMODIFIABLE.asDfType())
                 "mutableListOf", "arrayListOf" ->
-                    SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(size))
+                    SpecialField.COLLECTION_SIZE.asDfType(size)
                         .meet(DfTypes.LOCAL_OBJECT)
                 "mutableSetOf", "linkedSetOf", "hashSetOf", "hashMapOf", "linkedMapOf" ->
-                    SpecialField.COLLECTION_SIZE.asDfType(if (size == 0) DfTypes.intValue(0) else DfTypes.intRange(LongRangeSet.range(1, size.toLong())))
-                        .meet(DfTypes.LOCAL_OBJECT)
+                    SpecialField.COLLECTION_SIZE.asDfType(size.toSetSize()).meet(DfTypes.LOCAL_OBJECT)
                 else -> null
             }
         }
         return null
     }
 
+    private fun DfType.toSetSize(): DfType {
+        val minValue = if (DfTypes.intValue(0).isSuperType(this)) 0 else 1
+        return fromRelation(RelationType.LE).meet(DfTypes.intValue(minValue).fromRelation(RelationType.GE))
+    }
+
     private fun popArguments(stateBefore: DfaMemoryState, interpreter: DataFlowInterpreter): DfaCallArguments {
         val args = mutableListOf<DfaValue>()
-        // TODO: properly support named and optional arguments
         repeat(argCount) { args += stateBefore.pop() }
         val qualifier: DfaValue = if (qualifierOnStack) stateBefore.pop() else interpreter.factory.unknown
         return DfaCallArguments(qualifier, args.toTypedArray(), MutationSignature.unknown())
