@@ -205,8 +205,10 @@ class ClassLoaderConfigurator(
   private fun getCoreUrlClassLoaderIfPossible(module: IdeaPluginDescriptorImpl): UrlClassLoader? {
     val coreUrlClassLoader = coreLoader as? UrlClassLoader
     if (coreUrlClassLoader == null) {
-      @Suppress("SpellCheckingInspection")
-      log.error("You should run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+      if (!java.lang.Boolean.getBoolean("idea.use.core.classloader.for.plugin.path")) {
+        @Suppress("SpellCheckingInspection")
+        log.error("You should run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+      }
       setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
       return null
     }
