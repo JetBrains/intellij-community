@@ -34,7 +34,7 @@ class PooledCoroutineContextTest : UsefulTestCase() {
     loggedError {
       runBlocking {
         @Suppress("EXPERIMENTAL_API_USAGE")
-        GlobalScope.launch(Dispatchers.ApplicationThreadPool) {
+        GlobalScope.launch(Dispatchers.IO) {
           throw exception
         }.join()
       }
