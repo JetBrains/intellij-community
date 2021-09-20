@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.config.GitExecutableProblemsNotifier.BadGitExecutableNotification
 import org.jetbrains.annotations.Nls
 
-class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
+internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,
                          @Nls(capitalization = Nls.Capitalization.Sentence) description: String?,
                          fixOption: ErrorNotifier.FixOption?) {
