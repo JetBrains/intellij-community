@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 fun C.extFunForC(){}
 fun T.extFunForT(){}
 fun Any.extFunForAny(){}
