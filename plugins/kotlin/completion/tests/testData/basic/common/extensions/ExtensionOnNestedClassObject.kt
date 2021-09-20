@@ -1,4 +1,5 @@
-package foo
+// FIR_COMPARISON
+package-foo
 
 class A {
     class B {

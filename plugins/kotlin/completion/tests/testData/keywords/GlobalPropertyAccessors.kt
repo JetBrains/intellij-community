@@ -57,4 +57,5 @@ var a : Int
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  lateinit var
+// EXIST:  field
 // NOTHING_ELSE
