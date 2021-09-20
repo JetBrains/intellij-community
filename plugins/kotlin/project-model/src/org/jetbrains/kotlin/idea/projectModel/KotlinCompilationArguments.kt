@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.projectModel
 
 import java.io.Serializable
 
+@Deprecated("Use org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo instead", level = DeprecationLevel.ERROR)
 interface KotlinCompilationArguments : Serializable {
     val defaultArguments: Array<String>
     val currentArguments: Array<String>

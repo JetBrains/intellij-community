@@ -183,7 +183,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
             val platform = TargetPlatform(platformKinds)
 
-            val compilerArguments = kotlinSourceSet.compilerArguments
+            val compilerArguments = kotlinSourceSet.lazyCompilerArguments?.value
             // Used ID is the same as used in org/jetbrains/kotlin/idea/configuration/KotlinGradleSourceSetDataService.kt:280
             // because this DataService was separated from KotlinGradleSourceSetDataService for MPP projects only
             val id = if (compilerArguments?.multiPlatform == true) GradleConstants.SYSTEM_ID.id else null
@@ -199,7 +199,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
 
-            val defaultCompilerArguments = kotlinSourceSet.defaultCompilerArguments
+            val defaultCompilerArguments = kotlinSourceSet.lazyDefaultCompilerArguments?.value
             if (compilerArguments != null) {
                 applyCompilerArgumentsToFacet(
                     compilerArguments,
@@ -209,7 +209,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 )
             }
 
-            adjustClasspath(kotlinFacet, kotlinSourceSet.dependencyClasspath)
+            adjustClasspath(kotlinFacet, kotlinSourceSet.lazyDependencyClasspath.value)
 
             kotlinFacet.noVersionAutoAdvance()
 
@@ -228,10 +228,10 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 }
 
                 if (kotlinSourceSet.isTestModule) {
-                    testOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
+                    testOutputPath = (kotlinSourceSet.lazyCompilerArguments?.value as? K2JSCompilerArguments)?.outputFile
                     productionOutputPath = null
                 } else {
-                    productionOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
+                    productionOutputPath = (kotlinSourceSet.lazyCompilerArguments?.value as? K2JSCompilerArguments)?.outputFile
                     testOutputPath = null
                 }
 
