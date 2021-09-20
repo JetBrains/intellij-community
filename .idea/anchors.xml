@@ -3,7 +3,10 @@
   <component name="KotlinIdeAnchorService">
     <option name="moduleNameToAnchorName">
       <map>
-        <entry key="kotlinc.kotlin-compiler" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-compiler-common" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-compiler-fir" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-compiler-fe10" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-compiler-ir" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-compiler-cli" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-scripting-compiler" value="kotlin.util.compiler-classpath" />
         <entry key="kotlin-script-runtime" value="kotlin.util.compiler-classpath" />
