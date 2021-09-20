@@ -18,9 +18,7 @@ final class VmOptionsGenerator {
     '-Djdk.http.auth.tunneling.disabledSchemes=""',
     '-Djdk.attach.allowAttachSelf=true',
     '-Djdk.module.illegalAccess.silent=true',
-    '-Dkotlinx.coroutines.debug=off',
-    '-XX:+IgnoreUnrecognizedVMOptions', //todo[kb] remove when we find a way to remove outdated options like -XX:+UseConcMarkSweepGC
-    )
+    '-Dkotlinx.coroutines.debug=off')
 
   static final Map<String, String> MEMORY_OPTIONS = Map.of(
     '-Xms', '128m',
