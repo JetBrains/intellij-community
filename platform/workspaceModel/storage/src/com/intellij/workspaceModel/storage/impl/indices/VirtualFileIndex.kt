@@ -39,8 +39,9 @@ open class VirtualFileIndex internal constructor(
   internal open val entityId2VirtualFileUrl: EntityId2Vfu,
   internal open val vfu2EntityId: Vfu2EntityId,
   internal open val entityId2JarDir: BidirectionalMultiMap<EntityId, VirtualFileUrl>
-): VirtualFileUrlIndex {
+) : VirtualFileUrlIndex {
   private lateinit var entityStorage: AbstractEntityStorage
+
   constructor() : this(EntityId2Vfu(), Vfu2EntityId(), BidirectionalMultiMap())
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> {
@@ -91,15 +92,17 @@ open class VirtualFileIndex internal constructor(
     val existingVfuInFirstMap = HashSet<VirtualFileUrl>()
     this.entityId2VirtualFileUrl.forEach { (entityId, property2Vfu) ->
       fun assertProperty2Vfu(property: String, vfus: Any) {
-        val vfuSet = if (vfus is Set<*>) (vfus as ObjectOpenHashSet<VirtualFileUrl>)  else mutableSetOf(vfus as VirtualFileUrl)
+        val vfuSet = if (vfus is Set<*>) (vfus as ObjectOpenHashSet<VirtualFileUrl>) else mutableSetOf(vfus as VirtualFileUrl)
         vfuSet.forEach { vfu ->
           existingVfuInFirstMap.add(vfu)
           val property2EntityId = this.vfu2EntityId[vfu]
-          assert(property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
+          assert(
+            property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
 
           val compositeKey = getCompositeKey(entityId, property)
           val existingEntityId = property2EntityId!![compositeKey]
-          assert(existingEntityId != null) { "VirtualFileUrl: $vfu exist in both maps but EntityId: $entityId with Property: $property absent at other" }
+          assert(
+            existingEntityId != null) { "VirtualFileUrl: $vfu exist in both maps but EntityId: $entityId with Property: $property absent at other" }
         }
       }
 
@@ -109,7 +112,8 @@ open class VirtualFileIndex internal constructor(
       }
     }
     val existingVfuISecondMap = this.vfu2EntityId.keys
-    assert(existingVfuInFirstMap.size == existingVfuISecondMap.size) { "Different count of VirtualFileUrls EntityId2VirtualFileUrl: ${existingVfuInFirstMap.size} Vfu2EntityId: ${existingVfuISecondMap.size}" }
+    assert(
+      existingVfuInFirstMap.size == existingVfuISecondMap.size) { "Different count of VirtualFileUrls EntityId2VirtualFileUrl: ${existingVfuInFirstMap.size} Vfu2EntityId: ${existingVfuISecondMap.size}" }
     existingVfuInFirstMap.removeAll(existingVfuISecondMap)
     assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
@@ -204,7 +208,9 @@ open class VirtualFileIndex internal constructor(
       entityId2JarDir.removeKey(id)
       val removedValue = entityId2VirtualFileUrl.remove(id) ?: return
       when (removedValue) {
-        is Object2ObjectOpenHashMap<*, *> -> removedValue.forEach { (property, vfu) -> removeFromVfu2EntityIdMap(id, property as String, vfu) }
+        is Object2ObjectOpenHashMap<*, *> -> removedValue.forEach { (property, vfu) ->
+          removeFromVfu2EntityIdMap(id, property as String, vfu)
+        }
         is Pair<*, *> -> removeFromVfu2EntityIdMap(id, removedValue.first as String, removedValue.second!!)
       }
     }
@@ -245,7 +251,8 @@ open class VirtualFileIndex internal constructor(
         if (vfu is ObjectOpenHashSet<*>) {
           (vfu as ObjectOpenHashSet<VirtualFileUrl>).add(virtualFileUrl)
           return vfu
-        } else {
+        }
+        else {
           val result = createSmallMemoryFootprintSet<VirtualFileUrl>()
           result.add(vfu as VirtualFileUrl)
           result.add(virtualFileUrl)
@@ -260,7 +267,8 @@ open class VirtualFileIndex internal constructor(
             val vfu = property2Vfu[propertyName]
             if (vfu == null) {
               property2Vfu[propertyName] = virtualFileUrl
-            } else {
+            }
+            else {
               property2Vfu[propertyName] = addVfuToPropertyName(vfu)
             }
             property2Vfu
@@ -280,12 +288,13 @@ open class VirtualFileIndex internal constructor(
           else -> null
         }
         if (newProperty2Vfu != null) entityId2VirtualFileUrl[id] = newProperty2Vfu
-      } else {
+      }
+      else {
         entityId2VirtualFileUrl[id] = Pair(propertyName, virtualFileUrl)
       }
 
       val property2EntityId = vfu2EntityId.getOrDefault(virtualFileUrl, Object2ObjectOpenHashMap())
-      property2EntityId[getCompositeKey(id,propertyName)] = id
+      property2EntityId[getCompositeKey(id, propertyName)] = id
       vfu2EntityId[virtualFileUrl] = property2EntityId
     }
 
@@ -320,15 +329,15 @@ open class VirtualFileIndex internal constructor(
         LOG.error("The record for $id <=> ${vfu} should be available in both maps")
         return
       }
-      property2EntityId.remove(getCompositeKey(id,propertyName))
+      property2EntityId.remove(getCompositeKey(id, propertyName))
       if (property2EntityId.isEmpty()) vfu2EntityId.remove(vfu)
     }
 
-    private fun copyEntityMap(originMap: EntityId2Vfu): EntityId2Vfu{
+    private fun copyEntityMap(originMap: EntityId2Vfu): EntityId2Vfu {
       val copiedMap = EntityId2Vfu()
       fun getVirtualFileUrl(value: Any) = if (value is Set<*>) ObjectOpenHashSet(value as Set<VirtualFileUrl>) else value
 
-      originMap.forEach{ (entityId, vfuMap) ->
+      originMap.forEach { (entityId, vfuMap) ->
         when (vfuMap) {
           is Map<*, *> -> {
             vfuMap as Map<String, *>
@@ -345,9 +354,9 @@ open class VirtualFileIndex internal constructor(
       return copiedMap
     }
 
-    private fun copyVfuMap(originMap: Vfu2EntityId): Vfu2EntityId{
+    private fun copyVfuMap(originMap: Vfu2EntityId): Vfu2EntityId {
       val copiedMap = Vfu2EntityId()
-      originMap.forEach{ (key, value) -> copiedMap[key] = Object2ObjectOpenHashMap(value) }
+      originMap.forEach { (key, value) -> copiedMap[key] = Object2ObjectOpenHashMap(value) }
       return copiedMap
     }
 
