@@ -130,7 +130,7 @@ public abstract class GitTextHandler extends GitHandler {
         catch (ProcessCanceledException pce) {
           progressManager.executeNonCancelableSection(() -> {
             if (!tryKill()) {
-              LOG.error("Could not terminate [" + printableCommandLine() + "].");
+              LOG.warn("Could not terminate [" + printableCommandLine() + "].");
             }
           });
           throw pce;
