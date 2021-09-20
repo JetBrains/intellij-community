@@ -9,6 +9,7 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
@@ -18,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -56,15 +58,14 @@ import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.SealedUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -108,6 +109,24 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           return aClass != null && aClass.isEnum();
         }
       }))));
+  private static final ElementPattern<PsiElement> IN_SEALED_SWITCH = psiElement()
+    .withSuperParent(2, psiElement(PsiCaseLabelElementList.class)
+      .withParent(psiElement(PsiSwitchLabelStatementBase.class)
+                    .withSuperParent(2, psiElement(PsiSwitchBlock.class)
+                      .with(new PatternCondition<>("sealedExpressionType") {
+                        @Override
+                        public boolean accepts(@NotNull PsiSwitchBlock psiSwitchBlock, ProcessingContext context) {
+                          final PsiExpression expression = psiSwitchBlock.getExpression();
+                          if (expression == null) return false;
+                          final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+                          return aClass != null && aClass.hasModifierProperty(PsiModifier.SEALED);
+                        }
+                      })
+                    )
+      )
+    );
+  private static final PsiJavaElementPattern.Capture<PsiElement> IN_CASE_LABEL_ELEMENT_LIST =
+    psiElement().withSuperParent(2, psiElement(PsiCaseLabelElementList.class));
 
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
     psiElement().afterLeaf(psiElement().withElementType(
@@ -205,13 +224,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return new ExcludeFilter(var);
     }
 
-    if (IN_ENUM_SWITCH_LABEL.accepts(position)) {
-      return new ClassFilter(PsiField.class) {
-        @Override
-        public boolean isAcceptable(Object element, PsiElement context) {
-          return element instanceof PsiEnumConstant;
-        }
-      };
+    if (IN_CASE_LABEL_ELEMENT_LIST.accepts(position)) {
+      return getCaseLabelElementListFilter(position);
     }
 
     PsiForeachStatement loop = PsiTreeUtil.getParentOfType(position, PsiForeachStatement.class);
@@ -239,6 +253,103 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     return TrueFilter.INSTANCE;
+  }
+
+  @Contract(pure = true)
+  private static @NotNull ElementFilter getCaseLabelElementListFilter(@NotNull PsiElement position) {
+    if (IN_ENUM_SWITCH_LABEL.accepts(position)) {
+      return new ClassFilter(PsiField.class) {
+        @Override
+        public boolean isAcceptable(Object element, PsiElement context) {
+          return element instanceof PsiEnumConstant;
+        }
+      };
+    }
+
+    final PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class);
+    if (switchBlock == null) return TrueFilter.INSTANCE;
+
+    final PsiExpression selector = switchBlock.getExpression();
+    if (selector == null || selector.getType() == null) return TrueFilter.INSTANCE;
+
+    final PsiType selectorType = selector.getType();
+    final ClassFilter constantVariablesFilter = new ClassFilter(PsiVariable.class) {
+      @Override
+      public boolean isAcceptable(Object element, PsiElement context) {
+        final PsiVariable variable;
+        if (element instanceof PsiField) {
+          variable = (PsiField)element;
+          if (variable.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.STATIC)) {
+            return true;
+          }
+        }
+        else if (element instanceof PsiLocalVariable) {
+          variable = (PsiLocalVariable)element;
+          if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+            return true;
+          }
+        }
+        else {
+          return false;
+        }
+        return TypeConversionUtil.isAssignable(selectorType, variable.getType());
+      }
+    };
+
+    if (isPrimitive(selectorType)) return constantVariablesFilter;
+
+    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
+      return TypeUtils.isJavaLangString(selectorType)
+             ? constantVariablesFilter
+             : TrueFilter.INSTANCE;
+    }
+
+    if (TypeUtils.isJavaLangObject(selectorType)) {
+      return new OrFilter(new ClassFilter(PsiClass.class), constantVariablesFilter);
+    }
+
+    final PsiResolveHelper resolver = JavaPsiFacade.getInstance(position.getProject()).getResolveHelper();
+    final PsiClass selectorClass = resolver.resolveReferencedClass(selectorType.getCanonicalText(), null);
+    if (selectorClass == null) return TrueFilter.INSTANCE;
+
+    if (IN_SEALED_SWITCH.accepts(position)) {
+      final Collection<PsiClass> classes = SealedUtils.findSameFileInheritorsClasses(selectorClass);
+      return new ClassFilter(PsiClass.class) {
+        @Override
+        public boolean isAcceptable(Object element, PsiElement context) {
+          if (!(element instanceof PsiClass)) return false;
+
+          final PsiClass aClass = (PsiClass)element;
+
+          return selectorClass == aClass || classes.contains(aClass);
+        }
+      };
+    }
+
+    final ClassFilter inheritorsFilter = new ClassFilter(PsiClass.class) {
+      @Override
+      public boolean isAcceptable(Object element, PsiElement context) {
+        return element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, selectorClass, true);
+      }
+    };
+
+    if (TypeUtils.isJavaLangString(selectorType)) {
+      return new OrFilter(constantVariablesFilter, inheritorsFilter);
+    }
+
+    if (selectorType instanceof PsiClassType) return inheritorsFilter;
+
+    return TrueFilter.INSTANCE;
+  }
+
+  @Contract(pure = true)
+  private static boolean isPrimitive(@NotNull PsiType type) {
+    if (type instanceof PsiPrimitiveType) return true;
+    if (!(type instanceof PsiClassType)) return false;
+
+    final PsiClass aClass = ((PsiClassType)type).resolve();
+    final Collection<String> boxedPrimitiveTypes = JvmPrimitiveTypeKind.getBoxedFqns();
+    return aClass != null && boxedPrimitiveTypes.contains(aClass.getQualifiedName());
   }
 
   @NotNull
