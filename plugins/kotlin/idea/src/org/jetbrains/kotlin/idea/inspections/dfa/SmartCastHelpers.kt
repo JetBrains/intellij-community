@@ -58,6 +58,8 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtExpr
                 else getConditionScopes(parent, newValue)
             }
         }
+        is KtWhenConditionWithExpression ->
+            if (value == false) emptyList() else listOfNotNull((parent.parent as? KtWhenEntry)?.expression)
         is KtContainerNode ->
             when (val gParent = parent.parent) {
                 is KtIfExpression ->
