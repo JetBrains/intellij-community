@@ -3,18 +3,22 @@ package com.intellij.packageDependencies.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
 import javax.swing.JSpinner
 
-internal class AnalyzeDependenciesSettingPanelUi {
+internal class AnalyzeDependenciesAdditionalUi {
   val transitiveCB: JCheckBox = JBCheckBox()
   val borderChooser: JSpinner = JSpinner()
   val panel = panel {
-    titledRow(CodeInsightBundle.message("analysis.options")) {
+    group(CodeInsightBundle.message("analysis.options")) {
       row {
-        transitiveCB()
-        borderChooser().constraints(pushX, growX)
+        cell(transitiveCB)
+      }
+      indent {
+        row(CodeInsightBundle.message("analyze.dependencies.transitive.dependencies.label")) {
+          cell(borderChooser)
+        }
       }
     }
   }

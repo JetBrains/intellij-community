@@ -18,6 +18,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,6 +114,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     preselectButton();
 
     BorderLayoutPanel wholePanel = new BorderLayoutPanel();
+    wholePanel.setBorder(JBUI.Borders.empty(8));
     wholePanel.addToTop(panel);
     final JComponent additionalPanel = getAdditionalActionSettings(myProject);
     if (additionalPanel != null) {

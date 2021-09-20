@@ -177,11 +177,13 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
           final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));
           separator.setBorder(JBUI.Borders.empty());
           constraints.gridy++;
+          constraints.insets.top = JBUI.scale(20);
           panel.add(separator, constraints);
 
           optionsPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(optionsPanel));
           constraints.gridy++;
           constraints.weighty = 1;
+          constraints.insets.top = 0;
           panel.add(InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel), constraints);
         }
         return panel;
