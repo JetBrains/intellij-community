@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.JobFutureTask;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -141,7 +142,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-      if (Registry.is("ide.cancellation.propagate")) {
+      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
         return JobFutureTask.jobRunnableFuture(callable);
       }
       else {
@@ -151,7 +152,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     public void execute(@NotNull Runnable command) {
-      if (Registry.is("ide.cancellation.propagate")) {
+      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
         super.execute(JobFutureTask.jobRunnable(command));
       }
       else {
