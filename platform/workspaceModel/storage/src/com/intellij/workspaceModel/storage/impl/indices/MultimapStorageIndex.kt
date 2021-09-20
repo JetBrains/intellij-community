@@ -1,18 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.indices
 
-import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.containers.copy
+import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.workspaceModel.storage.impl.containers.putAll
 import org.jetbrains.annotations.TestOnly
 
+private typealias BidirectionalMap = BidirectionalLongMultiMap<PersistentEntityId<*>>
+//private typealias BidirectionalMap = BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
+
 open class MultimapStorageIndex private constructor(
-  internal open val index: BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
+  internal open val index: BidirectionalMap
 ) {
-  constructor() : this(BidirectionalMultiMap<EntityId, PersistentEntityId<*>>())
+  constructor() : this(BidirectionalMap())
 
   internal fun getIdsByEntry(entitySource: PersistentEntityId<*>): Set<EntityId> = index.getKeys(entitySource)
 
@@ -22,7 +24,7 @@ open class MultimapStorageIndex private constructor(
 
   class MutableMultimapStorageIndex private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
+    override var index: BidirectionalMap
   ) : MultimapStorageIndex(index), WorkspaceMutableIndex<PersistentEntityId<*>> {
 
     private var freezed = true
@@ -62,7 +64,7 @@ open class MultimapStorageIndex private constructor(
       index = copyIndex()
     }
 
-    private fun copyIndex(): BidirectionalMultiMap<EntityId, PersistentEntityId<*>> = index.copy()
+    private fun copyIndex(): BidirectionalMap = index.copy()
 
     fun toImmutable(): MultimapStorageIndex {
       freezed = true
