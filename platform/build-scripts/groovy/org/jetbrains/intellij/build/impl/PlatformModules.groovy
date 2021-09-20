@@ -225,7 +225,7 @@ final class PlatformModules {
     }
 
     for (String libraryName in productLayout.projectLibrariesToUnpackIntoMainJar) {
-      layout.projectLibrariesToUnpack.putValue(libraryName, productLayout.mainJarName)
+      layout.withProjectLibraryUnpackedIntoJar(libraryName, productLayout.mainJarName)
     }
 
     String productPluginSourceModuleName = buildContext.productProperties.applicationInfoModule
