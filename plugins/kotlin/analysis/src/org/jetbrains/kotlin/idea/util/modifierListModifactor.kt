@@ -12,12 +12,28 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-private fun KtModifierListOwner.addAnnotationWithText(
+fun KtModifierListOwner.addAnnotation(
     annotationFqName: FqName,
-    annotationText: String,
+    annotationInnerText: String? = null,
     whiteSpaceText: String = "\n",
     addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
 ): Boolean {
+    return addAnnotation(annotationFqName, annotationInnerText, null, whiteSpaceText, addToExistingAnnotation)
+}
+
+fun KtModifierListOwner.addAnnotation(
+    annotationFqName: FqName,
+    annotationInnerText: String? = null,
+    useSiteTarget: AnnotationUseSiteTarget?,
+    whiteSpaceText: String = "\n",
+    addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
+): Boolean {
+    val useSiteTargetPrefix = useSiteTarget?.let { "${it.renderName}:" } ?: ""
+    val annotationText = when (annotationInnerText) {
+        null -> "@${useSiteTargetPrefix}${annotationFqName.render()}"
+        else -> "@${useSiteTargetPrefix}${annotationFqName.render()}($annotationInnerText)"
+    }
+
     val psiFactory = KtPsiFactory(this)
     val modifierList = modifierList
 
@@ -44,36 +60,6 @@ private fun KtModifierListOwner.addAnnotationWithText(
     }
 
     return false
-}
-
-fun KtModifierListOwner.addAnnotation(
-    annotationFqName: FqName,
-    annotationInnerText: String? = null,
-    whiteSpaceText: String = "\n",
-    addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
-): Boolean {
-    val annotationText = when (annotationInnerText) {
-        null -> "@${annotationFqName.render()}"
-        else -> "@${annotationFqName.render()}($annotationInnerText)"
-    }
-
-    return addAnnotationWithText(annotationFqName, annotationText, whiteSpaceText, addToExistingAnnotation)
-}
-
-fun KtModifierListOwner.addAnnotationWithUseSiteTarget(
-    annotationFqName: FqName,
-    useSiteTarget: AnnotationUseSiteTarget,
-    annotationInnerText: String? = null,
-    whiteSpaceText: String = "\n",
-    addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
-): Boolean {
-    val useSiteTargetPrefix = "${useSiteTarget.renderName}:"
-    val annotationText = when (annotationInnerText) {
-        null -> "@${useSiteTargetPrefix}${annotationFqName.render()}"
-        else -> "@${useSiteTargetPrefix}${annotationFqName.render()}($annotationInnerText)"
-    }
-
-    return addAnnotationWithText(annotationFqName, annotationText, whiteSpaceText, addToExistingAnnotation)
 }
 
 fun KtAnnotated.findAnnotation(annotationFqName: FqName): KtAnnotationEntry? {
