@@ -13,6 +13,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
@@ -369,12 +370,15 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     return scope
   }
 
-  override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency>? {
+  override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
+    return declaredDependencies(project.file) ?: emptyList()
+  }
 
-    return ReadAction.compute<List<DeclaredDependency>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)
-                  ?: throw IllegalStateException(MavenProjectBundle.message("maven.model.error", module.name))
+  //for faster testing
+  internal fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
+    return ReadAction.compute<List<DeclaredDependency>?, Throwable> {
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@compute null
       model.dependencies.dependencies.map { mavenDomDependency ->
         DeclaredDependency(
           groupId = mavenDomDependency.groupId.stringValue,
@@ -390,8 +394,8 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
     return ReadAction.compute<List<UnifiedDependencyRepository>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
-        MavenProjectBundle.message("maven.model.error", module.name))
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)
+                  ?: return@compute emptyList()
       model.repositories.repositories.map {
         UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "")
       }
