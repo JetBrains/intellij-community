@@ -1,86 +1,65 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.assertions.Assertions.assertThat
-import kotlinx.coroutines.*
+import com.intellij.util.getValue
+import com.intellij.util.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
 class PooledCoroutineContextTest : UsefulTestCase() {
+
   @Test
   fun `log error`() {
-    val errorMessage = "don't swallow me"
-    val loggedErrors = loggedErrorsAfterThrowingFromGlobalScope(RuntimeException(errorMessage))
-
-    assertThat(loggedErrors).anyMatch { errorMessage in it.message.orEmpty() }
+    val exception = RuntimeException()
+    assertTrue(exception === loggedErrorsAfterThrowingFromGlobalScope(exception))
   }
 
   @Test
   fun `do not log ProcessCanceledException`() {
-    val errorMessage = "ignore me"
-    val loggedErrors = loggedErrorsAfterThrowingFromGlobalScope(ProcessCanceledException(RuntimeException(errorMessage)))
-
-    assertThat(loggedErrors).noneMatch { errorMessage in it.cause?.message.orEmpty() }
+    val exception = ProcessCanceledException()
+    assertNull(loggedErrorsAfterThrowingFromGlobalScope(exception))
   }
 
-  private fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): List<Throwable> {
-    // cannot use assertThatThrownBy here, because AssertJ doesn't support Kotlin coroutines
-    val loggedErrors = mutableListOf<Throwable>()
-    withLoggedErrorsRecorded(loggedErrors) {
-      runBlocking<Unit> {
-        withNoopThreadUncaughtExceptionHandler {
-          GlobalScope.launch(Dispatchers.ApplicationThreadPool) {
-            throw exception
-          }.join()
-        }
+  private fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): Throwable? = withNoopThreadUncaughtExceptionHandler {
+    loggedError {
+      runBlocking {
+        @Suppress("EXPERIMENTAL_API_USAGE")
+        GlobalScope.launch(Dispatchers.ApplicationThreadPool) {
+          throw exception
+        }.join()
       }
     }
-    return loggedErrors
   }
 
-  private fun <T> withLoggedErrorsRecorded(loggedErrors: List<Throwable>,
-                                                   block: () -> T): T {
-    val synchronizedLoggedErrors = Collections.synchronizedList(loggedErrors)
-    val result:AtomicReference<T> = AtomicReference()
+  private fun loggedError(block: () -> Unit): Throwable? {
+    var throwable by AtomicReference<Throwable?>()
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
-        synchronizedLoggedErrors.add(t)
+        throwable = t
         return false
       }
-    }) {
-      result.set(block())
-    }
-    return result.get()
+    }, block)
+    return throwable
   }
 
-  private suspend fun <T> withNoopThreadUncaughtExceptionHandler(block: suspend () -> T): T {
+  private fun <T> withNoopThreadUncaughtExceptionHandler(block: () -> T): T {
     val savedHandler = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { _, _ -> }
-    return try {
-      block()
+    try {
+      return block()
     }
     finally {
       Thread.setDefaultUncaughtExceptionHandler(savedHandler)
-    }
-  }
-
-  @Test
-  fun `error must be propagated to parent context if available`() = runBlocking {
-    class MyCustomException : RuntimeException()
-
-    try {
-      withContext(Dispatchers.ApplicationThreadPool) {
-        throw MyCustomException()
-      }
-    }
-    catch (ignored: MyCustomException) {
     }
   }
 }
