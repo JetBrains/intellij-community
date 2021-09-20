@@ -18,9 +18,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -37,11 +35,13 @@ import java.util.Date;
 import java.util.List;
 
 public class CommittedChangeListPanel extends JPanel implements DataProvider {
+  private final Project myProject;
+
   private final JLabel myDescriptionLabel;
   private final CommittedChangesBrowser myChangesBrowser;
   private final JEditorPane myCommitMessageArea;
+  private final JScrollPane myCommitMessageScrollPane;
   private final JPanel myCommitMessagePanel;
-  private final Project myProject;
 
   private CommittedChangeList myChangeList;
   private Collection<Change> myChanges;
@@ -60,9 +60,11 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
     myCommitMessageArea.setEditable(false);
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
     myCommitMessageArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    myCommitMessageScrollPane = ScrollPaneFactory.createScrollPane(myCommitMessageArea);
 
-    myCommitMessagePanel = JBUI.Panels.simplePanel(ScrollPaneFactory.createScrollPane(myCommitMessageArea))
-      .addToTop(SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea));
+    TitledSeparator separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
+    separator.setBorder(JBUI.Borders.emptyLeft(3));
+    myCommitMessagePanel = JBUI.Panels.simplePanel(myCommitMessageScrollPane).addToTop(separator);
 
     Splitter splitter = new Splitter(true, 0.8f);
     splitter.setFirstComponent(myChangesBrowser);
@@ -119,6 +121,10 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
     return null;
   }
 
+  public void hideSideBorders() {
+    myCommitMessageScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    myChangesBrowser.setViewerBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+  }
 
   @NotNull
   public static CommittedChangeListImpl createChangeList(@NotNull Collection<Change> changes) {
