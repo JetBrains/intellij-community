@@ -49,6 +49,13 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
     }
 
     companion object {
+        @Deprecated(
+            "Use 'EntryPointContainerFinder.find'",
+            ReplaceWith("org.jetbrains.kotlin.idea.run.EntryPointContainerFinder.find(locationElement)")
+        )
+        fun getEntryPointContainer(locationElement: PsiElement): KtDeclarationContainer? =
+            EntryPointContainerFinder.find(locationElement)
+
         fun getStartClassFqName(container: KtDeclarationContainer): String? = when (container) {
             is KtFile -> container.javaFileFacadeFqName.asString()
             is KtClassOrObject -> {
