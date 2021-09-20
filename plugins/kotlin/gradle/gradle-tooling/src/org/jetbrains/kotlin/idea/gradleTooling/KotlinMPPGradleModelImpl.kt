@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.AbstractCompilerArgumentsCacheAware
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
 
@@ -124,6 +126,8 @@ data class KotlinCompilationOutputImpl(
     )
 }
 
+@Deprecated("Use org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo instead", level = DeprecationLevel.ERROR)
+@Suppress("DEPRECATION_ERROR")
 data class KotlinCompilationArgumentsImpl(
     override val defaultArguments: Array<String>,
     override val currentArguments: Array<String>
@@ -140,14 +144,18 @@ data class KotlinNativeCompilationExtensionsImpl(
     constructor(extensions: KotlinNativeCompilationExtensions) : this(extensions.konanTarget)
 }
 
+@Suppress("DEPRECATION_ERROR")
 data class KotlinCompilationImpl(
     override val name: String,
     override val allSourceSets: Collection<KotlinSourceSet>,
     override val declaredSourceSets: Collection<KotlinSourceSet>,
     override val dependencies: Array<KotlinDependencyId>,
     override val output: KotlinCompilationOutput,
+    @Suppress("OverridingDeprecatedMember", "DEPRECATION_ERROR")
     override val arguments: KotlinCompilationArguments,
+    @Suppress("OverridingDeprecatedMember", "DEPRECATION_ERROR")
     override val dependencyClasspath: Array<String>,
+    override val cachedArgsInfo: CachedArgsInfo<*>,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?
 ) : KotlinCompilation {
@@ -161,6 +169,7 @@ data class KotlinCompilationImpl(
         output = KotlinCompilationOutputImpl(kotlinCompilation.output),
         arguments = KotlinCompilationArgumentsImpl(kotlinCompilation.arguments),
         dependencyClasspath = kotlinCompilation.dependencyClasspath,
+        cachedArgsInfo = kotlinCompilation.cachedArgsInfo.duplicate(),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl)
     ) {
@@ -217,9 +226,10 @@ data class KotlinTargetImpl(
         target.disambiguationClassifier,
         KotlinPlatform.byId(target.platform.id) ?: KotlinPlatform.COMMON,
         target.compilations.map { initialCompilation ->
-            (cloningCache[initialCompilation] as? KotlinCompilation) ?: KotlinCompilationImpl(initialCompilation, cloningCache).also {
-                cloningCache[initialCompilation] = it
-            }
+            (cloningCache[initialCompilation] as? KotlinCompilation)
+                ?: KotlinCompilationImpl(initialCompilation as KotlinCompilationImpl, cloningCache).also {
+                    cloningCache[initialCompilation] = it
+                }
         }.toList(),
         target.testRunTasks.map { initialTestTask ->
             (cloningCache[initialTestTask] as? KotlinTestRunTask)
@@ -270,6 +280,7 @@ data class KotlinMPPGradleModelImpl(
     override val extraFeatures: ExtraFeatures,
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
+    override val partialCacheAware: CompilerArgumentsCacheAware,
 ) : KotlinMPPGradleModel {
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
         sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
@@ -287,7 +298,9 @@ data class KotlinMPPGradleModelImpl(
             mppModel.extraFeatures.isNativeDependencyPropagationEnabled
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
-        dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap()
+        dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
+        partialCacheAware = CompilerArgumentsCacheAwareImpl(mppModel.partialCacheAware)
+
     )
 }
 

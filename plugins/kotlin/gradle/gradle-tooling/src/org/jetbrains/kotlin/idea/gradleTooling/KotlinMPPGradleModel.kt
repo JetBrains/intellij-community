@@ -4,10 +4,8 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import org.jetbrains.kotlin.idea.projectModel.ExtraFeatures
-import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
-import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.AbstractCompilerArgumentsCacheAware
+import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.ModelFactory
 import java.io.Serializable
@@ -49,6 +47,7 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
     val targets: Collection<KotlinTarget>
     val extraFeatures: ExtraFeatures
     val kotlinNativeHome: String
+    val partialCacheAware: CompilerArgumentsCacheAware
 
     @Deprecated("Use 'sourceSetsByName' instead", ReplaceWith("sourceSetsByName"), DeprecationLevel.ERROR)
     val sourceSets: Map<String, KotlinSourceSet>
