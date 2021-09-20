@@ -755,7 +755,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @NotNull
     private EditorTabPreview installEditorPreview(@NotNull MyShelvedPreviewProcessor changeProcessor, boolean hasSplitterPreview) {
-      EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
+      return new SimpleTreeEditorDiffPreview(changeProcessor, myTree, myTreeScrollPane,
+                                             isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview) {
+        @Override
+        public void returnFocusToTree() {
+          ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
+          if (toolWindow != null) toolWindow.activate(null);
+        }
+
         @Override
         public void updateAvailability(@NotNull AnActionEvent event) {
           DiffShelvedChangesActionProvider.updateAvailability(event);
@@ -770,11 +777,6 @@ public class ShelvedChangesViewManager implements Disposable {
         }
 
         @Override
-        protected boolean hasContent() {
-          return changeProcessor.getCurrentChange() != null;
-        }
-
-        @Override
         protected boolean skipPreviewUpdate() {
           if (super.skipPreviewUpdate()) return true;
           if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
@@ -783,16 +785,6 @@ public class ShelvedChangesViewManager implements Disposable {
           return false;
         }
       };
-      editorPreview.setEscapeHandler(() -> {
-        editorPreview.closePreview();
-
-        ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
-        if (toolWindow != null) toolWindow.activate(null);
-      });
-      editorPreview.installListeners(myTree, isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview);
-      editorPreview.installNextDiffActionOn(myTreeScrollPane);
-
-      return editorPreview;
     }
 
     @NotNull

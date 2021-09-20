@@ -4,28 +4,20 @@ package git4idea.index.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.ExpandableItemsHandler
-import com.intellij.util.ui.UIUtil
 import git4idea.index.actions.GitStageDiffAction
 import javax.swing.JComponent
 
-class GitStageEditorDiffPreview(diffProcessor: GitStageDiffPreview, private val tree: ChangesTree,
-                                targetComponent: JComponent, activateMainUi: () -> Unit) :
-  EditorTabPreview(diffProcessor) {
+class GitStageEditorDiffPreview(diffProcessor: GitStageDiffPreview,
+                                private val tree: ChangesTree,
+                                targetComponent: JComponent,
+                                private val activateMainUi: () -> Unit)
+  : SimpleTreeEditorDiffPreview(diffProcessor, tree, targetComponent, false) {
 
-  private val stageDiffPreview: GitStageDiffPreview get() = diffProcessor as GitStageDiffPreview
-
-  init {
-    escapeHandler = Runnable {
-      closePreview()
-      activateMainUi()
-    }
-    installListeners(tree, false)
-    installNextDiffActionOn(targetComponent)
-    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+  override fun returnFocusToTree() {
+    activateMainUi()
   }
 
   override fun updateAvailability(event: AnActionEvent) {
@@ -33,13 +25,8 @@ class GitStageEditorDiffPreview(diffProcessor: GitStageDiffPreview, private val 
   }
 
   override fun getCurrentName(): String {
-    return stageDiffPreview
-             .currentChangeName?.let { changeName -> VcsBundle.message("commit.editor.diff.preview.title", changeName) }
+    return changeViewProcessor.currentChangeName?.let { changeName -> VcsBundle.message("commit.editor.diff.preview.title", changeName) }
            ?: VcsBundle.message("commit.editor.diff.preview.empty.title")
-  }
-
-  override fun hasContent(): Boolean {
-    return stageDiffPreview.currentChangeName != null
   }
 
   override fun skipPreviewUpdate(): Boolean {
