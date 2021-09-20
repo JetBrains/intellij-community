@@ -153,19 +153,19 @@ fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addDistributionFragment(
   project: Project,
   distributionsInfo: DistributionsInfo,
-  getDistribution: C.() -> DistributionInfo,
-  setDistribution: C.(DistributionInfo) -> Unit
+  getDistribution: C.() -> DistributionInfo?,
+  setDistribution: C.(DistributionInfo?) -> Unit
 ) = add(createDistributionFragment(project, distributionsInfo, getDistribution, setDistribution))
 
 fun <C : RunConfigurationBase<*>> createDistributionFragment(
   project: Project,
   distributionsInfo: DistributionsInfo,
-  getDistribution: C.() -> DistributionInfo,
-  setDistribution: C.(DistributionInfo) -> Unit
+  getDistribution: C.() -> DistributionInfo?,
+  setDistribution: C.(DistributionInfo?) -> Unit
 ) = createSettingsEditorFragment<C, DistributionComboBox>(
   DistributionComboBox(project, distributionsInfo).apply {
     comboBoxActionName = distributionsInfo.comboBoxActionName
-    distributionsInfo.distributions.forEach(::addItemIfNotExists)
+    distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
   },
   distributionsInfo,
   { it, c -> c.selectedDistribution = it.getDistribution() },

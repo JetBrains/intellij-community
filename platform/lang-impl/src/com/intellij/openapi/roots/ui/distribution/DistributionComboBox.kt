@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
 import com.intellij.openapi.roots.ui.whenItemSelected
 import com.intellij.openapi.roots.ui.whenTextModified
 import com.intellij.openapi.ui.BrowseFolderRunnable
@@ -26,65 +27,70 @@ import javax.swing.text.DefaultEditorKit
 import javax.swing.text.JTextComponent
 
 
-class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<DistributionInfo>(CollectionComboBoxModel()) {
+class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<Item>(CollectionComboBoxModel()) {
 
-  var comboBoxActionName = ProjectBundle.message("sdk.specify.location")
-  var noDistributionName = ProjectBundle.message("sdk.missing.item")
+  var comboBoxActionName: String = ProjectBundle.message("sdk.specify.location")
+  var noDistributionName: String = ProjectBundle.message("sdk.missing.item")
 
-  private val collectionModel: CollectionComboBoxModel<DistributionInfo>
+  var defaultDistributionLocation: String = System.getProperty("user.home", "")
+
+  private val collectionModel: CollectionComboBoxModel<Item>
     get() = model as CollectionComboBoxModel
 
-  var selectedDistribution: DistributionInfo
-    get() = selectedItem as DistributionInfo
+  var selectedDistribution: DistributionInfo?
+    get() = (selectedItem as? Item.Distribution)?.info
     set(distribution) {
       selectedItem = distribution
     }
 
   override fun setSelectedItem(anObject: Any?) {
-    val distribution = when (anObject) {
-      is SpecifyDistributionActionInfo -> LocalDistributionInfo(System.getProperty("user.home", ""))
-      is DistributionInfo -> anObject
-      null -> NoDistributionInfo
-      else -> return
+    val item = when (anObject) {
+      is Item.NoDistribution, null -> Item.NoDistribution
+      is Item.SpecifyDistributionAction -> addDistributionIfNotExists(LocalDistributionInfo(defaultDistributionLocation))
+      is Item.Distribution -> addDistributionIfNotExists(anObject.info)
+      is DistributionInfo -> addDistributionIfNotExists(anObject)
+      else -> throw IllegalArgumentException("Unsupported combobox item: ${anObject.javaClass.name}")
     }
-    addItemIfNotExists(distribution)
-    super.setSelectedItem(distribution)
+    super.setSelectedItem(item)
   }
 
-  fun addItemIfNotExists(distribution: DistributionInfo) {
-    if (!collectionModel.contains(distribution)) {
-      if (distribution is LocalDistributionInfo) {
-        collectionModel.add(distribution)
+  fun addDistributionIfNotExists(info: DistributionInfo): Item {
+    val item = Item.Distribution(info)
+    val foundItem = collectionModel.items.find { it == item }
+    if (foundItem == null) {
+      if (info is LocalDistributionInfo) {
+        collectionModel.add(item)
       }
       else {
-        val index = collectionModel.getElementIndex(SpecifyDistributionActionInfo)
-        collectionModel.add(index, distribution)
-      }
-      if (collectionModel.contains(NoDistributionInfo)) {
-        collectionModel.remove(NoDistributionInfo)
-        super.setSelectedItem(distribution)
+        val index = collectionModel.getElementIndex(Item.SpecifyDistributionAction)
+        collectionModel.add(index, item)
+        if (collectionModel.contains(Item.NoDistribution)) {
+          collectionModel.remove(Item.NoDistribution)
+          super.setSelectedItem(item)
+        }
       }
     }
+    return foundItem ?: item
   }
 
   init {
     renderer = Optional.ofNullable(popup)
       .map { it.list }
       .map { ExpandableItemsHandlerFactory.install<Int>(it) }
-      .map<ListCellRenderer<DistributionInfo?>> { ExpandedItemListCellRendererWrapper(Renderer(), it) }
+      .map<ListCellRenderer<Item>> { ExpandedItemListCellRendererWrapper(Renderer(), it) }
       .orElseGet { Renderer() }
   }
 
   init {
-    collectionModel.add(NoDistributionInfo)
-    collectionModel.add(SpecifyDistributionActionInfo)
-    selectedDistribution = collectionModel.items.first { it != SpecifyDistributionActionInfo }
+    collectionModel.add(Item.NoDistribution)
+    collectionModel.add(Item.SpecifyDistributionAction)
+    selectedItem = Item.NoDistribution
   }
 
   init {
     ComboBoxEditor.installComboBoxEditor(project, info, this)
     whenItemSelected {
-      setEditable(it is LocalDistributionInfo)
+      setEditable(it is Item.Distribution && it.info is LocalDistributionInfo)
     }
   }
 
@@ -113,10 +119,10 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
     }
   }
 
-  private inner class Renderer : ColoredListCellRenderer<DistributionInfo>() {
+  private inner class Renderer : ColoredListCellRenderer<Item>() {
     override fun customizeCellRenderer(
-      list: JList<out DistributionInfo>,
-      value: DistributionInfo?,
+      list: JList<out Item>,
+      value: Item?,
       index: Int,
       selected: Boolean,
       hasFocus: Boolean
@@ -125,14 +131,12 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
       myBorder = null
 
       when (value) {
-        NoDistributionInfo -> append(noDistributionName)
-        SpecifyDistributionActionInfo -> append(comboBoxActionName)
-        else -> {
-          val name = value?.name
-          val description = value?.description
-          if (name != null) {
-            append(name)
-          }
+        is Item.NoDistribution -> append(noDistributionName)
+        is Item.SpecifyDistributionAction -> append(comboBoxActionName)
+        is Item.Distribution -> {
+          val name = value.info.name
+          val description = value.info.description
+          append(name)
           if (description != null) {
             append(" ")
             append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
@@ -149,7 +153,7 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
   ) : ExtendableTextField() {
     init {
       val fileBrowserAccessor = object : TextComponentAccessor<DistributionComboBox> {
-        override fun getText(component: DistributionComboBox) = component.selectedDistribution.asText()
+        override fun getText(component: DistributionComboBox) = component.selectedDistribution?.name ?: ""
         override fun setText(component: DistributionComboBox, text: String) {
           component.selectedDistribution = LocalDistributionInfo(text)
         }
@@ -198,31 +202,23 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
 
           override fun setItem(anObject: Any?) {
             mutex.lockOrSkip {
-              if (anObject is DistributionInfo) {
-                editor.text = anObject.asText()
+              if (anObject is Item.Distribution) {
+                editor.text = anObject.info.name
               }
             }
           }
 
-          override fun getItem(): Any {
-            return component.selectedDistribution
+          override fun getItem(): Any? {
+            return component.selectedItem
           }
         })
-      }
-
-      private fun DistributionInfo.asText(): String {
-        return if (description == null) name else "$name $description"
       }
     }
   }
 
-  object NoDistributionInfo : DistributionInfo {
-    override val name: Nothing get() = throw UnsupportedOperationException()
-    override val description: Nothing get() = throw UnsupportedOperationException()
-  }
-
-  private object SpecifyDistributionActionInfo : DistributionInfo {
-    override val name: Nothing get() = throw UnsupportedOperationException()
-    override val description: Nothing get() = throw UnsupportedOperationException()
+  sealed class Item {
+    object NoDistribution : Item()
+    object SpecifyDistributionAction : Item()
+    data class Distribution(val info: DistributionInfo) : Item()
   }
 }
