@@ -801,7 +801,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
       HighlightInfo patched = builder.createUnconditionally();
       if (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset) {
-        patched.setFromInjection(true);
+        patched.markFromInjection();
         registerQuickFixes(patched, fixes, shortName);
         outInfos.add(patched);
       }

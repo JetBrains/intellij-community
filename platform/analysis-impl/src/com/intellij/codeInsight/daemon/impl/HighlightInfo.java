@@ -156,8 +156,8 @@ public class HighlightInfo implements Segment {
     return new ProperTextRange(fixStartOffset, fixEndOffset);
   }
 
-  void setFromInjection(boolean fromInjection) {
-    setFlag(FROM_INJECTION_MASK, fromInjection);
+  void markFromInjection() {
+    setFlag(FROM_INJECTION_MASK, true);
   }
 
   void addFileLeverComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
@@ -782,7 +782,7 @@ public class HighlightInfo implements Segment {
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    private volatile List<IntentionAction> myOptions;
+    private volatile List<? extends IntentionAction> myOptions;
     private volatile HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
@@ -791,7 +791,7 @@ public class HighlightInfo implements Segment {
     private Boolean myCanCleanup;
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable List<IntentionAction> options,
+                                     @Nullable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
@@ -839,19 +839,19 @@ public class HighlightInfo implements Segment {
           myCanCleanup = false;
         }
         else {
-          InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
+          InspectionToolWrapper<?,?> toolWrapper = profile.getInspectionTool(key.toString(), element);
           myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
         }
       }
       return myCanCleanup;
     }
 
-    @Nullable
-    public List<IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
+    @NotNull
+    public Iterable<? extends IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
       if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
-        return null;
+        return Collections.emptyList();
       }
-      List<IntentionAction> options = myOptions;
+      List<? extends IntentionAction> options = myOptions;
       if (options != null) {
         return options;
       }
@@ -871,12 +871,12 @@ public class HighlightInfo implements Segment {
             return updateOptions(options);
           }
         }
-        return null;
+        return Collections.emptyList();
       }
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-      InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
+      InspectionToolWrapper<?,?> toolWrapper = profile.getInspectionTool(key.toString(), element);
       if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
         HighlightDisplayKey idKey = HighlightDisplayKey.findById(key.toString());
         if (idKey != null) {
@@ -928,8 +928,9 @@ public class HighlightInfo implements Segment {
       return updateOptions(newOptions);
     }
 
-    private synchronized List<IntentionAction> updateOptions(List<IntentionAction> newOptions) {
-      List<IntentionAction> options = myOptions;
+    @NotNull
+    private synchronized List<? extends IntentionAction> updateOptions(@NotNull List<? extends IntentionAction> newOptions) {
+      List<? extends IntentionAction> options = myOptions;
       if (options == null) {
         myOptions = options = newOptions;
       }
@@ -989,7 +990,7 @@ public class HighlightInfo implements Segment {
   }
 
   public void registerFix(@Nullable IntentionAction action,
-                          @Nullable List<IntentionAction> options,
+                          @Nullable List<? extends IntentionAction> options,
                           @Nullable @Nls String displayName,
                           @Nullable TextRange fixRange,
                           @Nullable HighlightDisplayKey key) {
