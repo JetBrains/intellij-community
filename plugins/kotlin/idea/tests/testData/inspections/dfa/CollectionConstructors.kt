@@ -100,6 +100,12 @@ fun mutableCheckInLambda() {
     if (list.isEmpty()) {}
 }
 
+fun mutableInMethodReference(x: Int?) {
+    val set = mutableSetOf<Int>()
+    x?.let(set::add)
+    if (set.size == 0) {}
+}
+
 fun modifyList(list: MutableList<Int>) {
     list.add(2)
 }

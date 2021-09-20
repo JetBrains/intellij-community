@@ -215,9 +215,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processCallableReference(expr: KtCallableReferenceExpression) {
         processExpression(expr.receiverExpression)
-        addInstruction(PopInstruction())
-        val dfType = expr.getKotlinType().toDfType(expr)
-        addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
+        addInstruction(KotlinCallableReferenceInstruction(expr))
     }
 
     private fun processThisExpression(expr: KtThisExpression) {
@@ -432,13 +430,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             .filterIsInstance<KtVariableDescriptor>()
             .map { v -> v.variable }
             .toSet()
-        PsiTreeUtil.processElements(expr, KtSimpleNameExpression::class.java, { ref ->
+        PsiTreeUtil.processElements(expr, KtSimpleNameExpression::class.java) { ref ->
             val target = ref.mainReference.resolve()
             if (target != null && existingVars.contains(target)) {
                 vars.addIfNotNull(KtVariableDescriptor.createFromSimpleName(factory, ref))
             }
             return@processElements true
-        })
+        }
         if (vars.isNotEmpty()) {
             addInstruction(EscapeInstruction(vars))
         }
