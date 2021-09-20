@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
@@ -72,11 +71,11 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             val parameterForArgument = call.getParameterForArgument(containingArgument) ?: return false
             val type = parameterForArgument.returnType ?: return false
 
-            if (!type.isBuiltinFunctionalType || !type.isSuspendFunctionType) return false //fixme
-            val hasRestrictSuspensionAnnotation = type.getReceiverTypeFromFunctionType()
-                ?.isRestrictsSuspensionReceiver(getLanguageVersionSettings(element)) ?: false
-            //return hasRestrictSuspensionAnnotation != true && isSuspendFunctionType
-            if (hasRestrictSuspensionAnnotation) return false //fixme previously always returned here
+            if (type.isBuiltinFunctionalType && type.isSuspendFunctionType) {
+                val hasRestrictSuspensionAnnotation = type.getReceiverTypeFromFunctionType()
+                    ?.isRestrictsSuspensionReceiver(getLanguageVersionSettings(element)) ?: false
+                return !hasRestrictSuspensionAnnotation
+            }
         }
 
         if (containingLambda == null) {
@@ -148,7 +147,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             return candidate ?: dotQualifiedExpression.findFlowOnCall()
         }
 
-        val isInsideFlow = call.resultingDescriptor.fqNameSafe.startsWith(Name.identifier("kotlinx.coroutines.flow"))
+        val isInsideFlow = call.resultingDescriptor.fqNameSafe.asString().startsWith("kotlinx.coroutines.flow")
         if (!isInsideFlow) return BlockingAllowance.UNKNOWN
         val flowOnCall = callExpression.findFlowOnCall() ?: return BlockingAllowance.DEFINITELY_NO
         return checkBlockFriendlyDispatcherParameter(flowOnCall)

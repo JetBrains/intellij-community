@@ -46,26 +46,6 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
         doTest("LambdaReceiverTypeCheck.kt")
     }
 
-    fun testNestedFunctionsInsideSuspendLambda() {
-        myFixture.addClass(
-            """
-            package kotlin.coroutines;
-            
-            public class CoroutineScope {}
-        """.trimIndent()
-        )
-        myFixture.addFileToProject(
-            "kotlinx/coroutines/BuildersKt.kt", """"
-            package kotlinx.coroutines; 
-            
-            import kotlin.coroutines.*;
-            
-            fun <T> runBlocking(block: suspend CoroutineScope.() -> T): T = TODO()
-        """.trimIndent()
-        )
-        doTest("NestedFunctionsInsideSuspendLambda.kt")
-    }
-
     fun testDispatchersTypeDetection() {
         doTest("DispatchersTypeCheck.kt")
     }
@@ -82,6 +62,6 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
 
     fun testFlowOn() {
         myFixture.configureByFile("FlowOn.kt")
-        myFixture.testHighlighting("FlowOn.kt")
+        myFixture.testHighlighting(true, false, false, "FlowOn.kt")
     }
 }
