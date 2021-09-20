@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.PlatformUtils
@@ -17,7 +18,7 @@ class HTMLNewProjectWizard : NewProjectWizard {
     override fun setupUI(builder: Panel) {}
 
     override fun setupProject(project: Project) {
-      TODO("Not yet implemented")
+      WebModuleBuilder<Any>().commit(project)
     }
   }
 }
