@@ -88,7 +88,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
     override fun breakpointsChanged() {
       valid.set(false)
-      project?.run { if (!isOpen || isDisposed) null else messageBus.syncPublisher(BookmarksListener.TOPIC) }?.structureChanged(this)
+      project?.run { if (isDisposed) null else messageBus.syncPublisher(BookmarksListener.TOPIC) }?.structureChanged(this)
     }
 
     override fun getChildren() = cache.getNodes(getKeys(value))
@@ -154,6 +154,10 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
 
   private class ItemNode(project: Project, item: BreakpointItem) : AbstractTreeNode<BreakpointItem>(project, item) {
+
+    override fun canNavigate(): Boolean = value.canNavigate()
+    override fun canNavigateToSource(): Boolean = value.canNavigateToSource()
+    override fun navigate(requestFocus: Boolean) = value.navigate(requestFocus)
 
     override fun isAlwaysLeaf() = true
     override fun getChildren(): Collection<AbstractTreeNode<*>> = emptyList()
