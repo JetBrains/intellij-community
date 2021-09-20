@@ -74,6 +74,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -1578,7 +1579,16 @@ public final class HighlightUtil {
 
   @NotNull
   static Collection<HighlightInfo> checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression) {
-    if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) return Collections.emptyList();
+    if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) {
+      return PsiUtil.getSwitchResultExpressions(switchExpression).stream().map(expression -> {
+        if (PsiType.VOID.equals(expression.getType())) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(expression)
+            .descriptionAndTooltip(JavaErrorBundle.message("yield.void")).create();
+        }
+        return null;
+      }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
     List<HighlightInfo> infos = new ArrayList<>();
     PsiType switchExpressionType = switchExpression.getType();
     if (switchExpressionType != null) {
