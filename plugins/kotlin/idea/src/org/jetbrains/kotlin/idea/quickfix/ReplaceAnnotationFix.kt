@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.addAnnotation
-import org.jetbrains.kotlin.idea.util.addAnnotationWithUseSiteTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -58,10 +57,7 @@ open class ReplaceAnnotationFix(
                 ?: existingEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), existingEntry.lastChild)
             ShortenReferences.DEFAULT.process(existingEntry)
         } else {
-            if (useSiteTarget != null)
-                owner.addAnnotationWithUseSiteTarget(annotationFqName, useSiteTarget, annotationInnerText)
-            else
-                owner.addAnnotation(annotationFqName, annotationInnerText)
+            owner.addAnnotation(annotationFqName, annotationInnerText, useSiteTarget)
         }
     }
 }
