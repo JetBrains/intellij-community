@@ -94,13 +94,12 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         call: ResolvedCall<out CallableDescriptor>,
         callExpression: KtCallExpression
     ): BlockingAllowance {
-        return union( //todo better style?
+        return union(
             { checkBlockFriendlyDispatcherParameter(call) },
             { checkFunctionWithDefaultDispatcher(callExpression) },
             { checkFlowChainElementWithIODispatcher(call, callExpression) }
         )
     }
-
 
     private fun getLanguageVersionSettings(psiElement: PsiElement): LanguageVersionSettings =
         psiElement.module?.languageVersionSettings ?: psiElement.project.getLanguageVersionSettings()
@@ -181,22 +180,19 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         val hasBlockingAnnotation = this.annotations.hasAnnotation(FqName(BLOCKING_CONTEXT_ANNOTATION))
         if (hasBlockingAnnotation) return BlockingAllowance.DEFINITELY_YES
 
-        val fqnOrNull = this.fqNameOrNull()?.asString() ?: return BlockingAllowance.DEFINITELY_NO //fixme?
+        val fqnOrNull = this.fqNameOrNull()?.asString() ?: return BlockingAllowance.DEFINITELY_NO
         return if (fqnOrNull == IO_DISPATCHER_FQN) BlockingAllowance.DEFINITELY_YES else BlockingAllowance.DEFINITELY_NO
     }
 
-    private fun union(vararg checks: () -> BlockingAllowance): BlockingAllowance { //todo rewrite lazy?
+    private fun union(vararg checks: () -> BlockingAllowance): BlockingAllowance {
         var overallResult = BlockingAllowance.UNKNOWN
         for (check in checks) {
             val iterationResult = check()
             if (iterationResult != BlockingAllowance.UNKNOWN) return iterationResult
-            //if (iterationResult != BlockingAllowance.UNKNOWN) return BlockingAllowance.DEFINITELY_NO
             overallResult = iterationResult
-            //overallResult = overallResult.or(iterationResult)
         }
         return overallResult
     }
-
 
     companion object {
         private const val BLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.BlockingContext"
@@ -205,36 +201,11 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         private const val COROUTINE_CONTEXT = "kotlin.coroutines.CoroutineContext"
         private const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"
 
-        private enum class BlockingAllowance(val isDefinitelyKnown: Boolean) { // could also be CONDITIONAL_YES with condition property provided
+        private enum class BlockingAllowance(val isDefinitelyKnown: Boolean) {
+            // could also be CONDITIONAL_YES with condition property provided
             DEFINITELY_YES(true),
             DEFINITELY_NO(true),
-            UNKNOWN(false);
-
-            fun or(other: BlockingAllowance): BlockingAllowance {
-                return when (this) {
-                    DEFINITELY_YES -> DEFINITELY_YES
-                    UNKNOWN -> {
-                        if (other == DEFINITELY_YES)
-                            DEFINITELY_YES
-                        else
-                            UNKNOWN
-                    }
-                    DEFINITELY_NO -> other
-                }
-            }
-
-            fun and(other: BlockingAllowance): BlockingAllowance {
-                return when (this) {
-                    DEFINITELY_NO -> DEFINITELY_NO
-                    UNKNOWN -> other
-                    DEFINITELY_YES -> {
-                        if (other == UNKNOWN)
-                            DEFINITELY_YES
-                        else
-                            other
-                    }
-                }
-            }
+            UNKNOWN(false)
         }
     }
 }
