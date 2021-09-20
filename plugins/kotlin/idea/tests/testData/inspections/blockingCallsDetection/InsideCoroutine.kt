@@ -5,23 +5,23 @@ import java.lang.Thread.sleep
 
 class InsideCoroutine {
     suspend fun example1() {
-        Thread.< warning descr = "Possibly blocking call in non-blocking context could lead to thread starvation" > sleep < / warning >(1);
+        Thread.< warning descr = "Possibly blocking call in non-blocking context could lead to thread starvation" > sleep < / warning >(1L);
     }
 
     fun example2() {
-        Thread.sleep(2)
+        Thread.sleep(2L)
     }
 
     fun example3() {
         run {
-            Thread.sleep(3)
+            Thread.sleep(3L)
         }
     }
 
     suspend fun example4() {
         run(fun() {
             Thread.< warning descr =
-                "Possibly blocking call in non-blocking context could lead to thread starvation" > sleep < / warning >(4)
+                "Possibly blocking call in non-blocking context could lead to thread starvation" > sleep < / warning >(4L)
         })
     }
 }
