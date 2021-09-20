@@ -3,14 +3,19 @@ package org.jetbrains.yaml.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.FactoryMap;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
@@ -157,15 +162,20 @@ class YAMLFormattingContext {
     return null;
   }
 
+
   @Nullable
   Indent computeBlockIndent(@NotNull ASTNode node) {
+    if (node instanceof OuterLanguageElement) {
+      Indent templateIndent = computeTemplateIndent(((OuterLanguageElement)node).getTextRange());
+      if (templateIndent != null) return templateIndent;
+    }
     IElementType nodeType = PsiUtilCore.getElementType(node);
     IElementType parentType = PsiUtilCore.getElementType(node.getTreeParent());
     IElementType grandParentType = parentType == null ? null : PsiUtilCore.getElementType(node.getTreeParent().getTreeParent());
     boolean grandParentIsDocument = grandParentType == YAMLElementTypes.DOCUMENT;
 
     assert nodeType != YAMLElementTypes.SEQUENCE : "Sequence should be inlined!";
-    assert nodeType != YAMLElementTypes.MAPPING  : "Mapping should be inlined!";
+    assert nodeType != YAMLElementTypes.MAPPING : "Mapping should be inlined!";
     assert nodeType != YAMLElementTypes.DOCUMENT : "Document should be inlined!";
 
     if (YAMLElementTypes.DOCUMENT_BRACKETS.contains(nodeType)) {
@@ -200,6 +210,18 @@ class YAMLFormattingContext {
       }
       return YAMLElementTypes.TOP_LEVEL.contains(parentType) ? SAME_AS_PARENT_INDENT : null;
     }
+  }
+
+  @Nullable
+  private Indent computeTemplateIndent(TextRange nodeTextRange) {
+    Document document = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
+    if (document == null) return null;
+    int lineNumber = document.getLineNumber(nodeTextRange.getStartOffset());
+    int lineStartOffset = document.getLineStartOffset(lineNumber);
+
+    if (!StringsKt.isBlank(document.getCharsSequence().subSequence(lineStartOffset, nodeTextRange.getStartOffset()))) return null;
+
+    return new IndentImpl(Indent.Type.SPACES, true, nodeTextRange.getStartOffset() - lineStartOffset, false, false);
   }
 
   @Nullable
