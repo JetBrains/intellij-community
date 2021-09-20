@@ -313,14 +313,14 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         if (!shouldSuppress(cv, expr)) {
                             val key = when (cv) {
                                 ConstantValue.TRUE ->
-                                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression)
+                                    if (shouldReportAsValue(expr))
                                         "inspection.message.value.always.true"
                                     else if (logicalChain(expr))
-                                        "inspection.message.condition.always.true.when.reached" 
-                                    else 
+                                        "inspection.message.condition.always.true.when.reached"
+                                    else
                                         "inspection.message.condition.always.true"
                                 ConstantValue.FALSE ->
-                                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression)
+                                    if (shouldReportAsValue(expr))
                                         "inspection.message.value.always.false"
                                     else if (logicalChain(expr))
                                         "inspection.message.condition.always.false.when.reached"
@@ -331,7 +331,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                                 else -> throw IllegalStateException("Unexpected constant: $cv")
                             }
                             val highlightType =
-                                if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression) ProblemHighlightType.WEAK_WARNING
+                                if (shouldReportAsValue(expr)) ProblemHighlightType.WEAK_WARNING
                                 else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
                             holder.registerProblem(expr, KotlinBundle.message(key), highlightType)
                         }
@@ -375,6 +375,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
     }
 
+    private fun shouldReportAsValue(expr: KtExpression) =
+        expr is KtSimpleNameExpression || expr is KtQualifiedExpression && expr.selectorExpression is KtSimpleNameExpression
+
     private fun logicalChain(expr: KtExpression): Boolean {
         var context = expr
         var parent = context.parent
@@ -393,14 +396,18 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     {
         val context = anchor.analyze(BodyResolveMode.FULL)
         if (context.diagnostics.forElement(anchor).any
-            { it.factory == Errors.CAST_NEVER_SUCCEEDS || it.factory == Errors.SENSELESS_COMPARISON || it.factory == Errors.USELESS_IS_CHECK }
+            { it.factory == Errors.CAST_NEVER_SUCCEEDS
+                    || it.factory == Errors.SENSELESS_COMPARISON
+                    || it.factory == Errors.USELESS_IS_CHECK
+                    || it.factory == Errors.DUPLICATE_LABEL_IN_WHEN }
         ) {
             return true
         }
         val suppressionCache = KotlinCacheService.getInstance(anchor.project).getSuppressionCache()
         return suppressionCache.isSuppressed(anchor, "CAST_NEVER_SUCCEEDS", Severity.WARNING) ||
                 suppressionCache.isSuppressed(anchor, "SENSELESS_COMPARISON", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "USELESS_IS_CHECK", Severity.WARNING)
+                suppressionCache.isSuppressed(anchor, "USELESS_IS_CHECK", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, "DUPLICATE_LABEL_IN_WHEN", Severity.WARNING)
     }
 
     private fun shouldSuppressWhenCondition(

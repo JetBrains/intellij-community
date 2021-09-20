@@ -1,14 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
-import com.intellij.codeInspection.dataFlow.CustomMethodHandlers
-import com.intellij.codeInspection.dataFlow.DfaCallArguments
-import com.intellij.codeInspection.dataFlow.MutationSignature
-import com.intellij.codeInspection.dataFlow.TypeConstraints
+import com.intellij.codeInspection.dataFlow.*
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
+import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
@@ -17,7 +17,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.psi.KtExpression
@@ -36,10 +38,15 @@ class KotlinFunctionCallInstruction(
     ExpressionPushingInstruction(KotlinExpressionAnchor(call)) {
     override fun accept(interpreter: DataFlowInterpreter, stateBefore: DfaMemoryState): Array<DfaInstructionState> {
         val arguments = popArguments(stateBefore, interpreter)
-        val method = getPsiMethod()
-        val pure = MutationSignature.fromMethod(method).isPure
         val factory = interpreter.factory
-        val resultValue = getMethodReturnValue(factory, stateBefore, method, arguments)
+        val (resultValue, pure) = getMethodReturnValue(factory, stateBefore, arguments)
+        if (!pure || JavaDfaHelpers.mayLeakFromType(resultValue.dfType)) {
+            arguments.arguments.forEach { arg -> JavaDfaHelpers.dropLocality(arg, stateBefore) }
+            val qualifier = arguments.qualifier
+            if (qualifier != null) {
+                JavaDfaHelpers.dropLocality(qualifier, stateBefore)
+            }
+        }
         if (!pure) {
             stateBefore.flushFields()
         }
@@ -55,22 +62,63 @@ class KotlinFunctionCallInstruction(
         return result.toTypedArray()
     }
 
+    data class MethodEffect(val dfaValue: DfaValue, val pure: Boolean)
+
     private fun getMethodReturnValue(
         factory: DfaValueFactory,
         stateBefore: DfaMemoryState,
-        method: PsiMethod?,
         arguments: DfaCallArguments
-    ): DfaValue {
+    ): MethodEffect {
+        val method = getPsiMethod()
+        val pure = MutationSignature.fromMethod(method).isPure
         if (method != null && arguments.arguments.size == method.parameterList.parametersCount) {
             val handler = CustomMethodHandlers.find(method)
             if (handler != null) {
                 val dfaValue = handler.getMethodResultValue(arguments, stateBefore, factory, method)
                 if (dfaValue != null) {
-                    return dfaValue
+                    return MethodEffect(dfaValue, pure)
                 }
             }
         }
-        return factory.fromDfType(getExpressionDfType(call))
+        val descriptor = call.resolveToCall()?.resultingDescriptor
+        if (descriptor != null) {
+            val type = fromKnownDescriptor(descriptor, arguments)
+            if (type != null) return MethodEffect(factory.fromDfType(type.meet(getExpressionDfType(call))), true)
+        }
+        return MethodEffect(factory.fromDfType(getExpressionDfType(call)), pure)
+    }
+
+    private fun fromKnownDescriptor(descriptor: CallableDescriptor, arguments: DfaCallArguments): DfType? {
+        val name = descriptor.name.asString()
+        val containingPackage = (descriptor.containingDeclaration as? PackageFragmentDescriptor)?.fqName?.asString() ?: return null
+        if (containingPackage == "kotlin.collections") {
+            val size = arguments.arguments.size
+            return when (name) {
+                "arrayOf", "booleanArrayOf", "byteArrayOf", "shortArrayOf", "charArrayOf",
+                "floatArrayOf", "intArrayOf", "doubleArrayOf", "longArrayOf" ->
+                    SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(size))
+                "emptyList", "emptySet", "emptyMap" ->
+                    SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
+                        .meet(Mutability.UNMODIFIABLE.asDfType())
+                "listOf" ->
+                    SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(size))
+                        .meet(Mutability.UNMODIFIABLE.asDfType())
+                "listOfNotNull", "setOfNotNull", "mapOfNotNull" ->
+                    SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intRange(LongRangeSet.range(0, size.toLong())))
+                        .meet(Mutability.UNMODIFIABLE.asDfType())
+                "setOf", "mapOf" ->
+                    SpecialField.COLLECTION_SIZE.asDfType(if (size == 0) DfTypes.intValue(0) else DfTypes.intRange(LongRangeSet.range(1, size.toLong())))
+                        .meet(Mutability.UNMODIFIABLE.asDfType())
+                "mutableListOf", "arrayListOf" ->
+                    SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(size))
+                        .meet(DfTypes.LOCAL_OBJECT)
+                "mutableSetOf", "linkedSetOf", "hashSetOf", "hashMapOf", "linkedMapOf" ->
+                    SpecialField.COLLECTION_SIZE.asDfType(if (size == 0) DfTypes.intValue(0) else DfTypes.intRange(LongRangeSet.range(1, size.toLong())))
+                        .meet(DfTypes.LOCAL_OBJECT)
+                else -> null
+            }
+        }
+        return null
     }
 
     private fun popArguments(stateBefore: DfaMemoryState, interpreter: DataFlowInterpreter): DfaCallArguments {
