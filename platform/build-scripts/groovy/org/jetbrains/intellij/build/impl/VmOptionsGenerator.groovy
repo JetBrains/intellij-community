@@ -26,6 +26,7 @@ final class VmOptionsGenerator {
     '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt.event=ALL-UNNAMED',
+    '--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED',
     '--add-opens=java.desktop/javax.swing=ALL-UNNAMED',
     '--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED',
     '--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED',
