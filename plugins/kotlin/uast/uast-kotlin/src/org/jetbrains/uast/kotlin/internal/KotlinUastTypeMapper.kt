@@ -6,79 +6,48 @@ package org.jetbrains.uast.kotlin.internal
 
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.builtins.functions.FunctionClassKind
+import org.jetbrains.kotlin.builtins.isSuspendFunctionTypeOrSubtype
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.codegen.signature.AsmTypeFactory
 import org.jetbrains.kotlin.codegen.signature.JvmSignatureWriter
 import org.jetbrains.kotlin.codegen.state.isMostPreciseContravariantArgument
 import org.jetbrains.kotlin.codegen.state.isMostPreciseCovariantArgument
 import org.jetbrains.kotlin.codegen.state.updateArgumentModeFromAnnotations
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.load.kotlin.TypeMappingConfiguration
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
-import org.jetbrains.kotlin.load.kotlin.mapType
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext
 import org.jetbrains.kotlin.types.checker.convertVariance
 import org.jetbrains.kotlin.types.model.*
+import org.jetbrains.kotlin.types.typeUtil.representativeUpperBound
+import org.jetbrains.kotlin.types.typeUtil.requiresTypeAliasExpansion
 import org.jetbrains.org.objectweb.asm.Type
 
-object KotlinUastTypeMapper {
-    private val staticTypeMappingConfiguration = object : TypeMappingConfiguration<Type> {
-        override fun commonSupertype(types: Collection<KotlinType>): KotlinType {
-            return CommonSupertypes.commonSupertype(types)
-        }
+internal object KotlinUastTypeMapper : TypeMappingContext<JvmSignatureWriter> {
+    override val typeContext: TypeSystemCommonBackendContextForTypeMapping =
+        KotlinUastTypeSystemCommonBackendContextForTypeMapping()
 
-        override fun getPredefinedTypeForClass(classDescriptor: ClassDescriptor): Type? {
-            return null
-        }
-
-        override fun getPredefinedInternalNameForClass(classDescriptor: ClassDescriptor): String? {
-            return null
-        }
-
-        override fun processErrorType(kotlinType: KotlinType, descriptor: ClassDescriptor) {
-            // Light class mode: not generating body, and thus not report error type.
-        }
-
-        override fun preprocessType(kotlinType: KotlinType): KotlinType? {
-            return null
-        }
+    override fun getClassInternalName(typeConstructor: TypeConstructorMarker): String {
+        require(typeConstructor is ClassifierBasedTypeConstructor)
+        val simpleType = typeConstructor.declarationDescriptor.defaultType
+        return simpleType.constructor.toString() // TODO: not fq name, e.g., kotlin.Unit -> Unit
     }
 
-    fun mapType(
-        type: KotlinType,
-        signatureVisitor: JvmSignatureWriter? = null,
-        mode: TypeMappingMode = TypeMappingMode.DEFAULT_UAST,
-    ): Type {
-        return mapType(
-            type, AsmTypeFactory, mode, staticTypeMappingConfiguration, signatureVisitor
-        ) { ktType, asmType, typeMappingMode ->
-            writeGenericType(ktType, asmType, signatureVisitor, typeMappingMode)
-        }
+    override fun getScriptInternalName(typeConstructor: TypeConstructorMarker): String {
+        TODO("Not yet implemented")
     }
 
-    private fun mapType(descriptor: ClassifierDescriptor): Type {
-        return mapType(descriptor.defaultType)
-    }
-
-    private fun writeGenericType(
-        type: KotlinType,
-        asmType: Type,
-        signatureVisitor: JvmSignatureWriter?,
-        mode: TypeMappingMode
-    ) {
-        if (signatureVisitor == null) return
-
+    override fun JvmSignatureWriter.writeGenericType(type: KotlinTypeMarker, asmType: Type, mode: TypeMappingMode) {
+        require(type is KotlinType)
         // Nothing mapping rules:
         //  Map<Nothing, Foo> -> Map
         //  Map<Foo, List<Nothing>> -> Map<Foo, List>
         //  In<Nothing, Foo> == In<*, Foo> -> In<?, Foo>
         //  In<Nothing, Nothing> -> In
         //  Inv<in Nothing, Foo> -> Inv
-        if (signatureVisitor.skipGenericSignature() || hasNothingInNonContravariantPosition(type) || type.arguments.isEmpty()) {
-            signatureVisitor.writeAsmType(asmType)
+        if (skipGenericSignature() || hasNothingInNonContravariantPosition(type) || type.arguments.isEmpty()) {
+            writeAsmType(asmType)
             return
         }
 
@@ -88,18 +57,18 @@ object KotlinUastTypeMapper {
 
         val indexOfParameterizedType = innerTypesAsList.indexOfFirst { innerPart -> innerPart.arguments.isNotEmpty() }
         if (indexOfParameterizedType < 0 || innerTypesAsList.size == 1) {
-            signatureVisitor.writeClassBegin(asmType)
-            writeGenericArguments(signatureVisitor, possiblyInnerType, mode)
+            writeClassBegin(asmType)
+            writeGenericArguments(this, possiblyInnerType, mode)
         } else {
             val outerType = innerTypesAsList[indexOfParameterizedType]
 
-            signatureVisitor.writeOuterClassBegin(asmType, mapType(outerType.classDescriptor).internalName)
-            writeGenericArguments(signatureVisitor, outerType, mode)
+            writeOuterClassBegin(asmType, mapType(outerType.classDescriptor.defaultType, this).internalName)
+            writeGenericArguments(this, outerType, mode)
 
-            writeInnerParts(innerTypesAsList, signatureVisitor, mode, indexOfParameterizedType + 1) // inner parts separated by `.`
+            writeInnerParts(innerTypesAsList, this, mode, indexOfParameterizedType + 1) // inner parts separated by `.`
         }
 
-        signatureVisitor.writeClassEnd()
+        writeClassEnd()
     }
 
     private fun hasNothingInNonContravariantPosition(kotlinType: KotlinType): Boolean =
@@ -238,5 +207,66 @@ object KotlinUastTypeMapper {
     private fun getJvmShortName(klass: ClassDescriptor): String {
         return JavaToKotlinClassMap.mapKotlinToJava(DescriptorUtils.getFqName(klass))?.shortClassName?.asString()
             ?: SpecialNames.safeIdentifier(klass.name).identifier
+    }
+
+    fun mapType(type: KotlinType, sw: JvmSignatureWriter? = null, mode: TypeMappingMode = TypeMappingMode.DEFAULT): Type {
+        val expandedType = if (type.requiresTypeAliasExpansion()) {
+            (type.constructor.declarationDescriptor as? TypeAliasDescriptor)?.expandedType ?: type
+        } else type
+        return AbstractTypeMapper.mapType(this, expandedType.lowerIfFlexible(), mode, sw)
+    }
+}
+
+private class KotlinUastTypeSystemCommonBackendContextForTypeMapping(
+) : TypeSystemCommonBackendContext by SimpleClassicTypeSystemContext, TypeSystemCommonBackendContextForTypeMapping {
+    override fun continuationTypeConstructor(): TypeConstructorMarker {
+        TODO("Not yet implemented")
+    }
+
+    override fun functionNTypeConstructor(n: Int): TypeConstructorMarker {
+        TODO("Not yet implemented")
+    }
+
+    override fun TypeConstructorMarker.defaultType(): KotlinTypeMarker {
+        require(this is ClassifierBasedTypeConstructor)
+        return this.declarationDescriptor.defaultType
+    }
+
+    override fun SimpleTypeMarker.isKClass(): Boolean {
+        require(this is KotlinType)
+        TODO("Not yet implemented")
+    }
+
+    override fun KotlinTypeMarker.isRawType(): Boolean {
+        require(this is KotlinType)
+        return this is RawType
+    }
+
+    override fun TypeConstructorMarker.isScript(): Boolean {
+        return false
+    }
+
+    override fun SimpleTypeMarker.isSuspendFunction(): Boolean {
+        require(this is KotlinType)
+        return this.isSuspendFunctionTypeOrSubtype
+    }
+
+    override fun TypeConstructorMarker.isTypeParameter(): Boolean {
+        return (this as? ClassifierBasedTypeConstructor)?.declarationDescriptor is TypeParameterDescriptor
+    }
+
+    override fun TypeConstructorMarker.asTypeParameter(): TypeParameterMarker {
+        require(isTypeParameter())
+        return (this as ClassifierBasedTypeConstructor).declarationDescriptor as TypeParameterDescriptor
+    }
+
+    override fun TypeParameterMarker.representativeUpperBound(): KotlinTypeMarker {
+        require(this is TypeParameterDescriptor)
+        return representativeUpperBound
+    }
+
+    override fun TypeConstructorMarker.typeWithArguments(arguments: List<KotlinTypeMarker>): SimpleTypeMarker {
+        require(this is KotlinType)
+        TODO("Not yet implemented")
     }
 }
