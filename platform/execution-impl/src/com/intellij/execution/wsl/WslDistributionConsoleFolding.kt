@@ -27,18 +27,15 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
   @VisibleForTesting
   fun shouldFoldLineNoProject(line: String): Boolean {
     // check if line contains `wsl.exe --distribution` and it's not at the start of line
-    val wslExeIndex = line.indexOf("$WSL_EXE $DISTRIBUTION_PARAMETER")
+    val wslExeIndex = line.indexOf(WSL_EXE_DISTRIBUTION)
     if (wslExeIndex <= 0) {
       return false
     }
 
     // check if line contains `--exec` or `$SHELL -c`, and it's located after `wsl.exe --distribution`
-    var execIndex = line.indexOf(EXEC_PARAMETER)
+    var execIndex = line.indexOf(EXEC_PARAMETER, wslExeIndex + 1)
     if (execIndex < 0) {
-      execIndex = line.indexOf("$SHELL_PARAMETER -c")
-    }
-    if (execIndex <= wslExeIndex) {
-      return false
+      execIndex = line.indexOf(SHELL_C)
     }
 
     // check if line contains `&& `. If yes, then it should be located after `--exec`
@@ -90,7 +87,7 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
     if (userCLStart <= 2) {
       userCLStart = indexOfExec + EXEC_PARAMETER.length + 1
       if (userCLStart <= EXEC_PARAMETER.length) {
-        userCLStart = line.indexOf("$SHELL_PARAMETER -c") + SHELL_PARAMETER.length + 4
+        userCLStart = line.indexOf(SHELL_C) + SHELL_PARAMETER.length + 4
         if (userCLStart <= SHELL_PARAMETER.length + 3) {
           return null
         }
@@ -123,5 +120,11 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
     val userCL = line.substring(userCLStart..userCLEnd)
 
     return ExecutionBundle.message("wsl.folding.placeholder", distributionLine, userCL)
+  }
+
+  companion object {
+    private const val WSL_EXE_DISTRIBUTION = "$WSL_EXE $DISTRIBUTION_PARAMETER"
+
+    private const val SHELL_C = "$SHELL_PARAMETER -c"
   }
 }
