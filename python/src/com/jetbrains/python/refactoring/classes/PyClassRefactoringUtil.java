@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
@@ -24,9 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -37,6 +36,7 @@ public final class PyClassRefactoringUtil {
   private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
   private static final Key<List<PyReferenceExpression>> INJECTION_REFERENCES = Key.create("PyInjectionReferences");
+  private static final Key<Set<FutureFeature>> ENCODED_FROM_FUTURE_IMPORTS = Key.create("PyFromFutureImports");
 
 
   private PyClassRefactoringUtil() {
@@ -185,6 +185,16 @@ public final class PyClassRefactoringUtil {
   public static void restoreNamedReferences(@NotNull final PsiElement newElement,
                                             @Nullable final PsiElement oldElement,
                                             final PsiElement @NotNull [] otherMovedElements) {
+    Set<FutureFeature> fromFutureImports = newElement.getCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS);
+    newElement.putCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS, null);
+    PsiFile destFile = newElement.getContainingFile();
+    if (fromFutureImports != null & destFile != null) {
+      for (FutureFeature futureFeature: fromFutureImports) {
+        AddImportHelper.addOrUpdateFromImportStatement(destFile, PyNames.FUTURE_MODULE, futureFeature.toString(), null,
+                                                       AddImportHelper.ImportPriority.FUTURE, null);
+      }
+    }
+
     newElement.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
@@ -279,6 +289,12 @@ public final class PyClassRefactoringUtil {
    * @param namesToSkip if reference inside of element has one of this names, it will not be saved.
    */
   public static void rememberNamedReferences(@NotNull final PsiElement element, final String @NotNull ... namesToSkip) {
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PyFile) {
+      Set<FutureFeature> fromFutureImports = collectFromFutureImports((PyFile)containingFile);
+      element.putCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS, fromFutureImports);
+    }
+
     element.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
@@ -337,6 +353,16 @@ public final class PyClassRefactoringUtil {
     var rememberedReferences = encodedImports == null ? new ArrayList<PyReferenceExpression>() : encodedImports;
     rememberedReferences.add(expression);
     host.putCopyableUserData(INJECTION_REFERENCES, rememberedReferences);
+  }
+
+  private static @NotNull Set<FutureFeature> collectFromFutureImports(@NotNull PyFile file) {
+    EnumSet<FutureFeature> result = EnumSet.noneOf(FutureFeature.class);
+    for (FutureFeature feature: FutureFeature.values()) {
+      if (file.hasImportFromFuture(feature)) {
+        result.add(feature);
+      }
+    }
+    return result;
   }
 
   private static void rememberReference(@NotNull PyReferenceExpression node, @NotNull PsiElement element) {

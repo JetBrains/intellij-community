@@ -438,6 +438,16 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("func", "dst.py");
   }
 
+  // PY-16221
+  public void testFromFutureImports() {
+    doMoveSymbolTest("C", "b.py");
+  }
+
+  // PY-16221
+  public void testExistingFromFutureImportsNotDuplicated() {
+    doMoveSymbolTest("C", "b.py");
+  }
+
   // PY-23831
   public void testWithImportedForwardReferencesInTypeHints() {
     doMoveSymbolTest("test", "dst.py");
