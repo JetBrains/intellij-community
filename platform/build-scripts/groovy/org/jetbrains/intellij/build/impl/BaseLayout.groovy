@@ -78,4 +78,8 @@ abstract class BaseLayout {
     checkAndAssociateModuleNameWithJarPath(moduleName, jarPath)
     moduleJars.putValue(jarPath, moduleName)
   }
+
+  final void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
+    projectLibrariesToUnpack.putValue(jarName, libraryName)
+  }
 }

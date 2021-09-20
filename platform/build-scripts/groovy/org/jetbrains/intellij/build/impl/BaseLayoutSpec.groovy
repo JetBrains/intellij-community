@@ -87,6 +87,6 @@ class BaseLayoutSpec {
    * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
    */
   void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
-    layout.projectLibrariesToUnpack.putValue(jarName, libraryName)
+    layout.withProjectLibraryUnpackedIntoJar(libraryName, jarName)
   }
 }
