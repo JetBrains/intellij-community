@@ -31,9 +31,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 class B implements AnnotationBuilder {
+  @NotNull
   private final AnnotationHolderImpl myHolder;
   private final @Nls String message;
+  @NotNull
   private final PsiElement myCurrentElement;
+  @NotNull
   private final HighlightSeverity severity;
   private TextRange range;
   private Boolean afterEndOfLine;
@@ -73,6 +76,7 @@ class B implements AnnotationBuilder {
   }
 
   private class FixB implements FixBuilder {
+    @NotNull
     IntentionAction fix;
     TextRange range;
     HighlightDisplayKey key;
@@ -245,7 +249,6 @@ class B implements AnnotationBuilder {
   }
 
   @Override
-  @SuppressWarnings("DuplicatedCode")
   public void create() {
     if (created) {
       throw new IllegalStateException("Must not call .create() twice");
@@ -257,6 +260,7 @@ class B implements AnnotationBuilder {
     if (tooltip == null && message != null) {
       tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
     }
+    //noinspection deprecation
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     if (needsUpdateOnTyping != null) {
       annotation.setNeedsUpdateOnTyping(needsUpdateOnTyping);
@@ -342,7 +346,7 @@ class B implements AnnotationBuilder {
   }
 
   @Override
-  @SuppressWarnings({"removal", "DuplicatedCode"})
+  @SuppressWarnings("removal")
   public Annotation createAnnotation() {
     PluginException.reportDeprecatedUsage("AnnotationBuilder#createAnnotation", "Use `#create()` instead");
     if (range == null) {
@@ -351,6 +355,7 @@ class B implements AnnotationBuilder {
     if (tooltip == null && message != null) {
       tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
     }
+    //noinspection deprecation
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     if (needsUpdateOnTyping != null) {
       annotation.setNeedsUpdateOnTyping(needsUpdateOnTyping);

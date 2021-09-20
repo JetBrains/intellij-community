@@ -1258,6 +1258,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
   }
 
+  /**
+   * @deprecated use {@link #runReadAction(Runnable)} instead
+   */
+  @Deprecated
   private final class ReadAccessToken extends AccessToken {
     private final ReadMostlyRWLock.Reader myReader;
 
