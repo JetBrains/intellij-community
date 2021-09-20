@@ -154,16 +154,17 @@ class MavenSyncConsole(private val myProject: Project) {
 
 
   @Synchronized
-  fun terminated(exitCode: Int) = doIfImportInProcess {
+  fun terminated(exitCode: Int) = doIfImportInProcess { if (0 == exitCode || 143 == exitCode) doFinish() else doTerminate(exitCode) }
+
+  private fun doTerminate(exitCode: Int) {
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete")
     tasks.forEach { completeTask(it.first, it.second, FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))) }
 
     mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "",
-                                                      FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))))
+      FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))))
     finished = true
     started = false
-
   }
 
   @Synchronized
