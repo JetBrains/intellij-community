@@ -225,6 +225,7 @@ public class MavenModuleBuilderHelper {
     }
 
     pom.getParent().refresh(false, false);
+    pom.refresh(false, false);
     updateProjectPom(project, pom);
 
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
