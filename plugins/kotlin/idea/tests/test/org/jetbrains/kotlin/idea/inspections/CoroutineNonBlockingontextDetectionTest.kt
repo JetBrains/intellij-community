@@ -47,6 +47,22 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
     }
 
     fun testNestedFunctionsInsideSuspendLambda() {
+        myFixture.addClass(
+            """
+            package kotlin.coroutines;
+            
+            public class CoroutineScope {}
+        """.trimIndent()
+        )
+        myFixture.addFileToProject(
+            "kotlinx/coroutines/BuildersKt.kt", """"
+            package kotlinx.coroutines; 
+            
+            import kotlin.coroutines.*;
+            
+            fun <T> runBlocking(block: suspend CoroutineScope.() -> T): T = TODO()
+        """.trimIndent()
+        )
         doTest("NestedFunctionsInsideSuspendLambda.kt")
     }
 

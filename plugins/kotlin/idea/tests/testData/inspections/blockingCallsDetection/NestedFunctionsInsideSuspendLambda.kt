@@ -1,8 +1,7 @@
 @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
 
-fun <T> runBlocking(block: suspend CoroutineScope.() -> T): T = TODO()
-
-class CoroutineScope
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 fun test() {
     runBlocking {
