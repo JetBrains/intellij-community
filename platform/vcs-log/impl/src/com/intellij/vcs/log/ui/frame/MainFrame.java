@@ -324,7 +324,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull private final JBLoadingPanel myChangesLoadingPane;
 
     protected MyCommitSelectionListenerForDiff(@NotNull JBLoadingPanel changesLoadingPane) {
-      super(MainFrame.this.myGraphTable, myLogData.getCommitDetailsGetter());
+      super(MainFrame.this.myGraphTable, MainFrame.this.myLogData.getCommitDetailsGetter());
       myChangesLoadingPane = changesLoadingPane;
     }
 

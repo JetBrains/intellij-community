@@ -92,7 +92,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
     mainContentPanel.statusText.text = text
   }
 
-  protected fun rebuildPanel(rows: Int): Int {
+  fun rebuildPanel(rows: Int): Int {
     val oldRowsCount = commitDetailsList.size
     val newRowsCount = min(rows, MAX_ROWS)
 
