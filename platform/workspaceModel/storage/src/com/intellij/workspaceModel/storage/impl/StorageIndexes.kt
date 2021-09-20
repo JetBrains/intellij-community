@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntityData
-import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
@@ -56,7 +55,7 @@ internal open class StorageIndexes(
 
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
-      for ((id, obj) in mappings.index) {
+      for ((id, _) in mappings.index) {
         assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
       }
     }
@@ -69,7 +68,7 @@ internal open class StorageIndexes(
     storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
       if (family.entities.firstOrNull { it != null } !is SoftLinkable) return@forEachIndexed
-      var mutableId = EntityId(0, i)
+      var mutableId = createEntityId(0, i)
       family.entities.forEach { data ->
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
@@ -111,7 +110,7 @@ internal open class StorageIndexes(
     storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
       if (family.entities.firstOrNull { it != null }?.persistentId(storage) == null) return@forEachIndexed
-      var mutableId = EntityId(0, i)
+      var mutableId = createEntityId(0, i)
       family.entities.forEach { data ->
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
@@ -130,7 +129,7 @@ internal open class StorageIndexes(
     storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
       // Optimization to skip useless conversion of classes
-      var mutableId = EntityId(0, i)
+      var mutableId = createEntityId(0, i)
       family.entities.forEach { data ->
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
@@ -157,9 +156,7 @@ internal class MutableStorageIndexes(
 
     // Update soft links index
     if (entityData is SoftLinkable) {
-      for (link in entityData.getLinks()) {
-        softLinks.index(pid, link)
-      }
+      entityData.index(softLinks)
     }
 
     val entitySource = entityData.entitySource
@@ -180,11 +177,7 @@ internal class MutableStorageIndexes(
   }
 
   fun updateSoftLinksIndex(softLinkable: SoftLinkable) {
-    val pid = (softLinkable as WorkspaceEntityData<*>).createEntityId()
-
-    for (link in softLinkable.getLinks()) {
-      softLinks.index(pid, link)
-    }
+    softLinkable.index(softLinks)
   }
 
   fun removeFromSoftLinksIndex(softLinkable: SoftLinkable) {
@@ -206,11 +199,8 @@ internal class MutableStorageIndexes(
     val pid = copiedData.createEntityId()
     if (copiedData is SoftLinkable) {
       if (modifiableEntity is ModifiableModuleEntity && !modifiableEntity.dependencyChanged) return
-      val beforeSoftLinksCopy = HashSet(this.softLinks.getEntriesById(pid))
-      val afterSoftLinks = copiedData.getLinks()
-      val (removed, added) = getDiff(beforeSoftLinksCopy, afterSoftLinks)
-      removed.forEach { this.softLinks.remove(pid, it) }
-      added.forEach { this.softLinks.index(pid, it) }
+
+      copiedData.updateLinksIndex(this.softLinks.getEntriesById(pid), this.softLinks)
     }
   }
 
@@ -232,6 +222,7 @@ internal class MutableStorageIndexes(
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun updateExternalMappingForEntityId(oldId: EntityId, newId: EntityId = oldId, originStorageIndexes: StorageIndexes) {
     originStorageIndexes.externalMappings.forEach { (id, mapping) ->
       val data = mapping.index[oldId] ?: return@forEach

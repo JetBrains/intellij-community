@@ -20,7 +20,7 @@ public interface IntForwardIndexAccessor<Key, Value> extends ForwardIndexAccesso
   @Nullable
   @Override
   default ByteArraySequence serializeIndexedData(@NotNull InputData<Key, Value> data) throws IOException {
-    return AbstractForwardIndexAccessor.serializeToByteSeq(serializeIndexedDataToInt(data), EnumeratorIntegerDescriptor.INSTANCE, 8);
+    return AbstractForwardIndexAccessor.serializeValueToByteSeq(serializeIndexedDataToInt(data), EnumeratorIntegerDescriptor.INSTANCE, 8);
   }
 
   /**

@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedPluginModel
+import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
 @Suppress("unused")
@@ -19,7 +19,7 @@ abstract class AnnotationBasedPluginProjectResolverExtension<T : AnnotationBased
     abstract val modelClass: Class<T>
     abstract val userDataKey: Key<T>
 
-    override fun getExtraProjectModelClasses() = setOf(modelClass)
+    override fun getExtraProjectModelClasses() = setOf(modelClass, AnnotationBasedPluginModel::class.java)
 
     override fun getToolingExtensionsClasses() = setOf(
             modelClass,

@@ -45,18 +45,17 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/
-                                       String commandLine,
-                                       @NotNull Charset charset) {
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     this(process, commandLine, charset, null);
   }
 
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine,
+  public KillableColoredProcessHandler(@NotNull Process process,
+                                       /*@NotNull*/ String commandLine,
                                        @NotNull Charset charset,
-                                       @Nullable Set<? extends File> filesToDelete) {
+                                       @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(true);
   }
@@ -66,13 +65,12 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
       super(commandLine);
     }
 
-    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset, @Nullable Set<? extends File> filesToDetele) {
-      super(process, commandLine, charset, filesToDetele);
+    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
+      super(process, commandLine, charset, filesToDelete);
     }
 
-    @NotNull
     @Override
-    protected BaseOutputReader.Options readerOptions() {
+    protected @NotNull BaseOutputReader.Options readerOptions() {
       return BaseOutputReader.Options.forMostlySilentProcess();
     }
   }

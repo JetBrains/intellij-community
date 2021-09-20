@@ -40,6 +40,23 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
                                  Disposable parent) {
     super(name, mergingTimeSpan, isActive, modalityStateComponent, parent, null, false);
   }
+
+  @Override
+  public void queue(@NotNull Update update) {
+    boolean passThrough = false;
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
+      passThrough = isPassThrough();
+    }
+    else if (MavenUtil.isNoBackgroundMode()) {
+      passThrough = true;
+    }
+
+    if (passThrough) {
+      update.run();
+      return;
+    }
+    super.queue(update);
+  }
   
   public void makeUserAware(final Project project) {
     ApplicationManager.getApplication().runReadAction(() -> {

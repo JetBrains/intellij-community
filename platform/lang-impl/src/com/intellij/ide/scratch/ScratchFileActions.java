@@ -327,15 +327,6 @@ public final class ScratchFileActions {
       e.getPresentation().setEnabledAndVisible(true);
     }
 
-    /**
-     * @deprecated use internationalized string instead.
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    protected @NotNull String getLanguageTerm() {
-      return "Language"; //NON-NLS
-    }
-
     protected @NotNull @Nls String getChangeLanguageActionName(@NotNull String languageName) {
       return LangBundle.message("scratch.file.action.change.language.action", languageName);
     }

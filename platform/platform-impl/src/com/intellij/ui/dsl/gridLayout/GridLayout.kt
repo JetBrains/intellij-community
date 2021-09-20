@@ -5,8 +5,10 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.checkComponent
 import com.intellij.ui.dsl.checkConstraints
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
+import com.intellij.ui.dsl.gridLayout.impl.PreferredSizeData
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
+import javax.swing.JComponent
 
 /**
  * Layout manager represented as a table, where some cells can be merged in one cell (resulting cell occupies several columns and rows)
@@ -53,12 +55,7 @@ class GridLayout : LayoutManager2 {
     }
 
     synchronized(parent.treeLock) {
-      val preferredSize = _rootGrid.getPreferredSize()
-      val insets = parent.insets
-      return Dimension(
-        preferredSize.width + insets.left + insets.right,
-        preferredSize.height + insets.top + insets.bottom
-      )
+      return getPreferredSizeData(parent).preferredSize
     }
   }
 
@@ -76,15 +73,7 @@ class GridLayout : LayoutManager2 {
     }
 
     synchronized(parent.treeLock) {
-      val insets = parent.insets
-      val rect = Rectangle(
-        insets.left, insets.top,
-        parent.width - insets.left - insets.right,
-        parent.height - insets.top - insets.bottom
-      )
-
-      _rootGrid.calculateLayoutData(rect.width, rect.height)
-      _rootGrid.layout(rect)
+      _rootGrid.layout(parent.width, parent.height, parent.insets)
     }
   }
 
@@ -98,5 +87,13 @@ class GridLayout : LayoutManager2 {
 
   override fun invalidateLayout(target: Container?) {
     // Nothing to do
+  }
+
+  fun getConstraints(component: JComponent): Constraints? {
+    return _rootGrid.getConstraints(component)
+  }
+
+  internal fun getPreferredSizeData(parent: Container): PreferredSizeData {
+    return _rootGrid.getPreferredSizeData(parent.insets)
   }
 }

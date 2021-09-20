@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.google.common.base.Ascii;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Set;
 
@@ -24,7 +26,6 @@ import java.util.Set;
  * Soft kill works on Unix, and also on Windows if a mediator process was used.
  */
 public class KillableProcessHandler extends OSProcessHandler implements KillableProcess {
-
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
 
   private boolean myShouldKillProcessSoftly = true;
@@ -49,7 +50,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
@@ -57,19 +58,16 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     this(process, commandLine, charset, null);
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableProcessHandler(@NotNull Process process, /*@NotNull*/
-                                String commandLine,
-                                @NotNull Charset charset,
-                                @Nullable Set<? extends File> filesToDelete) {
+  public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     myMediatedProcess = false;
   }
@@ -83,7 +81,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * @return true, if graceful process termination should be attempted first
+   * @return {@code true} if graceful process termination should be attempted first
    */
   public boolean shouldKillProcessSoftly() {
     return myShouldKillProcessSoftly;
@@ -92,22 +90,22 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * Sets whether the process will be terminated gracefully.
    *
-   * @param shouldKillProcessSoftly true, if graceful process termination should be attempted first (i.e. soft kill)
+   * @param shouldKillProcessSoftly {@code true} if graceful process termination should be attempted first (i.e. "soft kill")
    */
   public void setShouldKillProcessSoftly(boolean shouldKillProcessSoftly) {
     myShouldKillProcessSoftly = shouldKillProcessSoftly;
   }
 
   /**
-   * This method shouldn't be overridden, see shouldKillProcessSoftly
+   * This method shouldn't be overridden, see {@link #shouldKillProcessSoftly}
+   * @see #destroyProcessGracefully
    */
-  private boolean canKillProcessSoftly() {
+  private boolean canDestroyProcessGracefully() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
-        return myMediatedProcess || canTerminateGracefullyWithWinP();
+        return hasPty() || myMediatedProcess || canTerminateGracefullyWithWinP();
       }
-      else if (SystemInfo.isUnix) {
-        // 'kill -SIGINT <pid>' will be executed
+      if (SystemInfo.isUnix) {
         return true;
       }
     }
@@ -141,7 +139,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   @Override
   protected void doDestroyProcess() {
-    boolean gracefulTerminationAttempted = shouldKillProcessSoftly() && canKillProcessSoftly() && destroyProcessGracefully();
+    boolean gracefulTerminationAttempted = shouldKillProcessSoftly() && canDestroyProcessGracefully() && destroyProcessGracefully();
     if (!gracefulTerminationAttempted) {
       // execute default process destroy
       super.doDestroyProcess();
@@ -153,7 +151,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * This is an experimental API which will be removed in future releases once stabilized.
    * Please do not use this API.
    * @param shouldKillProcessSoftlyWithWinP true to use
-   * @deprecated graceful termination with WinP is enabled by default, please don't use this method
+   * @deprecated graceful termination with WinP is enabled by default; please don't use this method
    */
   @ApiStatus.Experimental
   @Deprecated
@@ -193,6 +191,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   protected boolean destroyProcessGracefully() {
+    if (hasPty() && sendInterruptToPtyProcess()) {
+      return true;
+    }
     if (SystemInfo.isWindows) {
       if (myMediatedProcess) {
         return RunnerMediator.destroyProcess(myProcess, true);
@@ -214,8 +215,8 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
           if (message != null && message.contains(".exe terminated with exit code 6,")) {
             // https://github.com/kohsuke/winp/blob/ec4ac6a988f6e3909c57db0abc4b02ff1b1d2e05/native/sendctrlc/main.cpp#L18
             // WinP uses AttachConsole(pid) which might fail if the specified process does not have a console.
-            // In this case the error code returned is ERROR_INVALID_HANDLE (6).
-            // Let's fallback to the default termination without logging an error.
+            // In this case, the error code returned is ERROR_INVALID_HANDLE (6).
+            // Let's fall back to the default termination without logging an error.
             String msg = "Cannot send Ctrl+C to process without a console (fallback to default termination)";
             if (LOG.isDebugEnabled()) {
               LOG.debug(msg + " " + getCommandLine());
@@ -232,6 +233,32 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     }
     else if (SystemInfo.isUnix) {
       return UnixProcessManager.sendSigIntToProcessTree(myProcess);
+    }
+    return false;
+  }
+
+  /**
+   * Writes the INTR (interrupt) character to process's stdin (PTY). When a PTY receives the INTR character,
+   * it raises a SIGINT signal for all processes in the foreground job associated with the PTY. The character itself is then discarded.
+   * <p>A proper way to get INTR is `termios.c_cc[VINTR]`. However, unlikely, the default (003, ETX) is changed.
+   * <p>Works on Unix and Windows.
+   * 
+   * @see <a href="https://man7.org/linux/man-pages/man3/tcflow.3.html">termios(3)</a>
+   * @see <a href="https://www.gnu.org/software/libc/manual/html_node/Signal-Characters.html">Characters that Cause Signals</a>
+   * 
+   * @return true if the character has been written successfully
+   */
+  private boolean sendInterruptToPtyProcess() {
+    OutputStream outputStream = myProcess.getOutputStream();
+    if (outputStream != null) {
+      try {
+        outputStream.write(Ascii.ETX);
+        outputStream.flush();
+        return true;
+      }
+      catch (IOException e) {
+        LOG.info("Failed to send Ctrl+C to PTY process. Fallback to default graceful termination.", e);
+      }
     }
     return false;
   }

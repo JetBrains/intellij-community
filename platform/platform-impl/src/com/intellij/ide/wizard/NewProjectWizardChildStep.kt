@@ -4,4 +4,9 @@ package com.intellij.ide.wizard
 interface NewProjectWizardChildStep<P : NewProjectWizardStep> : NewProjectWizardStep {
 
   val parentStep: P
+
+  interface Factory<P : NewProjectWizardStep> {
+
+    fun createStep(parent: P): NewProjectWizardChildStep<P>
+  }
 }

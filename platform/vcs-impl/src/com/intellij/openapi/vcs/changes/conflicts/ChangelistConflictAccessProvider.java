@@ -1,22 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.presentation.VirtualFilePresentation;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Dmitry Avdeev
@@ -55,12 +52,7 @@ final class ChangelistConflictAccessProvider extends WritingAccessProvider {
       ChangelistConflictDialog dialog;
       final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
       do {
-        final List<Pair<VirtualFile, Icon>> conflicts = ActionUtil.underModalProgress(
-          myProject,
-          FileTypesBundle.message("progress.title.resolving.filetype"),
-          () -> ContainerUtil.map(denied, (vf) -> new Pair<>(vf, VirtualFilePresentation.getIcon(vf)))
-        );
-        dialog = new ChangelistConflictDialog(myProject, new ArrayList<>(changeLists), conflicts);
+        dialog = new ChangelistConflictDialog(myProject, new ArrayList<>(changeLists), denied);
         dialog.show();
       } while (dialog.isOK() && !dialog.getResolution().resolveConflict(myProject, changes, null));
       IdeEventQueue.getInstance().setEventCount(savedEventCount);

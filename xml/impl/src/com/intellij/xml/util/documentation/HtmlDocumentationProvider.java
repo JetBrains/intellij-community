@@ -196,6 +196,12 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   }
 
   private PsiMetaData findDescriptor(PsiManager psiManager, String text, PsiElement context) {
+    if (context != null
+        && (context.getNode() == null
+            || context.getNode().getElementType() == XmlTokenType.XML_END_TAG_START
+            || context.getParent() instanceof XmlText)) {
+      return null;
+    }
     String key = StringUtil.toLowerCase(text);
     final HtmlTagDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(key);
 

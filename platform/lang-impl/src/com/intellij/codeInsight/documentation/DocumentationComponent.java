@@ -76,8 +76,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   public static final Color SECTION_COLOR = Gray.get(0x90);
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
-  private static final JBDimension MAX_DEFAULT = new JBDimension(650, 500);
-  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
+  static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
+  static final JBDimension MAX_DEFAULT = new JBDimension(650, 500);
 
   private final ExternalDocAction myExternalDocAction;
 

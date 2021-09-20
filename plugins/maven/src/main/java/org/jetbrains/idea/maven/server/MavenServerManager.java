@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -495,15 +494,6 @@ public final class MavenServerManager implements Disposable {
     };
   }
 
-  /**
-   * @deprecated use {@link MavenServerManager#createIndexer(Project)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public MavenIndexerWrapper createIndexer() {
-    return createIndexer(ProjectManager.getInstance().getDefaultProject());
-  }
-
   public void addDownloadListener(MavenServerDownloadListener listener) {
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.addDownloadListener(listener));
@@ -547,7 +537,7 @@ public final class MavenServerManager implements Disposable {
   public static File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
     //will be removed after IDEA-205421
-    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && ApplicationManager.getApplication().isUnitTestMode()) {
+    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && MavenUtil.isMavenUnitTestModeEnabled()) {
       return resolveEmbeddedMaven2HomeForTests().getMavenHome();
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
@@ -558,29 +548,10 @@ public final class MavenServerManager implements Disposable {
     return MavenUtil.isValidMavenHome(home) ? home : null;
   }
 
-  /**
-   * @deprecated use MavenImportingSettings.setVmOptionsForImporter
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public String getMavenEmbedderVMOptions() {
-    return "";
-  }
-
-
-  /**
-   * @deprecated use MavenImportingSettings.setVmOptionsForImporter
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
-  }
-
 
   @NotNull
   private static LocalMavenDistribution resolveEmbeddedMaven2HomeForTests() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!MavenUtil.isMavenUnitTestModeEnabled()) {
       throw new IllegalStateException("Maven2 is for test purpose only");
     }
 

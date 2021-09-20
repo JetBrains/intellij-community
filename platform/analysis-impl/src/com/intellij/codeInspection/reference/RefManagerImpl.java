@@ -9,6 +9,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
@@ -40,6 +41,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import org.jdom.Element;
@@ -48,8 +50,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -65,7 +69,7 @@ public class RefManagerImpl extends RefManager {
 
   private final Set<VirtualFile> myUnprocessedFiles = VfsUtilCore.createCompactVirtualFileSet();
   private final boolean processExternalElements = Registry.is("batch.inspections.process.external.elements");
-  private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
+  private final Map<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
 
   private volatile List<RefElement> myCachedSortedRefs; // holds cached values from myPsiToRefTable/myRefTable sorted by containing virtual file; benign data race
 
@@ -83,6 +87,9 @@ public class RefManagerImpl extends RefManager {
   private final Map<Key<?>, RefManagerExtension<?>> myExtensions = new HashMap<>();
   private final Map<Language, RefManagerExtension<?>> myLanguageExtensions = new HashMap<>();
   private final Interner<String> myNameInterner = Interner.createStringInterner();
+
+  private final ArrayBlockingQueue<ThrowableRunnable<RuntimeException>> myTasks = new ArrayBlockingQueue<>(50);
+  private volatile boolean myParallelProcessing;
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -335,12 +342,57 @@ public class RefManagerImpl extends RefManager {
   public void findAllDeclarations() {
     if (!myDeclarationsFound.getAndSet(true)) {
       long before = System.currentTimeMillis();
+      startTaskRunners();
       final AnalysisScope scope = getScope();
       if (scope != null) {
         scope.accept(myProjectIterator);
       }
+      myParallelProcessing = false;
+      LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
+    }
+  }
 
-      LOG.info("Total duration of processing project usages:" + (System.currentTimeMillis() - before)+"ms");
+  /**
+   * To submit task during processing of project usages. The task will be run in a read action in parallel on a separate thread.
+   * @param runnable  the task to run.
+   */
+  public void addParallelTask(ThrowableRunnable<RuntimeException> runnable) {
+    if (myParallelProcessing) {
+      try {
+        myTasks.put(runnable);
+      }
+      catch (InterruptedException ignore) {}
+    }
+    else {
+      runnable.run();
+    }
+  }
+
+  private void startTaskRunners() {
+    if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
+      return;
+    }
+    myParallelProcessing = true;
+    final int threadsCount = Math.min(4, Runtime.getRuntime().availableProcessors() - 1);
+    if (threadsCount == 0) {
+      // need more than 1 core for parallel processing
+      myParallelProcessing = false;
+      return;
+    }
+    LOG.info("Processing project usages using " + threadsCount + " threads");
+    final Application application = ApplicationManager.getApplication();
+    for (int i = 0; i < (threadsCount > 0 ? threadsCount : 4) ; i++) {
+      application.executeOnPooledThread(() -> {
+        while (myParallelProcessing || !myTasks.isEmpty()) {
+          try {
+            final ThrowableRunnable<RuntimeException> task = myTasks.poll(100, TimeUnit.MILLISECONDS);
+            if (task != null) {
+              ReadAction.run(task);
+            }
+          }
+          catch (InterruptedException ignore) {}
+        }
+      });
     }
   }
 

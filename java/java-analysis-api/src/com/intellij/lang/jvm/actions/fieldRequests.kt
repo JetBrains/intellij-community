@@ -5,7 +5,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.types.JvmSubstitutor
 
-class SimpleFieldRequest(
+internal class SimpleFieldRequest(
   private val fieldName: String,
   private val annotations: Collection<AnnotationRequest>,
   private val modifiers: Collection<JvmModifier>,

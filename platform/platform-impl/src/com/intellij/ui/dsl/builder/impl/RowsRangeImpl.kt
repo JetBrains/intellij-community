@@ -11,12 +11,12 @@ internal class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRa
   var endIndex = 0
 
   override fun visible(isVisible: Boolean): RowsRange {
-    panel.visible(isVisible, startIndex..endIndex)
+    panel.visibleFromParent(isVisible, startIndex..endIndex)
     return this
   }
 
   override fun enabled(isEnabled: Boolean): RowsRange {
-    panel.enabled(isEnabled, startIndex..endIndex)
+    panel.enabledFromParent(isEnabled, startIndex..endIndex)
     return this
   }
 

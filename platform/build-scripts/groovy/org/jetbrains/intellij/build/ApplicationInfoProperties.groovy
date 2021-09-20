@@ -50,7 +50,7 @@ final class ApplicationInfoProperties {
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileStatic(TypeCheckingMode.SKIP)
-  private ApplicationInfoProperties(ProductProperties productProperties, String appInfoXml) {
+  private ApplicationInfoProperties(ProductProperties productProperties, String appInfoXml, BuildMessages messages) {
     this.appInfoXml = appInfoXml
     def root = new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
 
@@ -79,7 +79,11 @@ final class ApplicationInfoProperties {
       productCode = productProperties.productCode
     }
     this.productCode = productCode
-    majorReleaseDate = formatMajorReleaseDate(root.build.first().@majorReleaseDate)
+    def majorReleaseDate = root.build.first().@majorReleaseDate
+    if (!isEAP && (majorReleaseDate == null || majorReleaseDate.startsWith('__'))) {
+      messages.error("majorReleaseDate may be omitted only for EAP")
+    }
+    this.majorReleaseDate = formatMajorReleaseDate(majorReleaseDate)
     productName = namesTag.@fullname ?: shortProductName
     edition = namesTag.@edition
     motto = namesTag.@motto
@@ -116,7 +120,7 @@ final class ApplicationInfoProperties {
   }
 
   ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
-    this(productProperties, findApplicationInfoInSources(project, productProperties, messages))
+    this(productProperties, findApplicationInfoInSources(project, productProperties, messages), messages)
   }
 
   String getUpperCaseProductName() { shortProductName.toUpperCase() }
@@ -151,7 +155,7 @@ final class ApplicationInfoProperties {
       "BUILD", buildContext.buildNumber,
       "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
     ), "__")
-    return new ApplicationInfoProperties(buildContext.productProperties, patchedAppInfoXml)
+    return new ApplicationInfoProperties(buildContext.productProperties, patchedAppInfoXml, buildContext.messages)
   }
 
   //copy of ApplicationInfoImpl.shortenCompanyName

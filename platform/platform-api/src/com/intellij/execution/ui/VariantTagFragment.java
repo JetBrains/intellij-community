@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -18,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.*;
 
@@ -110,6 +113,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   @Override
   protected void applyEditorTo(@NotNull T s) {
     mySetter.accept(s, mySelectedVariant);
+    validate(s);
   }
 
   @Nls
@@ -177,6 +181,21 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       myDropDown = new DropDownLink<>(null, link -> showPopup());
       myDropDown.setForeground(JBUI.CurrentTheme.Label.foreground());
       add(myDropDown, JLayeredPane.POPUP_LAYER);
+      myButton.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            myDropDown.dispatchEvent(e);
+          }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            myDropDown.dispatchEvent(e);
+          }
+        }
+      });
     }
 
     private JBPopup showPopup() {
@@ -185,6 +204,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myFragment.setSelectedVariant(v);
+          IdeFocusManager.findInstanceByComponent(myButton).requestFocus(myButton, true);
         }
       }));
       return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);

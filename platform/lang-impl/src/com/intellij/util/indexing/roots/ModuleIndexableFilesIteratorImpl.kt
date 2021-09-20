@@ -42,46 +42,6 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
       }
       return listOf(ModuleIndexableFilesIteratorImpl(module, moduleRoots, false))
     }
-
-    @JvmStatic
-    fun getMergedIterators(rootIterators: Collection<ModuleIndexableFilesIteratorImpl>): Collection<IndexableFilesIterator> {
-      if (rootIterators.isEmpty()) return emptyList()
-      val moduleGrouped = MultiMap<Module, ModuleIndexableFilesIteratorImpl>()
-      for (rootIterator in rootIterators) {
-        moduleGrouped.putValue(rootIterator.module, rootIterator)
-      }
-
-      val result = mutableListOf<IndexableFilesIterator>()
-      for (entry in moduleGrouped.entrySet()) {
-        if (entry.value.size == 1) {
-          result.add(entry.value.iterator().next())
-          continue
-        }
-
-        val roots = mutableListOf<VirtualFile>()
-        for (iteratorImpl in entry.value) {
-          for (root in iteratorImpl.roots) {
-            var isChild = false
-            val it = roots.iterator()
-            while (it.hasNext()) {
-              val next = it.next()
-              if (VfsUtil.isAncestor(next, root, false)) {
-                isChild = true
-                break
-              }
-              if (VfsUtil.isAncestor(root, next, true)) {
-                it.remove()
-              }
-            }
-            if (!isChild) {
-              roots.add(root)
-            }
-          }
-        }
-        result.add(ModuleIndexableFilesIteratorImpl(entry.key, roots, true))
-      }
-      return result
-    }
   }
 
   override fun getDebugName(): String =

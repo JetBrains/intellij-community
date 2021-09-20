@@ -4,7 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 
 /**
  * Vertical step in new project wizard.
@@ -31,7 +31,7 @@ interface NewProjectWizardStep {
   /**
    * Setups UI using Kotlin DSL. Use [context] to get [propertyGraph] or UI properties from parent steps.
    * ```
-   * override fun setupUI(builder: RowBuilder) {
+   * override fun setupUI(builder: Panel) {
    *   with(builder) {
    *     ...UI definitions...
    *   }
@@ -39,7 +39,7 @@ interface NewProjectWizardStep {
    * ```
    * See also: `https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl.html`
    */
-  fun setupUI(builder: RowBuilder)
+  fun setupUI(builder: Panel)
 
   /**
    * Applies data from UI into project model or settings.
@@ -47,10 +47,8 @@ interface NewProjectWizardStep {
    */
   fun setupProject(project: Project)
 
-  interface Factory<P : NewProjectWizardStep> {
-    /**
-     * Creates child step for new project wizard.
-     */
-    fun createStep(parent: P): NewProjectWizardStep
+  interface Factory {
+
+    fun createStep(context: WizardContext): NewProjectWizardStep
   }
 }

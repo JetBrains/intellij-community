@@ -23,6 +23,7 @@ import javax.swing.event.HyperlinkEvent
 internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
+  val parent: RowImpl,
   val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
@@ -40,17 +41,8 @@ internal class CellImpl<T : JComponent>(
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
 
-  /**
-   * Not null if parent is hidden and the cell should not be visible. While parent is hidden
-   * value contains visibility of the cell, which will be restored when parent becomes visible
-   */
-  private var parentManagedComponentVisible: Boolean? = null
-
-  /**
-   * Not null if parent is disabled and the cell should not be enabled. While parent is disabled
-   * value contains enable state of the cell, which will be restored when parent becomes enabled
-   */
-  private var parentManagedComponentEnabled: Boolean? = null
+  private var visible = viewComponent.isVisible
+  private var enabled = viewComponent.isEnabled
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
     super.horizontalAlign(horizontalAlign)
@@ -72,32 +64,24 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun focused(): CellImpl<T> {
+    dialogPanelConfig.preferredFocusedComponent = component
+    return this
+  }
+
   override fun applyToComponent(task: T.() -> Unit): CellImpl<T> {
     component.task()
     return this
   }
 
-  fun enabledFromParent(isEnabled: Boolean) {
-    if (isEnabled) {
-      parentManagedComponentEnabled?.let {
-        doEnabled(it)
-        parentManagedComponentEnabled = null
-      }
-    }
-    else {
-      if (parentManagedComponentEnabled == null) {
-        parentManagedComponentEnabled = viewComponent.isEnabled
-        doEnabled(false)
-      }
-    }
+  fun enabledFromParent(parentEnabled: Boolean) {
+    doEnabled(parentEnabled && enabled)
   }
 
   override fun enabled(isEnabled: Boolean): CellImpl<T> {
-    if (parentManagedComponentEnabled == null) {
-      doEnabled(isEnabled)
-    }
-    else {
-      parentManagedComponentEnabled = isEnabled
+    enabled = isEnabled
+    if (parent.isEnabled()) {
+      doEnabled(enabled)
     }
     return this
   }
@@ -108,27 +92,14 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  fun visibleFromParent(isVisible: Boolean) {
-    if (isVisible) {
-      parentManagedComponentVisible?.let {
-        doVisible(it)
-        parentManagedComponentVisible = null
-      }
-    }
-    else {
-      if (parentManagedComponentVisible == null) {
-        parentManagedComponentVisible = viewComponent.isVisible
-        doVisible(false)
-      }
-    }
+  fun visibleFromParent(parentVisible: Boolean) {
+    doVisible(parentVisible && visible)
   }
 
   override fun visible(isVisible: Boolean): CellImpl<T> {
-    if (parentManagedComponentVisible == null) {
-      doVisible(isVisible)
-    }
-    else {
-      parentManagedComponentVisible = isVisible
+    visible = isVisible
+    if (parent.isVisible()) {
+      doVisible(visible)
     }
     return this
   }
@@ -180,6 +151,8 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
+    componentSet(component, binding.get())
+
     onApply { if (shouldSaveOnApply()) binding.set(componentGet(component)) }
     onReset { componentSet(component, binding.get()) }
     onIsModified { shouldSaveOnApply() && componentGet(component) != binding.get() }
@@ -188,6 +161,19 @@ internal class CellImpl<T : JComponent>(
 
   override fun graphProperty(property: GraphProperty<*>): CellImpl<T> {
     this.property = property
+    return this
+  }
+
+  override fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T> {
+    val origin = component.origin
+    dialogPanelConfig.validateCallbacks.add { callback(ValidationInfoBuilder(origin), component) }
+    return this
+  }
+
+  override fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+    val origin = component.origin
+    dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
+    property?.let { dialogPanelConfig.customValidationRequestors.getOrPut(origin, { SmartList() }).add(it::afterPropagation) }
     return this
   }
 
@@ -215,17 +201,15 @@ internal class CellImpl<T : JComponent>(
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
-  fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
-    val origin = component.origin
-    dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
-    property?.let { dialogPanelConfig.customValidationRequestors.getOrPut(origin, { SmartList() }).add(it::afterPropagation) }
-    return this
-  }
-
   private fun doVisible(isVisible: Boolean) {
-    viewComponent.isVisible = isVisible
-    comment?.let { it.isVisible = isVisible }
-    label?.let { it.isVisible = isVisible }
+    if (viewComponent.isVisible != isVisible) {
+      viewComponent.isVisible = isVisible
+      comment?.let { it.isVisible = isVisible }
+      label?.let { it.isVisible = isVisible }
+
+      // Force parent to re-layout
+      viewComponent.parent?.revalidate()
+    }
   }
 
   private fun doEnabled(isEnabled: Boolean) {

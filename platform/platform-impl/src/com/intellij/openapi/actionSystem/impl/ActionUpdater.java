@@ -8,7 +8,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ComponentManager;
@@ -27,6 +30,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.*;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +55,7 @@ final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
 
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
-  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
+  static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
 
   private final boolean myModalContext;
@@ -121,7 +125,6 @@ final class ActionUpdater {
 
   @Nullable
   private Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
-    if (myPreCacheSlowDataKeys) ReadAction.run(this::ensureSlowDataKeysPreCached);
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
@@ -164,11 +167,20 @@ final class ActionUpdater {
     boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
     boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
     boolean isEDT = EDT.isCurrentThreadEdt();
-    if (isEDT && canAsync && shallAsync && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
+    boolean shallEDT = !(canAsync && shallAsync);
+    if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
       LOG.error("Calling `" + action.getClass().getName() + "#" + operation + "` on EDT " +
                 (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
     }
-    if (isEDT || canAsync && shallAsync) {
+    if (myPreCacheSlowDataKeys && !isEDT &&
+        (shallEDT || Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false))) {
+      ApplicationManagerEx.getApplicationEx().tryRunReadAction(this::ensureSlowDataKeysPreCached);
+    }
+    if (myAllowPartialExpand) {
+      ProgressManager.checkCanceled();
+    }
+
+    if (isEDT || !shallEDT) {
       try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
         return call.get();
       }
@@ -273,7 +285,9 @@ final class ActionUpdater {
 
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
-      ensureSlowDataKeysPreCached();
+      if (Registry.is("actionSystem.update.actions.call.preCacheSlowData.always", false)) {
+        ensureSlowDataKeysPreCached();
+      }
       if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
       return () -> { // invoked outside the read-action
@@ -334,6 +348,19 @@ final class ActionUpdater {
     }
   }
 
+  static void waitForAllUpdatesToFinish() {
+    int executorThreads = 2;
+    Semaphore semaphore = new Semaphore(executorThreads + 1);
+    Runnable upAndWait = () -> {
+      semaphore.up();
+      semaphore.waitFor();
+    };
+    for (int i = 0; i < executorThreads; i++) {
+      ourExecutor.execute(upAndWait);
+    }
+    upAndWait.run();
+  }
+
   private void waitTheTestDelay() {
     if (myTestDelayMillis <= 0) return;
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
@@ -349,12 +376,20 @@ final class ActionUpdater {
     if (!myPreCacheSlowDataKeys) return;
     long start = System.currentTimeMillis();
     for (DataKey<?> key : DataKey.allKeys()) {
-      myDataContext.getData(key);
+      try {
+        myDataContext.getData(key);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
+      }
+      catch (Throwable ex) {
+        LOG.error(ex);
+      }
     }
     myPreCacheSlowDataKeys = false;
     long time = System.currentTimeMillis() - start;
     if (time > 500) {
-      LOG.debug("ensureAsyncDataKeysPreCached() took: " + time + " ms");
+      LOG.debug("ensureSlowDataKeysPreCached() took: " + time + " ms");
     }
   }
 

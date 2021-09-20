@@ -270,7 +270,7 @@ class Bar {
       }
 
       // Here we check that the covering module (SDK in this case) is rendered in decorated info
-      assert component.decoratedText.contains("<div class='bottom'><icon src='AllIcons.Nodes.PpLibFolder'>&nbsp;&lt; java 1.7 ></div>")
+      assert component.decoratedText.contains('<div class="bottom"><icon src="AllIcons.Nodes.PpLibFolder"/>&nbsp;&lt; java 1.7 &gt;</div>')
     }
 
 

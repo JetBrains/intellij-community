@@ -76,6 +76,8 @@ class KotlinNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testStringIntMap() = doTest()
 
+    fun testIterable() = doTest()
+
     private fun doTest() {
         try {
             myFixture.configureByFile(getTestName(false) + ".kt")

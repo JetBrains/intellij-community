@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.gradle.KotlinPlatform
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
@@ -18,8 +17,12 @@ import org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework
 import org.jetbrains.kotlin.idea.platform.testintegration.NoLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.platform.testintegration.ResolvedLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.platform.testintegration.UnsureLightTestFrameworkResult
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.Icon
 

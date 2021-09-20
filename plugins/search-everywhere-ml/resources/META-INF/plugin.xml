@@ -3,13 +3,32 @@
   <name>Machine Learning in Search Everywhere</name>
   <vendor>JetBrains</vendor>
 
+  <description><![CDATA[
+    <p>The plugin improves the Search Everywhere feature by ordering the search results using machine learning,
+    making more relevant results appear higher up the list.
+    </p>
+    <br>
+    <i>Note that sorting by machine learning is currently available only for the Actions tab.</i>
+  ]]></description>
+
   <depends optional="true" config-file="vcs-feature-provider.xml">Git4Idea</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService" />
+    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService"/>
     <statistic.eventLog.eventLoggerProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider"
-      order="first" />
+      order="first"/>
+
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlBundle"/>
+
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with actions order won't be performed"
+                 key="search.everywhere.force.disable.experiment.action.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML logs and experiments in Search Everywhere will be disabled"
+                 key="search.everywhere.force.disable.logging.ml"/>
   </extensions>
 
   <extensionPoints>
@@ -27,9 +46,11 @@
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereOptionFeaturesProvider"/>
 
-    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider" />
-    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.FileKeyProvider" />
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.FileKeyProvider"/>
   </extensions>
 
   <applicationListeners>

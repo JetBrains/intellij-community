@@ -7,6 +7,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -179,13 +180,8 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   }
 
   public LightMethodBuilder setMethodReturnType(@NlsSafe @NotNull final String returnType) {
-    return setMethodReturnType(new Computable.NotNullCachedComputable<PsiType>() {
-      @NotNull
-      @Override
-      protected PsiType internalCompute() {
-        return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(returnType, getResolveScope());
-      }
-    });
+    return setMethodReturnType(NotNullLazyValue.lazy(
+      () -> JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(returnType, getResolveScope()))::getValue);
   }
 
   @Override

@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * @author: db
  */
-class Proto implements RW.Savable, Streamable {
+class Proto implements RW.Savable, Streamable, ProtoEntity {
   public final int access;
   public final int signature;
   public final int name;
@@ -87,6 +87,7 @@ class Proto implements RW.Savable, Streamable {
     return (Opcodes.ACC_ANNOTATION & access) != 0;
   }
 
+  @Override
   public final boolean isFinal() {
     return (Opcodes.ACC_FINAL & access) != 0;
   }

@@ -56,6 +56,9 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.dsl.gridLayout.Constraints;
+import com.intellij.ui.dsl.gridLayout.Grid;
+import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.picker.ColorListener;
@@ -1574,7 +1577,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       "getTooltipText", "getToolTipText", "cursor",
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
-      "isValid", "isDisplayable", "isLightweight", "getClientProperties", "getMouseListeners"
+      "isValid", "isDisplayable", "isLightweight", "getClientProperties", "getMouseListeners", "getFocusListeners"
     );
 
     final List<String> CHECKERS = Arrays.asList(
@@ -1589,10 +1592,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       "getAccessibleStateSet", "getAccessibleEditableText",
       "getAccessibleTable", "getAccessibleText",
       "getAccessibleValue", "accessibleChangeSupport"
-    );
-
-    final List<String> MIGLAYOUT_CC_PROPERTIES = Arrays.asList(
-      "getHorizontal", "getVertical"
     );
 
     final Component myComponent;
@@ -1637,6 +1636,9 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           if (cc != null) {
             addMigLayoutComponentConstraints(cc);
           }
+        }
+        else if (layout instanceof GridLayout && myComponent instanceof JComponent) {
+          addGridLayoutComponentConstraints(Objects.requireNonNull(((GridLayout)layout).getConstraints((JComponent)myComponent)));
         }
       }
     }
@@ -1957,20 +1959,38 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       myProperties.add(new PropertyBean(name, dimConstraintToString(constraint)));
       BoundSize size = constraint.getSize();
       if (size != null) {
-        myProperties.add(new PropertyBean("  " + name + ".size", boundSizeToString(size)));
+        addSubValue(name + ".size", boundSizeToString(size));
       }
       UnitValue align = constraint.getAlign();
       if (align != null) {
-        myProperties.add(new PropertyBean("  " + name + ".align", unitValueToString(align)));
+        addSubValue(name + ".align", unitValueToString(align));
       }
       BoundSize gapBefore = constraint.getGapBefore();
       if (gapBefore != null && !gapBefore.isUnset()) {
-        myProperties.add(new PropertyBean("  " + name + ".gapBefore", boundSizeToString(gapBefore)));
+        addSubValue(name + ".gapBefore", boundSizeToString(gapBefore));
       }
       BoundSize gapAfter = constraint.getGapAfter();
       if (gapAfter != null && !gapAfter.isUnset()) {
-        myProperties.add(new PropertyBean("  " + name + ".gapAfter", boundSizeToString(gapAfter)));
+        addSubValue(name + ".gapAfter", boundSizeToString(gapAfter));
       }
+    }
+
+    private void addGridLayoutComponentConstraints(Constraints constraints) {
+      Grid grid = constraints.getGrid();
+
+      myProperties.add(new PropertyBean("GridLayout component constraints", null));
+      addSubValue("grid", grid.getClass().getSimpleName() + "@" + System.identityHashCode(grid));
+      addSubValue("Cell coordinate", new Point(constraints.getX(), constraints.getY()));
+      addSubValue("Cell size", new Dimension(constraints.getWidth(), constraints.getHeight()));
+      addSubValue("gaps", constraints.getGaps());
+      addSubValue("visualPaddings", constraints.getVisualPaddings());
+      addSubValue("horizontalAlign", constraints.getHorizontalAlign().name());
+      addSubValue("verticalAlign", constraints.getVerticalAlign().name());
+      addSubValue("baselineAlign", constraints.getBaselineAlign());
+    }
+
+    private void addSubValue(@NotNull String name, @Nullable Object value) {
+      myProperties.add(new PropertyBean("  " + name, value));
     }
 
     private static String componentConstraintsToString(CC cc) {

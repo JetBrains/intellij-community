@@ -21,7 +21,8 @@ import java.util.List;
 
 /**
  * @see ExternalSystemProjectTracker#markDirty
- * @see ExternalSystemProjectTracker#scheduleProjectRefresh
+ * @see ExternalSystemProjectTracker#markDirtyAllProjects
+ * @see ExternalSystemProjectTracker#scheduleChangeProcessing
  * @deprecated use {@link ExternalSystemProjectTracker} instead
  */
 @SuppressWarnings("DeprecatedIsStillUsed")

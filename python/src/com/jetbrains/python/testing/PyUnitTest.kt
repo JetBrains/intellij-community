@@ -82,8 +82,6 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
     }
   }
 
-  override fun isFrameworkInstalled(): Boolean = true //Unittest is always available
-
   // Unittest does not support filesystem path. It needs qname resolvable against root or working directory
   override fun shouldSeparateTargetPath() = false
 }

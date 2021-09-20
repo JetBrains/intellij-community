@@ -2,6 +2,9 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.custom.options.CustomContentLayoutOption
@@ -39,15 +42,12 @@ class XDebugFramesAndThreadsLayoutOptions(
     option as? FramesAndThreadsLayoutOptionBase ?: throw IllegalStateException("Unexpected option type: ${option::class.java}")
     if (!option.isSelected) {
       val newView = option.createView()
-      debugTab.registerThreadsView(session, newView)
-      content.setPreferredFocusedComponent { newView.mainComponent }
+      debugTab.registerThreadsView(session, content, newView)
+      XDebugThreadsFramesViewChangeCollector.framesViewSelected(option.getOptionKey())
     }
 
     val contentUi = RunnerContentUi.KEY.getData(debugTab.ui as RunnerLayoutUiImpl)
-    if (contentUi != null &&
-        !isContentVisible() &&
-        !contentUi.isEmpty //avoid force restore of not initialized ui
-      ) {
+    if (contentUi != null && !isContentVisible()) {
       contentUi.restore(content)
       contentUi.select(content, true)
     }
@@ -56,6 +56,11 @@ class XDebugFramesAndThreadsLayoutOptions(
   override fun getDefaultOptionKey(): String = Registry.stringValue("debugger.default.selected.view.key")
 
   override fun getAvailableOptions() = options
+
+  override fun onHide() {
+    super.onHide()
+    XDebugThreadsFramesViewChangeCollector.framesViewSelected(HIDE_OPTION_KEY)
+  }
 }
 
 
@@ -104,4 +109,31 @@ class SideBySideLayoutOption(options: XDebugFramesAndThreadsLayoutOptions) : Sid
 class FramesOnlyLayoutOption(options: XDebugFramesAndThreadsLayoutOptions) : SideBySideLayoutOptionBase(options, false) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.frames.only.layout.option")
   override fun getOptionKey(): String = XDebugFramesAndThreadsLayoutOptions.FRAMES_ONLY_VIEW_KEY
+}
+
+class XDebugThreadsFramesViewChangeCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
+
+  companion object {
+    private val GROUP = EventLogGroup("debugger.frames.view", 2)
+
+    private const val UNKNOWN_KEY = "UNKNOWN"
+
+    private val VIEW_IDS = listOf(
+      UNKNOWN_KEY,
+      PersistentContentCustomLayoutOptions.HIDE_OPTION_KEY,
+      XDebugFramesAndThreadsLayoutOptions.DEFAULT_VIEW_KEY,
+      XDebugFramesAndThreadsLayoutOptions.THREADS_VIEW_KEY,
+      XDebugFramesAndThreadsLayoutOptions.SIDE_BY_SIDE_VIEW_KEY,
+      XDebugFramesAndThreadsLayoutOptions.FRAMES_ONLY_VIEW_KEY
+    )
+
+    private val VIEW_ID = EventFields.String("view_id", VIEW_IDS)
+    private val VIEW_SELECTED = GROUP.registerEvent("selected", VIEW_ID)
+
+    fun framesViewSelected(viewId: String?) {
+      val verifiedTabId = if (VIEW_IDS.contains(viewId)) viewId else UNKNOWN_KEY
+      VIEW_SELECTED.log(verifiedTabId)
+    }
+  }
 }

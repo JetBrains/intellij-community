@@ -118,19 +118,18 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
       }
     };
 
-    for (RegistryValue value : List.of(mySamplingInterval,
-                                       myMaxAttemptsCount,
-                                       myUnresponsiveInterval)) {
+    for (RegistryValue value : List.of(mySamplingInterval, myMaxAttemptsCount, myUnresponsiveInterval)) {
       value.addListener(cancelingListener, this);
     }
 
-    RegistryValue ourReasonableThreadPoolSize = registryManager.get("core.pooled.threads");
+    RegistryValue ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size");
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.setNewThreadListener((thread, runnable) -> {
       if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize.asInteger() &&
           ApplicationInfoImpl.getShadowInstance().isEAP()) {
-        File file = dumpThreads("newPooledThread/", true);
-        LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
+        String message = "Too many pooled threads created (" + service.getBackendPoolExecutorSize() + " > " + ourReasonableThreadPoolSize + ")";
+        File file = doDumpThreads("newPooledThread/", true, message);
+        LOG.info(message + (file == null ? "" : "; thread dump is saved to '" + file.getPath() + "'"));
       }
     });
 
@@ -367,17 +366,19 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   }
 
   @Override
-  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean millis) {
-    return myThread != null ?
-           dumpThreads(pathPrefix,
-                       millis,
-                       ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos()).getRawDump()) :
-           null;
+  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName) {
+    return doDumpThreads(pathPrefix, appendMillisecondsToFileName, "");
   }
 
-  private @Nullable File dumpThreads(@NotNull String pathPrefix,
-                                     boolean millis,
-                                     @NotNull String rawDump) {
+  @Nullable
+  private File doDumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String contentsPrefix) {
+    return myThread == null
+           ? null
+           : dumpThreads(pathPrefix, appendMillisecondsToFileName,
+                         contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos()).getRawDump());
+  }
+
+  private @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String rawDump) {
     if (!pathPrefix.contains("/")) {
       pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
     }
@@ -386,7 +387,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     }
 
     long now = System.currentTimeMillis();
-    String suffix = millis ? "-" + now : "";
+    String suffix = appendMillisecondsToFileName ? "-" + now : "";
     File file = new File(myLogDir, pathPrefix + DUMP_PREFIX + formatTime(now) + suffix + ".txt");
 
     File dir = file.getParentFile();

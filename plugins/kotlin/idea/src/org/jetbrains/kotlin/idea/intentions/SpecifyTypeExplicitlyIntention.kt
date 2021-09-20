@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.template.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
@@ -150,7 +150,7 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
                 it.toResolvableApproximations()
             }.ifEmpty { return null }
 
-            if (ApplicationManager.getApplication().isUnitTestMode) {
+            if (isUnitTestMode()) {
                 // This helps to be sure no nullable types are suggested
                 if (contextElement.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
                         it.text == "// CHOOSE_NULLABLE_TYPE_IF_EXISTS"

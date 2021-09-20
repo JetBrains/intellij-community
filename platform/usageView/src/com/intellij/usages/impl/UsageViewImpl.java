@@ -174,6 +174,19 @@ public class UsageViewImpl implements UsageViewEx {
   private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses =
     ContainerUtil.newConcurrentSet();
 
+  private Runnable fusRunnable = () -> {
+    if (myTree == null) return;
+    DataContext dc = DataManager.getInstance().getDataContext(myTree);
+    Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(dc);
+    if (navigatables != null) {
+      ContainerUtil.filter(navigatables, n -> n.canNavigateToSource() && n instanceof PsiElementUsage).
+        forEach(n -> {
+          PsiElement psiElement = ((PsiElementUsage)n).getElement();
+          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
+      });
+    }
+  };
+
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
                        UsageTarget @NotNull [] targets,
@@ -716,6 +729,7 @@ public class UsageViewImpl implements UsageViewEx {
           UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
           if (selectedProvider != myCurrentUsageContextProvider) {
             tabSelected(selectedProvider);
+            UsageViewStatisticsCollector.logTabSwitched(myProject);
           }
         });
         panel.add(tabbedPane, BorderLayout.CENTER);
@@ -798,8 +812,8 @@ public class UsageViewImpl implements UsageViewEx {
     myTree.setShowsRootHandles(true);
     SmartExpander.installOn(myTree);
     TreeUtil.installActions(myTree);
-    EditSourceOnDoubleClickHandler.install(myTree);
-    EditSourceOnEnterKeyHandler.install(myTree);
+    EditSourceOnDoubleClickHandler.install(myTree, fusRunnable);
+    EditSourceOnEnterKeyHandler.install(myTree, fusRunnable);
 
     TreeUtil.promiseSelectFirst(myTree);
     PopupHandler.installPopupMenu(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
@@ -1593,6 +1607,7 @@ public class UsageViewImpl implements UsageViewEx {
     disposeUsageContextPanels();
     isDisposed = true;
     myUpdateAlarm.cancelAllRequests();
+    fusRunnable = null; // Release reference to this
 
     cancelCurrentSearch();
     myRerunAction = null;

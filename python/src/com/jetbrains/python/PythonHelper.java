@@ -59,8 +59,6 @@ public enum PythonHelper implements HelperPackage {
 
   APPCFG_CONSOLE("pycharm", "appcfg_fetcher"),
 
-  BUILDOUT_ENGULFER("pycharm", "buildout_engulfer"),
-
   DOCSTRING_FORMATTER("docstring_formatter.py"),
 
   EXTRA_SYSPATH("extra_syspath.py"),

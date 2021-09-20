@@ -261,8 +261,7 @@ class MavenSyncConsole(private val myProject: Project) {
       MavenLog.LOG.warn(e)
       hasErrors = true
       @Suppress("HardCodedStringLiteral")
-      mySyncView.onEvent(mySyncId,
-                         createMessageEvent(e))
+      mySyncView.onEvent(mySyncId, createMessageEvent(e))
     }
     else {
       this.startImport(progressListener)

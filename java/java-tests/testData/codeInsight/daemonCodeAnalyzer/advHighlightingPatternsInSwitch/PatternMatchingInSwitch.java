@@ -274,6 +274,18 @@ class Main {
       case 1, <error descr="Duplicate label 'null'">null</error> -> "s";
       case <error descr="Duplicate label 'null'">null</error> -> "null";
     };
+
+    // total pattern duplicates
+    switch (i) {
+      case <error descr="Duplicate total pattern">Object o</error>:
+        break;
+      case <error descr="Duplicate total pattern">((Integer ii && true))</error>:
+        break;
+    }
+    str = switch (i) {
+      case ((Integer ii && false)) -> "";
+      case Number n -> "";
+    };
   }
 
   void fallThroughToPatterns(Object o, Integer ii) {
@@ -691,7 +703,7 @@ class Main {
     }
   }
 
-  void completeness(Day d, I i, I2 i2, I3 i3) {
+  void completeness(Day d, I i, I2 i2, I3 i3, AorBorC abc) {
     // old style switch, no completeness check
     switch (d) {
       case MONDAY, TUESDAY -> System.out.println("ok");
@@ -805,6 +817,18 @@ class Main {
         break;
     }
 
+    str = switch (abc) {
+      case A a -> "1";
+      case B b -> "2";
+      case C c -> "3";
+    };
+    str = switch (abc) {
+      case A a -> "1";
+      case C c -> "2";
+      case AorB ab -> "3";
+      case BorC bc -> "4";
+    };
+
     // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
     switch (<error descr="'switch' statement does not cover all possible input values">i2</error>) {
       case Sub7 s1:
@@ -885,3 +909,11 @@ final class Sub11 extends Sub10 {
 
 final class Sub12 extends Sub10 {
 }
+
+sealed interface AorBorC {}
+sealed interface AorB extends AorBorC {}
+sealed interface BorC extends AorBorC {}
+sealed interface AorC extends AorBorC {}
+final class A implements AorB, AorC {}
+final class B implements AorB, BorC {}
+final class C implements AorC, BorC {}

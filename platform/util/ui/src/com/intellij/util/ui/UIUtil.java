@@ -1168,13 +1168,6 @@ public final class UIUtil {
     return icon != null ? icon : getTreeExpandedIcon();
   }
 
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static Border getTableHeaderCellBorder() {
-    return UIManager.getBorder("TableHeader.cellBorder");
-  }
-
   public static Color getWindowColor() {
     return UIManager.getColor("window");
   }
@@ -3348,15 +3341,6 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull Color getTableSelectionForeground() {
     return getTableSelectionForeground(true);
-  }
-
-  /**
-   * @deprecated use {@link JreHiDpiUtil#isJreHiDPIEnabled()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean isJreHiDPIEnabled() {
-    return JreHiDpiUtil.isJreHiDPIEnabled();
   }
 
   public static void doNotScrollToCaret(@NotNull JTextComponent textComponent) {

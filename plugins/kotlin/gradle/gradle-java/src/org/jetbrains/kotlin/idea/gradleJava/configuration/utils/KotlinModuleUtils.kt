@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.utils
 
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.KotlinCompilation
-import org.jetbrains.kotlin.gradle.KotlinModule
-import org.jetbrains.kotlin.gradle.compilationFullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleTooling.compilationFullName
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinModule
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 internal fun KotlinModule.fullName(simpleName: String = name) = when (this) {

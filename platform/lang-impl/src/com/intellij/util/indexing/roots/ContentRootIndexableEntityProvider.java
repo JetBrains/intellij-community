@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -14,14 +14,14 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class ContentRootIndexableEntityProvider implements IndexableEntityProvider.ModuleEntityDependent<ContentRootEntity> {
+class ContentRootIndexableEntityProvider implements IndexableEntityProvider.ModuleEntityDependent<ContentRootEntity>,
+                                                    IndexableEntityProvider.Existing<ContentRootEntity> {
 
   @Override
   public @NotNull Class<ContentRootEntity> getEntityClass() {
@@ -29,37 +29,28 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Modu
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull ContentRootEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
-    if (moduleEntity.equals(entity.getModule())) {
-      return getExistingEntityIterator(entity, entityStorage, project);
-    }
-    return Collections.emptyList();
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
+                                                                                                      @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                                      @NotNull Project project) {
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.persistentId(), collectRootUrls(entity.getContentRoots()));
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull ContentRootEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project) {
-    return IndexableEntityProviderMethods.INSTANCE.createIterators(entity.getModule(), getVirtualFile(entity), project);
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ContentRootEntity entity,
+                                                                                                @NotNull Project project) {
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().persistentId(), entity.getUrl());
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull ContentRootEntity oldEntity,
-                                                                                         @NotNull ContentRootEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project) {
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ContentRootEntity oldEntity,
+                                                                                                   @NotNull ContentRootEntity newEntity) {
     if (!(newEntity.getExcludedPatterns().equals(oldEntity.getExcludedPatterns()))) {
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(newEntity.getModule(), getVirtualFile(newEntity),
-                                                                     project);
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().persistentId(), newEntity.getUrl());
     }
     List<VirtualFileUrl> newExcludedUrls = newEntity.getExcludedUrls();
     List<VirtualFileUrl> oldExcludedUrls = oldEntity.getExcludedUrls();
     if (!oldExcludedUrls.equals(newExcludedUrls)) {
-      VirtualFileManager fileManager = VirtualFileManager.getInstance();
-      List<VirtualFile> roots = new ArrayList<>();
+      List<VirtualFileUrl> roots = new ArrayList<>();
       for (VirtualFileUrl oldUrl : oldExcludedUrls) {
         boolean found = false;
         String oldPath = oldUrl.getUrl();
@@ -70,47 +61,35 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Modu
           }
         }
         if (!found) {
-          VirtualFile file = fileManager.findFileByUrl(oldPath);
-          if (file != null) {
-            roots.add(file);
-          }
+          roots.add(oldUrl);
         }
       }
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(newEntity.getModule(), roots, project);
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().persistentId(), roots);
     }
     return Collections.emptyList();
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedModuleEntityIterator(@NotNull ModuleEntity oldEntity,
-                                                                                               @NotNull ModuleEntity newEntity,
-                                                                                               @NotNull WorkspaceEntityStorage storage,
-                                                                                               @NotNull Project project) {
-    List<VirtualFile> newRoots = collectRoots(newEntity.getContentRoots());
-    List<VirtualFile> oldRoots = collectRoots(oldEntity.getContentRoots());
-    return IndexableEntityProviderMethods.INSTANCE.createIterators(newEntity, newRoots, oldRoots, project);
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedModuleEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
+                                                                                                        @NotNull ModuleEntity newEntity,
+                                                                                                        @NotNull Project project) {
+    List<VirtualFileUrl> newRoots = collectRootUrls(newEntity.getContentRoots());
+    List<VirtualFileUrl> oldRoots = collectRootUrls(oldEntity.getContentRoots());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.persistentId(), newRoots, oldRoots);
   }
 
   @NotNull
-  private static List<VirtualFile> collectRoots(Sequence<ContentRootEntity> newContentRoots) {
-    return SequencesKt.toList(SequencesKt.mapNotNull(newContentRoots, root -> getVirtualFile(root)));
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFile(@NotNull ContentRootEntity contentRoot) {
-    VirtualFilePointer url = (VirtualFilePointer)contentRoot.getUrl();
-    return url.getFile();
+  private static List<VirtualFileUrl> collectRootUrls(Sequence<ContentRootEntity> newContentRoots) {
+    return SequencesKt.toList(SequencesKt.mapNotNull(newContentRoots, root -> root.getUrl()));
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getRemovedEntityIterator(@NotNull ContentRootEntity entity,
-                                                                                        @NotNull WorkspaceEntityStorage storage,
-                                                                                        @NotNull Project project) {
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull ContentRootEntity entity,
+                                                                                                  @NotNull Project project) {
     if (!entity.getExcludedPatterns().isEmpty() || !entity.getExcludedUrls().isEmpty()) {
-      VirtualFile root = getVirtualFile(entity);
+      VirtualFile root = ((VirtualFilePointer)entity.getUrl()).getFile();
       if (root != null && ProjectFileIndex.getInstance(project).isInContent(root)) {
-        return IndexableEntityProviderMethods.INSTANCE.createIterators(entity.getModule(),
-                                                                       Collections.singletonList(root), project);
+        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().persistentId(), entity.getUrl());
       }
     }
     return Collections.emptyList();

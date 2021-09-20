@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.google.common.collect.Maps
@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
-import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.toolwindow.ChangedStateEventsPanel
 import com.intellij.internal.statistic.toolwindow.eventLogToolWindowsId
@@ -18,6 +17,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 
 internal class ShowChangedStateEventsAction(private val recorderId: String) : DumbAwareAction(
   ActionsBundle.message("action.ShowChangedStateStatisticsAction.text"),

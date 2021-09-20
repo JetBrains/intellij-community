@@ -70,6 +70,11 @@ public class BlockingMethodInNonBlockingContextInspectionTest extends UsefulTest
     myFixture.testHighlighting(true, false, true, "TestSimpleAnnotationsDetection.java");
   }
 
+  public void testClassAnnotationDetection() {
+    myFixture.configureByFiles("TestClassAnnotationsDetection.java", "Blocking.java", "NonBlocking.java");
+    myFixture.testHighlighting(true, false, true, "TestClassAnnotationsDetection.java");
+  }
+
   public void testExternalBlockingAnnotationDetection() {
     myFixture.configureByFiles("TestExternalAnnotationsDetection.java", "Blocking.java", "NonBlocking.java", "annotations.xml");
     myFixture.testHighlighting(true, false, true, "TestExternalAnnotationsDetection.java");

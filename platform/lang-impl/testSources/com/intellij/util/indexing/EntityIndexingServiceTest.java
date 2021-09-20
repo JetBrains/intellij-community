@@ -25,7 +25,11 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,8 +67,8 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   @NotNull
-  private Library createProjectLibrary() {
-    return createLibrary(LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()));
+  private LibraryBridge createProjectLibrary() {
+    return (LibraryBridge)createLibrary(LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()));
   }
 
   @NotNull
@@ -77,7 +81,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
     return lib;
   }
 
-  private void removeProjectLibrary(Library library) {
+  private void removeProjectLibrary(LibraryBridge library) {
     removeLibrary(library, LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()));
   }
 
@@ -94,16 +98,18 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
   public void testIndexingGlobalLibrary() throws Exception {
     doTest(this::createGlobalLibrary, this::removeGlobalLibrary,
-           IndexableEntityProviderMethods.INSTANCE::createIterators);
+           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(), pair.getSecond()));
   }
 
   @NotNull
-  private Library createGlobalLibrary() {
-    return createLibrary(LibraryTablesRegistrar.getInstance().getLibraryTable());
+  private Pair<Library, LibraryId> createGlobalLibrary() {
+    Library library = createLibrary(LibraryTablesRegistrar.getInstance().getLibraryTable());
+    return new Pair<>(library,
+                      new LibraryId(library.getName(), new LibraryTableId.GlobalLibraryTableId(library.getTable().getTableLevel())));
   }
 
-  private void removeGlobalLibrary(Library library) {
-    removeLibrary(library, LibraryTablesRegistrar.getInstance().getLibraryTable());
+  private void removeGlobalLibrary(Pair<Library, LibraryId> libraryPair) {
+    removeLibrary(libraryPair.getFirst(), LibraryTablesRegistrar.getInstance().getLibraryTable());
   }
 
   public void testIndexingModuleLibrary() throws Exception {
@@ -119,13 +125,13 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   @NotNull
-  private Library createModuleLibrary() {
+  private LibraryBridge createModuleLibrary() {
     ModuleRootManagerEx moduleRootManager = ModuleRootManagerEx.getInstanceEx(getModule());
     ModifiableRootModel model = moduleRootManager.getModifiableModel();
     LibraryTable table = model.getModuleLibraryTable();
     Library lib = table.createLibrary("lib");
     model.commit();
-    return lib;
+    return (LibraryBridge)lib;
   }
 
   public void testIndexingSdk() throws Exception {
@@ -161,7 +167,15 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
     List<IndexableFilesIterator> iterators;
     try {
-      iterators = EntityIndexingServiceImpl.getIterators(getProject(), listener.myEvents);
+      List<EntityChange<?>> changes = new ArrayList<>();
+      for (VersionedStorageChange event : listener.myEvents) {
+        Iterator<EntityChange<?>> iterator = event.getAllChanges().iterator();
+        while (iterator.hasNext()) {
+          EntityChange<?> next = iterator.next();
+          changes.add(next);
+        }
+      }
+      iterators = EntityIndexingServiceImpl.getIterators(getProject(), changes);
       Collection<IndexableFilesIterator> expectedIterators = expectedIteratorsProducer.fun(createdEntities);
 
       assertSameIterators(iterators, expectedIterators);

@@ -5,9 +5,6 @@ package org.jetbrains.kotlin.idea.groovy.inspections
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.groovy.KotlinGroovyBundle
 import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
-import org.jetbrains.kotlin.idea.inspections.gradle.KOTLIN_PLUGIN_CLASSPATH_MARKER
-import org.jetbrains.kotlin.idea.inspections.gradle.KotlinGradleInspectionVisitor
-import org.jetbrains.kotlin.idea.inspections.gradle.getResolvedKotlinGradleVersion
 import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection

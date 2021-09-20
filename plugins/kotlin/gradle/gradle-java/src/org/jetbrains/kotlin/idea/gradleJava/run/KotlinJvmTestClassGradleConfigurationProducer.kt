@@ -14,5 +14,4 @@ class KotlinJvmTestClassGradleConfigurationProducer : AbstractKotlinTestClassGra
     override fun isApplicable(module: Module) = module.platform.isJvm() && !module.isNewMPPModule
 
     override fun getPsiClassForLocation(contextLocation: Location<*>) = getTestClassForJvm(contextLocation)
-    override fun getPsiMethodForLocation(contextLocation: Location<*>) = getTestMethodForJvm(contextLocation)
 }

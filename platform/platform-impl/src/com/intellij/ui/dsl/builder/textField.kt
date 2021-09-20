@@ -1,14 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.ui.layout.*
 import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
 
+/**
+ * Columns for text components for short width (used instead of deprecated [GrowPolicy.SHORT_TEXT]
+ */
+const val COLUMNS_SHORT = 18
+
+/**
+ * Columns for text components for medium width (used instead of deprecated [GrowPolicy.MEDIUM_TEXT]
+ */
+const val COLUMNS_MEDIUM = 25
+
 fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
-  component.text = binding.get()
   return bind(JTextComponent::getText, JTextComponent::setText, binding)
+}
+
+fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>): Cell<T> {
+  component.text = property.get()
+  return graphProperty(property)
+    .applyToComponent { bind(property) }
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
@@ -37,6 +53,12 @@ fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) ->
   return bindIntText(PropertyBinding(getter, setter))
 }
 
+/**
+ * Minimal width of text field in chars
+ *
+ * @see COLUMNS_SHORT
+ * @see COLUMNS_MEDIUM
+ */
 fun <T : JTextField> Cell<T>.columns(columns: Int): Cell<T> {
   component.columns = columns
   return this

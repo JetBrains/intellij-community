@@ -37,26 +37,13 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
     if (sourceMapFile.exists()) {
       try {
-        loadSourceMap(projectData, sourceMapFile);
+        SaveHook.loadAndApplySourceMap(projectData, sourceMapFile);
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
       }
     }
     return projectData;
-  }
-
-  public void loadSourceMap(ProjectData projectData, File sourceMapFile) throws IOException {
-    Map map = SaveHook.loadSourceMapFromFile(new HashMap(), sourceMapFile);
-    for (Object o : map.entrySet()) {
-      @SuppressWarnings("unchecked") Map.Entry<String, String> entry = (Map.Entry<String, String>)o;
-      String className = entry.getKey();
-      String source = entry.getValue();
-      ClassData data = projectData.getClassData(className);
-      if (data != null) {
-        data.setSource(source);
-      }
-    }
   }
 
   @Override

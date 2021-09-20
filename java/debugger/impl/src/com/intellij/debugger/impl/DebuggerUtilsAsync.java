@@ -24,8 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -315,9 +317,9 @@ public final class DebuggerUtilsAsync {
 
   public static CompletableFuture<Method> method(Location location) {
     if (location instanceof LocationImpl && isAsyncEnabled()) {
-      return reschedule(((LocationImpl)location).methodAsync());
+      return reschedule(DebuggerUtilsEx.getMethodAsync((LocationImpl)location));
     }
-    return toCompletableFuture(() -> location.method());
+    return toCompletableFuture(() -> DebuggerUtilsEx.getMethod(location));
   }
 
   public static CompletableFuture<Boolean> isObsolete(Method method) {
@@ -497,11 +499,14 @@ public final class DebuggerUtilsAsync {
   }
 
   public static Throwable unwrap(@Nullable Throwable throwable) {
-    return throwable instanceof CompletionException ? throwable.getCause() : throwable;
+    return throwable instanceof CompletionException || throwable instanceof ExecutionException ? throwable.getCause() : throwable;
   }
 
   public static <T> T logError(@Nullable Throwable throwable) {
-    DebuggerUtilsImpl.logError(unwrap(throwable));
+    Throwable e = unwrap(throwable);
+    if (!(e instanceof CancellationException)) {
+      DebuggerUtilsImpl.logError(e);
+    }
     return null;
   }
 

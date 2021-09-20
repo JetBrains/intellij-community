@@ -1636,6 +1636,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments.kt");
         }
 
+        @TestMetadata("methodCallWithComments2.kt")
+        public void testMethodCallWithComments2() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments2.kt");
+        }
+
         @TestMetadata("methodCallWithLambdaArgument.kt")
         public void testMethodCallWithLambdaArgument() throws Exception {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgument.kt");
@@ -1654,6 +1659,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("methodCallWithVararg.kt")
         public void testMethodCallWithVararg() throws Exception {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
+        }
+
+        @TestMetadata("superTypeCall.kt")
+        public void testSuperTypeCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/superTypeCall.kt");
         }
     }
 
@@ -12943,6 +12953,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("sumByShorts.kt")
             public void testSumByShorts() throws Exception {
                 runTest("testData/intentions/loopToCallChain/sum/sumByShorts.kt");
+            }
+
+            @TestMetadata("sumOfDouble.kt")
+            public void testSumOfDouble() throws Exception {
+                runTest("testData/intentions/loopToCallChain/sum/sumOfDouble.kt");
+            }
+
+            @TestMetadata("sumOfInts.kt")
+            public void testSumOfInts() throws Exception {
+                runTest("testData/intentions/loopToCallChain/sum/sumOfInts.kt");
             }
         }
 

@@ -9,7 +9,6 @@ import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.junit.InheritorChooser
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation
 import com.intellij.execution.junit2.info.MethodLocation
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
@@ -24,7 +23,7 @@ import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfig
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
 abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer : AbstractKotlinTestMethodGradleConfigurationProducer() {
     override val forceGradleRunner: Boolean get() = true
@@ -89,11 +88,11 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
         }
 
         mppTestTasksChooser.multiplatformChooseTasks(context.project, dataContext, classes.asList(), contextualSuffix) { tasks ->
-            val configuration = fromContext.configuration as ExternalSystemRunConfiguration
+            val configuration = fromContext.configuration as GradleRunConfiguration
             val settings = configuration.settings
 
             val result = settings.applyTestConfiguration(context.module, tasks, *classes) {
-                var filters = createTestFilterFrom(context.location, it, psiMethod, true)
+                var filters = createTestFilterFrom(context.location, it, psiMethod)
                 if (context.location is PsiMemberParameterizedLocation && contextualSuffix != null) {
                     filters = filters.replace("[*$contextualSuffix*]", "")
                 }
@@ -115,7 +114,7 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
 
 abstract class AbstractKotlinTestMethodGradleConfigurationProducer
     : TestMethodGradleConfigurationProducer(), KotlinGradleConfigurationProducer {
-    override fun isConfigurationFromContext(configuration: ExternalSystemRunConfiguration, context: ConfigurationContext): Boolean {
+    override fun isConfigurationFromContext(configuration: GradleRunConfiguration, context: ConfigurationContext): Boolean {
         if (!context.check()) {
             return false
         }
@@ -129,7 +128,7 @@ abstract class AbstractKotlinTestMethodGradleConfigurationProducer
     }
 
     override fun setupConfigurationFromContext(
-        configuration: ExternalSystemRunConfiguration,
+        configuration: GradleRunConfiguration,
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {

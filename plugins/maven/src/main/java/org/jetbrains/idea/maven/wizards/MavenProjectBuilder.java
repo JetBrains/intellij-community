@@ -225,7 +225,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     manager.waitForReadingCompletion();
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
-        !ApplicationManager.getApplication().isUnitTestMode()) {
+        !MavenUtil.isMavenUnitTestModeEnabled()) {
 
       Promise<List<Module>> promise = manager.scheduleImportAndResolve();
       manager.waitForResolvingCompletion();

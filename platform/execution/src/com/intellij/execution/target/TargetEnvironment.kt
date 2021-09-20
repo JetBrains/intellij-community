@@ -34,6 +34,28 @@ abstract class TargetEnvironment(
       val parentDirectory: String? = null
     ) : TargetPath() {
       override fun toString(): String = "Temporary(hint=$hint, parentDirectory=$parentDirectory)"
+
+      override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Temporary
+
+        // instance with null hint considered unique thus differs from any other instance
+        if (hint == null) return false
+        if (hint != other.hint) return false
+        if (parentDirectory != other.parentDirectory) return false
+
+        return true
+      }
+
+      override fun hashCode(): Int {
+        // instance with null hint considered unique
+        if (hint == null) return super.hashCode()
+        var result = hint.hashCode()
+        result = 31 * result + (parentDirectory?.hashCode() ?: 0)
+        return result
+      }
     }
   }
 

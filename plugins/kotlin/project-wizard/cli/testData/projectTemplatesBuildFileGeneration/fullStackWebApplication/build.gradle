@@ -61,7 +61,7 @@ kotlin {
 }
 
 application {
-    mainClassName = 'ServerKt'
+    mainClassName = 'me.user.application.ServerKt'
 }
 
 tasks.named('jvmProcessResources') {

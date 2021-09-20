@@ -4,6 +4,7 @@ package com.intellij.openapi.editor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -11,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -64,6 +64,8 @@ import java.awt.event.WindowEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
+
+import static com.intellij.lang.documentation.ide.impl.DocumentationTargetHoverInfoKt.calcTargetDocumentationInfo;
 
 public class EditorMouseHoverPopupManager implements Disposable {
 
@@ -349,7 +351,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
       boolean highestPriorityOnly = !Registry.is("ide.tooltip.showAllSeverities");
       info = daemonCodeAnalyzer
-        .findHighlightsByOffset(editor.getDocument(), offset, false, highestPriorityOnly, HighlightSeverity.INFORMATION);
+        .findHighlightsByOffset(editor.getDocument(), offset, false, highestPriorityOnly, HighlightInfoType.SYMBOL_TYPE_SEVERITY);
     }
 
     PsiElement elementForQuickDoc = findElementForQuickDoc(editor, offset, project);
@@ -508,7 +510,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
     @Nullable
     protected EditorHoverInfo calcInfo(@NotNull Editor editor) {
       var highlightHoverInfo = HighlightHoverInfo.highlightHoverInfo(editor, getHighlightInfo());
-      var documentationHoverInfo = documentationPsiHoverInfo(editor);
+      var documentationHoverInfo = Registry.is("documentation.v2")
+                                   ? EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
+                                     ? calcTargetDocumentationInfo(Objects.requireNonNull(editor.getProject()), editor, targetOffset)
+                                     : null
+                                   : documentationPsiHoverInfo(editor);
       return highlightHoverInfo == null && documentationHoverInfo == null
              ? null
              : new EditorHoverInfo(highlightHoverInfo, documentationHoverInfo);

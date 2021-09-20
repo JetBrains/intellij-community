@@ -23,10 +23,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
@@ -131,12 +132,20 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @Override
-  JComponent createTopPanel() {
+  protected JPanel createMainPanel(@NotNull JComponent localsPanelComponent) {
+    var variablesPanel = new BorderLayoutPanel().addToCenter(localsPanelComponent);
+    var top = createTopPanel();
+    if (top == null)
+      return variablesPanel;
+    return variablesPanel.addToTop(top);
+  }
+
+  private JComponent createTopPanel() {
     if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
       Ref<AnAction> addToWatchesActionRef = new Ref<>();
       myEvaluateComboBox =
-        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
+        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateExpression", null, false, true) {
           @Override
           protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
             AnAction addToWatchesAction =
@@ -175,12 +184,20 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          XExpression expression = myEvaluateComboBox.getExpression();
-          if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
-            myEvaluateComboBox.saveTextInHistory();
-            XDebugSession session = getSession(getTree());
-            myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
+          // This listener overrides one from BasicComboBoxUI$Actions
+          // Close popup manually instead of default handler
+          if (myEvaluateComboBox.getComboBox().isPopupVisible()) {
+            myEvaluateComboBox.getComboBox().setPopupVisible(false);
           }
+          else {
+            addExpressionResultNode();
+          }
+        }
+      });
+      myEvaluateComboBox.getComboBox().addPopupMenuListener(new PopupMenuListenerAdapter() {
+        @Override
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+          myEvaluateComboBox.requestFocusInEditor();
         }
       });
       addToWatchesActionRef.get()
@@ -191,6 +208,15 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       return component;
     }
     return null;
+  }
+
+  private void addExpressionResultNode() {
+    XExpression expression = myEvaluateComboBox.getExpression();
+    if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
+      myEvaluateComboBox.saveTextInHistory();
+      XDebugSession session = getSession(getTree());
+      myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
+    }
   }
 
   @Override
@@ -412,13 +438,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
     else {
       XDebuggerTreeNode root = tree.getRoot();
-      List<? extends WatchNode> current = root instanceof WatchesRootNode
-                                          ? ((WatchesRootNode)tree.getRoot()).getWatchChildren() : Collections.emptyList();
-      List<XExpression> list = new SmartList<>();
-      for (WatchNode child : current) {
-        list.add(child.getExpression());
-      }
-      expressions = list;
+      expressions = root instanceof WatchesRootNode ? ((WatchesRootNode)root).getWatchExpressions() : Collections.emptyList();
     }
     return expressions;
   }
@@ -489,19 +509,14 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   public void updateSessionData() {
-    List<XExpression> expressions = new SmartList<>();
-    List<? extends WatchNode> children = myRootNode.getWatchChildren();
-    for (WatchNode child : children) {
-      expressions.add(child.getExpression());
-    }
     XDebugSession session = getSession(getTree());
     if (session != null) {
-      ((XDebugSessionImpl)session).setWatchExpressions(expressions);
+      ((XDebugSessionImpl)session).setWatchExpressions(myRootNode.getWatchExpressions());
     }
     else {
       XDebugSessionData data = getData(XDebugSessionData.DATA_KEY, getTree());
       if (data != null) {
-        data.setWatchExpressions(expressions);
+        data.setWatchExpressions(myRootNode.getWatchExpressions());
       }
     }
   }

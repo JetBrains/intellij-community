@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -11,8 +11,8 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTy
 
 public class GroovyDocInfoGenerator extends JavaDocInfoGenerator {
 
-  public GroovyDocInfoGenerator(PsiElement element) {
-    super(element.getProject(), element);
+  public GroovyDocInfoGenerator(PsiElement element, boolean isGenerationForRenderedDoc) {
+    super(element.getProject(), element, isGenerationForRenderedDoc);
   }
 
   @Override

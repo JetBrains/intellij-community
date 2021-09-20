@@ -17,7 +17,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +30,6 @@ import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.PtyProcessBuilder;
 import com.pty4j.unix.UnixPtyProcess;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +39,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -256,26 +258,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
    *         {@link LocalTerminalCustomizer#customizeCommandAndEnvironment} to it.
    */
   public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-    return getCommands(envs);
-  }
-
-  /**
-   * @deprecated use {@link #getInitialCommand(Map)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public @NotNull List<String> getCommands(@NotNull Map<String, String> envs) {
-    return Arrays.asList(getCommand(envs));
-  }
-
-  /**
-   * @deprecated use {@link #getInitialCommand(Map)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public String[] getCommand(Map<String, String> envs) {
     String shellPath = getShellPath();
-    return ArrayUtil.toStringArray(getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration()));
+    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
   }
 
   private @NotNull String getShellPath() {

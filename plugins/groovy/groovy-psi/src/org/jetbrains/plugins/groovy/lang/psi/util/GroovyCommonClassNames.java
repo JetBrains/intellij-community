@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import java.util.Set;
@@ -45,6 +45,8 @@ public interface GroovyCommonClassNames {
   String GROOVY_TRANSFORM_TYPE_CHECKED = "groovy.transform.TypeChecked";
   String GROOVY_TRANSFORM_TYPE_CHECKING_MODE = "groovy.transform.TypeCheckingMode";
   String GROOVY_TRANSFORM_INHERIT_CONSTRUCTORS = "groovy.transform.InheritConstructors";
+  String GROOVY_TRANSFORM_SEALED = "groovy.transform.Sealed";
+  String GROOVY_TRANSFORM_NON_SEALED = "groovy.transform.NonSealed";
   String GROOVY_LANG_IMMUTABLE = "groovy.lang.Immutable";
   String GROOVY_LANG_META_CLASS = "groovy.lang.MetaClass";
   String GROOVY_LANG_GROOVY_CALLABLE = "groovy.lang.GroovyCallable";

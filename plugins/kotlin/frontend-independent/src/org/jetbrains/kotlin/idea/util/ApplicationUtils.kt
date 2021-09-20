@@ -12,6 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 fun <T> runReadAction(action: () -> T): T {
     return ApplicationManager.getApplication().runReadAction<T>(action)
@@ -71,11 +74,6 @@ inline fun <reified T : Any> ComponentManager.getService(): T? = this.getService
 inline fun <reified T : Any> ComponentManager.getServiceSafe(): T =
     this.getService(T::class.java) ?: error("Unable to locate service ${T::class.java.name}")
 
-fun <T> Project.runReadActionInSmartMode(action: () -> T): T {
-    if (ApplicationManager.getApplication().isReadAccessAllowed) return action()
-    return DumbService.getInstance(this).runReadActionInSmartMode<T>(action)
-}
-
 fun <T> executeInBackgroundWithProgress(project: Project? = null, @NlsContexts.ProgressTitle title: String, block: () -> T): T {
     assert(!ApplicationManager.getApplication().isWriteAccessAllowed) {
         "Rescheduling computation into the background is impossible under the write lock"
@@ -83,4 +81,9 @@ fun <T> executeInBackgroundWithProgress(project: Project? = null, @NlsContexts.P
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(
         ThrowableComputable { block() }, title, true, project
     )
+}
+
+fun KotlinExceptionWithAttachments.withPsiAttachment(name: String, element: PsiElement?): KotlinExceptionWithAttachments {
+    kotlin.runCatching { element?.getElementTextWithContext() }.getOrNull()?.let { withAttachment(name, it) }
+    return this
 }

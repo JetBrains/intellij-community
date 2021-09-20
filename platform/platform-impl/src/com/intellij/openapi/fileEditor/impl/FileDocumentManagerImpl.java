@@ -59,6 +59,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -520,6 +521,15 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
+  public boolean processUnsavedDocuments(Processor<? super Document> processor) {
+    for (Document doc : myUnsavedDocuments) {
+      if (!processor.process(doc)) return false;
+    }
+
+    return true;
+  }
+
+  @Override
   public boolean isDocumentUnsaved(@NotNull Document document) {
     return myUnsavedDocuments.contains(document);
   }
@@ -553,6 +563,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         unbindFileFromDocument(file, document);
         // to avoid weird inconsistencies when file opened in an editor tab got renamed to unknown extension and then typed into
         closeAllEditorsFor(file);
+        myMultiCaster.afterDocumentUnbound(file, document);
       }
       else if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor()) && isBinaryWithDecompiler(file)) {
         reloadFromDisk(document);
@@ -724,6 +735,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     else {
       unbindFileFromDocument(file, document);
       myMultiCaster.fileWithNoDocumentChanged(file);
+      myMultiCaster.afterDocumentUnbound(file, document);
     }
     myUnsavedDocuments.remove(document);
   }

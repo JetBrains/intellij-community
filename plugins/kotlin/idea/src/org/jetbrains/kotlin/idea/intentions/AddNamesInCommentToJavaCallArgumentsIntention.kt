@@ -13,52 +13,67 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtLambdaArgument
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class AddNamesInCommentToJavaCallArgumentsIntention: SelfTargetingIntention<KtCallExpression>(
-    KtCallExpression::class.java,
+class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtCallElement>(
+    KtCallElement::class.java,
     KotlinBundle.lazyMessage("add.names.in.comment.to.call.arguments")
 ) {
-    override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean {
-        val arguments = element.valueArguments.filterNot { it is KtLambdaArgument }
-        if (arguments.isEmpty() || arguments.any { it.isNamed() || it.hasBlockComment() }) return false
-        val resolvedCall = element.resolveToCall() ?: return false
-        val descriptor = resolvedCall.candidateDescriptor
-        if (descriptor !is JavaMethodDescriptor && descriptor !is JavaClassConstructorDescriptor) return false
-        return arguments.size == arguments.resolve(resolvedCall).size
-    }
+    override fun isApplicableTo(element: KtCallElement, caretOffset: Int): Boolean =
+        resolveValueParameterDescriptors(element, anyBlockCommentsWithName = true) != null
 
-    override fun applyTo(element: KtCallExpression, editor: Editor?) {
+    override fun applyTo(element: KtCallElement, editor: Editor?) {
         val resolvedCall = element.resolveToCall() ?: return
         val psiFactory = KtPsiFactory(element)
-        for ((argument, parameter) in element.valueArguments.resolve(resolvedCall)) {
-            val isVararg = parameter.isVararg
-            val name = if (isVararg) "...${parameter.name}" else parameter.name
+        for ((argument, parameter) in element.valueArguments.filterIsInstance<KtValueArgument>().resolve(resolvedCall)) {
             val parent = argument.parent
-            parent.addBefore(psiFactory.createComment("/* $name = */"), argument)
+            parent.addBefore(psiFactory.createComment(parameter.toCommentedParameterName()), argument)
             parent.addBefore(psiFactory.createWhiteSpace(), argument)
-            if (isVararg) break
+            if (parameter.isVararg) break
         }
     }
 
-    private fun List<KtValueArgument>.resolve(
-        resolvedCall: ResolvedCall<out CallableDescriptor>
-    ): List<Pair<KtValueArgument, ValueParameterDescriptor>> =
-        mapNotNull {
-            if (it is KtLambdaArgument) return@mapNotNull null
-            val parameter = resolvedCall.getArgumentMapping(it).safeAs<ArgumentMatch>()?.valueParameter ?: return@mapNotNull null
-            it to parameter
+    companion object {
+        fun resolveValueParameterDescriptors(
+            element: KtCallElement,
+            anyBlockCommentsWithName: Boolean
+        ): List<Pair<KtValueArgument, ValueParameterDescriptor>>? {
+            val arguments = element.valueArguments.filterIsInstance<KtValueArgument>().filterNot { it is KtLambdaArgument }
+            if (arguments.isEmpty() || arguments.any { it.isNamed() } ||
+                (anyBlockCommentsWithName && arguments.any { it.hasBlockCommentWithName() }) ||
+                (!anyBlockCommentsWithName && arguments.none { it.hasBlockCommentWithName() })
+            ) return null
+            val resolvedCall = element.resolveToCall() ?: return null
+            val descriptor = resolvedCall.candidateDescriptor
+            if (descriptor !is JavaMethodDescriptor && descriptor !is JavaClassConstructorDescriptor) return null
+            val resolve = arguments.resolve(resolvedCall)
+            if (arguments.size != resolve.size) return null
+            return resolve
         }
 
-    private fun KtValueArgument.hasBlockComment(): Boolean =
-        siblings(forward = false, withSelf = false)
-            .takeWhile { it is PsiWhiteSpace || it is PsiComment }
-            .any { it is PsiComment && it.elementType == KtTokens.BLOCK_COMMENT }
+        fun ValueParameterDescriptor.toCommentedParameterName(): String =
+            "/* ${if (isVararg) "...$name" else name.asString()} = */"
+
+        fun KtValueArgument.hasBlockCommentWithName(): Boolean =
+            blockCommentWithName() != null
+
+        fun KtValueArgument.blockCommentWithName(): PsiComment? =
+            siblings(forward = false, withSelf = false)
+                .takeWhile { it is PsiWhiteSpace || it is PsiComment }
+                .filterIsInstance<PsiComment>()
+                .firstOrNull { it.elementType == KtTokens.BLOCK_COMMENT && it.text.endsWith("= */") }
+
+        fun List<KtValueArgument>.resolve(
+            resolvedCall: ResolvedCall<out CallableDescriptor>
+        ): List<Pair<KtValueArgument, ValueParameterDescriptor>> =
+            mapNotNull {
+                if (it is KtLambdaArgument) return@mapNotNull null
+                val parameter = resolvedCall.getArgumentMapping(it).safeAs<ArgumentMatch>()?.valueParameter ?: return@mapNotNull null
+                it to parameter
+            }
+    }
 }

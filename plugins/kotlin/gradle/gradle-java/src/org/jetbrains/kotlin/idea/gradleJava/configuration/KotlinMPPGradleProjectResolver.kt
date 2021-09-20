@@ -31,20 +31,22 @@ import org.jetbrains.kotlin.config.ExternalSystemNativeMainRunTask
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.idea.PlatformVersion
-import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.*
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
+import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.createKotlinMppPopulateModuleDependenciesContext
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
-import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
-import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
-import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
+import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
@@ -71,9 +73,13 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         }
     }
 
-    override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(KotlinMPPGradleModelBuilder::class.java, Unit::class.java)
+    override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
+        return setOf(KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java, Unit::class.java)
+    }
 
-    override fun getExtraProjectModelClasses(): Set<Class<out Any>> = setOf(KotlinMPPGradleModel::class.java)
+    override fun getExtraProjectModelClasses(): Set<Class<out Any>> {
+        return setOf(KotlinMPPGradleModel::class.java, KotlinTarget::class.java)
+    }
 
     override fun getExtraCommandLineArgs(): List<String> =
         /**
@@ -102,6 +108,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             if (!nativeDebugAdvertised && mppModel.kotlinNativeHome.isNotEmpty()) {
                 nativeDebugAdvertised = true
                 suggestNativeDebug(resolverCtx.projectPath)
+            }
+            if(mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
+                suggestKotlinJsInspectionPackPlugin(resolverCtx.projectPath)
             }
             if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
                 !PlatformUtils.isAppCode()

@@ -69,7 +69,7 @@ public abstract class PerformanceWatcher implements Disposable {
   @ApiStatus.Internal
   public abstract void edtEventFinished();
 
-  public abstract @Nullable File dumpThreads(@NotNull String pathPrefix, boolean millis);
+  public abstract @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName);
 
   public static @NotNull String printStacktrace(@NotNull String headerMsg,
                                                 @NotNull Thread thread,

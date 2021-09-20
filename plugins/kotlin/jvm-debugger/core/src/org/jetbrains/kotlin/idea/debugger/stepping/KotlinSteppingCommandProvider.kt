@@ -73,6 +73,15 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         return getStepOutCommand(suspendContext, sourcePosition)
     }
 
+    override fun getStepIntoCommand(
+        suspendContext: SuspendContextImpl?,
+        ignoreFilters: Boolean,
+        smartStepFilter: MethodFilter?,
+        stepSize: Int
+    ): DebugProcessImpl.ResumeCommand? {
+        return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
+    }
+
     private fun getStepOutCommand(suspendContext: SuspendContextImpl, sourcePosition: SourcePosition): DebugProcessImpl.ResumeCommand? {
         if (sourcePosition.line < 0) return null
         return DebuggerSteppingHelper.createStepOutCommand(suspendContext, true)
@@ -170,6 +179,22 @@ fun getStepOverAction(
     }
 
     return KotlinStepAction.KotlinStepOver(tokensToSkip, StepOverCallerInfo.from(location))
+}
+
+internal fun createKotlinInlineFilter(suspendContext: SuspendContextImpl): KotlinInlineFilter? {
+    val location = suspendContext.location ?: return null
+    val method = location.safeMethod() ?: return null
+    return KotlinInlineFilter(location, method)
+}
+
+internal class KotlinInlineFilter(location: Location, method: Method) {
+    private val borders = method.getInlineFunctionNamesAndBorders().values.filter { location !in it }
+
+    fun isNestedInline(context: SuspendContextImpl?): Boolean {
+        if (context === null) return false
+        val candidate = context.location ?: return false
+        return borders.any { range -> candidate in range }
+    }
 }
 
 fun Method.isSyntheticMethodForDefaultParameters(): Boolean {

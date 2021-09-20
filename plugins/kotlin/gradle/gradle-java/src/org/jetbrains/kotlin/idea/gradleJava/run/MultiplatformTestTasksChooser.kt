@@ -3,18 +3,17 @@
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.execution.test.runner.*
 import org.jetbrains.plugins.gradle.util.TasksToRun
 import java.util.*
-import java.util.function.Consumer
 
 private typealias TaskFilter = (ExternalSystemTestRunTask) -> Boolean
 
@@ -30,15 +29,13 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         dataContext: DataContext,
         elements: Iterable<PsiElement>,
         contextualSuffix: String? = null, // like "js, browser, HeadlessChrome85.0.4183, MacOSX10.14.6"
-        handler: (List<Map<SourcePath, TestTasks>>) -> Unit
+        handler: (List<Map<SourcePath, TasksToRun>>) -> Unit
     ) {
-        val consumer = Consumer<List<Map<SourcePath, TestTasks>>> { handler(it) }
         val testTasks = resolveTestTasks(elements, contextualFilter(contextualSuffix ))
-
         when {
-            testTasks.isEmpty() -> super.chooseTestTasks(project, dataContext, elements, consumer)
-            testTasks.size == 1 -> consumer.accept(testTasks.values.toList())
-            else -> chooseTestTasks(project, dataContext, testTasks, consumer)
+            testTasks.isEmpty() -> super.chooseTestTasks(project, dataContext, elements, handler)
+            testTasks.size == 1 -> handler(testTasks.values.toList())
+            else -> chooseTestTasks(project, dataContext, testTasks, handler)
         }
     }
 
@@ -96,20 +93,20 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         return tasks
     }
 
-    override fun chooseTestTasks(
+    override fun <T> chooseTestTasks(
         project: Project,
         context: DataContext,
-        testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
-        consumer: Consumer<List<Map<SourcePath, TestTasks>>>
+        testTasks: Map<TestName, T>,
+        consumer: (List<T>) -> Unit
     ) {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-            val result = mutableListOf<Map<SourcePath, TestTasks>>()
+        if (isUnitTestMode()) {
+            val result = mutableListOf<T>()
 
             for (tasks in testTasks.values) {
-                result += tasks.mapValues { it.value }
+                result += tasks
             }
 
-            consumer.accept(result)
+            consumer(result)
             return
         }
 

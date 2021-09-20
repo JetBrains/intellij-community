@@ -60,7 +60,7 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
     doTest(changedName = "renamed")
   }
 
-  fun testRenamedParametrizedDuplicate(){
+  fun _testRenamedParametrizedDuplicate(){
     doTest(changedName = "average")
   }
 
@@ -78,7 +78,7 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
     doTest(changedName = "sayHello")
   }
 
-  fun testParameterGrouping(){
+  fun _testParameterGrouping(){
     doTest()
   }
 

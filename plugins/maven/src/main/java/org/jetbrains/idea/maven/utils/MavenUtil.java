@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -15,10 +15,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManagerEx;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
@@ -49,7 +46,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
@@ -58,7 +54,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.apache.lucene.search.CachingSpanFilter;
+import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -72,10 +68,11 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -202,13 +199,15 @@ public class MavenUtil {
   }
 
   public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
-    if(ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       r.run();
-    } else if( ApplicationManager.getApplication().isDispatchThread()){
+    }
+    else if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().runWriteAction(r);
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(
-        ()->ApplicationManager.getApplication().runWriteAction(r), p),
+                                                          () -> ApplicationManager.getApplication().runWriteAction(r), p),
                                                         ModalityState.defaultModalityState());
     }
   }
@@ -239,6 +238,9 @@ public class MavenUtil {
   }
 
   public static boolean isNoBackgroundMode() {
+    if (shouldRunTasksAsynchronouslyInTests()) {
+      return false;
+    }
     return (ApplicationManager.getApplication().isUnitTestMode()
             || ApplicationManager.getApplication().isHeadlessEnvironment() &&
                !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode());
@@ -386,7 +388,8 @@ public class MavenUtil {
           }
         }
       }
-    } else {
+    }
+    else {
       //set language level only for root pom
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
@@ -517,7 +520,6 @@ public class MavenUtil {
                                                  final boolean cancellable,
                                                  @NotNull final MavenTask task) {
     return runInBackground(project, title, cancellable, task, null);
-
   }
 
   @NotNull
@@ -526,7 +528,7 @@ public class MavenUtil {
                                                  final boolean cancellable,
                                                  @NotNull final MavenTask task,
                                                  @Nullable("null means application pooled thread")
-                                                     ExecutorService executorService) {
+                                                   ExecutorService executorService) {
     MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
     Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
     final MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
@@ -554,7 +556,8 @@ public class MavenUtil {
       final Future<?> future;
       if (executorService == null) {
         future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      } else {
+      }
+      else {
         future = executorService.submit(runnable);
       }
       final MavenTaskHandler handler = new MavenTaskHandler() {
@@ -808,7 +811,7 @@ public class MavenUtil {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
                                         resolveGlobalSettingsFile(overriddenMavenHome));
 
-      if(result == null) {
+      if (result == null) {
         result = new File(resolveM2Dir(), REPOSITORY_DIR);
       }
     }
@@ -1023,7 +1026,8 @@ public class MavenUtil {
     if (mavenHome != null) {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
-    return result == null ? doResolveSuperPomFile(new File(MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
+    return result == null ? doResolveSuperPomFile(
+      new File(MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
   }
 
   @Nullable
@@ -1111,7 +1115,7 @@ public class MavenUtil {
 
   public static boolean newModelEnabled(Project project) {
     return Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
-            || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
+           || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
@@ -1460,21 +1464,30 @@ public class MavenUtil {
   }
 
   public static File getMavenPluginParentFile() {
-    File luceneLib = new File(PathUtil.getJarPathForClass(CachingSpanFilter.class));
-    return luceneLib.getParentFile().getParentFile();
+    return Paths.get(PathManager.getCommunityHomePath(), "plugins", "maven").toFile();
   }
 
-  public static MavenDistribution getEffectiveMavenHome(Project project, String workingDirectory) {
-    return MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirectory);
-  }
-
-  @Nullable
-  public static String getMaxLanguageLevel(@Nullable String level1, @Nullable String level2) {
-    LanguageLevel languageLevel1 = LanguageLevel.parse(level1);
-    LanguageLevel languageLevel2 = LanguageLevel.parse(level2);
-    if (languageLevel1 == null || languageLevel2 == null) {
-      return level1 != null ? level1 : level2;
+  @ApiStatus.Internal
+  //temporary api
+  public static boolean isMavenUnitTestModeEnabled() {
+    if (shouldRunTasksAsynchronouslyInTests()) {
+      return false;
     }
-    return languageLevel1.isAtLeast(languageLevel2) ? level1 : level2;
+    return ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  private static boolean shouldRunTasksAsynchronouslyInTests() {
+    return Boolean.getBoolean("maven.unit.tests.remove");
+  }
+
+  @NotNull
+  public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
+    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    return plugin != null ? plugin.getVersion() : StringUtils.EMPTY;
+  }
+
+  public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
+    return MavenServerManager.WRAPPED_MAVEN.equals(settings.getMavenHome()) ||
+           StringUtil.equals(settings.getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
   }
 }

@@ -6,7 +6,10 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.DefaultComboBoxModel
 
 
@@ -19,46 +22,51 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
 
   protected abstract val label: @NlsContexts.Label String
 
-  protected open val commonSteps = emptyList<NewProjectWizardStep>()
-
   val stepProperty = propertyGraph.graphProperty { "" }
   var step by stepProperty
 
   private val steps by lazy {
     epName.extensionList
-      .filter { it.isEnabled }
+      .filter { it.isEnabled(context) }
       .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }
   }
 
-  final override fun setupUI(builder: RowBuilder) {
+  open fun setupCommonUI(builder: Panel) {}
+
+  final override fun setupUI(builder: Panel) {
     with(builder) {
       row(label) {
         if (steps.size > 4) {
-          comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()), stepProperty)
+          comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()))
+            .bindItem(stepProperty)
         }
         else {
-          buttonSelector(steps.map { it.key }, stepProperty) { it }
+          segmentedButton(steps.map { it.key }, stepProperty) { it }
         }
-      }.largeGapAfter()
+      }.bottomGap(BottomGap.SMALL)
 
-      commonSteps.forEach { it.setupUI(this) }
+      setupCommonUI(this)
 
-      val stepsControllers = HashMap<String, DialogPanel>()
+      val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
+      val stepsPanels = HashMap<String, DialogPanel>()
       for ((name, step) in steps) {
-        stepsControllers[name] = nestedPanel {
-          step.setupUI(this)
-        }.component
+        val panel = panelBuilder.panel(step::setupUI)
+        row {
+          cell(panel)
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        stepsPanels[name] = panel
       }
       stepProperty.afterChange {
-        stepsControllers.values.forEach { it.isVisible = false }
-        stepsControllers[step]?.isVisible = true
+        for ((key, panel) in stepsPanels) {
+          panel.isVisible = key == step
+        }
       }
       step = steps.keys.first()
     }
   }
 
   final override fun setupProject(project: Project) {
-    commonSteps.forEach { it.setupProject(project) }
     steps[step]?.setupProject(project)
   }
 }

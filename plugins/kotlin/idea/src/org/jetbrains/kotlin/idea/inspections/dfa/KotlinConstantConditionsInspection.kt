@@ -15,13 +15,16 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
@@ -35,7 +38,9 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
+import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
 
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private enum class ConstantValue {
@@ -76,7 +81,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
-        // TODO: suppress in assert() or require() conditions (optionally?)
         // TODO: suppress when condition is required for a smart cast
         var parent = expression.parent
         if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
@@ -96,45 +100,76 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         ) {
             return true
         }
-        if (value == ConstantValue.TRUE) {
-            if (isPairingConditionInWhen(expression)) return true
-        }
-        if (value == ConstantValue.ZERO) {
-            if (expression.readWriteAccess(false).isWrite) {
-                // like if (x == 0) x++, warning would be somewhat annoying
-                return true
-            }
-            if (expression is KtSimpleNameExpression &&
-                (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)) {
-                // zero value is passed as argument to another method or used for array access. Often, such a warning is annoying
+        if (expression is KtBinaryExpression && expression.operationToken == KtTokens.ELVIS) {
+            // Left part of Elvis is Nothing?, so the right part is always executed
+            // Could be caused by code like return x?.let { return ... } ?: true
+            // While inner "return" is redundant, the "always true" warning is confusing
+            // probably separate inspection could report extra "return"
+            if (expression.left?.getKotlinType()?.isNullableNothing() == true) {
                 return true
             }
         }
-        if (value == ConstantValue.NULL) {
-            if (parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
-                // initialize other variable with null to copy type, like
-                // var x1 : X = null
-                // var x2 = x1 -- let's suppress this
-                return true
+        if (isAlsoChain(expression)) return true
+        when (value) {
+            ConstantValue.TRUE -> {
+                if (isSmartCastNecessary(expression, true)) return true
+                if (isPairingConditionInWhen(expression)) return true
+                if (isAssertion(parent)) return true
             }
-            if (expression is KtBinaryExpressionWithTypeRHS && expression.left.isNull()) {
-                // like (null as? X)
-                return true
+            ConstantValue.FALSE -> {
+                if (isSmartCastNecessary(expression, false)) return true
             }
-            if (parent is KtBinaryExpression) {
-                val token = parent.operationToken
-                if ((token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) &&
-                    (parent.left?.isNull() == true || parent.right?.isNull() == true)
+            ConstantValue.ZERO -> {
+                if (expression.readWriteAccess(false).isWrite) {
+                    // like if (x == 0) x++, warning would be somewhat annoying
+                    return true
+                }
+                if (expression is KtDotQualifiedExpression && expression.selectorExpression?.textMatches("ordinal") == true) {
+                    var receiver: KtExpression? = expression.receiverExpression
+                    if (receiver is KtQualifiedExpression) {
+                        receiver = receiver.selectorExpression
+                    }
+                    if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtEnumEntry) {
+                        // ordinal() call on explicit enum constant
+                        return true
+                    }
+                }
+                val bindingContext = expression.analyze()
+                if (ConstantExpressionEvaluator.getConstant(expression, bindingContext) != null) return true
+                if (expression is KtSimpleNameExpression &&
+                    (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)
                 ) {
-                    // like if (x == null) when 'x' is known to be null: report 'always true' instead
+                    // zero value is passed as argument to another method or used for array access. Often, such a warning is annoying
                     return true
                 }
             }
-            val kotlinType = expression.getKotlinType()
-            if (kotlinType.toDfType(expression) == DfTypes.NULL) {
-                // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
-                return true
+            ConstantValue.NULL -> {
+                if (parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
+                    // initialize other variable with null to copy type, like
+                    // var x1 : X = null
+                    // var x2 = x1 -- let's suppress this
+                    return true
+                }
+                if (expression is KtBinaryExpressionWithTypeRHS && expression.left.isNull()) {
+                    // like (null as? X)
+                    return true
+                }
+                if (parent is KtBinaryExpression) {
+                    val token = parent.operationToken
+                    if ((token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) &&
+                        (parent.left?.isNull() == true || parent.right?.isNull() == true)
+                    ) {
+                        // like if (x == null) when 'x' is known to be null: report 'always true' instead
+                        return true
+                    }
+                }
+                val kotlinType = expression.getKotlinType()
+                if (kotlinType.toDfType(expression) == DfTypes.NULL) {
+                    // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
+                    return true
+                }
             }
+            else -> {}
         }
         if (expression is KtSimpleNameExpression) {
             val target = expression.mainReference.resolve()
@@ -147,6 +182,26 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return true
         }
         return expression.isUsedAsStatement(expression.analyze(BodyResolveMode.FULL))
+    }
+
+    // Do not report on also, as it always returns the qualifier. If necessary, qualifier itself will be reported
+    private fun isAlsoChain(expr: KtExpression): Boolean {
+        val call = (expr as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression ?: return false
+        val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
+        if (descriptor.name.asString() != "also") return false
+        val packageFragment = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+        return packageFragment.fqName.asString() == "kotlin"
+    }
+
+    private fun isAssertion(parent: PsiElement?): Boolean {
+        val valueArg = parent as? KtValueArgument ?: return false
+        val valueArgList = valueArg.parent as? KtValueArgumentList ?: return false
+        val call = valueArgList.parent as? KtCallExpression ?: return false
+        val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
+        val name = descriptor.name.asString()
+        if (name != "assert" && name != "require" && name != "check") return false
+        val pkg = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+        return pkg.fqName.asString() == "kotlin"
     }
 
     /**
@@ -257,8 +312,20 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         val expr = anchor.expression
                         if (!shouldSuppress(cv, expr)) {
                             val key = when (cv) {
-                                ConstantValue.TRUE -> "inspection.message.condition.always.true"
-                                ConstantValue.FALSE -> "inspection.message.condition.always.false"
+                                ConstantValue.TRUE ->
+                                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression)
+                                        "inspection.message.value.always.true"
+                                    else if (logicalChain(expr))
+                                        "inspection.message.condition.always.true.when.reached" 
+                                    else 
+                                        "inspection.message.condition.always.true"
+                                ConstantValue.FALSE ->
+                                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression)
+                                        "inspection.message.value.always.false"
+                                    else if (logicalChain(expr))
+                                        "inspection.message.condition.always.false.when.reached"
+                                    else
+                                        "inspection.message.condition.always.false"
                                 ConstantValue.NULL -> "inspection.message.value.always.null"
                                 ConstantValue.ZERO -> "inspection.message.value.always.zero"
                                 else -> throw IllegalStateException("Unexpected constant: $cv")
@@ -306,6 +373,20 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
         }
+    }
+
+    private fun logicalChain(expr: KtExpression): Boolean {
+        var context = expr
+        var parent = context.parent
+        while (parent is KtParenthesizedExpression) {
+            context = parent
+            parent = context.parent
+        }
+        if (parent is KtBinaryExpression && parent.right == context) {
+            val token = parent.operationToken
+            return token == KtTokens.ANDAND || token == KtTokens.OROR
+        }
+        return false
     }
 
     private fun isCompilationWarning(anchor: KtExpression): Boolean

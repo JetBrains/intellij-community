@@ -19,10 +19,11 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.java.JavaBundle.message
+import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.DEFAULT_SIGNATURE
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.POSSIBLE_SIGNATURES
+import com.intellij.java.JavaBundle.message
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature
@@ -66,7 +67,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
 
   fun doTestMethod(vararg withSignature: String) = doTest(USE_METHOD, *withSignature)
   fun doTestConstructor(vararg withSignature: String) = doTest(USE_CONSTRUCTOR, VOID, *withSignature)
-  fun doTestReplace(replacement: String) = doTest(message("inspection.handle.signature.replace.with.fix.name", replacement))
+  fun doTestReplace(replacement: String) = doTest(CommonQuickFixBundle.message("fix.replace.with.x", replacement))
 
   fun doTest(actionPrefix: String, vararg withSignature: String) {
     val testName = getTestName(false)

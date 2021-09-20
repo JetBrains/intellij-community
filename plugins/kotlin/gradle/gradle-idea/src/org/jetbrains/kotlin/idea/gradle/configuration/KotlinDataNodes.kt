@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.serialization.PropertyMapping
-import org.jetbrains.kotlin.gradle.ArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.Serializable

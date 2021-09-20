@@ -65,11 +65,11 @@ public class InspectionOptionsPanel extends JPanel {
     return comp;
   }
 
-  public void addCheckbox(@NlsContexts.Checkbox String label, @NonNls String property) {
+  public void addCheckbox(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property) {
     addCheckboxEx(label, property);
   }
 
-  public JCheckBox addCheckboxEx(@NlsContexts.Checkbox String label, @NonNls String property) {
+  public JCheckBox addCheckboxEx(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property) {
     if (myOptionAccessor == null) {
       throw new IllegalStateException("No option accessor or owner specified in constructor call");
     }
@@ -80,7 +80,8 @@ public class InspectionOptionsPanel extends JPanel {
     return checkBox;
   }
 
-  public JCheckBox addDependentCheckBox(@NlsContexts.Checkbox String label, @NonNls String property, JCheckBox controller) {
+  public JCheckBox addDependentCheckBox(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property,
+                                        @NotNull JCheckBox controller) {
     final JCheckBox checkBox = addCheckboxEx(label, property);
     checkBox.setBorder(new EmptyBorder(new JBInsets(0, 20, 0, 0)));
     controller.addItemListener(

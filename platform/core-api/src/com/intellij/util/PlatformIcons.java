@@ -86,13 +86,6 @@ public interface PlatformIcons {
 
   Icon CONTENT_ROOT_ICON_CLOSED = AllIcons.Nodes.Module;
 
-  /**
-   * @deprecated use {@link #CONTENT_ROOT_ICON_CLOSED}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  Icon CONTENT_ROOT_ICON_OPEN = CONTENT_ROOT_ICON_CLOSED;
-
   Icon UP_DOWN_ARROWS = AllIcons.Ide.UpDown;
 
   Icon COMBOBOX_ARROW_ICON = AllIcons.General.ArrowDown;

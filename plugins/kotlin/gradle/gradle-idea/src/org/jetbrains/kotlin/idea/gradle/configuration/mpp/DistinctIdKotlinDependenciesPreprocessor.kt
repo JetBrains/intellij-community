@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.gradle.configuration.mpp
 
 import com.intellij.openapi.util.IntellijInternalApi
-import org.jetbrains.kotlin.gradle.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 
 @IntellijInternalApi
 object DistinctIdKotlinDependenciesPreprocessor : KotlinDependenciesPreprocessor {

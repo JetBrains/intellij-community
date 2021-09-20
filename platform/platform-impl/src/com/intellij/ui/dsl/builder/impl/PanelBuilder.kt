@@ -6,11 +6,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.*
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
@@ -42,6 +39,10 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   }
 
   fun build() {
+    if (rows.isEmpty()) {
+      return
+    }
+
     preprocess()
 
     val maxColumnsCount = getMaxColumnsCount()
@@ -55,7 +56,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       }
 
       val rowGaps = getRowGaps(row)
-      rowsGridBuilder.setRowGaps(RowGaps(top = rowGaps.top))
+      rowsGridBuilder.setRowGaps(VerticalGaps(top = rowGaps.top))
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
@@ -127,7 +128,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         val cell = row.cells[i]
         if (cell is CellImpl<*>) {
           cell.label?.let {
-            val labelCell = CellImpl(dialogPanelConfig, it)
+            val labelCell = CellImpl(dialogPanelConfig, it, row)
               .gap(RightGap.SMALL)
             row.cells.add(i, labelCell)
 
@@ -312,22 +313,24 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     return cells.indexOfFirst { (it as? CellImpl<*>)?.comment != null }
   }
 
-  private fun getRowGaps(row: RowImpl): RowGaps {
+  private fun getRowGaps(row: RowImpl): VerticalGaps {
     row.customRowGaps?.let {
       return it
     }
 
     val top = when (row.topGap) {
       TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
+      TopGap.MEDIUM -> dialogPanelConfig.spacing.verticalMediumGap
       null -> row.internalTopGap
     }
 
     val bottom = when (row.bottomGap) {
       BottomGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
+      BottomGap.MEDIUM -> dialogPanelConfig.spacing.verticalMediumGap
       null -> row.internalBottomGap
     }
 
-    return if (top > 0 || bottom > 0) RowGaps(top = top, bottom = bottom) else RowGaps.EMPTY
+    return if (top > 0 || bottom > 0) VerticalGaps(top = top, bottom = bottom) else VerticalGaps.EMPTY
   }
 
   private fun warn(message: String) {

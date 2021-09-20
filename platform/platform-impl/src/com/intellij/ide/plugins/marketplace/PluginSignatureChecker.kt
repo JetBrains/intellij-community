@@ -143,6 +143,8 @@ internal object PluginSignatureChecker {
     return true
   }
 
+  @Nls
+  @ExperimentalUnsignedTypes
   private fun verifyPluginAndGetErrorMessage(descriptor: IdeaPluginDescriptor, file: File, vararg certificates: Certificate): String? {
     return when (val verificationResult = ZipVerifier.verify(file)) {
       is InvalidSignatureResult -> {
@@ -169,6 +171,7 @@ internal object PluginSignatureChecker {
     }
   }
 
+  @Nls
   private fun getSignatureWarningMessage(descriptor: IdeaPluginDescriptor): String {
     val vendor = if (descriptor.organization.isNullOrBlank()) descriptor.vendor else descriptor.organization
     val vendorMessage = if (vendor.isNullOrBlank()) vendor else IdeBundle.message("jetbrains.certificate.vendor", vendor)

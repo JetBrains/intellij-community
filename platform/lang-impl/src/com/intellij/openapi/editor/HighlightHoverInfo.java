@@ -126,7 +126,7 @@ final class HighlightHoverInfo {
   }
 
   static @Nullable HighlightHoverInfo highlightHoverInfo(@NotNull Editor editor, @Nullable HighlightInfo info) {
-    if (info == null || info.getDescription() == null || info.getToolTip() == null) {
+    if (info == null || info.getToolTip() == null) {
       return null;
     }
     try {

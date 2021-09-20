@@ -25,6 +25,8 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, horizontal: Boolean, priv
 
   init {
     setForceMinimumSize(true)
+    // Buttons preferred size is calculated in SegmentedButton.getPreferredSize, so reset default size
+    setMinimumButtonSize(Dimension(0, 0))
     ActionToolbarBorder.setOutlined(this, true)
   }
 

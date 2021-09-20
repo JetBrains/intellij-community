@@ -82,7 +82,7 @@ class SimplifyCallChainFix(
         if (!firstCallHasArguments && !secondCallHasArguments) {
             commentSaver.restore(result)
         }
-        if (lambdaExpression != null) {
+        if (lambdaExpression != null || additionalArgument != null) {
             val callExpression = when (result) {
                 is KtQualifiedExpression -> result.callExpression
                 is KtCallExpression -> result
@@ -105,7 +105,7 @@ class SimplifyCallChainFix(
         }
 
         result.containingKtFile.commitAndUnblockDocument()
-        ShortenReferences.DEFAULT.process(result.reformatted() as KtElement)
+        if (result.isValid) ShortenReferences.DEFAULT.process(result.reformatted() as KtElement)
         if (runOptimizeImports) {
             OptimizeImportsProcessor(project, file).run()
         }

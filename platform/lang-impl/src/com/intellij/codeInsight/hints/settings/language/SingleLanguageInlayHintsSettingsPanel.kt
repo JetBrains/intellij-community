@@ -49,7 +49,7 @@ class SingleLanguageInlayHintsSettingsPanel(
   private val config = InlayHintsSettings.instance()
   private val myProviderList = createList()
   private var myCurrentProvider = selectLastViewedProvider()
-  private val myEditorTextField = createEditor()
+  private val myEditorTextField = createEditor(myLanguage, myProject) { updateHints() }
   private val myCurrentProviderCustomSettingsPane = JBScrollPane().also {
     it.border = null
   }
@@ -167,44 +167,6 @@ class SingleLanguageInlayHintsSettingsPanel(
     return previewPanel
   }
 
-  private fun createEditor(): EditorTextField {
-    val fileType: FileType = myLanguage.associatedFileType ?: FileTypes.PLAIN_TEXT
-    val editorField = object : EditorTextField(null, myProject, fileType, false, false) {
-      override fun addNotify() {
-        super.addNotify()
-        // only here the editor is finally initialized
-        updateHints()
-      }
-    }
-    editorField.font = EditorFontType.PLAIN.globalFont
-    editorField.border = LineBorder(JBColor.border())
-    editorField.addSettingsProvider { editor ->
-      editor.setVerticalScrollbarVisible(true)
-      editor.setHorizontalScrollbarVisible(true)
-      editor.setBorder(JBUI.Borders.empty(4))
-      with(editor.settings) {
-        additionalLinesCount = 2
-        isAutoCodeFoldingEnabled = false
-        isLineNumbersShown = true
-      }
-      // Sadly, but we can't use daemon here, because we need specific kind of settings instance here.
-      editor.document.addDocumentListener(object : DocumentListener {
-        override fun documentChanged(event: DocumentEvent) {
-          updateHints()
-        }
-      })
-      editor.backgroundColor = EditorFragmentComponent.getBackgroundColor(editor, false)
-      editor.setBorder(JBUI.Borders.empty())
-      // If editor is created as not viewer, daemon is enabled automatically. But we want to collect hints manually with another settings.
-      val psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document)
-      if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, false)
-      }
-    }
-    editorField.setCaretPosition(0)
-    return editorField
-  }
-
   private fun withInset(component: JComponent): JPanel {
     val panel = JPanel(GridLayout())
     panel.add(component)
@@ -314,4 +276,42 @@ class SingleLanguageInlayHintsSettingsPanel(
   override fun isCopyEnabled(dataContext: DataContext): Boolean = !myProviderList.isSelectionEmpty
 
   override fun isCopyVisible(dataContext: DataContext): Boolean = false
+}
+
+fun createEditor(language: Language, project: Project, updateHints: ()->Any): EditorTextField {
+  val fileType: FileType = language.associatedFileType ?: FileTypes.PLAIN_TEXT
+  val editorField = object : EditorTextField(null, project, fileType, false, false) {
+    override fun addNotify() {
+      super.addNotify()
+      // only here the editor is finally initialized
+      updateHints()
+    }
+  }
+  editorField.font = EditorFontType.PLAIN.globalFont
+  editorField.border = LineBorder(JBColor.border())
+  editorField.addSettingsProvider { editor ->
+    editor.setVerticalScrollbarVisible(true)
+    editor.setHorizontalScrollbarVisible(true)
+    editor.setBorder(JBUI.Borders.empty(4))
+    with(editor.settings) {
+      additionalLinesCount = 2
+      isAutoCodeFoldingEnabled = false
+      isLineNumbersShown = true
+    }
+    // Sadly, but we can't use daemon here, because we need specific kind of settings instance here.
+    editor.document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        updateHints()
+      }
+    })
+    editor.backgroundColor = EditorFragmentComponent.getBackgroundColor(editor, false)
+    editor.setBorder(JBUI.Borders.empty())
+    // If editor is created as not viewer, daemon is enabled automatically. But we want to collect hints manually with another settings.
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    if (psiFile != null) {
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, false)
+    }
+  }
+  editorField.setCaretPosition(0)
+  return editorField
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedPluginModel
+import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler

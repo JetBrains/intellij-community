@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.RevealFileAction;
-import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -19,17 +18,14 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.ssl.CertificateManager;
@@ -59,12 +55,7 @@ public class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public UnlockOption askForUnlock(@NotNull Project project, List<? extends VirtualFile> files) {
-    final List<Pair<VirtualFile, Icon>> nonProjectFiles = ActionUtil.underModalProgress(
-      project,
-      FileTypesBundle.message("progress.title.resolving.filetype"),
-      () -> ContainerUtil.map(files, (vf) -> new Pair<>(vf, VirtualFilePresentation.getIcon(vf)))
-    );
-    NonProjectFileWritingAccessDialog dialog = new NonProjectFileWritingAccessDialog(project, nonProjectFiles);
+    NonProjectFileWritingAccessDialog dialog = new NonProjectFileWritingAccessDialog(project, files);
     if (!dialog.showAndGet()) return null;
     return dialog.getUnlockOption();
   }

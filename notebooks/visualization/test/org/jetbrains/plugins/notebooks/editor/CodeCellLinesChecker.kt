@@ -4,7 +4,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import org.assertj.core.api.Assertions.assertThat
 
 class CodeCellLinesChecker(private val description: String,
-                           private val doIncrementalCheck: Boolean = true,
                            private val editorGetter: () -> EditorImpl) : (CodeCellLinesChecker.() -> Unit) -> Unit {
   private var markers: MutableList<NotebookCellLines.Marker>? = null
   private var intervals: MutableList<NotebookCellLines.Interval>? = null
@@ -76,7 +75,6 @@ class CodeCellLinesChecker(private val description: String,
     val codeCellLines = NotebookCellLines.get(editor)
     codeCellLines.intervalListeners.addListener(intervalListener)
     val prettyDocumentTextBefore = editorGetter().prettyText
-    val notebookCellLinesChecker = NotebookCellLinesChecker.get(editorGetter())
 
     try {
       handler()
@@ -105,7 +103,7 @@ class CodeCellLinesChecker(private val description: String,
         """.trimMargin("|||")
 
       markers.let { markers ->
-        assertThat(makeMarkersFromIntervals(editor.document, codeCellLines.intervalsIterator()).filter { it.offset >= markersStartOffset })
+        assertThat(makeMarkersFromIntervals(editor.document, codeCellLines.intervals).filter { it.offset >= markersStartOffset })
           .describedAs("Markers: $descr")
           .isEqualTo(markers)
       }
@@ -113,12 +111,6 @@ class CodeCellLinesChecker(private val description: String,
         assertThat(codeCellLines.intervalsIterator(intervalsStartLine).asSequence().toList())
           .describedAs("Intervals: $descr")
           .isEqualTo(intervals)
-      }
-
-      assertThat(codeCellLines.intervalsCount).isEqualTo(codeCellLines.intervalsIterator().asSequence().toList().size)
-
-      if (doIncrementalCheck) {
-        notebookCellLinesChecker.check(editorGetter().document, codeCellLines)
       }
     }
 

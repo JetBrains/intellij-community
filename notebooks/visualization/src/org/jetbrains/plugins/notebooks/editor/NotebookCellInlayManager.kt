@@ -117,17 +117,16 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   }
 
   private fun handleRefreshedDocument() {
-    val allCellLines = notebookCellLines.intervalsIterator().asSequence().toList()
     val factories = NotebookCellInlayController.Factory.EP_NAME.extensionList
-    for (interval in allCellLines) {
+    for (interval in notebookCellLines.intervals) {
       for (factory in factories) {
-        val controller = factory.compute(editor, emptyList(), notebookCellLines.getIterator(interval))
+        val controller = factory.compute(editor, emptyList(), notebookCellLines.intervals.listIterator(interval.ordinal))
         if (controller != null) {
           rememberController(controller, interval)
         }
       }
     }
-    addHighlighters(allCellLines)
+    addHighlighters(notebookCellLines.intervals)
     inlaysChanged()
   }
 
@@ -223,7 +222,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       }
       for ((factory, controllers) in seenControllersByFactory) {
         val actualController = if (!Disposer.isDisposed(editor.disposable)) {
-          factory.compute(editor, controllers, notebookCellLines.getIterator(interval))
+          factory.compute(editor, controllers, notebookCellLines.intervals.listIterator(interval.ordinal))
         }
         else {
           null

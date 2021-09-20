@@ -14,10 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -516,7 +513,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
       MacGestureSupportInstaller.installOnComponent(getComponent());
     }
 
@@ -2584,12 +2582,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 oldVisLeadSelectionStart = selectionModel.getSelectionEndPosition();
               }
             }
-            if (oldVisLeadSelectionStart != null) {
-              setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
+            else if (mySettings.isBlockCursor()) {
+              // adjust selection range, so that it covers caret location
+              if (mySelectionModel.hasSelection() && oldVisLeadSelectionStart.equals(mySelectionModel.getSelectionEndPosition())) {
+                oldVisLeadSelectionStart = prevSelectionVisualPosition(oldVisLeadSelectionStart);
+              }
+              if (newVisualCaret.after(oldVisLeadSelectionStart)) {
+                newVisualCaret = nextSelectionVisualPosition(newVisualCaret);
+                newCaretOffset = visualPositionToOffset(newVisualCaret);
+              }
+              else if (oldVisLeadSelectionStart.after(newVisualCaret) ||
+                       oldVisLeadSelectionStart.equals(newVisualCaret) && mySelectionModel.hasSelection()) {
+                oldVisLeadSelectionStart = nextSelectionVisualPosition(oldVisLeadSelectionStart);
+              }
+              oldSelectionStart = visualPositionToOffset(oldVisLeadSelectionStart);
             }
-            else {
-              setSelectionAndBlockActions(e, oldSelectionStart, newCaretOffset);
-            }
+            setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
             cancelAutoResetForMouseSelectionState();
           }
           else {
@@ -2621,6 +2629,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
     }
+  }
+
+  private VisualPosition nextSelectionVisualPosition(VisualPosition pos) {
+    if (!isColumnMode() && pos.column >= EditorUtil.getLastVisualLineColumnNumber(this, pos.line)) {
+      return new VisualPosition(pos.line + 1, 0, false);
+    }
+    else {
+      return new VisualPosition(pos.line, pos.column + 1, false);
+    }
+  }
+
+  private VisualPosition prevSelectionVisualPosition(VisualPosition pos) {
+    int prevColumn = pos.column - 1;
+    if (prevColumn >= 0) {
+      return new VisualPosition(pos.line, prevColumn, true);
+    }
+    if (isColumnMode() || pos.line == 0) {
+      return new VisualPosition(pos.line, 0, true);
+    }
+    int prevLine = pos.line - 1;
+    return new VisualPosition(prevLine, EditorUtil.getLastVisualLineColumnNumber(this, prevLine), true);
   }
 
   private void setupSpecialSelectionOnMouseDrag(int newCaretOffset, int caretShift) {
@@ -2704,13 +2733,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return allCarets.get(allCarets.size() - 1);
     }
     return firstCaret;
-  }
-
-  private void setSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent, int startOffset, int endOffset) {
-    mySelectionModel.setSelection(startOffset, endOffset);
-    if (myCurrentDragIsSubstantial || startOffset != endOffset) {
-      onSubstantialDrag(mouseDragEvent);
-    }
   }
 
   private void setSelectionAndBlockActions(@NotNull MouseEvent mouseDragEvent,
@@ -3759,7 +3781,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         // committed text insertion
         if (commitCount > 0) {
-          for (char c = text.current(); commitCount > 0; c = text.next(), commitCount--) {
+          for (char c = text.current(); c != CharacterIterator.DONE && commitCount > 0; c = text.next(), commitCount--) {
             if (c >= 0x20 && c != 0x7F) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
               processKeyTyped(c);
             }
@@ -4016,7 +4038,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area). Also, don't move caret when context menu for an inlay is invoked.
-      boolean moveCaret = eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
+      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && !ExperimentalUI.isNewUI()) ||
                   isInsideGutterWhitespaceArea(e) ||
                   eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
       if (moveCaret) {
@@ -4079,9 +4101,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        // Move the caret to the end of the selection, that is, the beginning of the next line.
-        // This is more consistent with the caret placement on "Extend line selection" and on dragging through the line numbers area.
-        selectLineAtCaret(true);
+        if (ExperimentalUI.isNewUI()) {
+          //do nothing here and set/unset a breakpoint if possible in XLineBreakpointManager
+          return false;
+        } else {
+          // Move the caret to the end of the selection, that is, the beginning of the next line.
+          // This is more consistent with the caret placement on "Extend line selection" and on dragging through the line numbers area.
+          selectLineAtCaret(true);
+        }
         return isNavigation;
       }
 

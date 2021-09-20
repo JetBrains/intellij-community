@@ -64,11 +64,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="pycharm.ds.notebook.editor.ui.binary.search.threshold"
-                 description="Threshold for size sorted lists in UI components when binary search should be preferred instead of linear."
-                 defaultValue="100"
-                 restartRequired="false"/>
-
     <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle" key="inlay.output.table.notification.group.name"/>
     <notificationGroup id="InlayTable" displayType="BALLOON"/>
     <editorFactoryListener id="org.intellij.datavis.r.inlays.InlaysManager" implementation="org.intellij.datavis.r.inlays.InlaysManager"/>

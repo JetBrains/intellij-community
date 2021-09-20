@@ -52,7 +52,7 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
     val mdFileName = childValue.virtualFile.nameWithoutExtension
     return children.filter { node ->
       val file = (node.value as? PsiFile)?.virtualFile
-      file?.let { it.extension in docExtensions && it.nameWithoutExtension == mdFileName } == true
+      file?.let { it.extension?.lowercase() in docExtensions && it.nameWithoutExtension == mdFileName } == true
     }.toMutableList()
   }
 

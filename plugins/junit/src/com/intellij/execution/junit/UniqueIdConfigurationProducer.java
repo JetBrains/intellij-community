@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -9,8 +9,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -48,7 +50,10 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
     Project project = context.getProject();
     GlobalSearchScope searchScope =
       module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.projectScope(project);
-    if (!JUnitUtil.isJUnit5(searchScope, project)) return null;
+    if (!DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> JUnitUtil.isJUnit5(searchScope, project) || 
+                                                                    TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(project)))) {
+      return null;
+    }
     return
       Arrays.stream(testProxies).map(testProxy -> TestUniqueId.getEffectiveNodeId(testProxy, project, searchScope))
         .filter(Objects::nonNull)

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.system.CpuArch;
@@ -220,6 +221,7 @@ public final class VMOptions {
     }
 
     if (modified) {
+      NioFiles.createDirectories(file.getParent());
       Files.write(file, lines, getFileCharset());
     }
   }

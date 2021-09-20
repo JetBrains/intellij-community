@@ -2,12 +2,11 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -77,7 +76,7 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
-    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jna.jar")
+    bootClassPathJarNames = List.of("util.jar", "bootstrap.jar")
     dependenciesProperties = new DependenciesProperties(this)
     applicationInfo = new ApplicationInfoProperties(project, productProperties, messages)
     applicationInfo = applicationInfo.patch(this)
@@ -161,11 +160,6 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  KotlinBinaries getKotlinBinaries() {
-    return compilationContext.kotlinBinaries
-  }
-
-  @Override
   File getProjectOutputDirectory() {
     return compilationContext.projectOutputDirectory
   }
@@ -218,7 +212,7 @@ final class BuildContextImpl extends BuildContext {
   @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
     for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
       if (relativePath.startsWith(info.second)) {
-        Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
+        Path result = info.first.resolve(Strings.trimStart(Strings.trimStart(relativePath, info.second), "/"))
         if (Files.exists(result)) {
           return result
         }
@@ -243,7 +237,7 @@ final class BuildContextImpl extends BuildContext {
         if (!prefix.endsWith("/")) {
           prefix += "/"
         }
-        return new Pair<>(Paths.get(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), StringUtil.trimStart(prefix, "/"))
+        return new Pair<>(Paths.get(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"))
       })
       .collect(Collectors.toList())
   }

@@ -340,23 +340,28 @@ public final class JavaSdkImpl extends JavaSdk {
   static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
     Path javaPluginClassesRootPath = PathManager.getJarForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
-    File javaPluginClassesRoot = javaPluginClassesRootPath.toFile();
     VirtualFile root;
     VirtualFileManager vfm = VirtualFileManager.getInstance();
     LocalFileSystem lfs = LocalFileSystem.getInstance();
-    if (javaPluginClassesRoot.isFile()) {
-      String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
-      String url = "jar://" + annotationsJarPath + "!/";
+    if (Files.isRegularFile(javaPluginClassesRootPath)) {
+      Path annotationsJarPath = javaPluginClassesRootPath.resolveSibling("jdkAnnotations.jar").toAbsolutePath();
+      String annotationsJarPathString = FileUtil.toSystemIndependentName(annotationsJarPath.toString());
+      String url = "jar://" + annotationsJarPathString + "!/";
       root = refresh ? vfm.refreshAndFindFileByUrl(url) : vfm.findFileByUrl(url);
-      pathsChecked.add(annotationsJarPath);
+      pathsChecked.add(annotationsJarPathString);
     }
     else {
       // when run against IDEA plugin JDK, something like this comes up: "$IDEA_HOME$/out/classes/production/intellij.java.impl"
-      File projectRoot = JBIterable.generate(javaPluginClassesRoot, File::getParentFile).get(4);
-      File root1 = new File(projectRoot, "community/java/jdkAnnotations");
-      File root2 = new File(projectRoot, "java/jdkAnnotations");
-      root = root1.exists() && root1.isDirectory() ? refresh ? lfs.refreshAndFindFileByIoFile(root1) : lfs.findFileByIoFile(root1) :
-      root2.exists() && root2.isDirectory() ? refresh ? lfs.refreshAndFindFileByIoFile(root2) : lfs.findFileByIoFile(root2) : null;
+      Path projectRoot = JBIterable.generate(javaPluginClassesRootPath, Path::getParent).get(4);
+      if (projectRoot != null) {
+        Path root1 = projectRoot.resolve("community/java/jdkAnnotations");
+        Path root2 = projectRoot.resolve("java/jdkAnnotations");
+        root = Files.isDirectory(root1) ? (refresh ? lfs.refreshAndFindFileByNioFile(root1) : lfs.findFileByNioFile(root1)) :
+               Files.isDirectory(root2) ? (refresh ? lfs.refreshAndFindFileByNioFile(root2) : lfs.findFileByNioFile(root2)) : null;
+      }
+      else {
+        root = null;
+      }
     }
     if (root == null) {
       String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
@@ -464,7 +469,7 @@ public final class JavaSdkImpl extends JavaSdk {
       try {
         try (DirectoryStream<Path> roots = Files.newDirectoryStream(jdkHome.resolve("modules"))) {
           for (Path root : roots) {
-            result.add(VfsUtil.getUrlForLibraryRoot(root.toFile()));
+            result.add(VfsUtil.getUrlForLibraryRoot(root));
           }
         }
       }
@@ -489,7 +494,7 @@ public final class JavaSdkImpl extends JavaSdk {
     }
     else {
       for (Path root : JavaSdkUtil.getJdkClassesRoots(jdkHome, isJre)) {
-        result.add(VfsUtil.getUrlForLibraryRoot(root.toFile()));
+        result.add(VfsUtil.getUrlForLibraryRoot(root));
       }
     }
 

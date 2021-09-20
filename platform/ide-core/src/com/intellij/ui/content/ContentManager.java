@@ -143,4 +143,8 @@ public interface ContentManager extends Disposable, BusyObject {
   boolean isDisposed();
 
   boolean isSingleSelection();
+
+  default boolean isEmpty() {
+    return getContentCount() == 0;
+  }
 }

@@ -1,7 +1,6 @@
 package com.intellij.grazie.text;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -228,6 +227,14 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
     @Override
     public String toString() {
       return "(" + (markUnknown ? "?" : "") + start + "," + end + ")";
+    }
+
+    public static Exclusion markUnknown(TextRange range) {
+      return new Exclusion(range.getStartOffset(), range.getEndOffset(), true);
+    }
+
+    public static Exclusion exclude(TextRange range) {
+      return new Exclusion(range.getStartOffset(), range.getEndOffset(), false);
     }
   }
 }

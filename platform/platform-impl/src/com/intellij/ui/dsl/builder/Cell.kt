@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -13,8 +14,6 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.HyperlinkEvent
-
-const val COLUMNS_MEDIUM = 25
 
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
 
@@ -30,6 +29,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   override fun gap(rightGap: RightGap): Cell<T>
 
   val component: T
+
+  fun focused(): Cell<T>
 
   fun applyToComponent(task: T.() -> Unit): Cell<T>
 
@@ -78,6 +79,10 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
   fun graphProperty(property: GraphProperty<*>): Cell<T>
+
+  fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   fun onApply(callback: () -> Unit): Cell<T>
 

@@ -22,10 +22,10 @@ interface Grid {
   /**
    * Gaps around columns. Used only when column is visible
    */
-  val columnsGaps: MutableList<ColumnGaps>
+  val columnsGaps: MutableList<HorizontalGaps>
 
   /**
    * Gaps around rows. Used only when row is visible
    */
-  val rowsGaps: MutableList<RowGaps>
+  val rowsGaps: MutableList<VerticalGaps>
 }

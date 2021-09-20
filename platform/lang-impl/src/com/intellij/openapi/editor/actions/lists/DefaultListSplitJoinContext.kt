@@ -34,12 +34,32 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
   open fun isValidIntermediateElement(data: ListWithElements, element: PsiElement) = element is PsiWhiteSpace
 
   /**
-   * Checks if we need to insert (to keep) new line at the start of list
+   * Checks if we need to insert (to keep) new line at the start of list:
+   * <code>
+   * foo(a,
+   *     b)
+   * </code>
+   * vs 
+   * <code>
+   * foo(
+   *     a,
+   *     b)
+   * </code>
    */
   open fun needHeadBreak(data: ListWithElements, firstElement: PsiElement, mode: JoinOrSplit): Boolean = false
 
   /**
-   * Checks if we need to insert (to keep) new line at the end of list
+   * Checks if we need to insert (to keep) new line at the end of list:
+   * <code>
+   * foo(a,
+   *     b)
+   * </code>
+   * vs
+   * <code>
+   * foo(a,
+   *     b
+   * )
+   * </code>
    */
   open fun needTailBreak(data: ListWithElements, lastElement: PsiElement, mode: JoinOrSplit): Boolean = false
 

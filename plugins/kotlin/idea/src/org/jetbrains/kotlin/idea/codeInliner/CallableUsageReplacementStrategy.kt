@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
@@ -65,7 +65,7 @@ class CallableUsageReplacementStrategy(
             else -> {
                 val exceptionWithAttachments = KotlinExceptionWithAttachments("Unsupported usage")
                     .withAttachment("type", usage)
-                    .withAttachment("usage", usage.getElementTextWithContext())
+                    .withPsiAttachment("usage.kt", usage)
 
                 LOG.error(exceptionWithAttachments)
                 null

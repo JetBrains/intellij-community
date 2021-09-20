@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.compute
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSettingReference
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
@@ -56,6 +57,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind"),
             GenerationPhase.PROJECT_GENERATION
         ) {
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind.hint")
             defaultValue = value(JsTargetKind.APPLICATION)
             filter = filter@{ reference, kindCandidate ->
                 when {
@@ -73,8 +75,8 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler"),
             GenerationPhase.PROJECT_GENERATION
         ) {
-            defaultValue = value(JsCompiler.LEGACY)
-            filter = filter@{ reference, compilerCandidate ->
+            defaultValue = value(JsCompiler.BOTH)
+            filter = { reference, compilerCandidate ->
                 when {
                     reference !is ModuleConfiguratorSettingReference<*, *> -> false
                     reference.module?.let { settingValue(it, kind) } == JsTargetKind.LIBRARY -> true
@@ -85,7 +87,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             }
         }
 
-        internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.text
+        internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.scriptValue
 
         val useJsIrCompiler by booleanSetting(
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.ir.title"),
@@ -97,7 +99,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
 
         internal fun Reader.irOrLegacyCompiler(module: Module): String {
             fun Reader.useJsIrCompiler(module: Module): Boolean = settingValue(module, useJsIrCompiler) ?: false
-            return if (useJsIrCompiler(module)) JsCompiler.IR.text else JsCompiler.LEGACY.text
+            return if (useJsIrCompiler(module)) JsCompiler.IR.scriptValue else JsCompiler.LEGACY.scriptValue
         }
 
         fun Reader.isApplication(module: Module): Boolean =
@@ -249,5 +251,14 @@ object JsComposeMppConfigurator : JsBrowserBasedConfigurator, SimpleTargetConfig
             listOf(GradlePropertyAccessIR("IR"))
         )
     }
+
+    override fun Writer.runArbitraryTask(
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path,
+    ): TaskResult<Unit> = compute {
+        GradlePlugin.gradleProperties.addValues("kotlin.js.webpack.major.version" to 4) //workaround for KT-48273 TODO:remove once 1.5.31 is released
+    }
+
 }
 

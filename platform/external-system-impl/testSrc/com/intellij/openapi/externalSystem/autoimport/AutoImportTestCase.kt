@@ -46,7 +46,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
   override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()
 
-  private lateinit var testDisposable: Disposable
+  protected lateinit var testDisposable: Disposable
   private val notificationAware get() = ProjectNotificationAware.getInstance(myProject)
   private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject).also { it.enableAutoImportInTests() }
   private val projectTrackerSettings get() = AutoImportProjectTrackerSettings.getInstance(myProject)
@@ -242,22 +242,17 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
   protected fun remove(projectId: ExternalSystemProjectId) = projectTracker.remove(projectId)
 
-  protected fun refreshProject() = projectTracker.scheduleProjectRefresh()
+  protected fun scheduleProjectReload() = projectTracker.scheduleProjectRefresh()
 
   protected fun markDirty(projectId: ExternalSystemProjectId) = projectTracker.markDirty(projectId)
-
-  protected fun forceRefreshProject(projectId: ExternalSystemProjectId) {
-    markDirty(projectId)
-    refreshProject()
-  }
 
   protected fun enableAsyncExecution() {
     projectTracker.isAsyncChangesProcessing = true
   }
 
   @Suppress("SameParameterValue")
-  protected fun setAutoReloadDelay(delay: Int) {
-    projectTracker.setAutoReloadDelay(delay)
+  protected fun setDispatcherMergingSpan(delay: Int) {
+    projectTracker.setDispatcherMergingSpan(delay)
   }
 
   protected fun setAutoReloadType(type: AutoReloadType) {
@@ -441,7 +436,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun markDirty() = markDirty(projectAware.projectId)
 
-    fun forceRefreshProject() = forceRefreshProject(projectAware.projectId)
+    fun forceRefreshProject() = projectAware.forceReloadProject()
 
     fun registerProjectAware() = register(projectAware)
 

@@ -1344,6 +1344,16 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
             runTest("testData/evaluation/multipleBreakpoints/initializer.kt");
         }
 
+        @TestMetadata("inlineStackTrace.kt")
+        public void testInlineStackTrace() throws Exception {
+            runTest("testData/evaluation/multipleBreakpoints/inlineStackTrace.kt");
+        }
+
+        @TestMetadata("inlineStackTraceWithNestedLambdas.kt")
+        public void testInlineStackTraceWithNestedLambdas() throws Exception {
+            runTest("testData/evaluation/multipleBreakpoints/inlineStackTraceWithNestedLambdas.kt");
+        }
+
         @TestMetadata("invisibleDeclarations.kt")
         public void testInvisibleDeclarations() throws Exception {
             runTest("testData/evaluation/multipleBreakpoints/invisibleDeclarations.kt");

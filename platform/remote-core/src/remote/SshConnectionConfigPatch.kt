@@ -39,6 +39,9 @@ data class SshConnectionConfigPatch(
       HTTP,
 
       SOCKS,
+
+      IDE_WIDE_PROXY
+
     }
 
     data class ProxyAuthData(

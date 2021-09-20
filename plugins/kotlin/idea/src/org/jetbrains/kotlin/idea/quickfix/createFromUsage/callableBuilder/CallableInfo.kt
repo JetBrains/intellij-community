@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassInfo
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -53,9 +54,9 @@ abstract class TypeInfo(val variance: Variance) {
                 } ?: containingDeclarationForPseudocode
 
                 throw KotlinExceptionWithAttachments(stackException.message, stackException)
-                    .withAttachment("original_expression.txt", originalElement.text)
-                    .withAttachment("containing_declaration.txt", containingDeclarationForPseudocode?.text)
-                    .withAttachment("enclosing_declaration.txt", enclosingPseudocodeDeclaration?.text)
+                    .withPsiAttachment("original_expression.txt", originalElement)
+                    .withPsiAttachment("containing_declaration.txt", containingDeclarationForPseudocode)
+                    .withPsiAttachment("enclosing_declaration.txt", enclosingPseudocodeDeclaration)
             }
         ).flatMap { it.getPossibleSupertypes(variance, builder) }
     }

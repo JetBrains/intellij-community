@@ -206,7 +206,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return myFrameCount;
   }
 
-  public CompletableFuture<Integer> frameCountAsync() throws EvaluateException {
+  public CompletableFuture<Integer> frameCountAsync() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
     if (myFrameCount == -1) {

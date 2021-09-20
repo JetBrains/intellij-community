@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
@@ -26,17 +27,15 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -54,7 +53,8 @@ internal class PackageManagementPanel(
     targetModuleSetter: TargetModuleSetter,
     searchClient: SearchClient,
     operationExecutor: OperationExecutor,
-    project: Project
+    project: Project,
+    programmaticSearchQueryInputsFlow: Flow<String>
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope, Disposable {
 
     companion object {
@@ -66,7 +66,8 @@ internal class PackageManagementPanel(
             targetModuleSetter = project.packageSearchDataService,
             searchClient = project.packageSearchDataService,
             operationExecutor = project.packageSearchDataService,
-            project = project
+            project = project,
+            programmaticSearchQueryInputsFlow = project.packageSearchDataService.programmaticSearchQueryStateFlow
         )
     }
 
@@ -92,7 +93,8 @@ internal class PackageManagementPanel(
         onItemSelectionChanged = { launch { selectedPackageSetter.setSelectedPackage(it) } },
         onSearchResultStateChanged = { searchResult, version, scope ->
             launch { searchResultStateSetter.setSearchResultState(searchResult, version, scope) }
-        }
+        },
+        programmaticSearchQueryInputsFlow = programmaticSearchQueryInputsFlow
     )
 
     private val packageDetailsPanel = PackageDetailsPanel(operationFactory, operationExecutor)
@@ -142,12 +144,13 @@ internal class PackageManagementPanel(
 
         rootDataModelProvider.dataModelFlow.filter { it.moduleModels.isNotEmpty() }
             .onEach { data ->
-                val (treeModel, selectionPath) = computeModuleTreeModel(
-                    modules = data.moduleModels,
-                    currentTargetModules = data.targetModules,
-                    traceInfo = data.traceInfo
-                )
-
+                val (treeModel, selectionPath) = readAction {
+                    computeModuleTreeModel(
+                        modules = data.moduleModels,
+                        currentTargetModules = data.targetModules,
+                        traceInfo = data.traceInfo
+                    )
+                }
                 modulesTree.display(
                     ModulesTree.ViewModel(
                         treeModel = treeModel,
@@ -159,13 +162,15 @@ internal class PackageManagementPanel(
             .launchIn(this)
 
         rootDataModelProvider.dataModelFlow.onEach { data ->
-            val tableItems = computePackagesTableItems(
-                project = project,
-                packages = data.packageModels,
-                selectedPackage = data.selectedPackage,
-                targetModules = data.targetModules,
-                traceInfo = data.traceInfo
-            )
+            val tableItems = readAction {
+                computePackagesTableItems(
+                    project = project,
+                    packages = data.packageModels,
+                    selectedPackage = data.selectedPackage,
+                    targetModules = data.targetModules,
+                    traceInfo = data.traceInfo
+                )
+            }
 
             packagesListPanel.display(
                 PackagesListPanel.ViewModel(
@@ -175,8 +180,7 @@ internal class PackageManagementPanel(
                     allKnownRepositories = data.allKnownRepositories,
                     filterOptions = data.filterOptions,
                     tableItems = tableItems,
-                    traceInfo = data.traceInfo,
-                    searchQuery = data.searchQuery
+                    traceInfo = data.traceInfo
                 )
             )
 
@@ -191,7 +195,6 @@ internal class PackageManagementPanel(
                 )
             )
         }
-            .flowOn(Dispatchers.ReadActions)
             .launchIn(this)
     }
 

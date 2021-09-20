@@ -72,4 +72,6 @@ class KotlinSSCallExpressionTest : KotlinSSResourceInspectionTest() {
     fun testFunTrailingLambdaMultiArg() { doTest("'_('_{2,2})") }
 
     fun testFqCallExpression() { doTest("A.B()") }
+
+    fun testInfixCall() { doTest("'_ foo true") }
 }

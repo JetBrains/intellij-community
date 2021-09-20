@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.noarg.gradleJava
 
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.annotationBased.AnnotationBasedPluginProjectResolverExtension
-import org.jetbrains.kotlin.noarg.ide.NoArgModel
+import org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModel
 
 class NoArgProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<NoArgModel>() {
     companion object {

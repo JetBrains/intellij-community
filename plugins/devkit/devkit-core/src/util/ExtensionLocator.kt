@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util
 
 import com.intellij.openapi.project.Project
@@ -27,7 +27,14 @@ fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint, extens
   return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, extensionId)
 }
 
-internal fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean = true, callback: (Extension, XmlTag) -> Boolean) {
+// TODO consider converting to a stream-like entity to avoid IDEA-277738, EA-139648, etc.
+/**
+ * A synchronized collection should be used as an accumulator in callbacks.
+ */
+internal fun processExtensionDeclarations(name: String,
+                                          project: Project,
+                                          strictMatch: Boolean = true,
+                                          callback: (Extension, XmlTag) -> Boolean) {
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   val searchWord = name.substringBeforeLast('$')
   if (searchWord.isEmpty()) return

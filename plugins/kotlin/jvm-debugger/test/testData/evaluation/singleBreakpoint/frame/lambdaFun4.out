@@ -5,7 +5,9 @@ Connected to the target VM
 lambdaFun4.kt:8
 Compile bytecode for this
 Compile bytecode for this@Foo
-KotlinStackFrame (lambdaFun4.kt:8)
+InlineStackFrame lambda 'with' in 'foo' (lambdaFun4.kt:8)
+    JavaValue[local] this: java.lang.String = abc
+KotlinStackFrameWithProvidedVariables (lambdaFun4.kt:6)
     JavaValue[local] this: java.lang.String = abc
 Disconnected from the target VM
 

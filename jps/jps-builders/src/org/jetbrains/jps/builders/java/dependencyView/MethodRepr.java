@@ -18,7 +18,7 @@ import java.util.function.Predicate;
 /**
  * @author: db
  */
-final class MethodRepr extends ProtoMember {
+final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
 
   public final Set<ParamAnnotation> myParameterAnnotations;
   public final TypeRepr.AbstractType[] myArgumentTypes;

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Pair
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.*
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
-import org.jetbrains.kotlin.gradle.KotlinDslScriptAdditionalTask
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
 @IntellijInternalApi

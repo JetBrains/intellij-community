@@ -148,7 +148,9 @@ class JpsCompilationRunner {
     System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
     final AntMessageHandler messageHandler = new AntMessageHandler()
     AntLoggerFactory.ourMessageHandler = messageHandler
-    setupAdditionalBuildLogging(compilationData)
+    if (context.options.compilationLogEnabled) {
+      setupAdditionalBuildLogging(compilationData)
+    }
     Logger.setFactory(AntLoggerFactory.class)
     boolean forceBuild = !context.options.incrementalCompilation
 

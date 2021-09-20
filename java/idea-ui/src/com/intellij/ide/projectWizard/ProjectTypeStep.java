@@ -3,7 +3,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
-import com.intellij.ide.*;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -44,6 +44,7 @@ import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -124,10 +125,14 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       layout.setHGap(0);
       myPanel.setLayout(layout);
 
-      ProjectTypeListWithSearch<TemplatesGroup>
-        listWithFilter  = new ProjectTypeListWithSearch<>(myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName());
-      listWithFilter.setMinimumSize(JBUI.size(40, -1));
+      String emptyCard = "emptyCard";
+      ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
+        myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> showCard(emptyCard));
+
+      myProjectTypePanel.setMinimumSize(JBUI.size(160, -1));
       myProjectTypePanel.add(listWithFilter);
+
+      myOptionsPanel.add(new JBPanelWithEmptyText().withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure")), emptyCard);
 
       listWithFilter.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
       mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0));
@@ -240,8 +245,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     //add them later for new wizard, after sorting
-    builders.removeIf(it -> it instanceof NewProjectModuleBuilder);
-    builders.removeIf(it -> it instanceof NewWizardEmptyModuleBuilder);
+    builders.removeIf(
+      it -> it instanceof NewProjectBuilder ||
+            it instanceof NewEmptyProjectBuilder ||
+            it instanceof NewModuleBuilder);
 
     Map<String, TemplatesGroup> groupMap = new HashMap<>();
     for (ModuleBuilder builder : builders) {
@@ -330,8 +337,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     if (isNewWizard()) {
-      groups.add(0, new TemplatesGroup(NewWizardEmptyModuleType.Companion.getINSTANCE().createModuleBuilder()));
-      groups.add(0, new TemplatesGroup(NewProjectModuleType.Companion.getINSTANCE().createModuleBuilder()));
+      if (context.isCreatingNewProject()) {
+        groups.add(0, new TemplatesGroup(NewEmptyProjectType.INSTANCE.createModuleBuilder()));
+        groups.add(0, new TemplatesGroup(NewProjectType.INSTANCE.createModuleBuilder()));
+      }
+      else {
+        groups.add(0, new TemplatesGroup(NewModuleType.INSTANCE.createModuleBuilder()));
+      }
     }
 
     return groups;
@@ -804,7 +816,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
           if (index < 1) return false;
           TemplatesGroup upper = groups.get(index - 1);
           if (isNewWizard()) {
-            return upper.getModuleBuilder() instanceof NewWizardEmptyModuleBuilder;
+            ModuleBuilder builder = upper.getModuleBuilder();
+            return builder instanceof NewEmptyProjectBuilder || builder instanceof NewModuleBuilder;
           }
 
           if (upper.getParentGroup() == null && value.getParentGroup() == null) return true;

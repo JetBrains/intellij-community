@@ -224,14 +224,6 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
-    //todo remove this when KTIJ-11539 is fixed; currently if we add kotlin.idea module to the classpath as a transitive dependency of some other module,
-    //     it'll cause conflicts with Kotlin plugin loaded from JAR
-    String pathToIgnore = new File(context.projectOutputDirectory, "production/kotlin.idea").absolutePath
-    if (ideClasspath.remove(pathToIgnore)) {
-      context.messages.debug(" remove $pathToIgnore from classpath to avoid conflicts")
-    }
-
-
     List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
       "idea.home.path"   : context.paths.projectHome,
       "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
@@ -603,23 +595,26 @@ idea.fatal.error.notification=disabled
   }
 
   private void setupJBre(String targetArch = null) {
-    logFreeDiskSpace("before downloading JREs")
-    String[] args = [
-      'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
-      "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
-    ]
-    if (targetArch != null) {
-      args += "-Dintellij.build.target.arch=" + targetArch
+    def message = 'Downloading JetBrains Runtime'
+    buildContext.executeStep(message, BuildOptions.RUNTIME_DOWNLOADING_STEP) {
+      logFreeDiskSpace("before downloading runtime")
+      String[] args = [
+        'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
+        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
+      ]
+      if (targetArch != null) {
+        args += "-Dintellij.build.target.arch=" + targetArch
+      }
+      String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
+      if (prefix != null) {
+        args += "-Dintellij.build.bundled.jre.prefix=" + prefix
+      }
+      if (buildContext.options.bundledJreBuild != null) {
+        args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledJreBuild
+      }
+      buildContext.gradle.run(message, args)
+      logFreeDiskSpace("after downloading runtime")
     }
-    String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
-    if (prefix != null) {
-      args += "-Dintellij.build.bundled.jre.prefix=" + prefix
-    }
-    if (buildContext.options.bundledJreBuild != null) {
-      args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledJreBuild
-    }
-    buildContext.gradle.run('Setting up JetBrains JREs', args)
-    logFreeDiskSpace("after downloading JREs")
   }
 
   private void setupBundledMaven() {
@@ -824,7 +819,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkBaseLayout(BaseLayout layout, String description) {
-    checkModules(layout.moduleJars.values(), "moduleJars in $description")
+    checkModules(layout.includedModuleNames, "moduleJars in $description")
     checkArtifacts(layout.includedArtifacts.keySet(), "includedArtifacts in $description")
     checkModules(layout.resourcePaths.collect { it.moduleName }, "resourcePaths in $description")
     checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description")

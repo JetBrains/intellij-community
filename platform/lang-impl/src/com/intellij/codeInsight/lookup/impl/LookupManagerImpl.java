@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -22,6 +21,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
@@ -126,32 +126,7 @@ public class LookupManagerImpl extends LookupManager {
 
     myActiveLookup = lookup;
     myActiveLookupEditor = editor;
-    myActiveLookup.addLookupListener(new LookupListener() {
-      @Override
-      public void itemSelected(@NotNull LookupEvent event) {
-        lookupClosed();
-      }
-
-      @Override
-      public void lookupCanceled(@NotNull LookupEvent event) {
-        lookupClosed();
-      }
-
-      @Override
-      public void currentItemChanged(@NotNull LookupEvent event) {
-        alarm.cancelAllRequests();
-        CodeInsightSettings settings = CodeInsightSettings.getInstance();
-        if (settings.AUTO_POPUP_JAVADOC_INFO && DocumentationManager.getInstance(myProject).getDocInfoHint() == null) {
-          alarm.addRequest(() -> showJavadoc(lookup), settings.JAVADOC_INFO_DELAY);
-        }
-      }
-
-      private void lookupClosed() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        alarm.cancelAllRequests();
-        lookup.removeLookupListener(this);
-      }
-    });
+    showDocOnItemChange(lookup, alarm);
     Disposer.register(lookup, new Disposable() {
       @Override
       public void dispose() {
@@ -181,7 +156,39 @@ public class LookupManagerImpl extends LookupManager {
     myProject.getMessageBus().syncPublisher(LookupManagerListener.TOPIC).activeLookupChanged(oldLookup, newLookup);
   }
 
-  private void showJavadoc(LookupImpl lookup) {
+  private void showDocOnItemChange(@NotNull Lookup lookup, @NotNull Alarm alarm) {
+    if (Registry.is("documentation.v2")) {
+      return;
+    }
+    lookup.addLookupListener(new LookupListener() {
+      @Override
+      public void itemSelected(@NotNull LookupEvent event) {
+        lookupClosed();
+      }
+
+      @Override
+      public void lookupCanceled(@NotNull LookupEvent event) {
+        lookupClosed();
+      }
+
+      @Override
+      public void currentItemChanged(@NotNull LookupEvent event) {
+        alarm.cancelAllRequests();
+        CodeInsightSettings settings = CodeInsightSettings.getInstance();
+        if (settings.AUTO_POPUP_JAVADOC_INFO && DocumentationManager.getInstance(myProject).getDocInfoHint() == null) {
+          alarm.addRequest(() -> showJavadoc(lookup), settings.JAVADOC_INFO_DELAY);
+        }
+      }
+
+      private void lookupClosed() {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        alarm.cancelAllRequests();
+        lookup.removeLookupListener(this);
+      }
+    });
+  }
+
+  private void showJavadoc(Lookup lookup) {
     if (myActiveLookup != lookup) return;
 
     DocumentationManager docManager = DocumentationManager.getInstance(myProject);
@@ -203,8 +210,8 @@ public class LookupManagerImpl extends LookupManager {
     }
   }
 
-  protected boolean isAutoPopupJavadocSupportedBy(@SuppressWarnings("unused") LookupElement lookupItem) {
-    return lookupItem.getUserData(SUPPRESS_AUTOPOPUP_JAVADOC) == null;
+  public static boolean isAutoPopupJavadocSupportedBy(@NotNull LookupElement lookupElement) {
+    return lookupElement.getUserData(SUPPRESS_AUTOPOPUP_JAVADOC) == null;
   }
 
   @NotNull

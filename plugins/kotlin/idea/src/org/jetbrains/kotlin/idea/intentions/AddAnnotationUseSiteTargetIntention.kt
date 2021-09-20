@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -127,7 +127,7 @@ private fun KtAnnotationEntry.applicableUseSiteTargets(): List<AnnotationUseSite
 
     val targets = applicableTargets.filter { it !in existingTargets }
 
-    return if (ApplicationManager.getApplication().isUnitTestMode) {
+    return if (isUnitTestMode()) {
         val chosenTarget = containingKtFile.findDescendantOfType<PsiComment>()
             ?.takeIf { it.text.startsWith("// CHOOSE_USE_SITE_TARGET:") }
             ?.text

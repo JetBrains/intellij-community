@@ -32,7 +32,7 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
             if (property.hasModifier(KtTokens.CONST_KEYWORD)) return false
             if (property.hasJvmFieldAnnotation()) return false
 
-            val bindingContext = property.getResolutionFacade().analyzeWithAllCompilerChecks(listOf(property)).bindingContext
+            val bindingContext = property.getResolutionFacade().analyzeWithAllCompilerChecks(property).bindingContext
             val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, property) as? PropertyDescriptor ?: return false
             if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) == false) return false
 

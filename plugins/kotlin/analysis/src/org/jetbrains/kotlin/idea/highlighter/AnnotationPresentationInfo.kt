@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -35,7 +36,7 @@ class AnnotationPresentationInfo(
 ) {
 
     companion object {
-        private const val KOTLIN_SUPPRESS_OPTIONS_ID = "KotlinSuppressOptions"
+        private const val KOTLIN_COMPILER_WARNING_ID = "KotlinSuppressOptions"
     }
 
     fun processDiagnostics(
@@ -68,21 +69,25 @@ class AnnotationPresentationInfo(
         diagnostic: Diagnostic,
         info: HighlightInfo
     ) {
-        val fixes = fixesMap[diagnostic]
-        val keyForSuppressOptions = HighlightDisplayKey.findOrRegister(
-            KOTLIN_SUPPRESS_OPTIONS_ID, KotlinIdeaAnalysisBundle.message("kotlin.suppress.options")
-        )
-        fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach {
-            QuickFixAction.registerQuickFixAction(info, it, keyForSuppressOptions)
+        val fixes = run {
+            fixesMap[diagnostic].takeIf { it.isNotEmpty() } ?: if (diagnostic.severity == Severity.WARNING) {
+                listOf(EmptyIntentionAction(diagnostic.factory.name))
+            } else emptyList()
         }
+        val keyForSuppressOptions = HighlightDisplayKey.findOrRegister(
+            KOTLIN_COMPILER_WARNING_ID, KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning")
+        )
 
-        if (diagnostic.severity == Severity.WARNING && fixes.isEmpty()) {
+        fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach { action ->
+            val options = mutableListOf<IntentionAction>()
+            action.safeAs<IntentionActionWithOptions>()?.options?.let { options += it }
+            info.problemGroup.safeAs<SuppressableProblemGroup>()?.let { group ->
+                options += group.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
+            }
             info.registerFix(
-                EmptyIntentionAction(diagnostic.factory.name),
-                info.problemGroup.safeAs<SuppressableProblemGroup>()?.let { group ->
-                    group.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
-                },
-                KotlinIdeaAnalysisBundle.message("kotlin.suppress.options"),
+                action,
+                options,
+                KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning"),
                 null,
                 keyForSuppressOptions
             )

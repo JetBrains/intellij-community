@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -24,7 +24,7 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
     protected open fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile) = true
 
     final override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             CREATE_BY_PATTERN_MAY_NOT_REFORMAT = true
         }
         try {

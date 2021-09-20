@@ -105,6 +105,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
 
         for ((index, childRequest) in request.requests.withIndex()) {
           val childDiffRequest = childRequest.request
+          childDiffRequest.putUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF, true)
           val frameDiffTool =
             if (viewer.unifiedDiff && UnifiedDiffTool.INSTANCE.canShow(context, childDiffRequest)) {
               UnifiedDiffTool.INSTANCE

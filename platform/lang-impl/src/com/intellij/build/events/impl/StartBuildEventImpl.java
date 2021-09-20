@@ -105,16 +105,6 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
     return this;
   }
 
-  /**
-   * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public StartBuildEventImpl withExecutionFilters(Filter... filters) {
-    Arrays.stream(filters).forEach(myBuildDescriptor::withExecutionFilter);
-    return this;
-  }
-
   @Nullable
   @ApiStatus.Experimental
   public BuildViewSettingsProvider getBuildViewSettingsProvider() {

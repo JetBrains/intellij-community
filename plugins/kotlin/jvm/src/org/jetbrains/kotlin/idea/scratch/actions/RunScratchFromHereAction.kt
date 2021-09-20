@@ -25,7 +25,7 @@ class RunScratchFromHereAction : ScratchAction(
             try {
                 executor.executeNew()
             } catch (ex: Throwable) {
-                executor.errorOccurs(KotlinJvmBundle.message("exception.occurs.during.run.scratch.action1"), ex, true)
+                executor.errorOccurs(KotlinJvmBundle.message("exception.occurred.during.run.scratch.action1"), ex, true)
             }
         }
     }

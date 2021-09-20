@@ -2,19 +2,25 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.generators.AbstractNewProjectWizardSdkStep
 import com.intellij.ide.wizard.*
-import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.columns
 
 class KotlinNewProjectWizard : NewProjectWizard {
     override val name: String = "Kotlin"
 
-    override fun createStep(parent: NewProjectStep.Step) = Step(parent, SdkStep(parent))
+    override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
     class Step(
-        parent: NewProjectStep.Step,
-        sdkStep: SdkStep
-    ) : AbstractNewProjectWizardMultiStep<NewProjectStep.Step, Step>(parent, KotlinBuildSystemType.EP_NAME),
+        parent: NewProjectWizardLanguageStep
+    ) : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, KotlinBuildSystemType.EP_NAME),
         NewProjectWizardBuildSystemData,
         NewProjectWizardLanguageData by parent {
 
@@ -22,13 +28,20 @@ class KotlinNewProjectWizard : NewProjectWizard {
 
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
 
-        override val commonSteps = listOf(sdkStep)
-
         override val buildSystemProperty by ::stepProperty
         override val buildSystem by ::step
-    }
 
-    class SdkStep(parent: NewProjectStep.Step) : AbstractNewProjectWizardSdkStep(parent) {
-        override fun sdkTypeFilter(type: SdkTypeId) = true
+        lateinit var sdkComboBox: Cell<JdkComboBox>
+        val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+        val sdk by sdkProperty
+
+        override fun setupCommonUI(builder: Panel) {
+            with(builder) {
+                row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+                    sdkComboBox = sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id)
+                        .columns(COLUMNS_MEDIUM)
+                }
+            }
+        }
     }
 }

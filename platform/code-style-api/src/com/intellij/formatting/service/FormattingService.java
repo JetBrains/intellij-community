@@ -2,6 +2,7 @@
 package com.intellij.formatting.service;
 
 import com.intellij.formatting.FormattingRangesInfo;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -28,7 +29,12 @@ public interface FormattingService {
     /**
      * The service can format multiple text ranges within the same document as opposed to complete file only.
      */
-    FORMAT_FRAGMENTS
+    FORMAT_FRAGMENTS,
+    /**
+     * The service supports imports optimization. If {@link #getImportOptimizers(PsiFile)} returns an empty set, the service
+     * can only do it as a part of formatting call.
+     */
+    OPTIMIZE_IMPORTS
   }
 
   @NotNull
@@ -43,6 +49,13 @@ public interface FormattingService {
   PsiElement formatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhiteSpaceOnly);
 
   void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat);
+
+  /**
+   * @param file The file
+   * @return A set of import optimizers for the given file.
+   */
+  @NotNull
+  Set<ImportOptimizer> getImportOptimizers(@NotNull PsiFile file);
 
   /**
    * @return A class of the service which should be run prior to this FormattingService (default is {@code null})

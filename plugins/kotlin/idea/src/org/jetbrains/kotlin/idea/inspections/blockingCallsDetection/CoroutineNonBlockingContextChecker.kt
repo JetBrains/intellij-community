@@ -46,6 +46,8 @@ import org.jetbrains.kotlin.types.KotlinType
 class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
     override fun isApplicable(file: PsiFile): Boolean {
+        if (file !is KtFile) return false
+
         val languageVersionSettings = getLanguageVersionSettings(file)
         return languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
     }

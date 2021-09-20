@@ -5,9 +5,12 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS_KEY
+import com.intellij.lang.documentation.ide.impl.DocumentationManager.Companion.instance
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilBase
 
@@ -25,6 +28,10 @@ open class ShowQuickDocInfoAction : AnAction(),
   }
 
   override fun update(e: AnActionEvent) {
+    if (Registry.`is`("documentation.v2")) {
+      e.presentation.isEnabled = !e.dataContext.getData(DOCUMENTATION_TARGETS_KEY).isNullOrEmpty()
+      return
+    }
     val presentation = e.presentation
     val dataContext = e.dataContext
     presentation.isEnabled = false
@@ -46,6 +53,10 @@ open class ShowQuickDocInfoAction : AnAction(),
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    if (Registry.`is`("documentation.v2")) {
+      actionPerformedV2(e.dataContext)
+      return
+    }
     val dataContext = e.dataContext
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(dataContext)
@@ -68,6 +79,11 @@ open class ShowQuickDocInfoAction : AnAction(),
       val hint = documentationManager.docInfoHint
       documentationManager.showJavaDocInfo(element, null, hint != null, null)
     }
+  }
+
+  private fun actionPerformedV2(dataContext: DataContext) {
+    val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+    instance(project).actionPerformed(dataContext)
   }
 
   @Suppress("SpellCheckingInspection")

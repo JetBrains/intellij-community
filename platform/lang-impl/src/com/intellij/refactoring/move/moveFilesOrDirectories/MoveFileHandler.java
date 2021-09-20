@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,21 @@ public abstract class MoveFileHandler {
   public abstract List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
 
   /**
+   * Finds conflicts which may arise when file is moved, 
+   * e.g. missing module dependency or visibility which makes moved element not accessible
+   * 
+   * {@link #detectConflicts(PsiElement[], UsageInfo[], PsiDirectory, MultiMap)} passes all elements which were moved 
+   * as well as all found usages for each handler. It's the responsibility of handler to ignore inappropriate elements/usages.
+   * 
+   * @param elementsToMove all elements which were moved during refactoring, including those which won't be normally processed by the handler
+   * @param usages         all usages found during refactoring
+   */
+  public void detectConflicts(MultiMap<PsiElement, String> conflicts,
+                              PsiElement[] elementsToMove,
+                              UsageInfo[] usages,
+                              PsiDirectory targetDirectory) {}
+
+  /**
    * After a file has been moved, updates the references to the file  so that they point to the new location of the file.
    *
    * @param usageInfos  the list of references, as returned from {@link #findUsages}
@@ -68,6 +84,18 @@ public abstract class MoveFileHandler {
    * @param file the moved file.
    */
   public abstract void updateMovedFile(PsiFile file) throws IncorrectOperationException;
+
+  /**
+   * Fills {@code conflicts} based on elements which were moved, target directory and already calculated usages.
+   */
+  public static void detectConflicts(PsiElement[] elementsToMove,
+                                     UsageInfo[] usageInfos,
+                                     PsiDirectory targetDirectory,
+                                     MultiMap<PsiElement, String> conflicts) {
+    for (MoveFileHandler handler : EP_NAME.getExtensionList()) {
+      handler.detectConflicts(conflicts, elementsToMove, usageInfos, targetDirectory);
+    }
+  }
 
   @NotNull
   public static MoveFileHandler forElement(PsiFile element) {
@@ -105,7 +133,5 @@ public abstract class MoveFileHandler {
 
     }
   };
-
-
 
 }

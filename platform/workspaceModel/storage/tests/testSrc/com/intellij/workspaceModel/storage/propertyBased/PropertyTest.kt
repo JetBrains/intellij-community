@@ -1,13 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.createBuilderFrom
-import com.intellij.workspaceModel.storage.entities.AnotherSource
-import com.intellij.workspaceModel.storage.entities.MySource
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.RefsTable
+import com.intellij.workspaceModel.storage.impl.StorageIndexes
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import junit.framework.TestCase

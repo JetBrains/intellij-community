@@ -12,10 +12,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -28,10 +28,6 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
-import git4idea.commands.Git
-import git4idea.index.actions.runProcess
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
@@ -45,33 +41,6 @@ import kotlin.math.min
 import kotlin.reflect.KClass
 
 object GitLessonsUtil {
-  fun LessonContext.checkoutBranch(branchName: String) {
-    task {
-      addFutureStep {
-        val changeListManager = ChangeListManager.getInstance(project)
-        changeListManager.scheduleUpdate()
-        changeListManager.invokeAfterUpdate(true) {
-          val repository = GitRepositoryManager.getInstance(project).repositories.first()
-          if (repository.currentBranch?.name == branchName) {
-            completeStep()
-          }
-          else {
-            runProcess(project, "", false) {
-              Git.getInstance().checkout(repository, branchName, null, true, false).throwOnError()
-            }
-            completeStep()
-          }
-        }
-      }
-    }
-
-    prepareRuntimeTask {
-      val vcsLogData = VcsProjectLog.getInstance(project).mainLogUi?.logData ?: return@prepareRuntimeTask
-      val roots = GitRepositoryManager.getInstance(project).repositories.map(GitRepository::getRoot)
-      vcsLogData.refresh(roots)
-    }
-  }
-
   // Git tool window must showing to reset it
   fun LessonContext.resetGitLogWindow() {
     prepareRuntimeTask {
@@ -155,6 +124,23 @@ object GitLessonsUtil {
         }
       })
     }
+  }
+
+  // Returns future that completes when checkout is started
+  fun TaskContext.triggerOnCheckout(checkBranch: (String) -> Boolean = { true }): CompletableFuture<Boolean> {
+    val checkoutStartedFuture = CompletableFuture<Boolean>()
+    addFutureStep {
+      subscribeForMessageBus(BranchChangeListener.VCS_BRANCH_CHANGED, object : BranchChangeListener {
+        override fun branchWillChange(branchName: String) {
+          checkoutStartedFuture.complete(true)
+        }
+
+        override fun branchHasChanged(branchName: String) {
+          if (checkBranch(branchName)) completeStep()
+        }
+      })
+    }
+    return checkoutStartedFuture
   }
 
   fun TaskContext.gotItStep(position: Balloon.Position,

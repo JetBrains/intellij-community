@@ -135,16 +135,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @ApiStatus.Internal
-  public enum RootsChangeType {
-    ROOTS_REMOVED, ROOTS_ADDED, GENERIC
-  }
-
-  public static RootsChangeIndexingInfo transfer(@NotNull RootsChangeType type) {
-    if (type == RootsChangeType.ROOTS_REMOVED) return RootsChangeIndexingInfo.NO_INDEXING_NEEDED;
-    return RootsChangeIndexingInfo.TOTAL_REINDEX;
-  }
-
-  @ApiStatus.Internal
   public BatchSession<RootsChangeIndexingInfo, List<RootsChangeIndexingInfo>> getRootsChanged() {
     return myRootsChanged;
   }

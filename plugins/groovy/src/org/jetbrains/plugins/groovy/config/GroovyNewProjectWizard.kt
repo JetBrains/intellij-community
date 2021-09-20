@@ -5,174 +5,84 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
-import com.intellij.ide.wizard.NewProjectStep
 import com.intellij.ide.wizard.NewProjectWizard
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.ide.wizard.NewProjectWizardLanguageStep
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
-import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.roots.ui.distribution.*
+import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.NoDistributionInfo
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.download.DownloadableFileSetVersions.FileSetVersionsCallback
+import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.groovy.GroovyBundle
-import java.awt.Dimension
 import java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager
 import java.nio.file.Path
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JTextField
 import javax.swing.SwingUtilities
 
 class GroovyNewProjectWizard : NewProjectWizard {
   override val name: String = "Groovy"
 
-  override fun createStep(parent: NewProjectStep.Step) = Step(parent)
+  override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-  class Step(parent: NewProjectStep.Step) : AbstractNewProjectWizardChildStep<NewProjectStep.Step>(parent) {
-    var javaSdk: Sdk? = null
-    var useMavenLibrary: Boolean = false
-    var useLocalLibrary: Boolean = false
-    var mavenVersion: FrameworkLibraryVersion? = null
-    var sdkPath: String = ""
+  class Step(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardChildStep<NewProjectWizardLanguageStep>(parent) {
+    val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+    val distributionsProperty = propertyGraph.graphProperty<DistributionInfo> { NoDistributionInfo }
 
-    override fun setupUI(builder: RowBuilder) {
+    var javaSdk by sdkProperty
+    var distribution by distributionsProperty
+
+    override fun setupUI(builder: Panel) {
       with(builder) {
         row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-          val sdkCombo = JdkComboBox(null, ProjectSdksModel().also { it.syncSdks() }, { it is JavaSdkType }, null, null, null)
-            .apply { minimumSize = Dimension(0, 0) }
-            .also { combo -> combo.addItemListener { javaSdk = combo.selectedJdk } }
-          sdkCombo()
-        }
-        nestedPanel {
-          row(GroovyBundle.message("label.groovy.sdk")) {
-            buttonGroup {
-              createDownloadableLibraryPanel()
-              val disposable = createFileSystemLibraryPanel()
-              Disposer.register(context.disposable, disposable)
-            }
-          }
-        }
-      }
-    }
-
-    private fun Row.createDownloadableLibraryPanel() {
-      lateinit var checkbox: JBRadioButton
-      row {
-        cell {
-          checkbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"),
-            ::useMavenLibrary).component.apply { isSelected = true }
-        }
-        cell {
+          val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
+          sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
+            .columns(COLUMNS_MEDIUM)
+        }.bottomGap(BottomGap.SMALL)
+        row(GroovyBundle.message("label.groovy.sdk")) {
+          val groovyLibraryDescription = GroovyLibraryDescription()
           val groovyLibraryType = LibraryType.EP_NAME.findExtensionOrFail(GroovyDownloadableLibraryType::class.java)
           val downloadableLibraryDescription = groovyLibraryType.libraryDescription
-          comboBox(
-            DefaultComboBoxModel(emptyArray()),
-            { mavenVersion }, { mavenVersion = it },
-            SimpleListCellRenderer.create(GroovyBundle.message("combo.box.null.value.placeholder")) { it?.versionString ?: "<unknown>" }
-          ).applyToComponent {
-            downloadableLibraryDescription.fetchVersions(object : FileSetVersionsCallback<FrameworkLibraryVersion>() {
-              override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
-                versions.sortedWith(::moveUnstablesToTheEnd).forEach(::addItem)
-              }
-            })
-          }.enableIf(checkbox.selected)
-        }
-      }
-    }
-
-    private fun Row.createFileSystemLibraryPanel(): Disposable {
-      lateinit var checkbox: JBRadioButton
-      lateinit var disposable: Disposable
-      row {
-        cell { checkbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), ::useLocalLibrary).component }
-        cell {
-          // todo: color text field in red if selected path does not correspond to a groovy sdk home
-          val groovyLibraryDescription = GroovyLibraryDescription()
-          val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
+          val comboBox = DistributionComboBox(context.project, object : FileChooserInfo {
+            override val fileChooserTitle = GroovyBundle.message("dialog.title.select.groovy.sdk")
+            override val fileChooserDescription: String? = null
+            override val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
+            override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
+          })
+          comboBox.comboBoxActionName = GroovyBundle.message("dialog.title.specify.groovy.sdk")
+          comboBox.noDistributionName = GroovyBundle.message("combo.box.null.value.placeholder")
           val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
-          val textWithBrowse = TextFieldWithBrowseButton()
-            .apply {
-              setText(pathToGroovyHome?.path)
-              addActionListener(object : BrowseFolderActionListener<JTextField>(
-                GroovyBundle.message("dialog.title.select.groovy.sdk"),
-                null,
-                this,
-                null,
-                fileChooserDescriptor,
-                TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
-                override fun getInitialFile() = pathToGroovyHome
-              })
-              FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null)
+          if (pathToGroovyHome != null) {
+            comboBox.addItemIfNotExists(LocalDistributionInfo(pathToGroovyHome.path))
+          }
+          downloadableLibraryDescription.fetchVersions(object : FileSetVersionsCallback<FrameworkLibraryVersion>() {
+            override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
+              versions.sortedWith(::moveUnstablesToTheEnd)
+                .map(::FrameworkLibraryDistributionInfo)
+                .forEach(comboBox::addItemIfNotExists)
+              comboBox.noDistributionName = ProjectBundle.message("sdk.missing.item")
             }
-            .let(::component)
-            .constraints(growX)
-            .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, ::sdkPath.toBinding())
-            .enableIf(checkbox.selected)
-
-          disposable = textWithBrowse.component
-        }
+          })
+          cell(comboBox)
+            .bindItem(distributionsProperty)
+            .columns(COLUMNS_MEDIUM)
+        }.bottomGap(BottomGap.SMALL)
       }
-      return disposable
-    }
-
-    override fun setupProject(project: Project) {
-      val builder = context.projectBuilder as? ModuleBuilder ?: return
-      val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
-        contentEntryPath = project.basePath
-        name = project.name
-        moduleJdk = javaSdk
-      }
-
-      val librariesContainer = LibrariesContainerFactory.createContainer(context.project)
-
-      val compositionSettings = generateCompositionSettings(project, librariesContainer)
-
-      builder.addModuleConfigurationUpdater(object : ModuleConfigurationUpdater() {
-        override fun update(module: Module, rootModel: ModifiableRootModel) {
-          groovyModuleBuilder.setupRootModel(rootModel)
-          compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
-        }
-      })
-    }
-
-    private fun generateCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings {
-      val libraryDescription = GroovyLibraryDescription()
-      // compositionSettings implements Disposable, but it is done that way because of the field with the type Library.
-      // this field in our usage is always null, so there is no need to dispose compositionSettings
-      val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
-        FrameworkLibraryVersionFilter.ALL, listOf(mavenVersion))
-      if (useMavenLibrary && mavenVersion != null) {
-        compositionSettings.setDownloadLibraries(true)
-        compositionSettings.downloadFiles(null)
-      }
-      else if (useLocalLibrary) {
-        val virtualFile = VfsUtil.findFile(Path.of(sdkPath), false) ?: return compositionSettings
-        val newLibraryConfiguration =
-          libraryDescription.createLibraryConfiguration(getCurrentKeyboardFocusManager().activeWindow, virtualFile)
-          ?: return compositionSettings
-        val libraryEditor = NewLibraryEditor(newLibraryConfiguration.libraryType, newLibraryConfiguration.properties)
-        libraryEditor.name = container.suggestUniqueLibraryName(newLibraryConfiguration.defaultLibraryName)
-        newLibraryConfiguration.addRoots(libraryEditor)
-        compositionSettings.setNewLibraryEditor(libraryEditor)
-      }
-      return compositionSettings
     }
 
     private fun moveUnstablesToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
@@ -185,6 +95,57 @@ class GroovyNewProjectWizard : NewProjectWizard {
         leftUnstable -> 1
         else -> -1
       }
+    }
+
+    override fun setupProject(project: Project) {
+      val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
+        contentEntryPath = parentStep.projectPath.systemIndependentPath
+        name = parentStep.name
+        moduleJdk = javaSdk
+      }
+
+      groovyModuleBuilder.addModuleConfigurationUpdater(object : ModuleConfigurationUpdater() {
+        override fun update(module: Module, rootModel: ModifiableRootModel) {
+          val librariesContainer = LibrariesContainerFactory.createContainer(project)
+          val compositionSettings = createCompositionSettings(project, librariesContainer)
+          compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
+        }
+      })
+
+      groovyModuleBuilder.commit(project)
+    }
+
+    private fun createCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings {
+      val libraryDescription = GroovyLibraryDescription()
+      val versionFilter = FrameworkLibraryVersionFilter.ALL
+      val pathProvider = { project.basePath ?: "./" }
+      when (val distribution = distribution) {
+        is FrameworkLibraryDistributionInfo -> {
+          val allVersions = listOf(distribution.version)
+          return LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, allVersions).apply {
+            setDownloadLibraries(true)
+            downloadFiles(null)
+          }
+        }
+        is LocalDistributionInfo -> {
+          val settings = LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, listOf(null))
+          val virtualFile = VfsUtil.findFile(Path.of(distribution.path), false) ?: return settings
+          val keyboardFocusManager = getCurrentKeyboardFocusManager()
+          val activeWindow = keyboardFocusManager.activeWindow
+          val newLibraryConfiguration = libraryDescription.createLibraryConfiguration(activeWindow, virtualFile) ?: return settings
+          val libraryEditor = NewLibraryEditor(newLibraryConfiguration.libraryType, newLibraryConfiguration.properties)
+          libraryEditor.name = container.suggestUniqueLibraryName(newLibraryConfiguration.defaultLibraryName)
+          newLibraryConfiguration.addRoots(libraryEditor)
+          settings.setNewLibraryEditor(libraryEditor)
+          return settings
+        }
+        else -> throw NoWhenBranchMatchedException(distribution.javaClass.toString())
+      }
+    }
+
+    private class FrameworkLibraryDistributionInfo(val version: FrameworkLibraryVersion) : AbstractDistributionInfo() {
+      override val name: String = version.versionString
+      override val description: String? = null
     }
   }
 }

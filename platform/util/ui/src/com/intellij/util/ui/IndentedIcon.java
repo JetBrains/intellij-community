@@ -7,26 +7,30 @@ import java.awt.*;
 
 
 public class IndentedIcon implements Icon {
-  private final Icon myBaseIcon;
-  private final int myIndent;
+  private final Icon baseIcon;
+  private final Insets insets;
 
-  public IndentedIcon(final Icon baseIcon, final int indent) {
-    myBaseIcon = baseIcon;
-    myIndent = indent;
+  public IndentedIcon(Icon baseIcon, int leftInset) {
+    this(baseIcon, new JBInsets(0, leftInset, 0, 0));
+  }
+
+  public IndentedIcon(Icon baseIcon, Insets insets) {
+    this.baseIcon = baseIcon;
+    this.insets = insets;
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    myBaseIcon.paintIcon(c, g, x + myIndent, y);
+    baseIcon.paintIcon(c, g, x + insets.left, y + insets.top);
   }
 
   @Override
   public int getIconWidth() {
-    return myIndent + myBaseIcon.getIconWidth();
+    return insets.left + insets.right + baseIcon.getIconWidth();
   }
 
   @Override
   public int getIconHeight() {
-    return myBaseIcon.getIconHeight();
+    return insets.top + insets.bottom + baseIcon.getIconHeight();
   }
 }

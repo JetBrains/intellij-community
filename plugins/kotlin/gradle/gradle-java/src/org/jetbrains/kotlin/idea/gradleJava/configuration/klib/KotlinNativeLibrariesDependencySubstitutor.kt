@@ -7,8 +7,8 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.KotlinDependency
-import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfoProvider

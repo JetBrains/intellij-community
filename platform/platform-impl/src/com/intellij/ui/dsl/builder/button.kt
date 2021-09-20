@@ -10,7 +10,6 @@ import javax.swing.AbstractButton
 import kotlin.reflect.KMutableProperty0
 
 fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>): Cell<T> {
-  component.isSelected = binding.get()
   return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
 }
 

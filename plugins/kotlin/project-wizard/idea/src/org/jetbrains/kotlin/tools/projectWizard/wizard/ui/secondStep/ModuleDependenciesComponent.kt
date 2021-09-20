@@ -26,6 +26,7 @@ class ModuleDependenciesComponent(
     context: Context
 ) : TitledComponent(context) {
     override val title: String = KotlinNewProjectWizardUIBundle.message("module.dependencies.module.dependencies")
+    override val tooltipText: String = KotlinNewProjectWizardUIBundle.message("module.dependencies.module.dependencies.tooltip")
     private val dependenciesList = ModuleDependenciesList(::possibleDependencies)
     override val alignment: TitleComponentAlignment
         get() = TitleComponentAlignment.AlignAgainstSpecificComponent(dependenciesList)
@@ -75,7 +76,7 @@ class ModuleDependenciesComponent(
             ModuleDependencyType.isDependencyPossible(module!!, to)
         }
 
-    override fun shouldBeShow(): Boolean = module?.let {
+    override fun shouldBeShown(): Boolean = module?.let {
         it.dependencies.isEmpty() && possibleDependencies().isEmpty()
     } != true
 

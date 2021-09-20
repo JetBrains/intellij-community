@@ -22,6 +22,7 @@ internal class SearchEverywhereMLStatisticsCollector {
                      context: SearchEverywhereMLContextInfo,
                      cache: SearchEverywhereMlSearchState,
                      selectedIndices: IntArray,
+                     selectedItems: List<Any>,
                      closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val data = arrayListOf<Pair<String, Any>>(
@@ -29,8 +30,8 @@ internal class SearchEverywhereMLStatisticsCollector {
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, data, selectedIndices,
-                   elementsProvider)
+    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, data,
+      selectedIndices, selectedItems, elementsProvider)
   }
 
   fun onSearchFinished(project: Project?, seSessionId: Int, searchIndex: Int,
@@ -44,8 +45,8 @@ internal class SearchEverywhereMLStatisticsCollector {
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional, EMPTY_ARRAY,
-                   elementsProvider)
+    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional,
+      EMPTY_ARRAY, emptyList(),elementsProvider)
   }
 
   fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
@@ -53,8 +54,8 @@ internal class SearchEverywhereMLStatisticsCollector {
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, emptyList(), EMPTY_ARRAY,
-                   elementsProvider)
+    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, emptyList(),
+      EMPTY_ARRAY, emptyList(), elementsProvider)
   }
 
   private fun reportElements(project: Project?, eventId: String,
@@ -64,6 +65,7 @@ internal class SearchEverywhereMLStatisticsCollector {
                              state: SearchEverywhereMlSearchState,
                              additional: List<Pair<String, Any>>,
                              selectedElements: IntArray,
+                             selectedItems: List<Any>,
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val elements = elementsProvider.invoke()
     NonUrgentExecutor.getInstance().execute {
@@ -91,6 +93,7 @@ internal class SearchEverywhereMLStatisticsCollector {
           }
           return@map -1
         }
+        data[SELECTED_ELEMENTS_CONSISTENT] = isSelectionConsistent(selectedElements, selectedItems, elements)
       }
 
       val actionManager = ActionManager.getInstance()
@@ -107,6 +110,18 @@ internal class SearchEverywhereMLStatisticsCollector {
 
       loggerProvider.logger.logAsync(GROUP, eventId, data, false)
     }
+  }
+
+  private fun isSelectionConsistent(selectedIndices: IntArray, selectedElements: List<Any>, elements: List<SearchEverywhereFoundElementInfo>): Boolean {
+    if (selectedIndices.size != selectedElements.size) return false
+
+    for (i in selectedIndices.indices) {
+      val index = selectedIndices[i]
+      if (index >= elements.size || selectedElements[i] != elements[index].element) {
+        return false
+      }
+    }
+    return true
   }
 
   private fun addElementFeatures(elementIdProvider: SearchEverywhereMlItemIdProvider,
@@ -148,7 +163,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 6)
+    private val GROUP = EventLogGroup("mlse.log", 8)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
@@ -173,6 +188,7 @@ internal class SearchEverywhereMLStatisticsCollector {
     private const val COLLECTED_RESULTS_DATA_KEY = "collectedItems"
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
     private const val SELECTED_ELEMENTS_DATA_KEY = "selectedIds"
+    private const val SELECTED_ELEMENTS_CONSISTENT = "isConsistent"
 
     // item fields
     internal const val ID_KEY = "id"

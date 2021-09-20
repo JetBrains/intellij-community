@@ -3,18 +3,17 @@ package com.jetbrains.packagesearch.intellij.plugin.gradle
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.SimpleMessageBusConnection
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.invoke
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DumbAwareMessageBusModuleChangesSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.invoke
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.settings.TestRunner
-import java.util.function.Supplier
 
 internal class ExternalProjectSignalProvider : DumbAwareMessageBusModuleChangesSignalProvider() {
 
-    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) {
+    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Runnable) {
         bus.subscribe(
             ProjectDataImportListener.TOPIC,
             ProjectDataImportListener {
@@ -27,13 +26,13 @@ internal class ExternalProjectSignalProvider : DumbAwareMessageBusModuleChangesS
 
 internal class SmartModeSignalProvider : DumbAwareMessageBusModuleChangesSignalProvider() {
 
-    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) =
+    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Runnable) =
         listener()
 }
 
 internal class GradleModuleLinkSignalProvider : DumbAwareMessageBusModuleChangesSignalProvider() {
 
-    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) {
+    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Runnable) {
         bus.subscribe(
             GradleSettingsListener.TOPIC,
             object : GradleSettingsListener {

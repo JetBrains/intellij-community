@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
@@ -7,12 +7,15 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -240,12 +243,30 @@ public final class HighlightNamesUtil {
   @Nullable
   static HighlightInfo highlightReassignedVariable(@NotNull PsiVariable variable, @NotNull PsiElement elementToHighlight) {
     if (variable instanceof PsiLocalVariable) {
-      return HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.REASSIGNED_LOCAL_VARIABLE).range(elementToHighlight).create();
+      return createReassignedInfo(elementToHighlight, 
+                                  JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES,
+                                  JavaHighlightInfoTypes.REASSIGNED_LOCAL_VARIABLE,
+                                  JavaBundle.message("tooltip.reassigned.local.variable"));
     }
     if (variable instanceof PsiParameter) {
-      return HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.REASSIGNED_PARAMETER).range(elementToHighlight).create();
+      return createReassignedInfo(elementToHighlight, 
+                                  JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES,
+                                  JavaHighlightInfoTypes.REASSIGNED_PARAMETER,
+                                  JavaBundle.message("tooltip.reassigned.parameter"));
     }
     return null;
+  }
+
+  @Nullable
+  private static HighlightInfo createReassignedInfo(@NotNull PsiElement elementToHighlight,
+                                                    @NotNull TextAttributesKey attributesKey,
+                                                    @NotNull HighlightInfoType highlightInfoType,
+                                                    @NotNull @NlsContexts.Tooltip String toolTip) {
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight);
+    return attributes != null && !attributes.isEmpty()
+           ? builder.escapedToolTip(toolTip).create()
+           : builder.create();
   }
 
   private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull TextAttributesScheme colorsScheme) {

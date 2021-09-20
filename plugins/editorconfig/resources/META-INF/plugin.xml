@@ -485,6 +485,7 @@ To create an EditorConfig file in a directory, right-click this directory and se
   </applicationListeners>
 
   <projectListeners>
-    <listener class="org.editorconfig.configmanagement.EditorConfigEncodingCache$FileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="org.editorconfig.configmanagement.EditorConfigEncodingCache$FileEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
   </projectListeners>
 </idea-plugin>

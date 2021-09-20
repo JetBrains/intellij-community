@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
@@ -140,7 +140,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
 
   override fun setForCurrentProject(isEnabled: Boolean) {
     if (isEnabled) vcsManager.getStandardConfirmation(ADD, vcs).value = DO_ACTION_SILENTLY
-    VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY = true
+    VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY = isEnabled
   }
 
   override fun needDoForCurrentProject() =

@@ -59,6 +59,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
@@ -415,5 +416,20 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
     }
     return null;
+  }
+
+  //TODO: use more general utils when available
+  public static <T> void forEachSafe(Iterable<T> iterable, Consumer<T> action) {
+    for (T o : iterable) {
+      try {
+        action.accept(o);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
   }
 }

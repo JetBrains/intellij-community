@@ -25,12 +25,10 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
   <!-- ULTIMATE-PLUGIN-PLACEHOLDER -->
 
-  <!-- CIDR-PLUGIN-PLACEHOLDER-START -->
   <depends>com.intellij.modules.idea</depends>
   <depends>com.intellij.modules.java</depends>
   <depends optional="true" config-file="dep-copyright.xml">com.intellij.copyright</depends>
 <!--  <depends optional="true" config-file="dep-injection.xml">org.intellij.intelliLang</depends>-->
-  <!-- CIDR-PLUGIN-PLACEHOLDER-END -->
 
   <xi:include href="indexes.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -42,10 +40,8 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <xi:include href="extensions/ide-frontend-independent.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
 
-  <!-- CIDR-PLUGIN-EXCLUDE-START -->
   <!--  <xi:include href="jvm-common.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
   <!--  <xi:include href="jvm.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
-  <!-- CIDR-PLUGIN-EXCLUDE-END -->
 
   <xi:include href="tipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

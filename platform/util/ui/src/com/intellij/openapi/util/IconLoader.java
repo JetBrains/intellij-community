@@ -222,19 +222,6 @@ public final class IconLoader {
     return findIcon(path, callerClass);
   }
 
-  /**
-   * @deprecated Use {@link #findIcon(String, Class, boolean, boolean)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @Nullable Icon findIcon(@NonNls @NotNull String path, boolean strict) {
-    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    if (callerClass == null) {
-      return null;
-    }
-    return findIcon(path, callerClass, callerClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, false);
-  }
-
   public static @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
     Icon icon = findIcon(path, aClass, aClass.getClassLoader(), null, true);
     if (icon == null) {

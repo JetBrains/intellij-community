@@ -192,6 +192,15 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testNativePrivateMethod() {
     doTest();
   }
+  public void testReturnSwitchExpression() {
+    doTest();
+  }
+  public void testReturnSwitchExpression2() {
+    doTest();
+  }
+  public void testReturnSwitchExpression3() {
+    doTest();
+  }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

@@ -173,23 +173,16 @@ private class TestEnv(intervals: List<Interval>) {
 }
 
 
-private class MockNotebookCellLines(val intervals: MutableList<Interval> = mutableListOf()) : NotebookCellLines {
+private class MockNotebookCellLines(override val intervals: MutableList<Interval> = mutableListOf()) : NotebookCellLines {
   init {
     checkIntervals(intervals)
   }
 
   override val intervalListeners = EventDispatcher.create(NotebookCellLines.IntervalListener::class.java)
 
-  override fun getIterator(ordinal: Int): ListIterator<Interval> = intervals.listIterator(ordinal)
-
-  override fun getIterator(interval: Interval): ListIterator<Interval> = getIterator(interval.ordinal)
-
   override fun intervalsIterator(startLine: Int): ListIterator<Interval> = TODO("stub")
 
   override val modificationStamp: Long
-    get() = TODO("stub")
-
-  override val intervalsCount: Int
     get() = TODO("stub")
 }
 

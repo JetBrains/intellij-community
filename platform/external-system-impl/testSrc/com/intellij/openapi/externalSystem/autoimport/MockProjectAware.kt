@@ -57,6 +57,15 @@ class MockProjectAware(
     Disposer.register(parentDisposable, Disposable { unsubscribeCounter.incrementAndGet() })
   }
 
+  fun forceReloadProject() {
+    val message = "Useless assertion parameter: don't assert mock reload context"
+    reloadProject(object : ExternalSystemProjectReloadContext {
+      override val isExplicitReload get() = throw UnsupportedOperationException(message)
+      override val hasUndefinedModifications get() = throw UnsupportedOperationException(message)
+      override val settingsFilesContext get() = throw UnsupportedOperationException(message)
+    })
+  }
+
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     when (refreshCollisionPassType.get()!!) {
       DUPLICATE -> {

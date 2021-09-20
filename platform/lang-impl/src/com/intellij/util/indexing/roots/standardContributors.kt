@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -12,22 +13,27 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableSetContributor
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.mergeIterators
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
 
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
+    @Suppress("DEPRECATION")
     if (indexProjectBasedOnIndexableEntityProviders()) {
-      val iterators: MutableList<IndexableFilesIterator> = mutableListOf()
+      val builders: MutableList<IndexableEntityProvider.IndexableIteratorBuilder> = mutableListOf()
       val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
-        addIteratorsFromProvider(provider, entityStorage, project, iterators)
+        if (provider is IndexableEntityProvider.Existing) {
+          addIteratorBuildersFromProvider(provider, entityStorage, project, builders)
+          ProgressManager.checkCanceled()
+        }
       }
-      return mergeIterators(iterators)
+      return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     }
     else {
       val seenLibraries: MutableSet<Library> = HashSet()
@@ -44,6 +50,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
             is LibraryOrderEntry -> {
               val library = orderEntry.library
               if (library != null && seenLibraries.add(library)) {
+                @Suppress("DEPRECATION")
                 providers.add(LibraryIndexableFilesIteratorImpl(library))
               }
             }
@@ -75,16 +82,23 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
   }
 
   companion object {
-    private fun <E : WorkspaceEntity> addIteratorsFromProvider(provider: IndexableEntityProvider<E>,
-                                                               entityStorage: WorkspaceEntityStorage,
-                                                               project: Project,
-                                                               iterators: MutableList<IndexableFilesIterator>) {
+    private fun <E : WorkspaceEntity> addIteratorBuildersFromProvider(provider: IndexableEntityProvider.Existing<E>,
+                                                                      entityStorage: WorkspaceEntityStorage,
+                                                                      project: Project,
+                                                                      iterators: MutableList<IndexableEntityProvider.IndexableIteratorBuilder>) {
       val entityClass = provider.entityClass
       for (entity in entityStorage.entities(entityClass)) {
-        iterators.addAll(provider.getAddedEntityIterator(entity, entityStorage, project))
+        iterators.addAll(provider.getExistingEntityIteratorBuilder(entity, project))
       }
     }
 
+    /**
+     * Registry property introduced to provide quick workaround for possible performance issues.
+     * Should be removed when the feature becomes stable
+     */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+    @Deprecated("Registry property introduced to provide quick workaround for possible performance issues. " +
+                "Should be removed when the feature is proved to be stable", ReplaceWith("true"))
     @JvmStatic
     fun indexProjectBasedOnIndexableEntityProviders(): Boolean = Registry.`is`("indexing.enable.entity.provider.based.indexing")
   }

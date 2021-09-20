@@ -3,37 +3,48 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.*
+import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.ide.wizard.NewProjectStep.Step as LanguageStep
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.columns
 
 class JavaNewProjectWizard : NewProjectWizard {
   override val name: String = "Java"
 
-  override fun createStep(parent: LanguageStep) = Step(parent, SdkStep(parent))
+  override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-  class Step(
-    parent: LanguageStep,
-    sdkStep: SdkStep
-  ) : AbstractNewProjectWizardMultiStep<LanguageStep, Step>(parent, JavaBuildSystemType.EP_NAME),
-      NewProjectWizardBuildSystemData,
+  class Step(parent: NewProjectWizardLanguageStep)
+    : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, JavaBuildSystemType.EP_NAME),
       NewProjectWizardLanguageData by parent,
-      NewProjectWizardSdkData by sdkStep {
+      NewProjectWizardBuildSystemData, NewProjectWizardSdkData {
 
     override val self = this
 
     override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
 
-    override val commonSteps = listOf(sdkStep)
-
     override val buildSystemProperty by ::stepProperty
     override val buildSystem by ::step
-  }
 
-  class SdkStep(parent: LanguageStep) : AbstractNewProjectWizardSdkStep(parent) {
-    override fun sdkTypeFilter(type: SdkTypeId): Boolean {
-      return type is JavaSdkType && type !is DependentSdkType
+    override lateinit var sdkComboBox: Cell<JdkComboBox>
+    override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+    override val sdk by sdkProperty
+
+    override fun setupCommonUI(builder: Panel) {
+      with(builder) {
+        row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+          val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
+          sdkComboBox = sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
+            .columns(COLUMNS_MEDIUM)
+        }
+      }
     }
   }
 }

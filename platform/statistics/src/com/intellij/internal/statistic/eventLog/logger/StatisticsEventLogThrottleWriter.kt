@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.logger
 
 import com.intellij.application.subscribe
@@ -8,6 +8,9 @@ import com.intellij.internal.statistic.utils.EventRateThrottleResult
 import com.intellij.internal.statistic.utils.EventsIdentityWindowThrottle
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 
 internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
                                                 recorderId: String,
@@ -86,7 +89,7 @@ internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogCo
   }
 
   private fun copyEvent(eventId: String, groupId: String, groupVersion: String, logEvent: LogEvent) = LogEvent(
-    logEvent.session, logEvent.build, logEvent.bucket, logEvent.time, groupId, groupVersion, logEvent.recorderVersion,
+    logEvent.session, logEvent.build, logEvent.bucket, logEvent.time, LogEventGroup(groupId, groupVersion), logEvent.recorderVersion,
     LogEventAction(eventId, logEvent.event.state)
   )
 

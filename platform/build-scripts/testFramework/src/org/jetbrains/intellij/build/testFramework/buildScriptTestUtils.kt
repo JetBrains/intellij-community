@@ -21,6 +21,7 @@ fun createBuildContext(homePath: String, productProperties: ProductProperties,
   options.buildStepsToSkip.add(BuildOptions.getTEAMCITY_ARTIFACTS_PUBLICATION())
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
   options.isUseCompiledClassesFromProjectOutput = true
+  options.compilationLogEnabled = false
   buildOptionsCustomizer(options)
   return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
 }
@@ -49,6 +50,10 @@ fun runTestBuild(homePath: String, productProperties: ProductProperties, buildTo
     }
   }
   finally {
+    // Redirect debug logging to some other file to prevent locking of output directory on Windows
+    val newDebugLog = FileUtil.createTempFile("debug-log-", ".log", true)
+    (buildContext.messages as BuildMessagesImpl).setDebugLogPath(newDebugLog.toPath())
+
     FileUtil.delete(Paths.get(buildContext.options.outputRootPath))
   }
 }

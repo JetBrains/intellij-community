@@ -2,17 +2,15 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.Function;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,65 +23,41 @@ class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<J
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getExistingEntityForModuleIterator(@NotNull JavaSourceRootEntity entity,
-                                                                                                  @NotNull ModuleEntity moduleEntity,
-                                                                                                  @NotNull WorkspaceEntityStorage entityStorage,
-                                                                                                  @NotNull Project project) {
-    if (entity.getSourceRoot().getContentRoot().getModule().equals(moduleEntity)) {
-      return getExistingEntityIterator(entity, entityStorage, project);
-    }
-    return Collections.emptyList();
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull JavaSourceRootEntity entity,
+                                                                                                @NotNull Project project) {
+    return collectBuildersOnAddedEntityWithDataExtractor(entity, JavaSourceRootIndexableEntityProvider::getDataForBuilders);
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull JavaSourceRootEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project) {
-    return collectIteratorsOnAddedEntityWithDataExtractor(entity, JavaSourceRootIndexableEntityProvider::getDataToIndex, project);
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaSourceRootEntity oldEntity,
+                                                                                                   @NotNull JavaSourceRootEntity newEntity) {
+    return collectBuildersOnReplacedEntityWithDataExtractor(oldEntity, newEntity,
+                                                            JavaSourceRootIndexableEntityProvider::getDataForBuilders);
   }
 
-  @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull JavaSourceRootEntity oldEntity,
-                                                                                         @NotNull JavaSourceRootEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project) {
-    return collectIteratorsOnReplacedEntityWithDataExtractor(oldEntity, newEntity, JavaSourceRootIndexableEntityProvider::getDataToIndex,
-                                                             project);
+  static <E extends WorkspaceEntity> Collection<IndexableIteratorBuilder> collectBuildersOnAddedEntityWithDataExtractor(@NotNull E entity,
+                                                                                                                        @NotNull Function<? super E, @NotNull Pair<VirtualFileUrl, ModuleEntity>> extractor) {
+    Pair<VirtualFileUrl, ModuleEntity> data = extractor.fun(entity);
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(data.getSecond().persistentId(), data.getFirst());
   }
 
   @NotNull
-  static <E extends WorkspaceEntity> Collection<IndexableFilesIterator> collectIteratorsOnAddedEntityWithDataExtractor(@NotNull E entity,
-                                                                                                                       @NotNull Function<? super E, Pair<VirtualFile, ModuleEntity>> extractor,
-                                                                                                                       @NotNull Project project) {
-    Pair<VirtualFile, ModuleEntity> data = extractor.fun(entity);
-    if (data != null) {
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(data.getSecond(), data.getFirst(), project);
-    }
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  static <E extends WorkspaceEntity> Collection<IndexableFilesIterator> collectIteratorsOnReplacedEntityWithDataExtractor(@NotNull E oldEntity,
-                                                                                                                          @NotNull E newEntity,
-                                                                                                                          @NotNull Function<? super E, Pair<VirtualFile, ModuleEntity>> extractor,
-                                                                                                                          @NotNull Project project) {
-    Pair<VirtualFile, ModuleEntity> newData = extractor.fun(newEntity);
+  static <E extends WorkspaceEntity> Collection<? extends IndexableIteratorBuilder> collectBuildersOnReplacedEntityWithDataExtractor(
+    @NotNull E oldEntity,
+    @NotNull E newEntity,
+    @NotNull Function<? super E, Pair<VirtualFileUrl, ModuleEntity>> extractor) {
+    Pair<VirtualFileUrl, ModuleEntity> newData = extractor.fun(newEntity);
     if (newData != null) {
-      Pair<VirtualFile, ModuleEntity> oldData = extractor.fun(oldEntity);
+      Pair<VirtualFileUrl, ModuleEntity> oldData = extractor.fun(oldEntity);
       if (oldData == null || !newData.getFirst().equals(oldData.getFirst())) {
-        return IndexableEntityProviderMethods.INSTANCE.createIterators(newData.getSecond(), newData.getFirst(), project);
+        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newData.getSecond().persistentId(), newData.getFirst());
       }
     }
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static Pair<VirtualFile, ModuleEntity> getDataToIndex(@NotNull JavaSourceRootEntity entity) {
+  private static @NotNull Pair<VirtualFileUrl, ModuleEntity> getDataForBuilders(@NotNull JavaSourceRootEntity entity) {
     SourceRootEntity sourceRootEntity = entity.getSourceRoot();
-    VirtualFilePointer url = (VirtualFilePointer)sourceRootEntity.getUrl();
-    if (url.isValid()) {
-      return new Pair<>(url.getFile(), sourceRootEntity.getContentRoot().getModule());
-    }
-    return null;
+    return new Pair<>(sourceRootEntity.getUrl(), sourceRootEntity.getContentRoot().getModule());
   }
 }

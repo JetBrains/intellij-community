@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
+import com.intellij.openapi.vcs.ex.RollbackLineStatusAction.rollback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.CalledInAny
@@ -134,7 +135,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {
-        RollbackLineStatusAction.rollback(tracker, range, editor)
+        rollback(tracker, range, editor)
       }
     }
   }

@@ -9,7 +9,7 @@ class JvmLongImpl implements JvmLong {
   }
 
   @Override
-  public Long getLongValue() {
+  public long getLongValue() {
     return value;
   }
 }

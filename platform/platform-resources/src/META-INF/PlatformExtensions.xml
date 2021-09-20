@@ -160,6 +160,9 @@
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionGroupExpander"
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionGroupExpanderImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
@@ -770,6 +773,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="settings.changes" version="57"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.IdeErrorDialogUsageCollector"/>
 
@@ -1255,8 +1259,9 @@
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
 
-    <moduleType implementationClass="com.intellij.ide.wizard.NewProjectModuleType" id="newWizard.newProjectType" order="first"/>
-    <moduleType implementationClass="com.intellij.ide.wizard.NewWizardEmptyModuleType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewModuleType" id="newWizard.newModuleType"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewProjectType" id="newWizard.newProjectType" order="first"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewEmptyProjectType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
 
     <newProjectWizard implementation="com.intellij.ide.wizard.HTMLNewProjectWizard"/>
 

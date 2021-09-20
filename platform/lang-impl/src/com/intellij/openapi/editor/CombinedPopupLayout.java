@@ -3,7 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.ui.WidthBasedLayout;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,10 +12,10 @@ final class CombinedPopupLayout implements LayoutManager {
 
   private static final int MAX_POPUP_WIDTH = 650;
 
-  private final @NotNull JComponent highlightInfoComponent;
-  private final @NotNull JComponent quickDocComponent;
+  private final @Nullable JComponent highlightInfoComponent;
+  private final @Nullable JComponent quickDocComponent;
 
-  CombinedPopupLayout(@NotNull JComponent highlightInfoComponent, @NotNull JComponent quickDocComponent) {
+  CombinedPopupLayout(@Nullable JComponent highlightInfoComponent, @Nullable JComponent quickDocComponent) {
     this.highlightInfoComponent = highlightInfoComponent;
     this.quickDocComponent = quickDocComponent;
   }
@@ -38,8 +38,8 @@ final class CombinedPopupLayout implements LayoutManager {
 
   @Override
   public Dimension minimumLayoutSize(Container parent) {
-    Dimension d1 = highlightInfoComponent.getMinimumSize();
-    Dimension d2 = quickDocComponent.getMinimumSize();
+    Dimension d1 = highlightInfoComponent == null ? new Dimension() : highlightInfoComponent.getMinimumSize();
+    Dimension d2 = quickDocComponent == null ? new Dimension() : quickDocComponent.getMinimumSize();
     return new Dimension(Math.max(d1.width, d2.width), d1.height + d2.height);
   }
 
@@ -47,8 +47,16 @@ final class CombinedPopupLayout implements LayoutManager {
   public void layoutContainer(Container parent) {
     int width = parent.getWidth();
     int height = parent.getHeight();
-    int h1 = Math.min(height, highlightInfoComponent.getPreferredSize().height);
-    highlightInfoComponent.setBounds(0, 0, width, h1);
-    quickDocComponent.setBounds(0, h1, width, height - h1);
+    if (highlightInfoComponent == null) {
+      if (quickDocComponent != null) quickDocComponent.setBounds(0, 0, width, height);
+    }
+    else if (quickDocComponent == null) {
+      highlightInfoComponent.setBounds(0, 0, width, height);
+    }
+    else {
+      int h1 = Math.min(height, highlightInfoComponent.getPreferredSize().height);
+      highlightInfoComponent.setBounds(0, 0, width, h1);
+      quickDocComponent.setBounds(0, h1, width, height - h1);
+    }
   }
 }

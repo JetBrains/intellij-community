@@ -3,10 +3,7 @@ package org.jetbrains.idea.maven.server
 
 import com.intellij.build.FilePosition
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
@@ -29,7 +26,8 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 @State(name = "MavenWrapperMapping",
-  storages = [Storage(value = "maven.wrapper.mapping.xml", roamingType = RoamingType.PER_OS)])
+  storages = [Storage(value = "maven.wrapper.mapping.xml", roamingType = RoamingType.PER_OS)],
+  category = SettingsCategory.TOOLS)
 internal class MavenWrapperMapping : PersistentStateComponent<MavenWrapperMapping.State> {
   internal var myState = State()
 
@@ -215,7 +213,8 @@ internal class MavenWrapperSupport {
       return null
     }
 
-    private fun getWrapperProperties(baseDir: VirtualFile?) =
+    @JvmStatic
+    fun getWrapperProperties(baseDir: VirtualFile?) =
       baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties")
   }
 }

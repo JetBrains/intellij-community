@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
 import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
@@ -92,6 +91,12 @@ public class MavenDistributionsCache {
     return  (distributionUrl == null) ? resolveEmbeddedMavenHome() : getMavenWrapper(distributionUrl);
   }
 
+  public @Nullable MavenDistribution getWrapper(@NotNull String workingDirectory) {
+    String multiModuleDir = myWorkingDirToMultimoduleMap.computeIfAbsent(workingDirectory, this::resolveMultimoduleDirectory);
+    String distributionUrl = getWrapperDistributionUrl(multiModuleDir);
+    return (distributionUrl != null) ? MavenWrapperSupport.getCurrentDistribution(distributionUrl) : null;
+  }
+
   private static MavenDistribution getMavenWrapper(String distributionUrl) {
     MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(distributionUrl);
     if (distribution == null) {
@@ -105,7 +110,10 @@ public class MavenDistributionsCache {
 
     String multiModuleDir = getMultimoduleDirectory(workingDir);
     String distributionUrl = getWrapperDistributionUrl(multiModuleDir);
-    if (distributionUrl == null) return;
+    if (distributionUrl == null) {
+      MavenWrapperEventLogNotification.noDistributionUrlEvent(myProject, multiModuleDir);
+      return;
+    }
 
     MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(distributionUrl);
     if (distribution != null) return;
@@ -114,6 +122,7 @@ public class MavenDistributionsCache {
     MavenSyncConsole console = MavenProjectsManager.getInstance(myProject).getSyncConsole();
 
     console.startWrapperResolving();
+    MavenWrapperEventLogNotification.informationEvent(myProject, SyncBundle.message("maven.wrapper.notification.downloading.start"));
     Task.Backgroundable task = getTaskInfo();
     BackgroundableProcessIndicator indicator = console.progressIndicatorForWrapper(myProject, task);
     try {
@@ -123,10 +132,12 @@ public class MavenDistributionsCache {
       }
       myMultimoduleDirToWrapperedMavenDistributionsMap.put(multiModuleDir, distribution);
       console.finishWrapperResolving(null);
+      MavenWrapperEventLogNotification.informationEvent(myProject, SyncBundle.message("maven.wrapper.notification.downloading.finish"));
     }
     catch (Exception e) {
       LOG.warn("error install wrapper", e);
       console.finishWrapperResolving(e);
+      MavenWrapperEventLogNotification.errorDownloading(myProject, e.getLocalizedMessage());
       MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
       settings.getGeneralSettings().setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
     } finally {
@@ -136,7 +147,7 @@ public class MavenDistributionsCache {
   }
 
   @NotNull
-  private Task.Backgroundable getTaskInfo() {
+  private static Task.Backgroundable getTaskInfo() {
     return new Task.Backgroundable(null, SyncBundle.message("maven.sync.wrapper.downloading")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) { }
@@ -208,7 +219,6 @@ public class MavenDistributionsCache {
 
   private boolean useWrapper() {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-    return MavenServerManager.WRAPPED_MAVEN.equals(settings.getGeneralSettings().getMavenHome()) ||
-           StringUtil.equals(settings.getGeneralSettings().getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
+    return MavenUtil.isWrapper(settings.getGeneralSettings());
   }
 }

@@ -198,14 +198,12 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
   @Override
   public TextContent excludeRange(TextRange rangeInText) {
-    return rangeInText.getLength() == 0
-           ? this
-           : excludeRanges(List.of(new Exclusion(rangeInText.getStartOffset(), rangeInText.getEndOffset(), false)));
+    return rangeInText.getLength() == 0 ? this : excludeRanges(List.of(Exclusion.exclude(rangeInText)));
   }
 
   @Override
   public TextContent markUnknown(TextRange rangeInText) {
-    return excludeRanges(List.of(new Exclusion(rangeInText.getStartOffset(), rangeInText.getEndOffset(), true)));
+    return excludeRanges(List.of(Exclusion.markUnknown(rangeInText)));
   }
 
   @Override
@@ -224,17 +222,9 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
       throw new IllegalArgumentException("Text ranges " + ranges + " should be between 0 and " + length());
     }
     for (int i = 1; i < ranges.size(); i++) {
-      if (ranges.get(i - 1).end >= ranges.get(i).start) {
+      if (ranges.get(i - 1).end > ranges.get(i).start) {
         throw new IllegalArgumentException("Ranges should be sorted and non-intersecting: " + ranges);
       }
-    }
-
-    if (ranges.size() == 1 && ranges.get(0).start == 0 && ranges.get(0).end == length()) {
-      PsiToken first = (PsiToken) tokens.get(0);
-      return new TextContentImpl(domain, Collections.singletonList(
-        new PsiToken("", first.psi,
-          TextRange.from(first.rangeInPsi.getStartOffset(), 0),
-          ranges.get(0).markUnknown || first.unknown || ((PsiToken) tokens.get(tokens.size() - 1)).unknown)));
     }
 
     int[] offsets = getTokenOffsets();
@@ -250,6 +240,12 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
         newTokens.addAll(((PsiToken)token).splitToken(offsets[i], affecting));
       }
     }
+
+    if (newTokens.isEmpty()) {
+      PsiToken first = (PsiToken) tokens.get(0);
+      newTokens.add(new PsiToken("", first.psi, TextRange.from(first.rangeInPsi.getStartOffset(), 0),
+                                 first.unknown || ((PsiToken)tokens.get(tokens.size() - 1)).unknown));
+    }
     
     return new TextContentImpl(domain, newTokens);
   }
@@ -258,10 +254,12 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
     @SuppressWarnings("unchecked") List<Exclusion>[] affectingExclusions = new List[tokens.size()];
 
     for (Exclusion range : ranges) {
-      if (range.start == range.end && !range.markUnknown) continue;
+      boolean emptyRange = range.start == range.end;
+      if (emptyRange && !range.markUnknown) continue;
 
       int i1 = findTokenIndex(range.start, offsets, true);
-      int i2 = findTokenIndex(range.end, offsets, false);
+      int i2 = findTokenIndex(range.end, offsets, emptyRange);
+      while (i2 > 0 && tokens.get(i2).length() == 0) i2--;
 
       for (int j = i1; j <= i2; j++) {
         List<Exclusion> affecting = affectingExclusions[j];
@@ -386,7 +384,7 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
       if (this == o) return true;
       if (!(o instanceof PsiToken)) return false;
       PsiToken psiToken = (PsiToken) o;
-      return unknown == psiToken.unknown && psi.equals(psiToken.psi) && rangeInPsi.equals(psiToken.rangeInPsi);
+      return unknown == psiToken.unknown && psi.equals(psiToken.psi) && (unknown || rangeInPsi.equals(psiToken.rangeInPsi));
     }
 
     @Override

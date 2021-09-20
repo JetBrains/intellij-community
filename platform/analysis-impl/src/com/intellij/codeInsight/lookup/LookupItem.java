@@ -12,7 +12,6 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,15 +54,6 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   public LookupItem(T o, @NotNull @NonNls String lookupString) {
     setObject(o);
     setLookupString(lookupString);
-  }
-
-  /**
-   * @deprecated use {@link LookupElementBuilder}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static LookupItem fromString(String s) {
-    return new LookupItem<>(s, s);
   }
 
   public void setObject(@NotNull T o) {

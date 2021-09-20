@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.statistics
 
-import com.intellij.featureStatistics.fusCollectors.EventsIdentityThrottle
 import com.intellij.featureStatistics.fusCollectors.EventsRateThrottle
 import com.intellij.featureStatistics.fusCollectors.ThrowableDescription
 import com.intellij.ide.plugins.PluginUtil
@@ -18,14 +17,24 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES }
 
+/**
+ * Collect gradle import stats.
+ *
+ * This collector is an internal implementation aimed gather data on
+ * the Gradle synchronization duration. Phases are also
+ * specific to Gradle build system.
+ */
+@ApiStatus.Internal
 class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.import", 1)
+    private val GROUP = EventLogGroup("build.gradle.import", 3)
 
     val activityIdField = EventFields.Long("ide_activity_id")
     val importPhaseField = EventFields.Enum<Phase>("phase")
@@ -43,8 +52,6 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
     val severityField = EventFields.String("severity", listOf("fatal", "warning"))
     val errorHashField = Int("error_hash")
     val tooManyErrorsField = Boolean("too_many_errors")
-    val errorFramesField = StringListValidatedByCustomRule("error_frames", "method_name")
-    val errorSizeField: EventField<Int> = Int("error_size")
 
     private val errorEvent = GROUP.registerVarargEvent("error",
                                                        activityIdField,
@@ -52,23 +59,25 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
                                                        severityField,
                                                        errorHashField,
                                                        EventFields.PluginInfo,
-                                                       tooManyErrorsField,
-                                                       errorFramesField,
-                                                       errorSizeField)
+                                                       tooManyErrorsField)
 
     private val ourErrorsRateThrottle = EventsRateThrottle(100, 5L * 60 * 1000) // 100 errors per 5 minutes
-    private val ourErrorsIdentityThrottle = EventsIdentityThrottle(50, 60L * 60 * 1000) // 1 unique error per 1 hour
 
+    @JvmStatic
     fun logSyncStarted(project: Project?, activityId: Long) =  syncStartedEvent.log(project, activityId)
+    @JvmStatic
     fun logSyncFinished(project: Project?, activityId: Long, success: Boolean) =  syncFinishedEvent.log(project, activityId, success)
 
+    @JvmStatic
     fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase) = phaseStartedEvent.log(project, activityId, phase)
+    @JvmStatic
     fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long) =
       phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs))
 
+    @JvmStatic
     fun logError(project: Project?, activityId: Long, throwable: Throwable) {
       val description = ThrowableDescription(throwable)
-      val data: MutableList<EventPair<*>> = ArrayList()
+      val data = ArrayList<EventPair<*>>()
       data.add(activityIdField.with(activityId))
 
       val pluginId = PluginUtil.getInstance().findPluginId(throwable)
@@ -78,10 +87,6 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
         val frames = description.getLastFrames(50)
         val framesHash = frames.hashCode()
         data.add(errorHashField.with(framesHash))
-        if (ourErrorsIdentityThrottle.tryPass(framesHash, System.currentTimeMillis())) {
-          data.add(errorFramesField.with(frames))
-          data.add(errorSizeField.with(description.size))
-        }
       }
       else {
         data.add(tooManyErrorsField.with(true))

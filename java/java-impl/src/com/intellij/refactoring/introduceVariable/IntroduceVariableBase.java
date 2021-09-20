@@ -134,7 +134,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return new JavaReplaceChoice(ReplaceChoice.ALL, null, false) {
         @Override
         public PsiExpression[] filter(ExpressionOccurrenceManager manager) {
-          return StreamEx.of(manager.getOccurrences()).filter(expr -> PsiTreeUtil.isAncestor(parent, expr, true))
+          return StreamEx.of(manager.getOccurrences())
+            .filter(expr -> PsiTreeUtil.isAncestor(parent, getPhysicalElement(expr), true))
             .toArray(PsiExpression.EMPTY_ARRAY);
         }
 
@@ -866,9 +867,23 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       String title = occurrencesInfo.myChainMethodName != null && occurrences.length == 1
                      ? JavaRefactoringBundle.message("replace.lambda.chain.detected")
                      : RefactoringBundle.message("replace.multiple.occurrences.found");
-      OccurrencesChooser.<PsiExpression>simpleChooser(editor).showChooser(callback, occurrencesMap, title);
+      createOccurrencesChooser(editor).showChooser(callback, occurrencesMap, title);
     }
     return callback.wasSucceed;
+  }
+
+  @NotNull
+  public static OccurrencesChooser<PsiExpression> createOccurrencesChooser(Editor editor) {
+    return new OccurrencesChooser<>(editor) {
+      @Override
+      protected TextRange getOccurrenceRange(PsiExpression occurrence) {
+        RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
+        if (rangeMarker != null) {
+          return new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+        }
+        return occurrence.getTextRange();
+      }
+    };
   }
 
   private void inplaceIntroduce(@NotNull Project project,
@@ -1337,7 +1352,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return myInplaceIntroducer;
   }
 
-  static class OccurrencesInfo {
+  public static class OccurrencesInfo {
     List<PsiExpression> myOccurrences;
     List<PsiExpression> myNonWrite;
     boolean myCantReplaceAll;
@@ -1345,7 +1360,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     boolean myHasWriteAccess;
     final String myChainMethodName;
 
-    OccurrencesInfo(PsiExpression[] occurrences) {
+    public OccurrencesInfo(PsiExpression[] occurrences) {
+      this(occurrences, true);
+    }
+
+    public OccurrencesInfo(PsiExpression[] occurrences, boolean chainCallPossible) {
       myOccurrences = Arrays.asList(occurrences);
       myNonWrite = new ArrayList<>();
       myCantReplaceAll = false;
@@ -1361,7 +1380,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
       }
       myHasWriteAccess = myOccurrences.size() > myNonWrite.size() && myOccurrences.size() > 1;
-      myChainMethodName = getChainCallExtractor();
+      myChainMethodName = chainCallPossible ? getChainCallExtractor() : null;
     }
 
     private String getChainCallExtractor() {
@@ -1384,7 +1403,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
 
     @NotNull
-    LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> buildOccurrencesMap(PsiExpression expr) {
+    public LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> buildOccurrencesMap(PsiExpression expr) {
       final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = new LinkedHashMap<>();
       if (myChainMethodName != null) {
         if (myOccurrences.size() > 1 && !myCantReplaceAll) {

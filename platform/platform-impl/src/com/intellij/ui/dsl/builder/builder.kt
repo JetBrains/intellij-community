@@ -17,7 +17,7 @@ internal annotation class LayoutDslMarker
 @ApiStatus.Experimental
 fun panel(init: Panel.() -> Unit): DialogPanel {
   val dialogPanelConfig = DialogPanelConfig()
-  val panel = PanelImpl(dialogPanelConfig)
+  val panel = PanelImpl(dialogPanelConfig, null)
   panel.init()
 
   val layout = GridLayout()
@@ -29,10 +29,8 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
 }
 
 private fun initPanel(dialogPanelConfig: DialogPanelConfig, panel: DialogPanel) {
-  /* todo
   panel.preferredFocusedComponent = dialogPanelConfig.preferredFocusedComponent
   panel.validateCallbacks = dialogPanelConfig.validateCallbacks
-  */
   panel.componentValidateCallbacks = dialogPanelConfig.componentValidateCallbacks
   panel.customValidationRequestors = dialogPanelConfig.customValidationRequestors
   panel.applyCallbacks = dialogPanelConfig.applyCallbacks

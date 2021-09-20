@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
@@ -78,19 +79,11 @@ public final class PyPackageManagerUI {
       boolean[] warning = {true};
       ApplicationManager.getApplication().invokeAndWait(() -> {
         if (dependentPackages.size() == 1) {
-          List<String> dep = new ArrayList<>();
-          int size = 1;
-          for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
-            final Set<PyPackage> value = entry.getValue();
-            size = value.size();
-            dep.add(PyBundle.message(
-              "python.packaging.dialog.description.attempt.to.uninstall.for.one.dependent.package.single.package.description",
-              entry.getKey(),
-              StringUtil.join(value, ", ")));
-          }
+          Map.Entry<String, Set<PyPackage>> packageToDependents = ContainerUtil.getOnlyItem(dependentPackages.entrySet());
+          assert packageToDependents != null;
+          Set<PyPackage> dependents = packageToDependents.getValue();
           String message = PyBundle.message("python.packaging.dialog.description.attempt.to.uninstall.for.one.dependent.package",
-                                            StringUtil.join(dep, "\n"),
-                                            size);
+                                            packageToDependents.getKey(), StringUtil.join(dependents, ", "), dependents.size());
           warning[0] =
             MessageDialogBuilder.yesNo(PyBundle.message("python.packaging.warning"), message)
               .asWarning()

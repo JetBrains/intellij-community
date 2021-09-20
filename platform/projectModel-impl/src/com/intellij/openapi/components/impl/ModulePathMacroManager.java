@@ -41,6 +41,10 @@ public class ModulePathMacroManager extends PathMacroManager {
     return result;
   }
 
+  public void onImlFileMoved() {
+    resetCachedReplacePathMap();
+  }
+
   public static ModulePathMacroManager createInstance(Supplier<@SystemIndependent String> moduleDirPointer) {
     return new ModulePathMacroManager(moduleDirPointer);
   }

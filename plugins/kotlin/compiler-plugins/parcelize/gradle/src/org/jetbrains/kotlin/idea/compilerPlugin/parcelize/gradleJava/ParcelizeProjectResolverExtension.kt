@@ -10,8 +10,8 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
 import com.intellij.serialization.PropertyMapping
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.parcelize.ide.ParcelizeGradleModel
-import org.jetbrains.kotlin.parcelize.ide.ParcelizeModelBuilderService
+import org.jetbrains.kotlin.idea.gradleTooling.model.parcelize.ParcelizeGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.model.parcelize.ParcelizeModelBuilderService
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.util.GradleConstants
 

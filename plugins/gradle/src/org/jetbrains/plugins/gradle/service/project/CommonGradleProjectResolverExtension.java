@@ -289,8 +289,9 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   public void populateModuleContentRoots(@NotNull IdeaModule gradleModule,
                                          @NotNull DataNode<ModuleData> ideModule) {
     ExternalProject externalProject = getExternalProject(gradleModule, resolverCtx);
+    Set<String> sourceSetContentRoots = Set.of();
     if (externalProject != null) {
-      addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
+      sourceSetContentRoots = addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
     }
 
     PathPrefixTreeMap<ContentRootData> contentRootIndex = new PathPrefixTreeMap<>();
@@ -308,9 +309,25 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       if (rootDirectory == null) continue;
 
       boolean oldGradle = false;
+
+
       String contentRootPath = FileUtil.toCanonicalPath(rootDirectory.getPath());
-      ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, contentRootPath);
-      contentRootIndex.set(contentRootPath, ideContentRoot);
+
+      // don't add content root if one of source sets already have this content root
+      boolean sameAsSourceSetContentRoot = sourceSetContentRoots.contains(contentRootPath);
+
+      if (!sameAsSourceSetContentRoot) {
+        ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, contentRootPath);
+        contentRootIndex.set(contentRootPath, ideContentRoot);
+
+        Set<File> excluded = gradleContentRoot.getExcludeDirectories();
+        if (excluded != null) {
+          for (File file : excluded) {
+            ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, file.getPath());
+          }
+        }
+      }
+
       if (!resolverCtx.isResolveModulePerSourceSet()) {
         List<? extends IdeaSourceDirectory> sourceDirectories = gradleContentRoot.getSourceDirectories().getAll();
         List<? extends IdeaSourceDirectory> testDirectories = gradleContentRoot.getTestDirectories().getAll();
@@ -342,13 +359,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
           populateContentRoot(contentRootIndex, ExternalSystemSourceType.TEST_RESOURCE, testResourceDirectories);
         }
       }
-
-      Set<File> excluded = gradleContentRoot.getExcludeDirectories();
-      if (excluded != null) {
-        for (File file : excluded) {
-          ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, file.getPath());
-        }
-      }
     }
     Set<String> existsContentRoots = new LinkedHashSet<>();
     for (DataNode<ContentRootData> contentRootDataNode : ExternalSystemApiUtil.findAll(ideModule, ProjectKeys.CONTENT_ROOT)) {
@@ -371,22 +381,32 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     return project;
   }
 
-  private void addExternalProjectContentRoots(@NotNull IdeaModule gradleModule,
-                                              @NotNull DataNode<ModuleData> ideModule,
-                                              @NotNull ExternalProject externalProject) {
+  private Set<String> addExternalProjectContentRoots(@NotNull IdeaModule gradleModule,
+                                                     @NotNull DataNode<ModuleData> ideModule,
+                                                     @NotNull ExternalProject externalProject) {
+    Set<String> contentsRoots = new LinkedHashSet<>();
+    final String buildDirPath = FileUtil.toCanonicalPath(externalProject.getBuildDir().getPath());
+
     processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
       @Override
       public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
         sourceSet.getSources().forEach((key, sourceDirectorySet) -> {
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(key);
             for (File file : sourceDirectorySet.getSrcDirs()) {
-              ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, file.getPath());
-              ideContentRoot.storePath(sourceType, file.getPath());
+              String path = FileUtil.toCanonicalPath(file.getPath());
+            contentsRoots.add(path);
+            ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, path);
+              if (FileUtil.isAncestor(path, buildDirPath, true)) {
+                ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, buildDirPath);
+              }
+              ideContentRoot.storePath(sourceType, path);
               dataNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
             }
           });
       }
     });
+
+    return contentsRoots;
   }
 
   private static void removeDuplicateResources(@NotNull List<? extends IdeaSourceDirectory> sourceDirectories,

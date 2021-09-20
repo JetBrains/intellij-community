@@ -24,7 +24,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.gridLayout.RowGaps
+import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.UIUtil
@@ -40,6 +40,7 @@ import javax.swing.event.HyperlinkEvent
 @ApiStatus.Internal
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        private val panelContext: PanelContext,
+                       private val parent: PanelImpl,
                        val label: JLabel? = null) : Row {
 
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
@@ -58,10 +59,13 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   var internalBottomGap: Int = 0
 
-  var customRowGaps: RowGaps? = null
+  var customRowGaps: VerticalGaps? = null
     private set
 
   val cells = mutableListOf<CellBaseImpl<*>?>()
+
+  private var visible = true
+  private var enabled = true
 
   init {
     label?.let { cell(it) }
@@ -78,7 +82,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
-    val result = CellImpl(dialogPanelConfig, component)
+    val result = CellImpl(dialogPanelConfig, component, this)
     cells.add(result)
 
     if (component is JRadioButton) {
@@ -101,14 +105,20 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabled(isEnabled: Boolean): RowImpl {
-    cells.forEach {
-      when (it) {
-        is CellImpl<*> -> it.enabledFromParent(isEnabled)
-        is PanelImpl -> it.enabled(isEnabled)
-      }
+    enabled = isEnabled
+    if (parent.isEnabled()) {
+      doEnabled(enabled)
     }
-    rowComment?.let { it.isEnabled = isEnabled }
     return this
+  }
+
+  fun enabledFromParent(parentEnabled: Boolean): RowImpl {
+    doEnabled(parentEnabled && enabled)
+    return this
+  }
+
+  fun isEnabled(): Boolean {
+    return enabled && parent.isEnabled()
   }
 
   override fun enabledIf(predicate: ComponentPredicate): RowImpl {
@@ -118,14 +128,20 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun visible(isVisible: Boolean): RowImpl {
-    cells.forEach {
-      when (it) {
-        is CellImpl<*> -> it.visibleFromParent(isVisible)
-        is PanelImpl -> it.visible(isVisible)
-      }
+    visible = isVisible
+    if (parent.isVisible()) {
+      doVisible(visible)
     }
-    rowComment?.let { it.isVisible = isVisible }
     return this
+  }
+
+  fun visibleFromParent(parentVisible: Boolean): RowImpl {
+    doVisible(parentVisible && visible)
+    return this
+  }
+
+  fun isVisible(): Boolean {
+    return visible && parent.isVisible()
   }
 
   override fun topGap(topGap: TopGap): RowImpl {
@@ -139,7 +155,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
-    val result = PanelImpl(dialogPanelConfig)
+    val result = PanelImpl(dialogPanelConfig, this)
     result.init()
     cells.add(result)
     return result
@@ -156,12 +172,12 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun radioButton(text: String, value: Any): Cell<JBRadioButton> {
     val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button with value")
-    val valueType = value::class.javaPrimitiveType ?: value::class.java
-    if (valueType != group.type) {
+    if (value::class.java != group.type) {
       throw UiDslException("Value $value is incompatible with button group binding class ${group.type.simpleName}")
     }
     val binding = group.binding
     val result = radioButton(text)
+    result.component.isSelected = binding.get() == value
     val component = result.component
     result.onApply { if (component.isSelected) group.set(value) }
     result.onReset { component.isSelected = binding.get() == value }
@@ -323,12 +339,32 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component)
   }
 
-  override fun customize(customRowGaps: RowGaps): Row {
+  override fun customize(customRowGaps: VerticalGaps): Row {
     this.customRowGaps = customRowGaps
     return this
   }
 
   fun getIndent(): Int {
     return panelContext.indentCount * dialogPanelConfig.spacing.horizontalIndent
+  }
+
+  private fun doVisible(isVisible: Boolean) {
+    for (cell in cells) {
+      when (cell) {
+        is CellImpl<*> -> cell.visibleFromParent(isVisible)
+        is PanelImpl -> cell.visibleFromParent(isVisible)
+      }
+    }
+    rowComment?.let { it.isVisible = isVisible }
+  }
+
+  private fun doEnabled(isEnabled: Boolean) {
+    cells.forEach {
+      when (it) {
+        is CellImpl<*> -> it.enabledFromParent(isEnabled)
+        is PanelImpl -> it.enabledFromParent(isEnabled)
+      }
+    }
+    rowComment?.let { it.isEnabled = isEnabled }
   }
 }

@@ -28,4 +28,5 @@ public interface DocumentationMarkup {
   HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().setClass("definition");
   HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().setClass("grayed");
   HtmlChunk.Element CENTERED_ELEMENT = HtmlChunk.p().setClass("centered");
+  HtmlChunk.Element EXTERNAL_LINK_ICON = HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow");
 }

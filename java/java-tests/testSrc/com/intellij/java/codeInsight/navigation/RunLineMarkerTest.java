@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
@@ -131,6 +132,10 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     list.get(1).update(event);
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
     myFixture.testAction(list.get(1));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
+    myTempSettings.add(selectedConfiguration);
+    assertEquals("MainTest", selectedConfiguration.getName());
   }
 
   public void testAbstractTestClassMethods() {

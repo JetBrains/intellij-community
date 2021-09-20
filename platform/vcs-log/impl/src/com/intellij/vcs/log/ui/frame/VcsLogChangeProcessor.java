@@ -58,7 +58,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull
   @Override
   public Stream<Wrapper> getSelectedChanges() {
-    return wrap(getSelectedOrAll(myBrowser));
+    return wrap(VcsTreeModelData.selected(myBrowser.getViewer()));
   }
 
   @NotNull

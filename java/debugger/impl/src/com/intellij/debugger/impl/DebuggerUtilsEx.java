@@ -57,6 +57,7 @@ import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.jetbrains.jdi.ArrayReferenceImpl;
+import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ObjectReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
@@ -70,6 +71,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
@@ -82,16 +84,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * @return all CodeFragmentFactoryProviders that provide code fragment factories suitable in the context given
    */
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
-    final DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
-    final List<CodeFragmentFactory> providers = CodeFragmentFactory.EXTENSION_POINT_NAME.getExtensionList();
-    final List<CodeFragmentFactory> suitableFactories = new ArrayList<>(providers.size());
-    if (providers.size() > 0) {
-      for (CodeFragmentFactory factory : providers) {
-        if (factory != defaultFactory && factory.isContextAccepted(context)) {
-          suitableFactories.add(factory);
-        }
+    DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
+    List<CodeFragmentFactory> suitableFactories = new SmartList<>();
+    CodeFragmentFactory.EXTENSION_POINT_NAME.forEachExtensionSafe(factory -> {
+      if (factory != defaultFactory && factory.isContextAccepted(context)) {
+        suitableFactories.add(factory);
       }
-    }
+    });
     suitableFactories.add(defaultFactory); // let default factory be the last one
     return suitableFactories;
   }
@@ -615,6 +614,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       LOG.info(e);
     }
     return null;
+  }
+
+  public static CompletableFuture<Method> getMethodAsync(LocationImpl location) {
+    return location.methodAsync().exceptionally(throwable -> {
+      if (DebuggerUtilsAsync.unwrap(throwable) instanceof IllegalArgumentException) { // Invalid method id
+        LOG.info(throwable);
+        return null;
+      }
+      throw (RuntimeException)throwable;
+    });
   }
 
   @NotNull

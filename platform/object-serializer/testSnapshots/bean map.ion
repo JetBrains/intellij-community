@@ -12,7 +12,9 @@
         foo:bar
       },
       beanMap:[
-      ]
+      ],
+      emptyMap:{
+      }
     },
     {
       '@id':2,
@@ -20,7 +22,11 @@
         'some key':'some value'
       },
       beanMap:[
-      ]
+      ],
+      emptyMap:{
+      }
     }
-  ]
+  ],
+  emptyMap:{
+  }
 }

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -125,7 +126,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     ApplicationManager.getApplication().runWriteAction(() -> {
       // set the output path first so that handlers of RootsChanged event sent after JDK is set
       // would see the updated path
-      String canonicalPath = myUi.getProjectCompilerOutput();
+      String canonicalPath = getCompilerOutputUrl();
       if (canonicalPath.length() > 0) {
         try {
           canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
@@ -134,7 +135,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
           //file doesn't exist yet
         }
         canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-        compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+        compilerProjectExtension.setCompilerOutputUrl(canonicalPath);
       }
       else {
         compilerProjectExtension.setCompilerOutputPointer(null);
@@ -221,6 +222,6 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   public String getCompilerOutputUrl() {
-    return VfsUtilCore.pathToUrl(myUi.getProjectCompilerOutput().trim());
+    return VfsUtilCore.pathToUrl(FileUtil.toCanonicalPath(FileUtil.expandUserHome(myUi.getProjectCompilerOutput().trim()), File.separatorChar));
   }
 }

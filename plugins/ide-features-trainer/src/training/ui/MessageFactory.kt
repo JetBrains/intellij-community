@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import org.intellij.lang.annotations.Language
@@ -10,6 +9,7 @@ import org.jdom.Element
 import org.jdom.Text
 import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
+import training.dsl.LessonUtil
 import training.util.KeymapUtil
 import training.util.openLinkInBrowser
 import java.util.regex.Pattern
@@ -124,7 +124,7 @@ internal object MessageFactory {
           }
           "ide" -> {
             type = MessagePart.MessageType.TEXT_REGULAR
-            textFn = { ApplicationNamesInfo.getInstance().fullProductName }
+            textFn = { LessonUtil.productName }
           }
         }
         val message = MessagePart(type, textFn)

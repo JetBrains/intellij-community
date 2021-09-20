@@ -462,7 +462,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return Comparator.comparing(XLineBreakpoint<P>::getFileUrl).thenComparingInt(XLineBreakpoint::getLine);
   }
 
+  /**
+   * @deprecated use {@link XDebugProcess#getEvaluator()}
+   */
   @Nullable
+  @Deprecated
   public static XDebuggerEvaluator getEvaluator(final XSuspendContext suspendContext) {
     XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
     if (executionStack != null) {

@@ -47,7 +47,8 @@ object DirectiveBasedActionUtils {
             .sorted()
 
         UsefulTestCase.assertOrderedEquals(
-            "All actual $name should be mentioned in test data with '$directive' directive. But no unnecessary $name should be me mentioned",
+            "All actual $name should be mentioned in test data with '$directive' directive. " +
+                    "But no unnecessary $name should be me mentioned, file:\n${file.text}",
             actual,
             expected
         )

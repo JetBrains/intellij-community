@@ -27,11 +27,8 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.environment()?.let {
-
       e.presentation.icon = e.environment()?.getRunToolbarProcess()?.getStopIcon() ?: templatePresentation.icon
-      it.contentToReuse?.let {
-        canBeStopped(it)
-      }
+      true
     } ?: false
 
     if (!RunToolbarProcess.experimentalUpdating()) {
@@ -44,7 +41,7 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
   private fun canBeStopped(descriptor: RunContentDescriptor?): Boolean {
     val processHandler = descriptor?.processHandler
     return (processHandler != null && !processHandler.isProcessTerminated
-            && (!processHandler.isProcessTerminating
-                || processHandler is KillableProcess && (processHandler as KillableProcess).canKillProcess()))
+           && (!processHandler.isProcessTerminating
+               || processHandler is KillableProcess && (processHandler as KillableProcess).canKillProcess()))
   }
 }

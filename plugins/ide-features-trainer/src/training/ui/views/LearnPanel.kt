@@ -3,10 +3,10 @@ package training.ui.views
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalBox
@@ -197,8 +197,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           if (!StatisticBase.isLearnProjectCloseLogged) {
             StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
           }
-          val action = ActionManager.getInstance().getAction("CloseProject")
-          invokeActionForFocusContext(action)
+          CloseProjectWindowHelper().windowClosing(learnToolWindow.project)
         }
       })
       linksPanel.add(exitLink)

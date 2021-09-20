@@ -14,11 +14,13 @@ internal class DialogPanelConfig {
   var spacing = createIntelliJSpacingConfiguration()
   val context = Context()
 
-  var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
-  var customValidationRequestors: MutableMap<JComponent, MutableList<(() -> Unit) -> Unit>> = linkedMapOf()
-  val applyCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
-  val resetCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
-  val isModifiedCallbacks: MutableMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
+  var preferredFocusedComponent: JComponent? = null
+  val validateCallbacks = mutableListOf<() -> ValidationInfo?>()
+  val componentValidateCallbacks = linkedMapOf<JComponent, () -> ValidationInfo?>()
+  val customValidationRequestors = linkedMapOf<JComponent, MutableList<(() -> Unit) -> Unit>>()
+  val applyCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
+  val resetCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
+  val isModifiedCallbacks = linkedMapOf<JComponent?, MutableList<() -> Boolean>>()
 
 }
 
@@ -39,6 +41,7 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val commentBottomGap = JBUI.scale(6)
     override val groupTopGap = JBUI.scale(20)
     override val verticalSmallGap = JBUI.scale(8)
+    override val verticalMediumGap = JBUI.scale(20)
     override val buttonGroupHeaderBottomGap = JBUI.scale(2)
     override val segmentedButtonVerticalGap = JBUI.scale(3)
     override val segmentedButtonHorizontalGap= JBUI.scale(12)

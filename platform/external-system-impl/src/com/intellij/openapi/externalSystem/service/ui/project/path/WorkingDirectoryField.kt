@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.service.ui.project.path
 import com.intellij.ide.wizard.getCanonicalPath
 import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.externalSystem.service.ui.*
 import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor.CompletionType
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
@@ -15,6 +14,9 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.addKeyboardAction
+import com.intellij.openapi.roots.ui.getKeyStrokes
+import com.intellij.openapi.roots.ui.isTextUnderMouse
 import com.intellij.openapi.ui.BrowseFolderRunnable
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.util.RecursionManager

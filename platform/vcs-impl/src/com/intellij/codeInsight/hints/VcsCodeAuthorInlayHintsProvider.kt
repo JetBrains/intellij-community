@@ -22,11 +22,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.ui.layout.*
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.CacheableAnnotationProvider
 import javax.swing.JComponent
 
-private fun isCodeAuthorEnabledInRegistry(): Boolean = Registry.`is`("vcs.code.author.inlay.hints")
+private fun isCodeAuthorEnabledForApplication(): Boolean =
+  !application.isUnitTestMode && Registry.`is`("vcs.code.author.inlay.hints")
 
 private fun isCodeAuthorEnabledInSettings(): Boolean =
   InlayHintsProviderExtension.findProviders()
@@ -38,11 +40,11 @@ private fun isCodeAuthorEnabledInSettings(language: Language): Boolean {
   return hasProviderForLanguage && InlayHintsSettings.instance().hintsShouldBeShown(KEY, language)
 }
 
-internal fun isCodeAuthorInlayHintsEnabled(): Boolean = isCodeAuthorEnabledInRegistry() && isCodeAuthorEnabledInSettings()
+internal fun isCodeAuthorInlayHintsEnabled(): Boolean = isCodeAuthorEnabledForApplication() && isCodeAuthorEnabledInSettings()
 
 @RequiresEdt
 internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
-  if (!isCodeAuthorEnabledInRegistry()) return
+  if (!isCodeAuthorEnabledForApplication()) return
 
   val psiFile = PsiManagerEx.getInstanceEx(project).fileManager.getCachedPsiFile(file)
   if (psiFile != null && !isCodeAuthorEnabledInSettings(psiFile.language)) return
@@ -59,7 +61,7 @@ private val KEY = SettingsKey<NoSettings>("vcs.code.author")
 
 abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
-    if (!isCodeAuthorEnabledInRegistry()) return null
+    if (!isCodeAuthorEnabledForApplication()) return null
 
     val virtualFile = file.virtualFile ?: return null
     val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
@@ -71,7 +73,7 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
   protected abstract fun isAccepted(element: PsiElement): Boolean
 
   override fun createSettings(): NoSettings = NoSettings()
-  override val isVisibleInSettings: Boolean get() = isCodeAuthorEnabledInRegistry()
+  override val isVisibleInSettings: Boolean get() = isCodeAuthorEnabledForApplication()
 
   override val name: String get() = message("label.code.author.inlay.hints")
   override val key: SettingsKey<NoSettings> get() = KEY

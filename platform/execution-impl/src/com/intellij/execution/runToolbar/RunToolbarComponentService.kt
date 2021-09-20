@@ -29,13 +29,13 @@ class RunToolbarComponentService(val project: Project) {
           }
         }
 
-        override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+        override fun processTerminating(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
             if (env.project == project) {
               stop(env)
             }
           }
-          }
+        }
       })
 
       extraSlots.addListener(object : ActiveListener {

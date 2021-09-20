@@ -203,26 +203,17 @@ public class MavenModuleBuilderHelper {
 
     MavenRunner runner = MavenRunner.getInstance(project);
     MavenRunnerSettings settings = runner.getState().clone();
+
     Map<String, String> props = settings.getMavenProperties();
-
     props.put("interactiveMode", "false");
-    //props.put("archetypeGroupId", myArchetype.groupId);
-    //props.put("archetypeArtifactId", myArchetype.artifactId);
-    //props.put("archetypeVersion", myArchetype.version);
-    //if (myArchetype.repository != null) props.put("archetypeRepository", myArchetype.repository);
-
-    //props.put("groupId", myProjectId.getGroupId());
-    //props.put("artifactId", myProjectId.getArtifactId());
-    //props.put("version", myProjectId.getVersion());
-
     props.putAll(myPropertiesToCreateByArtifact);
 
-    runner.run(params, settings, () -> copyGeneratedFiles(workingDir, pom, project));
+    runner.run(params, settings, () -> copyGeneratedFiles(workingDir, pom, project, props.get("artifactId")));
   }
 
-  private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project) {
+  private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project, String artifactId) {
     try {
-      String artifactId = myProjectId.getArtifactId();
+      artifactId = artifactId != null ? artifactId : myProjectId.getArtifactId();
       if (artifactId != null) {
         FileUtil.copyDir(new File(workingDir, artifactId), new File(pom.getParent().getPath()));
       }
@@ -234,6 +225,7 @@ public class MavenModuleBuilderHelper {
     }
 
     pom.getParent().refresh(false, false);
+    pom.refresh(false, false);
     updateProjectPom(project, pom);
 
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);

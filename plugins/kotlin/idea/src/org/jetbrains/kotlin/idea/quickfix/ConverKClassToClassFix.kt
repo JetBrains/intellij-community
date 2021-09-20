@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -19,7 +20,7 @@ import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
-class ConvertKClassToClassFix(element: KtExpression) : KotlinQuickFixAction<KtExpression>(element) {
+class ConvertKClassToClassFix(element: KtExpression) : KotlinQuickFixAction<KtExpression>(element), HighPriorityAction {
     override fun getText() = familyName
     override fun getFamilyName() = KotlinBundle.message("convert.from.class.to.kclass")
 

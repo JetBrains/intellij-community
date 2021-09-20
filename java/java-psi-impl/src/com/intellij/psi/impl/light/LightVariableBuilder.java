@@ -64,11 +64,13 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     return myModifierList;
   }
 
+  @SuppressWarnings("unchecked")
   public T setModifiers(String... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
     return (T)this;
   }
 
+  @SuppressWarnings("unchecked")
   public T setModifierList(LightModifierList modifierList) {
     myModifierList = modifierList;
     return (T)this;
@@ -130,6 +132,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
+  @SuppressWarnings("unchecked")
   public T setBaseIcon(Icon baseIcon) {
     myBaseIcon = baseIcon;
     return (T)this;

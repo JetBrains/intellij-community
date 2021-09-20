@@ -1176,6 +1176,16 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/kt17295.kt");
         }
 
+        @TestMetadata("ktij12731.kt")
+        public void testKtij12731() throws Exception {
+            runTest("testData/stepping/custom/ktij12731.kt");
+        }
+
+        @TestMetadata("ktij15642.kt")
+        public void testKtij15642() throws Exception {
+            runTest("testData/stepping/custom/ktij15642.kt");
+        }
+
         @TestMetadata("manyFilesWithInlineCalls1.kt")
         public void testManyFilesWithInlineCalls1() throws Exception {
             runTest("testData/stepping/custom/manyFilesWithInlineCalls1.kt");
@@ -1234,6 +1244,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("smartStepIntoFunWithDefaultArgs.kt")
         public void testSmartStepIntoFunWithDefaultArgs() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");
+        }
+
+        @TestMetadata("smartStepIntoInlineFun.kt")
+        public void testSmartStepIntoInlineFun() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInlineFun.kt");
         }
 
         @TestMetadata("smartStepIntoInlinedFunLiteral.kt")

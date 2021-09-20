@@ -7,8 +7,9 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
+import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.options.ConfigurationException
@@ -22,24 +23,61 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.ui.layout.*
 
 
-fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>,
-                    project: Project?, moduleBuilder: ModuleBuilder): CellBuilder<JdkComboBox> {
-  return sdkComboBox(sdkModel, sdkProperty, project, moduleBuilder::isSuitableSdkType)
+fun Row.sdkComboBox(
+  sdkModel: ProjectSdksModel,
+  sdkProperty: GraphProperty<Sdk?>,
+  project: Project?,
+  moduleBuilder: ModuleBuilder
+): CellBuilder<JdkComboBox> {
+  return component(createSdkComboBox(project, sdkModel, sdkProperty, StdModuleTypes.JAVA.id, moduleBuilder::isSuitableSdkType))
 }
 
-fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>,
-                    project: Project?, sdkTypeFilter: (SdkTypeId) -> Boolean
-): CellBuilder<JdkComboBox> {
+fun com.intellij.ui.dsl.builder.Row.sdkComboBox(
+  context: WizardContext,
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkPropertyId: String,
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
+  sdkFilter: ((Sdk) -> Boolean)? = null,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
+  onNewSdkAdded: ((Sdk) -> Unit)? = null
+): com.intellij.ui.dsl.builder.Cell<JdkComboBox> {
+  val sdksModel = ProjectSdksModel()
+
+  Disposer.register(context.disposable, Disposable {
+    sdksModel.disposeUIResources()
+  })
+
+  val comboBox = createSdkComboBox(context.project, sdksModel, sdkProperty, sdkPropertyId,
+    sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded)
+
+  return cell(comboBox)
+    .validationOnApply { validateSdk(sdkProperty, sdksModel) }
+    .onApply { context.projectJdk = sdkProperty.get() }
+}
+
+fun createSdkComboBox(
+  project: Project?,
+  sdkModel: ProjectSdksModel,
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkPropertyId: String,
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
+  sdkFilter: ((Sdk) -> Boolean)? = null,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
+  onNewSdkAdded: ((Sdk) -> Unit)? = null
+): JdkComboBox {
+
   sdkModel.reset(project)
 
-  val sdkComboBox = JdkComboBox(project, sdkModel, sdkTypeFilter, JdkComboBox.getSdkFilter(sdkTypeFilter), sdkTypeFilter, null)
-  val moduleType: ModuleType<*> = StdModuleTypes.JAVA
+  val sdkComboBox = JdkComboBox(project, sdkModel, sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded)
 
-  val selectedJdkProperty = "jdk.selected." + moduleType.id
+  val selectedJdkProperty = "jdk.selected.$sdkPropertyId"
   val stateComponent = if (project == null) PropertiesComponent.getInstance() else PropertiesComponent.getInstance(project)
 
   sdkComboBox.addActionListener {
@@ -51,9 +89,9 @@ fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>
   }
 
   val lastUsedSdk = stateComponent.getValue(selectedJdkProperty)
-  ProjectWizardUtil.preselectJdkForNewModule(project, lastUsedSdk, sdkComboBox, sdkTypeFilter)
+  ProjectWizardUtil.preselectJdkForNewModule(project, lastUsedSdk, sdkComboBox, sdkTypeFilter ?: { true })
 
-  return this.component(sdkComboBox)
+  return sdkComboBox
 }
 
 private fun getTargetJdk(sdkComboBox: JdkComboBox, project: Project?): Sdk? {

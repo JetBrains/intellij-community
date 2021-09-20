@@ -2,7 +2,6 @@
 package com.intellij.ui
 
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
 import java.awt.Component
@@ -18,11 +17,10 @@ class ScalingDeferredSquareImageIcon<K : Any>(size: Int, defaultIcon: Icon,
   private val scaledIconCache = ScaleContext.Cache { scaleCtx ->
     IconDeferrer.getInstance().defer(baseIcon, key) {
       try {
-        val image = imageLoader(it)
-        val hidpiImage = ImageUtil.ensureHiDPI(image, scaleCtx)
-        val scaledSize = scaleCtx.apply(size.toDouble(), ScaleType.USR_SCALE).toInt()
-        val scaledImage = ImageUtil.scaleImage(hidpiImage, scaledSize, scaledSize)
-        IconUtil.createImageIcon(scaledImage)
+        imageLoader(it)?.let { image ->
+          val resizedImage = ImageUtil.resize(image, size, scaleCtx)
+          IconUtil.createImageIcon(resizedImage)
+        } ?: baseIcon
       }
       catch (e: Exception) {
         baseIcon

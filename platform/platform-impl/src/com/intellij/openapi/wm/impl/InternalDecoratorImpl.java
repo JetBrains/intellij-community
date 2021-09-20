@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
@@ -17,15 +18,19 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.ComponentWithMnemonics;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.hover.HoverListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +43,28 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class InternalDecoratorImpl extends InternalDecorator implements Queryable, DataProvider, ComponentWithMnemonics {
   @ApiStatus.Internal
   public static final Key<Boolean> SHARED_ACCESS_KEY = Key.create("sharedAccess");
+  @ApiStatus.Internal
+  static final Key<Boolean> HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create("HideCommonToolWindowButtons");
+  static final Key<Boolean> INACTIVE_LOOK = Key.create("InactiveLook");
 
+  public enum Mode {
+    SINGLE, VERTICAL_SPLIT, HORIZONTAL_SPLIT, CELL;
+
+    public boolean isTopLevel() {
+      return this == SINGLE || this == VERTICAL_SPLIT || this == HORIZONTAL_SPLIT;
+    }
+  }
+
+  private final ToolWindowContentUi myContentUi;
+  private final JComponent myDecoratorChild;
+  private Mode myMode = null;
+  private boolean isSplitUnsplitInProgress;
   private final ToolWindowImpl toolWindow;
 
   @Nullable
@@ -62,19 +81,23 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   private final ToolWindowHeader header;
   private final Wrapper notificationHeader = new Wrapper();
+  private InternalDecoratorImpl myFirstDecorator;
+  private InternalDecoratorImpl mySecondDecorator;
+  private Splitter mySplitter;
 
   InternalDecoratorImpl(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi, @NotNull JComponent decoratorChild) {
-    setLayout(new BorderLayout());
-
+    myContentUi = contentUi;
+    myDecoratorChild = decoratorChild;
     this.toolWindow = toolWindow;
 
     setFocusable(false);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    updateMode(Mode.SINGLE);
 
     header = new ToolWindowHeader(toolWindow, contentUi, () -> toolWindow.createPopupGroup(true)) {
       @Override
       protected boolean isActive() {
-        return toolWindow.isActive();
+        return toolWindow.isActive() && Boolean.TRUE != UIUtil.getClientProperty(InternalDecoratorImpl.this, INACTIVE_LOOK);
       }
 
       @Override
@@ -89,18 +112,133 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
     dividerAndHeader.setOpaque(false);
     dividerAndHeader.add(JBUI.Panels.simplePanel(header).addToBottom(notificationHeader), BorderLayout.SOUTH);
-    add(dividerAndHeader, BorderLayout.NORTH);
+
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 
-    add(decoratorChild, BorderLayout.CENTER);
-
-    setBorder(new InnerPanelBorder(toolWindow));
-
     if (Registry.is("ide.experimental.ui")) {
       new ToolwindowHoverListener().addTo(this);
     }
+  }
+
+  public void updateMode(Mode mode) {
+    if (mode == myMode) return;
+    myMode = mode;
+    removeAll();
+    setBorder(null);
+    switch (mode) {
+      case SINGLE:
+      case CELL: {
+        setLayout(new BorderLayout());
+        add(dividerAndHeader, BorderLayout.NORTH);
+        add(myDecoratorChild, BorderLayout.CENTER);
+        ApplicationManager.getApplication().invokeLater(() -> setBorder(new InnerPanelBorder(toolWindow)));
+        return;
+      }
+      case VERTICAL_SPLIT:
+      case HORIZONTAL_SPLIT: {
+        mySplitter = new OnePixelSplitter(mode == Mode.VERTICAL_SPLIT);
+        mySplitter.setFirstComponent(myFirstDecorator);
+        mySplitter.setSecondComponent(mySecondDecorator);
+
+        setLayout(new BorderLayout());
+        add(mySplitter, BorderLayout.CENTER);
+      }
+    }
+  }
+
+  public void splitWithContent(@NotNull Content content, boolean horizontal) {
+    if (mySecondDecorator == null) {
+      mySecondDecorator = toolWindow.createCellDecorator();
+      mySecondDecorator.getContentManager().addContentManagerListener(new ContentManagerListener() {
+        @Override
+        public void contentRemoved(@NotNull ContentManagerEvent event) {
+          if (!isSplitUnsplitInProgress && !mySecondDecorator.isSplitUnsplitInProgress && mySecondDecorator.getContentManager().isEmpty()) {
+            unsplit(myFirstDecorator.getContentManager().getSelectedContent());
+          }
+        }
+      });
+    }
+    if (myFirstDecorator == null) {
+      myFirstDecorator = toolWindow.createCellDecorator();
+      myFirstDecorator.getContentManager().addContentManagerListener(new ContentManagerListener() {
+        @Override
+        public void contentRemoved(@NotNull ContentManagerEvent event) {
+          if (!isSplitUnsplitInProgress && !myFirstDecorator.isSplitUnsplitInProgress && myFirstDecorator.getContentManager().isEmpty()) {
+            unsplit(mySecondDecorator.getContentManager().getSelectedContent());
+          }
+        }
+      });
+      myFirstDecorator.updateMode(Mode.CELL);
+      for (Content c : getContentManager().getContents()) {
+        moveContent(c, this, (c != content ? myFirstDecorator : mySecondDecorator));
+      }
+    }
+    myFirstDecorator.updateMode(Mode.CELL);
+    mySecondDecorator.updateMode(Mode.CELL);
+    updateMode(horizontal ? Mode.HORIZONTAL_SPLIT : Mode.VERTICAL_SPLIT);
+  }
+
+  private static void moveContent(@NotNull Content content, @NotNull InternalDecoratorImpl source, @NotNull InternalDecoratorImpl target) {
+    ContentManager targetContentManager = target.getContentManager();
+    if (Objects.equals(content.getManager(), targetContentManager)) return;
+
+    try {
+      source.isSplitUnsplitInProgress = true;
+      content.putUserData(Content.TEMPORARY_REMOVED_KEY, Boolean.TRUE);
+      ObjectUtils.consumeIfNotNull(content.getManager(), manager -> manager.removeContent(content, false));
+      ((ContentImpl)content).setManager(targetContentManager);
+      targetContentManager.addContent(content);
+    } finally {
+      content.putUserData(Content.TEMPORARY_REMOVED_KEY, null);
+      source.isSplitUnsplitInProgress = false;
+    }
+  }
+
+  public void unsplit(@Nullable Content toSelect) {
+    if (!myMode.isTopLevel()) {
+      ObjectUtils.consumeIfNotNull(findNearestDecorator(getParent()), decorator -> decorator.unsplit(toSelect));
+      return;
+    }
+    if (isSplitUnsplitInProgress) {
+      return;
+    }
+    isSplitUnsplitInProgress = true;
+    try {
+      if (myFirstDecorator == null || mySecondDecorator == null) return;
+      for (Content c : myFirstDecorator.getContentManager().getContents()) {
+        moveContent(c, myFirstDecorator, this);
+      }
+      for (Content c : mySecondDecorator.getContentManager().getContents()) {
+        moveContent(c, mySecondDecorator, this);
+      }
+      updateMode(Mode.SINGLE);
+      ObjectUtils.consumeIfNotNull(myFirstDecorator, decorator -> Disposer.dispose(decorator.getContentManager()));
+      ObjectUtils.consumeIfNotNull(mySecondDecorator, decorator -> Disposer.dispose(decorator.getContentManager()));
+      if (toSelect != null) {
+        ObjectUtils.consumeIfNotNull(toSelect.getManager(), m -> m.setSelectedContent(toSelect));
+      }
+      myFirstDecorator = null;
+      mySecondDecorator = null;
+      mySplitter = null;
+    }
+    finally {
+      isSplitUnsplitInProgress = false;
+    }
+  }
+
+  public void setMode(Mode mode) {
+    myMode = mode;
+  }
+
+  public Mode getMode() {
+    return myMode;
+  }
+
+  @Override
+  public ContentManager getContentManager() {
+    return myContentUi.getContentManager();
   }
 
   @Override
@@ -118,7 +256,8 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   @Override
   public String toString() {
-    return toolWindow.getId();
+    return toolWindow.getId() + ": " + StringUtil.trimMiddle(Arrays.toString(Arrays.stream(getContentManager().getContents()).map(
+      content -> content.getDisplayName()).toArray()), 40);
   }
 
   @NotNull
@@ -352,6 +491,34 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
         glassPane.addMouseMotionPreprocessor(listener, disposable);
         glassPane.addMousePreprocessor(listener, disposable);
       }
+    // Under construction
+    //if (Registry.is("ide.allow.split.and.reorder.in.tool.window")) {
+    //  new ToolWindowInnerDragHelper(disposable, this).start();
+    //}
+  }
+
+  @Override
+  public void reshape(int x, int y, int w, int h) {
+    super.reshape(x, y, w, h);
+    InternalDecoratorImpl topLevelDecorator = findTopLevelDecorator(this);
+    if (topLevelDecorator == null || !topLevelDecorator.isShowing()) {
+      putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null);
+      UIUtil.putClientProperty(this, HIDE_COMMON_TOOLWINDOW_BUTTONS, null);
+      UIUtil.putClientProperty(this, INACTIVE_LOOK, null);
+    } else {
+      Object hideLabel = SwingUtilities.convertPoint(this, x, y, topLevelDecorator).equals(new Point()) ? null : "true";
+      putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL,
+                        hideLabel);
+      Point topScreenLocation = topLevelDecorator.getLocationOnScreen();
+      topScreenLocation.x += topLevelDecorator.getWidth();
+      Point screenLocation = getLocationOnScreen();
+      screenLocation.x += w;
+      Boolean hideButtons = topScreenLocation.equals(screenLocation) ? null : Boolean.TRUE;
+      Boolean hideActivity = topScreenLocation.y == screenLocation.y ? null : Boolean.TRUE;
+      UIUtil.putClientProperty(this, HIDE_COMMON_TOOLWINDOW_BUTTONS, hideButtons);
+      UIUtil.putClientProperty(this, INACTIVE_LOOK, hideActivity);
+    }
+    myContentUi.update();
   }
 
   @Override
@@ -388,7 +555,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     }
     validate();
   }
-  
+
   private static final class ResizeOrMoveDocketToolWindowMouseListener extends MouseAdapter {
     private final JComponent divider;
     private final IdeGlassPane glassPane;
@@ -495,6 +662,21 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     container.setFocusTraversalPolicy(policy);
     installDefaultFocusTraversalKeys(container, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
     installDefaultFocusTraversalKeys(container, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS);
+  }
+
+  @Nullable
+  public static InternalDecoratorImpl findTopLevelDecorator(Component component) {
+    Component parent = component != null ? component.getParent() : null;
+    InternalDecoratorImpl candidate = null;
+    while (parent != null) {
+      if (parent instanceof InternalDecoratorImpl) candidate = (InternalDecoratorImpl)parent;
+      parent = parent.getParent();
+    }
+    return candidate;
+  }
+
+  public static InternalDecoratorImpl findNearestDecorator(Component component) {
+    return (InternalDecoratorImpl)ComponentUtil.findParentByCondition(component, c -> c instanceof InternalDecoratorImpl);
   }
 
   private static void installDefaultFocusTraversalKeys(@NotNull Container container, int id) {

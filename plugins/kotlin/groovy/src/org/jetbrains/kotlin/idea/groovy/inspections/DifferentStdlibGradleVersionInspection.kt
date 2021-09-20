@@ -10,8 +10,6 @@ import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.groovy.KotlinGroovyBundle
-import org.jetbrains.kotlin.idea.inspections.gradle.KotlinGradleInspectionVisitor
-import org.jetbrains.kotlin.idea.inspections.gradle.getResolvedKotlinGradleVersion
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.kotlin.idea.roots.findGradleProjectStructure

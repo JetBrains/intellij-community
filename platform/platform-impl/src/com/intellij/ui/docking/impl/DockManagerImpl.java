@@ -79,16 +79,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   @Override
-  public void register(@NotNull DockContainer container) {
-    if (container instanceof Disposable) {
-      register(container, (Disposable)container);
-    }
-    else {
-      myContainers.add(container);
-    }
-  }
-
-  @Override
   public void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable) {
     myContainers.add(container);
     Disposer.register(parentDisposable, new Disposable() {

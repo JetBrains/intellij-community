@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.*
-import com.intellij.ui.dsl.gridLayout.RowGaps
+import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -52,14 +52,24 @@ enum class TopGap {
   /**
    * See [SpacingConfiguration.verticalSmallGap]
    */
-  SMALL
+  SMALL,
+
+  /**
+   * See [SpacingConfiguration.verticalMediumGap]
+   */
+  MEDIUM
 }
 
 enum class BottomGap {
   /**
    * See [SpacingConfiguration.verticalSmallGap]
    */
-  SMALL
+  SMALL,
+
+  /**
+   * See [SpacingConfiguration.verticalMediumGap]
+   */
+  MEDIUM
 }
 
 @ApiStatus.Experimental
@@ -88,14 +98,14 @@ interface Row {
   fun placeholder(): Placeholder
 
   /**
-   * Sets visibility for all components inside row including comment [Row.comment].
-   * See also [CellBase.visible] description
+   * Sets visibility of the row including comment [Row.comment] and all children recursively.
+   * The row is invisible while there is an invisible parent
    */
   fun visible(isVisible: Boolean): Row
 
   /**
-   * Sets enabled state for all components inside row including comment [Row.comment].
-   * See also [CellBase.enabled] description
+   * Sets enabled state of the row including comment [Row.comment] and all children recursively.
+   * The row is disabled while there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): Row
 
@@ -178,5 +188,5 @@ interface Row {
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
    */
-  fun customize(customRowGaps: RowGaps): Row
+  fun customize(customRowGaps: VerticalGaps): Row
 }

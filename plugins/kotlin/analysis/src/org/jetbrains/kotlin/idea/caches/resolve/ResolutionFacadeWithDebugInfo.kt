@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -39,14 +40,23 @@ private class ResolutionFacadeWithDebugInfo(
         get() = delegate.project
 
     override fun analyze(element: KtElement, bodyResolveMode: BodyResolveMode): BindingContext {
-        return wrapExceptions({ ResolvingWhat(listOf(element), bodyResolveMode) }) {
+        return wrapExceptions({ ResolvingWhat(element, bodyResolveMode = bodyResolveMode) }) {
             delegate.analyze(element, bodyResolveMode)
         }
     }
 
     override fun analyze(elements: Collection<KtElement>, bodyResolveMode: BodyResolveMode): BindingContext {
-        return wrapExceptions({ ResolvingWhat(elements, bodyResolveMode) }) {
+        return wrapExceptions({ ResolvingWhat(elements = elements, bodyResolveMode = bodyResolveMode) }) {
             delegate.analyze(elements, bodyResolveMode)
+        }
+    }
+
+    override fun analyzeWithAllCompilerChecks(
+        element: KtElement,
+        callback: DiagnosticSink.DiagnosticsCallback?
+    ): AnalysisResult {
+        return wrapExceptions({ ResolvingWhat(element) }) {
+            delegate.analyzeWithAllCompilerChecks(element, callback)
         }
     }
 
@@ -54,13 +64,13 @@ private class ResolutionFacadeWithDebugInfo(
         elements: Collection<KtElement>,
         callback: DiagnosticSink.DiagnosticsCallback?
     ): AnalysisResult {
-        return wrapExceptions({ ResolvingWhat(elements) }) {
+        return wrapExceptions({ ResolvingWhat(elements = elements) }) {
             delegate.analyzeWithAllCompilerChecks(elements, callback)
         }
     }
 
     override fun resolveToDescriptor(declaration: KtDeclaration, bodyResolveMode: BodyResolveMode): DeclarationDescriptor {
-        return wrapExceptions({ ResolvingWhat(listOf(declaration), bodyResolveMode) }) {
+        return wrapExceptions({ ResolvingWhat(declaration, bodyResolveMode = bodyResolveMode) }) {
             delegate.resolveToDescriptor(declaration, bodyResolveMode)
         }
     }
@@ -83,14 +93,14 @@ private class ResolutionFacadeWithDebugInfo(
 
     @FrontendInternals
     override fun <T : Any> getFrontendService(element: PsiElement, serviceClass: Class<T>): T {
-        return wrapExceptions({ ResolvingWhat(listOf(element), serviceClass = serviceClass) }) {
+        return wrapExceptions({ ResolvingWhat(element, serviceClass = serviceClass) }) {
             delegate.getFrontendService(element, serviceClass)
         }
     }
 
     @FrontendInternals
     override fun <T : Any> tryGetFrontendService(element: PsiElement, serviceClass: Class<T>): T? {
-        return wrapExceptions({ ResolvingWhat(listOf(element), serviceClass = serviceClass) }) {
+        return wrapExceptions({ ResolvingWhat(element, serviceClass = serviceClass) }) {
             delegate.tryGetFrontendService(element, serviceClass)
         }
     }
@@ -130,10 +140,10 @@ private class KotlinIdeaResolutionException(
             append(creationPlace.description())
         })
         for (element in resolvingWhat.elements.withIndex()) {
-            withAttachment("element${element.index}.kt", element.value.text)
-            withAttachment(
+            withPsiAttachment("element${element.index}.kt", element.value)
+            withPsiAttachment(
                 "file${element.index}.kt",
-                element.value.containingFile?.text ?: "No file! 'element.value' ${element.value} have 'containingFile' == null"
+                element.value.containingFile
             )
         }
     }
@@ -160,13 +170,14 @@ private class CreationPlace(
 }
 
 private class ResolvingWhat(
+    val element: PsiElement? = null,
     val elements: Collection<PsiElement> = emptyList(),
     private val bodyResolveMode: BodyResolveMode? = null,
     private val serviceClass: Class<*>? = null,
     private val moduleDescriptor: ModuleDescriptor? = null
 ) {
     fun shortDescription() = serviceClass?.let { "getting service ${serviceClass.simpleName}" }
-        ?: "analyzing ${elements.firstOrNull()?.javaClass?.simpleName ?: ""}"
+        ?: "analyzing ${(element ?: elements.firstOrNull())?.javaClass?.simpleName ?: ""}"
 
     fun description(): String {
         return buildString {
@@ -181,6 +192,7 @@ private class ResolvingWhat(
                 appendLine()
             }
             appendLine("Elements:")
+            element?.let { appendElement(it) }
             for (element in elements) {
                 appendElement(element)
             }

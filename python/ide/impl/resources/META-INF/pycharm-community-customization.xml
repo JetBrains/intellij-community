@@ -35,18 +35,10 @@
                             implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
                             order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
 
-    <projectConfigurable groupId="build"
-                         id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.BuildoutModulesConfigurable.display.name"
-                         instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
-
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
-    <directoryProjectConfigurator implementation="com.jetbrains.python.buildout.BuildoutFacetConfigurator" id="buildout"
-                                  order="after sourceRoot"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.PlatformInspectionProfileConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.newProject.welcome.PyWelcomeConfigurator" id="welcome" order="last"/>
 

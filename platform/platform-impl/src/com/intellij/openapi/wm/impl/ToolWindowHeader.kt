@@ -68,7 +68,14 @@ abstract class ToolWindowHeader internal constructor(
           arrayOf(tabListAction, actionGroup, DockToolWindowAction(), ShowOptionsAction(), HideAction())
         }
 
-        override fun getChildren(e: AnActionEvent?) = children
+        override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+          val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(e?.getData(PlatformDataKeys.CONTEXT_COMPONENT))
+          val b = UIUtil.getClientProperty(nearestDecorator, InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
+          if (b == true) {
+            return (children.filter { it !is DockToolWindowAction && it !is ShowOptionsAction && it !is HideAction}).toTypedArray()
+          }
+          return children
+        }
 
         override fun isDumbAware() = true
       },
@@ -208,15 +215,17 @@ abstract class ToolWindowHeader internal constructor(
     val clip = g2d.clip
     val type = toolWindow.type
     val image: Image?
+    val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
+    val drawTopLine = type != ToolWindowType.FLOATING && !UIUtil.isClientPropertyTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
     if (isActive) {
       if (activeImage == null ||  /*myActiveImage.getHeight() != r.height ||*/type != imageType) {
-        activeImage = drawToBuffer(g2d, true, r.height, type == ToolWindowType.FLOATING)
+        activeImage = drawToBuffer(g2d, true, r.height, drawTopLine)
       }
       image = activeImage
     }
     else {
       if (this.image == null ||  /*myImage.getHeight() != r.height ||*/type != imageType) {
-        this.image = drawToBuffer(g2d, false, r.height, type == ToolWindowType.FLOATING)
+        this.image = drawToBuffer(g2d, false, r.height, drawTopLine)
       }
       image = this.image
     }
@@ -300,11 +309,11 @@ abstract class ToolWindowHeader internal constructor(
   }
 }
 
-private fun drawToBuffer(g2d: Graphics2D, active: Boolean, height: Int, floating: Boolean): BufferedImage {
+private fun drawToBuffer(g2d: Graphics2D, active: Boolean, height: Int, drawTopLine: Boolean): BufferedImage {
   val width = 150
   val image = ImageUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_RGB)
   val g = image.createGraphics()
-  UIUtil.drawHeader(g, 0, width, height, active, true, !floating, true)
+  UIUtil.drawHeader(g, 0, width, height, active, true, drawTopLine, true)
   g.dispose()
   return image
 }

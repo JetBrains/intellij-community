@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionOrStringFragment
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -187,7 +187,7 @@ private fun smartSelectElement(
         return
     }
 
-    if (elements.size == 1 || ApplicationManager.getApplication().isUnitTestMode) {
+    if (elements.size == 1 || isUnitTestMode()) {
         callback(elements.first())
         return
     }

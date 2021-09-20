@@ -103,7 +103,8 @@ public final class MavenExternalParameters {
     Sdk jdk = getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings);
     params.setJdk(jdk);
 
-    final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
+    File mavenWrapperFile = getMavenWrapper(project, parameters.getWorkingDirPath(), coreSettings);
+    final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration, mavenWrapperFile);
     final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
     if(mavenVersion == null) {
       throw new ExecutionException(MavenProjectBundle.message("dialog.message.maven.home.directory.invalid", mavenHome));
@@ -156,10 +157,18 @@ public final class MavenExternalParameters {
                                       : EncodingProjectManager.getInstance(project);
     params.setCharset(encodingManager.getDefaultCharset());
 
-    addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters);
+    addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters, runConfiguration);
     MavenUtil.addEventListener(mavenVersion, params);
 
     return params;
+  }
+
+  @Nullable
+  private static File getMavenWrapper(@Nullable Project project,
+                              @NotNull String workingDirPath,
+                              @NotNull MavenGeneralSettings coreSettings) {
+    return (project != null && MavenUtil.isWrapper(coreSettings))
+           ? MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirPath).getMavenHome() : null;
   }
 
   static @Nullable String getRunVmOptions(@Nullable MavenRunnerSettings runnerSettings,
@@ -404,18 +413,16 @@ public final class MavenExternalParameters {
                                          String mavenHome,
                                          MavenGeneralSettings coreSettings,
                                          MavenRunnerSettings runnerSettings,
-                                         MavenRunnerParameters parameters) {
+                                         MavenRunnerParameters parameters,
+                                         @Nullable MavenRunConfiguration runConfiguration) {
     encodeCoreAndRunnerSettings(coreSettings, mavenHome, parametersList);
 
     if (runnerSettings.isSkipTests()) {
       parametersList.addProperty("skipTests", "true");
     }
 
-    for (Map.Entry<String, String> entry : runnerSettings.getMavenProperties().entrySet()) {
-      if (entry.getKey().length() > 0) {
-        parametersList.addProperty(entry.getKey(), entry.getValue());
-      }
-    }
+    addProperty(parametersList, runnerSettings.getMavenProperties().entrySet());
+    if (runConfiguration != null) addProperty(parametersList, runConfiguration.getSettings().getMavenProperties().entrySet());
 
     for (String goal : parameters.getGoals()) {
       parametersList.add(goal);
@@ -429,6 +436,14 @@ public final class MavenExternalParameters {
     addOption(parametersList, "P", encodeProfiles(parameters.getProfilesMap()));
   }
 
+  private static void addProperty(ParametersList parametersList, Set<Map.Entry<String, String>> mavenProperties) {
+    for (Map.Entry<String, String> entry : mavenProperties) {
+      if (entry.getKey().length() > 0) {
+        parametersList.addProperty(entry.getKey(), entry.getValue());
+      }
+    }
+  }
+
   private static void addOption(ParametersList cmdList, @NonNls String key, @NonNls String value) {
     if (!StringUtil.isEmptyOrSpaces(value)) {
       cmdList.add("-" + key);
@@ -438,7 +453,7 @@ public final class MavenExternalParameters {
 
   @NotNull
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
-    return resolveMavenHome(coreSettings, null, null);
+    return resolveMavenHome(coreSettings, null, null, null);
   }
 
   /**
@@ -452,8 +467,9 @@ public final class MavenExternalParameters {
   @NlsSafe
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
                                         @Nullable Project project,
-                                        @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
-    final File file = MavenUtil.resolveMavenHomeDirectory(coreSettings.getMavenHome());
+                                        @Nullable MavenRunConfiguration runConfiguration,
+                                        @Nullable File mavenWrapperFile) throws ExecutionException {
+    final File file = mavenWrapperFile != null ? mavenWrapperFile : MavenUtil.resolveMavenHomeDirectory(coreSettings.getMavenHome());
 
     if (file == null) {
       throw createExecutionException(RunnerBundle.message("external.maven.home.no.default"),

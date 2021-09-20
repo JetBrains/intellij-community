@@ -31,52 +31,45 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() {
-    val oldLogger = LoggedErrorProcessor.getInstance()
     val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
     try {
-      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("Project JDK is not specifie", oldLogger))
-      MavenWorkspaceSettingsComponent.getInstance(myProject)
-        .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
-      WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
-      createAndImportProject()
-      val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == myProject }
-      assertNotEmpty(connectors)
-      TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk);
+      LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Project JDK is not specifie")) {
+        MavenWorkspaceSettingsComponent.getInstance(myProject)
+          .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+        WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
+        createAndImportProject()
+        val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == myProject }
+        assertNotEmpty(connectors)
+        TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk);
+      }
     }
     finally {
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = projectSdk }
       MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter = jdkForImporter
-      LoggedErrorProcessor.setNewInstance(oldLogger)
     }
   }
 
   @Test
   fun testShouldShowLogsOfMavenServerIfNotStarted() {
-    val oldLogger = LoggedErrorProcessor.getInstance()
     try {
-      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("Maven server exception for tests", oldLogger))
-      MavenServerCMDState.setThrowExceptionOnNextServerStart()
-      createAndImportProject()
-      assertEvent { it.message.contains("Maven server exception for tests") }
+      LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Maven server exception for tests")) {
+        MavenServerCMDState.setThrowExceptionOnNextServerStart()
+        createAndImportProject()
+        assertEvent { it.message.contains("Maven server exception for tests") }
+      }
     }
     finally {
       MavenServerCMDState.resetThrowExceptionOnNextServerStart()
-      LoggedErrorProcessor.setNewInstance(oldLogger)
     }
   }
 
   @Test
   fun `test maven server not started - bad vm config`() {
-    val oldLogger = LoggedErrorProcessor.getInstance()
-    try {
-      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("java.util.concurrent.ExecutionException:", oldLogger))
+    LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("java.util.concurrent.ExecutionException:")) {
       createProjectSubFile(".mvn/jvm.config", "-Xms100m -Xmx10m")
       createAndImportProject()
       assertEvent { it.message.contains("Error occurred during initialization of VM") }
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(oldLogger)
     }
   }
 
@@ -89,12 +82,12 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     assertEvent { it.message.contains("Unable to parse maven.config:") }
   }
 
-  private fun loggedErrorProcessor(search: String, oldLogger: LoggedErrorProcessor) = object : LoggedErrorProcessor() {
+  private fun loggedErrorProcessor(search: String) = object : LoggedErrorProcessor() {
     override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
       if (message != null && message.contains(search)) {
         return false
       }
-      return oldLogger.processError(category, message, t, details)
+      return true
     }
   }
 

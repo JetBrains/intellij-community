@@ -23,7 +23,9 @@ public interface OptionAccessor {
 
     @Override
     public boolean getOption(String optionName) {
-      return ReflectionUtil.getField(myInspection.getClass(), myInspection, boolean.class, optionName);
+      final Boolean value = ReflectionUtil.getField(myInspection.getClass(), myInspection, boolean.class, optionName);
+      assert value != null : "field '" + optionName + "'not found";
+      return value;
     }
 
     @Override

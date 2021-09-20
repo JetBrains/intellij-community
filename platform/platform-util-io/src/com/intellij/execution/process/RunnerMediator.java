@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +18,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Utility class to start a process with a runner mediator (runnerw.exe) injected into a command line,
+ * Utility class to start a process on Windows with a runner mediator (runnerw.exe) injected into a command line,
  * which adds a capability to terminate process tree gracefully by sending it a Ctrl+Break through stdin.
+ *
+ * @deprecated processes are killed softly on Windows be default now
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public class RunnerMediator {
   private static final Logger LOG = Logger.getInstance(RunnerMediator.class);
 
@@ -52,9 +57,8 @@ public class RunnerMediator {
   /**
    * In case of windows creates process with runner mediator(runnerw.exe) injected to command line string, which adds a capability
    * to terminate process tree gracefully with ctrl+break.
-   *
+   * <p>
    * Returns appropriate process handle, which in case of Unix is able to terminate whole process tree by sending sig_kill
-   *
    */
   public @NotNull ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableColoredProcessHandler(commandLine, true) {
@@ -111,6 +115,7 @@ public class RunnerMediator {
 
   /**
    * Destroys process tree: in case of windows via imitating ctrl+break, in case of unix via sending sig_kill to every process in tree.
+   *
    * @param process to kill with all sub-processes.
    */
   public static boolean destroyProcess(final @NotNull Process process) {
@@ -119,6 +124,7 @@ public class RunnerMediator {
 
   /**
    * Destroys process tree: in case of windows via imitating ctrl+c, in case of unix via sending sig_int to every process in tree.
+   *
    * @param process to kill with all sub-processes.
    */
   static boolean destroyProcess(final @NotNull Process process, final boolean softKill) {

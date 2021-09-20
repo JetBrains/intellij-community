@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.util.Pair
-import org.jetbrains.kotlin.gradle.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibrariesFixer
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet

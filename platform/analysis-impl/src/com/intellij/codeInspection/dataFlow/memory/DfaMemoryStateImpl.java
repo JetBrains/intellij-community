@@ -1209,7 +1209,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     if (value instanceof DfaWrappedValue) {
       DfType wrappedValueType = getDfType(((DfaWrappedValue)value).getWrappedValue());
-      return value.getDfType().meet(((DfaWrappedValue)value).getSpecialField().asDfType(wrappedValueType, getFactory().getProject()));
+      return ((DfaWrappedValue)value).getSpecialField().asDfType(value.getDfType(), wrappedValueType);
     }
     return value.getDfType();
   }

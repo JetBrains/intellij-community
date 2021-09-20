@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.cocoapods
 
-import org.jetbrains.kotlin.gradle.EnablePodImportTask
+import org.jetbrains.kotlin.idea.gradleTooling.EnablePodImportTask
 import org.jetbrains.plugins.gradle.model.ClassSetProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension

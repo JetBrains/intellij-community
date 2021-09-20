@@ -56,22 +56,29 @@ interface Panel : CellBase<Panel> {
    * Adds panel with independent grid, title and some vertical space before the group.
    * Grouped radio buttons and checkboxes should use [Panel.buttonGroup] method, which uses different title gaps
    *
-   * @param indent true left indent is needed
+   * @param indent true if left indent is needed
+   * @param topGroupGap true if standard gap before the group is needed
    */
-  fun group(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = true, init: Panel.() -> Unit): Panel
+  fun group(@NlsContexts.BorderTitle title: String? = null,
+            indent: Boolean = true,
+            topGroupGap: Boolean = true,
+            init: Panel.() -> Unit): Panel
 
   /**
    * Similar to [Panel.group] but uses the same grid as parent.
    * See [RowsRange]
    */
-  fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit): RowsRange
+  fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null,
+                     indent: Boolean = true,
+                     topGroupGap: Boolean = true,
+                     init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds hideable panel with independent grid, title and some vertical space before the group.
+   * Adds collapsible panel with independent grid, title and some vertical space before the group.
    *
-   * @param indent true left indent is needed
+   * @param indent true if left indent is needed
    */
-  fun hideableGroup(@NlsContexts.BorderTitle title: String, indent: Boolean = true, init: Panel.() -> Unit): HideablePanel
+  fun collapsibleGroup(@NlsContexts.BorderTitle title: String, indent: Boolean = true, init: Panel.() -> Unit): CollapsiblePanel
 
   /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
@@ -110,7 +117,7 @@ inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsC
 
 inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, @NlsContexts.BorderTitle title: String? = null,
                                                crossinline init: Panel.() -> Unit) {
-  buttonGroup(binding, T::class.javaPrimitiveType ?: T::class.java, title) {
+  buttonGroup(binding, T::class.java, title) {
     init()
   }
 }

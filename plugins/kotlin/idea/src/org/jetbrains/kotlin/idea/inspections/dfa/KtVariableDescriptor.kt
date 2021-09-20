@@ -8,10 +8,15 @@ import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -19,6 +24,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
+import org.jetbrains.kotlin.types.KotlinType
 
 class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescriptor {
     val stable: Boolean = calculateStable()
@@ -43,7 +50,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                             parentScope = PsiTreeUtil.getParentOfType(context, KtFunction::class.java)
                             val maybeLambda = parentScope?.parent as? KtLambdaExpression
                             val maybeCall = (maybeLambda?.parent as? KtLambdaArgument)?.parent as? KtCallExpression
-                            if (maybeCall != null && getInlineableLambda(maybeCall) == maybeLambda) {
+                            if (maybeCall != null && getInlineableLambda(maybeCall)?.lambda == maybeLambda) {
                                 context = maybeCall
                                 continue
                             }
@@ -75,6 +82,16 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
     override fun toString(): String = variable.name ?: "<unknown>"
     
     companion object {
+        fun getSingleLambdaParameter(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
+            val parameters = lambda.valueParameters
+            if (parameters.size > 1) return null
+            if (parameters.size == 1) {
+                return factory.varFactory.createVariableValue(KtVariableDescriptor(parameters[0]))
+            }
+            val kotlinType = lambda.resolveType()?.getValueParameterTypesFromFunctionType()?.singleOrNull()?.type ?: return null
+            return factory.varFactory.createVariableValue(KtItVariableDescriptor(lambda.functionLiteral, kotlinType))
+        }
+
         fun createFromQualified(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             var selector = expr
             while (selector is KtQualifiedExpression) {
@@ -112,6 +129,16 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                         }
                     }
                 }
+                if (expr.textMatches("it")) {
+                    val descriptor = expr.resolveMainReferenceToDescriptors().singleOrNull()
+                    if (descriptor is ValueParameterDescriptor) {
+                        val fn = ((descriptor.containingDeclaration as? DeclarationDescriptorWithSource)?.source as? KotlinSourceElement)?.psi
+                        if (fn != null) {
+                            val type = descriptor.type
+                            return varFactory.createVariableValue(KtItVariableDescriptor(fn, type))
+                        }
+                    }
+                }
             }
             return null
         }
@@ -124,4 +151,11 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                     target.containingClass()?.isInterface() != true &&
                     !target.isExtensionDeclaration()
     }
+}
+class KtItVariableDescriptor(val lambda: KtElement, val type: KotlinType): VariableDescriptor {
+    override fun getDfType(qualifier: DfaVariableValue?): DfType = type.toDfType(lambda)
+    override fun isStable(): Boolean = true
+    override fun equals(other: Any?): Boolean = other is KtItVariableDescriptor && other.lambda == lambda
+    override fun hashCode(): Int = lambda.hashCode()
+    override fun toString(): String = "it"
 }

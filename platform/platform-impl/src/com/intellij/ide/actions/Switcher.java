@@ -136,7 +136,7 @@ public final class Switcher extends BaseSwitcherAction {
         if (pinned && (e.isControlDown() || e.isMetaDown() || e.isShiftDown())) return false;
         final Object source = e.getSource();
         if (source instanceof JList) {
-          JList<? extends SwitcherListItem> jList = (JList<? extends SwitcherListItem>)source;
+          JList<?> jList = (JList<?>)source;
           if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
             jList.setSelectedIndex(jList.getAnchorSelectionIndex());
           }
@@ -819,12 +819,16 @@ public final class Switcher extends BaseSwitcherAction {
       super(view, VERTICAL_SCROLLBAR_AS_NEEDED, noBorder ? HORIZONTAL_SCROLLBAR_AS_NEEDED : HORIZONTAL_SCROLLBAR_NEVER);
       setBorder(noBorder ? JBUI.Borders.empty() : JBUI.Borders.customLineRight(JBUI.CurrentTheme.Popup.separatorColor()));
       setViewportBorder(JBUI.Borders.empty());
+      setMinimumSize(JBUI.size(noBorder ? 250 : 0, 100));
     }
 
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       if (isPreferredSizeSet()) return size;
+      Dimension min = super.getMinimumSize();
+      if (size.width < min.width) size.width = min.width;
+      if (size.height < min.height) size.height = min.height;
       if (HORIZONTAL_SCROLLBAR_NEVER != getHorizontalScrollBarPolicy()) return size;
       size.width = width = Math.max(size.width, width);
       return size;

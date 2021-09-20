@@ -32,6 +32,8 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     internal const val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = "packageDistanceNorm"
 
     internal const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
+    internal const val FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY = "fileTypeUsageRatioToMax"
+    internal const val FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY = "fileTypeUsageRatioToMin"
     internal const val TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY = "timeSinceLastFileTypeUsage"
     internal const val FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY = "fileTypeUsedInLastMinute"
     internal const val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = "fileTypeUsedInLastHour"
@@ -163,14 +165,22 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
   private fun getFileTypeStats(item: PsiFileSystemItem,
                                currentTime: Long,
                                fileTypeStats: Map<String, FileTypeUsageSummary>): Map<String, Any> {
-    val totalUsage = fileTypeStats.values.sumBy { it.usageCount }
+    val totalUsage = fileTypeStats.values.sumOf { it.usageCount }
     val stats = fileTypeStats[item.virtualFile.fileType.name]
 
-    val timeSinceLastUsage = if (stats == null) Long.MAX_VALUE else currentTime - stats.lastUsed
-    val usageRatio = if (stats == null) 0.0 else roundDouble(stats.usageCount.toDouble() / totalUsage)
+    if (stats == null) {
+      return emptyMap()
+    }
+
+    val timeSinceLastUsage = currentTime - stats.lastUsed
+    val usageRatio = roundDouble(stats.usageCount.toDouble() / totalUsage)
+    val min = fileTypeStats.minOf { it.value.usageCount }
+    val max = fileTypeStats.maxOf { it.value.usageCount }
 
     return hashMapOf(
       FILETYPE_USAGE_RATIO_DATA_KEY to usageRatio,
+      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY to roundDouble(stats.usageCount.toDouble() / max),
+      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY to roundDouble(stats.usageCount.toDouble() / min),
 
       TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to timeSinceLastUsage,
       FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to (timeSinceLastUsage <= MINUTE),

@@ -95,11 +95,11 @@ class GotItTooltip(@NonNls val id: String,
   private var showCloseShortcut = false
   private var maxCount = 1
   private var onBalloonCreated: (Balloon) -> Unit = {}
-  private var hideOnClickOutside: Boolean = false
 
   // Ease the access (remove private or val to var) if fine tuning is needed.
   private val savedCount: (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
-  private val canShow: (String) -> Boolean = { savedCount(it) < maxCount }
+  private val checkCount: (String) -> Boolean = { savedCount(it) < maxCount }
+  var canShow: () -> Boolean = { true }
   private val gotIt: (String) -> Unit = {
     val count = savedCount(it)
     if (count in 0 until maxCount) PropertiesComponent.getInstance().setValue(it, (count + 1).toString())
@@ -222,14 +222,6 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   /**
-   * Hide popup when user clicks outside.
-   */
-  fun withHideOnClickOutside(): GotItTooltip {
-    hideOnClickOutside = true
-    return this
-  }
-
-  /**
    * Optionally show close shortcut next to Got It button
    */
   fun andShowCloseShortcut(): GotItTooltip {
@@ -248,7 +240,7 @@ class GotItTooltip(@NonNls val id: String,
   /**
    * Returns <code>true</code> if this tooltip can be shown at the given properties settings.
    */
-  override fun canShow(): Boolean = canShow("$PROPERTY_PREFIX.$id")
+  override fun canShow(): Boolean = canShow.let { it() } && checkCount("$PROPERTY_PREFIX.$id")
 
   /**
    * Show tooltip for the given component and point to the component.
@@ -425,7 +417,7 @@ class GotItTooltip(@NonNls val id: String,
     var button: JButton? = null
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(createContent { button = it }).setDisposable(this).setHideOnAction(
       false).setHideOnClickOutside(false).setHideOnFrameResize(false).setHideOnKeyOutside(false).setHideOnClickOutside(
-      hideOnClickOutside).setBlockClicksThroughBalloon(true).setBorderColor(BORDER_COLOR).setCornerToPointerDistance(
+      false).setBlockClicksThroughBalloon(true).setBorderColor(BORDER_COLOR).setCornerToPointerDistance(
       ARROW_SHIFT).setFillColor(BACKGROUND_COLOR).setPointerSize(JBUI.size(16, 8)).createBalloon().also {
       it.setAnimationEnabled(false)
     }

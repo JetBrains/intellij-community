@@ -740,6 +740,13 @@
         </value>
       </option>
 
+      <option name="INLINE_STACK_FRAMES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="e6e0f1"/>
+        </value>
+      </option>
+
       <option name="MATCHED_BRACE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
@@ -1414,6 +1421,12 @@
         <value>
           <option name="BACKGROUND" value="3a2323" deuteranopia="42372b" protanopia="42372b"/>
           <option name="ERROR_STRIPE_COLOR" value="664233" />
+        </value>
+      </option>
+      <option name="INLINE_STACK_FRAMES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="534a57"/>
         </value>
       </option>
       <option name="COFFEESCRIPT.GLOBAL_VARIABLE">

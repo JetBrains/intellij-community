@@ -6,7 +6,6 @@ import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.junit.InheritorChooser
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
@@ -14,14 +13,14 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
-import org.jetbrains.kotlin.idea.gradle.run.*
+import org.jetbrains.kotlin.idea.gradle.run.KotlinGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
 abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer : AbstractKotlinTestClassGradleConfigurationProducer() {
     override val forceGradleRunner: Boolean get() = true
@@ -77,10 +76,10 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
         val dataContext = MultiplatformTestTasksChooser.createContext(context.dataContext, locationName)
 
         mppTestTasksChooser.multiplatformChooseTasks(context.project, dataContext, classes) { tasks ->
-            val configuration = fromContext.configuration as ExternalSystemRunConfiguration
+            val configuration = fromContext.configuration as GradleRunConfiguration
             val settings = configuration.settings
 
-            val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz, hasSuffix = true) }
+          val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz) }
             if (!settings.applyTestConfiguration(context.module, tasks, classes, createFilter)) {
                 LOG.warn("Cannot apply class test configuration, uses raw run configuration")
                 performRunnable.run()
@@ -94,7 +93,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
 
 abstract class AbstractKotlinTestClassGradleConfigurationProducer
     : TestClassGradleConfigurationProducer(), KotlinGradleConfigurationProducer {
-    override fun isConfigurationFromContext(configuration: ExternalSystemRunConfiguration, context: ConfigurationContext): Boolean {
+    override fun isConfigurationFromContext(configuration: GradleRunConfiguration, context: ConfigurationContext): Boolean {
         if (!context.check()) {
             return false
         }
@@ -108,7 +107,7 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
     }
 
     override fun setupConfigurationFromContext(
-        configuration: ExternalSystemRunConfiguration,
+        configuration: GradleRunConfiguration,
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {
@@ -123,7 +122,7 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
         if (GradleConstants.SYSTEM_ID != configuration.settings.externalSystemId) return false
         if (sourceElement.isNull) return false
 
-        (configuration as? GradleRunConfiguration)?.isScriptDebugEnabled = false
+        configuration.isScriptDebugEnabled = false
         return doSetupConfigurationFromContext(configuration, context, sourceElement)
     }
 
@@ -132,7 +131,6 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
     }
 
     override fun getPsiClassForLocation(contextLocation: Location<*>) = getTestClassForKotlinTest(contextLocation)
-    override fun getPsiMethodForLocation(contextLocation: Location<*>) = getTestMethodForKotlinTest(contextLocation)
 
     override fun isPreferredConfiguration(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
         return checkShouldReplace(self, other) || super.isPreferredConfiguration(self, other)

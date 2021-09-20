@@ -11,6 +11,7 @@ import com.intellij.execution.application.JavaApplicationRunConfigurationImporte
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.jar.JarApplicationRunConfigurationImporter;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -34,8 +35,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.PathUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -43,6 +46,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -408,6 +412,51 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     else {
       assertContain(beforeSyncTasks, ":projects", ":tasks");
     }
+  }
+
+  @Test
+  @Bombed(year = 2021, month = Calendar.DECEMBER, day=1, user = "Nikita.Skvortsov", description = "Waiting for next version of IDEA Ext plugin")
+  public void testIdeaPostProcessingHook() throws Exception {
+    File layoutFile = new File(getProjectPath(), "layout.json");
+    assertThat(layoutFile).doesNotExist();
+
+    importProject(
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
+        .addPostfix("import org.jetbrains.gradle.ext.*\n" +
+                    "idea {\n" +
+                    "  project.settings {\n" +
+                    "    withIDEADir { File dir ->\n" +
+                    "      println(\"Callback executed with: \" + dir.absolutePath)\n" +
+                    "    }  \n" +
+                    "  }\n" +
+                    "}")
+        .generate()
+    );
+
+    final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
+      ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
+
+    assertThat(activations)
+      .extracting("projectPath")
+      .containsExactly(GradleSettings.getInstance(myProject).getLinkedProjectsSettings().iterator().next().getExternalProjectPath());
+
+    final List<String> afterSyncTasks = activations.get(0).state.getTasks(ExternalSystemTaskActivator.Phase.AFTER_SYNC);
+
+    assertThat(afterSyncTasks).containsExactly("processIdeaSettings");
+
+    String ideaDir = PathUtil.toSystemIndependentName(((ProjectStoreOwner)myProject).getComponentStore()
+      .getProjectFilePath().getParent().toAbsolutePath().toString());
+
+    String moduleFile = getModule("project").getModuleFilePath();
+    assertThat(layoutFile)
+      .exists()
+      .hasContent("{\n"+
+      "  \"ideaDirPath\": \""+ ideaDir + "\",\n" +
+      "  \"modulesMap\": {\n"+
+      "    \"project\": \"" + moduleFile + "\"\n"+
+      "  }\n"+
+      "}");
   }
 
   @Test

@@ -12,7 +12,7 @@ internal class NotebookIntervalPointerFactoryImpl(private val notebookCellLines:
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
 
   init {
-    pointers.addAll(notebookCellLines.getIterator(0).asSequence().map { NotebookIntervalPointerImpl(it) })
+    pointers.addAll(notebookCellLines.intervals.asSequence().map { NotebookIntervalPointerImpl(it) })
     notebookCellLines.intervalListeners.addListener(this)
   }
 
@@ -48,7 +48,7 @@ internal class NotebookIntervalPointerFactoryImpl(private val notebookCellLines:
   }
 
   private fun updatePointersFrom(pos: Int) {
-    val iterator = notebookCellLines.getIterator(pos)
+    val iterator = notebookCellLines.intervals.listIterator(pos)
 
     for(i in pos until pointers.size) {
       pointers[i].interval = iterator.next()

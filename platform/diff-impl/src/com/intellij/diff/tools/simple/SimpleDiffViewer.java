@@ -170,6 +170,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return myFoldingModel;
   }
 
+  boolean needAlignChanges() {
+    return Boolean.TRUE.equals(myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF));
+  }
+
   @NotNull
   public TwosideTextDiffProvider getTextDiffProvider() {
     return myTextDiffProvider;
@@ -709,7 +713,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyDividerPainter implements DiffSplitter.Painter, DiffDividerDrawUtil.DividerPaintable {
+  private class MyDividerPainter implements DiffSplitter.Painter {
     @DirtyUI
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
@@ -718,23 +722,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       gg.setColor(DiffDrawUtil.getDividerColor(getEditor1()));
       gg.fill(gg.getClipBounds());
 
-      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), getEditor1(), getEditor2(), this);
-
+      myModel.paintPolygons(gg, divider);
       myFoldingModel.paintOnDivider(gg, divider);
 
       gg.dispose();
     }
 
-    @Override
-    public void process(@NotNull Handler handler) {
-      for (SimpleDiffChange diffChange : getDiffChanges()) {
-        if (!handler.processExcludable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
-                                       diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
-                                       diffChange.getDiffType(), diffChange.isExcluded(), diffChange.isSkipped())) {
-          return;
-        }
-      }
-    }
   }
 
   private class MyStatusPanel extends StatusPanel {

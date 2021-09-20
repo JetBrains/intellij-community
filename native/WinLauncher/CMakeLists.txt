@@ -30,7 +30,7 @@ endif ()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WinLauncher.rc ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc @ONLY)
 
-add_executable(WinLauncher WIN32 WinLauncher.cpp ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc)
+add_executable(WinLauncher WIN32 WinLauncher.cpp WinLauncher.manifest ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc)
 
 set_target_properties(WinLauncher PROPERTIES
     OUTPUT_NAME ${FILE_NAME}

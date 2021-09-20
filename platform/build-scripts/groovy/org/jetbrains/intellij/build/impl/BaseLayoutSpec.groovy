@@ -13,7 +13,7 @@ class BaseLayoutSpec {
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
   void withModule(String moduleName) {
-    layout.moduleJars.putValue("${BaseLayout.convertModuleNameToFileName(moduleName)}.jar".toString(), moduleName)
+    layout.withModule(moduleName)
   }
 
   /**
@@ -25,8 +25,7 @@ class BaseLayoutSpec {
    * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
    */
   void withModule(String moduleName, String relativeJarPath) {
-    layout.moduleJars.putValue(relativeJarPath, moduleName)
-    layout.explicitlySetJarPaths.add(relativeJarPath)
+    layout.withModule(moduleName, relativeJarPath)
   }
 
   /**

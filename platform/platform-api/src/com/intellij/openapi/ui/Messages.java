@@ -290,7 +290,7 @@ public class Messages {
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    return showDialog(message, title, options, defaultOptionIndex, defaultOptionIndex, icon, doNotAskOption);
+    return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
   }
 
   /**

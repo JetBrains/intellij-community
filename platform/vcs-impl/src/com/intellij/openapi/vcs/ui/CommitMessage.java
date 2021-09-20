@@ -188,17 +188,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     setText(currentDescription);
   }
 
-  /**
-   * Creates a text editor appropriate for creating commit messages.
-   * @return a commit message editor
-   * @deprecated Use {@link CommitMessage} component.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static EditorTextField createCommitTextEditor(@NotNull Project project, @SuppressWarnings("unused") boolean forceSpellCheckOn) {
-    return createCommitMessageEditor(project, false);
-  }
-
   @NotNull
   private static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
     Set<EditorCustomization> features = new HashSet<>();

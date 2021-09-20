@@ -3,7 +3,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
-import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -24,8 +23,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +42,7 @@ public final class PsiElementListNavigator {
                                                                    @NlsContexts.PopupTitle String title,
                                                                    @NlsContexts.TabTitle final String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
-    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
   }
 
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull MouseEvent e,
@@ -300,19 +297,5 @@ public final class PsiElementListNavigator {
     protected void afterPopupBuilderCreated(@NotNull IPopupChooserBuilder<T> builder) {
       // Do nothing by default
     }
-  }
-
-  /**
-   * @deprecated use {@link #openTargets(MouseEvent, NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void openTargets(MouseEvent e,
-                                 NavigatablePsiElement[] targets,
-                                 @Nls String title,
-                                 @Nls final String findUsagesTitle,
-                                 ListCellRenderer listRenderer,
-                                 @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
-    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)listUpdaterTask);
   }
 }

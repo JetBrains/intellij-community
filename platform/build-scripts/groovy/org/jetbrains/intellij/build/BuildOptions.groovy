@@ -103,6 +103,11 @@ class BuildOptions {
   static final String REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
 
   /**
+   * May be useful to skip this step in TeamCity build to use experimental JBR provided via artifact dependency.
+   */
+  static final String RUNTIME_DOWNLOADING_STEP = "runtime_downloading_step"
+
+  /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
@@ -160,6 +165,11 @@ class BuildOptions {
   String outputRootPath = System.getProperty("intellij.build.output.root")
 
   String logPath = System.getProperty("intellij.build.log.root")
+
+  /**
+   * If {@code true} write a separate compilation.log for all compilation messages
+   */
+  Boolean compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
 
   static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
   boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
@@ -233,14 +243,6 @@ class BuildOptions {
    */
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
-
-  /**
-   * Path to prebuilt Kotlin plugin (not zipped).
-   * Currently fully-fledged Kotlin plugin distribution is being on TeamCity only via kombo.gant script.
-   * If this path is not specified then distribution without LLDB debugger is going to be built locally (for tests only).
-   */
-  static final String PREBUILT_KOTLIN_PLUGIN_PATH = "intellij.build.kotlin.plugin.path"
-  String prebuiltKotlinPluginPath = System.getProperty(PREBUILT_KOTLIN_PLUGIN_PATH)
 
   static final String TARGET_OS = "intellij.build.target.os"
 

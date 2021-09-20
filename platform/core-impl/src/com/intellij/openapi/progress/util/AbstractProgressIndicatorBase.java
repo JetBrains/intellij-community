@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -18,10 +19,8 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +46,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     private final double myFraction;
     private final boolean myIndeterminate;
 
-    private State(@NlsContexts.ProgressText String text,
-                  @NlsContexts.ProgressDetails String text2,
-                  double fraction,
-                  boolean indeterminate) {
+    private State(@NlsContexts.ProgressText String text, @NlsContexts.ProgressDetails String text2, double fraction, boolean indeterminate) {
       myText = text;
       myText2 = text2;
       myFraction = fraction;
@@ -63,7 +59,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile int myNonCancelableSectionCount;
-  private final Object lock = ObjectUtils.sentinel("APIB lock");
+  @SuppressWarnings("SpellCheckingInspection") private final Object lock = ObjectUtils.sentinel("APIB lock");
 
   @Override
   public void start() {
@@ -161,12 +157,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  @Nullable
-  protected Throwable getCancellationTrace() {
-    if (this instanceof Disposable) {
-      return Disposer.getDisposalTrace((Disposable)this);
-    }
-    return null;
+  protected @Nullable Throwable getCancellationTrace() {
+    return this instanceof Disposable ? Disposer.getDisposalTrace((Disposable)this) : null;
   }
 
   @Override
@@ -198,8 +190,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void setFraction(final double fraction) {
     synchronized (getLock()) {
       if (isIndeterminate()) {
-        @NonNls String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
-                                 "Please call setIndeterminate(false) before you start progress. "+getClass();
+        String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
+                         "Please call setIndeterminate(false) before you start progress. " + getClass();
         LOG.warn(message, new IllegalStateException());
         setIndeterminate(false);
       }
@@ -214,8 +206,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  @NotNull
-  private State getState() {
+  private @NotNull State getState() {
     return new State(getText(), getText2(), getFraction(), isIndeterminate());
   }
 
@@ -237,12 +228,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
+  @SuppressWarnings({"deprecation", "NonAtomicOperationOnVolatileField"})
   public void startNonCancelableSection() {
-    DeprecatedMethodException.report("Use ProgressManager#executeNonCancelableSection() instead");
+    PluginException.reportDeprecatedUsage("ProgressIndicator#startNonCancelableSection", "Use `ProgressManager.executeNonCancelableSection()` instead");
     myNonCancelableSectionCount++;
   }
 
   @Override
+  @SuppressWarnings({"deprecation", "NonAtomicOperationOnVolatileField"})
   public void finishNonCancelableSection() {
     myNonCancelableSectionCount--;
   }
@@ -261,8 +254,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
-  @NotNull
-  public ModalityState getModalityState() {
+  public @NotNull ModalityState getModalityState() {
     return myModalityState;
   }
 
@@ -303,11 +295,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-
-  @NonNls
   @Override
   public String toString() {
-    return "ProgressIndicator " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
+    return "ProgressIndicator " + System.identityHashCode(this) + ": running=" + isRunning() + "; canceled=" + isCanceled();
   }
 
   @Override
@@ -320,7 +310,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return isModal();
   }
 
-  public void initStateFrom(@NotNull final ProgressIndicator indicator) {
+  public void initStateFrom(@NotNull ProgressIndicator indicator) {
     synchronized (getLock()) {
       myRunning = indicator.isRunning();
       myCanceled = indicator.isCanceled();
@@ -345,15 +335,13 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     myShouldStartActivity = false;
   }
 
-  @NotNull
-  private Stack<State> getStateStack() {
+  private @NotNull Stack<State> getStateStack() {
     Stack<State> stack = myStateStack;
     if (stack == null) myStateStack = stack = new Stack<>(2);
     return stack;
   }
 
-  @NotNull
-  protected Object getLock() {
+  protected @NotNull Object getLock() {
     return lock;
   }
 }

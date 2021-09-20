@@ -28,12 +28,4 @@ public abstract class MoveFileTestCase extends LightMultiFileTestCase {
       assertNotNull(psiFile);
     });
   }
-
-  public static class BranchTest extends MoveFileTestCase {
-    @Override
-    protected void setUp() throws Exception {
-      super.setUp();
-      Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
-    }
-  }
 }

@@ -525,7 +525,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
 
       if (plainType && ready && !isEnter) {
-        myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
+        myRecordingMacro.appendKeyPressed(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
         notifyUser(Character.valueOf(e.getKeyChar()).toString(), true);
       }
       else if ((!plainType && ready) || isEnter) {

@@ -4,6 +4,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -28,7 +29,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesHeaderData
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
-import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.combineTyped
 import com.jetbrains.packagesearch.intellij.plugin.util.flatMapTransform
@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -68,7 +69,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newCoroutineContext
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
 import java.net.SocketTimeoutException
@@ -80,7 +80,8 @@ import kotlin.time.toDuration
 
 internal class PackageSearchDataService(
     override val project: Project
-) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, CoroutineScope, SearchResultStateSetter {
+) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor,
+    CoroutineScope, SearchResultStateSetter, UIStateModifier {
 
     override val coroutineContext = project.lifecycleScope.newCoroutineContext(CoroutineName("PackageSearchDataService"))
 
@@ -115,6 +116,8 @@ internal class PackageSearchDataService(
 
     private val replayFromErrorChannel = Channel<Unit>()
 
+    override val programmaticSearchQueryStateFlow = MutableStateFlow("")
+
     val projectModulesStateFlow = project.trustedProjectFlow.flatMapConcat { trustedState ->
         when (trustedState) {
             ThreeState.YES -> project.nativeModulesChangesFlow
@@ -122,12 +125,12 @@ internal class PackageSearchDataService(
         }
     }
         .replayOnSignals(replayFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow)
-        .map { modules -> project.moduleTransformers.flatMapTransform(project, modules) }
+        .map { modules -> readAction { project.moduleTransformers.flatMapTransform(project, modules) } }
         .catch {
             logError("PackageSearchDataService#projectModulesStateFlow", it) { "Error while elaborating latest project modules" }
             emit(emptyList())
         }
-        .flowOn(Dispatchers.ReadActions)
+        .flowOn(Dispatchers.Default)
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
     override val dataModelFlow: StateFlow<RootDataModel> = combineTyped(
@@ -153,7 +156,7 @@ internal class PackageSearchDataService(
             selectedPackageModel = selectedPackage,
             searchResultsUiStateOverrides = searchResultsUiStateOverrides
         )
-    }.replayOnSignals(dataChangeChannel.consumeAsFlow())
+    }.replayOnSignals(dataChangeChannel.consumeAsFlow(), project.moduleChangesSignalFlow)
         .mapLatest { it.toRootDataModel() }
         .onEach { highlightEvents.send(Unit) }
         .catch {
@@ -187,30 +190,32 @@ internal class PackageSearchDataService(
             .onEach { rerunHighlightingOnOpenBuildFiles() }
             .launchIn(this)
 
-        searchQueryState.mapLatest { query ->
-            val traceInfo = TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)
-            logDebug(traceInfo, "PKGSDataService#performSearch()") { "Searching for '$query'..." }
-            if (query.isBlank()) {
-                logDebug(traceInfo, "PKGSDataService#performSearch()") { "Query is empty, reverting to no results" }
-                return@mapLatest null
-            }
-
-            setStatus(isSearching = true)
-
-            val response =
-                dataProvider.doSearch(query, filterOptionsState.value).onFailure {
-                    logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
-                    handleSearchError(it)
+        searchQueryState
+            .debounce(250)
+            .mapLatest { query ->
+                val traceInfo = TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)
+                logDebug(traceInfo, "PKGSDataService#performSearch()") { "Searching for '$query'..." }
+                if (query.isBlank()) {
+                    logDebug(traceInfo, "PKGSDataService#performSearch()") { "Query is empty, reverting to no results" }
+                    return@mapLatest null
                 }
-                    .onSuccess {
-                        logDebug(traceInfo, "PKGSDataService#performSearch()") {
-                            "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
-                        }
+
+                setStatus(isSearching = true)
+
+                val response =
+                    dataProvider.doSearch(query, filterOptionsState.value).onFailure {
+                        logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
+                        handleSearchError(it)
                     }
-                    .getOrNull()
-            setStatus(isSearching = false)
-            response
-        }
+                        .onSuccess {
+                            logDebug(traceInfo, "PKGSDataService#performSearch()") {
+                                "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
+                            }
+                        }
+                        .getOrNull()
+                setStatus(isSearching = false)
+                response
+            }
             .catch { error -> handleSearchError(error) }
             .onEach { searchResultsState.emit(it) }
             .launchIn(this)
@@ -302,7 +307,7 @@ internal class PackageSearchDataService(
     ): List<ModuleModel> {
         // Refresh project modules, this will cascade into updating the rest of the data
 
-        val moduleModels = withContext(Dispatchers.ReadActions) { projectModules.map { ModuleModel(it) } }
+        val moduleModels = readAction { projectModules.map { ModuleModel(it) } }
 
         if (targetModules is TargetModules.One && projectModules.none { it == targetModules.module.projectModule }) {
             logDebug(traceInfo, "PKGSDataService#fetchProjectModuleModels()") { "Target module doesn't exist anymore, resetting to 'All'" }
@@ -356,15 +361,12 @@ internal class PackageSearchDataService(
     private suspend fun fetchProjectDependencies(modules: List<ProjectModule>, traceInfo: TraceInfo): Map<ProjectModule, List<UnifiedDependency>> =
         modules.associateWith { module -> module.installedDependencies(traceInfo) }
 
-    private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> =
-        withContext(Dispatchers.ReadActions) {
-            logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
-            ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-                ?.also { yield() }
-                ?.listDependenciesInModule(this@installedDependencies)
-                ?.toList()
-                ?: emptyList()
-        }
+    private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> {
+        logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
+        return readAction { ProjectModuleOperationProvider.forProjectModuleType(moduleType) }
+            ?.let { provider -> readAction { provider.listDependenciesInModule(this@installedDependencies) } }
+            ?.toList() ?: emptyList()
+    }
 
     private fun PackageModel.matches(query: String, onlyKotlinMultiplatform: Boolean): Boolean {
         if (onlyKotlinMultiplatform && !isKotlinMultiplatform) {
@@ -486,9 +488,8 @@ internal class PackageSearchDataService(
         allKnownRepositories: KnownRepositories.All
     ): PackagesHeaderData {
         val count = installedUiPackageModels.count() + installableUiPackageModels.count()
-        val selectedModules = targetModulesState.value
-        val moduleNames = if (selectedModules.size == 1) {
-            selectedModules.first().projectModule.name
+        val moduleNames = if (targetModules is TargetModules.One) {
+            targetModules.module.projectModule.name
         } else {
             PackageSearchBundle.message("packagesearch.ui.toolwindow.allModules").lowercase()
         }
@@ -543,7 +544,7 @@ internal class PackageSearchDataService(
         logDebug(traceInfo, "PKGSDataService#setStatusAsync()") { "Status changed: $newStatus" }
     }
 
-    private suspend fun rerunHighlightingOnOpenBuildFiles() = withContext(Dispatchers.ReadActions) {
+    private suspend fun rerunHighlightingOnOpenBuildFiles() = readAction {
         val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
         val psiManager = PsiManager.getInstance(project)
 

@@ -150,7 +150,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myHasInlaysWithGutterIcons;
   private int myStartIconAreaWidth = START_ICON_AREA_WIDTH.get();
   private int myIconsAreaWidth;
-  private int myLineNumberAreaWidth;
+  private int myLineNumberAreaWidth = getInitialLineNumberWidth();
   private int myAdditionalLineNumberAreaWidth;
   @NotNull private List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   private int myTextAnnotationGuttersSize;
@@ -418,7 +418,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       if (ExperimentalUI.isNewUI()) {
         g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-        float offsetX = getFoldingAreaOffset() + getFoldingAnchorWidth() - JBUIScale.scale(4f);
+        double offsetX = getFoldingAreaOffset() + getFoldingAnchorWidth() - scale(4f);
         LinePainter2D.paint(g, offsetX, clip.y, offsetX, clip.y + clip.height);
       }
     }
@@ -718,14 +718,36 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               g.setColor(colorUnderCaretRow);
             }
 
-            String s = String.valueOf(lineToDisplay);
-            int textOffset = isMirrored() ?
-                             offset - getLineNumberAreaWidth() - 1 :
-                             offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), s);
+            Icon icon = null;
+            if (ExperimentalUI.isNewUI()) {
+              VisualPosition visualPosition = myEditor.logicalToVisualPosition(new LogicalPosition(logicalLine, 0));
+              Optional<GutterMark> breakpoint = getGutterRenderers(visualPosition.line).stream()
+                .filter(r -> r instanceof GutterIconRenderer &&
+                             ((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS)
+                .findFirst();
+              if (breakpoint.isPresent()) {
+                icon = breakpoint.get().getIcon();
+              }
+              if (icon == null) {
+                if (Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
+                  Object activeIcon = getClientProperty("line.number.hover.icon");
+                  if (activeIcon instanceof Icon) {
+                    icon = (Icon)activeIcon;
+                  }
+                }
+              }
+            }
 
-            g.drawString(s,
-                         textOffset,
-                         y + myEditor.getAscent());
+            if (icon != null) {
+              icon.paintIcon(this, g, offset - icon.getIconWidth(), y + (visLinesIterator.getLineHeight() - icon.getIconHeight()) / 2);
+            } else {
+              String s = String.valueOf(lineToDisplay);
+              int textOffset = isMirrored() ?
+                               offset - getLineNumberAreaWidth() - 1 :
+                               offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), s);
+
+              g.drawString(s, textOffset,y + myEditor.getAscent());
+            }
           }
         }
         visLinesIterator.advance();
@@ -1647,7 +1669,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (!isLineNumbersShown()) return;
 
     Integer maxLineNumber = myLineNumberConverter.getMaxLineNumber(myEditor);
-    myLineNumberAreaWidth = maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber);
+    myLineNumberAreaWidth = Math.max(getInitialLineNumberWidth(), maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber));
 
     myAdditionalLineNumberAreaWidth = 0;
     if (myAdditionalLineNumberConverter != null) {
@@ -1720,6 +1742,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public int getLineMarkerFreePaintersAreaOffset() {
+    if (ExperimentalUI.isNewUI()) {
+      return getLineNumberAreaOffset() + getLineMarkerAreaWidth() + getGapBetweenAreas();
+    }
     return getIconAreaOffset() + myIconsAreaWidth + getGapAfterIconsArea();
   }
 
@@ -1734,7 +1759,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                                                                   : myForcedRightFreePaintersAreaWidth
                                          : 0;
     if (ExperimentalUI.isNewEditorTabs()) {
-      width += getGapBetweenAreas();
+      if (width == 0) return 0;
+      return FREE_PAINTERS_RIGHT_AREA_WIDTH.get();
     }
     return width;
   }
@@ -2516,6 +2542,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (myAccessibleGutterLine != null) {
       myAccessibleGutterLine.escape(true);
     }
+  }
+
+  private static int getInitialLineNumberWidth() {
+    if (ExperimentalUI.isNewUI()) {
+      //have a placeholder for breakpoints
+      return 24;
+    }
+    return 0;
   }
 
   private static final class ClickInfo {

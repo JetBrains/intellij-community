@@ -70,6 +70,8 @@ import java.util.*;
 public final class PropertyInspectorTable extends JBTable implements DataProvider {
   private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
 
+  private static final int PROPERTY_INDENT = 11;
+
   public static final DataKey<PropertyInspectorTable> DATA_KEY = DataKey.create(PropertyInspectorTable.class.getName());
 
   private static final Color SYNTETIC_PROPERTY_BACKGROUND = new JBColor(Gray._230, UIUtil.getPanelBackground().brighter());
@@ -148,7 +150,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
           return;
         }
         final Property property = myProperties.get(row);
-        int indent = getPropertyIndentDepth(property) * getPropertyIndentWidth();
+        int indent = getPropertyIndentDepth(property) * getScaledPropertyIndent();
         final Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
 
         Component rendererComponent = myCellRenderer.getTableCellRendererComponent(PropertyInspectorTable.this,
@@ -611,8 +613,8 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     return 0;
   }
 
-  private static int getPropertyIndentWidth() {
-    return JBUIScale.scale(11);
+  private static int getScaledPropertyIndent() {
+    return JBUIScale.scale(PROPERTY_INDENT);
   }
 
   private Property[] getPropChildren(final Property property) {
@@ -1034,10 +1036,10 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
       myExpandIcon = UIDesignerIcons.ExpandNode;
       myCollapseIcon = UIDesignerIcons.CollapseNode;
       for (int i = 0; i < myIndentIcons.length; i++) {
-        myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
+        myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getScaledPropertyIndent() * i, myExpandIcon.getIconHeight());
       }
-      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, getPropertyIndentWidth());
-      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, getPropertyIndentWidth());
+      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, PROPERTY_INDENT);
+      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, PROPERTY_INDENT);
     }
 
     @Override

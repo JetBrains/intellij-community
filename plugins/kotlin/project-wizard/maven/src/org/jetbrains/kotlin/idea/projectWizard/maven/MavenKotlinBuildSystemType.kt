@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.idea.projectWizard.maven
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.openapi.project.Project
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
@@ -17,16 +20,20 @@ class MavenKotlinBuildSystemType : KotlinBuildSystemType {
         var groupId: String = ""
         var artifactId: String = ""
 
-        override fun setupUI(builder: RowBuilder) {
+        override fun setupUI(builder: Panel) {
             with(builder) {
-                hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
+                collapsibleGroup(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                     row(MavenWizardBundle.message("label.project.wizard.new.project.group.id")) {
-                        textField(::groupId)
+                        textField()
+                            .bindText(::groupId)
+                            .horizontalAlign(HorizontalAlign.FILL)
                     }
                     row(MavenWizardBundle.message("label.project.wizard.new.project.artifact.id")) {
-                        textField(::artifactId)
-                    }
-                }.largeGapAfter()
+                        textField()
+                            .bindText(::artifactId)
+                            .horizontalAlign(HorizontalAlign.FILL)
+                    }.bottomGap(BottomGap.SMALL)
+                }
             }
         }
 
@@ -35,4 +42,3 @@ class MavenKotlinBuildSystemType : KotlinBuildSystemType {
         }
     }
 }
-

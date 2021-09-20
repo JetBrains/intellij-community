@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
-import com.intellij.openapi.externalSystem.service.ui.util.FileChooserInfo
+import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory

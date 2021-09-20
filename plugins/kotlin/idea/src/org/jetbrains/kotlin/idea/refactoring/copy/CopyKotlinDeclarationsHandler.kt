@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.copy
 
 import com.intellij.ide.util.EditorHelper
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
@@ -33,6 +32,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinDirectoryMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.sourceRoot
@@ -49,8 +49,6 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
     companion object {
 
         private val commandName get() = RefactoringBundle.message("copy.handler.copy.files.directories")
-
-        private val isUnitTestMode get() = ApplicationManager.getApplication().isUnitTestMode
 
         @set:TestOnly
         var Project.newName: String? by UserDataProperty(Key.create("NEW_NAME"))
@@ -131,7 +129,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
         )
 
         return if (existingFile !is KtFile) {
-            if (isUnitTestMode) return ExistingFilePolicy.OVERWRITE
+            if (isUnitTestMode()) return ExistingFilePolicy.OVERWRITE
 
             val answer = Messages.showOkCancelDialog(
                 message,
@@ -142,7 +140,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
             )
             if (answer == Messages.OK) ExistingFilePolicy.OVERWRITE else ExistingFilePolicy.SKIP
         } else {
-            if (isUnitTestMode) return ExistingFilePolicy.APPEND
+            if (isUnitTestMode()) return ExistingFilePolicy.APPEND
 
             val answer = Messages.showYesNoCancelDialog(
                 message,
@@ -329,7 +327,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
             initialTargetDirectory = initialTargetDirectory
         )
 
-        val targetData = if (isUnitTestMode) getTargetDataForUnitTest(sourceData) else getTargetDataForUX(sourceData)
+        val targetData = if (isUnitTestMode()) getTargetDataForUnitTest(sourceData) else getTargetDataForUX(sourceData)
         targetData ?: return
 
         val internalUsages = collectInternalUsages(sourceData, targetData)
@@ -463,7 +461,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
         internalUsages: HashSet<UsageInfo>
     ): MultiMap<PsiElement, String> {
 
-        if (isUnitTestMode && BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore())
+        if (isUnitTestMode() && BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore())
             return MultiMap.empty()
 
         val targetSourceRootPsi = targetData.targetSourceRoot?.toPsiDirectory(sourceData.project)

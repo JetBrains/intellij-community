@@ -358,7 +358,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         private void visitJavaModule(PsiJavaModule module) {
           RefElement refElement = myRefManager.getReference(module);
           if (refElement != null) {
-            ((RefJavaModuleImpl)refElement).buildReferences();
+            myRefManager.addParallelTask(() -> ((RefJavaModuleImpl)refElement).buildReferences());
           }
         }
       };
@@ -441,7 +441,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     public boolean visitFile(@NotNull UFile node) {
       RefElement refElement = myRefManager.getReference(node.getSourcePsi());
       if (refElement instanceof RefJavaFileImpl) {
-        ((RefJavaFileImpl)refElement).buildReferences();
+        myRefManager.addParallelTask(() -> ((RefJavaFileImpl)refElement).buildReferences());
       }
       return true;
     }
@@ -451,7 +451,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       processComments(node);
       RefElement decl = myRefManager.getReference(node.getSourcePsi());
       if (decl != null) {
-        ((RefElementImpl)decl).buildReferences();
+        myRefManager.addParallelTask(() -> ((RefElementImpl)decl).buildReferences());
       }
 
       PsiModifierListOwner javaModifiersListOwner = ObjectUtils.tryCast(node.getJavaPsi(), PsiModifierListOwner.class);
@@ -478,7 +478,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       if (variable instanceof UParameter) {
         final RefElement reference = myRefManager.getReference(variable.getSourcePsi());
         if (reference instanceof RefParameterImpl) {
-          ((RefParameterImpl)reference).buildReferences();
+          myRefManager.addParallelTask(() -> ((RefParameterImpl)reference).buildReferences());
         }
       }
       return false;

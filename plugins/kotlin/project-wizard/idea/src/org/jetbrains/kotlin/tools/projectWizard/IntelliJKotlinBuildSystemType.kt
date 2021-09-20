@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.openapi.project.Project
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 
 class IntelliJKotlinBuildSystemType : KotlinBuildSystemType {
     override val name = "IntelliJ"
@@ -11,7 +11,7 @@ class IntelliJKotlinBuildSystemType : KotlinBuildSystemType {
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent)
 
     class Step(parent: KotlinNewProjectWizard.Step) : AbstractNewProjectWizardChildStep<KotlinNewProjectWizard.Step>(parent) {
-        override fun setupUI(builder: RowBuilder) {}
+        override fun setupUI(builder: Panel) {}
 
         override fun setupProject(project: Project) {
             TODO("Not yet implemented")
