@@ -279,7 +279,6 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         stopAtException: Boolean = false,
         overrides: List<PerfTestSettingsOverride<Unit, Array<LookupElement>>> = emptyList(),
     ) {
-        assertTrue("lookupElements has to be not empty", lookupElements.isNotEmpty())
         perfTypeAndDo(
             project,
             fileName,
