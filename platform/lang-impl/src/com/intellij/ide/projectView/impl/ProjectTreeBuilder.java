@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
-import com.intellij.ide.bookmarks.Bookmark;
-import com.intellij.ide.bookmarks.BookmarksListener;
+import com.intellij.ide.bookmark.BookmarksListener;
+import com.intellij.ide.bookmark.FileBookmarksListener;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
@@ -52,7 +52,12 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> queueUpdate());
-    connection.subscribe(BookmarksListener.TOPIC, new MyBookmarksListener());
+    connection.subscribe(BookmarksListener.TOPIC, new FileBookmarksListener(file -> {
+      PsiElement element = findPsi(file);
+      if (element != null) {
+        queueUpdateFrom(element, false);
+      }
+    }));
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(createPsiTreeChangeListener(project), this);
     FileStatusManager.getInstance(project).addFileStatusListener(new MyFileStatusListener(), this);
@@ -94,30 +99,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     protected boolean isFlattenPackages(){
       AbstractTreeStructure structure = getTreeStructure();
       return structure instanceof AbstractProjectTreeStructure && ((AbstractProjectTreeStructure)structure).isFlattenPackages();
-    }
-  }
-
-  private final class MyBookmarksListener implements BookmarksListener {
-    @Override
-    public void bookmarkAdded(@NotNull Bookmark b) {
-      updateForFile(b.getFile());
-    }
-
-    @Override
-    public void bookmarkRemoved(@NotNull Bookmark b) {
-      updateForFile(b.getFile());
-    }
-
-    @Override
-    public void bookmarkChanged(@NotNull Bookmark b) {
-      updateForFile(b.getFile());
-    }
-
-    private void updateForFile(@NotNull VirtualFile file) {
-      PsiElement element = findPsi(file);
-      if (element != null) {
-        queueUpdateFrom(element, false);
-      }
     }
   }
 
