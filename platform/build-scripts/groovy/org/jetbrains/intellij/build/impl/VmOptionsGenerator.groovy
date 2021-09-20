@@ -40,6 +40,7 @@ final class VmOptionsGenerator {
     }
 
     result.addAll(COMMON_VM_OPTIONS)
+
     return result
   }
 }
