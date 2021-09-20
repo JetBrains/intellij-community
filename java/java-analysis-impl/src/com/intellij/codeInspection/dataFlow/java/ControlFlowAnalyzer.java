@@ -39,6 +39,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -1741,6 +1742,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         generateBoxingUnboxingInstructionFor(paramExpr, result.getSubstitutor().substitute(parameters[i].getType()));
       }
     }
+    foldVarArgs(call, parameters);
 
     addBareCall(call, methodExpression);
     finishElement(call);
@@ -1905,19 +1907,33 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpressionList args = call.getArgumentList();
     PsiMethod ctr = call.resolveConstructor();
     if (args != null) {
-      PsiExpression[] params = args.getExpressions();
-      if (params.length > 0) {
+      PsiExpression[] arguments = args.getExpressions();
+      if (arguments.length > 0) {
         PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
-        for (int i = 0; i < params.length; i++) {
-          PsiExpression param = params[i];
-          param.accept(this);
+        for (int i = 0; i < arguments.length; i++) {
+          PsiExpression argument = arguments[i];
+          argument.accept(this);
           if (parameters != null && i < parameters.length) {
-            generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
+            generateBoxingUnboxingInstructionFor(argument, parameters[i].getType());
           }
         }
+        foldVarArgs(call, parameters);
       }
     }
     return ctr;
+  }
+
+  private void foldVarArgs(PsiCall call, PsiParameter[] parameters) {
+    if (!MethodCallUtils.isVarArgCall(call)) return;
+    PsiExpressionList args = call.getArgumentList();
+    if (args == null) return;
+    PsiParameter lastParameter = ArrayUtil.getLastElement(parameters);
+    if (lastParameter != null && lastParameter.isVarArgs()) {
+      int arraySize = args.getExpressionCount() - parameters.length + 1;
+      if (arraySize >= 0) {
+        addInstruction(new FoldArrayInstruction(null, DfTypes.typedObject(lastParameter.getType(), Nullability.NOT_NULL), arraySize));
+      }
+    }
   }
 
   @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
