@@ -18,7 +18,7 @@ internal object KotlinFirIconProvider {
                 symbol.isExtension -> {
                     if (isAbstract) KotlinIcons.ABSTRACT_EXTENSION_FUNCTION else KotlinIcons.EXTENSION_FUNCTION
                 }
-                symbol.symbolKind == KtSymbolKind.MEMBER -> {
+                symbol.symbolKind == KtSymbolKind.CLASS_MEMBER -> {
                     if (isAbstract) PlatformIcons.ABSTRACT_METHOD_ICON else PlatformIcons.METHOD_ICON
                 }
                 else -> KotlinIcons.FUNCTION
