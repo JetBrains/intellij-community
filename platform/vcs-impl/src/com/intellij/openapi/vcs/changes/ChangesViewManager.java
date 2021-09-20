@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.problems.ProblemListener;
-import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
@@ -477,7 +476,14 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @NotNull
     private EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor, boolean hasSplitterPreview) {
-      EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
+      return new SimpleTreeEditorDiffPreview(changeProcessor, myView, myContentPanel,
+                                             isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview) {
+        @Override
+        public void returnFocusToTree() {
+          ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
+          if (toolWindow != null) toolWindow.activate(null);
+        }
+
         @Override
         public void updateAvailability(@NotNull AnActionEvent e) {
           ShowDiffFromLocalChangesActionProvider.updateAvailability(e);
@@ -489,11 +495,6 @@ public class ChangesViewManager implements ChangesViewEx,
           return changeName != null
                  ? VcsBundle.message("commit.editor.diff.preview.title", changeName)
                  : VcsBundle.message("commit.editor.diff.preview.empty.title");
-        }
-
-        @Override
-        protected boolean hasContent() {
-          return changeProcessor.getCurrentChangeName() != null;
         }
 
         @Override
@@ -517,19 +518,6 @@ public class ChangesViewManager implements ChangesViewEx,
                  VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
         }
       };
-      editorPreview.setEscapeHandler(() -> {
-        editorPreview.closePreview();
-
-        ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
-        if (toolWindow != null) toolWindow.activate(null);
-      });
-
-      editorPreview.installListeners(myView, isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview);
-      editorPreview.installNextDiffActionOn(myContentPanel);
-
-      UIUtil.putClientProperty(myView, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
-
-      return editorPreview;
     }
 
     @NotNull
