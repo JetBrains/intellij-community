@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
 import org.objenesis.instantiator.ObjectInstantiator
@@ -42,7 +43,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v26"
+    const val SERIALIZER_VERSION = "v27"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -178,6 +179,22 @@ class EntityStorageSerializerImpl(
       override fun read(kryo: Kryo, input: Input, type: Class<ParentEntityId>): ParentEntityId {
         val entityId = kryo.readClassAndObject(input) as SerializableEntityId
         return ParentEntityId(entityId.toEntityId())
+      }
+    })
+
+    kryo.register(ObjectArraySet::class.java, object : Serializer<ObjectArraySet<*>>(false, true) {
+      override fun write(kryo: Kryo, output: Output, `object`: ObjectArraySet<*>) {
+        output.writeInt(`object`.size)
+        `object`.forEach { kryo.writeClassAndObject(output, it) }
+      }
+
+      override fun read(kryo: Kryo, input: Input, type: Class<ObjectArraySet<*>>): ObjectArraySet<*> {
+        val res = ObjectArraySet<Any>()
+        repeat(input.readInt()) {
+          val data = kryo.readClassAndObject(input)
+          res.add(data)
+        }
+        return res
       }
     })
 

@@ -134,12 +134,12 @@ class EntityStorageSerializationTest {
 
 // Kotlin tip: Use the ugly ${'$'} to insert the $ into the multiline string
 private val expectedKryoRegistration = """
-  [10, com.intellij.workspaceModel.storage.impl.EntityId]
-  [11, com.google.common.collect.HashMultimap]
-  [12, com.intellij.workspaceModel.storage.impl.ConnectionId]
-  [13, com.intellij.workspaceModel.storage.impl.ImmutableEntitiesBarrel]
-  [14, com.intellij.workspaceModel.storage.impl.ChildEntityId]
-  [15, com.intellij.workspaceModel.storage.impl.ParentEntityId]
+  [10, com.google.common.collect.HashMultimap]
+  [11, com.intellij.workspaceModel.storage.impl.ConnectionId]
+  [12, com.intellij.workspaceModel.storage.impl.ImmutableEntitiesBarrel]
+  [13, com.intellij.workspaceModel.storage.impl.ChildEntityId]
+  [14, com.intellij.workspaceModel.storage.impl.ParentEntityId]
+  [15, it.unimi.dsi.fastutil.objects.ObjectArraySet]
   [16, com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}TypeInfo]
   [17, java.util.ArrayList]
   [18, java.util.HashMap]
