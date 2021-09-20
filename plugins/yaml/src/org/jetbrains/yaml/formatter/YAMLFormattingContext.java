@@ -80,6 +80,10 @@ class YAMLFormattingContext {
 
   @Nullable
   Spacing computeSpacing(@NotNull Block parent, @Nullable Block child1, @NotNull Block child2) {
+    if (child2 instanceof ASTBlock && startsWithTemplate(((ASTBlock)child2).getNode())) {
+      return null;
+    }
+
     Spacing simpleSpacing = mySpaceBuilder.getSpacing(parent, child1, child2);
     if (simpleSpacing != null) {
       return simpleSpacing;
@@ -124,6 +128,14 @@ class YAMLFormattingContext {
       }
     }
     return Spacing.createSpacing(spaces, spaces, minLineFeeds, false, 0);
+  }
+
+  private static boolean startsWithTemplate(@Nullable ASTNode astNode) {
+    while (astNode != null) {
+      if (astNode instanceof OuterLanguageElement) return true;
+      astNode = astNode.getFirstChildNode();
+    }
+    return false;
   }
 
   @Nullable
