@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironment.TargetPath
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
@@ -11,7 +11,6 @@ import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.projectRoots.Sdk
@@ -23,6 +22,7 @@ import com.intellij.util.io.deleteWithParentsIfEmpty
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
+import com.jetbrains.python.run.execute
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -39,6 +39,7 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
     check(mySdk !is Disposable || !Disposer.isDisposed(mySdk))
   }
 
+  @Throws(ExecutionException::class)
   fun run(indicator: ProgressIndicator) {
     val localRemoteSourcesRoot = Files.createDirectories(Paths.get(PythonSdkUtil.getRemoteSourcesLocalPath(mySdk.homePath)))
 
@@ -60,13 +61,7 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
 
     val environment = myTargetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
     val cmd = execution.buildTargetedCommandLine(environment, mySdk, emptyList())
-    val process = environment.createProcess(cmd, indicator)
-    val cmdPresentation = cmd.getCommandPresentation(environment)
-    val capturingHandler = CapturingProcessHandler(process, cmd.charset, cmdPresentation)
-    val output = capturingHandler.runProcess()
-    if (output.stdout.isNotBlank()) {
-      LOG.debug(output.stdout)
-    }
+    cmd.execute(environment, indicator)
 
     // XXX Make it automatic
     environment.downloadVolumes.values.forEach { it.download(".", indicator) }

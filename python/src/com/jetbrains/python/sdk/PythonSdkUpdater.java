@@ -156,7 +156,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         generateSkeletons(sdk, indicator);
         refreshPackages(sdk, indicator);
       }
-      catch (InvalidSdkException e) {
+      catch (InvalidSdkException | ExecutionException e) {
         LOG.warn("Update for SDK " + sdk + " failed", e);
       }
 
