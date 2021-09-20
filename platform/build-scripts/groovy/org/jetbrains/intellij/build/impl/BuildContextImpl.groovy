@@ -356,6 +356,29 @@ final class BuildContextImpl extends BuildContext {
       //noinspection SpellCheckingInspection
       jvmArgs.add('-Dsplash=true')
     }
+
+    if (options.bundledJreVersion >= 17) {
+      jvmArgs.addAll([
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED',
+        '--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED',
+        '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+        '--add-opens=java.desktop/java.awt=ALL-UNNAMED',
+        '--add-opens=java.desktop/java.awt.event=ALL-UNNAMED',
+        '--add-opens=java.desktop/javax.swing=ALL-UNNAMED',
+        '--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED',
+        '--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.font=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.java2d=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
+        '--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED',
+        '--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED',
+        '--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED'])
+    }
+
     return jvmArgs
   }
 }
