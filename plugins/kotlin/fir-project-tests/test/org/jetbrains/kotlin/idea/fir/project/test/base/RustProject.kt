@@ -38,8 +38,7 @@ internal object RustProject {
                 note = "in-method completion",
             ),
 
-            // TODO fix, fails in UAST type mapping
-            /* TypeAndAutocompleteInFile(
+            TypeAndAutocompleteInFile(
                  filePath =  "$basePath/lang/core/resolve/NameResolution.kt",
                  typeAfter = "private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)",
                  textToType = "\nval a = ",
@@ -51,9 +50,9 @@ internal object RustProject {
                  filePath =  "$basePath/lang/core/resolve/NameResolution.kt",
                  typeAfter = "testAssert { cameFrom.context == scope }",
                  textToType = "\nval a = s",
-                 expectedLookupElements = listOf("scope"),
+                 expectedLookupElements = listOf(),
                  note = "in big method in big file completion",
-             ),*/
+             ),
         )
     }
 }
