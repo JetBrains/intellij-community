@@ -489,6 +489,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                             KotlinExpressionAnchor(expr)
                         )
                     )
+                    val kotlinType = expr.getKotlinType()
+                    if (kotlinType?.isMarkedNullable == true) {
+                        addInstruction(WrapDerivedVariableInstruction(kotlinType.toDfType(expr), SpecialField.UNBOX))
+                    }
                     return true
                 }
             }
