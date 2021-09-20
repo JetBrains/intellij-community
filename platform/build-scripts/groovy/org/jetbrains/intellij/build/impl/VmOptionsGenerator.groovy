@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.ProductProperties
 final class VmOptionsGenerator {
   @SuppressWarnings('SpellCheckingInspection')
   static final List<String> COMMON_VM_OPTIONS = List.of(
+    '-XX:+IgnoreUnrecognizedVMOptions',
     '-XX:+UseG1GC',
     '-XX:SoftRefLRUPolicyMSPerMB=50',
     '-XX:CICompilerCount=2',
