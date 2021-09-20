@@ -29,8 +29,9 @@ import javax.swing.text.JTextComponent
 
 class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<Item>(CollectionComboBoxModel()) {
 
-  var comboBoxActionName: String = ProjectBundle.message("sdk.specify.location")
-  var noDistributionName: String = ProjectBundle.message("sdk.missing.item")
+  var sdkListLoadingText: String = ProjectBundle.message("sdk.loading.item")
+  var noDistributionText: String = ProjectBundle.message("sdk.missing.item")
+  var specifyLocationActionName: String = ProjectBundle.message("sdk.specify.location")
 
   var defaultDistributionLocation: String = System.getProperty("user.home", "")
 
@@ -45,6 +46,7 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
 
   override fun setSelectedItem(anObject: Any?) {
     val item = when (anObject) {
+      is Item.ListLoading -> Item.ListLoading
       is Item.NoDistribution, null -> Item.NoDistribution
       is Item.SpecifyDistributionAction -> addDistributionIfNotExists(LocalDistributionInfo(defaultDistributionLocation))
       is Item.Distribution -> addDistributionIfNotExists(anObject.info)
@@ -52,6 +54,17 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
       else -> throw IllegalArgumentException("Unsupported combobox item: ${anObject.javaClass.name}")
     }
     super.setSelectedItem(item)
+  }
+
+  fun addLoadingItem() {
+    if (!collectionModel.contains(Item.ListLoading)) {
+      val index = collectionModel.getElementIndex(Item.SpecifyDistributionAction)
+      collectionModel.add(index, Item.ListLoading)
+    }
+  }
+
+  fun removeLoadingItem() {
+    collectionModel.remove(Item.ListLoading)
   }
 
   fun addDistributionIfNotExists(info: DistributionInfo): Item {
@@ -131,8 +144,9 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
       myBorder = null
 
       when (value) {
-        is Item.NoDistribution -> append(noDistributionName)
-        is Item.SpecifyDistributionAction -> append(comboBoxActionName)
+        is Item.ListLoading -> append(sdkListLoadingText)
+        is Item.NoDistribution -> append(noDistributionText, SimpleTextAttributes.ERROR_ATTRIBUTES)
+        is Item.SpecifyDistributionAction -> append(specifyLocationActionName)
         is Item.Distribution -> {
           val name = value.info.name
           val description = value.info.description
@@ -217,6 +231,7 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
   }
 
   sealed class Item {
+    object ListLoading : Item()
     object NoDistribution : Item()
     object SpecifyDistributionAction : Item()
     data class Distribution(val info: DistributionInfo) : Item()

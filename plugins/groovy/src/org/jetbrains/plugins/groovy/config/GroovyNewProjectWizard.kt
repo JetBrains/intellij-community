@@ -15,7 +15,6 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -69,18 +68,22 @@ class GroovyNewProjectWizard : NewProjectWizard {
             override val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
             override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
           })
-          comboBox.comboBoxActionName = GroovyBundle.message("dialog.title.specify.groovy.sdk")
-          comboBox.noDistributionName = GroovyBundle.message("combo.box.null.value.placeholder")
+          comboBox.specifyLocationActionName = GroovyBundle.message("dialog.title.specify.groovy.sdk")
+          comboBox.addLoadingItem()
           val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
           if (pathToGroovyHome != null) {
             comboBox.addDistributionIfNotExists(LocalDistributionInfo(pathToGroovyHome.path))
           }
           downloadableLibraryDescription.fetchVersions(object : FileSetVersionsCallback<FrameworkLibraryVersion>() {
             override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
-              versions.sortedWith(::moveUnstablesToTheEnd)
+              versions.sortedWith(::moveUnstableVersionToTheEnd)
                 .map(::FrameworkLibraryDistributionInfo)
                 .forEach(comboBox::addDistributionIfNotExists)
-              comboBox.noDistributionName = ProjectBundle.message("sdk.missing.item")
+              comboBox.removeLoadingItem()
+            }
+
+            override fun onError(errorMessage: String) {
+              comboBox.removeLoadingItem()
             }
           })
           cell(comboBox)
@@ -105,7 +108,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
       return null
     }
 
-    private fun moveUnstablesToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
+    private fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
       val leftVersion = left.versionString
       val rightVersion = right.versionString
       val leftUnstable = GroovyConfigUtils.isUnstable(leftVersion)

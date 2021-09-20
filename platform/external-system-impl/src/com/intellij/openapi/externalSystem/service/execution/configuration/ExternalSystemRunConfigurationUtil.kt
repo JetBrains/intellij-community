@@ -164,7 +164,7 @@ fun <C : RunConfigurationBase<*>> createDistributionFragment(
   setDistribution: C.(DistributionInfo?) -> Unit
 ) = createSettingsEditorFragment<C, DistributionComboBox>(
   DistributionComboBox(project, distributionsInfo).apply {
-    comboBoxActionName = distributionsInfo.comboBoxActionName
+    specifyLocationActionName = distributionsInfo.comboBoxActionName
     distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
   },
   distributionsInfo,
