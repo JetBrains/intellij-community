@@ -53,6 +53,17 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestParamsCommand(headers)));
         System.out.println("Message got");
         break;
+      case CACHE_DOWNLOAD_MESSAGE:
+        CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage cacheDownloadMessage = msg.getCacheDownloadMessage();
+        ProgressIndicator progressIndicator = getProgressIndicator();
+        progressIndicator.setIndeterminate(true);
+        if (cacheDownloadMessage.getMainText() != null) {
+          progressIndicator.setText(cacheDownloadMessage.getMainText());
+        }
+        if (cacheDownloadMessage.getDescriptionText() != null) {
+          progressIndicator.setText(cacheDownloadMessage.getDescriptionText());
+        }
+        break;
       case CONSTANT_SEARCH_TASK:
         // ignored, because the functionality is deprecated
         break;

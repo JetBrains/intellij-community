@@ -14,6 +14,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.TargetTypeRegistry;
@@ -162,7 +164,10 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       if (ProjectStamps.PORTABLE_CACHES) {
         // Try to download caches
-        myChannel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createAuthTokenRequest()));
+        ChannelFuture channelFuture = myChannel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createAuthTokenRequest()));
+        channelFuture.await();
+        JpsOutputLoaderManager loaderManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), myProjectPath, myChannel, mySessionId);
+        loaderManager.load(true, false);
       }
 
       runBuild(new MessageHandler() {

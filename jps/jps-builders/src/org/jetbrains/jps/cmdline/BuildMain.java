@@ -19,6 +19,7 @@ import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
+import org.jetbrains.jps.cache.client.JpsServerAuthUtil;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
@@ -242,6 +243,7 @@ public final class BuildMain {
           case AUTHENTICATION_TOKEN: {
             CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParams = controllerMessage.getRequestParams();
             System.out.println("Got request params: " + requestParams.getAuthHeadersMap());
+            JpsServerAuthUtil.setRequestHeaders(requestParams.getAuthHeadersMap());
             return;
           }
           case CONSTANT_SEARCH_RESULT: {

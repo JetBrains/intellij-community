@@ -94,6 +94,7 @@ message Message {
       COMPILE_MESSAGE = 3;
       CONSTANT_SEARCH_TASK = 4;
       AUTH_TOKEN_REQUEST = 5;
+      CACHE_DOWNLOAD_MESSAGE = 6;
     }
 
     message BuildEvent {
@@ -158,10 +159,16 @@ message Message {
       optional bool is_field_removed = 5  [default = false];
     }
 
+    message CacheDownloadMessage {
+      optional string main_text = 1;
+      optional string description_text = 2;
+    }
+
     required Type type = 1;
     optional BuildEvent build_event = 2;
     optional CompileMessage compile_message = 3;
     optional ConstantSearchTask constant_search_task = 4;
+    optional CacheDownloadMessage cache_download_message = 5;
   }
 
   required UUID session_id = 1;

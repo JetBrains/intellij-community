@@ -224,7 +224,7 @@ public class JpsOutputLoaderManager implements Disposable {
   }
 
   @Nullable
-  private static String getBuildOutDir(@NotNull Project project) {
+  public static String getBuildOutDir(@NotNull Project project) {
     VirtualFile projectFile = project.getProjectFile();
     String projectBasePath = project.getBasePath();
     if (projectFile == null || projectBasePath == null) {

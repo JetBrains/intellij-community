@@ -6432,6 +6432,17 @@ public final class CmdlineRemoteProto {
        * @return The constantSearchTask.
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask getConstantSearchTask();
+
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+       * @return Whether the cacheDownloadMessage field is set.
+       */
+      boolean hasCacheDownloadMessage();
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+       * @return The cacheDownloadMessage.
+       */
+      org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage getCacheDownloadMessage();
     }
     /**
      * Protobuf type {@code org.jetbrains.jpsservice.Message.BuilderMessage}
@@ -6469,6 +6480,10 @@ public final class CmdlineRemoteProto {
          * <code>AUTH_TOKEN_REQUEST = 5;</code>
          */
         AUTH_TOKEN_REQUEST(5),
+        /**
+         * <code>CACHE_DOWNLOAD_MESSAGE = 6;</code>
+         */
+        CACHE_DOWNLOAD_MESSAGE(6),
         ;
 
         /**
@@ -6491,6 +6506,10 @@ public final class CmdlineRemoteProto {
          * <code>AUTH_TOKEN_REQUEST = 5;</code>
          */
         public static final int AUTH_TOKEN_REQUEST_VALUE = 5;
+        /**
+         * <code>CACHE_DOWNLOAD_MESSAGE = 6;</code>
+         */
+        public static final int CACHE_DOWNLOAD_MESSAGE_VALUE = 6;
 
 
         @java.lang.Override
@@ -6515,6 +6534,7 @@ public final class CmdlineRemoteProto {
             case 3: return COMPILE_MESSAGE;
             case 4: return CONSTANT_SEARCH_TASK;
             case 5: return AUTH_TOKEN_REQUEST;
+            case 6: return CACHE_DOWNLOAD_MESSAGE;
             default: return null;
           }
         }
@@ -10637,6 +10657,451 @@ public final class CmdlineRemoteProto {
         }
       }
 
+      public interface CacheDownloadMessageOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage)
+          com.google.protobuf.MessageLiteOrBuilder {
+
+        /**
+         * <code>optional string main_text = 1;</code>
+         * @return Whether the mainText field is set.
+         */
+        boolean hasMainText();
+        /**
+         * <code>optional string main_text = 1;</code>
+         * @return The mainText.
+         */
+        java.lang.String getMainText();
+        /**
+         * <code>optional string main_text = 1;</code>
+         * @return The bytes for mainText.
+         */
+        com.google.protobuf.ByteString
+            getMainTextBytes();
+
+        /**
+         * <code>optional string description_text = 2;</code>
+         * @return Whether the descriptionText field is set.
+         */
+        boolean hasDescriptionText();
+        /**
+         * <code>optional string description_text = 2;</code>
+         * @return The descriptionText.
+         */
+        java.lang.String getDescriptionText();
+        /**
+         * <code>optional string description_text = 2;</code>
+         * @return The bytes for descriptionText.
+         */
+        com.google.protobuf.ByteString
+            getDescriptionTextBytes();
+      }
+      /**
+       * Protobuf type {@code org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage}
+       */
+      public  static final class CacheDownloadMessage extends
+          com.google.protobuf.GeneratedMessageLite<
+              CacheDownloadMessage, CacheDownloadMessage.Builder> implements
+          // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage)
+          CacheDownloadMessageOrBuilder {
+        private CacheDownloadMessage() {
+          mainText_ = "";
+          descriptionText_ = "";
+        }
+        private int bitField0_;
+        public static final int MAIN_TEXT_FIELD_NUMBER = 1;
+        private java.lang.String mainText_;
+        /**
+         * <code>optional string main_text = 1;</code>
+         * @return Whether the mainText field is set.
+         */
+        @java.lang.Override
+        public boolean hasMainText() {
+          return ((bitField0_ & 0x00000001) != 0);
+        }
+        /**
+         * <code>optional string main_text = 1;</code>
+         * @return The mainText.
+         */
+        @java.lang.Override
+        public java.lang.String getMainText() {
+          return mainText_;
+        }
+        /**
+         * <code>optional string main_text = 1;</code>
+         * @return The bytes for mainText.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getMainTextBytes() {
+          return com.google.protobuf.ByteString.copyFromUtf8(mainText_);
+        }
+        /**
+         * <code>optional string main_text = 1;</code>
+         * @param value The mainText to set.
+         */
+        private void setMainText(
+            java.lang.String value) {
+          value.getClass();
+  bitField0_ |= 0x00000001;
+          mainText_ = value;
+        }
+        /**
+         * <code>optional string main_text = 1;</code>
+         */
+        private void clearMainText() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          mainText_ = getDefaultInstance().getMainText();
+        }
+        /**
+         * <code>optional string main_text = 1;</code>
+         * @param value The bytes for mainText to set.
+         */
+        private void setMainTextBytes(
+            com.google.protobuf.ByteString value) {
+          mainText_ = value.toStringUtf8();
+          bitField0_ |= 0x00000001;
+        }
+
+        public static final int DESCRIPTION_TEXT_FIELD_NUMBER = 2;
+        private java.lang.String descriptionText_;
+        /**
+         * <code>optional string description_text = 2;</code>
+         * @return Whether the descriptionText field is set.
+         */
+        @java.lang.Override
+        public boolean hasDescriptionText() {
+          return ((bitField0_ & 0x00000002) != 0);
+        }
+        /**
+         * <code>optional string description_text = 2;</code>
+         * @return The descriptionText.
+         */
+        @java.lang.Override
+        public java.lang.String getDescriptionText() {
+          return descriptionText_;
+        }
+        /**
+         * <code>optional string description_text = 2;</code>
+         * @return The bytes for descriptionText.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getDescriptionTextBytes() {
+          return com.google.protobuf.ByteString.copyFromUtf8(descriptionText_);
+        }
+        /**
+         * <code>optional string description_text = 2;</code>
+         * @param value The descriptionText to set.
+         */
+        private void setDescriptionText(
+            java.lang.String value) {
+          value.getClass();
+  bitField0_ |= 0x00000002;
+          descriptionText_ = value;
+        }
+        /**
+         * <code>optional string description_text = 2;</code>
+         */
+        private void clearDescriptionText() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          descriptionText_ = getDefaultInstance().getDescriptionText();
+        }
+        /**
+         * <code>optional string description_text = 2;</code>
+         * @param value The bytes for descriptionText to set.
+         */
+        private void setDescriptionTextBytes(
+            com.google.protobuf.ByteString value) {
+          descriptionText_ = value.toStringUtf8();
+          bitField0_ |= 0x00000002;
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+
+        public static Builder newBuilder() {
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
+        }
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage prototype) {
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+        }
+
+        /**
+         * Protobuf type {@code org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage}
+         */
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage, Builder> implements
+            // @@protoc_insertion_point(builder_implements:org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage)
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessageOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage.newBuilder()
+          private Builder() {
+            super(DEFAULT_INSTANCE);
+          }
+
+
+          /**
+           * <code>optional string main_text = 1;</code>
+           * @return Whether the mainText field is set.
+           */
+          @java.lang.Override
+          public boolean hasMainText() {
+            return instance.hasMainText();
+          }
+          /**
+           * <code>optional string main_text = 1;</code>
+           * @return The mainText.
+           */
+          @java.lang.Override
+          public java.lang.String getMainText() {
+            return instance.getMainText();
+          }
+          /**
+           * <code>optional string main_text = 1;</code>
+           * @return The bytes for mainText.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString
+              getMainTextBytes() {
+            return instance.getMainTextBytes();
+          }
+          /**
+           * <code>optional string main_text = 1;</code>
+           * @param value The mainText to set.
+           * @return This builder for chaining.
+           */
+          public Builder setMainText(
+              java.lang.String value) {
+            copyOnWrite();
+            instance.setMainText(value);
+            return this;
+          }
+          /**
+           * <code>optional string main_text = 1;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearMainText() {
+            copyOnWrite();
+            instance.clearMainText();
+            return this;
+          }
+          /**
+           * <code>optional string main_text = 1;</code>
+           * @param value The bytes for mainText to set.
+           * @return This builder for chaining.
+           */
+          public Builder setMainTextBytes(
+              com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setMainTextBytes(value);
+            return this;
+          }
+
+          /**
+           * <code>optional string description_text = 2;</code>
+           * @return Whether the descriptionText field is set.
+           */
+          @java.lang.Override
+          public boolean hasDescriptionText() {
+            return instance.hasDescriptionText();
+          }
+          /**
+           * <code>optional string description_text = 2;</code>
+           * @return The descriptionText.
+           */
+          @java.lang.Override
+          public java.lang.String getDescriptionText() {
+            return instance.getDescriptionText();
+          }
+          /**
+           * <code>optional string description_text = 2;</code>
+           * @return The bytes for descriptionText.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString
+              getDescriptionTextBytes() {
+            return instance.getDescriptionTextBytes();
+          }
+          /**
+           * <code>optional string description_text = 2;</code>
+           * @param value The descriptionText to set.
+           * @return This builder for chaining.
+           */
+          public Builder setDescriptionText(
+              java.lang.String value) {
+            copyOnWrite();
+            instance.setDescriptionText(value);
+            return this;
+          }
+          /**
+           * <code>optional string description_text = 2;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearDescriptionText() {
+            copyOnWrite();
+            instance.clearDescriptionText();
+            return this;
+          }
+          /**
+           * <code>optional string description_text = 2;</code>
+           * @param value The bytes for descriptionText to set.
+           * @return This builder for chaining.
+           */
+          public Builder setDescriptionTextBytes(
+              com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setDescriptionTextBytes(value);
+            return this;
+          }
+
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage)
+        }
+        @java.lang.Override
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
+            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+            java.lang.Object arg0, java.lang.Object arg1) {
+          switch (method) {
+            case NEW_MUTABLE_INSTANCE: {
+              return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage();
+            }
+            case NEW_BUILDER: {
+              return new Builder();
+            }
+            case BUILD_MESSAGE_INFO: {
+                java.lang.Object[] objects = new java.lang.Object[] {
+                  "bitField0_",
+                  "mainText_",
+                  "descriptionText_",
+                };
+                java.lang.String info =
+                    "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u1008\u0000\u0002" +
+                    "\u1008\u0001";
+                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+            }
+            // fall through
+            case GET_DEFAULT_INSTANCE: {
+              return DEFAULT_INSTANCE;
+            }
+            case GET_PARSER: {
+              com.google.protobuf.Parser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage> parser = PARSER;
+              if (parser == null) {
+                synchronized (org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage.class) {
+                  parser = PARSER;
+                  if (parser == null) {
+                    parser =
+                        new DefaultInstanceBasedParser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage>(
+                            DEFAULT_INSTANCE);
+                    PARSER = parser;
+                  }
+                }
+              }
+              return parser;
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return (byte) 1;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            return null;
+          }
+          }
+          throw new UnsupportedOperationException();
+        }
+
+
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage)
+        private static final org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage DEFAULT_INSTANCE;
+        static {
+          CacheDownloadMessage defaultInstance = new CacheDownloadMessage();
+          // New instances are implicitly immutable so no need to make
+          // immutable.
+          DEFAULT_INSTANCE = defaultInstance;
+          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+            CacheDownloadMessage.class, defaultInstance);
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage getDefaultInstance() {
+          return DEFAULT_INSTANCE;
+        }
+
+        private static volatile com.google.protobuf.Parser<CacheDownloadMessage> PARSER;
+
+        public static com.google.protobuf.Parser<CacheDownloadMessage> parser() {
+          return DEFAULT_INSTANCE.getParserForType();
+        }
+      }
+
       private int bitField0_;
       public static final int TYPE_FIELD_NUMBER = 1;
       private int type_;
@@ -10809,6 +11274,52 @@ public final class CmdlineRemoteProto {
        */
       private void clearConstantSearchTask() {  constantSearchTask_ = null;
         bitField0_ = (bitField0_ & ~0x00000008);
+      }
+
+      public static final int CACHE_DOWNLOAD_MESSAGE_FIELD_NUMBER = 5;
+      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage cacheDownloadMessage_;
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+       */
+      @java.lang.Override
+      public boolean hasCacheDownloadMessage() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+       */
+      @java.lang.Override
+      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage getCacheDownloadMessage() {
+        return cacheDownloadMessage_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage.getDefaultInstance() : cacheDownloadMessage_;
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+       */
+      private void setCacheDownloadMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage value) {
+        value.getClass();
+  cacheDownloadMessage_ = value;
+        bitField0_ |= 0x00000010;
+        }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+       */
+      @java.lang.SuppressWarnings({"ReferenceEquality"})
+      private void mergeCacheDownloadMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage value) {
+        value.getClass();
+  if (cacheDownloadMessage_ != null &&
+            cacheDownloadMessage_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage.getDefaultInstance()) {
+          cacheDownloadMessage_ =
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage.newBuilder(cacheDownloadMessage_).mergeFrom(value).buildPartial();
+        } else {
+          cacheDownloadMessage_ = value;
+        }
+        bitField0_ |= 0x00000010;
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+       */
+      private void clearCacheDownloadMessage() {  cacheDownloadMessage_ = null;
+        bitField0_ = (bitField0_ & ~0x00000010);
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage parseFrom(
@@ -11083,6 +11594,53 @@ public final class CmdlineRemoteProto {
           return this;
         }
 
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+         */
+        @java.lang.Override
+        public boolean hasCacheDownloadMessage() {
+          return instance.hasCacheDownloadMessage();
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+         */
+        @java.lang.Override
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage getCacheDownloadMessage() {
+          return instance.getCacheDownloadMessage();
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+         */
+        public Builder setCacheDownloadMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage value) {
+          copyOnWrite();
+          instance.setCacheDownloadMessage(value);
+          return this;
+          }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+         */
+        public Builder setCacheDownloadMessage(
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage.Builder builderForValue) {
+          copyOnWrite();
+          instance.setCacheDownloadMessage(builderForValue.build());
+          return this;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+         */
+        public Builder mergeCacheDownloadMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage value) {
+          copyOnWrite();
+          instance.mergeCacheDownloadMessage(value);
+          return this;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage cache_download_message = 5;</code>
+         */
+        public Builder clearCacheDownloadMessage() {  copyOnWrite();
+          instance.clearCacheDownloadMessage();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage)
       }
       private byte memoizedIsInitialized = 2;
@@ -11106,10 +11664,11 @@ public final class CmdlineRemoteProto {
                 "buildEvent_",
                 "compileMessage_",
                 "constantSearchTask_",
+                "cacheDownloadMessage_",
               };
               java.lang.String info =
-                  "\u0001\u0004\u0000\u0001\u0001\u0004\u0004\u0000\u0000\u0004\u0001\u150c\u0000\u0002" +
-                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003";
+                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0004\u0001\u150c\u0000\u0002" +
+                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1009\u0004";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

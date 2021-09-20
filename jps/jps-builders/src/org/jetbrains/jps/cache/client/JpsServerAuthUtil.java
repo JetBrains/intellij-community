@@ -1,25 +1,16 @@
-//package org.jetbrains.jps.cache.client;
-//
-//import com.intellij.jps.cache.JpsCacheBundle;
-//import com.intellij.jps.cache.client.JpsServerAuthExtension;
-//import org.apache.http.message.BasicHeader;
-//import org.jetbrains.annotations.NotNull;
-//import org.jetbrains.jps.cache.JpsCacheBundle;
-//
-//import java.util.Map;
-//
-//final class JpsServerAuthUtil {
-//  static @NotNull Map<String, String> getRequestHeaders() {
-//    JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
-//    if (authExtension == null) {
-//      String message = JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin");
-//      throw new RuntimeException(message);
-//    }
-//    Map<String, String> authHeader = authExtension.getAuthHeader();
-//    if (authHeader == null) {
-//      String message = JpsCacheBundle.message("internal.authentication.plugin.missing.token");
-//      throw new RuntimeException(message);
-//    }
-//    return authHeader;
-//  }
-//}
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.jps.cache.client;
+
+import java.util.Map;
+
+public class JpsServerAuthUtil {
+  private static Map<String, String> requestHeaders;
+
+  public static Map<String, String> getRequestHeaders() {
+    return requestHeaders;
+  }
+
+  public static void setRequestHeaders(Map<String, String> requestHeaders) {
+    JpsServerAuthUtil.requestHeaders = requestHeaders;
+  }
+}
