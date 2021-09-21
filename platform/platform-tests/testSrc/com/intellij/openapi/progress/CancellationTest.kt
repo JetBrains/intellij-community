@@ -4,6 +4,7 @@ package com.intellij.openapi.progress
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
+import junit.framework.TestCase.fail
 import kotlinx.coroutines.Job
 import org.junit.ClassRule
 import org.junit.Test
@@ -18,17 +19,35 @@ class CancellationTest {
   }
 
   @Test
-  fun `job cancellation makes checkCanceled throw CE`() {
+  fun `job cancellation`() {
+    val pm = ProgressManager.getInstance()
     val lock = Semaphore(1)
     val job = Job()
+    val cancelled = Semaphore(1)
     val future = AppExecutorUtil.getAppExecutorService().submit {
       withJob(job) {
+        ProgressManager.checkCanceled()
         lock.up()
-        neverEndingStory()
+        cancelled.waitUp()
+        assertCheckCanceledThrows()
+        pm.executeNonCancelableSection {
+          ProgressManager.checkCanceled()
+        }
+        assertCheckCanceledThrows()
       }
     }
     lock.waitUp()
     job.cancel()
-    waitAssertCompletedWithCancellation(future)
+    cancelled.up()
+    waitAssertCompletedNormally(future)
+  }
+
+  private fun assertCheckCanceledThrows() {
+    try {
+      ProgressManager.checkCanceled()
+      fail()
+    }
+    catch (e: JobCanceledException) {
+    }
   }
 }
