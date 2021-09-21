@@ -53,6 +53,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
             serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.KotlinPluginKindProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.fir.FirKotlinPluginKindProvider"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.KotlinPluginDisposable"/>
