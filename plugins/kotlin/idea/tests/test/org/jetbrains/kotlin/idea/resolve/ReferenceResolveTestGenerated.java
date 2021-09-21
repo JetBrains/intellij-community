@@ -23,6 +23,16 @@ public class ReferenceResolveTestGenerated extends AbstractReferenceResolveTest 
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AmbiguousLabel1.kt")
+    public void testAmbiguousLabel1() throws Exception {
+        runTest("testData/resolve/references/AmbiguousLabel1.kt");
+    }
+
+    @TestMetadata("AmbiguousLabel2.kt")
+    public void testAmbiguousLabel2() throws Exception {
+        runTest("testData/resolve/references/AmbiguousLabel2.kt");
+    }
+
     @TestMetadata("AnnotationForClass.kt")
     public void testAnnotationForClass() throws Exception {
         runTest("testData/resolve/references/AnnotationForClass.kt");
