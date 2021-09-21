@@ -9,18 +9,11 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleJavaBuildSystemStep(parent: JavaNewProjectWizard.Step)
   : GradleBuildSystemStep<JavaNewProjectWizard.Step>(parent) {
-
-  override val sdkComboBox: Cell<JdkComboBox>
-    get() = parentStep.sdkComboBox
-
-  override val sdk = parentStep.sdk
 
   override fun setupProject(project: Project) {
     val builder = InternalGradleModuleBuilder().apply {
@@ -37,7 +30,7 @@ class GradleJavaBuildSystemStep(parent: JavaNewProjectWizard.Step)
 
       isUseKotlinDsl = false
 
-      gradleVersion = suggestGradleVersion(parentStep.sdk)
+      gradleVersion = suggestGradleVersion()
     }
 
     builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {

@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
+import com.intellij.ide.projectWizard.generators.NewProjectWizardSdkData
+import com.intellij.ide.wizard.NewProjectWizardBaseData
+import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.Panel
@@ -20,19 +21,13 @@ import javax.swing.Icon
 
 abstract class GradleBuildSystemStep<ParentStep>(parent: ParentStep)
   : MavenizedNewProjectWizardStep<ProjectData, ParentStep>(parent)
-  where ParentStep : com.intellij.ide.wizard.NewProjectWizardBaseData, ParentStep : com.intellij.ide.wizard.NewProjectWizardStep {
-
-  abstract val sdkComboBox: com.intellij.ui.dsl.builder.Cell<JdkComboBox>
-  abstract val sdk: Sdk?
-
+  where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardSdkData, ParentStep : NewProjectWizardStep {
 
   override fun createView(data: ProjectData) = GradleDataView(data)
 
   override fun setupUI(builder: Panel) {
     super.setupUI(builder)
-    sdkComboBox.validationOnApply {
-      sdk?.let { validateGradleVersion(it) }
-    }
+    parentStep.sdkComboBox.validationOnApply { validateGradleVersion() }
   }
 
   override fun findAllParents(): List<ProjectData> {
@@ -55,9 +50,9 @@ abstract class GradleBuildSystemStep<ParentStep>(parent: ParentStep)
     return null
   }
 
-  private fun ValidationInfoBuilder.validateGradleVersion(sdk: Sdk): ValidationInfo? {
-    val javaVersion = getJavaVersion(sdk) ?: return null
-    if (getGradleVersion(sdk) == null) {
+  private fun ValidationInfoBuilder.validateGradleVersion(): ValidationInfo? {
+    val javaVersion = getJavaVersion() ?: return null
+    if (getGradleVersion() == null) {
       val preferredGradleVersion = getPreferredGradleVersion()
       val errorTitle = GradleBundle.message("gradle.settings.wizard.unsupported.jdk.title", if (context.isCreatingNewProject) 0 else 1)
       val errorMessage = GradleBundle.message(
@@ -74,8 +69,8 @@ abstract class GradleBuildSystemStep<ParentStep>(parent: ParentStep)
     return null
   }
 
-  private fun getJavaVersion(sdk: Sdk?): JavaVersion? {
-    val jdk = sdk ?: return null
+  private fun getJavaVersion(): JavaVersion? {
+    val jdk = parentStep.sdk ?: return null
     val versionString = jdk.versionString ?: return null
     return JavaVersion.tryParse(versionString)
   }
@@ -85,17 +80,17 @@ abstract class GradleBuildSystemStep<ParentStep>(parent: ParentStep)
     return findGradleVersion(project) ?: GradleVersion.current()
   }
 
-  private fun getGradleVersion(sdk: Sdk?): GradleVersion? {
+  private fun getGradleVersion(): GradleVersion? {
     val preferredGradleVersion = getPreferredGradleVersion()
-    val javaVersion = getJavaVersion(sdk) ?: return preferredGradleVersion
+    val javaVersion = getJavaVersion() ?: return preferredGradleVersion
     return when (isSupported(preferredGradleVersion, javaVersion)) {
       true -> preferredGradleVersion
       else -> suggestGradleVersion(javaVersion)
     }
   }
 
-  protected fun suggestGradleVersion(sdk: Sdk?): GradleVersion {
-    return getGradleVersion(sdk) ?: getPreferredGradleVersion()
+  protected fun suggestGradleVersion(): GradleVersion {
+    return getGradleVersion() ?: getPreferredGradleVersion()
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

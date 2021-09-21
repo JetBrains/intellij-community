@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.buttonGroup
 import com.intellij.util.io.systemIndependentPath
@@ -18,11 +16,6 @@ internal class GradleKotlinBuildSystemType : KotlinBuildSystemType {
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = object : GradleBuildSystemStep<KotlinNewProjectWizard.Step>(parent) {
         var buildSystemType: BuildSystemType = BuildSystemType.GradleKotlinDsl
-
-        override val sdkComboBox: Cell<JdkComboBox>
-            get() = parentStep.sdkComboBox
-
-        override val sdk = parentStep.sdk
 
         override fun setupUI(builder: Panel) {
             super.setupUI(builder)

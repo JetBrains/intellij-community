@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.generators.NewProjectWizardSdkData
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -77,15 +78,16 @@ class KotlinNewProjectWizard : NewProjectWizard {
     class Step(parent: NewProjectWizardLanguageStep) :
         AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, KotlinBuildSystemType.EP_NAME),
         NewProjectWizardBuildSystemData,
-        NewProjectWizardLanguageData by parent {
+        NewProjectWizardLanguageData by parent,
+        NewProjectWizardSdkData {
 
         override val self = this
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
         override val buildSystemProperty by ::stepProperty
         override val buildSystem by ::step
-        lateinit var sdkComboBox: Cell<JdkComboBox>
-        val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-        val sdk by sdkProperty
+        override lateinit var sdkComboBox: Cell<JdkComboBox>
+        override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+        override val sdk by sdkProperty
 
         override fun setupCommonUI(builder: Panel) {
             with(builder) {
