@@ -200,7 +200,6 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public PsiMethod findDeepestSuperMethod() {
     return myMethod.findDeepestSuperMethod();
   }

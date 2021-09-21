@@ -36,17 +36,14 @@ public class ApplicationManager {
   public static void setApplication(@NotNull Application instance,
                                     @NotNull Supplier<? extends FileTypeRegistry> fileTypeRegistryGetter,
                                     @NotNull Disposable parent) {
-    final Application old = ourApplication;
-    @SuppressWarnings("deprecation")
+    Application old = ourApplication;
+    //noinspection deprecation
     Supplier<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        if (old != null) {
-          // to prevent NPEs in threads still running
-          setApplication(old);
-          FileTypeRegistry.setInstanceSupplier(oldFileTypeRegistry);
-        }
+    Disposer.register(parent, () -> {
+      if (old != null) {
+        // to prevent NPEs in threads still running
+        setApplication(old);
+        FileTypeRegistry.setInstanceSupplier(oldFileTypeRegistry);
       }
     });
     setApplication(instance);
