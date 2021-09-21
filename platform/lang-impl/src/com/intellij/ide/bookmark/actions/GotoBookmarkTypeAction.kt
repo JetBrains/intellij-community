@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
 internal open class GotoBookmarkTypeAction(private val type: BookmarkType)
-  : DumbAwareAction(messagePointer("goto.bookmark.type.action.text", type.mnemonic), type.icon) {
+  : DumbAwareAction(messagePointer("goto.bookmark.type.action.text", type.mnemonic)/*, type.icon*/) {
 
   override fun update(event: AnActionEvent) {
     val navigatable = event.bookmarksManager?.getBookmark(type)?.canNavigate()

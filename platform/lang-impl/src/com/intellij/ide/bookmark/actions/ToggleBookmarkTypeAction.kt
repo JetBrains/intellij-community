@@ -6,8 +6,8 @@ import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-internal open class ToggleBookmarkTypeAction(private val type: BookmarkType) : DumbAwareAction(
-  messagePointer("bookmark.type.toggle.action.text", type.mnemonic), type.icon) {
+internal open class ToggleBookmarkTypeAction(private val type: BookmarkType)
+  : DumbAwareAction(messagePointer("bookmark.type.toggle.action.text", type.mnemonic)/*, type.icon*/) {
 
   override fun update(event: AnActionEvent) {
     val manager = event.bookmarksManager
