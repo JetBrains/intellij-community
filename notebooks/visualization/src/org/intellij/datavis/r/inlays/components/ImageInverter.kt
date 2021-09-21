@@ -6,6 +6,7 @@ package org.intellij.datavis.r.inlays.components
 
 import com.intellij.util.ui.ImageUtil
 import java.awt.Color
+import java.awt.GraphicsConfiguration
 import java.awt.image.BufferedImage
 import java.awt.image.IndexColorModel
 import java.io.ByteArrayInputStream
@@ -14,7 +15,7 @@ import javax.imageio.ImageIO
 import kotlin.math.max
 import kotlin.math.min
 
-class ImageInverter(foreground: Color, background: Color) {
+class ImageInverter(foreground: Color, background: Color, private val graphicsConfiguration: GraphicsConfiguration? = null) {
   private val rgb = FloatArray(3)
   private val hsl = FloatArray(3)
   private val whiteHsl = FloatArray(3)
@@ -148,16 +149,8 @@ class ImageInverter(foreground: Color, background: Color) {
       val alpha = invert(argb)
       palette[index] = convertHSLtoRGB(hsl, alpha)
     }
-    val outputModel = IndexColorModel(
-      model.pixelSize,
-      model.mapSize,
-      palette,
-      0,
-      model.hasAlpha(),
-      model.transparentPixel,
-      model.transferType
-    )
-    return BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED, outputModel)
+
+    return ImageUtil.createImage(graphicsConfiguration, image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
   }
 
   // Note: returns alpha, resulting color resides in `hsl`
