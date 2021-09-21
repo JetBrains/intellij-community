@@ -2,8 +2,13 @@
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.DiffPreview
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.SimpleTreeDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -22,6 +27,26 @@ object ChangesBrowserToolWindow {
     repoToolWindow.contentManager.removeAllContents(true)
     repoToolWindow.contentManager.addContent(content)
     repoToolWindow.activate(null)
+  }
+
+  @JvmStatic
+  fun createDiffPreview(project: Project,
+                        changesBrowser: ChangesBrowserBase,
+                        disposable: Disposable): DiffPreview {
+    val processor = SimpleTreeDiffRequestProcessor(project, "ChangesToolWindowPreview", changesBrowser.viewer, disposable)
+    return object : SimpleTreeEditorDiffPreview(processor, changesBrowser.viewer) {
+      override fun getCurrentName(): String {
+        val changeName = changeViewProcessor.currentChangeName
+        return when {
+          changeName != null -> VcsBundle.message("changes.editor.diff.preview.title", changeName)
+          else -> VcsBundle.message("changes.editor.diff.preview.empty.title")
+        }
+      }
+
+      override fun returnFocusToTree() {
+        ToolWindowManager.getInstance(project).getToolWindow(TOOLWINDOW_ID)?.activate(null)
+      }
+    }
   }
 
   private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager): ToolWindow {

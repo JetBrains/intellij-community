@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.content.Content;
@@ -49,6 +50,10 @@ public class ChangeListViewerDialog extends DialogWrapper {
                                 @Nullable @NlsContexts.TabTitle String title,
                                 @NotNull LoadingCommittedChangeListPanel loadingPanel) {
     loadingPanel.hideSideBorders();
+
+    SimpleChangesBrowser changesBrowser = loadingPanel.getChangesBrowser();
+    DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, changesBrowser, loadingPanel);
+    changesBrowser.setShowDiffActionPreview(diffPreview);
 
     Content content = ContentFactory.SERVICE.getInstance().createContent(loadingPanel.getContent(), title, false);
     content.setPreferredFocusableComponent(loadingPanel.getPreferredFocusedComponent());
