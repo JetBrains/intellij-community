@@ -48,6 +48,8 @@
       <action id="ProblemsView.AutoscrollToSource"
               icon="AllIcons.General.AutoscrollToSource"
               class="com.intellij.analysis.problemsView.toolWindow.AutoscrollToSource"/>
+      <action id="ProblemsView.OpenInPreviewTab"
+              class="com.intellij.analysis.problemsView.toolWindow.OpenInPreviewTab"/>
       <action id="ProblemsView.ShowPreview"
               icon="AllIcons.Actions.PreviewDetails"
               class="com.intellij.analysis.problemsView.toolWindow.ShowPreview"/>
