@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.perf.common
+package org.jetbrains.kotlin.idea.base.project.test
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.lookup.LookupElement
@@ -8,6 +8,10 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.perf.*
+import org.jetbrains.kotlin.idea.perf.common.HighlightFile
+import org.jetbrains.kotlin.idea.perf.common.ProjectAction
+import org.jetbrains.kotlin.idea.perf.common.ProjectData
+import org.jetbrains.kotlin.idea.perf.common.TypeAndAutocompleteInFile
 import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
 import org.jetbrains.kotlin.idea.perf.util.TeamCity
 import org.jetbrains.kotlin.idea.testFramework.EditorFile

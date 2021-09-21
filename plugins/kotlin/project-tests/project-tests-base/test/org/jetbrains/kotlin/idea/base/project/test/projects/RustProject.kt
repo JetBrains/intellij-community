@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.fir.project.test.base
+package org.jetbrains.kotlin.idea.base.project.test.projects
 
 import org.jetbrains.kotlin.idea.perf.common.HighlightFile
 import org.jetbrains.kotlin.idea.perf.common.ProjectAction
@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.perf.common.ProjectData
 import org.jetbrains.kotlin.idea.perf.common.TypeAndAutocompleteInFile
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 
-internal object RustProject {
+object RustProject {
     /*
       The fork (https://github.com/darthorimar/intellij-rust) of intellij-rust plugin is used
       It has required code pregenerated manually
