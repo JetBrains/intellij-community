@@ -2978,7 +2978,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class ScrollingTimer {
     private Timer myTimer;
-    private static final int TIMER_PERIOD = 100;
     private static final int CYCLE_SIZE = 20;
     private int myXCycles;
     private int myYCycles;
@@ -3017,7 +3016,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
 
-      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", TIMER_PERIOD, e -> {
+      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", Registry.intValue("editor.scrolling.animation.interval.ms"), e -> {
         if (isDisposed()) {
           stop();
           return;
