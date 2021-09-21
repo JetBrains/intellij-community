@@ -29,7 +29,13 @@ val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
 enum class DevIdeaBuildServerStatus(private val status: String) {
   OK("OK"),
   FAILED("FAILED"),
-  UNDEFINED("UNDEFINED")
+  UNDEFINED("UNDEFINED");
+
+  companion object {
+    fun fromString(source: String): DevIdeaBuildServerStatus {
+      return values().single { it.status == source.trim() }
+    }
+  }
 }
 
 class DevIdeaBuildServer {
@@ -41,7 +47,6 @@ class DevIdeaBuildServer {
 
     @JvmStatic
     fun main(args: Array<String>) {
-      // avoiding "log4j:WARN No appenders could be found"
       // avoiding "log4j:WARN No appenders could be found"
       System.setProperty("log4j.defaultInitOverride", "true")
       val root = org.apache.log4j.Logger.getRootLogger()
@@ -106,6 +111,7 @@ class DevIdeaBuildServer {
         }
         catch (e: ConfigurationException) {
           statusCode = HttpURLConnection.HTTP_BAD_REQUEST
+          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
           statusMessage = e.message!!
         }
         catch (e: Throwable) {
