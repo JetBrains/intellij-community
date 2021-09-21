@@ -1,4 +1,6 @@
 // "Replace with 'New'" "false"
+// ACTION: Compiler warning 'DEPRECATION'
+// ACTION: Compiler warning 'TYPEALIAS_EXPANSION_DEPRECATION'
 // ACTION: Convert to block body
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable

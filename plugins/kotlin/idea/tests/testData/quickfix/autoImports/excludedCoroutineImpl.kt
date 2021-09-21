@@ -1,6 +1,7 @@
 // "Import" "false"
 // WITH_RUNTIME
 // LANGUAGE_VERSION: 1.2
+// ACTION: Compiler warning 'UNUSED_EXPRESSION'
 // ACTION: Create local variable 'CoroutineImpl'
 // ACTION: Create object 'CoroutineImpl'
 // ACTION: Create parameter 'CoroutineImpl'
