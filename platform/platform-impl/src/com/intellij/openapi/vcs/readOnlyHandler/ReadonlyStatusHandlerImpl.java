@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandlerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,11 +72,15 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
   @NotNull
   @Override
   protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
-    final List<FileInfo> fileInfos = SlowOperations.allowSlowOperations(() -> createFileInfos(files));
+    List<VirtualFile> nonWritableFiles =
+      ContainerUtil.filter(originalFiles, (vf) -> vf != null && !vf.isWritable() && vf.isInLocalFileSystem());
+
     // if all files are already writable
-    if (fileInfos.isEmpty()) {
+    if (nonWritableFiles.isEmpty()) {
       return createResultStatus(originalFiles, files);
     }
+
+    final List<FileInfo> fileInfos = SlowOperations.allowSlowOperations(() -> createFileInfos(nonWritableFiles));
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myClearReadOnlyInTests) {
@@ -99,19 +104,15 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
   }
 
   @NotNull
-  private List<FileInfo> createFileInfos(@NotNull Collection<? extends VirtualFile> files) {
-    List<FileInfo> fileInfos = new ArrayList<>();
-    for (final VirtualFile file : files) {
-      if (file != null && !file.isWritable() && file.isInLocalFileSystem()) {
-        TargetPresentationBuilder builder = TargetPresentation.builder(file.getPresentableName())
-          .icon(VirtualFilePresentation.getIcon(file))
-          .presentableText(file.getPresentableName());
-        VirtualFile vfParent = file.getParent();
-        if (vfParent != null) builder = builder.locationText(vfParent.getPresentableUrl());
-        fileInfos.add(new FileInfo(file, builder.presentation(), myProject));
-      }
-    }
-    return fileInfos;
+  private List<FileInfo> createFileInfos(@NotNull Collection<? extends VirtualFile> nonWritableFiles) {
+    return ContainerUtil.map(nonWritableFiles, (vf) -> {
+      TargetPresentationBuilder builder = TargetPresentation.builder(vf.getPresentableName())
+        .icon(VirtualFilePresentation.getIcon(vf))
+        .presentableText(vf.getPresentableName());
+      VirtualFile vfParent = vf.getParent();
+      if (vfParent != null) builder = builder.locationText(vfParent.getPresentableUrl());
+      return new FileInfo(vf, builder.presentation(), myProject);
+    });
   }
 
   public static void processFiles(@NotNull List<FileInfo> fileInfos, @Nullable String changelist) {
