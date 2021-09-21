@@ -6,10 +6,10 @@ import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.BreakpointAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.BreakpointRemovedAction
 import org.jetbrains.plugins.feature.suggester.actions.DebugSessionPausedAction
-import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 
 class RunToCursorSuggester : AbstractFeatureSuggester() {
     override val id: String = "Run to cursor"
@@ -43,8 +43,8 @@ class RunToCursorSuggester : AbstractFeatureSuggester() {
         }
     }
 
-    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        when (val action = actions.lastOrNull()) {
+    override fun getSuggestion(action: Action): Suggestion {
+        when (action) {
             is DebugSessionPausedAction -> {
                 if (State.debugSessionPaused && isOnTheSameLine(action.position, State.addedBreakpointPosition)) {
                     State.isPausedOnBreakpoint = true

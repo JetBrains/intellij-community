@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
-import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatistics.Companion.SUGGESTION_FOUND
@@ -19,11 +18,6 @@ import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
 import java.lang.ref.WeakReference
 
 class FeatureSuggestersManager(val project: Project) : Disposable {
-    companion object {
-        private const val MAX_ACTIONS_NUMBER: Int = 100
-    }
-
-    private val actionsHistory = UserActionsHistory(MAX_ACTIONS_NUMBER)
     private val suggestionPresenter: SuggestionPresenter =
         NotificationSuggestionPresenter()
     private val settings = FeatureSuggesterSettings.instance()
@@ -37,17 +31,16 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
         val suggesters = FeatureSuggester.suggesters
             .filter { it.languages.find { id -> id == Language.ANY.id || id == language.id } != null }
         if (suggesters.isNotEmpty()) {
-            actionsHistory.add(action)
             for (suggester in suggesters) {
                 if (suggester.isEnabled()) {
-                    processSuggester(suggester)
+                    processSuggester(suggester, action)
                 }
             }
         }
     }
 
-    private fun processSuggester(suggester: FeatureSuggester) {
-        val suggestion = suggester.getSuggestion(actionsHistory)
+    private fun processSuggester(suggester: FeatureSuggester, action: Action) {
+        val suggestion = suggester.getSuggestion(action)
         if (suggestion is PopupSuggestion) {
             FeatureSuggesterStatistics.sendStatistics(SUGGESTION_FOUND, suggester.id)
             if (suggester.isSuggestionNeeded(settings.suggestingIntervalDays)) {
@@ -80,9 +73,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
         )
     }
 
-    override fun dispose() {
-        actionsHistory.clear()
-    }
+    override fun dispose() {}
 
     private fun FeatureSuggester.isEnabled(): Boolean {
         return FeatureSuggesterSettings.instance().isEnabled(id)

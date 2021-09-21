@@ -5,13 +5,14 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
 import org.jetbrains.plugins.feature.suggester.asString
-import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
+import org.jetbrains.plugins.feature.suggester.util.WeakReferenceDelegator
 import java.awt.datatransfer.DataFlavor
 
 class IntroduceVariableSuggester : AbstractFeatureSuggester() {
@@ -24,9 +25,10 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
 
     override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
-    private data class ExtractedExpressionData(var exprText: String, var changedStatement: PsiElement) {
+    private class ExtractedExpressionData(var exprText: String, changedStatement: PsiElement) {
+        var changedStatement: PsiElement? by WeakReferenceDelegator(changedStatement)
         val changedStatementText: String
-        var declaration: PsiElement? = null
+        var declaration: PsiElement? by WeakReferenceDelegator(null)
         var variableEditingFinished: Boolean = false
 
         init {
@@ -42,8 +44,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
 
     private var extractedExprData: ExtractedExpressionData? = null
 
-    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        val action = actions.lastOrNull() ?: return NoSuggestion
+    override fun getSuggestion(action: Action): Suggestion {
         val language = action.language ?: return NoSuggestion
         val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         when (action) {

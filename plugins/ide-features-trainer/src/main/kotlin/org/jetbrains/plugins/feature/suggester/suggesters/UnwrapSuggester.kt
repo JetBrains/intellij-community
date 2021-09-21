@@ -7,8 +7,8 @@ import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.TextFragment
+import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
-import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class UnwrapSuggester : AbstractFeatureSuggester() {
@@ -43,8 +43,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
 
     private val surroundingStatementStartRegex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
 
-    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        val action = actions.lastOrNull() ?: return NoSuggestion
+    override fun getSuggestion(action: Action): Suggestion {
         val language = action.language ?: return NoSuggestion
         val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         if (action is BeforeEditorTextRemovedAction) {

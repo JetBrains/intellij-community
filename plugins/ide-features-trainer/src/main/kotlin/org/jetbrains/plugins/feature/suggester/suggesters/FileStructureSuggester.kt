@@ -9,9 +9,9 @@ import com.intellij.psi.PsiNamedElement
 import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.EditorFindAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
-import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class FileStructureSuggester : AbstractFeatureSuggester() {
@@ -24,14 +24,17 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
 
     override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
-    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        if (actions.size < 2) return NoSuggestion
-        val action = actions.lastOrNull()!!
+    private var prevActionIsEditorFindAction = false
+
+    override fun getSuggestion(action: Action): Suggestion {
         val language = action.language ?: return NoSuggestion
         val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         when (action) {
+            is EditorFindAction -> {
+                prevActionIsEditorFindAction = true
+            }
             is EditorFocusGainedAction -> {
-                if (actions.get(1) !is EditorFindAction) return NoSuggestion // check that previous action is Find
+                if (!prevActionIsEditorFindAction) return NoSuggestion // check that previous action is Find
                 val psiFile = action.psiFile ?: return NoSuggestion
                 val project = action.project ?: return NoSuggestion
                 val editor = action.editor ?: return NoSuggestion
@@ -42,10 +45,14 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
                 if (definition is PsiNamedElement && langSupport.isFileStructureElement(definition) &&
                     definition.name?.contains(textToFind, !findModel.isCaseSensitive) == true
                 ) {
+                    prevActionIsEditorFindAction = false
                     return createSuggestion()
                 }
             }
-            else -> NoSuggestion
+            else -> {
+                prevActionIsEditorFindAction = false
+                NoSuggestion
+            }
         }
 
         return NoSuggestion

@@ -6,13 +6,14 @@ import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.actions.PsiAction
-import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
+import org.jetbrains.plugins.feature.suggester.util.WeakReferenceDelegator
 
 class SurroundWithSuggester : AbstractFeatureSuggester() {
     override val id: String = "Surround with"
@@ -25,12 +26,13 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
     override val languages = listOf("JAVA", "kotlin")
 
     private object State {
-        var surroundingStatement: PsiElement? = null
+        var surroundingStatement: PsiElement? by WeakReferenceDelegator(null)
         var surroundingStatementStartOffset: Int = -1
         var firstStatementInBlockText: String = ""
         var isLeftBraceAdded: Boolean = false
         var isRightBraceAdded: Boolean = false
         var lastChangeTimeMillis: Long = 0L
+        var lastTextInsertedAction: EditorTextInsertedAction? by WeakReferenceDelegator(null)
 
         fun applySurroundingStatementAddition(statement: PsiElement, timeMillis: Long) {
             reset()
@@ -60,12 +62,12 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
             isLeftBraceAdded = false
             isRightBraceAdded = false
             lastChangeTimeMillis = 0L
+            lastTextInsertedAction = null
         }
     }
 
     @Suppress("NestedBlockDepth")
-    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        val action = actions.lastOrNull() ?: return NoSuggestion
+    override fun getSuggestion(action: Action): Suggestion {
         val language = action.language ?: return NoSuggestion
         val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         if (State.surroundingStatement?.isValid == false && action is PsiAction) {
@@ -88,7 +90,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
             }
             is ChildrenChangedAction -> {
                 if (State.surroundingStatement == null) return NoSuggestion
-                val textInsertedAction = actions.findLastTextInsertedAction() ?: return NoSuggestion
+                val textInsertedAction = State.lastTextInsertedAction ?: return NoSuggestion
                 val text = textInsertedAction.text
                 if (text.contains("{") || text.contains("}")) {
                     val psiFile = action.parent as? PsiFile ?: return NoSuggestion
@@ -120,6 +122,9 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
                     }
                 }
             }
+            is EditorTextInsertedAction -> {
+                State.lastTextInsertedAction = action
+            }
             else -> NoSuggestion
         }
         return NoSuggestion
@@ -131,10 +136,6 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
         if (langSupport.isSurroundingStatement(parent)) {
             surroundingStatement = parent
         }
-    }
-
-    private fun UserActionsHistory.findLastTextInsertedAction(): EditorTextInsertedAction? {
-        return asIterable().findLast { it is EditorTextInsertedAction } as? EditorTextInsertedAction
     }
 
     private fun State.isBraceAddedToStatement(langSupport: LanguageSupport, psiFile: PsiFile, offset: Int): Boolean {

@@ -1,15 +1,17 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.google.common.collect.EvictingQueue
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
-import org.jetbrains.plugins.feature.suggester.history.ChangesHistory
-import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.util.WeakReferenceDelegator
 import java.lang.ref.WeakReference
+import java.util.Queue
 import kotlin.math.abs
 
 class LineCommentingSuggester : AbstractFeatureSuggester() {
@@ -29,22 +31,22 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
 
     private val maxTimeMillisBetweenComments = 5000L
     private val numberOfCommentsToGetSuggestion = 3
-    private val commentsHistory = ChangesHistory<CommentData>(NUMBER_OF_COMMENTS_TO_GET_SUGGESTION)
-    private var firstSlashAddedAction: EditorTextInsertedAction? = null
+    @Suppress("UnstableApiUsage")
+    private val commentsHistory: Queue<CommentData> = EvictingQueue.create(NUMBER_OF_COMMENTS_TO_GET_SUGGESTION)
+    private var firstSlashAddedAction: EditorTextInsertedAction? by WeakReferenceDelegator(null)
 
-    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        val curAction = actions.lastOrNull() ?: return NoSuggestion
-        if (curAction is EditorTextInsertedAction) {
-            if (isCommentSymbolAdded(curAction, '/')) {
-                firstSlashAddedAction = curAction
-            } else if (firstSlashAddedAction != null && isSecondSlashAdded(curAction, firstSlashAddedAction!!) ||
-                isCommentSymbolAdded(curAction, '#')
+    override fun getSuggestion(action: Action): Suggestion {
+        if (action is EditorTextInsertedAction) {
+            if (isCommentSymbolAdded(action, '/')) {
+                firstSlashAddedAction = action
+            } else if (firstSlashAddedAction != null && isSecondSlashAdded(action, firstSlashAddedAction!!) ||
+                isCommentSymbolAdded(action, '#')
             ) {
-                val document = curAction.document ?: return NoSuggestion
+                val document = action.document ?: return NoSuggestion
                 val commentData = CommentData(
-                    lineNumber = document.getLineNumber(curAction.caretOffset),
+                    lineNumber = document.getLineNumber(action.caretOffset),
                     documentRef = WeakReference(document),
-                    timeMillis = curAction.timeMillis
+                    timeMillis = action.timeMillis
                 )
                 commentsHistory.add(commentData)
                 firstSlashAddedAction = null
@@ -74,6 +76,7 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
     }
 
     private fun isSecondSlashAdded(curAction: EditorTextInsertedAction, prevAction: EditorTextInsertedAction): Boolean {
+        if (curAction.project != prevAction.project) return false
         val curPsiFile = curAction.psiFile ?: return false
         val curDocument = curAction.document ?: return false
         val prevPsiFile = prevAction.psiFile ?: return false
@@ -84,17 +87,16 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
             curDocument.getLineNumber(curAction.caretOffset) == prevDocument.getLineNumber(prevAction.caretOffset)
     }
 
-    private fun ChangesHistory<CommentData>.isLinesCommentedInARow(): Boolean {
-        val comments = asIterable()
+    private fun Queue<CommentData>.isLinesCommentedInARow(): Boolean {
         return !(
-            comments.map(CommentData::lineNumber)
+            map(CommentData::lineNumber)
                 .sorted()
                 .zipWithNext { first, second -> second - first }
                 .any { it != 1 } ||
-                comments.map { it.documentRef.get() }
+                map { it.documentRef.get() }
                     .zipWithNext { first, second -> first != null && first === second }
                     .any { !it } ||
-                comments.map(CommentData::timeMillis)
+                map(CommentData::timeMillis)
                     .zipWithNext { first, second -> second - first }
                     .any { it > maxTimeMillisBetweenComments }
             )

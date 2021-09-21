@@ -8,9 +8,9 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.feature.suggester.FeatureSuggesterBundle
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
-import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class RenamingSuggester : AbstractFeatureSuggester() {
@@ -46,8 +46,7 @@ class RenamingSuggester : AbstractFeatureSuggester() {
 
     private var renamedIdentifiersData = RenamedIdentifiersData("", emptyList())
 
-    override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        val action = actions.lastOrNull() ?: return NoSuggestion
+    override fun getSuggestion(action: Action): Suggestion {
         val language = action.language ?: return NoSuggestion
         val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
         val name = CommandProcessor.getInstance().currentCommandName
@@ -56,7 +55,8 @@ class RenamingSuggester : AbstractFeatureSuggester() {
         }
         when (action) {
             is BeforeChildReplacedAction -> {
-                val (parent, newChild, oldChild) = action
+                val parent = action.parent
+                val oldChild = action.oldChild
                 if (langSupport.isIdentifier(oldChild)) {
                     if (!renamedIdentifiersData.references.contains(parent)) {
                         // TODO Find out why resolve reference causes:
@@ -72,7 +72,8 @@ class RenamingSuggester : AbstractFeatureSuggester() {
                 }
             }
             is ChildReplacedAction -> {
-                val (parent, newChild, oldChild) = action
+                val parent = action.parent
+                val newChild = action.newChild
                 if (langSupport.isIdentifier(newChild)) {
                     if (renamedIdentifiersData.references.contains(parent) &&
                         renamedIdentifiersData.isAllRenamed()
