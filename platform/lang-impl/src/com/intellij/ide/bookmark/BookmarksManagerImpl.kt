@@ -75,7 +75,6 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     val group = addOrReuseGroup(project.name, true)
     project.messageBus.connect().subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
       override fun bookmarkAdded(old: com.intellij.ide.bookmarks.Bookmark) {
-        if (!group.isDefault) return
         val bookmark = LineBookmarkProvider.find(project)?.createBookmark(old.file, old.line) ?: return
         group.add(bookmark, old.type, old.description, false)
       }
