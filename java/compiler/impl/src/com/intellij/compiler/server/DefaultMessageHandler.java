@@ -2,6 +2,7 @@
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.cache.client.JpsServerAuthUtil;
+import com.intellij.compiler.cache.git.GitRepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -63,6 +65,12 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         if (cacheDownloadMessage.getDescriptionText() != null) {
           progressIndicator.setText(cacheDownloadMessage.getDescriptionText());
         }
+        break;
+      case REPOSITORY_COMMITS_REQUEST:
+        CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage latestCommitMessage = msg.getLatestCommitMessage();
+        List<String> repositoryCommits = GitRepositoryUtil.fetchRepositoryCommits(myProject, latestCommitMessage.getLatestCommit());
+        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRepositoryCommitsMessage(repositoryCommits)));
+
         break;
       case CONSTANT_SEARCH_TASK:
         // ignored, because the functionality is deprecated

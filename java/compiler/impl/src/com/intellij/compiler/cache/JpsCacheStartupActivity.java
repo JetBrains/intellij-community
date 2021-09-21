@@ -1,18 +1,10 @@
 package com.intellij.compiler.cache;
 
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.cache.client.JpsServerAuthExtension;
-import com.intellij.compiler.server.BuildManager;
-import com.intellij.ide.browsers.BrowserLauncher;
-import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.ide.util.PropertiesComponent;
-//import com.intellij.jps.cache.git.GitRepositoryUtil;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
+import com.intellij.compiler.cache.git.GitRepositoryUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.SystemInfo;
-//import git4idea.repo.GitRepository;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 //import static com.intellij.jps.cache.JpsCachesPluginUtil.INTELLIJ_REPO_NAME;
@@ -24,11 +16,13 @@ public final class JpsCacheStartupActivity implements StartupActivity.Background
 
   @Override
   public void runActivity(@NotNull Project project) {
-    JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(project, project, () -> {
-      System.out.println("All Ok");
-    });
-    checkWindowsCRLF(project);
-    checkAutoBuildEnabled(project);
+    if (Registry.is("compiler.process.use.portable.caches") && GitRepositoryUtil.isIntelliJRepository(project)) {
+      JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(project, project, () -> {
+        System.out.println("All Ok");
+      });
+      checkWindowsCRLF(project);
+      checkAutoBuildEnabled(project);
+    }
   }
 
   private static void checkWindowsCRLF(@NotNull Project project) {

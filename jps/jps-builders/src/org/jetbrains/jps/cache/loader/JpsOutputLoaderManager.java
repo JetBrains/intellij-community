@@ -10,11 +10,10 @@ import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.api.CmdlineProtoUtil;
-import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
 import org.jetbrains.jps.cache.client.JpsServerClient;
+import org.jetbrains.jps.cache.git.GitCommitsIterator;
 import org.jetbrains.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
@@ -56,7 +55,7 @@ public class JpsOutputLoaderManager implements Disposable {
   public JpsOutputLoaderManager(@NotNull JpsProject project,
                                 @NotNull String projectPath,
                                 @NotNull Channel channel,
-                                @NotNull UUID sessionId) throws InterruptedException {
+                                @NotNull UUID sessionId) {
     myNettyClient = new JpsNettyClient(channel, sessionId);
     myProjectPath = projectPath;
     hasRunningTask = new AtomicBoolean();
@@ -121,67 +120,35 @@ public class JpsOutputLoaderManager implements Disposable {
   //  ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
   //}
 
-  //public void notifyAboutNearestCache() {
-  //  Pair<String, Integer> commitInfo = getNearestCommit(false, false);
-  //  if (commitInfo == null) return;
-  //
-  //  String notificationContent = commitInfo.second == 1
-  //                               ? JpsCacheBundle.message("notification.content.caches.are.for.current.commit")
-  //                               : JpsCacheBundle
-  //                                 .message("notification.content.caches.are.for.commit.commits.prior.to.yours", commitInfo.second - 1);
-  //
-  //  ApplicationManager.getApplication().invokeLater(() -> {
-  //    STANDARD
-  //      .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.available"), notificationContent,
-  //                          NotificationType.INFORMATION)
-  //      .addAction(NotificationAction.createSimpleExpiring(
-  //        JpsCacheBundle.message("action.NotificationAction.JpsOutputLoaderManager.text.update.caches"),
-  //        () -> {
-  //          DOWNLOAD_THROUGH_NOTIFICATION_EVENT_ID.log();
-  //          load(false, false);
-  //        }))
-  //      .notify(myProject);
-  //  });
-  //}
-
   @Nullable
   private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, boolean verbose) {
     Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote();
 
+    String previousCommitId = null;
     //String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     //List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
-    //String commitId = "";
-    //int commitsBehind = 0;
-    //Set<String> availableCommitsForRemote = new HashSet<>();
-    //for (GitCommitsIterator commitsIterator : repositoryList) {
-    //  availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
-    //  if (availableCommitsForRemote.contains(commitId)) continue;
-    //  commitsBehind = 0;
-    //  while (commitsIterator.hasNext() && !availableCommitsForRemote.contains(commitId)) {
-    //    commitId = commitsIterator.next();
-    //    commitsBehind++;
-    //  }
-    //}
-    //var group = verbose ? STANDARD : EVENT_LOG;
-    //if (!availableCommitsForRemote.contains(commitId)) {
-    //  String warning = JpsCacheBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
-    //  LOG.warn(warning);
-    //  ApplicationManager.getApplication().invokeLater(() -> {
-    //    group.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), warning, NotificationType.WARNING)
-    //      .notify(myProject);
-    //  });
-    //  return null;
-    //}
-    //if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
-    //  String info = JpsCacheBundle.message("notification.content.system.contains.up.to.date.caches");
-    //  LOG.info(info);
-    //  ApplicationManager.getApplication().invokeLater(() -> {
-    //    group.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), info, NotificationType.INFORMATION)
-    //      .notify(myProject);
-    //  });
-    //  return null;
-    //}
-    return Pair.create(availableCommitsPerRemote.get(INTELLIJ_REPO_NAME).stream().findFirst().get(), 500);
+    String commitId = "";
+    GitCommitsIterator commitsIterator = new GitCommitsIterator(myNettyClient, INTELLIJ_REPO_NAME);
+    Set<String> availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
+    int commitsBehind = 0;
+    while (commitsIterator.hasNext() && !availableCommitsForRemote.contains(commitId)) {
+      commitId = commitsIterator.next();
+      commitsBehind++;
+    }
+
+    if (!availableCommitsForRemote.contains(commitId)) {
+      String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
+      LOG.warn(message);
+      myNettyClient.sendMainStatusMessage(message);
+      return null;
+    }
+    if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
+      String message = JpsBuildBundle.message("notification.content.system.contains.up.to.date.caches");
+      LOG.info(message);
+      myNettyClient.sendMainStatusMessage(message);
+      return null;
+    }
+    return Pair.create(commitId, commitsBehind);
   }
 
   private void startLoadingForCommit(@NotNull String commitId) {

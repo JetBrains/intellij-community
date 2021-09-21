@@ -20,6 +20,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.cache.client.JpsServerAuthUtil;
+import org.jetbrains.jps.cache.git.GitCommitsIterator;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
@@ -244,6 +245,12 @@ public final class BuildMain {
             CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParams = controllerMessage.getRequestParams();
             System.out.println("Got request params: " + requestParams.getAuthHeadersMap());
             JpsServerAuthUtil.setRequestHeaders(requestParams.getAuthHeadersMap());
+            return;
+          }
+          case REPOSITORY_COMMITS_RESULT: {
+            CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult = controllerMessage.getRepositoryCommitsResult();
+            System.out.println("Got repository commits: " + repositoryCommitsResult.getCommitList());
+            GitCommitsIterator.setRepositoryCommits(repositoryCommitsResult.getCommitList());
             return;
           }
           case CONSTANT_SEARCH_RESULT: {

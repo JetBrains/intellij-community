@@ -35,6 +35,7 @@ message Message {
       FS_EVENT = 3;
       CONSTANT_SEARCH_RESULT = 4;
       AUTHENTICATION_TOKEN = 5;
+      REPOSITORY_COMMITS_RESULT = 6;
     }
 
     message FSEvent {
@@ -80,11 +81,16 @@ message Message {
       map<string, string> auth_headers = 1;
     }
 
+    message RepositoryCommitsResult {
+      repeated string commit = 1;
+    }
+
     required Type type = 1;
     optional ParametersMessage params_message = 2;
     optional FSEvent fs_event = 3;
     optional ConstantSearchResult constant_search_result = 4;
     optional RequestParams request_params = 5;
+    optional RepositoryCommitsResult repository_commits_result = 6;
   }
 
   message BuilderMessage {
@@ -95,6 +101,7 @@ message Message {
       CONSTANT_SEARCH_TASK = 4;
       AUTH_TOKEN_REQUEST = 5;
       CACHE_DOWNLOAD_MESSAGE = 6;
+      REPOSITORY_COMMITS_REQUEST = 7;
     }
 
     message BuildEvent {
@@ -164,11 +171,16 @@ message Message {
       optional string description_text = 2;
     }
 
+    message LatestCommitMessage {
+      required string latest_commit = 1;
+    }
+
     required Type type = 1;
     optional BuildEvent build_event = 2;
     optional CompileMessage compile_message = 3;
     optional ConstantSearchTask constant_search_task = 4;
     optional CacheDownloadMessage cache_download_message = 5;
+    optional LatestCommitMessage latest_commit_message = 6;
   }
 
   required UUID session_id = 1;

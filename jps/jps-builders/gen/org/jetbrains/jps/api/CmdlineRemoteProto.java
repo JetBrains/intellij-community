@@ -1555,6 +1555,17 @@ public final class CmdlineRemoteProto {
        * @return The requestParams.
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getRequestParams();
+
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+       * @return Whether the repositoryCommitsResult field is set.
+       */
+      boolean hasRepositoryCommitsResult();
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+       * @return The repositoryCommitsResult.
+       */
+      org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult getRepositoryCommitsResult();
     }
     /**
      * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage}
@@ -1592,6 +1603,10 @@ public final class CmdlineRemoteProto {
          * <code>AUTHENTICATION_TOKEN = 5;</code>
          */
         AUTHENTICATION_TOKEN(5),
+        /**
+         * <code>REPOSITORY_COMMITS_RESULT = 6;</code>
+         */
+        REPOSITORY_COMMITS_RESULT(6),
         ;
 
         /**
@@ -1614,6 +1629,10 @@ public final class CmdlineRemoteProto {
          * <code>AUTHENTICATION_TOKEN = 5;</code>
          */
         public static final int AUTHENTICATION_TOKEN_VALUE = 5;
+        /**
+         * <code>REPOSITORY_COMMITS_RESULT = 6;</code>
+         */
+        public static final int REPOSITORY_COMMITS_RESULT_VALUE = 6;
 
 
         @java.lang.Override
@@ -1638,6 +1657,7 @@ public final class CmdlineRemoteProto {
             case 3: return FS_EVENT;
             case 4: return CONSTANT_SEARCH_RESULT;
             case 5: return AUTHENTICATION_TOKEN;
+            case 6: return REPOSITORY_COMMITS_RESULT;
             default: return null;
           }
         }
@@ -5763,6 +5783,399 @@ public final class CmdlineRemoteProto {
         }
       }
 
+      public interface RepositoryCommitsResultOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
+          com.google.protobuf.MessageLiteOrBuilder {
+
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @return A list containing the commit.
+         */
+        java.util.List<java.lang.String>
+            getCommitList();
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @return The count of commit.
+         */
+        int getCommitCount();
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @param index The index of the element to return.
+         * @return The commit at the given index.
+         */
+        java.lang.String getCommit(int index);
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @param index The index of the element to return.
+         * @return The commit at the given index.
+         */
+        com.google.protobuf.ByteString
+            getCommitBytes(int index);
+      }
+      /**
+       * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult}
+       */
+      public  static final class RepositoryCommitsResult extends
+          com.google.protobuf.GeneratedMessageLite<
+              RepositoryCommitsResult, RepositoryCommitsResult.Builder> implements
+          // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
+          RepositoryCommitsResultOrBuilder {
+        private RepositoryCommitsResult() {
+          commit_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
+        }
+        public static final int COMMIT_FIELD_NUMBER = 1;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> commit_;
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @return A list containing the commit.
+         */
+        @java.lang.Override
+        public java.util.List<java.lang.String> getCommitList() {
+          return commit_;
+        }
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @return The count of commit.
+         */
+        @java.lang.Override
+        public int getCommitCount() {
+          return commit_.size();
+        }
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @param index The index of the element to return.
+         * @return The commit at the given index.
+         */
+        @java.lang.Override
+        public java.lang.String getCommit(int index) {
+          return commit_.get(index);
+        }
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @param index The index of the value to return.
+         * @return The bytes of the commit at the given index.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getCommitBytes(int index) {
+          return com.google.protobuf.ByteString.copyFromUtf8(
+              commit_.get(index));
+        }
+        private void ensureCommitIsMutable() {
+          com.google.protobuf.Internal.ProtobufList<java.lang.String> tmp =
+              commit_;  if (!tmp.isModifiable()) {
+            commit_ =
+                com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
+           }
+        }
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @param index The index to set the value at.
+         * @param value The commit to set.
+         */
+        private void setCommit(
+            int index, java.lang.String value) {
+          value.getClass();
+  ensureCommitIsMutable();
+          commit_.set(index, value);
+        }
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @param value The commit to add.
+         */
+        private void addCommit(
+            java.lang.String value) {
+          value.getClass();
+  ensureCommitIsMutable();
+          commit_.add(value);
+        }
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @param values The commit to add.
+         */
+        private void addAllCommit(
+            java.lang.Iterable<java.lang.String> values) {
+          ensureCommitIsMutable();
+          com.google.protobuf.AbstractMessageLite.addAll(
+              values, commit_);
+        }
+        /**
+         * <code>repeated string commit = 1;</code>
+         */
+        private void clearCommit() {
+          commit_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
+        }
+        /**
+         * <code>repeated string commit = 1;</code>
+         * @param value The bytes of the commit to add.
+         */
+        private void addCommitBytes(
+            com.google.protobuf.ByteString value) {
+          ensureCommitIsMutable();
+          commit_.add(value.toStringUtf8());
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+
+        public static Builder newBuilder() {
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
+        }
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult prototype) {
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+        }
+
+        /**
+         * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult}
+         */
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult, Builder> implements
+            // @@protoc_insertion_point(builder_implements:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResultOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder()
+          private Builder() {
+            super(DEFAULT_INSTANCE);
+          }
+
+
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @return A list containing the commit.
+           */
+          @java.lang.Override
+          public java.util.List<java.lang.String>
+              getCommitList() {
+            return java.util.Collections.unmodifiableList(
+                instance.getCommitList());
+          }
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @return The count of commit.
+           */
+          @java.lang.Override
+          public int getCommitCount() {
+            return instance.getCommitCount();
+          }
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @param index The index of the element to return.
+           * @return The commit at the given index.
+           */
+          @java.lang.Override
+          public java.lang.String getCommit(int index) {
+            return instance.getCommit(index);
+          }
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @param index The index of the value to return.
+           * @return The bytes of the commit at the given index.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString
+              getCommitBytes(int index) {
+            return instance.getCommitBytes(index);
+          }
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @param index The index to set the value at.
+           * @param value The commit to set.
+           * @return This builder for chaining.
+           */
+          public Builder setCommit(
+              int index, java.lang.String value) {
+            copyOnWrite();
+            instance.setCommit(index, value);
+            return this;
+          }
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @param value The commit to add.
+           * @return This builder for chaining.
+           */
+          public Builder addCommit(
+              java.lang.String value) {
+            copyOnWrite();
+            instance.addCommit(value);
+            return this;
+          }
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @param values The commit to add.
+           * @return This builder for chaining.
+           */
+          public Builder addAllCommit(
+              java.lang.Iterable<java.lang.String> values) {
+            copyOnWrite();
+            instance.addAllCommit(values);
+            return this;
+          }
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearCommit() {
+            copyOnWrite();
+            instance.clearCommit();
+            return this;
+          }
+          /**
+           * <code>repeated string commit = 1;</code>
+           * @param value The bytes of the commit to add.
+           * @return This builder for chaining.
+           */
+          public Builder addCommitBytes(
+              com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.addCommitBytes(value);
+            return this;
+          }
+
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
+        }
+        @java.lang.Override
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
+            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+            java.lang.Object arg0, java.lang.Object arg1) {
+          switch (method) {
+            case NEW_MUTABLE_INSTANCE: {
+              return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult();
+            }
+            case NEW_BUILDER: {
+              return new Builder();
+            }
+            case BUILD_MESSAGE_INFO: {
+                java.lang.Object[] objects = new java.lang.Object[] {
+                  "commit_",
+                };
+                java.lang.String info =
+                    "\u0001\u0001\u0000\u0000\u0001\u0001\u0001\u0000\u0001\u0000\u0001\u001a";
+                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+            }
+            // fall through
+            case GET_DEFAULT_INSTANCE: {
+              return DEFAULT_INSTANCE;
+            }
+            case GET_PARSER: {
+              com.google.protobuf.Parser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult> parser = PARSER;
+              if (parser == null) {
+                synchronized (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.class) {
+                  parser = PARSER;
+                  if (parser == null) {
+                    parser =
+                        new DefaultInstanceBasedParser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult>(
+                            DEFAULT_INSTANCE);
+                    PARSER = parser;
+                  }
+                }
+              }
+              return parser;
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return (byte) 1;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            return null;
+          }
+          }
+          throw new UnsupportedOperationException();
+        }
+
+
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
+        private static final org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult DEFAULT_INSTANCE;
+        static {
+          RepositoryCommitsResult defaultInstance = new RepositoryCommitsResult();
+          // New instances are implicitly immutable so no need to make
+          // immutable.
+          DEFAULT_INSTANCE = defaultInstance;
+          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+            RepositoryCommitsResult.class, defaultInstance);
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult getDefaultInstance() {
+          return DEFAULT_INSTANCE;
+        }
+
+        private static volatile com.google.protobuf.Parser<RepositoryCommitsResult> PARSER;
+
+        public static com.google.protobuf.Parser<RepositoryCommitsResult> parser() {
+          return DEFAULT_INSTANCE.getParserForType();
+        }
+      }
+
       private int bitField0_;
       public static final int TYPE_FIELD_NUMBER = 1;
       private int type_;
@@ -5981,6 +6394,52 @@ public final class CmdlineRemoteProto {
        */
       private void clearRequestParams() {  requestParams_ = null;
         bitField0_ = (bitField0_ & ~0x00000010);
+      }
+
+      public static final int REPOSITORY_COMMITS_RESULT_FIELD_NUMBER = 6;
+      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult_;
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+       */
+      @java.lang.Override
+      public boolean hasRepositoryCommitsResult() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+       */
+      @java.lang.Override
+      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult getRepositoryCommitsResult() {
+        return repositoryCommitsResult_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.getDefaultInstance() : repositoryCommitsResult_;
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+       */
+      private void setRepositoryCommitsResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult value) {
+        value.getClass();
+  repositoryCommitsResult_ = value;
+        bitField0_ |= 0x00000020;
+        }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+       */
+      @java.lang.SuppressWarnings({"ReferenceEquality"})
+      private void mergeRepositoryCommitsResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult value) {
+        value.getClass();
+  if (repositoryCommitsResult_ != null &&
+            repositoryCommitsResult_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.getDefaultInstance()) {
+          repositoryCommitsResult_ =
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder(repositoryCommitsResult_).mergeFrom(value).buildPartial();
+        } else {
+          repositoryCommitsResult_ = value;
+        }
+        bitField0_ |= 0x00000020;
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+       */
+      private void clearRepositoryCommitsResult() {  repositoryCommitsResult_ = null;
+        bitField0_ = (bitField0_ & ~0x00000020);
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage parseFrom(
@@ -6302,6 +6761,53 @@ public final class CmdlineRemoteProto {
           return this;
         }
 
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+         */
+        @java.lang.Override
+        public boolean hasRepositoryCommitsResult() {
+          return instance.hasRepositoryCommitsResult();
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+         */
+        @java.lang.Override
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult getRepositoryCommitsResult() {
+          return instance.getRepositoryCommitsResult();
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+         */
+        public Builder setRepositoryCommitsResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult value) {
+          copyOnWrite();
+          instance.setRepositoryCommitsResult(value);
+          return this;
+          }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+         */
+        public Builder setRepositoryCommitsResult(
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.Builder builderForValue) {
+          copyOnWrite();
+          instance.setRepositoryCommitsResult(builderForValue.build());
+          return this;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+         */
+        public Builder mergeRepositoryCommitsResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult value) {
+          copyOnWrite();
+          instance.mergeRepositoryCommitsResult(value);
+          return this;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
+         */
+        public Builder clearRepositoryCommitsResult() {  copyOnWrite();
+          instance.clearRepositoryCommitsResult();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
       private byte memoizedIsInitialized = 2;
@@ -6326,10 +6832,12 @@ public final class CmdlineRemoteProto {
                 "fsEvent_",
                 "constantSearchResult_",
                 "requestParams_",
+                "repositoryCommitsResult_",
               };
               java.lang.String info =
-                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0004\u0001\u150c\u0000\u0002" +
-                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1009\u0004";
+                  "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0000\u0000\u0004\u0001\u150c\u0000\u0002" +
+                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1009\u0004\u0006\u1009\u0005" +
+                  "";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -6443,6 +6951,17 @@ public final class CmdlineRemoteProto {
        * @return The cacheDownloadMessage.
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage getCacheDownloadMessage();
+
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+       * @return Whether the latestCommitMessage field is set.
+       */
+      boolean hasLatestCommitMessage();
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+       * @return The latestCommitMessage.
+       */
+      org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage getLatestCommitMessage();
     }
     /**
      * Protobuf type {@code org.jetbrains.jpsservice.Message.BuilderMessage}
@@ -6484,6 +7003,10 @@ public final class CmdlineRemoteProto {
          * <code>CACHE_DOWNLOAD_MESSAGE = 6;</code>
          */
         CACHE_DOWNLOAD_MESSAGE(6),
+        /**
+         * <code>REPOSITORY_COMMITS_REQUEST = 7;</code>
+         */
+        REPOSITORY_COMMITS_REQUEST(7),
         ;
 
         /**
@@ -6510,6 +7033,10 @@ public final class CmdlineRemoteProto {
          * <code>CACHE_DOWNLOAD_MESSAGE = 6;</code>
          */
         public static final int CACHE_DOWNLOAD_MESSAGE_VALUE = 6;
+        /**
+         * <code>REPOSITORY_COMMITS_REQUEST = 7;</code>
+         */
+        public static final int REPOSITORY_COMMITS_REQUEST_VALUE = 7;
 
 
         @java.lang.Override
@@ -6535,6 +7062,7 @@ public final class CmdlineRemoteProto {
             case 4: return CONSTANT_SEARCH_TASK;
             case 5: return AUTH_TOKEN_REQUEST;
             case 6: return CACHE_DOWNLOAD_MESSAGE;
+            case 7: return REPOSITORY_COMMITS_REQUEST;
             default: return null;
           }
         }
@@ -11102,6 +11630,322 @@ public final class CmdlineRemoteProto {
         }
       }
 
+      public interface LatestCommitMessageOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage)
+          com.google.protobuf.MessageLiteOrBuilder {
+
+        /**
+         * <code>required string latest_commit = 1;</code>
+         * @return Whether the latestCommit field is set.
+         */
+        boolean hasLatestCommit();
+        /**
+         * <code>required string latest_commit = 1;</code>
+         * @return The latestCommit.
+         */
+        java.lang.String getLatestCommit();
+        /**
+         * <code>required string latest_commit = 1;</code>
+         * @return The bytes for latestCommit.
+         */
+        com.google.protobuf.ByteString
+            getLatestCommitBytes();
+      }
+      /**
+       * Protobuf type {@code org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage}
+       */
+      public  static final class LatestCommitMessage extends
+          com.google.protobuf.GeneratedMessageLite<
+              LatestCommitMessage, LatestCommitMessage.Builder> implements
+          // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage)
+          LatestCommitMessageOrBuilder {
+        private LatestCommitMessage() {
+          latestCommit_ = "";
+        }
+        private int bitField0_;
+        public static final int LATEST_COMMIT_FIELD_NUMBER = 1;
+        private java.lang.String latestCommit_;
+        /**
+         * <code>required string latest_commit = 1;</code>
+         * @return Whether the latestCommit field is set.
+         */
+        @java.lang.Override
+        public boolean hasLatestCommit() {
+          return ((bitField0_ & 0x00000001) != 0);
+        }
+        /**
+         * <code>required string latest_commit = 1;</code>
+         * @return The latestCommit.
+         */
+        @java.lang.Override
+        public java.lang.String getLatestCommit() {
+          return latestCommit_;
+        }
+        /**
+         * <code>required string latest_commit = 1;</code>
+         * @return The bytes for latestCommit.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getLatestCommitBytes() {
+          return com.google.protobuf.ByteString.copyFromUtf8(latestCommit_);
+        }
+        /**
+         * <code>required string latest_commit = 1;</code>
+         * @param value The latestCommit to set.
+         */
+        private void setLatestCommit(
+            java.lang.String value) {
+          value.getClass();
+  bitField0_ |= 0x00000001;
+          latestCommit_ = value;
+        }
+        /**
+         * <code>required string latest_commit = 1;</code>
+         */
+        private void clearLatestCommit() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          latestCommit_ = getDefaultInstance().getLatestCommit();
+        }
+        /**
+         * <code>required string latest_commit = 1;</code>
+         * @param value The bytes for latestCommit to set.
+         */
+        private void setLatestCommitBytes(
+            com.google.protobuf.ByteString value) {
+          latestCommit_ = value.toStringUtf8();
+          bitField0_ |= 0x00000001;
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+
+        public static Builder newBuilder() {
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
+        }
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage prototype) {
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+        }
+
+        /**
+         * Protobuf type {@code org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage}
+         */
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage, Builder> implements
+            // @@protoc_insertion_point(builder_implements:org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage)
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessageOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage.newBuilder()
+          private Builder() {
+            super(DEFAULT_INSTANCE);
+          }
+
+
+          /**
+           * <code>required string latest_commit = 1;</code>
+           * @return Whether the latestCommit field is set.
+           */
+          @java.lang.Override
+          public boolean hasLatestCommit() {
+            return instance.hasLatestCommit();
+          }
+          /**
+           * <code>required string latest_commit = 1;</code>
+           * @return The latestCommit.
+           */
+          @java.lang.Override
+          public java.lang.String getLatestCommit() {
+            return instance.getLatestCommit();
+          }
+          /**
+           * <code>required string latest_commit = 1;</code>
+           * @return The bytes for latestCommit.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString
+              getLatestCommitBytes() {
+            return instance.getLatestCommitBytes();
+          }
+          /**
+           * <code>required string latest_commit = 1;</code>
+           * @param value The latestCommit to set.
+           * @return This builder for chaining.
+           */
+          public Builder setLatestCommit(
+              java.lang.String value) {
+            copyOnWrite();
+            instance.setLatestCommit(value);
+            return this;
+          }
+          /**
+           * <code>required string latest_commit = 1;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearLatestCommit() {
+            copyOnWrite();
+            instance.clearLatestCommit();
+            return this;
+          }
+          /**
+           * <code>required string latest_commit = 1;</code>
+           * @param value The bytes for latestCommit to set.
+           * @return This builder for chaining.
+           */
+          public Builder setLatestCommitBytes(
+              com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setLatestCommitBytes(value);
+            return this;
+          }
+
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage)
+        }
+        private byte memoizedIsInitialized = 2;
+        @java.lang.Override
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
+            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+            java.lang.Object arg0, java.lang.Object arg1) {
+          switch (method) {
+            case NEW_MUTABLE_INSTANCE: {
+              return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage();
+            }
+            case NEW_BUILDER: {
+              return new Builder();
+            }
+            case BUILD_MESSAGE_INFO: {
+                java.lang.Object[] objects = new java.lang.Object[] {
+                  "bitField0_",
+                  "latestCommit_",
+                };
+                java.lang.String info =
+                    "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0001\u0001\u1508\u0000";
+                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+            }
+            // fall through
+            case GET_DEFAULT_INSTANCE: {
+              return DEFAULT_INSTANCE;
+            }
+            case GET_PARSER: {
+              com.google.protobuf.Parser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage> parser = PARSER;
+              if (parser == null) {
+                synchronized (org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage.class) {
+                  parser = PARSER;
+                  if (parser == null) {
+                    parser =
+                        new DefaultInstanceBasedParser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage>(
+                            DEFAULT_INSTANCE);
+                    PARSER = parser;
+                  }
+                }
+              }
+              return parser;
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return memoizedIsInitialized;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
+            return null;
+          }
+          }
+          throw new UnsupportedOperationException();
+        }
+
+
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage)
+        private static final org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage DEFAULT_INSTANCE;
+        static {
+          LatestCommitMessage defaultInstance = new LatestCommitMessage();
+          // New instances are implicitly immutable so no need to make
+          // immutable.
+          DEFAULT_INSTANCE = defaultInstance;
+          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+            LatestCommitMessage.class, defaultInstance);
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage getDefaultInstance() {
+          return DEFAULT_INSTANCE;
+        }
+
+        private static volatile com.google.protobuf.Parser<LatestCommitMessage> PARSER;
+
+        public static com.google.protobuf.Parser<LatestCommitMessage> parser() {
+          return DEFAULT_INSTANCE.getParserForType();
+        }
+      }
+
       private int bitField0_;
       public static final int TYPE_FIELD_NUMBER = 1;
       private int type_;
@@ -11320,6 +12164,52 @@ public final class CmdlineRemoteProto {
        */
       private void clearCacheDownloadMessage() {  cacheDownloadMessage_ = null;
         bitField0_ = (bitField0_ & ~0x00000010);
+      }
+
+      public static final int LATEST_COMMIT_MESSAGE_FIELD_NUMBER = 6;
+      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage latestCommitMessage_;
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+       */
+      @java.lang.Override
+      public boolean hasLatestCommitMessage() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+       */
+      @java.lang.Override
+      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage getLatestCommitMessage() {
+        return latestCommitMessage_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage.getDefaultInstance() : latestCommitMessage_;
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+       */
+      private void setLatestCommitMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage value) {
+        value.getClass();
+  latestCommitMessage_ = value;
+        bitField0_ |= 0x00000020;
+        }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+       */
+      @java.lang.SuppressWarnings({"ReferenceEquality"})
+      private void mergeLatestCommitMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage value) {
+        value.getClass();
+  if (latestCommitMessage_ != null &&
+            latestCommitMessage_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage.getDefaultInstance()) {
+          latestCommitMessage_ =
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage.newBuilder(latestCommitMessage_).mergeFrom(value).buildPartial();
+        } else {
+          latestCommitMessage_ = value;
+        }
+        bitField0_ |= 0x00000020;
+      }
+      /**
+       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+       */
+      private void clearLatestCommitMessage() {  latestCommitMessage_ = null;
+        bitField0_ = (bitField0_ & ~0x00000020);
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage parseFrom(
@@ -11641,6 +12531,53 @@ public final class CmdlineRemoteProto {
           return this;
         }
 
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+         */
+        @java.lang.Override
+        public boolean hasLatestCommitMessage() {
+          return instance.hasLatestCommitMessage();
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+         */
+        @java.lang.Override
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage getLatestCommitMessage() {
+          return instance.getLatestCommitMessage();
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+         */
+        public Builder setLatestCommitMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage value) {
+          copyOnWrite();
+          instance.setLatestCommitMessage(value);
+          return this;
+          }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+         */
+        public Builder setLatestCommitMessage(
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage.Builder builderForValue) {
+          copyOnWrite();
+          instance.setLatestCommitMessage(builderForValue.build());
+          return this;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+         */
+        public Builder mergeLatestCommitMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage value) {
+          copyOnWrite();
+          instance.mergeLatestCommitMessage(value);
+          return this;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.LatestCommitMessage latest_commit_message = 6;</code>
+         */
+        public Builder clearLatestCommitMessage() {  copyOnWrite();
+          instance.clearLatestCommitMessage();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage)
       }
       private byte memoizedIsInitialized = 2;
@@ -11665,10 +12602,12 @@ public final class CmdlineRemoteProto {
                 "compileMessage_",
                 "constantSearchTask_",
                 "cacheDownloadMessage_",
+                "latestCommitMessage_",
               };
               java.lang.String info =
-                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0004\u0001\u150c\u0000\u0002" +
-                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1009\u0004";
+                  "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0000\u0000\u0005\u0001\u150c\u0000\u0002" +
+                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1009\u0004\u0006\u1409\u0005" +
+                  "";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

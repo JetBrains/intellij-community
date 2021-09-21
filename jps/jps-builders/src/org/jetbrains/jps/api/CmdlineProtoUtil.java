@@ -130,6 +130,23 @@ public final class CmdlineProtoUtil {
       .setRequestParams(requestParam).build();
   }
 
+  public static BuilderMessage createRequestRepositoryCommits(@NotNull String latestCommit) {
+    BuilderMessage.LatestCommitMessage.Builder requestCommitsBuilder = BuilderMessage.LatestCommitMessage.newBuilder();
+    requestCommitsBuilder.setLatestCommit(latestCommit);
+    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
+    newBuilder.setType(BuilderMessage.Type.REPOSITORY_COMMITS_REQUEST);
+    newBuilder.setLatestCommitMessage(requestCommitsBuilder.build());
+    return newBuilder.build();
+  }
+
+  public static CmdlineRemoteProto.Message.ControllerMessage createRepositoryCommitsMessage(@NotNull List<String> commits) {
+    CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult =
+      CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder().addAllCommit(commits).build();
+    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
+      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.REPOSITORY_COMMITS_RESULT)
+      .setRepositoryCommitsResult(repositoryCommitsResult).build();
+  }
+
   public static BuilderMessage createCacheDownloadMessage(String text) {
     BuilderMessage.CacheDownloadMessage.Builder cacheDownloadMessageBuilder = BuilderMessage.CacheDownloadMessage.newBuilder();
     cacheDownloadMessageBuilder.setMainText(text);
