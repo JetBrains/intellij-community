@@ -9,6 +9,7 @@ import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -119,7 +120,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     }
   }
   val autoScrollToSource = object : Option {
-    override fun isEnabled() = isVertical || !state.showPreview
+    override fun isEnabled() = openInPreviewTab.run { !isSelected && isEnabled }
     override fun isSelected() = state.autoscrollToSource
     override fun setSelected(selected: Boolean) {
       state.autoscrollToSource = selected
@@ -128,10 +129,9 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   }
   val openInPreviewTab = object : Option {
     override fun isEnabled() = isVertical || !state.showPreview
-    override fun isSelected() = state.openInPreviewTab
+    override fun isSelected() = UISettings.instance.openInPreviewTabIfPossible
     override fun setSelected(selected: Boolean) {
-      panel.putClientProperty(OPEN_IN_PREVIEW_TAB, selected)
-      state.openInPreviewTab = selected
+      UISettings.instance.openInPreviewTabIfPossible = selected
       selectionAlarm.cancelAndRequest()
     }
   }
@@ -146,7 +146,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   }
 
   private fun selectionChanged(autoScroll: Boolean = true) {
-    if (isPopup || !autoScrollToSource.isEnabled) {
+    if (isPopup || !openInPreviewTab.isEnabled) {
       preview.open(leadSelectionNode?.asDescriptor)
     }
     else {
@@ -159,7 +159,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   init {
     panel.addToCenter(createScrollPane(tree, true))
-    panel.putClientProperty(OPEN_IN_PREVIEW_TAB, state.openInPreviewTab)
+    panel.putClientProperty(OPEN_IN_PREVIEW_TAB, true)
 
     firstComponent = panel
 

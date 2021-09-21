@@ -17,7 +17,6 @@ class BookmarksViewState : BaseState() {
   var groupLineBookmarks by property(true)
   var autoscrollFromSource by property(false)
   var autoscrollToSource by property(false)
-  var openInPreviewTab by property(false)
   var showPreview by property(false)
 }
 
@@ -25,6 +24,5 @@ class BookmarksViewState : BaseState() {
 internal class BookmarksViewStateComponent : SimplePersistentStateComponent<BookmarksViewState>(BookmarksViewState()) {
   override fun noStateLoaded() {
     state.autoscrollToSource = UISettings.instance.state.defaultAutoScrollToSource
-    state.openInPreviewTab = UISettings.instance.state.openInPreviewTabIfPossible
   }
 }
