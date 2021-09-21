@@ -7,11 +7,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.list.TargetPopup;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new JBColor(() -> UIUtil.getListSelectionForeground(true)));
 
   private JPanel myTopPanel;
-  private JList<VirtualFile> myFileList;
+  private JList<FileInfo> myFileList;
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
   private JComboBox<String> myChangelist;
@@ -53,9 +53,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     myUsingFileSystemRadioButton.addActionListener(listener);
     (myUsingVcsRadioButton.isEnabled() ? myUsingVcsRadioButton : myUsingFileSystemRadioButton).setSelected(true);
     myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
-
-    myFileList.setCellRenderer(new FileListRenderer());
-
+    myFileList.setCellRenderer(TargetPopup.createTargetPresentationRenderer(FileInfo::getTargetPresentation));
     init();
   }
 
@@ -67,8 +65,8 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       }
 
       @Override
-      public VirtualFile getElementAt(final int index) {
-        return myFiles.get(index).getFile();
+      public FileInfo getElementAt(final int index) {
+        return myFiles.get(index);
       }
     });
 

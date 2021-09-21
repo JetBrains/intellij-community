@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.presentation.VirtualFilePresentation;
+import com.intellij.navigation.TargetPresentation;
+import com.intellij.navigation.TargetPresentationBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -10,6 +13,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandlerBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +71,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
   @NotNull
   @Override
   protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
-    final List<FileInfo> fileInfos = createFileInfos(files);
+    final List<FileInfo> fileInfos = SlowOperations.allowSlowOperations(() -> createFileInfos(files));
     // if all files are already writable
     if (fileInfos.isEmpty()) {
       return createResultStatus(originalFiles, files);
@@ -99,7 +103,12 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     List<FileInfo> fileInfos = new ArrayList<>();
     for (final VirtualFile file : files) {
       if (file != null && !file.isWritable() && file.isInLocalFileSystem()) {
-        fileInfos.add(new FileInfo(file, myProject));
+        TargetPresentationBuilder builder = TargetPresentation.builder(file.getPresentableName())
+          .icon(VirtualFilePresentation.getIcon(file))
+          .presentableText(file.getPresentableName());
+        VirtualFile vfParent = file.getParent();
+        if (vfParent != null) builder = builder.locationText(vfParent.getPresentableUrl());
+        fileInfos.add(new FileInfo(file, builder.presentation(), myProject));
       }
     }
     return fileInfos;
