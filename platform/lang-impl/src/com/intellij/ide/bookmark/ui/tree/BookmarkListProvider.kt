@@ -4,7 +4,12 @@ package com.intellij.ide.bookmark.ui.tree
 import com.intellij.ide.bookmark.BookmarkBundle.message
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmark.BookmarksListProvider
+import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.ide.bookmark.LineBookmark
+import com.intellij.ide.bookmark.providers.FileBookmarkImpl
+import com.intellij.ide.bookmark.providers.LineBookmarkImpl
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import javax.swing.JComponent
@@ -14,6 +19,13 @@ internal class BookmarkListProvider(private val project: Project) : BookmarksLis
   override fun getProject() = project
 
   override fun createNode(): AbstractTreeNode<*>? = null
+  override fun getDescriptor(node: AbstractTreeNode<*>) = when (val value = node.equalityObject) {
+    is LineBookmarkImpl -> value.descriptor
+    is FileBookmarkImpl -> value.descriptor
+    is LineBookmark -> OpenFileDescriptor(project, value.file, value.line)
+    is FileBookmark -> OpenFileDescriptor(project, value.file)
+    else -> null
+  }
 
   override fun getEditActionText() = message("bookmark.edit.action.text")
   override fun canEdit(selection: Any) = selection is BookmarkNode<*>

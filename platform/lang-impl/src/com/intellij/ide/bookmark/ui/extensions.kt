@@ -2,9 +2,7 @@
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.bookmark.BookmarkBundle
-import com.intellij.ide.bookmark.providers.FileBookmarkImpl
-import com.intellij.ide.bookmark.providers.LineBookmarkImpl
-import com.intellij.ide.bookmark.ui.tree.BookmarkNode
+import com.intellij.ide.bookmark.BookmarksListProvider
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -14,22 +12,14 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
 import java.awt.Component
 
-internal val AbstractTreeNode<*>.asFile
-  get() = when (this) {
-    is BookmarkNode<*> -> virtualFile
-    is ProjectViewNode<*> -> virtualFile
-    else -> null
-  }
-
 internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
   get() {
-    when (val value = equalityObject) {
-      is FileBookmarkImpl -> return value.descriptor
-      is LineBookmarkImpl -> return value.descriptor
-    }
     val project = project ?: return null
     if (!canNavigateToSource()) return null
-    return asFile?.let { OpenFileDescriptor(project, it) }
+    val descriptor = BookmarksListProvider.EP.getExtensions(project).firstNotNullOfOrNull { it.getDescriptor(this) }
+    if (descriptor != null) return descriptor
+    val node = this as? ProjectViewNode<*>
+    return node?.virtualFile?.let { OpenFileDescriptor(project, it) }
   }
 
 @Suppress("DialogTitleCapitalization")

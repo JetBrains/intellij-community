@@ -9,12 +9,14 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerBundle.message
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
@@ -38,6 +40,11 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
   override fun getProject() = project
 
   override fun createNode(): AbstractTreeNode<*> = RootNode(project, rootNameKey)
+  override fun getDescriptor(node: AbstractTreeNode<*>): OpenFileDescriptor? {
+    val item = node.equalityObject as? BreakpointItem ?: return null
+    val breakpoint = item.breakpoint as? XBreakpoint<*> ?: return null
+    return breakpoint.sourcePosition?.let { OpenFileDescriptor(project, it.file, it.line, 0) }
+  }
 
   override fun getEditActionText(): String = ActionsBundle.actionText("EditBreakpoint")
   override fun canEdit(selection: Any) = selection is ItemNode

@@ -3,12 +3,14 @@ package com.intellij.ide.bookmark;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 public interface BookmarksListProvider {
@@ -19,6 +21,11 @@ public interface BookmarksListProvider {
   @NotNull Project getProject();
 
   @Nullable AbstractTreeNode<?> createNode();
+
+  @ApiStatus.Experimental
+  default @Nullable OpenFileDescriptor getDescriptor(@NotNull AbstractTreeNode<?> node) {
+    return null;
+  }
 
 
   @Nullable @ActionText String getEditActionText();
