@@ -19,10 +19,9 @@ import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
 class FeatureSuggestersManager(val project: Project) : Disposable {
     private val suggestionPresenter: SuggestionPresenter =
         NotificationSuggestionPresenter()
-    private val settings = FeatureSuggesterSettings.instance()
 
     init {
-        initFocusListener()
+        if (!project.isDefault) initFocusListener()
     }
 
     fun actionPerformed(action: Action) {
@@ -43,7 +42,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
         val suggestion = suggester.getSuggestion(action)
         if (suggestion is PopupSuggestion) {
             FeatureSuggesterStatistics.sendStatistics(SUGGESTION_FOUND, suggester.id)
-            if (suggester.isSuggestionNeeded(settings.suggestingIntervalDays)) {
+            if (suggester.isSuggestionNeeded(FeatureSuggesterSettings.instance().suggestingIntervalDays)) {
                 suggestionPresenter.showSuggestion(project, suggestion)
                 fireSuggestionFound(suggestion)
             }

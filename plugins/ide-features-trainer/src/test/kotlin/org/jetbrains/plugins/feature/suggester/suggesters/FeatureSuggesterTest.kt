@@ -18,6 +18,7 @@ import org.jetbrains.plugins.feature.suggester.FeatureSuggestersManagerListener
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 
@@ -31,6 +32,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
     override fun setUp() {
         super.setUp()
         myFixture.configureByFile(testingCodeFileName)
+        FeatureSuggesterSettings.instance().suggestingIntervalDays = 0
         expectedSuggestion = NoSuggestion
         subscribeToSuggestions { suggestion -> expectedSuggestion = suggestion }
     }

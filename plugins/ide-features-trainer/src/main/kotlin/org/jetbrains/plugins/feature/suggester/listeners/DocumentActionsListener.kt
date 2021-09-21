@@ -15,30 +15,40 @@ import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAc
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextRemovedAction
 import org.jetbrains.plugins.feature.suggester.handleAction
+import java.lang.ref.WeakReference
 
-object DocumentActionsListener : BulkAwareDocumentListener {
+class DocumentActionsListener : BulkAwareDocumentListener {
 
-    override fun beforeDocumentChangeNonBulk(event: DocumentEvent) = runInEdt {
-        handleDocumentAction(
-            event = event,
-            textInsertedActionConstructor = ::BeforeEditorTextInsertedAction,
-            textRemovedActionConstructor = ::BeforeEditorTextRemovedAction
-        )
+    override fun beforeDocumentChangeNonBulk(event: DocumentEvent) {
+        // Store in a weak reference, otherwise PsiDocumentManagerImplTest.testDoNotLeakForgottenUncommittedDocument will fail
+        val eventRef = WeakReference(event)
+        runInEdt {
+            handleDocumentAction(
+                eventRef = eventRef,
+                textInsertedActionConstructor = ::BeforeEditorTextInsertedAction,
+                textRemovedActionConstructor = ::BeforeEditorTextRemovedAction
+            )
+        }
     }
 
-    override fun documentChangedNonBulk(event: DocumentEvent) = runInEdt {
-        handleDocumentAction(
-            event = event,
-            textInsertedActionConstructor = ::EditorTextInsertedAction,
-            textRemovedActionConstructor = ::EditorTextRemovedAction
-        )
+    override fun documentChangedNonBulk(event: DocumentEvent) {
+        // Store in a weak reference, otherwise PsiDocumentManagerImplTest.testDoNotLeakForgottenUncommittedDocument will fail
+        val eventRef = WeakReference(event)
+        runInEdt {
+            handleDocumentAction(
+                eventRef = eventRef,
+                textInsertedActionConstructor = ::EditorTextInsertedAction,
+                textRemovedActionConstructor = ::EditorTextRemovedAction
+            )
+        }
     }
 
-    private fun <T : Action> handleDocumentAction(
-        event: DocumentEvent,
+    private inline fun <T : Action> handleDocumentAction(
+        eventRef: WeakReference<DocumentEvent>,
         textInsertedActionConstructor: (String, Int, Editor, Long) -> T,
         textRemovedActionConstructor: (TextFragment, Int, Editor, Long) -> T
     ) {
+        val event = eventRef.get() ?: return
         val document = event.document
         val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
         val project = guessProjectForFile(virtualFile) ?: return

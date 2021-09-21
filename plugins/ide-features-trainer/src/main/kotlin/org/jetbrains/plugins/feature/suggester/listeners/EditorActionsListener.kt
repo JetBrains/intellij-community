@@ -35,7 +35,7 @@ import org.jetbrains.plugins.feature.suggester.asString
 import org.jetbrains.plugins.feature.suggester.getSelection
 import org.jetbrains.plugins.feature.suggester.handleAction
 
-object EditorActionsListener : AnActionListener {
+class EditorActionsListener : AnActionListener {
     private val copyPasteManager = CopyPasteManager.getInstance()
 
     override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
