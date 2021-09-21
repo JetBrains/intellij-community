@@ -1908,17 +1908,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiMethod ctr = call.resolveConstructor();
     if (args != null) {
       PsiExpression[] arguments = args.getExpressions();
-      if (arguments.length > 0) {
-        PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
-        for (int i = 0; i < arguments.length; i++) {
-          PsiExpression argument = arguments[i];
-          argument.accept(this);
-          if (parameters != null && i < parameters.length) {
-            generateBoxingUnboxingInstructionFor(argument, parameters[i].getType());
-          }
+      PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
+      for (int i = 0; i < arguments.length; i++) {
+        PsiExpression argument = arguments[i];
+        argument.accept(this);
+        if (parameters != null && i < parameters.length) {
+          generateBoxingUnboxingInstructionFor(argument, parameters[i].getType());
         }
-        foldVarArgs(call, parameters);
       }
+      foldVarArgs(call, parameters);
     }
     return ctr;
   }
