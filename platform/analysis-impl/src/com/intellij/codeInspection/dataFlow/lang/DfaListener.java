@@ -35,7 +35,7 @@ public interface DfaListener {
    * Note that it can be called for the same place several times (once per memory state).
    * @param problem a problem descriptor
    * @param value value that was checked
-   * @param failed YES if condition failed always; NO if it's satisfied; UNSURE if it may fail.
+   * @param failed YES if condition always failed; NO if it's satisfied; UNSURE if it may fail.
    * @param state memory state
    */
   default void onCondition(@NotNull UnsatisfiedConditionProblem problem,

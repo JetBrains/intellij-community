@@ -834,9 +834,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         } else if (ref == "!!") {
             val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.NullPointerException")
-            addInstruction(EnsureInstruction(KotlinNullCheckProblem(expr), RelationType.NE, DfTypes.NULL, transfer))
-            // Probably unbox
-            addImplicitConversion(expr, operand?.getKotlinType(), expr.getKotlinType())
+            val operandType = operand?.getKotlinType()
+            if (operandType?.canBeNull() == true) {
+                addInstruction(EnsureInstruction(KotlinNullCheckProblem(expr), RelationType.NE, DfTypes.NULL, transfer))
+                // Probably unbox
+                addImplicitConversion(expr, operandType, expr.getKotlinType())
+            }
         } else {
             addInstruction(EvalUnknownInstruction(anchor, 1))
         }
