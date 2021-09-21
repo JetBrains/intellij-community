@@ -65,7 +65,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
             val blockingFriendlyDispatcherUsed = checkBlockingFriendlyDispatcherUsed(call, callExpression)
             if (blockingFriendlyDispatcherUsed.isDefinitelyKnown) {
-                return blockingFriendlyDispatcherUsed != BlockingAllowance.DEFINITELY_YES
+                return blockingFriendlyDispatcherUsed != BlockingAllowed.DEFINITELY_YES
             }
 
             val parameterForArgument = call.getParameterForArgument(containingArgument) ?: return false
@@ -93,7 +93,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     private fun checkBlockingFriendlyDispatcherUsed(
         call: ResolvedCall<out CallableDescriptor>,
         callExpression: KtCallExpression
-    ): BlockingAllowance {
+    ): BlockingAllowed {
         return union(
             { checkBlockFriendlyDispatcherParameter(call) },
             { checkFunctionWithDefaultDispatcher(callExpression) },
@@ -110,30 +110,30 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     private fun KotlinType.isCoroutineContext(): Boolean =
         (this.constructor.supertypes + this).any { it.fqName?.asString() == COROUTINE_CONTEXT }
 
-    private fun checkBlockFriendlyDispatcherParameter(call: ResolvedCall<*>): BlockingAllowance {
-        val argumentDescriptor = call.getFirstArgument()?.resolveToCall()?.resultingDescriptor ?: return BlockingAllowance.UNKNOWN
+    private fun checkBlockFriendlyDispatcherParameter(call: ResolvedCall<*>): BlockingAllowed {
+        val argumentDescriptor = call.getFirstArgument()?.resolveToCall()?.resultingDescriptor ?: return BlockingAllowed.UNSURE
         return argumentDescriptor.isBlockFriendlyDispatcher()
     }
 
-    private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): BlockingAllowance {
+    private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): BlockingAllowed {
         val classDescriptor =
-            callExpression.receiverValue().castSafelyTo<ImplicitClassReceiver>()?.classDescriptor ?: return BlockingAllowance.UNKNOWN
-        if (classDescriptor.typeConstructor.supertypes.none { it.fqName?.asString() == COROUTINE_SCOPE }) return BlockingAllowance.UNKNOWN
+            callExpression.receiverValue().castSafelyTo<ImplicitClassReceiver>()?.classDescriptor ?: return BlockingAllowed.UNSURE
+        if (classDescriptor.typeConstructor.supertypes.none { it.fqName?.asString() == COROUTINE_SCOPE }) return BlockingAllowed.UNSURE
         val propertyDescriptor = classDescriptor
             .unsubstitutedMemberScope
             .getContributedDescriptors(DescriptorKindFilter.VARIABLES)
             .filterIsInstance<PropertyDescriptor>()
             .singleOrNull { it.isOverridableOrOverrides && it.type.isCoroutineContext() }
-            ?: return BlockingAllowance.UNKNOWN
+            ?: return BlockingAllowed.UNSURE
 
-        val initializer = propertyDescriptor.findPsi().castSafelyTo<KtProperty>()?.initializer ?: return BlockingAllowance.UNKNOWN
+        val initializer = propertyDescriptor.findPsi().castSafelyTo<KtProperty>()?.initializer ?: return BlockingAllowed.UNSURE
         return initializer.hasBlockFriendlyDispatcher()
     }
 
     private fun checkFlowChainElementWithIODispatcher(
         call: ResolvedCall<out CallableDescriptor>,
         callExpression: KtCallExpression
-    ): BlockingAllowance {
+    ): BlockingAllowed {
         tailrec fun KtExpression.findFlowOnCall(): ResolvedCall<out CallableDescriptor>? {
             val dotQualifiedExpression = this.getStrictParentOfType<KtDotQualifiedExpression>() ?: return null
             val candidate = dotQualifiedExpression
@@ -146,21 +146,21 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         }
 
         val isInsideFlow = call.resultingDescriptor.fqNameSafe.asString().startsWith(FLOW_FQN)
-        if (!isInsideFlow) return BlockingAllowance.UNKNOWN
-        val flowOnCall = callExpression.findFlowOnCall() ?: return BlockingAllowance.DEFINITELY_NO
+        if (!isInsideFlow) return BlockingAllowed.UNSURE
+        val flowOnCall = callExpression.findFlowOnCall() ?: return BlockingAllowed.DEFINITELY_NO
         return checkBlockFriendlyDispatcherParameter(flowOnCall)
     }
 
-    private fun KtExpression.hasBlockFriendlyDispatcher(): BlockingAllowance {
+    private fun KtExpression.hasBlockFriendlyDispatcher(): BlockingAllowed {
         class RecursiveExpressionVisitor : PsiRecursiveElementVisitor() {
-            var allowsBlocking: BlockingAllowance = BlockingAllowance.UNKNOWN
+            var allowsBlocking: BlockingAllowed = BlockingAllowed.UNSURE
 
             override fun visitElement(element: PsiElement) {
                 if (element is KtExpression) {
                     val callableDescriptor = element.getCallableDescriptor()
                     val allowsBlocking = callableDescriptor.castSafelyTo<DeclarationDescriptor>()
                         ?.isBlockFriendlyDispatcher()
-                    if (allowsBlocking != null && allowsBlocking != BlockingAllowance.UNKNOWN) {
+                    if (allowsBlocking != null && allowsBlocking != BlockingAllowed.UNSURE) {
                         this.allowsBlocking = allowsBlocking
                         return
                     }
@@ -172,24 +172,24 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         return RecursiveExpressionVisitor().also(this::accept).allowsBlocking
     }
 
-    private fun DeclarationDescriptor?.isBlockFriendlyDispatcher(): BlockingAllowance {
-        if (this == null) return BlockingAllowance.UNKNOWN
+    private fun DeclarationDescriptor?.isBlockFriendlyDispatcher(): BlockingAllowed {
+        if (this == null) return BlockingAllowed.UNSURE
 
         val hasBlockingAnnotation = annotations.hasAnnotation(FqName(BLOCKING_CONTEXT_ANNOTATION))
-        if (hasBlockingAnnotation) return BlockingAllowance.DEFINITELY_YES
+        if (hasBlockingAnnotation) return BlockingAllowed.DEFINITELY_YES
 
         val hasNonBlockingAnnotation = annotations.hasAnnotation(FqName(NONBLOCKING_CONTEXT_ANNOTATION))
-        if (hasNonBlockingAnnotation) return BlockingAllowance.DEFINITELY_NO
+        if (hasNonBlockingAnnotation) return BlockingAllowed.DEFINITELY_NO
 
-        val fqnOrNull = fqNameOrNull()?.asString() ?: return BlockingAllowance.DEFINITELY_NO
-        return if (fqnOrNull == IO_DISPATCHER_FQN) BlockingAllowance.DEFINITELY_YES else BlockingAllowance.DEFINITELY_NO
+        val fqnOrNull = fqNameOrNull()?.asString() ?: return BlockingAllowed.DEFINITELY_NO
+        return if (fqnOrNull == IO_DISPATCHER_FQN) BlockingAllowed.DEFINITELY_YES else BlockingAllowed.DEFINITELY_NO
     }
 
-    private fun union(vararg checks: () -> BlockingAllowance): BlockingAllowance {
-        var overallResult = BlockingAllowance.UNKNOWN
+    private fun union(vararg checks: () -> BlockingAllowed): BlockingAllowed {
+        var overallResult = BlockingAllowed.UNSURE
         for (check in checks) {
             val iterationResult = check()
-            if (iterationResult != BlockingAllowance.UNKNOWN) return iterationResult
+            if (iterationResult != BlockingAllowed.UNSURE) return iterationResult
             overallResult = iterationResult
         }
         return overallResult
@@ -204,11 +204,11 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         private const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"
         private const val FLOW_FQN = "kotlinx.coroutines.flow"
 
-        private enum class BlockingAllowance(val isDefinitelyKnown: Boolean) {
+        private enum class BlockingAllowed(val isDefinitelyKnown: Boolean) {
             // could also be CONDITIONAL_YES with condition property provided
             DEFINITELY_YES(true),
             DEFINITELY_NO(true),
-            UNKNOWN(false)
+            UNSURE(false)
         }
     }
 }
