@@ -37,7 +37,6 @@ import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
     fun getBindingContext(element: KtElement): BindingContext
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
-    fun getTypeMapper(element: KtElement): KotlinTypeMapper?
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
 
     override val languagePlugin: UastLanguagePlugin
