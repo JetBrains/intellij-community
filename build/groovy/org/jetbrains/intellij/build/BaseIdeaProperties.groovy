@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 
 import java.nio.file.Path
 import java.util.function.Consumer
@@ -143,10 +144,9 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         withModule("intellij.java.rt", "idea_rt.jar")
 
         // for compatibility with users' projects which take these libraries from IDEA installation
-        withProjectLibrary("jetbrains-annotations")
-        removeVersionFromProjectLibraryJarNames("jetbrains-annotations")
-        withProjectLibrary("JUnit3", "", true)
-        removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
+        withProjectLibrary("jetbrains-annotations", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+        // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
+        withProjectLibrary("JUnit3", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
         withProjectLibrary("commons-net")
 
         withoutProjectLibrary("Ant")
