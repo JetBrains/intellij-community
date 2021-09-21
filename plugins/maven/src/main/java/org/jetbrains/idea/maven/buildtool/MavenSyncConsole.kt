@@ -152,9 +152,9 @@ class MavenSyncConsole(private val myProject: Project) {
     doFinish()
   }
 
-
   @Synchronized
-  fun terminated(exitCode: Int) = doIfImportInProcess { if (0 == exitCode || 143 == exitCode) doFinish() else doTerminate(exitCode) }
+  fun terminated(exitCode: Int) = doIfImportInProcess {
+    if (EXIT_CODE_OK == exitCode || EXIT_CODE_SIGTERM == exitCode) doFinish() else doTerminate(exitCode) }
 
   private fun doTerminate(exitCode: Int) {
     val tasks = myStartedSet.toList().asReversed()
@@ -503,6 +503,10 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
+  companion object {
+    val EXIT_CODE_OK = 0
+    val EXIT_CODE_SIGTERM = 143
+  }
 }
 
 interface ArtifactSyncListener {
