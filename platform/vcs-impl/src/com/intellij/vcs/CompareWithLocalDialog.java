@@ -27,6 +27,8 @@ import com.intellij.openapi.vcs.history.actions.GetVersionAction.FileRevisionPro
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ObjectUtils;
@@ -36,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
@@ -156,12 +157,7 @@ public class CompareWithLocalDialog {
     private MyChangesBrowser(@NotNull Project project, @NotNull LocalContent localContent) {
       super(project, false, true);
       myLocalContent = localContent;
-    }
-
-    @NotNull
-    @Override
-    protected Border createViewerBorder() {
-      return IdeBorderFactory.createBorder(SideBorder.TOP);
+      hideViewerBorder();
     }
 
     @NotNull

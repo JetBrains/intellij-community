@@ -64,7 +64,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myViewer.installPopupHandler(myPopupMenuGroup);
 
     myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer, true);
-    myViewerScrollPane.setBorder(createViewerBorder());
+    setViewerBorder(createViewerBorder());
 
     myShowDiffAction = new MyShowDiffAction();
   }
@@ -130,6 +130,33 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   @NotNull
   protected Border createViewerBorder() {
     return IdeBorderFactory.createBorder(SideBorder.ALL);
+  }
+
+  public void setViewerBorder(@NotNull Border border) {
+    myViewerScrollPane.setBorder(border);
+  }
+
+  public void hideViewerBorder() {
+    int borders;
+    switch (myToolbarAnchor) {
+      case SwingConstants.TOP:
+        borders = SideBorder.TOP;
+        break;
+      case SwingConstants.BOTTOM:
+        borders = SideBorder.BOTTOM;
+        break;
+      case SwingConstants.LEFT:
+        borders = SideBorder.LEFT;
+        break;
+      case SwingConstants.RIGHT:
+        borders = SideBorder.RIGHT;
+        break;
+      default:
+        borders = SideBorder.NONE;
+        break;
+    }
+
+    setViewerBorder(IdeBorderFactory.createBorder(borders));
   }
 
   @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.BOTTOM, SwingConstants.LEFT, SwingConstants.RIGHT})
