@@ -360,6 +360,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       val info = getInfo(bookmark) ?: return
       if (info.description == description) return
       info.description = description
+      notifier.bookmarkChanged(this, bookmark)
     }
 
     override fun canAdd(bookmark: Bookmark) = synchronized(notifier) {
