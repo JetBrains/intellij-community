@@ -40,7 +40,12 @@ interface Panel : CellBase<Panel> {
   /**
    * Adds specified columns in a row
    */
-  fun twoColumnRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null): Row
+  fun twoColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null): Row
+
+  /**
+   * Adds specified columns in a row
+   */
+  fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
   /**
    * Creates sub-panel that occupies whole width and uses own grid inside
