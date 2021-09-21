@@ -37,6 +37,9 @@ public final class JobFutureTask<V> extends FutureTask<V> {
         deferred.complete(result);
         return result;
       }
+      catch (JobCanceledException e) {
+        throw deferred.getCancellationException();
+      }
       catch (Throwable e) {
         deferred.completeExceptionally(e);
         throw e;
@@ -56,6 +59,9 @@ public final class JobFutureTask<V> extends FutureTask<V> {
       try (AccessToken ignored = withJob(job)) {
         runnable.run();
         job.complete();
+      }
+      catch (JobCanceledException e) {
+        throw job.getCancellationException();
       }
       catch (Throwable e) {
         job.completeExceptionally(e);
