@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
@@ -199,7 +200,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          return ProcessService.getInstance().sendWinProcessCtrlC(myProcess);
+          return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+            return ProcessService.getInstance().sendWinProcessCtrlC(myProcess);
+          });
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
