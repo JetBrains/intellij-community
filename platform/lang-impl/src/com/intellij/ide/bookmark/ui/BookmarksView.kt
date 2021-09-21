@@ -11,12 +11,14 @@ import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.project.Project
+import com.intellij.pom.Navigatable
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.preview.DescriptorPreview
@@ -28,6 +30,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
+import com.intellij.util.containers.toArray
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 
@@ -65,11 +68,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun getData(dataId: String): Any? {
     return when {
       PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
-      /*
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> getSelectedNodes {
-        getNavigatable(it)
-      }?.toTypedArray() // TODO("Not yet implemented")
-      */
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Navigatable?>())
       else -> null
     }
   }
