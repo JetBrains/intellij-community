@@ -26,6 +26,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     }
 
     fun actionPerformed(action: Action) {
+        if (project.isDisposed) return
         val language = action.language ?: return
         val suggesters = FeatureSuggester.suggesters
             .filter { it.languages.find { id -> id == Language.ANY.id || id == language.id } != null }
