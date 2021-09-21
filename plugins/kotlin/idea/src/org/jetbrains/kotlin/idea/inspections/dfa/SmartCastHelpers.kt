@@ -64,11 +64,11 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtExpr
             when (val gParent = parent.parent) {
                 is KtIfExpression ->
                     if (gParent.condition == expr) {
-                        val thenExpression = if (value == false) null else gParent.then
-                        val elseExpression = if (value == true) null else gParent.`else`
+                        val thenExpression = gParent.then
+                        val elseExpression = gParent.`else`
                         val result = mutableListOf<KtExpression>()
-                        if (thenExpression != null) result += thenExpression
-                        if (elseExpression != null) result += elseExpression
+                        if (thenExpression != null && value != false) result += thenExpression
+                        if (elseExpression != null && value != true) result += elseExpression
                         val nothingType = thenExpression?.getKotlinType()?.isNothing() == true ||
                                 elseExpression?.getKotlinType()?.isNothing() == true
                         if (nothingType) {

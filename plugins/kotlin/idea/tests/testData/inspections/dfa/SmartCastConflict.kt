@@ -118,3 +118,10 @@ fun testWhen(x: String?) {
         }
     }
 }
+
+fun negatedTypeTest(x: Any) {
+    val b = x is String
+    if (!b) return
+    if (x !is String) return
+    x.trim()
+}
