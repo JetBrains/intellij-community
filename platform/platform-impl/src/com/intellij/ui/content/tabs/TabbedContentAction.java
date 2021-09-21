@@ -16,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class TabbedContentAction extends AnAction implements DumbAware {
@@ -188,7 +189,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       Content content = ObjectUtils.chooseNotNull(ObjectUtils.doIfCast(component, ContentTabLabel.class, o -> o.getContent()),
                                                   manager.getSelectedContent());
       if (content != null) {
-        decorator.splitWithContent(content, myHorizontal);
+        decorator.splitWithContent(content, myHorizontal ? SwingConstants.RIGHT : SwingConstants.BOTTOM);
       }
     }
 

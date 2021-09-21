@@ -31,6 +31,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+
+import static javax.swing.SwingConstants.*;
 
 public final class InternalDecoratorImpl extends InternalDecorator implements Queryable, DataProvider, ComponentWithMnemonics {
   @ApiStatus.Internal
@@ -148,7 +151,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     }
   }
 
-  public void splitWithContent(@NotNull Content content, boolean horizontal) {
+  public void splitWithContent(@NotNull Content content, @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1}) int dropSide) {
     if (mySecondDecorator == null) {
       mySecondDecorator = toolWindow.createCellDecorator();
       mySecondDecorator.getContentManager().addContentManagerListener(new ContentManagerListener() {
@@ -172,12 +175,12 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       });
       myFirstDecorator.updateMode(Mode.CELL);
       for (Content c : getContentManager().getContents()) {
-        moveContent(c, this, (c != content ? myFirstDecorator : mySecondDecorator));
+        moveContent(c, this, (c != content ^ (dropSide == LEFT || dropSide == TOP) ? myFirstDecorator : mySecondDecorator));
       }
     }
     myFirstDecorator.updateMode(Mode.CELL);
     mySecondDecorator.updateMode(Mode.CELL);
-    updateMode(horizontal ? Mode.HORIZONTAL_SPLIT : Mode.VERTICAL_SPLIT);
+    updateMode(dropSide == TOP || dropSide == BOTTOM ? Mode.VERTICAL_SPLIT : Mode.HORIZONTAL_SPLIT);
   }
 
   private static void moveContent(@NotNull Content content, @NotNull InternalDecoratorImpl source, @NotNull InternalDecoratorImpl target) {
@@ -226,6 +229,10 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     finally {
       isSplitUnsplitInProgress = false;
     }
+  }
+
+  public void setSplitInProgress(boolean inProgress) {
+    isSplitUnsplitInProgress = inProgress;
   }
 
   public void setMode(Mode mode) {
@@ -480,21 +487,20 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   @Override
   public void addNotify() {
     super.addNotify();
-      JPanel divider = this.divider;
+    if (disposable != null) {
+      Disposer.dispose(disposable);
+    }
+    JPanel divider = this.divider;
+    disposable = Disposer.newDisposable();
       if (divider != null) {
         IdeGlassPane glassPane = (IdeGlassPane)getRootPane().getGlassPane();
-        if (disposable != null) {
-          Disposer.dispose(disposable);
-        }
-        disposable = Disposer.newDisposable();
         ResizeOrMoveDocketToolWindowMouseListener listener = new ResizeOrMoveDocketToolWindowMouseListener(divider, glassPane, this);
         glassPane.addMouseMotionPreprocessor(listener, disposable);
         glassPane.addMousePreprocessor(listener, disposable);
       }
-    // Under construction
-    //if (Registry.is("ide.allow.split.and.reorder.in.tool.window")) {
-    //  new ToolWindowInnerDragHelper(disposable, this).start();
-    //}
+    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false)) {
+      new ToolWindowInnerDragHelper(disposable, this).start();
+    }
   }
 
   @Override
