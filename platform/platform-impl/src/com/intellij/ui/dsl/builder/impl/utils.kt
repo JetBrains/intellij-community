@@ -45,11 +45,11 @@ internal fun createHtmlComment(text: String, action: (HyperlinkEvent) -> Unit): 
 }
 
 internal fun isAllowedLabel(cell: CellBaseImpl<*>?): Boolean {
-  return cell is CellImpl<*> && ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(cell.component) }
+  return cell is CellImpl<*> && ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(cell.component.origin) }
 }
 
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
   if (isAllowedLabel(cell)) {
-    label.labelFor = (cell as CellImpl<*>).component
+    label.labelFor = (cell as CellImpl<*>).component.origin
   }
 }
