@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.util.Range
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -22,12 +21,15 @@ class KotlinLambdaSmartStepTarget(
     val isInline: Boolean = InlineUtil.isInline(resultingDescriptor),
     val isSuspend: Boolean = parameter.type.isSuspendFunctionType,
     val methodName: String = OperatorNameConventions.INVOKE.asString()
-) : SmartStepTarget(
+) : KotlinSmartStepTarget(
         calcLabel(resultingDescriptor, parameter, methodName),
         highlightElement,
         true,
         lines
 ) {
+    override fun createMethodFilter() =
+        KotlinLambdaMethodFilter(this)
+
     override fun getIcon(): Icon = KotlinIcons.LAMBDA
 
     fun getLambda() = highlightElement as KtFunction
