@@ -31,7 +31,7 @@ import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
   implements Configurable.NoScroll, Configurable.WithEpDependencies {
   @NotNull private final Project myProject;
-  private VcsDirectoryConfigurationPanel myMappings;
+  private VcsDirectoryConfigurationPanel myDelegate;
 
   public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
@@ -46,8 +46,8 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public JComponent createComponent() {
-    myMappings = new VcsDirectoryConfigurationPanel(myProject);
-    return myMappings;
+    myDelegate = new VcsDirectoryConfigurationPanel(myProject);
+    return myDelegate;
   }
 
   @Override
@@ -57,28 +57,28 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public boolean isModified() {
-    return myMappings != null && myMappings.isModified();
+    return myDelegate != null && myDelegate.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    myMappings.apply();
+    myDelegate.apply();
   }
 
   @Override
   public void reset() {
     super.reset();
-    myMappings.reset();
+    myDelegate.reset();
   }
 
   @Override
   public void disposeUIResources() {
     super.disposeUIResources();
-    if (myMappings != null) {
-      myMappings.disposeUIResources();
+    if (myDelegate != null) {
+      myDelegate.disposeUIResources();
     }
-    myMappings = null;
+    myDelegate = null;
   }
 
   @Override
