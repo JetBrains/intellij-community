@@ -8,9 +8,11 @@ import com.intellij.psi.compiled.ClsStubBuilder
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.util.indexing.FileContent
+import org.jetbrains.kotlin.SpecialJvmAnnotations
 import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.decompiler.stubBuilder.*
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.kotlin.*
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.ProtoBuf
@@ -20,8 +22,12 @@ import org.jetbrains.kotlin.metadata.deserialization.TypeTable
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.stubs.KotlinStubVersions
+import org.jetbrains.kotlin.resolve.constants.ClassLiteralValue
+import org.jetbrains.kotlin.resolve.constants.ConstantValue
+import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 
@@ -137,7 +143,37 @@ class AnnotationLoaderForClassFileStubBuilder(
     override fun loadAnnotation(
         annotationClassId: ClassId, source: SourceElement, result: MutableList<ClassId>
     ): KotlinJvmBinaryClass.AnnotationArgumentVisitor? {
-        result.add(annotationClassId)
-        return null
+        if (annotationClassId != SpecialJvmAnnotations.JAVA_LANG_ANNOTATION_REPEATABLE) {
+            result += annotationClassId
+            return null
+        }
+
+        return object : KotlinJvmBinaryClass.AnnotationArgumentVisitor {
+            private val arguments = mutableMapOf<Name, ConstantValue<*>>()
+            override fun visitClassLiteral(name: Name, value: ClassLiteralValue) {
+                arguments[name] = KClassValue(value)
+            }
+
+            override fun visitEnd() {
+                if (!isRepeatableWithImplicitContainer(arguments)) {
+                    result.add(annotationClassId)
+                }
+            }
+
+            override fun visit(name: Name?, value: Any?) = Unit
+            override fun visitEnum(name: Name, enumClassId: ClassId, enumEntryName: Name) = Unit
+            override fun visitArray(name: Name): KotlinJvmBinaryClass.AnnotationArrayArgumentVisitor? = null
+            override fun visitAnnotation(name: Name, classId: ClassId): KotlinJvmBinaryClass.AnnotationArgumentVisitor? = null
+        }
+    }
+
+    private fun isRepeatableWithImplicitContainer(arguments: Map<Name, ConstantValue<*>>): Boolean {
+        val containerKClassValue = arguments[Name.identifier("value")] as? KClassValue ?: return false
+        val normalClass = containerKClassValue.value as? KClassValue.Value.NormalClass ?: return false
+        val classId = normalClass.classId
+        if (classId.outerClassId == null || classId.shortClassName.asString() != JvmAbi.REPEATABLE_ANNOTATION_CONTAINER_NAME) return false
+
+        val klass = kotlinClassFinder.findKotlinClass(classId)
+        return klass != null && SpecialJvmAnnotations.isAnnotatedWithContainerMetaAnnotation(klass)
     }
 }

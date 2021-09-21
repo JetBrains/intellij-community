@@ -8,14 +8,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.MockLibraryFacility
-import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File
 
@@ -56,25 +51,31 @@ abstract class AbstractDecompiledTextBaseTest(
             else -> KotlinCompilerStandalone.Platform.Jvm()
         }
 
+        val directivesText = InTextDirectivesUtils.textWithDirectives(testDataDirectory)
         mockLibraryFacility = MockLibraryFacility(
             source = testDataDirectory,
             attachSources = false,
             platform = platform,
-            options = getCompilationOptions(testDataDirectory)
+            options = getCompilationOptions(directivesText),
+            classpath = getCompilationClasspath(directivesText),
         )
 
         mockLibraryFacility.setUp(module)
     }
 
-    private fun getCompilationOptions(testDirectory: File): List<String> {
-        val directivesText = InTextDirectivesUtils.textWithDirectives(testDirectory)
-
+    private fun getCompilationOptions(directivesText: String): List<String> =
         if (InTextDirectivesUtils.isDirectiveDefined(directivesText, "ALLOW_KOTLIN_PACKAGE")) {
-            return listOf("-Xallow-kotlin-package")
+            listOf("-Xallow-kotlin-package")
+        } else {
+            emptyList()
         }
 
-        return emptyList()
-    }
+    private fun getCompilationClasspath(directivesText: String): List<File> =
+        if (InTextDirectivesUtils.isDirectiveDefined(directivesText, "STDLIB_JDK_8")) {
+            listOf(KotlinArtifacts.instance.kotlinStdlibJdk8)
+        } else {
+            emptyList()
+        }
 
     override fun tearDown() {
         runAll(
