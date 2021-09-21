@@ -271,9 +271,10 @@
         <separator/>
         <action id="BookmarksView.AutoscrollFromSource" icon="AllIcons.General.AutoscrollFromSource"
                 class="com.intellij.ide.bookmark.actions.AutoscrollFromSourceToggleAction"/>
-        <separator/>
         <action id="BookmarksView.AutoscrollToSource" icon="AllIcons.General.AutoscrollToSource"
                 class="com.intellij.ide.bookmark.actions.AutoscrollToSourceToggleAction"/>
+        <action id="BookmarksView.OpenInPreviewTab"
+                class="com.intellij.ide.bookmark.actions.OpenInPreviewTabToggleAction"/>
         <separator/>
       </group>
 

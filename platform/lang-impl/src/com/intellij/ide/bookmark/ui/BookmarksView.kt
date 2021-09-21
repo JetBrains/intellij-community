@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.project.Project
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -126,6 +127,15 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       selectionAlarm.cancelAndRequest()
     }
   }
+  val openInPreviewTab = object : Option {
+    override fun isEnabled() = isVertical || !state.showPreview
+    override fun isSelected() = state.openInPreviewTab
+    override fun setSelected(selected: Boolean) {
+      panel.putClientProperty(OPEN_IN_PREVIEW_TAB, selected)
+      state.openInPreviewTab = selected
+      selectionAlarm.cancelAndRequest()
+    }
+  }
   val showPreview = object : Option {
     override fun isAlwaysVisible() = !isVertical
     override fun isEnabled() = !isVertical && leadSelectionNode?.canNavigateToSource() ?: false
@@ -142,7 +152,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     }
     else {
       preview.close()
-      if (autoScroll && autoScrollToSource.isSelected) {
+      if (autoScroll && (autoScrollToSource.isSelected || openInPreviewTab.isSelected)) {
         OpenSourceUtil.navigateToSource(false, false, leadSelectionNode)
       }
     }
@@ -150,6 +160,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   init {
     panel.addToCenter(createScrollPane(tree, true))
+    panel.putClientProperty(OPEN_IN_PREVIEW_TAB, state.openInPreviewTab)
 
     firstComponent = panel
 
