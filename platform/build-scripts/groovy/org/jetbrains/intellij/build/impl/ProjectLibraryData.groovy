@@ -7,15 +7,23 @@ import groovy.transform.CompileStatic
 final class ProjectLibraryData {
   final String libraryName
   final String relativeOutputPath
-  /**
-   * Do not merge library JAR file into uber JAR.
-   */
-  final boolean standalone
+  final PackMode packMode
 
-  ProjectLibraryData(String libraryName, String relativeOutputPath, boolean standalone) {
+  enum PackMode {
+    // merged into some uber jar
+    MERGED,
+    // all JARs of the library is merged into JAR named after the library
+    STANDALONE_MERGED,
+    // all JARs of the library is included into dist separate
+    STANDALONE_SEPARATE,
+    // all JARs of the library is included into dist separate with transformed file names (version suffix is removed)
+    STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+  }
+
+  ProjectLibraryData(String libraryName, String relativeOutputPath, PackMode packMode) {
     this.libraryName = libraryName
     this.relativeOutputPath = relativeOutputPath
-    this.standalone = standalone
+    this.packMode = packMode
   }
 
   boolean equals(o) {
@@ -30,5 +38,10 @@ final class ProjectLibraryData {
 
   int hashCode() {
     return libraryName.hashCode()
+  }
+
+  @Override
+  String toString() {
+    return "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$relativeOutputPath)"
   }
 }

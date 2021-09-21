@@ -39,10 +39,13 @@ class BaseLayoutSpec {
   /**
    * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
    * @relativeOutputPath path relative to 'lib' plugin directory
-   * @standalone do not merge library JAR file into uber JAR.
    */
-  void withProjectLibrary(String libraryName, String relativeOutputPath = "", boolean standalone = false) {
-    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, standalone))
+  void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, ProjectLibraryData.PackMode.MERGED))
+  }
+
+  void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", packMode))
   }
 
   /**

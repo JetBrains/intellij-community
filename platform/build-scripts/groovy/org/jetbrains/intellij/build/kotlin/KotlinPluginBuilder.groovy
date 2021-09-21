@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ResourcesGenerator
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
@@ -147,7 +148,7 @@ class KotlinPluginBuilder {
       withProjectLibraryUnpackedIntoJar("kotlinc.compiler-components-for-jps", jpsPluginJar)
 
       String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
-      withProjectLibrary(kotlincKotlinCompiler, "", true)
+      withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
 
       withModuleOutputPatches(MAIN_KOTLIN_PLUGIN_MODULE, new ResourcesGenerator() {
         @Override
@@ -172,8 +173,8 @@ class KotlinPluginBuilder {
       withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
 
-      withProjectLibrary("kotlin-reflect", "", true)
-      withProjectLibrary("kotlin-stdlib-jdk8", "", true)
+      withProjectLibrary("kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlin-stdlib-jdk8", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("javaslang")
       withProjectLibrary("kotlinx-collections-immutable-jvm")
       withProjectLibrary("javax-inject")

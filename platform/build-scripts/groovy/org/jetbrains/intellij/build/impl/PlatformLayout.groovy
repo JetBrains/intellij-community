@@ -32,18 +32,13 @@ final class PlatformLayout extends BaseLayout {
   /**
    * Include all project libraries from dependencies of modules already included into layout to 'lib' directory
    */
-  void withProjectLibrariesFromIncludedModules(BuildContext context) {
-    context.messages.debug("Collecting project libraries used by platform modules")
 
-    MultiMap<JpsLibrary, JpsModule> librariesToInclude = computeProjectLibrariesFromIncludedModules(context)
-    for (Map.Entry<JpsLibrary, Collection<JpsModule>> entry in librariesToInclude.entrySet()) {
-      context.messages.debug(" library '${entry.key.name}': used in ${entry.value.collect { "'$it.name'" }.join(", ")}")
-      includedProjectLibraries.add(new ProjectLibraryData(entry.key.name, "", false))
-    }
+  void withProjectLibrary(String libraryName) {
+    includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", ProjectLibraryData.PackMode.MERGED))
   }
 
-  void withProjectLibrary(String libraryName, boolean standalone = false) {
-    includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", standalone))
+  void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {
+    includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", packMode))
   }
 
   void removeVersionFromProjectLibraryJarNames(String libraryName) {
