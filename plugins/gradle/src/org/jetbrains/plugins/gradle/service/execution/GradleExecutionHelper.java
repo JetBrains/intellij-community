@@ -376,10 +376,11 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet")) {
-        if (!settings.getArguments().contains("--debug")) {
-          settings.withArgument("--info");
-        }
+      var arguments = settings.getArguments();
+      var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
+      var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
+      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+        settings.withArgument("--info");
       }
     }
 
