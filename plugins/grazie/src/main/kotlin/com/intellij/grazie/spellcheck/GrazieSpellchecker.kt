@@ -4,17 +4,22 @@ package com.intellij.grazie.spellcheck
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detector.heuristics.rule.RuleFilter
+import com.intellij.grazie.detector.utils.collections.emptyLinkedSet
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.toLinkedSet
+import com.intellij.openapi.application.ex.ApplicationUtil
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClassLoaderUtil
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import org.languagetool.rules.spelling.hunspell.HunspellRule
 import org.slf4j.LoggerFactory
+import java.util.concurrent.Callable
 
 object GrazieSpellchecker : GrazieStateLifecycle {
   private const val MAX_SUGGESTIONS_COUNT = 3
@@ -101,18 +106,28 @@ object GrazieSpellchecker : GrazieStateLifecycle {
    * Checks text for spelling mistakes.
    */
   fun getSuggestions(word: String): LinkedSet<String> {
-    return filterCheckers(word).mapNotNull { speller ->
-      try {
-        speller.suggest(word)
-      }
-      catch (t: Throwable) {
-        if (t.isFromHunspellRuleInit()) {
-          disableHunspellRuleInitialization(speller.speller)
-        }
+    val filtered = filterCheckers(word)
+    if (filtered.isEmpty()) return emptyLinkedSet()
 
-        logger.warn("Got exception during suggest for spelling mistakes by LanguageTool with word: $word", t)
-        null
-      }
-    }.flatten().toLinkedSet()
+    val indicator = EmptyProgressIndicator.notNullize(ProgressManager.getGlobalProgressIndicator())
+    return ApplicationUtil.runWithCheckCanceled(Callable {
+      filtered.mapNotNull { speller ->
+        indicator.checkCanceled()
+        try {
+          speller.suggest(word)
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (t: Throwable) {
+          if (t.isFromHunspellRuleInit()) {
+            disableHunspellRuleInitialization(speller.speller)
+          }
+
+          logger.warn("Got exception during suggest for spelling mistakes by LanguageTool with word: $word", t)
+          null
+        }
+      }.flatten().toLinkedSet()
+    }, indicator)
   }
 }
