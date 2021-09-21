@@ -821,7 +821,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myViewContentPanel.repaint();
     createToolbarActions(newPane);
 
-    myAutoScrollToSourceHandler.install(newPane.myTree);
+    if (newPane.myTree != null) {
+      myAutoScrollToSourceHandler.install(newPane.myTree);
+      myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
+    }
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null && newSubId != null) {
@@ -831,7 +834,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         newPane.select(selectedPsiElement, virtualFile, true);
       }
     }
-    myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
     myProject.getMessageBus().syncPublisher(ProjectViewListener.TOPIC).paneShown(newPane, currentPane);
 
     logProjectViewPaneChangedEvent(currentPane, newPane);
