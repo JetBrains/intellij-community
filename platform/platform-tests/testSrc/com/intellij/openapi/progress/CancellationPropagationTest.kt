@@ -1,36 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress
 
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.RegistryKeyRule
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import junit.framework.TestCase.assertNull
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.*
-import org.junit.BeforeClass
-import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
 
-class CancellationPropagationTest {
-
-  companion object {
-
-    @ClassRule
-    @JvmField
-    val application: ApplicationRule = ApplicationRule()
-
-    @BeforeClass
-    @JvmStatic
-    fun initProgressManager() {
-      ProgressManager.getInstance()
-    }
-  }
+@RunWith(JUnit4::class)
+class CancellationPropagationTest : BasePlatformTestCase() {
 
   @Rule
   @JvmField
