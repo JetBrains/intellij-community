@@ -369,18 +369,18 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
   }
 
-  private static class Item {
+  public static class Item {
     final int index;
-    final String longText;
+    protected final String longText;
     String shortText = "";
     boolean trimmed;
 
-    Item(int index, String longText) {
+    protected Item(int index, String longText) {
       this.index = index;
       this.longText = longText;
     }
 
-    @NlsSafe String getShortText(int maxChars) {
+    public @NlsSafe String getShortText(int maxChars) {
       int len = shortText.length();
       if (len > 0 && !trimmed) return shortText;
       if (len >= maxChars && (len - maxChars) * 10 / len == 0) return shortText;
