@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
 import com.jetbrains.python.psi.PyAssignmentStatement
@@ -15,10 +16,14 @@ import com.jetbrains.python.psi.PyStatementList
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyWhileStatement
+import com.jetbrains.python.psi.impl.PyFileImpl
 import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class PythonLanguageSupport : LanguageSupport {
+    override fun isSourceFile(file: PsiFile): Boolean {
+        return file is PyFileImpl
+    }
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is PyIfStatement

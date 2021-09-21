@@ -12,13 +12,18 @@ import com.intellij.lang.javascript.psi.JSStatement
 import com.intellij.lang.javascript.psi.JSVarStatement
 import com.intellij.lang.javascript.psi.JSVariable
 import com.intellij.lang.javascript.psi.JSWhileStatement
+import com.intellij.lang.javascript.psi.impl.JSFileImpl
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class JavaScriptLanguageSupport : LanguageSupport {
+    override fun isSourceFile(file: PsiFile): Boolean {
+        return file is JSFileImpl
+    }
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is JSIfStatement

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentsOfType
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -21,6 +23,9 @@ import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class KotlinLanguageSupport : LanguageSupport {
+    override fun isSourceFile(file: PsiFile): Boolean {
+        return file is KtFile && !file.isCompiled
+    }
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is KtIfExpression

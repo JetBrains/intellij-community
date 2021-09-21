@@ -4,6 +4,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 
 @Suppress("TooManyFunctions")
 interface LanguageSupport {
@@ -26,6 +27,8 @@ interface LanguageSupport {
             }
         }
     }
+
+    fun isSourceFile(file: PsiFile): Boolean
 
     fun isIfStatement(element: PsiElement): Boolean
 

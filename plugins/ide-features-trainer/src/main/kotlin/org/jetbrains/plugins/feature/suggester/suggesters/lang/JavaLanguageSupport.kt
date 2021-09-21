@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiExpressionStatement
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiForStatement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiIfStatement
@@ -15,11 +16,15 @@ import com.intellij.psi.PsiLocalVariable
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiStatement
 import com.intellij.psi.PsiWhileStatement
+import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class JavaLanguageSupport : LanguageSupport {
+    override fun isSourceFile(file: PsiFile): Boolean {
+        return file is PsiJavaFileImpl
+    }
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is PsiIfStatement

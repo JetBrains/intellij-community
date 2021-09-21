@@ -126,8 +126,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
     }
 
     private fun State.tryToUpdateSurroundingStatement(langSupport: LanguageSupport, action: PsiAction) {
-        val psiFile = action.parent.containingFile ?: return
-        val element = psiFile.findElementAt(surroundingStatementStartOffset) ?: return
+        val element = action.psiFile.findElementAt(surroundingStatementStartOffset) ?: return
         val parent = element.parent ?: return
         if (langSupport.isSurroundingStatement(parent)) {
             surroundingStatement = parent
