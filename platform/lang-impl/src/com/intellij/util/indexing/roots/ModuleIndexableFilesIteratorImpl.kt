@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
@@ -93,9 +94,12 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean {
-    if (module.isDisposed) return false
+    val index = runReadAction {
+      return@runReadAction if (module.isDisposed) null else ModuleRootManager.getInstance(module).fileIndex
+    }
+    if (index == null) return false
     for (root in roots) {
-      ModuleRootManager.getInstance(module).fileIndex.iterateContentUnderDirectory(root, fileIterator, fileFilter)
+      index.iterateContentUnderDirectory(root, fileIterator, fileFilter)
     }
     return true
   }
