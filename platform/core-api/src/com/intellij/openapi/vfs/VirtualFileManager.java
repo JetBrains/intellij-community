@@ -46,7 +46,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileSystem#getProtocol
    */
   @Contract("null -> null")
-  public abstract @Nullable VirtualFileSystem getFileSystem(@Nullable String protocol);
+  public abstract VirtualFileSystem getFileSystem(@Nullable String protocol);
 
   /**
    * <p>Refreshes the cached file systems information from the physical file systems synchronously.<p/>

@@ -91,9 +91,9 @@ public abstract class FindSettings {
 
   public abstract void initModelBySetings(@NotNull FindModel model);
 
-  public abstract @NlsSafe String getFileMask();
+  public abstract @NotNull @NlsSafe String getFileMask();
 
-  public abstract void setFileMask(String fileMask);
+  public abstract void setFileMask(@NotNull @NlsSafe String fileMask);
 
   public abstract void setCustomScope(String scopeName);
 
