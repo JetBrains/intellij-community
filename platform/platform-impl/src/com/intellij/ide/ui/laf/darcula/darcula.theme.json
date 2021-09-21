@@ -504,6 +504,7 @@
     "infoText": "#bbbbbb",
     "text.grayFilter": "-15,-10,100",
     "text": "#bbbbbb",
+    "textInactiveText" : "#808080",
     "textText": "#bbbbbb",
     "window": "#3c3f41"
   },

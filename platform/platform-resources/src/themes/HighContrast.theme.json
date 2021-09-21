@@ -466,7 +466,9 @@
       "separatorColor": "#e6e6e6"
     },
 
-    "Window.border" : "1,1,1,1,E6E6E6"
+    "Window.border" : "1,1,1,1,E6E6E6",
+
+    "textInactiveText" : "#E0861F"
   },
 
   "icons": {

@@ -873,6 +873,8 @@
       "Projects.actions.background": "#DCEDFE",
       "separatorColor": "#d1d1d1",
       "SidePanel.background": "#f2f2f2"
-    }
+    },
+
+    "textInactiveText" : "#808080"
   }
 }
