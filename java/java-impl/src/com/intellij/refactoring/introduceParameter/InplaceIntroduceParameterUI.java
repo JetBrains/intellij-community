@@ -93,14 +93,6 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     return hasFinalModifier();
   }
 
-  public void appendOccurrencesDelegate(JPanel myWholePanel) {
-    final GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0);
-    gc.gridy++;
-    gc.insets.left = 0;
-    createDelegateCb(gc, myWholePanel);
-  }
-
   public boolean hasFinalModifier() {
     if (myHasWriteAccess) return false;
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_CREATE_FINALS;
