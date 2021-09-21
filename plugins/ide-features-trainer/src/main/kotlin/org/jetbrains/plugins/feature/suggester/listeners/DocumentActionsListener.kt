@@ -15,7 +15,6 @@ import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAc
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextRemovedAction
 import org.jetbrains.plugins.feature.suggester.handleAction
-import java.lang.ref.WeakReference
 
 object DocumentActionsListener : BulkAwareDocumentListener {
 
@@ -37,8 +36,8 @@ object DocumentActionsListener : BulkAwareDocumentListener {
 
     private fun <T : Action> handleDocumentAction(
         event: DocumentEvent,
-        textInsertedActionConstructor: (String, Int, WeakReference<Editor>, Long) -> T,
-        textRemovedActionConstructor: (TextFragment, Int, WeakReference<Editor>, Long) -> T
+        textInsertedActionConstructor: (String, Int, Editor, Long) -> T,
+        textRemovedActionConstructor: (TextFragment, Int, Editor, Long) -> T
     ) {
         val document = event.document
         val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
@@ -51,7 +50,7 @@ object DocumentActionsListener : BulkAwareDocumentListener {
                 textInsertedActionConstructor(
                     event.newFragment.toString(),
                     event.offset,
-                    WeakReference(editor),
+                    editor,
                     System.currentTimeMillis()
                 )
             )
@@ -65,7 +64,7 @@ object DocumentActionsListener : BulkAwareDocumentListener {
                         event.oldFragment.toString()
                     ),
                     event.offset,
-                    WeakReference(editor),
+                    editor,
                     System.currentTimeMillis()
                 )
             )

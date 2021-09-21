@@ -42,7 +42,7 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
             } else if (firstSlashAddedAction != null && isSecondSlashAdded(action, firstSlashAddedAction!!) ||
                 isCommentSymbolAdded(action, '#')
             ) {
-                val document = action.document ?: return NoSuggestion
+                val document = action.document
                 val commentData = CommentData(
                     lineNumber = document.getLineNumber(action.caretOffset),
                     documentRef = WeakReference(document),
@@ -65,7 +65,6 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
     private fun isCommentSymbolAdded(action: EditorTextInsertedAction, symbol: Char): Boolean {
         with(action) {
             val psiFile = this.psiFile ?: return false
-            val document = this.document ?: return false
             if (text != symbol.toString()) return false
             val psiElement = psiFile.findElementAt(caretOffset) ?: return false
             if (psiElement is PsiComment || psiElement.nextSibling is PsiComment) return false
@@ -78,9 +77,9 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
     private fun isSecondSlashAdded(curAction: EditorTextInsertedAction, prevAction: EditorTextInsertedAction): Boolean {
         if (curAction.project != prevAction.project) return false
         val curPsiFile = curAction.psiFile ?: return false
-        val curDocument = curAction.document ?: return false
         val prevPsiFile = prevAction.psiFile ?: return false
-        val prevDocument = curAction.document ?: return false
+        val curDocument = curAction.document
+        val prevDocument = prevAction.document
         if (curPsiFile !== prevPsiFile || curDocument !== prevDocument) return false
         return curAction.text == "/" &&
             abs(curAction.caretOffset - prevAction.caretOffset) == 1 &&

@@ -15,7 +15,6 @@ import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterStatis
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
 import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
-import java.lang.ref.WeakReference
 
 class FeatureSuggestersManager(val project: Project) : Disposable {
     private val suggestionPresenter: SuggestionPresenter =
@@ -63,7 +62,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
                     if (editor.project != project) return
                     actionPerformed(
                         EditorFocusGainedAction(
-                            editorRef = WeakReference(editor),
+                            editor = editor,
                             timeMillis = System.currentTimeMillis()
                         )
                     )

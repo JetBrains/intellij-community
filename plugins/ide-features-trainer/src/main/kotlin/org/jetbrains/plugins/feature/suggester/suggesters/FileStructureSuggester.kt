@@ -37,11 +37,9 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
                 if (!prevActionIsEditorFindAction) return NoSuggestion // check that previous action is Find
                 val psiFile = action.psiFile ?: return NoSuggestion
                 val project = action.project ?: return NoSuggestion
-                val editor = action.editor ?: return NoSuggestion
-
                 val findModel = getFindModel(project)
                 val textToFind = findModel.stringToFind
-                val definition = langSupport.getDefinitionOnCaret(psiFile, editor.caretModel.offset)
+                val definition = langSupport.getDefinitionOnCaret(psiFile, action.editor.caretModel.offset)
                 if (definition is PsiNamedElement && langSupport.isFileStructureElement(definition) &&
                     definition.name?.contains(textToFind, !findModel.isCaseSensitive) == true
                 ) {
