@@ -36,16 +36,31 @@ object GrazieSpellchecker : GrazieStateLifecycle {
   private val logger = LoggerFactory.getLogger(GrazieSpellchecker::class.java)
 
   data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule, val suggestLimit: Int) {
-    fun check(word: String): Boolean = synchronized(speller) {
+    fun check(word: String): Boolean? = synchronized(speller) {
+      if (word.isBlank()) return true
+
       ClassLoaderUtil.computeWithClassLoader<Boolean, Throwable>(GraziePlugin.classLoader) {
-        !speller.isMisspelled(word) || !speller.isMisspelled(word.capitalize())
+        if (speller.match(tool.getRawAnalyzedSentence(word)).isEmpty()) {
+          if (!speller.isMisspelled(word)) true
+          else {
+            // if the speller does not return matches, but the word is still misspelled (not in the dictionary),
+            // then this word was ignored by the rule (e.g. alien word), and we cannot be sure about its correctness
+            // let's try adding a small change to a word to see if it's alien
+            val mutated = word + word.last() + word.last()
+            if (speller.match(tool.getRawAnalyzedSentence(mutated)).isEmpty()) null else true
+          }
+        } else false
       }
     }
 
     fun suggest(text: String): Set<String> = synchronized(speller) {
       ClassLoaderUtil.computeWithClassLoader<Set<String>, Throwable>(GraziePlugin.classLoader) {
         speller.match(tool.getRawAnalyzedSentence(text))
-          .flatMap { it.suggestedReplacements }
+          .flatMap { match ->
+            match.suggestedReplacements.map {
+              text.replaceRange(match.fromPos, match.toPos, it)
+            }
+          }
           .take(suggestLimit).toSet()
       }
     }
@@ -85,11 +100,13 @@ object GrazieSpellchecker : GrazieStateLifecycle {
   fun isCorrect(word: String): Boolean? {
     val myCheckers = filterCheckers(word)
 
-    if (myCheckers.isEmpty()) return null
-
-    return myCheckers.any { speller ->
+    var isAlien = true
+    myCheckers.forEach { speller ->
       try {
-        speller.check(word)
+        when (speller.check(word)) {
+          true -> return true
+          false -> isAlien = false
+        }
       }
       catch (t: Throwable) {
         if (t.isFromHunspellRuleInit()) {
@@ -97,9 +114,10 @@ object GrazieSpellchecker : GrazieStateLifecycle {
         }
 
         logger.warn("Got exception during check for spelling mistakes by LanguageTool with word: $word", t)
-        false
       }
     }
+
+    return if (isAlien) null else false
   }
 
   /**
