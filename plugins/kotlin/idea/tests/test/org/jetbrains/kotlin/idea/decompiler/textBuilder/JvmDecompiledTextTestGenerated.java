@@ -28,6 +28,21 @@ public class JvmDecompiledTextTestGenerated extends AbstractJvmDecompiledTextTes
         runTest("testData/decompiler/decompiledTextJvm/EnumWithQuotes/");
     }
 
+    @TestMetadata("JvmRepeatableAnnotation")
+    public void testJvmRepeatableAnnotation() throws Exception {
+        runTest("testData/decompiler/decompiledTextJvm/JvmRepeatableAnnotation/");
+    }
+
+    @TestMetadata("JvmRepeatableAnnotationWithKotlin")
+    public void testJvmRepeatableAnnotationWithKotlin() throws Exception {
+        runTest("testData/decompiler/decompiledTextJvm/JvmRepeatableAnnotationWithKotlin/");
+    }
+
+    @TestMetadata("KotlinRepeatableAnnotation")
+    public void testKotlinRepeatableAnnotation() throws Exception {
+        runTest("testData/decompiler/decompiledTextJvm/KotlinRepeatableAnnotation/");
+    }
+
     @TestMetadata("Modifiers")
     public void testModifiers() throws Exception {
         runTest("testData/decompiler/decompiledTextJvm/Modifiers/");
