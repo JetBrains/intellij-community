@@ -44,8 +44,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
 
     override fun createMethodFilter(stepTarget: SmartStepTarget?): MethodFilter? {
         return when (stepTarget) {
-            is KotlinMethodSmartStepTarget -> KotlinOrdinaryMethodFilter(stepTarget)
-            is KotlinLambdaSmartStepTarget -> KotlinLambdaMethodFilter(stepTarget)
+            is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
             else -> super.createMethodFilter(stepTarget)
         }
     }

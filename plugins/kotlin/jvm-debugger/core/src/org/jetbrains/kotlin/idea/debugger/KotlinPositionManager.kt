@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedLambdaName
+import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
@@ -159,6 +161,15 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
             return SourcePosition.createFromElement(lambdaOrFunIfInside.bodyExpression!!)
         }
 
+        val callableReferenceIfInside = getCallableReferenceIfInside(location, psiFile, sourceLineNumber)
+        if (callableReferenceIfInside != null) {
+            val sourcePosition = SourcePosition.createFromElement(callableReferenceIfInside)
+            if (sourcePosition != null) {
+                // Never stop on invocation of method reference
+                return KotlinReentrantSourcePosition(sourcePosition)
+            }
+        }
+
         val elementInDeclaration = getElementForDeclarationLine(location, psiFile, sourceLineNumber)
         if (elementInDeclaration != null) {
             return SourcePosition.createFromElement(elementInDeclaration)
@@ -256,8 +267,17 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
         }
     }
 
+    private fun getCallableReferenceIfInside(location: Location, file: KtFile, lineNumber: Int): KtCallableReferenceExpression? {
+        val currentLocationClassName = location.getClassName() ?: return null
+        val allReferenceExpressions = getElementsAtLineIfAny<KtCallableReferenceExpression>(file, lineNumber)
+
+        return allReferenceExpressions.firstOrNull {
+            it.calculatedClassNameMatches(currentLocationClassName)
+        }
+    }
+
     private fun getLambdaOrFunIfInside(location: Location, file: KtFile, lineNumber: Int): KtFunction? {
-        val currentLocationFqName = location.declaringType().name() ?: return null
+        val currentLocationClassName = location.getClassName() ?: return null
 
         val start = CodeInsightUtils.getStartLineOffset(file, lineNumber)
         val end = CodeInsightUtils.getEndLineOffset(file, lineNumber)
@@ -265,9 +285,6 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
 
         val literalsOrFunctions = getLambdasAtLineIfAny(file, lineNumber)
         if (literalsOrFunctions.isEmpty()) return null
-
-        val currentLocationClassName =
-            JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
 
         return literalsOrFunctions.getAppropriateLiteralBasedOnDeclaringClassName(location, currentLocationClassName) ?:
                literalsOrFunctions.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
@@ -285,18 +302,22 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
                 continue
             }
 
-            val internalClassNames = DebuggerClassNameProvider(
-                myDebugProcess.project,
-                myDebugProcess.searchScope,
-                alwaysReturnLambdaParentClass = false
-            ).getOuterClassNamesForElement(literal.firstChild, emptySet()).classNames
-
-            if (internalClassNames.any { it == currentLocationClassName }) {
+            if (literal.firstChild.calculatedClassNameMatches(currentLocationClassName)) {
                 return literal
             }
         }
 
         return null
+    }
+
+    private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String): Boolean {
+        val internalClassNames = DebuggerClassNameProvider(
+            myDebugProcess.project,
+            myDebugProcess.searchScope,
+            alwaysReturnLambdaParentClass = false
+        ).getOuterClassNamesForElement(this, emptySet()).classNames
+
+        return internalClassNames.any { it == currentLocationClassName }
     }
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
@@ -459,6 +480,11 @@ private fun Method.getInlineFunctionLocalVariables(): Sequence<LocalVariable> {
 private fun LocalVariable.isInlineFunctionLocalVariable(methodName: String) =
     name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
     name().substringAfter(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) != methodName
+
+fun Location.getClassName(): String? {
+    val currentLocationFqName = declaringType().name() ?: return null
+    return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
+}
 
 private fun LocalVariable.getBorders(): Pair<Location, Location>? {
     val variable = this.safeAs<LocalVariableImpl>() ?: return null

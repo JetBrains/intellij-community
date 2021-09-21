@@ -200,8 +200,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val stepTargets = KotlinSmartStepIntoHandler().findSmartStepTargets(position)
         stepTargets.mapNotNull { stepTarget ->
             when (stepTarget) {
-                is KotlinLambdaSmartStepTarget -> KotlinLambdaMethodFilter(stepTarget)
-                is KotlinMethodSmartStepTarget -> KotlinOrdinaryMethodFilter(stepTarget)
+                is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
                 is MethodSmartStepTarget -> BasicStepMethodFilter(stepTarget.method, stepTarget.getCallingExpressionLines())
                 else -> null
             }

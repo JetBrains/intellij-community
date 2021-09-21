@@ -2,15 +2,14 @@
 
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.psi.PsiElement
 import com.intellij.util.Range
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.renderer.PropertyAccessorRenderingPolicy
@@ -23,7 +22,7 @@ class KotlinMethodSmartStepTarget(
     label: String,
     highlightElement: PsiElement,
     lines: Range<Int>
-) : SmartStepTarget(label, highlightElement, false, lines) {
+) : KotlinSmartStepTarget(label, highlightElement, false, lines) {
     val declaration = declaration?.let(SourceNavigationHelper::getNavigationElement)
 
     init {
@@ -35,12 +34,6 @@ class KotlinMethodSmartStepTarget(
 
     private val isExtension: Boolean
         get() = descriptor.isExtension
-
-    val targetMethodName: String = when (descriptor) {
-        is ClassDescriptor, is ConstructorDescriptor -> "<init>"
-        is PropertyAccessorDescriptor -> JvmAbi.getterName(descriptor.correspondingProperty.name.asString())
-        else -> descriptor.name.asString()
-    }
 
     override fun getIcon(): Icon = if (isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
 
@@ -57,6 +50,9 @@ class KotlinMethodSmartStepTarget(
             return renderer.render(descriptor)
         }
     }
+
+    override fun createMethodFilter() =
+        KotlinMethodFilter(descriptor, callingExpressionLines, isInvoke, declaration)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
