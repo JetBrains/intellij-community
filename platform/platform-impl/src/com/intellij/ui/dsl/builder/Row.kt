@@ -164,7 +164,7 @@ interface Row {
   fun link(@NlsContexts.LinkLabel text: String, action: (ActionEvent) -> Unit): Cell<ActionLink>
 
   /**
-   * Creates focusable browser link with text inside. Should not be used with html inside
+   * Creates focusable browser link with text inside. Should not be used with html in [text]
    */
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 

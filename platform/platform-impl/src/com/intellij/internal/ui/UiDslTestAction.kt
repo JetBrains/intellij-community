@@ -26,12 +26,12 @@ import javax.swing.border.Border
 class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
 
   override fun actionPerformed(e: AnActionEvent) {
-    UiDslDemoDialog(e.project).show()
+    UiDslTestDialog(e.project).show()
   }
 }
 
 @Suppress("DialogTitleCapitalization")
-private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
+private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
 
   init {
     title = "UI DSL Tests"
