@@ -32,11 +32,8 @@ public final class JobFutureTask<V> extends FutureTask<V> {
   private static <V> @NotNull Callable<V> jobCallable(@NotNull Callable<? extends V> callable) {
     CompletableDeferred<V> deferred = CompletableDeferred(currentJob());
     return () -> {
-      try {
-        V result;
-        try (AccessToken ignored = withJob(deferred)) {
-          result = callable.call();
-        }
+      try (AccessToken ignored = withJob(deferred)) {
+        V result = callable.call();
         deferred.complete(result);
         return result;
       }
@@ -56,10 +53,8 @@ public final class JobFutureTask<V> extends FutureTask<V> {
     }
     CompletableJob job = JobKt.Job(currentJob());
     return () -> {
-      try {
-        try (AccessToken ignored = withJob(job)) {
-          runnable.run();
-        }
+      try (AccessToken ignored = withJob(job)) {
+        runnable.run();
         job.complete();
       }
       catch (Throwable e) {
