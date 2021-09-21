@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.testFramework.MapDataContext;
 
@@ -20,7 +21,7 @@ public class HideAllToolWindowsTest extends ToolWindowManagerTestCase {
     for (int i = 0; i < extensions.size(); i++) {
       ToolWindowEP extension = extensions.get(i);
       String id = extension.id;
-      if (id.equals("Structure") || id.equals("Favorites") || id.equals("Ant")) {
+      if (id.equals("Structure") || id.equals(ToolWindowId.FAVORITES_VIEW) || id.equals(ToolWindowId.BOOKMARKS) || id.equals("Ant")) {
         continue;
       }
 
