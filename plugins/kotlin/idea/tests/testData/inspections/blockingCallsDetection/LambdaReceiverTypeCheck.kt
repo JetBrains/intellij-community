@@ -1,6 +1,6 @@
 @file:Suppress("UNUSED_PARAMETER")
 
-import java.lang.Thread.sleep
+import java.lang.Thread
 import kotlin.coroutines.RestrictsSuspension
 
 suspend fun testFunction() {
@@ -8,7 +8,7 @@ suspend fun testFunction() {
     withRestrictedReceiver({ Thread.sleep(0) }, { Thread.sleep(1) })
 
     withSimpleReceiver({
-        Thread.< warning descr = "Possibly blocking call in non-blocking context could lead to thread starvation" > sleep < / warning >(2);
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(2)
     })
 }
 
