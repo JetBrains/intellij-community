@@ -560,7 +560,9 @@ public final class StartupUtil {
       Agreements.showEndUserAndDataSharingAgreements(document);
     }
     else if (ConsentOptions.getInstance().getConsents().getValue()) {
+      /* Android Studio: b/200625563
       Agreements.showDataSharingAgreement();
+      Android Studio: b/200625563 */
     }
     activity.end();
 
