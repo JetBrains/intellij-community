@@ -201,11 +201,6 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceField"/>
     </action>
 
-    <action id="IntroduceConstantKt" class="org.jetbrains.kotlin.idea.refactoring.introduce.introduceConstant.IntroduceConstantAction"
-            use-shortcut-of="IntroduceConstant">
-      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceProperty"/>
-    </action>
-
     <action id="ExtractFunctionToScope" class="org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractFunctionToScopeAction">
       <keyboard-shortcut keymap="$default" first-keystroke="control alt shift M"/>
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractFunction"/>
