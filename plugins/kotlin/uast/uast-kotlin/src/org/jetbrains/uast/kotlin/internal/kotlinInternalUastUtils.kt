@@ -63,6 +63,7 @@ import org.jetbrains.kotlin.types.typeUtil.isInterface
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.internal.KotlinUastTypeMapper
 import org.jetbrains.uast.kotlin.psi.UastDescriptorLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
@@ -142,9 +143,6 @@ internal fun KotlinType.toPsiType(
 
     val project = context.project
 
-    val typeMapper = project.getService(KotlinUastResolveProviderService::class.java)
-        .getTypeMapper(context) ?: return UastErrorType
-
     val languageVersionSettings = project.getService(KotlinUastResolveProviderService::class.java)
         .getLanguageVersionSettings(context)
 
@@ -152,7 +150,7 @@ internal fun KotlinType.toPsiType(
     val typeMappingMode = if (boxed) TypeMappingMode.GENERIC_ARGUMENT_UAST else TypeMappingMode.DEFAULT_UAST
     val approximatedType =
         TypeApproximator(this.builtIns, languageVersionSettings).approximateDeclarationType(this, true)
-    typeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)
+    KotlinUastTypeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)
 
     val signature = StringCharacterIterator(signatureWriter.toString())
 

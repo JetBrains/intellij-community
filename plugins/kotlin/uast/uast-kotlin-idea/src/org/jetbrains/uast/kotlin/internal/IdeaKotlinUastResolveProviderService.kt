@@ -3,8 +3,6 @@
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.codegen.ClassBuilderMode
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -13,7 +11,6 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.module
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -27,12 +24,6 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
     override fun getBindingContextIfAny(element: KtElement): BindingContext? =
         element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
-
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper = KotlinTypeMapper(
-        getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
-        JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,
-        useOldInlineClassesManglingScheme = false
-    )
 
     override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
 
