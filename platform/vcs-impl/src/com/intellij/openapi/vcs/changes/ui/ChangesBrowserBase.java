@@ -48,6 +48,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   private final AnAction myShowDiffAction;
 
   @Nullable private Runnable myInclusionChangedListener;
+  @Nullable private DiffPreview myDiffPreview;
 
 
   protected ChangesBrowserBase(@NotNull Project project,
@@ -289,7 +290,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @Nullable
   protected DiffPreview getShowDiffActionPreview() {
-    return null;
+    return myDiffPreview;
+  }
+
+  protected void setShowDiffActionPreview(@Nullable DiffPreview diffPreview) {
+    myDiffPreview = diffPreview;
   }
 
   public void showDiff() {

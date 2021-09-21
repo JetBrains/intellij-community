@@ -45,6 +45,11 @@ public class LoadingCommittedChangeListPanel implements Disposable {
     return myChangesPanel.getPreferredFocusedComponent();
   }
 
+  @NotNull
+  public SimpleChangesBrowser getChangesBrowser() {
+    return myChangesPanel.getChangesBrowser();
+  }
+
   public void hideCommitMessage() {
     myChangesPanel.setShowCommitMessage(false);
   }
