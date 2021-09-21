@@ -183,6 +183,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProj
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.uast.test.comparasion.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -1111,17 +1112,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("fir", testDataPath = "../completion/tests/testData") {
         testClass<AbstractHighLevelJvmBasicCompletionTest> {
-            model("basic/common")
-            model("basic/java")
-            model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractHighLevelBasicCompletionHandlerTest> {
-            model("handlers/basic", pattern = KT_WITHOUT_DOTS)
+            model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractFirKeywordCompletionHandlerTest> {
-            model("handlers/keywords", pattern = KT_WITHOUT_DOTS)
+            model("handlers/keywords", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractHighLevelWeigherTest> {
@@ -1286,13 +1287,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJSBasicCompletionTest> {
-            model("basic/common")
-            model("basic/js")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/js", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJvmBasicCompletionTest> {
-            model("basic/common")
-            model("basic/java")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJvmSmartCompletionTest> {
@@ -1308,19 +1309,19 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractBasicCompletionHandlerTest> {
-            model("handlers/basic", pattern = KT_WITHOUT_DOTS)
+            model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractSmartCompletionHandlerTest> {
-            model("handlers/smart")
+            model("handlers/smart", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractKeywordCompletionHandlerTest> {
-            model("handlers/keywords")
+            model("handlers/keywords", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractCompletionCharFilterTest> {
-            model("handlers/charFilter", pattern = KT_WITHOUT_DOTS)
+            model("handlers/charFilter", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractMultiFileJvmBasicCompletionTest> {
