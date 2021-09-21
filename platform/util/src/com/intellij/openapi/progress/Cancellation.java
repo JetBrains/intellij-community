@@ -6,11 +6,13 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import kotlinx.coroutines.Job;
 import kotlinx.coroutines.JobKt;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
+@Internal
 public final class Cancellation {
 
   private static final ThreadLocal<Job> ourJob = new ThreadLocal<>();
