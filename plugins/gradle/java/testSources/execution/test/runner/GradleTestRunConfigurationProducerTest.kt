@@ -309,6 +309,11 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       assertEquals(settings.scriptParameters, "--info --stacktrace")
       assertEmpty(settings.vmOptions)
     }
+    createAndAddRunConfiguration("build -x test").apply {
+      assertSameElements(settings.taskNames, "build")
+      assertEquals(settings.scriptParameters, "-x test")
+      assertEmpty(settings.vmOptions)
+    }
   }
 
   @Test
