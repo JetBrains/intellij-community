@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.Invoker
 
-@State(name = "BookmarksManagerState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
+@State(name = "BookmarksManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentStateComponentWithModificationTracker<ManagerState> {
 
   private val invoker = Invoker.forBackgroundThreadWithReadAction(project)
@@ -73,12 +73,14 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
 
   override fun noStateLoaded() {
     val group = addOrReuseGroup(project.name, true)
-    project.messageBus.connect().subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
+    val listener = object : BookmarksListener {
       override fun bookmarkAdded(old: com.intellij.ide.bookmarks.Bookmark) {
         val bookmark = LineBookmarkProvider.find(project)?.createBookmark(old.file, old.line) ?: return
         group.add(bookmark, old.type, old.description, false)
       }
-    })
+    }
+    project.messageBus.connect().subscribe(BookmarksListener.TOPIC, listener)
+    com.intellij.ide.bookmarks.BookmarkManager.getInstance(project).allBookmarks.forEach { listener.bookmarkAdded(it) }
     invoker.invokeLater { noStateLoaded(FavoritesManager.getInstance(project)) }
   }
 
@@ -126,7 +128,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   }
 
   private fun addOrReuseGroup(name: String, isDefault: Boolean) = synchronized(notifier) {
-    findGroup(name)?.also { it.isDefault = isDefault } ?: Group(name, isDefault, false)
+    findGroup(name)?.also { it.isDefault = it.isDefault || isDefault } ?: Group(name, isDefault, false)
   }
 
   override fun getBookmark(type: BookmarkType) = synchronized(notifier) {
