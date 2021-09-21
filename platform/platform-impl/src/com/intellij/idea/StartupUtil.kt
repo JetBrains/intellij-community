@@ -619,9 +619,11 @@ private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?,
         true
       }
       else if (ConsentOptions.needToShowUsageStatsConsent()) {
+/* Android Studio: b/200625563
         prepareAndExecuteInEdt {
           showDataSharingAgreement()
         }
+Android Studio: b/200625563 */
         false
       }
       else {
