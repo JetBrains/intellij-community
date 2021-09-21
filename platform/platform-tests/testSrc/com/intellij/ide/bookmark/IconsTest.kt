@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.bookmarks
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.bookmark
 
-import com.intellij.ide.bookmark.BookmarkType
 import junit.framework.TestCase
 import javax.swing.Icon
 import kotlin.test.assertEquals
@@ -20,7 +19,7 @@ private fun testIcons(iconSupplier: (BookmarkType) -> Icon) = BookmarkType.value
   assertSame(icon, iconSupplier(it), "different icon instances for the same type")
 }
 
-class BookmarkTest : TestCase() {
+class IconsTest : TestCase() {
   fun testIcons() = testIcons { it.icon }
   fun testGutterIcons() = testIcons { it.gutterIcon }
 }
