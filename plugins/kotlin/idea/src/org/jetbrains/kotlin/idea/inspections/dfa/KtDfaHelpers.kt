@@ -18,6 +18,7 @@ import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
 internal fun KotlinType?.toDfType(context: KtElement) : DfType {
     if (this == null) return DfType.TOP
@@ -172,6 +174,18 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
 
 internal fun KtExpression.getKotlinType(): KotlinType? = analyze(BodyResolveMode.PARTIAL).getType(this)
 
+/**
+ * JVM-patched array element type (e.g. Int? for Array<Int>)
+ */
+internal fun KotlinType.getArrayElementType(context: KtElement): KotlinType? {
+    if (!KotlinBuiltIns.isArrayOrPrimitiveArray(this)) return null
+    val type = context.builtIns.getArrayElementType(this)
+    if (KotlinBuiltIns.isArray(this) && KotlinBuiltIns.isPrimitiveType(type)) {
+        return type.makeNullable()
+    }
+    return type
+}
+
 internal fun KotlinType.toPsiType(context: KtElement): PsiType? {
     val typeFqName = this.constructor.declarationDescriptor?.fqNameUnsafe ?: return null
     val boxed = canBeNull()
@@ -186,7 +200,7 @@ internal fun KotlinType.toPsiType(context: KtElement): PsiType? {
         FqNames._double -> PsiType.DOUBLE.orBoxed()
         FqNames._float -> PsiType.FLOAT.orBoxed()
         FqNames.nothing -> PsiType.VOID.orBoxed()
-        FqNames.array -> context.builtIns.getArrayElementType(this).toPsiType(context)?.createArrayType()
+        FqNames.array -> getArrayElementType(context)?.toPsiType(context)?.createArrayType()
         else -> when (val fqNameString = correctFqName(typeFqName)) {
             "kotlin.ByteArray" -> PsiType.BYTE.createArrayType()
             "kotlin.IntArray" -> PsiType.INT.createArrayType()

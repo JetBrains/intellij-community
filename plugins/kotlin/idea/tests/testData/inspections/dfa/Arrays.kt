@@ -1,4 +1,10 @@
 // WITH_RUNTIME
+fun arrayCast(x: Array<Int>) {
+    @Suppress("UNCHECKED_CAST")
+    val y = x as Array<Any>
+    println(y)
+}
+
 fun arrayRead(x : Array<Int>) {
     if (x[0] > 10)
         if (<warning descr="Condition is always false">x[0] < 0</warning>) {
