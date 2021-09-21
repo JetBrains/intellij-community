@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.completionPopup
 
-import com.intellij.openapi.application.invokeLater
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
 
 class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
@@ -15,7 +14,7 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
         val variants = completeBasic() ?: fail()
         chooseCompletionItem(variants[0])
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -27,7 +26,7 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
         val variants = completeBasic() ?: fail()
         chooseCompletionItem(variants[0])
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -41,7 +40,7 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
         val variants = getLookupElements() ?: fail()
         chooseCompletionItem(variants[0])
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }

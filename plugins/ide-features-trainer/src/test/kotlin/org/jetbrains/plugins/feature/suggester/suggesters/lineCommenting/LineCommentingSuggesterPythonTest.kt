@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lineCommenting
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
@@ -18,7 +17,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(5, 0)
         type("#")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -31,7 +30,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(10, 2)
         type("#")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -44,7 +43,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(19, 0)
         type("#")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -57,7 +56,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(24, 0)
         type("#")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -77,7 +76,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(27, 2)
         type("#")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

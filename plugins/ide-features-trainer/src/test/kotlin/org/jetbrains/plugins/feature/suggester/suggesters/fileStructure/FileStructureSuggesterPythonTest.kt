@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.fileStructure
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
@@ -13,7 +12,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("field", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -23,7 +22,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("bcd", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -33,7 +32,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("functi", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -43,7 +42,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("clazz", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -53,7 +52,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("aaa", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -63,7 +62,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("strin", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -73,7 +72,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("aaa", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -83,7 +82,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("function", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -93,7 +92,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
         performFindInFileAction("Claz", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

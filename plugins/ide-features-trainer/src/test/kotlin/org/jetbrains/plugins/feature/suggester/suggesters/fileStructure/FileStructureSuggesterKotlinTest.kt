@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.fileStructure
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
@@ -13,7 +12,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("field", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -23,7 +22,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("global", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -33,7 +32,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("mai", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -43,7 +42,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("staticCl", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -53,7 +52,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("args", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -63,7 +62,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("abc", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -73,7 +72,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("fiel", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -83,7 +82,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("main", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -93,7 +92,7 @@ class FileStructureSuggesterKotlinTest : FileStructureSuggesterTest() {
         performFindInFileAction("Static", fromOffset)
         focusEditor()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

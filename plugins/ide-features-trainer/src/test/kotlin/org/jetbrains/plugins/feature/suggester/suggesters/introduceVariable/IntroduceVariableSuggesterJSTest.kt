@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.introduceVariable
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
@@ -17,7 +16,7 @@ class IntroduceVariableSuggesterJSTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(21, 23)
         type(" flag")
 
-        invokeLater {
+        testInvokeLater {
             println(doc.text)
             assertSuggestedCorrectly()
         }
@@ -31,7 +30,7 @@ class IntroduceVariableSuggesterJSTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(22, 24)
         type("value")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -44,7 +43,7 @@ class IntroduceVariableSuggesterJSTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(22, 24)
         type("val")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -57,7 +56,7 @@ class IntroduceVariableSuggesterJSTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(63, 15)
         type("tring")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -70,7 +69,7 @@ class IntroduceVariableSuggesterJSTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(64, 15)
         type("bool")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -96,7 +95,7 @@ class IntroduceVariableSuggesterJSTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(38, 30)
         type("output")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -112,7 +111,7 @@ class IntroduceVariableSuggesterJSTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(62, 24)
         type("trrr")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

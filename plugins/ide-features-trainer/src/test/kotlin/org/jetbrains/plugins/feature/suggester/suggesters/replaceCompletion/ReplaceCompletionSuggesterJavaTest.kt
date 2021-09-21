@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.replaceCompletion
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
@@ -15,7 +14,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[0])
         repeat(5) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -31,7 +30,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 97
         )
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -48,7 +47,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 100
         )
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -59,7 +58,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[0])
         repeat(21) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -70,7 +69,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[1])
         repeat(15) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -83,7 +82,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[0])
         repeat(22) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -99,7 +98,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 45
         )
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.replaceCompletion
 
-import com.intellij.openapi.application.invokeLater
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
 class ReplaceCompletionSuggesterJSTest : ReplaceCompletionSuggesterTest() {
@@ -14,7 +13,7 @@ class ReplaceCompletionSuggesterJSTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[1])
         repeat(5) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -30,7 +29,7 @@ class ReplaceCompletionSuggesterJSTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 90
         )
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -47,7 +46,7 @@ class ReplaceCompletionSuggesterJSTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 93
         )
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -58,7 +57,7 @@ class ReplaceCompletionSuggesterJSTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[1])
         repeat(21) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -69,7 +68,7 @@ class ReplaceCompletionSuggesterJSTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[0])
         repeat(15) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -82,7 +81,7 @@ class ReplaceCompletionSuggesterJSTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[0])
         repeat(22) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -98,7 +97,7 @@ class ReplaceCompletionSuggesterJSTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 37
         )
 
-        invokeLater {
+        testInvokeLater {
             assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

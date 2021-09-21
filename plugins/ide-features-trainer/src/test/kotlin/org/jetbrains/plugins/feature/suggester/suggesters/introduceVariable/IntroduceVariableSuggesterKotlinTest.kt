@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.introduceVariable
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
@@ -19,7 +18,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(10, 24)
         type(" flag")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -32,7 +31,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(11, 20)
         type("temp")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -45,7 +44,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(11, 20)
         type("abcbcd")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -58,7 +57,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(38, 35)
         type("serr")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -71,7 +70,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(51, 23)
         type("bool")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -97,7 +96,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(29, 24)
         type("output")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -113,7 +112,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(41, 22)
         type("string")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

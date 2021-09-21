@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.introduceVariable
 
-import com.intellij.openapi.application.invokeLater
-
 /**
  * Note: when user is declaring variable and it's name starts with any language keyword suggestion will not be thrown
  */
@@ -17,7 +15,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(4, 2)
         type(" eee")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -30,7 +28,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(28, 25)
         type("value")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -43,7 +41,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(28, 46)
         type("val")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -56,7 +54,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(37, 18)
         type("str")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -69,7 +67,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(38, 11)
         type("output")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -95,7 +93,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(28, 42)
         type("out")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -109,7 +107,7 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
         moveCaretToLogicalPosition(36, 13)
         type("str")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }

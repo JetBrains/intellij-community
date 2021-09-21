@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.replaceCompletion
 
-import com.intellij.openapi.application.invokeLater
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
 class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
@@ -14,7 +13,7 @@ class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[0])
         repeat(8) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -30,7 +29,7 @@ class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 76
         )
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -47,7 +46,7 @@ class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 79
         )
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -58,7 +57,7 @@ class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[0])
         repeat(23) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -69,7 +68,7 @@ class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[1])
         repeat(5) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -82,7 +81,7 @@ class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
         chooseCompletionItem(variants[0])
         repeat(25) { typeDelete() }
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -98,7 +97,7 @@ class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
             columnEndIndex = 35
         )
 
-        invokeLater {
+        testInvokeLater {
             assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

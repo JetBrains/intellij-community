@@ -39,6 +39,10 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         return "src/test/resources/testData"
     }
 
+    fun testInvokeLater(runnable: Runnable) {
+        ApplicationManager.getApplication().invokeLater(runnable, project.disposed)
+    }
+
     private fun subscribeToSuggestions(suggestionFound: (PopupSuggestion) -> Unit) {
         project.messageBus.connect()
             .subscribe(

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.surroundWith
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
@@ -14,7 +13,7 @@ class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
         insertNewLineAt(8)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -25,7 +24,7 @@ class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
         moveCaretToLogicalPosition(7, 19)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -36,7 +35,7 @@ class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
         insertNewLineAt(14)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -59,7 +58,7 @@ class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
         insertNewLineAt(13)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -70,7 +69,7 @@ class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
         insertNewLineAt(10)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -84,7 +83,7 @@ class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
         insertNewLineAt(13)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -93,7 +92,7 @@ class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
         insertNewLineAt(6)
         type("if (true) {    }")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -104,7 +103,7 @@ class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
         moveCaretToLogicalPosition(7, 20)
         type("{}")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

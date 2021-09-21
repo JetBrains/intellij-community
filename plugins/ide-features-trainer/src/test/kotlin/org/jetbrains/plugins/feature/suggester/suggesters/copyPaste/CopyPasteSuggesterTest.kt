@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.copyPaste
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
@@ -15,7 +14,7 @@ class CopyPasteSuggesterTest : FeatureSuggesterTest() {
         copyBetweenLogicalPositions(lineStartIndex = 5, columnStartIndex = 5, lineEndIndex = 5, columnEndIndex = 0)
         copyBetweenLogicalPositions(lineStartIndex = 6, columnStartIndex = 14, lineEndIndex = 6, columnEndIndex = 0)
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -26,7 +25,7 @@ class CopyPasteSuggesterTest : FeatureSuggesterTest() {
         copyBetweenLogicalPositions(lineStartIndex = 11, columnStartIndex = 18, lineEndIndex = 11, columnEndIndex = 0)
         copyBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 23, lineEndIndex = 9, columnEndIndex = 0)
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -35,7 +34,7 @@ class CopyPasteSuggesterTest : FeatureSuggesterTest() {
         copyBetweenLogicalPositions(lineStartIndex = 31, columnStartIndex = 11, lineEndIndex = 31, columnEndIndex = 16)
         copyBetweenLogicalPositions(lineStartIndex = 17, columnStartIndex = 6, lineEndIndex = 17, columnEndIndex = 11)
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -48,7 +47,7 @@ class CopyPasteSuggesterTest : FeatureSuggesterTest() {
         copyBetweenLogicalPositions(lineStartIndex = 32, columnStartIndex = 23, lineEndIndex = 32, columnEndIndex = 0)
         copyBetweenLogicalPositions(lineStartIndex = 6, columnStartIndex = 14, lineEndIndex = 6, columnEndIndex = 0)
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

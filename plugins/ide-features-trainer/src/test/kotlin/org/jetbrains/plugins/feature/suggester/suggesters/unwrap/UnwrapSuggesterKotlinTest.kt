@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.unwrap
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
@@ -14,7 +13,7 @@ class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
         selectBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 42, lineEndIndex = 9, columnEndIndex = 3)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -25,7 +24,7 @@ class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
         moveCaretRelatively(6, 0)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -36,7 +35,7 @@ class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
         moveCaretToLogicalPosition(9, 9)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -47,7 +46,7 @@ class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
         moveCaretToLogicalPosition(25, 13)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -58,7 +57,7 @@ class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
         moveCaretToLogicalPosition(30, 13)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -81,7 +80,7 @@ class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
         moveCaretToLogicalPosition(23, 15)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -100,7 +99,7 @@ class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
         moveCaretToLogicalPosition(24, 18)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

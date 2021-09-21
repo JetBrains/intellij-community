@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.renaming
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.junit.Ignore
@@ -18,7 +17,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         moveCaretToLogicalPosition(10, 34)
         myFixture.type("1")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -31,7 +30,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         moveCaretToLogicalPosition(10, 33)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -53,7 +52,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         deleteSymbolsAtCaret(2)
         myFixture.type("bde")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -72,7 +71,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         moveCaretRelatively(-3, 0, true)
         pasteFromClipboard()
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -85,7 +84,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         moveCaretToLogicalPosition(8, 11)
         myFixture.type("nyFun")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -100,7 +99,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         moveCaretToLogicalPosition(7, 22)
         myFixture.type("aa")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -113,7 +112,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         moveCaretToLogicalPosition(24, 51)
         myFixture.type("ument")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -131,7 +130,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         deleteSymbolsAtCaret(2)
         myFixture.type("bc")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -144,7 +143,7 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
         moveCaretToLogicalPosition(25, 34)
         deleteSymbolAtCaret()
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

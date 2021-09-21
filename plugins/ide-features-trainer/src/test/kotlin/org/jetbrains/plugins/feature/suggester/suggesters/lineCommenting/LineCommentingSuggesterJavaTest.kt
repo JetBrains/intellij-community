@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lineCommenting
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggesterTest
@@ -18,7 +17,7 @@ class LineCommentingSuggesterJavaTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(8, 8)
         type("//")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -31,7 +30,7 @@ class LineCommentingSuggesterJavaTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(10, 8)
         type("//")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -44,7 +43,7 @@ class LineCommentingSuggesterJavaTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(14, 0)
         type("//")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -57,7 +56,7 @@ class LineCommentingSuggesterJavaTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(35, 0)
         type("//")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -77,7 +76,7 @@ class LineCommentingSuggesterJavaTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(44, 2)
         type("//")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -98,7 +97,7 @@ class LineCommentingSuggesterJavaTest : FeatureSuggesterTest() {
         moveCaretToLogicalPosition(45, 4)
         type("//")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }

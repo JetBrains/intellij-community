@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.surroundWith
 
-import com.intellij.openapi.application.invokeLater
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 
@@ -14,7 +13,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         insertNewLineAt(8)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -25,7 +24,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         moveCaretToLogicalPosition(7, 20)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -36,7 +35,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         insertNewLineAt(14)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -47,7 +46,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         moveCaretRelatively(12, 0)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -58,7 +57,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         insertNewLineAt(13)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -69,7 +68,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         insertNewLineAt(10)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -80,7 +79,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         insertNewLineAt(13)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             assertSuggestedCorrectly()
         }
     }
@@ -94,7 +93,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         insertNewLineAt(13)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -103,7 +102,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         insertNewLineAt(6)
         type("if (true) {    }")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
@@ -116,7 +115,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
         moveCaretToLogicalPosition(9, 23)
         type("}")
 
-        invokeLater {
+        testInvokeLater {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
