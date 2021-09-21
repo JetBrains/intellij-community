@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Variable 'b' is never used
 fun test(list: List<Int>) {
     val b = list.<caret>all { it != 1 || it != 2 }
 }

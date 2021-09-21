@@ -5,6 +5,7 @@ fun test(foo: String) {
 
     if (foo == "a") {
         // some comments for "a"
+// AFTER-WARNING: Parameter 's' is never used
         println("a");
     }
 }

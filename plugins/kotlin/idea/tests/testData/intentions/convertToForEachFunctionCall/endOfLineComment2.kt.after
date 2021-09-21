@@ -4,5 +4,6 @@ fun foo() {}
 fun test() {
     listOf(1, 2).forEach { l ->
         foo() // comment
+// AFTER-WARNING: Parameter 'l' is never used, could be renamed to _
     }
 }

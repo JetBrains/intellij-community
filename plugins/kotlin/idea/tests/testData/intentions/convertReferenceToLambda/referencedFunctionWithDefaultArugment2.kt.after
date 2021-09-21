@@ -1,3 +1,7 @@
+// AFTER-WARNING: Parameter 'convert' is never used
+// AFTER-WARNING: Parameter 'i' is never used
+// AFTER-WARNING: Parameter 'j' is never used
+// AFTER-WARNING: Parameter 'k' is never used
 fun test() {
     foo2 { i, j -> convert3(i, j) }
 }

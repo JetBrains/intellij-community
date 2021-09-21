@@ -8,5 +8,6 @@ fun foo() {
         // comment 2
         v++
         // end of loop
+// AFTER-WARNING: The value changed at 'v++' is never used
     }
 }

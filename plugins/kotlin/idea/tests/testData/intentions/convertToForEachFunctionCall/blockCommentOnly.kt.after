@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Parameter 'l' is never used, could be renamed to _
 fun foo() {}
 
 fun test() {

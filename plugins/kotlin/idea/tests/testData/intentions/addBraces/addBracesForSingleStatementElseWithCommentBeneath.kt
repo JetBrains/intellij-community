@@ -5,6 +5,7 @@ fun test(b: Boolean) {
             foo(1)
         }
     // comment about call below
+// AFTER-WARNING: Parameter 'i' is never used
 }
 
 fun foo(i: Int) {}

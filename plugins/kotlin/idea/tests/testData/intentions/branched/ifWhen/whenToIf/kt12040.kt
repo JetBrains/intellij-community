@@ -4,6 +4,7 @@ fun foo(a: Int) {
         0 -> bar(a)
 
         // another comment
+// AFTER-WARNING: Parameter 'p' is never used
         1 -> bar(a)
     }
 }

@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'initialText' is never used
 annotation class Annotation1(val a: Int = 0)
 annotation class Annotation2(val a: Int = 0)
 annotation class Annotation3(val a: Int = 0)

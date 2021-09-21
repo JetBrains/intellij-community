@@ -16,6 +16,7 @@ class Test {
         })
 
         // Applicable
+// AFTER-WARNING: Parameter 'b' is never used
         bar(object : Runnable {
             override fun run() {
                 bar(object : Runnable {

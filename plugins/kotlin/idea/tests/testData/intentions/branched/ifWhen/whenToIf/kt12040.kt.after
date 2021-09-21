@@ -5,6 +5,7 @@ fun foo(a: Int) {
     ) bar(a)
 
     // another comment
+// AFTER-WARNING: Parameter 'p' is never used
     else if (a == 1) bar(a)
 }
 

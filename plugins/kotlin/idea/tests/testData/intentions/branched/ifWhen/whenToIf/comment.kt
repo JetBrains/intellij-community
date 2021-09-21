@@ -2,6 +2,8 @@ fun foo(b: Boolean) {
     <caret>when {
         // comment 1
         b -> 1 // comment 2
+// AFTER-WARNING: The expression is unused
+// AFTER-WARNING: The expression is unused
 
         else -> 2
     }

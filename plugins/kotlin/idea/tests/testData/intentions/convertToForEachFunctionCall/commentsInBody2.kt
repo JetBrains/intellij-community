@@ -4,6 +4,7 @@ fun foo() {
 
     <caret>for (x in list) {
         // comment
+// AFTER-WARNING: Variable 'v' is never used
         var v = x + 1
     }
 }

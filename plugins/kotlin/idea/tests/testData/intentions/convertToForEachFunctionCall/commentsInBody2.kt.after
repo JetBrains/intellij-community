@@ -4,6 +4,7 @@ fun foo() {
 
     list.forEach { x ->
         // comment
+// AFTER-WARNING: Variable 'v' is never used
         var v = x + 1
     }
 }
