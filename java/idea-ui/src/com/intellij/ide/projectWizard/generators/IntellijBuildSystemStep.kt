@@ -43,14 +43,12 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
   }
 
   private val moduleNameProperty = propertyGraph.graphProperty { parent.name }
-  private val contentRootProperty = propertyGraph.graphProperty(pathFromParent).transform(::getPresentablePath, ::getCanonicalPath)
-  private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent).transform(::getPresentablePath, ::getCanonicalPath)
+  private val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
+  private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
 
   protected var moduleName by moduleNameProperty
   protected var contentRoot by contentRootProperty
   protected var moduleFileLocation by moduleFileLocationProperty
-
-  private var contentRootField: TextFieldWithBrowseButton? = null
 
   private var userDefinedContentRoot: Boolean = false
   private var userDefinedModuleFileLocation: Boolean = false
@@ -67,10 +65,9 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
     moduleFileLocationProperty.dependsOn(moduleNameProperty, pathFromModuleName)
 
     moduleNameProperty.dependsOn(contentRootProperty) {
-      val path = contentRootField?.text ?: ""
-      when (val i = path.lastIndexOf(File.separator)) {
+      when (val i = contentRoot.lastIndexOf(File.separator)) {
         -1, contentRoot.lastIndex -> ""
-        else -> path.substring(i + 1)
+        else -> contentRoot.substring(i + 1)
       }
     }
     moduleFileLocationProperty.dependsOn(contentRootProperty) { contentRoot }
@@ -90,11 +87,10 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
           row(UIBundle.message("label.project.wizard.new.project.content.root")) {
             textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
               FileChooserDescriptorFactory.createSingleFolderDescriptor())
-              .bindText(contentRootProperty)
+              .bindText(contentRootProperty.transform(::getPresentablePath, ::getCanonicalPath))
               .horizontalAlign(HorizontalAlign.FILL)
               .validationOnApply { validateContentRoot() }
               .apply {
-                contentRootField = component
                 component.textField.addKeyListener(object : KeyListener {
                   override fun keyTyped(e: KeyEvent?) {}
                   override fun keyPressed(e: KeyEvent?) {
@@ -109,7 +105,7 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
         row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
           textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
             FileChooserDescriptorFactory.createSingleFolderDescriptor())
-            .bindText(moduleFileLocationProperty)
+            .bindText(moduleFileLocationProperty.transform(::getPresentablePath, ::getCanonicalPath))
             .horizontalAlign(HorizontalAlign.FILL)
             .validationOnApply { validateModuleFileLocation() }
             .apply {

@@ -16,11 +16,11 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType {
     object : IntellijBuildSystemStep<JavaNewProjectWizard.Step>(parent) {
       override fun setupProject(project: Project) {
         val builder = JavaModuleBuilder()
-        val moduleFile = Paths.get(getCanonicalPath(moduleFileLocation.trim()), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
+        val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
 
         builder.name = moduleName
         builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
-        builder.contentEntryPath = FileUtil.toSystemDependentName(getCanonicalPath(contentRoot.trim()))
+        builder.contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
         builder.moduleJdk = parentStep.sdk
 
         builder.commit(project)
