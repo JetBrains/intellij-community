@@ -127,7 +127,7 @@ public class StringUtil extends StringUtilRt {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
-  public static @NotNull <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
+  public static @NotNull <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
     return Object::toString;
   }
 

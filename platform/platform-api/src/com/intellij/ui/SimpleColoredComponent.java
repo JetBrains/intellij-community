@@ -130,7 +130,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return iterator;
   }
 
-  @SuppressWarnings("unused")
   public boolean isIconOnTheRight() {
     return myIconOnTheRight;
   }

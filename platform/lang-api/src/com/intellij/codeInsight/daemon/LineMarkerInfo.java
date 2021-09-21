@@ -154,7 +154,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
                         Icon icon,
-                        @SuppressWarnings("unused") int updatePass,
+                        int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
@@ -172,7 +172,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
-                        @SuppressWarnings("unused") int updatePass,
+                        int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
     this(element, new TextRange(startOffset, startOffset), icon, null, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);

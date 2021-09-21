@@ -2021,7 +2021,6 @@ public abstract class DialogWrapper {
     return null;
   }
 
-  @SuppressWarnings("unused")
   public static @Nullable DialogWrapper findInstanceFromFocus() {
     return findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
   }

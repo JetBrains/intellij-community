@@ -20,7 +20,6 @@ public abstract class ExecutionTargetProvider {
   /**
    * @deprecated use {@link #getTargets(Project, RunConfiguration)} instead
    */
-  @SuppressWarnings("unused")
   @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")

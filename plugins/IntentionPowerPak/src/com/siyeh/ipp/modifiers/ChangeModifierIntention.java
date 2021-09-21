@@ -72,7 +72,6 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private AccessModifier myTarget;
 
   // Necessary to register an extension
-  @SuppressWarnings("unused")
   public ChangeModifierIntention() {
     this(false);
   }
