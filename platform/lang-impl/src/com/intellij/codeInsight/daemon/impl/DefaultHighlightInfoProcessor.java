@@ -110,20 +110,17 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                    @Nullable final List<? extends HighlightInfo> infos,
                                                    @NotNull final HighlightingSession highlightingSession) {
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), existing -> {
-        if (existing.isBijective() &&
-            existing.getGroup() == Pass.UPDATE_ALL &&
-            range.equalsToRange(existing.getActualStartOffset(), existing.getActualEndOffset())) {
-          if (infos != null) {
-            for (HighlightInfo created : infos) {
-              if (existing.equalsByActualOffset(created)) return true;
-            }
+      if (existing.getGroup() == Pass.UPDATE_ALL && range.equals(existing.getVisitingTextRange())) {
+        if (infos != null) {
+          for (HighlightInfo created : infos) {
+            if (existing.equalsByActualOffset(created)) return true;
           }
-          // seems that highlight info "existing" is going to disappear
-          // remove it earlier
-          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighterFor(existing);
         }
-        return true;
-      });
+        // seems that highlight info 'existing' is going to disappear; remove it earlier
+        ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighterFor(existing);
+      }
+      return true;
+    });
   }
 
   @Override

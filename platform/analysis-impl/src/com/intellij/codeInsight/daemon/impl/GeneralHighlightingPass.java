@@ -359,8 +359,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         HighlightInfo info = holder.get(j);
 
         if (!myRestrictRange.contains(info)) continue;
-        List<? super HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile)
-                                     ? insideResult : outsideResult;
+        List<? super HighlightInfo> result = myPriorityRange.contains(info) && !(element instanceof PsiFile) ? insideResult : outsideResult;
         result.add(info);
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
         if (isError) {
@@ -369,10 +368,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }
           myErrorFound = true;
         }
-        // if this highlight info range is exactly the same as the element range we are visiting
+        // if this highlight info range is contained inside the current element range we are visiting
         // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
         // We also know that we can remove syntax error element.
-        info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset) || isErrorElement);
+        info.setVisitingTextRange(elementRange);
         infosForThisRange.add(info);
       }
       holder.clear();
@@ -454,7 +453,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(file, filters) {
-      int queued;
+      int queued; // all infos at [0..queued) indices are scheduled to EDT via queueInfoToUpdateIncrementally()
       @Override
       public @NotNull TextAttributesScheme getColorsScheme() {
         return actualScheme;

@@ -35,10 +35,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,15 +51,16 @@ public class HighlightInfo implements Segment {
   // optimization: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
 
-  private static final byte BIJECTIVE_MASK = 0x1;
-  private static final byte HAS_HINT_MASK = 0x2;
-  private static final byte FROM_INJECTION_MASK = 0x4;
-  private static final byte AFTER_END_OF_LINE_MASK = 0x8;
-  private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x10;
-  private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x20;
+  private static final byte HAS_HINT_MASK = 0x1;
+  private static final byte FROM_INJECTION_MASK = 0x2;
+  private static final byte AFTER_END_OF_LINE_MASK = 0x4;
+  private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x8;
+  private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x10;
+  // this HighlightInfo was created during visiting PsiElement 'element' with element.getTextRange() = TextRange(startOffset+visitingRangeDeltaStartOffset, endOffset+visitingRangeDeltaEndOffset)
+  private int visitingRangeDeltaStartOffset;
+  private int visitingRangeDeltaEndOffset;
 
-  @MagicConstant(intValues = {
-    BIJECTIVE_MASK, HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK})
+  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK})
   private @interface FlagConstant { }
 
   public final TextAttributes forcedTextAttributes;
@@ -102,6 +100,7 @@ public class HighlightInfo implements Segment {
   @Nullable
   PsiElement psiElement;
 
+  @ApiStatus.Internal
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                           @Nullable TextAttributesKey forcedTextAttributesKey,
                           @NotNull HighlightInfoType type,
@@ -132,9 +131,9 @@ public class HighlightInfo implements Segment {
     // optimization: do not retain extra memory if can recompute
     toolTip = encodeTooltip(escapedToolTip, escapedDescription);
     this.severity = severity;
-    setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
-    setFlag(NEEDS_UPDATE_ON_TYPING_MASK, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
-    setFlag(FILE_LEVEL_ANNOTATION_MASK, isFileLevelAnnotation);
+    myFlags = (byte)((afterEndOfLine ? AFTER_END_OF_LINE_MASK : 0) |
+                     (calcNeedUpdateOnTyping(needsUpdateOnTyping, type) ? NEEDS_UPDATE_ON_TYPING_MASK : 0) |
+                     (isFileLevelAnnotation ? FILE_LEVEL_ANNOTATION_MASK : 0));
     this.navigationShift = navigationShift;
     myProblemGroup = problemGroup;
     this.gutterIconRenderer = gutterIconRenderer;
@@ -232,12 +231,9 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
-  boolean isBijective() {
-    return isFlagSet(BIJECTIVE_MASK);
-  }
-
-  void setBijective(boolean bijective) {
-    setFlag(BIJECTIVE_MASK, bijective);
+  void setVisitingTextRange(@NotNull TextRange range) {
+    visitingRangeDeltaStartOffset = range.getStartOffset() - getStartOffset();
+    visitingRangeDeltaEndOffset = range.getEndOffset() - getEndOffset();
   }
 
   @NotNull
@@ -288,7 +284,6 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  @SuppressWarnings("deprecation")
   Color getErrorStripeMarkColor(@NotNull PsiElement element, @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
@@ -1022,5 +1017,11 @@ public class HighlightInfo implements Segment {
           action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) return other;
     }
     return null;
+  }
+
+  TextRange getVisitingTextRange() {
+    int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
+    int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
+    return TextRange.isProperRange(visitStart, visitEnd) ? new TextRange(visitStart, visitEnd) : null;
   }
 }
