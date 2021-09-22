@@ -98,11 +98,9 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         }
                     },
                     'invalid_entries': []
@@ -119,11 +117,9 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         }
                     },
                     'invalid_entries': []
@@ -138,7 +134,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': [
@@ -157,11 +152,9 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         }
                     },
                     'invalid_entries': []
@@ -176,7 +169,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         }
                     },
                     'invalid_entries': [
@@ -195,7 +187,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': []
@@ -210,11 +201,9 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                         'new.py': {
                             'mtime': 0,
-                            'size': 0,
                         }
                     },
                     'invalid_entries': []
@@ -231,7 +220,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': []
@@ -246,11 +234,9 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                         'new/__init__.py': {
                             'mtime': 0,
-                            'size': 0,
                         }
                     },
                     'invalid_entries': []
@@ -267,7 +253,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': []
@@ -282,7 +267,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 12,
                         },
                     },
                     'invalid_entries': []
@@ -299,7 +283,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': [
@@ -317,7 +300,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': []
@@ -334,7 +316,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': []
@@ -354,7 +335,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': []
@@ -365,7 +345,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': []
@@ -380,7 +359,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': [],
@@ -397,7 +375,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'dir/mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         },
                     },
                     'invalid_entries': []
@@ -412,7 +389,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         }
                     },
                     'invalid_entries': []
@@ -430,7 +406,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         }
                     },
                     'invalid_entries': []
@@ -441,7 +416,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         }
                     },
                     'invalid_entries': []
@@ -452,7 +426,6 @@ class RemoteSyncTest(HelpersTestCase):
                     'valid_entries': {
                         'mod.py': {
                             'mtime': 0,
-                            'size': 19,
                         }
                     },
                     'invalid_entries': []
