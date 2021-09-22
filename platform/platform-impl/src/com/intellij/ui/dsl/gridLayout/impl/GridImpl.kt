@@ -231,8 +231,10 @@ internal class GridImpl : Grid {
           if (grid.layoutData.dimension.height == 1 && isSupportedBaseline(constraints)) {
             val gridRowBaselineData = grid.layoutData.baselineData.get(constraints.verticalAlign)
             if (gridRowBaselineData != null) {
-              layoutCellData.baseline = gridRowBaselineData.maxAboveBaseline
-              layoutData.baselineData.registerBaseline(layoutCellData, gridRowBaselineData.maxAboveBaseline)
+              val baseline = calculateBaseline(layoutCellData.preferredSize.height, layoutCellData.cell.constraints.verticalAlign,
+                gridRowBaselineData)
+              layoutCellData.baseline = baseline
+              layoutData.baselineData.registerBaseline(layoutCellData, baseline)
             }
           }
         }
@@ -362,16 +364,23 @@ internal class GridImpl : Grid {
     else {
       val rowBaselineData = layoutData.baselineData.get(layoutCellData)!!
       val rowHeight = layoutData.getHeight(layoutCellData)
-      y = layoutData.rowsCoord[constraints.y] + rowBaselineData.maxAboveBaseline - baseline +
-          when (constraints.verticalAlign) {
-            VerticalAlign.TOP -> 0
-            VerticalAlign.CENTER -> (rowHeight - rowBaselineData.height) / 2
-            VerticalAlign.BOTTOM -> rowHeight - rowBaselineData.height
-            VerticalAlign.FILL -> 0
-          }
+      y = layoutData.rowsCoord[constraints.y] + calculateBaseline(rowHeight, constraints.verticalAlign, rowBaselineData) - baseline
     }
 
     return Rectangle(offsetX + x, offsetY + y, paddedWidth + visualPaddings.width, paddedHeight + visualPaddings.height)
+  }
+
+  /**
+   * Calculates baseline for specified [height]
+   */
+  private fun calculateBaseline(height: Int, verticalAlign: VerticalAlign, rowBaselineData: RowBaselineData): Int {
+    return rowBaselineData.maxAboveBaseline +
+           when (verticalAlign) {
+             VerticalAlign.TOP -> 0
+             VerticalAlign.CENTER -> (height - rowBaselineData.height) / 2
+             VerticalAlign.BOTTOM -> height - rowBaselineData.height
+             VerticalAlign.FILL -> 0
+           }
   }
 
   private fun isEmpty(constraints: Constraints): Boolean {
