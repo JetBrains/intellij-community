@@ -131,6 +131,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/annotations/primaryConstructorAnnotation.java");
         }
 
+        @TestMetadata("repeatableAnnotationOneFive.java")
+        public void testRepeatableAnnotationOneFive() throws Exception {
+            runTest("testData/newJ2k/annotations/repeatableAnnotationOneFive.java");
+        }
+
+        @TestMetadata("repeatableAnnotationOneSix.java")
+        public void testRepeatableAnnotationOneSix() throws Exception {
+            runTest("testData/newJ2k/annotations/repeatableAnnotationOneSix.java");
+        }
+
+        @TestMetadata("repeatableAnnotationOneSixWithAlias.java")
+        public void testRepeatableAnnotationOneSixWithAlias() throws Exception {
+            runTest("testData/newJ2k/annotations/repeatableAnnotationOneSixWithAlias.java");
+        }
+
         @TestMetadata("serialVersionUID.java")
         public void testSerialVersionUID() throws Exception {
             runTest("testData/newJ2k/annotations/serialVersionUID.java");
