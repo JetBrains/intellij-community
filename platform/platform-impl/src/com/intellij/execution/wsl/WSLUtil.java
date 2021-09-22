@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.WinReg;
@@ -168,11 +167,6 @@ public final class WSLUtil {
       return null;
     }
     return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
-  }
-
-  public static @NotNull ThreeState isWsl1(@NotNull WSLDistribution distribution) {
-    int version = distribution.getVersion();
-    return version < 0 ? ThreeState.UNSURE : ThreeState.fromBoolean(version == 1);
   }
 
   /**

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
@@ -66,8 +65,7 @@ public class GitExecutableManager {
     }
     else if (executable instanceof GitExecutable.Wsl) {
       WSLDistribution distribution = ((GitExecutable.Wsl)executable).getDistribution();
-      type = WSLUtil.isWsl1(distribution) == ThreeState.YES ? GitVersion.Type.WSL1
-                                                            : GitVersion.Type.WSL2;
+      type = distribution.getVersion() == 1 ? GitVersion.Type.WSL1 : GitVersion.Type.WSL2;
     }
 
     LOG.debug("Acquiring git version for " + executable);
