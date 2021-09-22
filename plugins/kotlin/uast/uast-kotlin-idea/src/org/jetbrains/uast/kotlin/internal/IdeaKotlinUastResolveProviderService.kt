@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiElement
@@ -67,6 +68,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     private fun allModulesSupportJvm(project: Project): Boolean = CachedValuesManager.getManager(project).getCachedValue(project) {
         Result.create(
             ModuleManager.getInstance(project).modules.all { module ->
+                ProgressManager.checkCanceled()
                 TargetPlatformDetector.getPlatform(module).isJvm()
             },
             ProjectRootModificationTracker.getInstance(project),
