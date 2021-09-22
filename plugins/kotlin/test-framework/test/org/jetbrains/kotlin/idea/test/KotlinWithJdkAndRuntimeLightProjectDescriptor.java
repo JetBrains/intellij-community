@@ -35,6 +35,12 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     );
 
     @NotNull
+    public static final KotlinWithJdkAndRuntimeLightProjectDescriptor INSTANCE_WITH_STDLIB_JDK8 = new KotlinWithJdkAndRuntimeLightProjectDescriptor(
+            List.of(KotlinArtifacts.getInstance().getKotlinStdlib(), KotlinArtifacts.getInstance().getKotlinStdlibJdk8()),
+            List.of(KotlinArtifacts.getInstance().getKotlinStdlibSources(), KotlinArtifacts.getInstance().getKotlinStdlibJdk8Sources())
+    );
+
+    @NotNull
     public static final KotlinWithJdkAndRuntimeLightProjectDescriptor INSTANCE_NO_SOURCES = new KotlinWithJdkAndRuntimeLightProjectDescriptor(
             INSTANCE.getLibraryFiles(), Collections.emptyList()
     );
