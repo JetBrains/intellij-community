@@ -241,8 +241,8 @@ public final class GitLogUtil {
   }
 
   public static void sendHashesToStdin(@NotNull Collection<String> hashes, @NotNull GitHandler handler) {
-    // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
-    // see RunnerMediator.sendCtrlEventThroughStream
+    // if we close this stream, WinRunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
+    // see WinRunnerMediator.sendCtrlEventThroughStream
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
                                                                       "\n",
                                                                       handler.getCharset(),

@@ -24,8 +24,8 @@ import java.nio.file.Path;
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-public final class RunnerMediator {
-  private static final Logger LOG = Logger.getInstance(RunnerMediator.class);
+public final class WinRunnerMediator {
+  private static final Logger LOG = Logger.getInstance(WinRunnerMediator.class);
 
   private static final char IAC = (char)5;
   private static final char BRK = (char)3;
@@ -34,7 +34,7 @@ public final class RunnerMediator {
   private static final String IDEA_RUNNERW = "IDEA_RUNNERW";
   private static final Key<Boolean> MEDIATOR_KEY = Key.create("KillableProcessHandler.Mediator.Process");
 
-  private RunnerMediator() {}
+  private WinRunnerMediator() {}
 
   /**
    * Sends sequence of two chars(codes 5 and {@code event}) to a process output stream

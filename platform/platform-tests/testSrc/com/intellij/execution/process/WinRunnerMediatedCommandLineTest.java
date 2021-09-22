@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class RunnerMediatedCommandLineTest extends GeneralCommandLineTest {
+public class WinRunnerMediatedCommandLineTest extends GeneralCommandLineTest {
   @Before
   public void ensureRightOS() {
     IoTestUtil.assumeWindows();
@@ -21,7 +21,7 @@ public class RunnerMediatedCommandLineTest extends GeneralCommandLineTest {
   @Override
   protected @NotNull ProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     KillableProcessHandler processHandler = new KillableProcessHandler(commandLine, true);
-    assertTrue(RunnerMediator.isRunnerCommandInjected(commandLine));
+    assertTrue(WinRunnerMediator.isRunnerCommandInjected(commandLine));
     return processHandler;
   }
 
