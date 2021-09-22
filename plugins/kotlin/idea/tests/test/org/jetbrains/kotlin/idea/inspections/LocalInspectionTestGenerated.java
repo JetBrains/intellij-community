@@ -953,6 +953,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/catchIgnoresException")
+    public static class CatchIgnoresException extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyUnderscore.kt")
+        public void testAlreadyUnderscore() throws Exception {
+            runTest("testData/inspectionsLocal/catchIgnoresException/alreadyUnderscore.kt");
+        }
+
+        @TestMetadata("hasBody.kt")
+        public void testHasBody() throws Exception {
+            runTest("testData/inspectionsLocal/catchIgnoresException/hasBody.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("testData/inspectionsLocal/catchIgnoresException/hasComment.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/inspectionsLocal/catchIgnoresException/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/collections")
     public abstract static class Collections extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
