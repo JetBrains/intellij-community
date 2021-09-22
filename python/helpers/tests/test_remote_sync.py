@@ -370,14 +370,14 @@ class RemoteSyncTest(HelpersTestCase):
         })
 
     def test_state_json_root_added(self):
-        self.collect_sources(['new'], state_json={
+        self.collect_sources(['root', 'new'], state_json={
             'roots': [
                 {
                     'path': 'root',
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': []
@@ -386,6 +386,16 @@ class RemoteSyncTest(HelpersTestCase):
         })
         self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
             'roots': [
+                {
+                    'path': 'root',
+                    'zip_name': 'root.zip',
+                    'valid_entries': {
+                        'dir/mod.py': {
+                            'mtime': self.mtime('root/dir/mod.py'),
+                        },
+                    },
+                    'invalid_entries': []
+                },
                 {
                     'path': 'new',
                     'zip_name': 'new.zip',
