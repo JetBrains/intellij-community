@@ -72,7 +72,7 @@ private fun KtClassKind.toDescriptorKlassKind(): ClassKind =
 private fun KtConstantValue.toConstantValue(): ConstantValue<*> =
     when (this) {
         KtUnsupportedConstantValue -> ErrorValue.create("Error value for KtUnsupportedConstantValue")
-        is KtSimpleConstantValue<*> -> when (constantValueKind) {
+        is KtLiteralConstantValue<*> -> when (constantValueKind) {
             ConstantValueKind.Null -> NullValue()
             ConstantValueKind.Boolean -> BooleanValue(value as Boolean)
             ConstantValueKind.Char -> CharValue(value as Char)
@@ -89,6 +89,9 @@ private fun KtConstantValue.toConstantValue(): ConstantValue<*> =
             ConstantValueKind.UnsignedLong -> ULongValue(value as Long)
             else -> error("Unexpected constant KtSimpleConstantValue: $value (class: ${value?.javaClass}")
         }
+        is KtArrayConstantValue -> ErrorValue.create("Unsupported")
+        is KtAnnotationConstantValue -> ErrorValue.create("Unsupported")
+        is KtEnumEntryConstantValue ->  ErrorValue.create("Unsupported")
     }
 
 abstract class KtSymbolBasedDeclarationDescriptor(val context: FE10BindingContext) : DeclarationDescriptorWithSource {
