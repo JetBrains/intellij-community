@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
-
-
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
@@ -20,35 +18,51 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
                 }
             }
         }
+
         return recurse(element)
     }
 
     private fun processAnnotation(annotation: JKAnnotation) {
-        if (annotation.classSymbol.fqName == "java.lang.Deprecated") {
-            annotation.classSymbol = symbolProvider.provideClassSymbol("kotlin.Deprecated")
-            annotation.arguments = listOf(JKAnnotationParameterImpl(JKLiteralExpression("\"\"", JKLiteralExpression.LiteralType.STRING)))
-        }
-        if (annotation.classSymbol.fqName == JvmAnnotationNames.TARGET_ANNOTATION.asString()) {
-            annotation.classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.Target")
+        annotation.tryConvertDeprecatedAnnotation() ||
+                annotation.tryConvertTargetAnnotation()
+    }
 
-            val arguments = annotation.arguments.singleOrNull()?.let { parameter ->
-                when (val value = parameter.value) {
-                    is JKKtAnnotationArrayInitializerExpression -> value.initializers
-                    else -> listOf(value)
-                }
-            }
-            if (arguments != null) {
-                val newArguments =
-                    arguments.flatMap { value ->
-                        value.fieldAccessFqName()
-                            ?.let { targetMappings[it] }
-                            ?.map { fqName ->
-                                JKFieldAccessExpression(symbolProvider.provideFieldSymbol(fqName))
-                            } ?: listOf(value.copyTreeAndDetach())
-                    }
-                annotation.arguments = newArguments.map { JKAnnotationParameterImpl(it) }
-            }
+    private fun JKAnnotation.tryConvertDeprecatedAnnotation(): Boolean {
+        if (classSymbol.fqName == "java.lang.Deprecated") {
+            classSymbol = symbolProvider.provideClassSymbol("kotlin.Deprecated")
+            arguments = listOf(JKAnnotationParameterImpl(JKLiteralExpression("\"\"", JKLiteralExpression.LiteralType.STRING)))
+            return true
         }
+
+        return false
+    }
+
+    private fun JKAnnotation.tryConvertTargetAnnotation(): Boolean {
+        if (classSymbol.fqName == JvmAnnotationNames.TARGET_ANNOTATION.asString()) {
+            classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.Target")
+
+            arguments.singleOrNull()
+                ?.let { parameter ->
+                    when (val value = parameter.value) {
+                        is JKKtAnnotationArrayInitializerExpression -> value.initializers
+                        else -> listOf(value)
+                    }
+                }
+                ?.flatMap { value ->
+                    value.fieldAccessFqName()
+                        ?.let { targetMappings[it] }
+                        ?.map { fqName -> JKFieldAccessExpression(symbolProvider.provideFieldSymbol(fqName)) }
+                        ?: listOf(value.copyTreeAndDetach())
+                }
+                ?.map { JKAnnotationParameterImpl(it) }
+                ?.let {
+                    arguments = it
+                }
+
+            return true
+        }
+
+        return false
     }
 
     private fun JKAnnotationMemberValue.fieldAccessFqName(): String? =
