@@ -156,7 +156,6 @@ public class DeclarationParser {
 
   private void parseEnumConstants(final PsiBuilder builder) {
     boolean first = true;
-    boolean seenCommaBefore = false;
     while (builder.getTokenType() != null) {
       if (expect(builder, JavaTokenType.SEMICOLON)) {
         return;
