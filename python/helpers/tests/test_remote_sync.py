@@ -68,11 +68,13 @@ class RemoteSyncTest(HelpersTestCase):
 
     def test_output_dir_cannot_be_root(self):
         with self.assertRaises(ValueError):
-            self.collect_sources(['root'], output_dir=os.path.join(self.test_data_dir, 'root'))
+            self.collect_sources(['root'],
+                                 output_dir=os.path.join(self.test_data_dir, 'root'))
 
     def test_output_dir_cannot_be_inside_root(self):
         with self.assertRaises(ValueError):
-            self.collect_sources(['root'], output_dir=os.path.join(self.test_data_dir, 'root/out'))
+            self.collect_sources(['root'], output_dir=os.path.join(self.test_data_dir,
+                                                                   'root/out'))
 
     def test_non_existing_roots_ignored(self):
         self.collect_sources(['root', 'non-existing'])
@@ -97,10 +99,10 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                         'mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/mod.py'),
                         }
                     },
                     'invalid_entries': []
@@ -116,7 +118,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                         'mod.py': {
                             'mtime': 0,
@@ -133,7 +135,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': [
@@ -154,7 +156,7 @@ class RemoteSyncTest(HelpersTestCase):
                             'mtime': 0,
                         },
                         'mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/mod.py'),
                         }
                     },
                     'invalid_entries': []
@@ -168,7 +170,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/mod.py'),
                         }
                     },
                     'invalid_entries': [
@@ -186,7 +188,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': []
@@ -200,10 +202,10 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                         'new.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/new.py'),
                         }
                     },
                     'invalid_entries': []
@@ -219,7 +221,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': []
@@ -233,10 +235,10 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                         'new/__init__.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/new/__init__.py'),
                         }
                     },
                     'invalid_entries': []
@@ -252,7 +254,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': []
@@ -266,7 +268,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': []
@@ -282,7 +284,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': [
@@ -299,7 +301,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': []
@@ -315,7 +317,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': []
@@ -323,7 +325,8 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         }
         self.collect_sources(['root'], state_json=orig_state_json)
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), orig_state_json)
+        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'),
+                              orig_state_json)
         self.assertEmptyZip(os.path.join(self.temp_dir, 'root.zip'))
 
     def test_state_json_root_removed(self):
@@ -344,7 +347,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': []
@@ -358,7 +361,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('root/dir/mod.py'),
                         },
                     },
                     'invalid_entries': [],
@@ -388,7 +391,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'new.zip',
                     'valid_entries': {
                         'mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('new/mod.py'),
                         }
                     },
                     'invalid_entries': []
@@ -405,7 +408,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'a.zip',
                     'valid_entries': {
                         'mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('a/mod.py'),
                         }
                     },
                     'invalid_entries': []
@@ -415,7 +418,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'c.zip',
                     'valid_entries': {
                         'mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('c/mod.py'),
                         }
                     },
                     'invalid_entries': []
@@ -425,7 +428,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'b.zip',
                     'valid_entries': {
                         'mod.py': {
-                            'mtime': 0,
+                            'mtime': self.mtime('b/mod.py'),
                         }
                     },
                     'invalid_entries': []
@@ -435,8 +438,9 @@ class RemoteSyncTest(HelpersTestCase):
 
     def test_state_json_non_ascii_paths(self):
         """Checks that non-ASCII paths are written without escaping in .state.json."""
-        with self.comparing_dirs():
-            self.collect_sources(['по-русски'])
+        self.collect_sources(['по-русски'])
+        with open(os.path.join(self.temp_dir, '.state.json')) as state_file:
+            self.assertIn('"по-русски.zip"', state_file.read())
 
     def collect_sources(self, roots_inside_test_data, output_dir=None, state_json=None):
         if output_dir is None:
@@ -447,3 +451,7 @@ class RemoteSyncTest(HelpersTestCase):
         rsync = RemoteSync(roots, output_dir, state_json)
         rsync._test_root = self.test_data_dir
         rsync.run()
+
+    def mtime(self, test_data_path):
+        path = os.path.join(self.test_data_dir, test_data_path)
+        return int(os.stat(path).st_mtime)
