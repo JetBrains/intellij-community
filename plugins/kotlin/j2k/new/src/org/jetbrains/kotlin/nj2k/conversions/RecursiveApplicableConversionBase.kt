@@ -27,5 +27,5 @@ abstract class RecursiveApplicableConversionBase(context: NewJ2kConverterContext
     fun <T : JKTreeElement> recurse(element: T): T = applyRecursive(element, ::applyToElement)
 }
 
-val RecursiveApplicableConversionBase.moduleApiVersion: ApiVersion get() =
-    (context.converter.targetModule?.languageVersionSettings ?: context.converter.project.getLanguageVersionSettings()).apiVersion
+val RecursiveApplicableConversionBase.moduleApiVersion: ApiVersion
+    get() = (context.converter.targetModule?.languageVersionSettings ?: context.converter.project.getLanguageVersionSettings()).apiVersion
