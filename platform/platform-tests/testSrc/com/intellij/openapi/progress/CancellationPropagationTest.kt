@@ -40,6 +40,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       val callable = Callable(f)
       service.submit(callable)
       val callables = listOf(Callable(f), Callable(f))
+      service.invokeAny(callables)
       service.invokeAll(callables)
     }
 
@@ -54,10 +55,15 @@ class CancellationPropagationTest : BasePlatformTestCase() {
         }
       }
       if (current !in parent.children) {
-        Throwable().let {
-          failureTrace = it
-          throw it
+        val ce = try {
+          @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
+          current.getCancellationException()
         }
+        catch (e: Throwable) {
+          failureTrace = e
+          throw e
+        }
+        throw ce
       }
       return current
     }
@@ -76,7 +82,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     }
 
     fun expectedTaskCount(layer: Int): Int = layer * layer + layer
-    assertEquals(expectedTaskCount(4), counter.get())
+    assertTrue(counter.get() in expectedTaskCount(5)..expectedTaskCount(6))
   }
 
   @Test
@@ -150,6 +156,33 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     rootCancelled.up()
     finished.waitUp()
     assertTrue(wasCancelled)
+    rootJob.waitJoin()
+  }
+
+  @Test
+  fun `job is cancelled by future`() {
+    var f by AtomicReference<Future<*>>()
+    val lock = Semaphore(2)
+    val cancelled = Semaphore(1)
+    val pce = Semaphore(1)
+    val rootJob = withRootJob {
+      f = service.submit {
+        lock.up()
+        cancelled.waitUp()
+        try {
+          ProgressManager.checkCanceled()
+          fail()
+        }
+        catch (e: ProcessCanceledException) {
+          pce.up()
+        }
+      }
+      lock.up()
+    }
+    lock.waitUp()
+    f.cancel(false)
+    cancelled.up()
+    pce.waitUp()
     rootJob.waitJoin()
   }
 
