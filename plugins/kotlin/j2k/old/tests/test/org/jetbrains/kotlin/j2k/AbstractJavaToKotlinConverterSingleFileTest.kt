@@ -9,14 +9,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
-import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.types.FlexibleTypeImpl
 import java.io.File
 import java.util.regex.Pattern
@@ -151,7 +152,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             .trim()
     }
 
-    override fun getProjectDescriptor(): KotlinWithJdkAndRuntimeLightProjectDescriptor {
+    override fun getProjectDescriptor(): LightProjectDescriptor {
         val testName = getTestName(false)
         return if (testName.contains("WithFullJdk") || testName.contains("withFullJdk"))
             KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
