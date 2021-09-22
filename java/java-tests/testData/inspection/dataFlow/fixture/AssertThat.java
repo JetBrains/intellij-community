@@ -88,6 +88,16 @@ class Contracts {
     Assertions.assertThat(id).isPresent().map(this::convert).isEmpty();
     if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
   }
+
+  void testBlank() {
+    String string = readString();
+    if (string == null) {}
+    Assertions.assertThat(string).isNotBlank();
+    if (<warning descr="Condition 'string == null' is always 'false'">string == null</warning>) {}
+    if (<warning descr="Condition 'string.isEmpty()' is always 'false'">string.isEmpty()</warning>) {}
+  }
+
+  native String readString();
   
   native @Nullable String convert(String s);
 
