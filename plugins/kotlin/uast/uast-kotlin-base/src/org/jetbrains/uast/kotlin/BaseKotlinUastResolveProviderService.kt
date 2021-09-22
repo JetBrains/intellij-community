@@ -66,7 +66,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiClass?
 
-    fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry): PsiClass?
+    fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry, source: UElement): PsiClass?
 
     fun resolveToDeclaration(ktExpression: KtExpression): PsiElement?
 
