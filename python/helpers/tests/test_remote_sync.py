@@ -247,7 +247,6 @@ class RemoteSyncTest(HelpersTestCase):
         })
 
     def test_state_json_when_file_changed(self):
-        # TODO check that a modified file is included in the zip
         self.collect_sources(['root'], state_json={
             'roots': [
                 {
@@ -255,7 +254,7 @@ class RemoteSyncTest(HelpersTestCase):
                     'zip_name': 'root.zip',
                     'valid_entries': {
                         'dir/mod.py': {
-                            'mtime': self.mtime('root/dir/mod.py'),
+                            'mtime': 0,
                         },
                     },
                     'invalid_entries': []
@@ -276,6 +275,7 @@ class RemoteSyncTest(HelpersTestCase):
                 }
             ]
         })
+        self.assertZipContentEquals(self.resolve_in_temp_dir('root.zip'), "dir/mod.py")
 
     def test_state_json_invalid_entries_removed(self):
         self.collect_sources(['root'], state_json={
