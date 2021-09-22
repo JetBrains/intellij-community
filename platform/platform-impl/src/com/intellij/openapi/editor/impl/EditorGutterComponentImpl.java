@@ -47,10 +47,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -1540,31 +1538,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     g.setColor(getOutlineColor(active));
     RectanglePainter2D.DRAW.paint(g, rect, null, StrokeType.CENTERED, sw, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-    if (!SystemInfo.isMac) {
-      double dx1 = rect.getX();
-      double dx2 = dx1 + rect.getWidth() - 1;
-      int x1 = (int)Math.round(dx1);
-      int x2 = (int)Math.round(dx2);
-      int cX = (int)Math.round(centerX);
-      int cY = (int)Math.round(centerY);
-
-      if (cX - x1 != x2 - cX) {
-        x1 +=  (x2 - cX) - (cX - x1);
-      }
-
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      g.setStroke(new BasicStroke((float)getStrokeWidth(), BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
-      int off = (int)Math.round(getSquareInnerOffset(x2 - x1));
-      g.drawLine(x1 + off, cY, x2 - off, cY);
-      if (plus) {
-        g.drawLine((x1 + x2) / 2, cY - (x2 - x1 - 2*off) / 2, (x1 + x2) / 2, cY + (x2 - x1 - 2*off) / 2);
-      }
-      config.restore();
-    } else {
-      drawLine(g, false, centerX, centerY, width, sw);
-      if (plus) {
-        drawLine(g, true, centerX, centerY, width, sw);
-      }
+    drawLine(g, false, centerX, centerY, width, sw);
+    if (plus) {
+      drawLine(g, true, centerX, centerY, width, sw);
     }
   }
 
