@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -26,12 +27,13 @@ class CancellationPropagationTest : BasePlatformTestCase() {
   val initRegistryKeyRule = RegistryKeyRule("ide.cancellation.propagate", true)
 
   private val service = AppExecutorUtil.getAppExecutorService()
+  private val scheduledService = AppExecutorUtil.getAppScheduledExecutorService()
 
   @Test
   fun `job tree`() {
     val counter = AtomicInteger()
 
-    fun tasks(task: () -> Unit) {
+    fun tasks(service: ExecutorService, task: () -> Unit) {
       val f = {
         counter.incrementAndGet()
         task()
@@ -42,6 +44,17 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       val callables = listOf(Callable(f), Callable(f))
       service.invokeAny(callables)
       service.invokeAll(callables)
+    }
+
+    val services = listOf(
+      service,
+      scheduledService,
+    )
+
+    fun tasks(task: () -> Unit) {
+      for (service in services) {
+        tasks(service, task)
+      }
     }
 
     var failureTrace by AtomicReference<Throwable?>()
@@ -72,7 +85,10 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       throw it
     }
 
-    fun expectedTaskCount(layer: Int): Int = layer * layer + layer
+    fun expectedTaskCount(serviceTasks: Int): Int {
+      val tasksInLayer = services.size * serviceTasks
+      return tasksInLayer * (tasksInLayer + 1)
+    }
     assertTrue(counter.get() in expectedTaskCount(5)..expectedTaskCount(6))
   }
 
