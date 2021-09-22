@@ -37,6 +37,14 @@ abstract class TaskContext : LearningDslBase {
    * */
   open var rehighlightPreviousUi: Boolean? = null
 
+  /**
+   * Can be set to true iff you need to propagate found highlighting component from the previous task as found from the current task.
+   * So it may be used as `previous.ui`. And will be rehighlighted on restore.
+   *
+   * The default `null` means true now, but it may be changed later.
+   */
+  open var propagateHighlighting: Boolean? = null
+
   /** Put here some initialization for the task */
   open fun before(preparation: TaskRuntimeContext.() -> Unit) = Unit
 

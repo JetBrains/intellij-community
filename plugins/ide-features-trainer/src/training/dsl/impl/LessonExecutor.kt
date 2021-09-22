@@ -71,6 +71,7 @@ internal class LessonExecutor(val lesson: KLesson,
   data class TaskData(var shouldRestore: (() -> (() -> Unit)?)? = null,
                       var transparentRestore: Boolean? = null,
                       var highlightPreviousUi: Boolean? = null,
+                      var propagateHighlighting: Boolean? = null,
                       var delayMillis: Int = 0)
 
   private val taskActions: MutableList<TaskInfo> = ArrayList()
@@ -386,8 +387,10 @@ internal class LessonExecutor(val lesson: KLesson,
 
     clearRestore()
     LessonManager.instance.passExercise()
-    if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
-    if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
+    if (taskContext.propagateHighlighting != false) {
+      if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
+      if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
+    }
     for (index in taskInfo.removeAfterDoneMessages) {
       LessonManager.instance.removeMessage(index)
     }

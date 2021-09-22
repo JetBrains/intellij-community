@@ -52,6 +52,12 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       data.highlightPreviousUi = value
     }
 
+  override var propagateHighlighting: Boolean?
+    get() = data.propagateHighlighting
+    set(value) {
+      data.propagateHighlighting = value
+    }
+
   private val runtimeContext = TaskRuntimeContext(lessonExecutor,
                                                   recorder,
                                                   { lessonExecutor.applyRestore(this) },
