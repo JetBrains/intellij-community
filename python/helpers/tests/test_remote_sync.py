@@ -110,7 +110,7 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         })
 
-    def test_state_json_updated_file_removed(self):
+    def test_state_json_when_file_removed(self):
         self.collect_sources(['root'], state_json={
             'roots': [
                 {
@@ -145,7 +145,7 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         })
 
-    def test_state_json_updated_dir_removed(self):
+    def test_state_json_when_dir_removed(self):
         self.collect_sources(['root'], state_json={
             'roots': [
                 {
@@ -180,7 +180,7 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         })
 
-    def test_state_json_updated_file_added(self):
+    def test_state_json_when_file_added(self):
         self.collect_sources(['root'], state_json={
             'roots': [
                 {
@@ -213,7 +213,7 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         })
 
-    def test_state_json_updated_dir_added(self):
+    def test_state_json_when_dir_added(self):
         self.collect_sources(['root'], state_json={
             'roots': [
                 {
@@ -246,7 +246,8 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         })
 
-    def test_state_json_updated_file_changed(self):
+    def test_state_json_when_file_changed(self):
+        # TODO check that a modified file is included in the zip
         self.collect_sources(['root'], state_json={
             'roots': [
                 {
@@ -309,7 +310,7 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         })
 
-    def test_state_json_nothing_changed(self):
+    def test_state_json_when_nothing_changed(self):
         orig_state_json = {
             'roots': [
                 {
@@ -329,7 +330,7 @@ class RemoteSyncTest(HelpersTestCase):
         self.assertJsonEquals(new_state_json, orig_state_json)
         self.assertEmptyZip(self.resolve_in_temp_dir('root.zip'))
 
-    def test_state_json_root_removed(self):
+    def test_state_json_when_root_removed(self):
         self.collect_sources(['root'], state_json={
             'roots': [
                 {
@@ -369,7 +370,7 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         })
 
-    def test_state_json_root_added(self):
+    def test_state_json_when_root_added(self):
         self.collect_sources(['root', 'new'], state_json={
             'roots': [
                 {
