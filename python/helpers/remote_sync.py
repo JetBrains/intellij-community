@@ -215,7 +215,7 @@ class RemoteSync(object):
     def file_stat(self, path):
         os_stat = os.stat(path)
         return {
-            'mtime': int(os_stat.st_mtime) if not self._test_root else 0,
+            'mtime': int(os_stat.st_mtime),
         }
 
     def is_modified(self, cur_stat, old_stat):
