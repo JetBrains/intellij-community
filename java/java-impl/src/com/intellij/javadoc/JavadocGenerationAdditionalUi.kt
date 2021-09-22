@@ -8,6 +8,7 @@ import com.intellij.psi.PsiKeyword
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -75,7 +76,7 @@ class JavadocGenerationAdditionalUi {
                 value = 1
                 labelTable = mylabelTable
                 putClientProperty(UIUtil.JSLIDER_ISFILLED, true)
-                preferredSize = JBUI.size(84, 100)
+                preferredSize = JBUI.size(84, 110)
                 paintLabels = true
                 snapToTicks = true
                 addChangeListener { handleSlider() }
@@ -85,6 +86,8 @@ class JavadocGenerationAdditionalUi {
               .component
           }
         }
+          .gap(RightGap.COLUMNS)
+          .verticalAlign(VerticalAlign.TOP)
         panel {
           row {
             myHierarchy = checkBox(JavaBundle.message("javadoc.generate.options.hierarchy")).component
@@ -101,6 +104,8 @@ class JavadocGenerationAdditionalUi {
             mySeparateIndex = checkBox(JavaBundle.message("javadoc.generate.options.index.per.letter")).component
           }
         }
+          .gap(RightGap.COLUMNS)
+          .verticalAlign(VerticalAlign.TOP)
         panel {
           row {
             myTagUse = checkBox("@use").component
@@ -120,7 +125,7 @@ class JavadocGenerationAdditionalUi {
             myDeprecatedList = checkBox(JavaBundle.message("javadoc.generate.tag.list.deprecated")).component
           }
         }
-          .horizontalAlign(HorizontalAlign.CENTER)
+          .verticalAlign(VerticalAlign.TOP)
         bottomGap(BottomGap.MEDIUM)
       }
       row(JavaBundle.message("javadoc.generate.locale")) {
