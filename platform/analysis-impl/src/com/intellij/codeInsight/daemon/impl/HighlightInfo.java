@@ -231,9 +231,9 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
-  void setVisitingTextRange(@NotNull TextRange range) {
-    visitingRangeDeltaStartOffset = range.getStartOffset() - getStartOffset();
-    visitingRangeDeltaEndOffset = range.getEndOffset() - getEndOffset();
+  void setVisitingTextRange(long range) {
+    visitingRangeDeltaStartOffset = Divider.startOffset(range) - getStartOffset();
+    visitingRangeDeltaEndOffset = Divider.endOffset(range) - getEndOffset();
   }
 
   @NotNull
@@ -1019,9 +1019,9 @@ public class HighlightInfo implements Segment {
     return null;
   }
 
-  TextRange getVisitingTextRange() {
+  long getVisitingTextRange() {
     int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
     int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
-    return TextRange.isProperRange(visitStart, visitEnd) ? new TextRange(visitStart, visitEnd) : null;
+    return TextRange.isProperRange(visitStart, visitEnd) ? Divider.toScalarRange(visitStart, visitEnd) : -1;
   }
 }
