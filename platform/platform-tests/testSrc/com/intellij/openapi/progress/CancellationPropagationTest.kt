@@ -55,25 +55,15 @@ class CancellationPropagationTest : BasePlatformTestCase() {
         }
       }
 
-      var f1 by AtomicReference<Future<*>>()
-      val f1Set = Semaphore(1)
-      f1 = service.submit { // root -> submit
+      service.submit { // root -> submit
         val rsj = assertCurrentJob(parent = rootJob) ?: return@submit
         service.submit { // execute -> submit
           assertCurrentJob(parent = rsj)
-          try {
-            f1Set.waitUp()
-            waitAssertCompletedNormally(f1) // key point: the future is done, but the Job is not
-          }
-          catch (e: Throwable) {
-            failureTrace = e
-          }
         }
         service.execute { // execute -> execute
           assertCurrentJob(parent = rsj)
         }
       }
-      f1Set.up()
     }
 
     CoroutineScope(Dispatchers.Default).launch {
@@ -88,6 +78,27 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     failureTrace?.let {
       throw it
     }
+  }
+
+  @Test
+  fun `future is completed before job is completed`() {
+    var childFuture1 by AtomicReference<Future<*>>()
+    var childFuture2 by AtomicReference<Future<*>>()
+    val childFuture1Set = Semaphore(1)
+    val childFuture2Set = Semaphore(1)
+    val rootJob = withRootJob {
+      childFuture1 = service.submit {
+        childFuture2 = service.submit { // execute -> submit
+          childFuture1Set.waitUp()
+          waitAssertCompletedNormally(childFuture1) // key point: the future is done, but the Job is not
+        }
+        childFuture2Set.up()
+      }
+      childFuture1Set.up()
+    }
+    childFuture2Set.waitUp()
+    waitAssertCompletedNormally(childFuture2)
+    waitAssertCompletedNormally(rootJob)
   }
 
   @Test
