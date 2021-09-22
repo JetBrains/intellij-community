@@ -50,7 +50,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     final UISettings settings = UISettings.getInstance();
     LOG.debug("Revalidate in the navbarRootPane, toolbar visible: " + isShowToolPanel(settings));
     if (isShowToolPanel(settings)) {
-      toggleRunPanel(false);
       toggleRunPanel(true);
     }
   }
@@ -106,8 +105,11 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     promise.onSuccess(action -> {
       SwingUtilities.invokeLater(() -> {
         if (show && myRunPanel == null && runToolbarExists()) {
+          if(myWrapperPanel != null && myRunPanel != null) {
+            myWrapperPanel.remove(myRunPanel);
+            myRunPanel = null;
+          }
           final ActionManager manager = ActionManager.getInstance();
-
           if (action instanceof ActionGroup && myWrapperPanel != null) {
             ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)action, true);
             actionToolbar.setTargetComponent(null);
