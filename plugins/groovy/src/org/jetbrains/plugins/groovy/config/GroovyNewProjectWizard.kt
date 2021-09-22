@@ -10,6 +10,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpda
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardLanguageStep
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -147,7 +148,9 @@ class GroovyNewProjectWizard : NewProjectWizard {
           val allVersions = listOf(distribution.version)
           return LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, allVersions).apply {
             setDownloadLibraries(true)
-            downloadFiles(null)
+            ApplicationManager.getApplication().executeOnPooledThread {
+              downloadFiles(null)
+            }
           }
         }
         is LocalDistributionInfo -> {
