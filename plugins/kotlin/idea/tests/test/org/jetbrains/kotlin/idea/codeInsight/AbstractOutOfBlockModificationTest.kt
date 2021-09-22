@@ -68,8 +68,8 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
 
     private fun checkForUnexpectedErrors(ktFile: KtFile) {
         val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
-        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider)
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider)
+        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = diagnosticsProvider)
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider = diagnosticsProvider)
     }
 
     private fun checkOOBWithDescriptorsResolve(expectedOutOfBlock: Boolean) {

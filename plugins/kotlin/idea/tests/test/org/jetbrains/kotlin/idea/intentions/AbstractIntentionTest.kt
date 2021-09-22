@@ -37,6 +37,11 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     protected open fun isApplicableDirectiveName(): String = "IS_APPLICABLE"
 
+    protected open fun isApplicableDirective(fileText: String): Boolean {
+        val isApplicableString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// ${isApplicableDirectiveName()}: ")
+        return isApplicableString == null || isApplicableString == "true"
+    }
+
     protected open fun intentionTextDirectiveName(): String = "INTENTION_TEXT"
 
     @Throws(Exception::class)
@@ -110,8 +115,20 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
 
                         doTestFor(mainFile.name, pathToFiles, intentionAction, fileText)
 
-                        if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
-                            DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
+                        if (file is KtFile &&
+                            isApplicableDirective(fileText) &&
+                            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")
+                        ) {
+                            val ktFile = file as KtFile
+
+                            if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
+                                DirectiveBasedActionUtils.checkForUnexpectedWarnings(
+                                    ktFile,
+                                    disabledByDefault = false,
+                                    directiveName = "AFTER-WARNING"
+                                )
+                            }
+                            DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
                         }
                     } finally {
                         ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
@@ -139,8 +156,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     @Throws(Exception::class)
     private fun doTestFor(mainFilePath: String, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
-        val isApplicableString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// ${isApplicableDirectiveName()}: ")
-        val isApplicableExpected = isApplicableString == null || isApplicableString == "true"
+        val isApplicableExpected = isApplicableDirective(fileText)
 
         val isApplicableOnPooled = computeUnderProgressIndicatorAndWait {
             ApplicationManager.getApplication().runReadAction(Computable { intentionAction.isAvailable(project, editor, file) })
@@ -179,6 +195,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                 if (shouldFailString.isEmpty()) {
                     for ((filePath, value) in pathToFiles) {
                         val canonicalPathToExpectedFile = filePath + afterFileNameSuffix()
+                        val afterFile = testDataFile(canonicalPathToExpectedFile)
                         if (filePath == mainFilePath) {
                             try {
                                 myFixture.checkResultByFile(canonicalPathToExpectedFile)
