@@ -15,11 +15,26 @@
  */
 package org.jetbrains.idea.maven.server;
 
+
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-public interface MavenServerDownloadListener {
-  void artifactDownloaded(File file, String relativePath) throws RemoteException;
+public class MavenServerDownloadListenerWrapper extends MavenRemoteObject
+  implements MavenServerDownloadListener, MavenPullDownloadListener {
+  private final ConcurrentLinkedQueue<DownloadArtifactEvent> myPullingQueue = new ConcurrentLinkedQueue<DownloadArtifactEvent>();
+
+  @Override
+  public void artifactDownloaded(File file, String relativePath) throws RemoteException {
+    myPullingQueue.add(new DownloadArtifactEvent(file.getAbsolutePath(), relativePath));
+  }
+
+  @Override
+  @Nullable
+  public List<DownloadArtifactEvent> pull() {
+    return MavenRemotePullUtil.pull(myPullingQueue);
+  }
 }
