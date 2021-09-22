@@ -369,8 +369,8 @@ public class JDParser {
     if (TodoConfiguration.getInstance().isMultiLine()) {
       for (TodoPattern todoPattern : TodoConfiguration.getInstance().getTodoPatterns()) {
         Pattern p = todoPattern.getPattern();
-        if (p != null) {
-          return p.matcher(line.trim()).matches();
+        if (p != null && p.matcher(line.trim()).matches()) {
+          return true;
         }
       }
     }

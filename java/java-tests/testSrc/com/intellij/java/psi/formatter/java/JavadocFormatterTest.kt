@@ -1582,4 +1582,43 @@ public class Test {
       config.isMultiLine = currFlag;
     }
   }
+
+  fun testIdea277973() {
+    val config = TodoConfiguration.getInstance()
+    val currFlag = config.isMultiLine;
+    try {
+      config.isMultiLine = true
+      doTextTest(
+        """
+        public class Test {
+            /**
+             * FIXME This is a long to do comment which
+             *   takes multiple lines. Indentation of these
+             *   lines should remain.
+             *
+             *   @param i Parameter
+             */
+            void foo(int i) { }
+        }
+        """.trimIndent(),
+
+        """
+        public class Test {
+            /**
+             * FIXME This is a long to do comment which
+             *   takes multiple lines. Indentation of these
+             *   lines should remain.
+             *
+             * @param i Parameter
+             */
+            void foo(int i) {
+            }
+        }
+        """.trimIndent()
+      )
+    }
+    finally {
+      config.isMultiLine = currFlag;
+    }
+  }
 }
