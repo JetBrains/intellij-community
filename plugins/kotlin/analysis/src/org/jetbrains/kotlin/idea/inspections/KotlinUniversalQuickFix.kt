@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 
-interface KotlinUniversalQuickFix : IntentionAction, LocalQuickFix {
+interface KotlinUniversalQuickFix : IntentionActionWithFixAllOption, LocalQuickFix {
     @JvmDefault
     override fun getName() = text
 
