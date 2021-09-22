@@ -106,7 +106,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     if (Registry.is("vcs.ignorefile.generation", true)) {
       result.add(new IgnoredSettingsPanel(myProject));
     }
-    result.add(new IssueNavigationConfigurationPanel(myProject));
+    result.add(new IssueNavigationConfigurable(myProject));
     result.add(new ChangelistConflictConfigurable(myProject));
     result.add(new CommitDialogConfigurable(myProject));
     result.add(new ShelfProjectConfigurable(myProject));
