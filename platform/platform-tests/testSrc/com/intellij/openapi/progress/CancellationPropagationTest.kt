@@ -46,33 +46,24 @@ class CancellationPropagationTest : BasePlatformTestCase() {
 
     var failureTrace by AtomicReference<Throwable?>()
 
-    fun assertCurrentJobIsChildOf(parent: Job): Job {
-      val current = Cancellation.currentJob()
-      if (current == null) {
-        Throwable().let {
-          failureTrace = it
-          throw it
-        }
+    fun assertCurrentJob(parent: Job): Job {
+      try {
+        return assertCurrentJobIsChildOf(parent)
       }
-      if (current !in parent.children) {
-        val ce = try {
-          @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-          current.getCancellationException()
-        }
-        catch (e: Throwable) {
-          failureTrace = e
-          throw e
-        }
-        throw ce
+      catch (e: CancellationException) {
+        throw e
       }
-      return current
+      catch (e: Throwable) {
+        failureTrace = e
+        throw e
+      }
     }
 
     withRootJob { rootJob ->
       tasks {
-        val child = assertCurrentJobIsChildOf(parent = rootJob)
+        val child = assertCurrentJob(parent = rootJob)
         tasks {
-          assertCurrentJobIsChildOf(parent = child)
+          assertCurrentJob(parent = child)
         }
       }
     }.waitJoin()

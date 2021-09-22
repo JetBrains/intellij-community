@@ -66,3 +66,12 @@ fun waitAssertCancelled(job: Job) {
   job.waitJoin()
   assertTrue(job.isCancelled)
 }
+
+fun assertCurrentJobIsChildOf(parent: Job): Job {
+  val current = requireNotNull(Cancellation.currentJob())
+  if (current !in parent.children) {
+    @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
+    throw current.getCancellationException()
+  }
+  return current
+}
