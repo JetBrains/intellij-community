@@ -1007,11 +1007,7 @@ idea.fatal.error.notification=disabled
   @Override
   @CompileStatic(TypeCheckingMode.SKIP)
   void buildUpdaterJar() {
-    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater.jar") {
-        module("intellij.platform.updater")
-      }
-    }
+    buildFullUpdaterJar()
   }
 
   @Override
