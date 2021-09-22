@@ -87,9 +87,6 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         print("\nLaunched processes stdout:\n" + self.process_stdout.getvalue() + '-' * 80)
         print("\nLaunched processes stderr:\n" + self.process_stderr.getvalue() + '-' * 80)
 
-    def get_test_data_path(self, rel_path):
-        return os.path.join(self.test_data_dir, rel_path)
-
     def run_generator(self, mod_qname=None,
                       mod_path=None,
                       extra_syspath=None,
@@ -109,7 +106,8 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         if not extra_syspath:
             extra_syspath = [self.test_data_dir]
 
-        extra_syspath = [p if os.path.isabs(p) else self.get_test_data_path(p) for p in extra_syspath]
+        extra_syspath = [p if os.path.isabs(p) else self.resolve_in_test_data(p)
+                         for p in extra_syspath]
 
         if mod_path and not os.path.isabs(mod_path):
             mod_path = os.path.join(extra_syspath[0], mod_path)
@@ -167,7 +165,8 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
 
     def check_generator_output(self, mod_name=None, mod_path=None, custom_required_gen=False, success=True, **kwargs):
         if custom_required_gen:
-            kwargs.setdefault('required_gen_version_file_path', self.get_test_data_path('required_gen_version'))
+            kwargs.setdefault('required_gen_version_file_path',
+                              self.resolve_in_test_data('required_gen_version'))
 
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
             result = self.run_generator(mod_name, mod_path=mod_path, **kwargs)
@@ -186,7 +185,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         """.format(hash=generator3.core.module_hash('_ast', None)))
 
     def test_layout_for_toplevel_physical_module(self):
-        mod_path = self.get_test_data_path('mod.py')
+        mod_path = self.resolve_in_test_data('mod.py')
         self.run_generator(mod_qname='mod', mod_path=mod_path)
         self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
@@ -197,7 +196,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         """.format(hash=generator3.core.module_hash('mod', mod_path)))
 
     def test_layout_for_physical_module_inside_package(self):
-        mod_path = self.get_test_data_path('pkg/subpkg/mod.py')
+        mod_path = self.resolve_in_test_data('pkg/subpkg/mod.py')
         self.run_generator(mod_qname='pkg.subpkg.mod', mod_path=mod_path)
         self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
@@ -478,8 +477,10 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.2')
 
     def test_existing_updated_due_to_modified_binary(self):
-        mod1_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod1.so'))
-        mod2_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod2.so'))
+        mod1_mtime = file_modification_timestamp(
+            self.resolve_in_test_data('binaries/mod1.so'))
+        mod2_mtime = file_modification_timestamp(
+            self.resolve_in_test_data('binaries/mod2.so'))
         state = {
             'sdk_skeletons': {
                 'mod1': {
@@ -500,8 +501,8 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.2')
 
     def test_failed_updated_due_to_modified_binary(self):
-        mod1_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod1.so'))
-        mod2_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod2.so'))
+        mod1_mtime = file_modification_timestamp(self.resolve_in_test_data('binaries/mod1.so'))
+        mod2_mtime = file_modification_timestamp(self.resolve_in_test_data('binaries/mod2.so'))
         state = {
             'sdk_skeletons': {
                 'mod1': {
@@ -522,7 +523,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.1')
 
     def test_failed_skeleton_skipped(self):
-        mod_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod.so'))
+        mod_mtime = file_modification_timestamp(self.resolve_in_test_data('binaries/mod.so'))
         state = {
             'sdk_skeletons': {
                 'mod': {
