@@ -126,7 +126,6 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   private void addHighlighter() {
-    if (true) return;
     Document document = getCachedDocument();
     if (document != null) {
       createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myTarget.getProject(), true));
@@ -134,6 +133,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   public RangeHighlighter createHighlighter(@NotNull MarkupModelEx markup) {
+    if (true) return null;
     final RangeHighlighterEx highlighter;
     int line = getLine();
     if (line >= 0) {
