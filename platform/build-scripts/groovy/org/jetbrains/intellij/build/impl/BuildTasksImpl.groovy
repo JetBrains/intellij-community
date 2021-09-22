@@ -1005,21 +1005,26 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
+  @CompileStatic
   void buildUpdaterJar() {
-    buildFullUpdaterJar()
+    doBuildUpdaterJar("updater.jar")
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
+  @CompileStatic
   void buildFullUpdaterJar() {
+    doBuildUpdaterJar("updater-full.jar")
+  }
+
+  @CompileStatic(TypeCheckingMode.SKIP)
+  private void doBuildUpdaterJar(String artifactName) {
     String updaterModule = "intellij.platform.updater"
     List<File> libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule))
       .productionOnly()
       .runtimeOnly()
-      .libraries.collectMany {it.getFiles(JpsOrderRootType.COMPILED)}
-    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater-full.jar", true) {
+      .libraries.collectMany { it.getFiles(JpsOrderRootType.COMPILED) }
+    new LayoutBuilder(buildContext, true).layout(buildContext.paths.artifacts) {
+      jar(artifactName, true) {
         module(updaterModule)
         for (file in libraryFiles) {
           ant.zipfileset(src: file.absolutePath)
