@@ -5233,6 +5233,44 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testZeroArguments() throws Exception {
             runTest("testData/intentions/convertForEachToForLoop/zeroArguments.kt");
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertForEachToForLoop/forEachIndexed")
+        public static class ForEachIndexed extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/implicitReceiver.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/labeledReturn.kt");
+            }
+
+            @TestMetadata("list.kt")
+            public void testList() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/list.kt");
+            }
+
+            @TestMetadata("range.kt")
+            public void testRange() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/range.kt");
+            }
+
+            @TestMetadata("sequence.kt")
+            public void testSequence() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/sequence.kt");
+            }
+
+            @TestMetadata("string.kt")
+            public void testString() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/forEachIndexed/string.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -8028,9 +8066,52 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToForEachFunctionCall/simple.kt");
         }
 
+        @TestMetadata("this.kt")
+        public void testThis() throws Exception {
+            runTest("testData/intentions/convertToForEachFunctionCall/this.kt");
+        }
+
         @TestMetadata("typeAnnotatedWithNonBlockBody.kt")
         public void testTypeAnnotatedWithNonBlockBody() throws Exception {
             runTest("testData/intentions/convertToForEachFunctionCall/typeAnnotatedWithNonBlockBody.kt");
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertToForEachFunctionCall/withIndex")
+        public static class WithIndex extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("testData/intentions/convertToForEachFunctionCall/withIndex/implicitReceiver.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("testData/intentions/convertToForEachFunctionCall/withIndex/labeledReturn.kt");
+            }
+
+            @TestMetadata("list.kt")
+            public void testList() throws Exception {
+                runTest("testData/intentions/convertToForEachFunctionCall/withIndex/list.kt");
+            }
+
+            @TestMetadata("range.kt")
+            public void testRange() throws Exception {
+                runTest("testData/intentions/convertToForEachFunctionCall/withIndex/range.kt");
+            }
+
+            @TestMetadata("sequence.kt")
+            public void testSequence() throws Exception {
+                runTest("testData/intentions/convertToForEachFunctionCall/withIndex/sequence.kt");
+            }
+
+            @TestMetadata("string.kt")
+            public void testString() throws Exception {
+                runTest("testData/intentions/convertToForEachFunctionCall/withIndex/string.kt");
+            }
         }
     }
 

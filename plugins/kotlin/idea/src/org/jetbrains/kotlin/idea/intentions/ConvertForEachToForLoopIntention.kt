@@ -26,24 +26,33 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
             sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
         }
+        private const val FOR_EACH_INDEXED_NAME = "forEachIndexed"
+        private val FOR_EACH_INDEXED_FQ_NAMES: Set<String> by lazy {
+            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_INDEXED_NAME" }.toSet()
+        }
     }
 
     override fun isApplicableTo(element: KtSimpleNameExpression): Boolean {
-        if (element.getReferencedName() != FOR_EACH_NAME) return false
+        val referencedName = element.getReferencedName()
+        val isForEach = referencedName == FOR_EACH_NAME
+        val isForEachIndexed = referencedName == FOR_EACH_INDEXED_NAME
+        if (!isForEach && !isForEachIndexed) return false
 
         val data = extractData(element) ?: return false
-        if (data.functionLiteral.valueParameters.size > 1) return false
+        val valueParameterSize = data.functionLiteral.valueParameters.size
+        if (isForEach && valueParameterSize > 1 || isForEachIndexed && valueParameterSize != 2) return false
         if (data.functionLiteral.bodyExpression == null) return false
 
         return true
     }
 
     override fun applyTo(element: KtSimpleNameExpression, editor: Editor?) {
-        val (expressionToReplace, receiver, functionLiteral, context) = extractData(element)!!
+        val (expressionToReplace, receiver, isImplicitReceiver, functionLiteral, context) = extractData(element)!!
 
         val commentSaver = CommentSaver(expressionToReplace)
 
-        val loop = generateLoop(functionLiteral, receiver, context)
+        val isForEachIndexed = element.getReferencedName() == FOR_EACH_INDEXED_NAME
+        val loop = generateLoop(functionLiteral, receiver, isImplicitReceiver, isForEachIndexed, context)
         val result = expressionToReplace.replace(loop) as KtForExpression
         result.loopParameter?.also { editor?.caretModel?.moveToOffset(it.startOffset) }
 
@@ -53,6 +62,7 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
     private data class Data(
         val expressionToReplace: KtExpression,
         val receiver: KtExpression,
+        val isImplicitReceiver: Boolean,
         val functionLiteral: KtLambdaExpression,
         val context: BindingContext
     )
@@ -66,19 +76,27 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
 
         val context = expression.analyze()
         val resolvedCall = expression.getResolvedCall(context) ?: return null
-        if (DescriptorUtils.getFqName(resolvedCall.resultingDescriptor).toString() !in FOR_EACH_FQ_NAMES) return null
+        val fqName = DescriptorUtils.getFqName(resolvedCall.resultingDescriptor).toString()
+        if (fqName !in FOR_EACH_FQ_NAMES && fqName !in FOR_EACH_INDEXED_FQ_NAMES) return null
 
-        val receiver = if (resolvedCall.extensionReceiver is ImplicitReceiver) {
+        val isImplicitReceiver = resolvedCall.extensionReceiver is ImplicitReceiver
+        val receiver = if (isImplicitReceiver) {
             KtPsiFactory(expression).createThisExpression()
         } else {
             resolvedCall.call.explicitReceiver.safeAs<ExpressionReceiver>()?.expression
         } ?: return null
         val argument = resolvedCall.call.valueArguments.singleOrNull() ?: return null
         val functionLiteral = argument.getArgumentExpression() as? KtLambdaExpression ?: return null
-        return Data(expression, receiver, functionLiteral, context)
+        return Data(expression, receiver, isImplicitReceiver, functionLiteral, context)
     }
 
-    private fun generateLoop(functionLiteral: KtLambdaExpression, receiver: KtExpression, context: BindingContext): KtExpression {
+    private fun generateLoop(
+        functionLiteral: KtLambdaExpression,
+        receiver: KtExpression,
+        isImplicitReceiver: Boolean,
+        isForEachIndexed: Boolean,
+        context: BindingContext,
+    ): KtExpression {
         val factory = KtPsiFactory(functionLiteral)
 
         val body = functionLiteral.bodyExpression!!
@@ -91,8 +109,19 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         }
 
         val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
-        val parameter = functionLiteral.valueParameters.singleOrNull()
-
-        return factory.createExpressionByPattern("for($0 in $1){ $2 }", parameter ?: "it", loopRange, body)
+        val parameters = functionLiteral.valueParameters
+        return if (isForEachIndexed) {
+            val parameter1 = parameters[0].text
+            val parameter2 = parameters[1].text
+            if (isImplicitReceiver) {
+                factory.createExpressionByPattern("for(($0, $1) in withIndex()){ $2 }", parameter1, parameter2, body)
+            } else {
+                val loopRangeWithIndex = factory.createExpressionByPattern("$0.withIndex()", loopRange)
+                factory.createExpressionByPattern("for(($0, $1) in $2){ $3 }", parameter1, parameter2, loopRangeWithIndex, body)
+            }
+        } else {
+            val parameter = parameters.singleOrNull() ?: "it"
+            factory.createExpressionByPattern("for($0 in $1){ $2 }", parameter, loopRange, body)
+        }
     }
 }

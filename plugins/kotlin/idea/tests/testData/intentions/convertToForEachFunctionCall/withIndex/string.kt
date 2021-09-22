@@ -1,0 +1,6 @@
+// WITH_RUNTIME
+fun test() {
+    <caret>for ((index, element) in "123".withIndex()) {
+        println("$index:$element")
+    }
+}
