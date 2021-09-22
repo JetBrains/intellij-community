@@ -338,9 +338,6 @@ internal class GitVcsPanel(private val project: Project) :
           }
         }
       }
-      row {
-        checkBox(cdAutoUpdateOnPush(project))
-      }
       if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
         updateProjectInfoFilter()
       }
