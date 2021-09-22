@@ -2,10 +2,7 @@
 
 package org.jetbrains.uast.kotlin.internal
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -19,8 +16,7 @@ import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.uast.UastErrorType
-import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.lz
@@ -33,10 +29,11 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
 
 internal fun KtAnalysisSession.toPsiClass(
     ktType: KtType,
+    source: UElement?,
     context: KtElement,
     typeOwnerKind: TypeOwnerKind
 ): PsiClass? {
-    return PsiTypesUtil.getPsiClass(toPsiType(ktType, context, typeOwnerKind, boxed = true))
+    return PsiTypesUtil.getPsiClass(toPsiType(ktType, source, context, typeOwnerKind, boxed = true))
 }
 
 internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
@@ -53,6 +50,22 @@ internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
 
 internal fun KtAnalysisSession.toPsiType(
     ktType: KtType,
+    source: UElement?,
+    context: KtElement,
+    typeOwnerKind: TypeOwnerKind,
+    boxed: Boolean = false
+): PsiType =
+    toPsiType(
+        ktType,
+        source?.getParentOfType<UDeclaration>(false)?.javaPsi as? PsiModifierListOwner,
+        context,
+        typeOwnerKind,
+        boxed
+    )
+
+internal fun KtAnalysisSession.toPsiType(
+    ktType: KtType,
+    lightDeclaration: PsiModifierListOwner?,
     context: KtElement,
     typeOwnerKind: TypeOwnerKind,
     boxed: Boolean = false
@@ -78,7 +91,8 @@ internal fun KtAnalysisSession.toPsiType(
         }
         if (psiType != null) return psiType
     }
-    return ktType.asPsiType(context, TypeMappingMode.DEFAULT_UAST) ?: UastErrorType
+    val parent: PsiElement = lightDeclaration ?: context
+    return ktType.asPsiType(parent, TypeMappingMode.DEFAULT_UAST) ?: UastErrorType
 }
 
 internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
