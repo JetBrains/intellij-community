@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.PatchesPreloader;
 import com.intellij.openapi.vcs.changes.ui.*;
@@ -928,32 +927,6 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       return super.loadRequestFast(provider);
-    }
-
-    @Override
-    protected @Nullable AnAction createGoToChangeAction() {
-      return new MyGoToChangePopupProvider().createGoToChangeAction();
-    }
-
-    private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
-      @NotNull
-      @Override
-      public List<? extends PresentableChange> getChanges() {
-        return getAllChanges().collect(Collectors.toList());
-      }
-
-      @Override
-      public void select(@NotNull PresentableChange presentableChange) {
-        if (presentableChange instanceof Wrapper) {
-          selectChange((Wrapper)presentableChange);
-        }
-      }
-
-      @Nullable
-      @Override
-      public PresentableChange getSelectedChange() {
-        return getCurrentChange();
-      }
     }
   }
 

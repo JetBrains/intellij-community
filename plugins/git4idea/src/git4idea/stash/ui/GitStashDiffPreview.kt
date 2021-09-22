@@ -4,14 +4,15 @@ package git4idea.stash.ui
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.vcs.log.runInEdtAsync
@@ -21,7 +22,6 @@ import one.util.streamex.StreamEx
 import java.beans.PropertyChangeListener
 import java.util.stream.Stream
 import javax.swing.JTree
-import kotlin.streams.toList
 
 abstract class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInEditor: Boolean, parentDisposable: Disposable) :
   ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
@@ -56,25 +56,7 @@ abstract class GitStashDiffPreview(project: Project, private val tree: ChangesTr
     return wrap(VcsTreeModelData.all(tree))
   }
 
-  override fun createGoToChangeAction(): AnAction {
-    return MyGoToChangePopupProvider().createGoToChangeAction()
-  }
-
   protected abstract fun getTag(change: Change): ChangesBrowserNode.Tag?
-
-  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getChanges(): List<PresentableChange> {
-      return allChanges.toList()
-    }
-
-    override fun select(change: PresentableChange) {
-      (change as? Wrapper)?.run(::selectChange)
-    }
-
-    override fun getSelectedChange(): PresentableChange? {
-      return currentChange
-    }
-  }
 
   override fun selectChange(change: Wrapper) {
     VcsLogChangesBrowser.selectObjectWithTag(tree, change.userObject, change.tag)

@@ -32,9 +32,19 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.Comparator.comparing;
 
-public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
+public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
+  public static abstract class Default<T extends PresentableChange> extends PresentableGoToChangePopupAction<T> {
+    @Override
+    protected PresentableChange getPresentation(@NotNull T change) {
+      return change;
+    }
+  }
+
   @NotNull
-  protected abstract ListSelection<? extends PresentableChange> getChanges();
+  protected abstract ListSelection<? extends T> getChanges();
+
+  @Nullable
+  protected abstract PresentableChange getPresentation(@NotNull T change);
 
   @Override
   protected boolean canNavigate() {
@@ -42,13 +52,14 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
   }
 
   @NotNull
-  protected DefaultTreeModel buildTreeModel(@NotNull Project project,
-                                            @NotNull ChangesGroupingPolicyFactory grouping,
-                                            @NotNull List<? extends PresentableChange> changes) {
+  private DefaultTreeModel buildTreeModel(@NotNull Project project,
+                                          @NotNull ChangesGroupingPolicyFactory grouping,
+                                          @NotNull List<? extends T> changes) {
     MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = MultiMap.createLinked();
 
     for (int i = 0; i < changes.size(); i++) {
-      PresentableChange change = changes.get(i);
+      PresentableChange change = getPresentation(changes.get(i));
+      if (change == null) continue;
 
       FilePath filePath = change.getFilePath();
       FileStatus fileStatus = change.getFileStatus();
@@ -63,7 +74,7 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
     return builder.build();
   }
 
-  protected abstract void onSelected(@NotNull List<? extends PresentableChange> changes, @Nullable Integer selectedIndex);
+  protected abstract void onSelected(@NotNull T change);
 
   @NotNull
   @Override
@@ -97,12 +108,12 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
 
   private class MyChangesBrowser extends ChangesBrowserBase {
     @NotNull private final Ref<? extends JBPopup> myRef;
-    @NotNull private final ListSelection<? extends PresentableChange> myChanges;
+    @NotNull private final ListSelection<? extends T> myChanges;
 
     MyChangesBrowser(@NotNull Project project, @NotNull Ref<? extends JBPopup> popupRef) {
       super(project, false, false);
       myRef = popupRef;
-      myChanges = SimpleGoToChangePopupAction.this.getChanges();
+      myChanges = PresentableGoToChangePopupAction.this.getChanges();
       myViewer.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       init();
 
@@ -124,7 +135,7 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
     @NotNull
     @Override
     protected DefaultTreeModel buildTreeModel() {
-      return SimpleGoToChangePopupAction.this.buildTreeModel(myProject, getGrouping(), myChanges.getList());
+      return PresentableGoToChangePopupAction.this.buildTreeModel(myProject, getGrouping(), myChanges.getList());
     }
 
     @NotNull
@@ -145,8 +156,10 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
 
       ChangesBrowserNode<?> selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
       GenericChangesBrowserNode node = ObjectUtils.tryCast(selection, GenericChangesBrowserNode.class);
-      Integer selectedIndex = node != null ? node.getIndex() : null;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(myChanges.getList(), selectedIndex));
+      if (node == null) return;
+
+      T newSelection = myChanges.getList().get(node.getIndex());
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(newSelection));
     }
   }
 
