@@ -59,10 +59,10 @@ class RemoteSyncTest(HelpersTestCase):
         nested.zip
         root.zip
         """)
-        self.assertZipContentEquals(os.path.join(self.temp_dir, 'root.zip'), """
+        self.assertZipContentEquals(self.resolve_in_temp_dir('root.zip'), """
         pkg/__init__.py
         """)
-        self.assertZipContentEquals(os.path.join(self.temp_dir, 'nested.zip'), """
+        self.assertZipContentEquals(self.resolve_in_temp_dir('nested.zip'), """
         mod.py
         """)
 
@@ -92,7 +92,7 @@ class RemoteSyncTest(HelpersTestCase):
 
     def test_new_state_json_content(self):
         self.collect_sources(['root'])
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -128,7 +128,7 @@ class RemoteSyncTest(HelpersTestCase):
                 }
             ]
         })
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -163,7 +163,7 @@ class RemoteSyncTest(HelpersTestCase):
                 }
             ]
         })
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -195,7 +195,7 @@ class RemoteSyncTest(HelpersTestCase):
                 }
             ]
         })
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -228,7 +228,7 @@ class RemoteSyncTest(HelpersTestCase):
                 }
             ]
         })
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -261,7 +261,7 @@ class RemoteSyncTest(HelpersTestCase):
                 }
             ]
         })
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -294,7 +294,7 @@ class RemoteSyncTest(HelpersTestCase):
                 },
             ]
         })
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -325,9 +325,9 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         }
         self.collect_sources(['root'], state_json=orig_state_json)
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'),
-                              orig_state_json)
-        self.assertEmptyZip(os.path.join(self.temp_dir, 'root.zip'))
+        new_state_json = self.resolve_in_temp_dir('.state.json')
+        self.assertJsonEquals(new_state_json, orig_state_json)
+        self.assertEmptyZip(self.resolve_in_temp_dir('root.zip'))
 
     def test_state_json_root_removed(self):
         self.collect_sources(['root'], state_json={
@@ -354,7 +354,7 @@ class RemoteSyncTest(HelpersTestCase):
                 },
             ]
         })
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -384,7 +384,7 @@ class RemoteSyncTest(HelpersTestCase):
                 }
             ]
         })
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'root',
@@ -411,7 +411,7 @@ class RemoteSyncTest(HelpersTestCase):
 
     def test_state_json_original_order_of_roots_preserved(self):
         self.collect_sources(['a', 'c', 'b'])
-        self.assertJsonEquals(os.path.join(self.temp_dir, '.state.json'), {
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             'roots': [
                 {
                     'path': 'a',
@@ -449,19 +449,21 @@ class RemoteSyncTest(HelpersTestCase):
     def test_state_json_non_ascii_paths(self):
         """Checks that non-ASCII paths are written without escaping in .state.json."""
         self.collect_sources(['по-русски'])
-        with open(os.path.join(self.temp_dir, '.state.json')) as state_file:
+        with open(self.resolve_in_temp_dir('.state.json')) as state_file:
             self.assertIn('"по-русски.zip"', state_file.read())
 
     def collect_sources(self, roots_inside_test_data, output_dir=None, state_json=None):
         if output_dir is None:
             output_dir = self.temp_dir
-        self.assertTrue(os.path.exists(self.test_data_dir),
-                        'Test data directory {} does not exist'.format(self.test_data_dir))
-        roots = [os.path.join(self.test_data_dir, r) for r in roots_inside_test_data]
+        self.assertTrue(
+            os.path.exists(self.test_data_dir),
+            'Test data directory {} does not exist'.format(self.test_data_dir)
+        )
+        roots = [self.resolve_in_test_data(r) for r in roots_inside_test_data]
         rsync = RemoteSync(roots, output_dir, state_json)
         rsync._test_root = self.test_data_dir
         rsync.run()
 
     def mtime(self, test_data_path):
-        path = os.path.join(self.test_data_dir, test_data_path)
+        path = self.resolve_in_test_data(test_data_path)
         return int(os.stat(path).st_mtime)

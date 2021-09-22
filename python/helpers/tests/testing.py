@@ -84,6 +84,12 @@ class HelpersTestCase(unittest.TestCase):
     def class_test_data_dir(self):
         return os.path.join(self.test_data_root, self.test_class_name)
 
+    def resolve_in_test_data(self, rel_path):
+        return os.path.join(self.test_data_dir, rel_path)
+
+    def resolve_in_temp_dir(self, rel_path):
+        return os.path.join(self.temp_dir, rel_path)
+
     @property
     def test_data_root(self):
         return _test_data_root
