@@ -44,7 +44,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       if (project != null && lookup != null) {
         LookupManager.getInstance(project).hideActiveLookup();
       }
-      myOriginalHandler.execute(editor, caret, dataContext);
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
       return;
     }
 
@@ -103,6 +105,28 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
+  public static class UpInLookupAction extends EditorAction {
+    public UpInLookupAction() {
+      super(new UpHandler(null) {
+        @Override
+        public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+          return LookupManager.getActiveLookup(editor) != null;
+        }
+      });
+    }
+  }
+
+  public static class DownInLookupAction extends EditorAction {
+    public DownInLookupAction() {
+      super(new DownHandler(null) {
+        @Override
+        public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+          return LookupManager.getActiveLookup(editor) != null;
+        }
+      });
+    }
+  }
+
   private static final class UpDownInEditorHandler extends EditorActionHandler {
     private final boolean myUp;
 
@@ -140,7 +164,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
       if (!UISettings.getInstance().getCycleScrolling() && !lookup.isFocused() && lookup.getList().getSelectedIndex() == 0) {
-        myOriginalHandler.execute(lookup.getEditor(), caret, context);
+        if (myOriginalHandler != null) {
+          myOriginalHandler.execute(lookup.getEditor(), caret, context);
+        }
         return;
       }
       executeUpOrDown(lookup, true);
