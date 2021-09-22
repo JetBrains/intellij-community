@@ -17,6 +17,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -252,12 +253,12 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   @Override
   @Transient
-  public final @NotNull @NlsSafe String getFileMask() {
+  public final @Nullable @NlsSafe String getFileMask() {
     return FILE_MASK;
   }
 
   @Override
-  public final void setFileMask(@NotNull @NlsSafe String fileMask) {
+  public final void setFileMask(@Nullable @NlsSafe String fileMask) {
     FILE_MASK = fileMask;
     FindInProjectSettingsBase.addRecentStringToList(fileMask, recentFileMasks);
   }

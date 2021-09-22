@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -86,7 +87,7 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
     return ArrayUtilRt.toStringArray(replaceStrings);
   }
 
-  static void addRecentStringToList(@NotNull @NlsSafe String str,
+  static void addRecentStringToList(@Nullable @NlsSafe String str,
                                     @NotNull List<? super String> list) {
     if (StringUtil.isEmptyOrSpaces(str)) {
       return;
