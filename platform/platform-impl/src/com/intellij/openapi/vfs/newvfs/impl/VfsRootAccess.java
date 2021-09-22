@@ -126,6 +126,10 @@ public final class VfsRootAccess {
       allowed.add(FileUtil.toSystemIndependentName(findInUserHome(".m2")));
       allowed.add(FileUtil.toSystemIndependentName(findInUserHome(".gradle")));
 
+      if (System.getenv().containsKey("GRADLE_USER_HOME")){
+        allowed.add(FileUtil.toSystemIndependentName(System.getenv("GRADLE_USER_HOME")));
+      }
+
       if (SystemInfo.isWindows) {
         String wslName = System.getProperty("wsl.distribution.name");
         if (wslName != null) {
