@@ -66,7 +66,12 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
     }
     execution.addParameter(downloadVolume.getTargetDownloadPath())
 
-    val environment = myTargetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
+    val targetIndicator = TargetProgressIndicatorAdapter(indicator)
+    val environment = myTargetEnvRequest.prepareEnvironment(targetIndicator)
+
+    // XXX Make it automatic
+    environment.uploadVolumes.values.forEach { it.upload(".", targetIndicator) }
+    
     val cmd = execution.buildTargetedCommandLine(environment, mySdk, emptyList())
     cmd.execute(environment, indicator)
 
