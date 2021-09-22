@@ -7,7 +7,8 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -66,13 +67,8 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       }
     }
 
-    CoroutineScope(Dispatchers.Default).launch {
-      assertNull(Cancellation.currentJob())
-      val rootJob = this@launch.coroutineContext.job
-      withJob {
-        assertTrue(Cancellation.currentJob() === rootJob)
-        someBlockingCode()
-      }
+    withRootJob {
+      someBlockingCode()
     }.waitJoin()
 
     failureTrace?.let {
