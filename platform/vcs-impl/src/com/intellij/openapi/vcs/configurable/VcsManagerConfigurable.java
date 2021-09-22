@@ -102,7 +102,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   protected Configurable[] buildConfigurables() {
     List<Configurable> result = new ArrayList<>();
 
-    result.add(new VcsDirectoryConfigurationPanel(myProject));
+    result.add(new VcsMappingConfigurable(myProject));
     if (Registry.is("vcs.ignorefile.generation", true)) {
       result.add(new IgnoredSettingsPanel(myProject));
     }
