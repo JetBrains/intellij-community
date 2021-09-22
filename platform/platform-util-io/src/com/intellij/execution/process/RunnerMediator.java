@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,20 +11,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
  * Utility class to start a process on Windows with a runner mediator (runnerw.exe) injected into a command line,
- * which adds a capability to terminate process tree gracefully by sending it a Ctrl+Break through stdin.
+ * which adds a capability to terminate process tree gracefully by sending it Ctrl+Break or Ctrl+C signals through the stdin.
  *
- * @deprecated processes are killed softly on Windows be default now
+ * @deprecated processes are killed softly on Windows be default now, see {@link KillableProcessHandler#canTerminateGracefullyWithWinP()}
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-public class RunnerMediator {
+public final class RunnerMediator {
   private static final Logger LOG = Logger.getInstance(RunnerMediator.class);
 
   private static final char IAC = (char)5;
@@ -35,41 +34,25 @@ public class RunnerMediator {
   private static final String IDEA_RUNNERW = "IDEA_RUNNERW";
   private static final Key<Boolean> MEDIATOR_KEY = Key.create("KillableProcessHandler.Mediator.Process");
 
-  /**
-   * Creates default runner mediator
-   */
-  public static RunnerMediator getInstance() {
-    return new RunnerMediator();
-  }
+  private RunnerMediator() {}
 
   /**
    * Sends sequence of two chars(codes 5 and {@code event}) to a process output stream
    */
-  private static void sendCtrlEventThroughStream(final @NotNull Process process, final char event) {
+  private static boolean sendCtrlEventThroughStream(@NotNull Process process, char event) {
     OutputStream os = process.getOutputStream();
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    PrintWriter pw = new PrintWriter(os);
-    pw.print(IAC);
-    pw.print(event);
-    pw.flush();
-  }
-
-  /**
-   * In case of windows creates process with runner mediator(runnerw.exe) injected to command line string, which adds a capability
-   * to terminate process tree gracefully with ctrl+break.
-   * <p>
-   * Returns appropriate process handle, which in case of Unix is able to terminate whole process tree by sending sig_kill
-   */
-  public @NotNull ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new KillableColoredProcessHandler(commandLine, true) {
-      @Override
-      protected boolean destroyProcessGracefully() {
-        if (SystemInfo.isWindows) {
-          return RunnerMediator.destroyProcess(myProcess, false);
-        }
-        return super.destroyProcessGracefully();
+    if (os != null) {
+      try {
+        os.write(IAC);
+        os.write(event);
+        os.flush();
+        return true;
       }
-    };
+      catch (IOException e) {
+        LOG.info("Cannot send " + IAC + "+" + event + " to runnerw", e);
+      }
+    }
+    return false;
   }
 
   private static @Nullable String getRunnerPath() {
@@ -114,40 +97,15 @@ public class RunnerMediator {
   }
 
   /**
-   * Destroys process tree: in case of windows via imitating ctrl+break, in case of unix via sending sig_kill to every process in tree.
+   * Sends Ctrl+C or Ctrl+Break signals through stdin to runnerw.exe which will generate
+   * corresponding events to all console processes attached to the console.
    *
    * @param process to kill with all sub-processes.
    */
-  public static boolean destroyProcess(final @NotNull Process process) {
-    return destroyProcess(process, false);
-  }
-
-  /**
-   * Destroys process tree: in case of windows via imitating ctrl+c, in case of unix via sending sig_int to every process in tree.
-   *
-   * @param process to kill with all sub-processes.
-   */
-  static boolean destroyProcess(final @NotNull Process process, final boolean softKill) {
-    try {
-      if (SystemInfo.isWindows) {
-        sendCtrlEventThroughStream(process, softKill ? C : BRK);
-        return true;
-      }
-      else if (SystemInfo.isUnix) {
-        if (softKill) {
-          return UnixProcessManager.sendSigIntToProcessTree(process);
-        }
-        else {
-          return UnixProcessManager.sendSigKillToProcessTree(process);
-        }
-      }
-      else {
-        return false;
-      }
+  static boolean destroyProcess(final @NotNull Process process, @SuppressWarnings("SameParameterValue") boolean softKill) {
+    if (SystemInfo.isWindows) {
+      return sendCtrlEventThroughStream(process, softKill ? C : BRK);
     }
-    catch (Exception e) {
-      LOG.error("Couldn't terminate the process", e);
-      return false;
-    }
+    return false;
   }
 }
