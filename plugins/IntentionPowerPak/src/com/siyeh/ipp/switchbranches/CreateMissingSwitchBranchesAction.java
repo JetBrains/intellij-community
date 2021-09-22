@@ -100,22 +100,22 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     }
     if (expression instanceof PsiReferenceExpression) {
       PsiModifierListOwner target = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiModifierListOwner.class);
-      List<Value> values = getValues(target, type);
+      List<Value> values = getValues(target, type, expression);
       if (values != null) return values;
     }
     else if (expression instanceof PsiMethodCallExpression) {
       PsiModifierListOwner target = ObjectUtils.tryCast(((PsiMethodCallExpression)expression).resolveMethod(), PsiModifierListOwner.class);
-      List<Value> values = getValues(target, type);
+      List<Value> values = getValues(target, type, expression);
       if (values != null) return values;
     }
     return Collections.emptyList();
   }
 
-  private static List<Value> getValues(PsiModifierListOwner target, PsiType type) {
+  private static List<Value> getValues(PsiModifierListOwner target, PsiType type, PsiElement context) {
     if (target == null) {
       return null;
     }
-    MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(target, type);
+    MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(target, type, context);
     if (values != null && !values.isFlagSet() && values.getValues().length <= MAX_NUMBER_OF_BRANCHES) {
       List<Value> result = new ArrayList<>();
       for (PsiAnnotationMemberValue value : values.getValues()) {
