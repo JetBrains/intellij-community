@@ -157,7 +157,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       return myState;
     }
     finally {
-      CorruptionMarker.markIndexesAsDirty();
+      //CorruptionMarker.markIndexesAsDirty();
       myFileBasedIndex.addStaleIds(myStaleIds);
       myFileBasedIndex.setUpFlusher();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
