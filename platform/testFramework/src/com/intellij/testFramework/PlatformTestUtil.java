@@ -104,6 +104,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.*;
 import java.util.function.Function;
 import java.util.jar.JarFile;
@@ -1070,36 +1072,40 @@ public final class PlatformTestUtil {
   /**
    * Executing {@code runConfiguration} with executor {@code executoId} and wait for the {@code timeoutInSeconds} seconds till process ends.
    */
-  @NotNull
-  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
-                                                                 @NotNull String executorId,
-                                                                 long timeoutInSeconds) throws InterruptedException {
-    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
+                                                                          @NotNull String executorId,
+                                                                          long timeoutInSeconds) throws InterruptedException {
+    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId, null);
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
-    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler, processHandler::isProcessTerminated, 60);
+    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
+                              processHandler::isProcessTerminated, 60);
     return result.first;
   }
 
-
-  @NotNull
-  public static Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
-                                                                                               @NotNull String executorId)
+  /**
+   * @see PlatformTestUtil#executeConfiguration(RunConfiguration, com.intellij.execution.Executor, java.util.function.Consumer)
+   */
+  public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull String executorId,
+    @Nullable Consumer<RunContentDescriptor> contentDescriptorProcessor)
     throws InterruptedException {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     assertNotNull("Unable to find executor: " + executorId, executor);
-    return executeConfiguration(runConfiguration, executor);
+    return executeConfiguration(runConfiguration, executor, contentDescriptorProcessor);
   }
 
   /**
-   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns pair of {@link ExecutionEnvironment} and
-   * {@link RunContentDescriptor}
+   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns a pair of {@link ExecutionEnvironment} and
+   * {@link RunContentDescriptor}.
+   *
+   * @param descriptorProcessor optional processor for the run content descriptor of executed configuration
    */
-  @NotNull
-  public static Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
-                                                                                               @NotNull Executor executor)
-    throws InterruptedException {
-
+  public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull Executor executor,
+    @Nullable Consumer<? super RunContentDescriptor> descriptorProcessor) throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1116,6 +1122,9 @@ public final class PlatformTestUtil {
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, descriptor -> {
       LOG.debug("Process started");
+      if (descriptorProcessor != null) {
+        descriptorProcessor.accept(descriptor);
+      }
       ProcessHandler processHandler = descriptor.getProcessHandler();
       assertNotNull(processHandler);
       processHandler.addProcessListener(new ProcessAdapter() {
