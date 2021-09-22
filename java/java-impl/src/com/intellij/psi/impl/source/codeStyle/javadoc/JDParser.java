@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -438,7 +439,7 @@ public class JDParser {
    * @param width width of the wrapped text
    * @return array of strings (lines)
    */
-  @Nullable
+  @Contract("null, _ -> null")
   private List<String> toArrayWrapping(@Nullable String s, int width) {
     List<String> list = new ArrayList<>();
     List<Pair<String, Boolean>> pairs = splitToParagraphs(s);
@@ -498,7 +499,7 @@ public class JDParser {
    * @param s   string to process
    * @return    processing result
    */
-  @Nullable
+  @Contract("null -> null")
   private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s) {
     if (s == null) return null;
     s = s.trim();
