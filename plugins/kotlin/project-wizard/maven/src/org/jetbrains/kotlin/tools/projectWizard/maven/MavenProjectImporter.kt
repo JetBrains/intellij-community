@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.projectWizard.maven
+package org.jetbrains.kotlin.tools.projectWizard.maven
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -9,7 +9,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.PlatformVersion
 import java.nio.file.Path
 
-class MavenProjectImporter(private val project: Project) {
+internal class MavenProjectImporter(private val project: Project) {
+
     fun importProject(path: Path) {
         if (PlatformVersion.isAndroidStudio()) {
             return // AS does not support Maven

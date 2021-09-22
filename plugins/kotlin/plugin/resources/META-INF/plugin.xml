@@ -106,7 +106,6 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
   <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="refIndex.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="project-wizard.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlinx-serialization.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -134,6 +133,7 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.gradle.gradle-native"/>
     <module name="kotlin.maven"/>
+    <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.project-wizard.gradle"/>
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.properties"/>

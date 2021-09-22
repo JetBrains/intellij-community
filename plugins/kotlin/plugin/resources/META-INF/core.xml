@@ -34,9 +34,6 @@
             interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="com.intellij.newProjectWizard.buildSystem.kotlin"
-            interface="org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType" dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.testFrameworkProvider"
             interface="org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider"
             dynamic="true"/>
@@ -225,8 +222,6 @@
             key="CLASS"
             factoryClass="org.jetbrains.kotlin.idea.structureView.KtClsStructureViewBuilderProvider"/>
 
-    <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.IntelliJKotlinBuildSystemType"/>
-
     <registryKey
             key="kotlin.code-vision.usages"
             description="Enable Code-Vision usages search"
@@ -263,13 +258,6 @@
     <j2kConverterExtension implementation="org.jetbrains.kotlin.idea.j2k.OldJ2kConverterExtension"/>
 
     <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.configuration.GradleDetector"/>
-  </extensions>
-
-  <!-- Project Wizard -->
-  <extensions defaultExtensionNs="com.intellij">
-    <jbProtocolCommand implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.OpenNewProjectWizardProtocolCommand"/>
-    <newProjectWizard implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
-    <moduleBuilder builderClass="org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder"/>
   </extensions>
 
   <!-- Editing -->
