@@ -642,7 +642,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           myConnection.disconnect();
         }
 
-        CorruptionMarker.markIndexesAsClosed();
+        //CorruptionMarker.markIndexesAsClosed();
       }
       catch (Throwable e) {
         LOG.error("Problems during index shutdown", e);
