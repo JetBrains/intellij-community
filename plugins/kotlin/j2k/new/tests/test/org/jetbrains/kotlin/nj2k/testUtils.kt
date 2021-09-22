@@ -16,17 +16,21 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
-fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel = LanguageLevel.JDK_1_8): KotlinWithJdkAndRuntimeLightProjectDescriptor {
-    return object : KotlinWithJdkAndRuntimeLightProjectDescriptor() {
-        private fun projectDescriptorByFileDirective(): LightProjectDescriptor {
-            val fileText = FileUtil.loadFile(testDataFile, true)
-            return if (InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_FULL_JDK"))
-                INSTANCE_FULL_JDK
-            else INSTANCE
-        }
+fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel = LanguageLevel.JDK_1_8): LightProjectDescriptor {
+    val fileText = FileUtil.loadFile(testDataFile, true)
+    val descriptor = when {
+        InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_FULL_JDK") ->
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
 
+        InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_STDLIB_JDK8") ->
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
+
+        else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    }
+
+    return object : KotlinWithJdkAndRuntimeLightProjectDescriptor(descriptor.libraryFiles, descriptor.librarySourceFiles) {
         override fun getSdk(): Sdk? {
-            val sdk = projectDescriptorByFileDirective().sdk ?: return null
+            val sdk = descriptor.sdk ?: return null
             runWriteAction {
                 val modificator: SdkModificator = (sdk.clone() as Sdk).sdkModificator
                 JavaSdkImpl.attachJdkAnnotations(modificator)
