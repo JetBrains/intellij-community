@@ -37,9 +37,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   // guarded by this
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
 
-  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> {
-    return n == 0 ? ExtensionPointListener.emptyArray() : new ExtensionPointListener[n];
-  };
+  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.emptyArray() : new ExtensionPointListener[n];
 
   private final String name;
   private final String className;
@@ -303,22 +301,22 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
-  public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<Supplier<@Nullable T>, PluginDescriptor> consumer) {
+  public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<? super Supplier<? extends @Nullable T>, ? super PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
       for (T extension : cachedExtensions) {
-        consumer.accept(() -> extension, pluginDescriptor /* doesn't matter for tests */);
+        consumer.accept((Supplier<T>)() -> extension, pluginDescriptor /* doesn't matter for tests */);
       }
       return;
     }
 
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
-      consumer.accept(() -> adapter.createInstance(componentManager), adapter.getPluginDescriptor());
+      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.getPluginDescriptor());
     }
   }
 
   @TestOnly
-  public final void checkImplementations(@NotNull Consumer<ExtensionComponentAdapter> consumer) {
+  public final void checkImplementations(@NotNull Consumer<? super ExtensionComponentAdapter> consumer) {
     for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
       consumer.accept(adapter);
     }
@@ -536,28 +534,6 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return true;
   }
 
-  // used in upsource
-  // remove extensions for which implementation class is not available
-  @SuppressWarnings("unused")
-  public final synchronized void removeUnloadableExtensions() {
-    List<ExtensionComponentAdapter> adapters = this.adapters;
-    for (int i = adapters.size() - 1; i >= 0; i--) {
-      ExtensionComponentAdapter adapter = adapters.get(i);
-      try {
-        adapter.getImplementationClass(componentManager);
-      }
-      catch (Throwable e) {
-        if (adapters == this.adapters) {
-          adapters = new ArrayList<>(adapters);
-        }
-        adapters.remove(i);
-        clearCache();
-      }
-    }
-
-    this.adapters = adapters;
-  }
-
   /**
    * Put extension point in read-only mode and replace existing extensions by supplied.
    * For tests this method is more preferable than {@link #registerExtension)} because makes registration more isolated and strict
@@ -567,7 +543,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    */
   @TestOnly
   @ApiStatus.Internal
-  public final synchronized void maskAll(@NotNull List<T> newList, @NotNull Disposable parentDisposable, boolean fireEvents) {
+  public final synchronized void maskAll(@NotNull List<? extends T> newList, @NotNull Disposable parentDisposable, boolean fireEvents) {
     if (POINTS_IN_READONLY_MODE == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       POINTS_IN_READONLY_MODE = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -662,7 +638,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final synchronized void unregisterExtension(@NotNull T extension) {
-    if (!unregisterExtensions((className, adapter) -> !adapter.isInstanceCreated() || adapter.createInstance(componentManager) != extension, true)) {
+    if (!unregisterExtensions((__, adapter) -> !adapter.isInstanceCreated() || adapter.createInstance(componentManager) != extension, true)) {
       // there is a possible case that particular extension was replaced in particular environment, e.g. Upsource
       // replaces some IntelliJ extensions (important for CoreApplicationEnvironment), so, just log as error instead of throw error
       LOG.warn("Extension to be removed not found: " + extension);
@@ -672,7 +648,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   @Override
   public final void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
     String classNameToUnregister = extensionClass.getCanonicalName();
-    if (!unregisterExtensions((className, adapter) -> !className.equals(classNameToUnregister), /* stopAfterFirstMatch = */ true)) {
+    if (!unregisterExtensions((cls, adapter) -> !cls.equals(classNameToUnregister), /* stopAfterFirstMatch = */ true)) {
       LOG.warn("Extension to be removed not found: " + extensionClass);
     }
   }

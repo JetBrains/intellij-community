@@ -69,7 +69,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
     List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.outside));
 
     // all infos for the "injected fragment for the host which is inside" are indeed inside
-    // but some of the infos for the "injected fragment for the host which is outside" can be still inside
+    // but some infos for the "injected fragment for the host which is outside" can be still inside
     Set<PsiFile> injected = getInjectedPsiFiles(allInsideElements, allOutsideElements, progress);
 
     Set<HighlightInfo> injectedResult = new HashSet<>();
