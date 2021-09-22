@@ -25,12 +25,13 @@ import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.execute
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Paths
+import java.nio.file.attribute.FileTime
+import java.time.Instant
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.div
 
-private const val METADATA_FILE = ".state.json"
+private const val STATE_FILE = ".state.json"
 
 class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
   private val myTargetEnvRequest = checkNotNull(PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(mySdk))
@@ -52,10 +53,16 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
 
     val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.REMOTE_SYNC, targetEnvironmentRequest = myTargetEnvRequest)
 
-    if (Files.exists(localRemoteSourcesRoot / METADATA_FILE)) {
-      Files.copy(localRemoteSourcesRoot / METADATA_FILE, localUploadDir / METADATA_FILE)
+    val stateFilePath = localRemoteSourcesRoot / STATE_FILE
+    val stateFilePrevTimestamp: FileTime
+    if (Files.exists(stateFilePath)) {
+      stateFilePrevTimestamp = Files.getLastModifiedTime(stateFilePath)
+      Files.copy(stateFilePath, localUploadDir / STATE_FILE)
       execution.addParameter("--state-file")
-      execution.addParameter(uploadVolume.getTargetUploadPath().getRelativeTargetPath(METADATA_FILE))
+      execution.addParameter(uploadVolume.getTargetUploadPath().getRelativeTargetPath(STATE_FILE))
+    }
+    else {
+      stateFilePrevTimestamp = FileTime.from(Instant.MIN)
     }
     execution.addParameter(downloadVolume.getTargetDownloadPath())
 
@@ -66,14 +73,16 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
     // XXX Make it automatic
     environment.downloadVolumes.values.forEach { it.download(".", indicator) }
 
-    val stateFile: StateFile
-    try {
-      Files.newBufferedReader(localRemoteSourcesRoot / METADATA_FILE).use {
-        stateFile = Gson().fromJson(it, StateFile::class.java)
-      }
+    if (!Files.exists(stateFilePath)) {
+      throw IllegalStateException("$stateFilePath is missing")
     }
-    catch (e: NoSuchFileException) {
-      throw IllegalStateException("$METADATA_FILE is missing")
+    if (Files.getLastModifiedTime(stateFilePath) <= stateFilePrevTimestamp) {
+      throw IllegalStateException("$stateFilePath has not been updated")
+    }
+    
+    val stateFile: StateFile
+    Files.newBufferedReader(stateFilePath).use {
+      stateFile = Gson().fromJson(it, StateFile::class.java)
     }
 
     val pathMappings = PathMappingSettings()
