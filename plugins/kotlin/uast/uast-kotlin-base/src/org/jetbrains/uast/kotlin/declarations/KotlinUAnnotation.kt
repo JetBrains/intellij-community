@@ -84,7 +84,7 @@ class KotlinUAnnotation(
     override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
 
     override fun resolve(): PsiClass? {
-        return baseResolveProviderService.resolveToClass(sourcePsi)
+        return baseResolveProviderService.resolveToClass(sourcePsi, this)
     }
 
     override val uastAnchor by lz {
