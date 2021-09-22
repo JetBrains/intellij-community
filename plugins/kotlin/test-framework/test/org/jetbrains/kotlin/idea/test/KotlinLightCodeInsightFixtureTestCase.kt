@@ -316,7 +316,7 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     // TODO: refactor such tests or add sophisticated check for the directive
     val options = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $COMPILER_ARGUMENTS_DIRECTIVE ").firstOrNull()
 
-    if (version != null || jvmTarget != null || options != null) {
+    if (version != null || apiVersion != null || jvmTarget != null || options != null) {
         configureLanguageAndApiVersion(
             project, module,
             version ?: LanguageVersion.LATEST_STABLE.versionString,
