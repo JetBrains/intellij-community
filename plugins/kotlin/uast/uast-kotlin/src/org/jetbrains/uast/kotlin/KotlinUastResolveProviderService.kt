@@ -208,7 +208,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolveToClassIfConstructorCallImpl(ktCallElement, source) as? PsiClass
     }
 
-    override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry): PsiClass? {
+    override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry, source: UElement): PsiClass? {
         val classDescriptor = ktAnnotationEntry.resolveToClassDescriptor() ?: return null
         return ktAnnotationEntry.calleeExpression?.let { ktExpression ->
             resolveToDeclarationImpl(ktExpression, classDescriptor) as? PsiClass
