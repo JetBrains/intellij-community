@@ -453,7 +453,7 @@ public class ShelvedChangesViewManager implements Disposable {
   @NotNull
   static ListSelection<ShelvedWrapper> getSelectedChangesOrAll(@NotNull DataContext dataContext) {
     ChangesTree tree = dataContext.getData(SHELVED_CHANGES_TREE);
-    if (tree == null) return ListSelection.createAt(Collections.emptyList(), 0);
+    if (tree == null) return ListSelection.empty();
 
     ListSelection<ShelvedWrapper> wrappers = ListSelection.createAt(VcsTreeModelData.selected(tree).userObjects(ShelvedWrapper.class), 0);
 
