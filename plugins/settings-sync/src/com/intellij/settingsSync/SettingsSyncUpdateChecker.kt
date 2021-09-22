@@ -1,0 +1,27 @@
+package com.intellij.settingsSync
+
+import com.intellij.openapi.application.Application
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+
+internal class SettingsSyncUpdateChecker(private val application: Application,
+                                         private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
+
+  @RequiresBackgroundThread
+  fun updateFromServer() {
+    val updateResult = remoteCommunicator.receiveUpdates()
+    when (updateResult) {
+      is UpdateResult.Error -> {
+        // todo remove the notification after next successful update
+        notifyError(SettingsSyncBundle.message("notification.title.update.error"), updateResult.message)
+        return
+      }
+      is UpdateResult.Success -> {
+        val snapshot = updateResult.settingsSnapshot
+        val event = SettingsChangeEvent(ChangeSource.FROM_SERVER, snapshot)
+        application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(event)
+      }
+    }
+  }
+
+  // todo update by app focus receive & by timer
+}

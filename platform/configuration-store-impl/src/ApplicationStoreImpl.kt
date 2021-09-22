@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -21,7 +21,7 @@ internal class ApplicationPathMacroManager : PathMacroManager(null)
 
 @NonNls const val APP_CONFIG = "\$APP_CONFIG$"
 
-class ApplicationStoreImpl : ComponentStoreWithExtraComponents() {
+open class ApplicationStoreImpl : ComponentStoreWithExtraComponents() {
   override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication(), PathMacroManager.getInstance(ApplicationManager.getApplication()))
 
   override val serviceContainer: ComponentManagerImpl

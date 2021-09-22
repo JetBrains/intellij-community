@@ -40,6 +40,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.textmate",
     "intellij.editorconfig",
     "intellij.settingsRepository",
+    "intellij.settingsSync",
     "intellij.configurationScript",
     "intellij.yaml",
     "intellij.tasks.core",
