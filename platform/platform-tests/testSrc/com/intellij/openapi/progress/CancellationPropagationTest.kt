@@ -13,6 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -36,7 +37,10 @@ class CancellationPropagationTest : BasePlatformTestCase() {
         task()
       }
       service.execute(f)
-      service.submit(f)
+      val callable = Callable(f)
+      service.submit(callable)
+      val callables = listOf(Callable(f), Callable(f))
+      service.invokeAll(callables)
     }
 
     var failureTrace by AtomicReference<Throwable?>()
@@ -72,7 +76,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     }
 
     fun expectedTaskCount(layer: Int): Int = layer * layer + layer
-    assertEquals(expectedTaskCount(2), counter.get())
+    assertEquals(expectedTaskCount(4), counter.get())
   }
 
   @Test
