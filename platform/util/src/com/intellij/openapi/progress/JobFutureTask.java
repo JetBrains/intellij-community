@@ -5,6 +5,7 @@ import com.intellij.openapi.application.AccessToken;
 import kotlinx.coroutines.CompletableDeferred;
 import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.JobKt;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
@@ -15,6 +16,7 @@ import static com.intellij.openapi.progress.Cancellation.currentJob;
 import static com.intellij.openapi.progress.Cancellation.withJob;
 import static kotlinx.coroutines.CompletableDeferredKt.CompletableDeferred;
 
+@Internal
 public final class JobFutureTask<V> extends FutureTask<V> {
 
   private final @NotNull CompletableDeferred<V> myJob;
