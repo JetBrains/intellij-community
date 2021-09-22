@@ -27,48 +27,40 @@ class CancellationPropagationTest : BasePlatformTestCase() {
 
   @Test
   fun `job tree`() {
+    fun tasks(task: () -> Unit) {
+      val f = {
+        task()
+      }
+      service.execute(f)
+      service.submit(f)
+    }
+
     var failureTrace by AtomicReference<Throwable?>()
 
-    fun assertCurrentJob(parent: Job?): Job? {
+    fun assertCurrentJobIsChildOf(parent: Job): Job {
       val current = Cancellation.currentJob()
       if (current == null) {
-        failureTrace = Throwable()
-        return null
+        Throwable().let {
+          failureTrace = it
+          throw it
+        }
       }
-      if (parent != null && current !in parent.children) {
-        failureTrace = Throwable()
-        return null
+      if (current !in parent.children) {
+        Throwable().let {
+          failureTrace = it
+          throw it
+        }
       }
       return current
     }
 
-    fun someBlockingCode() {
-      val rootJob = assertCurrentJob(null)
-      assertTrue(Cancellation.currentJob() === rootJob)
-
-      service.execute { // root -> execute
-        val rej = assertCurrentJob(parent = rootJob) ?: return@execute
-        service.submit { // execute -> submit
-          assertCurrentJob(parent = rej)
-        }
-        service.execute { // execute -> execute
-          assertCurrentJob(parent = rej)
+    withRootJob { rootJob ->
+      tasks {
+        val child = assertCurrentJobIsChildOf(parent = rootJob)
+        tasks {
+          assertCurrentJobIsChildOf(parent = child)
         }
       }
-
-      service.submit { // root -> submit
-        val rsj = assertCurrentJob(parent = rootJob) ?: return@submit
-        service.submit { // execute -> submit
-          assertCurrentJob(parent = rsj)
-        }
-        service.execute { // execute -> execute
-          assertCurrentJob(parent = rsj)
-        }
-      }
-    }
-
-    withRootJob {
-      someBlockingCode()
     }.waitJoin()
 
     failureTrace?.let {
