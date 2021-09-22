@@ -20,7 +20,8 @@ def print_usage(cmd):
            '  {0} [project_dir] [-w|--wait]\n' +
            '  {0} [-l|--line line] [project_dir|--temp-project] [-w|--wait] file[:line]\n' +
            '  {0} diff <left> <right>\n' +
-           '  {0} merge <local> <remote> [base] <merged>').format(cmd))
+           '  {0} merge <local> <remote> [base] <merged>\n' +
+           '  {0} ideScript <script>').format(cmd))
 
 
 def write_to_sock(sock, data):
@@ -57,7 +58,7 @@ def process_args(argv):
         if arg == '-h' or arg == '-?' or arg == '--help':
             print_usage(argv[0])
             exit(0)
-        elif i == 0 and (arg == 'diff' or arg == 'merge' or arg == '--temp-project'):
+        elif i == 0 and (arg == 'diff' or arg == 'merge' or arg == 'ideScript' or arg == '--temp-project'):
             args.append(arg)
         elif arg == '-l' or arg == '--line':
             args.append(arg)
