@@ -151,7 +151,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
           }
         }
         is LocalDistributionInfo -> {
-          val settings = LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, listOf(null))
+          val settings = LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, emptyList())
           val virtualFile = VfsUtil.findFile(Path.of(distribution.path), false) ?: return settings
           val keyboardFocusManager = getCurrentKeyboardFocusManager()
           val activeWindow = keyboardFocusManager.activeWindow
