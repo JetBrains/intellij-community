@@ -2,10 +2,15 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.utils.ifEmpty
 
 class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -23,8 +28,9 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
     }
 
     private fun processAnnotation(annotation: JKAnnotation) {
-        annotation.tryConvertDeprecatedAnnotation() ||
-                annotation.tryConvertTargetAnnotation()
+        with(annotation) {
+            tryConvertDeprecatedAnnotation() || tryConvertTargetAnnotation() || tryConvertRepeatableAnnotation()
+        }
     }
 
     private fun JKAnnotation.tryConvertDeprecatedAnnotation(): Boolean {
@@ -59,6 +65,25 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
                     arguments = it
                 }
 
+            return true
+        }
+
+        return false
+    }
+
+    private fun JKAnnotation.tryConvertRepeatableAnnotation(): Boolean {
+        if (classSymbol.fqName == JvmAnnotationNames.REPEATABLE_ANNOTATION.asString() && moduleApiVersion >= ApiVersion.KOTLIN_1_6) {
+            val jvmRepeatable = "kotlin.jvm.JvmRepeatable"
+            KotlinTopLevelTypeAliasFqNameIndex.getInstance()[
+                    jvmRepeatable,
+                    context.project,
+                    context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
+                        ?: ProjectScope.getLibrariesScope(context.project)
+            ].ifEmpty {
+                return false
+            }
+
+            classSymbol = symbolProvider.provideClassSymbol(jvmRepeatable)
             return true
         }
 
