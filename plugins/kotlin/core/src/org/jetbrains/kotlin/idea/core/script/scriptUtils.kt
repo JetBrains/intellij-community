@@ -36,7 +36,8 @@ fun scriptingWarnLog(message: String) {
 }
 
 fun scriptingWarnLog(message: String, throwable: Throwable?) {
-    logger.warn("[KOTLIN_SCRIPTING] $message", throwable)
+    // FIXME change to logger.warn after 27.09.21. Workaround for remote-dev build. Ping me(Denis.Konoplev) if I won't do it.
+    logger.debug("[KOTLIN_SCRIPTING] $message", throwable)
 }
 
 fun scriptingErrorLog(message: String, throwable: Throwable?) {
