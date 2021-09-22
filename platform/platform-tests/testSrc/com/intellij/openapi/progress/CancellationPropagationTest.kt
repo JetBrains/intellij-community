@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
@@ -27,8 +28,11 @@ class CancellationPropagationTest : BasePlatformTestCase() {
 
   @Test
   fun `job tree`() {
+    val counter = AtomicInteger()
+
     fun tasks(task: () -> Unit) {
       val f = {
+        counter.incrementAndGet()
         task()
       }
       service.execute(f)
@@ -66,6 +70,9 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     failureTrace?.let {
       throw it
     }
+
+    fun expectedTaskCount(layer: Int): Int = layer * layer + layer
+    assertEquals(expectedTaskCount(2), counter.get())
   }
 
   @Test
