@@ -102,5 +102,9 @@ class GitStageDiffPreview(project: Project,
     override fun createProducer(project: Project?): DiffRequestProducer? {
       return createTwoSidesDiffRequestProducer(project!!, node)
     }
+
+    override fun toString(): String {
+      return "GitFileStatusNodeWrapper(node=$node)"
+    }
   }
 }
