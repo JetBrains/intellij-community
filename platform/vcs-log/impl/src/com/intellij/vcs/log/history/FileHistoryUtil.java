@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -21,7 +21,6 @@ import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,10 +65,6 @@ public final class FileHistoryUtil {
     Hash commitHash = logData.getCommitId(commitIndex).getHash();
     ContentRevision afterRevision = createContentRevision(commitHash, commitIndex, visiblePack, diffHandler);
 
-    if (FileHistoryFilterer.NO_PARENTS_INFO.get(visiblePack, false) &&
-        commitRow + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
-      parentRows = Collections.singletonList(commitRow + 1);
-    }
     if (parentRows.isEmpty()) {
       if (afterRevision == null) return null;
       return new Change(null, afterRevision);
