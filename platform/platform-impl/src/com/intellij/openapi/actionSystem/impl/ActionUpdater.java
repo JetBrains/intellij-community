@@ -30,7 +30,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.*;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
@@ -42,10 +42,7 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -55,7 +52,7 @@ final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
 
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
-  static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
+  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
 
   private final boolean myModalContext;
@@ -349,16 +346,12 @@ final class ActionUpdater {
   }
 
   static void waitForAllUpdatesToFinish() {
-    int executorThreads = 2;
-    Semaphore semaphore = new Semaphore(executorThreads + 1);
-    Runnable upAndWait = () -> {
-      semaphore.up();
-      semaphore.waitFor();
-    };
-    for (int i = 0; i < executorThreads; i++) {
-      ourExecutor.execute(upAndWait);
+    try {
+      ((BoundedTaskExecutor)ourExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
     }
-    upAndWait.run();
+    catch (Exception e) {
+      ExceptionUtil.rethrow(e);
+    }
   }
 
   private void waitTheTestDelay() {
