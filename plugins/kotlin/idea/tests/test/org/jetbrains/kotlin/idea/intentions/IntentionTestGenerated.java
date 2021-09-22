@@ -5169,6 +5169,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/implicitReceiver.kt");
+        }
+
         @TestMetadata("infixCall.kt")
         public void testInfixCall() throws Exception {
             runTest("testData/intentions/convertForEachToForLoop/infixCall.kt");
