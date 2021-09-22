@@ -216,12 +216,10 @@ class RemoteSync(object):
         os_stat = os.stat(path)
         return {
             'mtime': int(os_stat.st_mtime) if not self._test_root else 0,
-            'size': int(os_stat.st_size),
         }
 
     def is_modified(self, cur_stat, old_stat):
-        return (cur_stat['mtime'] > old_stat['mtime'] or
-                cur_stat['size'] != old_stat['size'])
+        return cur_stat['mtime'] > old_stat['mtime']
 
     def root_id(self, path):
         if self._test_root:
