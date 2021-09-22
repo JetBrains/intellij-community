@@ -31,7 +31,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                   "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
     { "alt DOWN",                 "ShowContent", "MethodDown", "ShowSearchHistory"},
-    { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
+    { "alt F1",                   "SelectIn"},
     { "alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
     { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
     { "control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
@@ -241,7 +241,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl V",             "PasteMultiple", "Terminal.Paste"},
     });
     put("Default for GNOME", new String[][] {
-    { "shift alt 1",              "SelectIn", "ProjectViewChangeView"},
+    { "shift alt 1",              "SelectIn"},
     { "shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
     { "shift alt LEFT",           "PreviousEditorTab", "Diff.PrevChange", "Back"},
     { "shift alt RIGHT",          "NextEditorTab", "Diff.NextChange","Forward"},
@@ -251,7 +251,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control 2",                "FileChooser.GotoProject", "Stop", "DuplicatesForm.SendToRight"},
     { "control 3",                "FindWordAtCaret", "FileChooser.GotoModule"},
     { "control 5",                "Refresh", "Rerun"},
-    { "shift alt 1",              "SelectIn", "ProjectViewChangeView"},
+    { "shift alt 1",              "SelectIn"},
     { "shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
     { "shift alt L",              "ReformatCode", "context.load"},
     });

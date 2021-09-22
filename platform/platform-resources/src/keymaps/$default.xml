@@ -1008,9 +1008,6 @@
   <action id="EditorDeleteToWordEnd">
     <keyboard-shortcut first-keystroke="control DELETE"/>
   </action>
-  <action id="ProjectViewChangeView">
-    <keyboard-shortcut first-keystroke="alt F1"/>
-  </action>
   <action id="ChooseRunConfiguration">
     <keyboard-shortcut first-keystroke="alt shift F10"/>
   </action>
