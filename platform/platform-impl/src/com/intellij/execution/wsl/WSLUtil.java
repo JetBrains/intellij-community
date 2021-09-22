@@ -171,7 +171,7 @@ public final class WSLUtil {
   }
 
   public static @NotNull ThreeState isWsl1(@NotNull WSLDistribution distribution) {
-    int version = getWslVersion(distribution);
+    int version = distribution.getVersion();
     return version < 0 ? ThreeState.UNSURE : ThreeState.fromBoolean(version == 1);
   }
 
@@ -179,7 +179,7 @@ public final class WSLUtil {
    * @param distribution
    * @return version if it can be determined or -1 instead
    */
-  public static int getWslVersion(@NotNull WSLDistribution distribution) {
+  static int getWslVersion(@NotNull WSLDistribution distribution) {
     int version = getVersionFromWslCli(distribution);
     if (version < 0) {
       version = getVersionByUname(distribution);
@@ -247,7 +247,7 @@ public final class WSLUtil {
     return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId");
   }
 
-  public static class WSLToolFlags {
+  static class WSLToolFlags {
     public final boolean isQuietFlagAvailable;
     public final boolean isVerboseFlagAvailable;
 
