@@ -10,8 +10,7 @@ class UpdateCopyrightAdditionalUi {
   lateinit var updateExistingCopyrightsCb: JCheckBox
   val panel = panel {
     row {
-      checkBox(CopyrightBundle.message("checkbox.text.update.existing.copyrights"))
-        .applyToComponent { updateExistingCopyrightsCb = this }
+      updateExistingCopyrightsCb = checkBox(CopyrightBundle.message("checkbox.text.update.existing.copyrights")).component
     }.topGap(TopGap.MEDIUM)
   }
 }

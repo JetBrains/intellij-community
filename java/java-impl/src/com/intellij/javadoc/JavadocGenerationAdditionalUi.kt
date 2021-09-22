@@ -52,27 +52,24 @@ class JavadocGenerationAdditionalUi {
   val panel = panel {
     group(JavaBundle.message("javadoc.generate.options.separator")) {
       row {
-        checkBox(JavaBundle.message("javadoc.generate.include.jdk.library.sources.in.sourcepath.option"))
-          .applyToComponent { myIncludeLibraryCb = this }
+        myIncludeLibraryCb = checkBox(JavaBundle.message("javadoc.generate.include.jdk.library.sources.in.sourcepath.option")).component
       }
       row {
-        checkBox(JavaBundle.message("javadoc.generate.link.to.jdk.documentation.option"))
-          .applyToComponent { myLinkToJdkDocs = this }
+        myLinkToJdkDocs = checkBox(JavaBundle.message("javadoc.generate.link.to.jdk.documentation.option")).component
       }
       row(JavaBundle.message("javadoc.generate.output.directory")) {
-        textFieldWithBrowseButton(JavaBundle.message("javadoc.generate.output.directory.browse"),
+        myTfOutputDir = textFieldWithBrowseButton(JavaBundle.message("javadoc.generate.output.directory.browse"),
           null,
           FileChooserDescriptorFactory.createSingleFolderDescriptor())
-          .applyToComponent { myTfOutputDir = this }
           .horizontalAlign(HorizontalAlign.FILL)
+          .component
         bottomGap(BottomGap.MEDIUM)
       }
       row {
         panel {
           row {
-            cell(JSlider())
+            myScopeSlider = cell(JSlider())
               .applyToComponent {
-                myScopeSlider = this
                 orientation = JSlider.VERTICAL
                 maximum = 4; minimum = 1
                 value = 1
@@ -85,66 +82,64 @@ class JavadocGenerationAdditionalUi {
               }
               .horizontalAlign(HorizontalAlign.CENTER)
               .verticalAlign(VerticalAlign.FILL)
+              .component
           }
         }
         panel {
           row {
-            checkBox(JavaBundle.message("javadoc.generate.options.hierarchy")).applyToComponent { myHierarchy = this }
+            myHierarchy = checkBox(JavaBundle.message("javadoc.generate.options.hierarchy")).component
           }
           row {
-            checkBox(JavaBundle.message("javadoc.generate.options.navigator")).applyToComponent { myNavigator = this }
+            myNavigator = checkBox(JavaBundle.message("javadoc.generate.options.navigator")).component
           }
           row {
-            checkBox(JavaBundle.message("javadoc.generate.options.index")).applyToComponent {
-              myIndex = this
+            myIndex = checkBox(JavaBundle.message("javadoc.generate.options.index")).applyToComponent {
               addChangeListener { mySeparateIndex.isEnabled = myIndex.isSelected }
-            }
+            }.component
           }
           row {
-            checkBox(JavaBundle.message("javadoc.generate.options.index.per.letter")).applyToComponent { mySeparateIndex = this }
+            mySeparateIndex = checkBox(JavaBundle.message("javadoc.generate.options.index.per.letter")).component
           }
         }
         panel {
           row {
-            checkBox("@use").applyToComponent { myTagUse = this }
+            myTagUse = checkBox("@use").component
           }
           row {
-            checkBox("@author").applyToComponent { myTagAuthor = this }
+            myTagAuthor = checkBox("@author").component
           }
           row {
-            checkBox("@version").applyToComponent { myTagVersion = this }
+            myTagVersion = checkBox("@version").component
           }
           row {
-            checkBox("@deprecated").applyToComponent {
-              myTagDeprecated = this
+            myTagDeprecated = checkBox("@deprecated").applyToComponent {
               addChangeListener { myDeprecatedList.isEnabled = myTagDeprecated.isSelected }
-            }
+            }.component
           }
           row {
-            checkBox(JavaBundle.message("javadoc.generate.tag.list.deprecated")).applyToComponent { myDeprecatedList = this }
+            myDeprecatedList = checkBox(JavaBundle.message("javadoc.generate.tag.list.deprecated")).component
           }
         }
           .horizontalAlign(HorizontalAlign.CENTER)
         bottomGap(BottomGap.MEDIUM)
       }
       row(JavaBundle.message("javadoc.generate.locale")) {
-        textField()
-          .applyToComponent { myLocaleTextField = this }
+        myLocaleTextField = textField()
           .horizontalAlign(HorizontalAlign.FILL)
+          .component
       }
       row(JavaBundle.message("javadoc.generate.arguments")) {
-        textField()
-          .applyToComponent { myOtherOptionsField = this }
+        myOtherOptionsField = textField()
           .horizontalAlign(HorizontalAlign.FILL)
+          .component
       }
       row(JavaBundle.message("javadoc.generate.heap.size")) {
-        intTextField(IntRange(0, Int.MAX_VALUE), 128)
-          .applyToComponent { myHeapSizeField = this }
+        myHeapSizeField = intTextField(IntRange(0, Int.MAX_VALUE), 128)
           .horizontalAlign(HorizontalAlign.FILL)
+          .component
       }
       row {
-        checkBox(JavaBundle.message("javadoc.generate.open.in.browser"))
-          .applyToComponent { myOpenInBrowserCheckBox = this }
+        myOpenInBrowserCheckBox = checkBox(JavaBundle.message("javadoc.generate.open.in.browser")).component
       }
     }
   }

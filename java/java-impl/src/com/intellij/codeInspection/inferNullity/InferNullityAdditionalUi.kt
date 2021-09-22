@@ -10,7 +10,7 @@ class InferNullityAdditionalUi {
   lateinit var checkBox: JCheckBox
   val panel = panel {
     row {
-      checkBox(JavaBundle.message("checkbox.annotate.local.variables")).also { checkBox = it.component }
+      checkBox = checkBox(JavaBundle.message("checkbox.annotate.local.variables")).component
     }.topGap(TopGap.MEDIUM)
   }
 

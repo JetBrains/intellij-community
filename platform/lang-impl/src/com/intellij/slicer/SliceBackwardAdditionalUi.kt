@@ -11,9 +11,9 @@ class SliceBackwardAdditionalUi {
   lateinit var field: JTextField
   val panel = panel {
     row(LangBundle.message("label.filter.value")) {
-      textField()
-        .applyToComponent { field = this }
+      field = textField()
         .horizontalAlign(HorizontalAlign.FILL)
+        .component
     }.topGap(TopGap.MEDIUM)
   }
 }

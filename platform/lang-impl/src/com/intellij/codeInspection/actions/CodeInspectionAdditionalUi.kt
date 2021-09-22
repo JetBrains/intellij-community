@@ -28,7 +28,7 @@ class CodeInspectionAdditionalUi {
   val panel = panel {
       row(InspectionsBundle.message("inspection.action.profile.label")) {
         cell(browseProfilesCombo)
-        link(CommonBundle.message("action.text.configure.ellipsis")) {}.also { link = it.component }
+        link = link(CommonBundle.message("action.text.configure.ellipsis")) {}.component
       }.topGap(TopGap.MEDIUM)
     }
 }

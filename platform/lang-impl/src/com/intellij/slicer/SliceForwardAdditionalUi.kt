@@ -10,8 +10,7 @@ class SliceForwardAdditionalUi {
   lateinit var myShowDerefs: JCheckBox
   val panel = panel {
     row {
-      checkBox(LangBundle.message("checkbox.show.method.calls.and.field.accesses.on.variable.being.analysed"))
-        .applyToComponent { myShowDerefs = this }
+      myShowDerefs = checkBox(LangBundle.message("checkbox.show.method.calls.and.field.accesses.on.variable.being.analysed")).component
     }.topGap(TopGap.MEDIUM)
   }
 }
