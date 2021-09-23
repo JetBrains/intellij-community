@@ -60,17 +60,23 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
-          val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount, horizontalAlign = HorizontalAlign.FILL,
+          val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount,
+            horizontalAlign = HorizontalAlign.FILL,
+            verticalAlign = VerticalAlign.FILL,
             gaps = Gaps(left = row.getIndent()))
           val cells = row.cells
 
           buildLabelRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
 
+          subGridBuilder.resizableRow()
           buildRow(cells, row.label != null, 0, cells.size, panel, subGridBuilder)
           subGridBuilder.row()
 
           buildCommentRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
           setLastColumnResizable(subGridBuilder)
+          if (row.resizableRow) {
+            rowsGridBuilder.resizableRow()
+          }
           rowsGridBuilder.row()
         }
 
@@ -80,10 +86,16 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           buildCell(row.cells[0], true, row.getIndent(), row.cells.size == 1, 1, panel, rowsGridBuilder)
 
           if (row.cells.size > 1) {
-            val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1, horizontalAlign = HorizontalAlign.FILL)
+            val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1,
+              horizontalAlign = HorizontalAlign.FILL,
+              verticalAlign = VerticalAlign.FILL)
+              .resizableRow()
             val cells = row.cells.subList(1, row.cells.size)
             buildRow(cells, false, 0, cells.size, panel, subGridBuilder)
             setLastColumnResizable(subGridBuilder)
+          }
+          if (row.resizableRow) {
+            rowsGridBuilder.resizableRow()
           }
           rowsGridBuilder.row()
 
@@ -94,6 +106,9 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           buildLabelRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
 
           buildRow(row.cells, row.label != null, row.getIndent(), maxColumnsCount, panel, rowsGridBuilder)
+          if (row.resizableRow) {
+            rowsGridBuilder.resizableRow()
+          }
           rowsGridBuilder.row()
 
           buildCommentRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
@@ -199,7 +214,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         val insets = cell.component.origin.insets
         val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component)
-        builder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+        builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
           gaps = gaps, visualPaddings = visualPaddings)
       }

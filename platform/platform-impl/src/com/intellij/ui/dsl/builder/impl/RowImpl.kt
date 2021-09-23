@@ -35,7 +35,6 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.*
-import javax.swing.event.HyperlinkEvent
 
 @ApiStatus.Internal
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
@@ -44,6 +43,9 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        val label: JLabel? = null) : Row {
 
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
+    private set
+
+  var resizableRow = false
     private set
 
   var rowComment: JComponent? = null
@@ -73,6 +75,11 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun layout(rowLayout: RowLayout): RowImpl {
     this.rowLayout = rowLayout
+    return this
+  }
+
+  override fun resizableRow(): RowImpl {
+    resizableRow = true
     return this
   }
 
@@ -249,6 +256,10 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(Label(text))
   }
 
+  override fun labelHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
+    return cell(createHtml(text, action))
+  }
+
   override fun comment(text: String, maxLineLength: Int): CellImpl<JLabel> {
     return cell(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }
@@ -257,7 +268,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
-  override fun commentHtml(text: String, action: (HyperlinkEvent) -> Unit): Cell<JEditorPane> {
+  override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
     return cell(createHtmlComment(text, action))
   }
 
@@ -324,6 +335,13 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
         }
       })
     }
+    return result
+  }
+
+  override fun textArea(): Cell<JBTextArea> {
+    val textArea = JBTextArea()
+    val result = CellImpl(dialogPanelConfig, textArea, this, JBScrollPane(textArea))
+    cells.add(result)
     return result
   }
 

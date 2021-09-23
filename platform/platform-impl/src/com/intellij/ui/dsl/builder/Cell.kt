@@ -95,6 +95,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
+  /**
+   * Shows [message] if [condition] is true
+   */
+  fun errorOnApply(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
+
   fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   fun onApply(callback: () -> Unit): Cell<T>

@@ -53,6 +53,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Segmented Button", createSegmentedButton())
     result.addTab("Visible/Enabled", createVisibleEnabled())
     result.addTab("Cells With Sub-Panels", createCellsWithPanels())
+    result.addTab("Resizable Rows", createResizableRows())
 
     return result
   }
@@ -367,6 +368,19 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
         }
         cell(subPanel)
           .horizontalAlign(HorizontalAlign.FILL)
+      }
+    }
+  }
+
+  fun createResizableRows(): JPanel {
+    return panel {
+      for (rowLayout in RowLayout.values()) {
+        row(rowLayout.name) {
+          textArea()
+            .horizontalAlign(HorizontalAlign.FILL)
+            .verticalAlign(VerticalAlign.FILL)
+        }.layout(rowLayout)
+          .resizableRow()
       }
     }
   }

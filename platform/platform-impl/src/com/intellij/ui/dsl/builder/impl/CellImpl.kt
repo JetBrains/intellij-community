@@ -168,10 +168,14 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T> {
+  override fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
     dialogPanelConfig.validateCallbacks.add { callback(ValidationInfoBuilder(origin), component) }
     return this
+  }
+
+  override fun errorOnApply(message: String, condition: (T) -> Boolean): CellImpl<T> {
+    return validationOnApply { if (condition(it)) error(message) else null }
   }
 
   override fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
