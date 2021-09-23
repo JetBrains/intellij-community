@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.fir.utils.KtAnalysisSessionFe10BindingH
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.api.tokens.ValidityTokenFactory
 import org.jetbrains.kotlin.analysis.api.tokens.assertIsValidAndAccessible
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getResolveState
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtElement
 import java.lang.ref.WeakReference
+import kotlin.reflect.KClass
 
 interface FE10BindingContext {
     val builtIns: KotlinBuiltIns
@@ -121,6 +123,15 @@ private class ValidityTokenForKtSymbolBasedWrappers(val project: Project) : Vali
 
     @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
     override fun getInaccessibilityReason(): String = error("Getting inaccessibility reason for validity token when it is accessible")
+
+    override val factory: ValidityTokenFactory = ValidityTokenForKtSymbolBasedWrappersFactory
+}
+
+private object ValidityTokenForKtSymbolBasedWrappersFactory : ValidityTokenFactory() {
+    override val identifier: KClass<out ValidityToken> = ValidityTokenForKtSymbolBasedWrappers::class
+
+    override fun create(project: Project): ValidityToken =
+        ValidityTokenForKtSymbolBasedWrappers(project)
 }
 
 // This class supposed to be used for non-declaration resolved fir elements, because of that we don't case about FIR phases.
