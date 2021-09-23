@@ -72,6 +72,7 @@ internal class LessonExecutor(val lesson: KLesson,
                       var transparentRestore: Boolean? = null,
                       var highlightPreviousUi: Boolean? = null,
                       var propagateHighlighting: Boolean? = null,
+                      var checkRestoreByTimer: Int? = null,
                       var delayBeforeRestore: Int = 0)
 
   private val taskActions: MutableList<TaskInfo> = ArrayList()
@@ -346,6 +347,9 @@ internal class LessonExecutor(val lesson: KLesson,
       }
     }
     currentRestoreFuture = restoreRecorder.futureCheck { checkFunction(); false }
+    taskData.checkRestoreByTimer?.let {
+      restoreRecorder.timerCheck(it) { checkFunction(); false }
+    }
   }
 
   private fun clearRestore() {
