@@ -82,6 +82,7 @@ final class JarPackager {
       // kotlinx- libs to one kotlinx.jar
       mergeLibsByPredicate("kotlinx.jar", librariesToMerge, outputDir, layoutSpec, buildContext) { it.startsWith("kotlinx-") }
 
+      // see ClassPathUtil.getUtilClassPath
       Set<String> libsThatUsedInJps = Set.of(
         "ASM",
         "aalto-xml",
@@ -92,8 +93,10 @@ final class JarPackager {
         "gson",
         "Log4J",
         "Slf4j",
-        "maven-resolver-provider",
         // see getBuildProcessApplicationClasspath - used in JPS
+        "lz4-java",
+        "maven-resolver-provider",
+        "OroMatcher",
         "jgoodies-forms",
         "jgoodies-common",
         "NanoXML"

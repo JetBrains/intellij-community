@@ -135,6 +135,8 @@ final class PlatformModules {
                                              List<JpsLibrary> additionalProjectLevelLibraries,
                                              BuildContext buildContext) {
     PlatformLayout layout = new PlatformLayout()
+    // used only in modules that packed into Java
+    layout.excludedProjectLibraries.add("jps-javac-extension")
     productLayout.platformLayoutCustomizer.accept(layout)
 
     Set<String> alreadyPackedModules = new HashSet<>()
