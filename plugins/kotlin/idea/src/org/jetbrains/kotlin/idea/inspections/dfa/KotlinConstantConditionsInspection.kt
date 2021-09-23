@@ -83,6 +83,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
         // TODO: suppress when constant initial value of mutable variable is used and variable is declared just before
         //      like var x = 0; x = x or y
+        // TODO: do something with always false branches in exhaustive when statements
+        // TODO: return x && y.let {return...}
+        // TODO: suppress x.let { true }
         var parent = expression.parent
         if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
             // Will be reported for parent qualified expression
@@ -115,10 +118,11 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             ConstantValue.TRUE -> {
                 if (isSmartCastNecessary(expression, true)) return true
                 if (isPairingConditionInWhen(expression)) return true
-                if (isAssertion(parent)) return true
+                if (isAssertion(parent, true)) return true
             }
             ConstantValue.FALSE -> {
                 if (isSmartCastNecessary(expression, false)) return true
+                if (isAssertion(parent, false)) return true
             }
             ConstantValue.ZERO -> {
                 if (expression.readWriteAccess(false).isWrite) {
@@ -194,15 +198,26 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         return packageFragment.fqName.asString() == "kotlin"
     }
 
-    private fun isAssertion(parent: PsiElement?): Boolean {
-        val valueArg = parent as? KtValueArgument ?: return false
-        val valueArgList = valueArg.parent as? KtValueArgumentList ?: return false
-        val call = valueArgList.parent as? KtCallExpression ?: return false
-        val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
-        val name = descriptor.name.asString()
-        if (name != "assert" && name != "require" && name != "check") return false
-        val pkg = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
-        return pkg.fqName.asString() == "kotlin"
+    private fun isAssertion(parent: PsiElement?, value: Boolean): Boolean {
+        return when (parent) {
+            is KtBinaryExpression ->
+                (parent.operationToken == KtTokens.ANDAND || parent.operationToken == KtTokens.OROR) && isAssertion(parent.parent, value)
+            is KtParenthesizedExpression ->
+                isAssertion(parent.parent, value)
+            is KtPrefixExpression ->
+                parent.operationToken == KtTokens.EXCL && isAssertion(parent.parent, !value)
+            is KtValueArgument -> {
+                if (!value) return false
+                val valueArgList = parent.parent as? KtValueArgumentList ?: return false
+                val call = valueArgList.parent as? KtCallExpression ?: return false
+                val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
+                val name = descriptor.name.asString()
+                if (name != "assert" && name != "require" && name != "check") return false
+                val pkg = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+                return pkg.fqName.asString() == "kotlin"
+            }
+            else -> false
+        }
     }
 
     /**
@@ -399,6 +414,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         if (context.diagnostics.forElement(anchor).any
             { it.factory == Errors.CAST_NEVER_SUCCEEDS
                     || it.factory == Errors.SENSELESS_COMPARISON
+                    || it.factory == Errors.SENSELESS_NULL_IN_WHEN
                     || it.factory == Errors.USELESS_IS_CHECK
                     || it.factory == Errors.DUPLICATE_LABEL_IN_WHEN }
         ) {
@@ -407,6 +423,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val suppressionCache = KotlinCacheService.getInstance(anchor.project).getSuppressionCache()
         return suppressionCache.isSuppressed(anchor, "CAST_NEVER_SUCCEEDS", Severity.WARNING) ||
                 suppressionCache.isSuppressed(anchor, "SENSELESS_COMPARISON", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, "SENSELESS_NULL_IN_WHEN", Severity.WARNING) ||
                 suppressionCache.isSuppressed(anchor, "USELESS_IS_CHECK", Severity.WARNING) ||
                 suppressionCache.isSuppressed(anchor, "DUPLICATE_LABEL_IN_WHEN", Severity.WARNING)
     }
