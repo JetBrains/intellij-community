@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironment.TargetPath
+import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
@@ -13,6 +14,7 @@ import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.PathMappingSettings
@@ -24,6 +26,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.execute
 import com.jetbrains.python.run.prepareHelperScriptExecution
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.FileTime
@@ -33,11 +36,15 @@ import kotlin.io.path.div
 
 private const val STATE_FILE = ".state.json"
 
-class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
-  private val myTargetEnvRequest = checkNotNull(PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(mySdk))
+class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk, project: Project) {
+  private val pyRequest: HelpersAwareTargetEnvironmentRequest =
+    checkNotNull(PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project))
+
+  private val myTargetEnvRequest: TargetEnvironmentRequest
+    get() = pyRequest.targetEnvironmentRequest
 
   init {
-    check(mySdk !is Disposable || !Disposer.isDisposed(mySdk))
+    assert(mySdk !is Disposable || !Disposer.isDisposed(mySdk))
   }
 
   @Throws(ExecutionException::class)
@@ -51,7 +58,7 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
     val downloadVolume = TargetEnvironment.DownloadRoot(localRootPath = localRemoteSourcesRoot, targetRootPath = TargetPath.Temporary())
     myTargetEnvRequest.downloadVolumes += downloadVolume
 
-    val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.REMOTE_SYNC, targetEnvironmentRequest = myTargetEnvRequest)
+    val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.REMOTE_SYNC, helpersAwareTargetRequest = pyRequest)
 
     val stateFilePath = localRemoteSourcesRoot / STATE_FILE
     val stateFilePrevTimestamp: FileTime
@@ -71,7 +78,7 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
 
     // XXX Make it automatic
     environment.uploadVolumes.values.forEach { it.upload(".", targetIndicator) }
-    
+
     val cmd = execution.buildTargetedCommandLine(environment, mySdk, emptyList())
     cmd.execute(environment, indicator)
 
@@ -84,7 +91,7 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
     if (Files.getLastModifiedTime(stateFilePath) <= stateFilePrevTimestamp) {
       throw IllegalStateException("$stateFilePath has not been updated")
     }
-    
+
     val stateFile: StateFile
     Files.newBufferedReader(stateFilePath).use {
       stateFile = Gson().fromJson(it, StateFile::class.java)

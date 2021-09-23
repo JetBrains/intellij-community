@@ -4,17 +4,21 @@ package com.jetbrains.python.sdk.skeletons
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.getTargetDownloadPath
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.prepareHelperScriptExecution
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
@@ -22,9 +26,16 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Paths
 import kotlin.io.path.div
 
-class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolder: String?)
+class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder: String?, project: Project?)
   : PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
-  private val myTargetEnvRequest = checkNotNull(PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(sdk = mySdk))
+  private val pyRequest: HelpersAwareTargetEnvironmentRequest = checkNotNull(
+    // TODO Get rid of the dependency on the default project
+    PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project ?: ProjectManager.getInstance().defaultProject)
+  )
+
+  private val myTargetEnvRequest: TargetEnvironmentRequest
+    get() = pyRequest.targetEnvironmentRequest
+
   private val myFoundBinaries: MutableSet<String> = HashSet()
 
   private fun isLocalTarget() = myTargetEnvRequest is LocalTargetEnvironmentRequest
@@ -43,7 +54,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolde
 
     private fun doRunProcess(listener: LineWiseProcessOutputListener?): ProcessOutput {
       val generatorScriptExecution = prepareHelperScriptExecution(helperPackage = PythonHelper.GENERATOR3,
-        targetEnvironmentRequest = myTargetEnvRequest)
+        helpersAwareTargetRequest = pyRequest)
       generatorScriptExecution.addParameter("-d")
       val skeletonsDownloadRoot = TargetEnvironment.DownloadRoot(localRootPath = Paths.get(mySkeletonsPath),
         targetRootPath = TargetEnvironment.TargetPath.Temporary())

@@ -119,7 +119,7 @@ public class PySkeletonRefresher {
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
     if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")) {
-      mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder);
+      mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject);
     }
     else if (PythonSdkUtil.isRemote(sdk)) {
       try {
