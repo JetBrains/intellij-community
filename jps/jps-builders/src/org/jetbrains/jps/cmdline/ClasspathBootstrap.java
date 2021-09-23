@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
@@ -128,6 +129,7 @@ public final class ClasspathBootstrap {
     addToClassPath(Gson.class, cp);  // gson
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
+    addToClassPath(Tracer.class, cp); // tracing infrastructure
 
     try {
       Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");

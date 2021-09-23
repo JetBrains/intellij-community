@@ -31,6 +31,7 @@ final class CommunityStandaloneJpsBuilder {
           module("intellij.platform.util.text.matching")
           module("intellij.platform.util.base")
           module("intellij.platform.util.xmlDom")
+          module("intellij.platform.tracing")
         }
 
         jar("jps-launcher.jar") {
