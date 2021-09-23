@@ -343,7 +343,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   private Map<ProblemDescriptor, HighlightDisplayLevel> runXmlFileSchemaValidation(@NotNull XmlFile xmlFile) {
-    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(xmlFile));
+    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(xmlFile), false);
 
     List<ExternalAnnotator> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
     for (ExternalAnnotator<?, ?> annotator : annotators) {

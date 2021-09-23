@@ -77,7 +77,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                    @NotNull HighlightInfoProcessor processor,
                    boolean mainHighlightingPass) {
     super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
-    myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
+    myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), false);
     myExternalToolPassFactory = factory;
     myMainHighlightingPass = mainHighlightingPass;
   }
