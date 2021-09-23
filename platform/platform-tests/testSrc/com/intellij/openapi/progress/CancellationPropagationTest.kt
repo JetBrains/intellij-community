@@ -254,4 +254,18 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     waitAssertCompletedWithCancellation(childFuture2)
     waitAssertCancelled(rootJob)
   }
+
+  @Test
+  fun `unhandled exception from execute`() {
+    val t = Throwable()
+    val canThrow = Semaphore(1)
+    withRootJob {
+      service.execute {
+        canThrow.waitUp()
+        throw t
+      }
+    }
+    val loggedError = loggedError(canThrow)
+    assertSame(t, loggedError)
+  }
 }
