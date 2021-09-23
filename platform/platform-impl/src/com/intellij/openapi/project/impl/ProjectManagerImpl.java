@@ -9,6 +9,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -246,8 +247,9 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "deprecation"})
   void updateTheOnlyProjectField() {
     boolean isDefaultInitialized = isDefaultProjectInitialized();
+    boolean isLightEditActive = LightEditService.getInstance().getProject() != null;
     synchronized (lock) {
-      ProjectCoreUtil.theProject = myOpenProjects.length == 1 && !isDefaultInitialized ? myOpenProjects[0] : null;
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 && !isDefaultInitialized && !isLightEditActive ? myOpenProjects[0] : null;
     }
   }
 
