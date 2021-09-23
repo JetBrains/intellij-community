@@ -18,7 +18,7 @@ internal class RunToolbarAdditionAction(val executorGroup: ExecutorGroup<*>,
     updatePresentation(e.presentation)
 
     e.project?.let {
-      e.presentation.isEnabled = !e.isActiveProcess()
+      e.presentation.isEnabled = e.environment() == null
     }
   }
 

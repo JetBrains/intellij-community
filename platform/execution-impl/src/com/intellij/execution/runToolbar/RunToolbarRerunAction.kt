@@ -21,7 +21,7 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
     e.presentation.isEnabledAndVisible =
       e.presentation.isEnabled
       && e.presentation.isVisible
-      && e.isActiveProcess()
+      && getDescriptor(e) != null
       && e.presentation.isVisible
 
     if (!RunToolbarProcess.experimentalUpdating()) {

@@ -64,7 +64,7 @@ private fun getConfiguration(dataContext: DataContext): RunnerAndConfigurationSe
 }
 
 internal fun AnActionEvent.isActiveProcess(): Boolean {
-  return this.environment()?.isRunning() ?: false
+  return this.environment() != null
 }
 
 internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
@@ -97,19 +97,13 @@ fun AnActionEvent.environment(): ExecutionEnvironment? {
   return runToolbarData()?.environment
 }
 
-fun ExecutionEnvironment.isRunning(): Boolean? {
-  return this.contentToReuse?.processHandler?.let {
-    !it.isProcessTerminating && !it.isProcessTerminated
-  }
-}
-
 internal fun AnActionEvent.id(): String? {
   return runToolbarData()?.id
 }
 
 internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
   return ExecutorGroup.getGroupIfProxy(this.executor)?.let { executorGroup ->
-    RunToolbarProcess.getProcesses().firstOrNull {
+    RunToolbarProcess.getProcesses().firstOrNull{
       it.executorId == executorGroup.id
     }
   } ?: run {

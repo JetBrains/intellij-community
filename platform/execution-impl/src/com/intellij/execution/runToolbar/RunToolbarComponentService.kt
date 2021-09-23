@@ -32,15 +32,7 @@ class RunToolbarComponentService(val project: Project) {
         override fun processTerminating(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
             if (env.project == project) {
-              terminating(env)
-            }
-          }
-        }
-
-        override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-          ApplicationManager.getApplication().invokeLater {
-            if (env.project == project) {
-              terminated(env)
+              stop(env)
             }
           }
         }
@@ -72,21 +64,12 @@ class RunToolbarComponentService(val project: Project) {
     }
   }
 
-  private fun terminated(env: ExecutionEnvironment) {
+  private fun stop(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions.remove(env.executionId)
       LOG.info("new active process removed: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
       if(extraSlots.active) {
-        extraSlots.processTerminated(env.executionId)
-      }
-    }
-  }
-
-  private fun terminating(env: ExecutionEnvironment) {
-    if(isRelevant(env)) {
-      LOG.info("new active process terminating: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
-      if(extraSlots.active) {
-        extraSlots.processTerminating(env)
+        extraSlots.processStopped(env.executionId)
       }
     }
   }

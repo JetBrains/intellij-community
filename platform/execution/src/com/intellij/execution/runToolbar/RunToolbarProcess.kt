@@ -48,8 +48,6 @@ interface RunToolbarProcess {
 
   val showInBar: Boolean
 
-  fun isTemporaryProcess(): Boolean = false
-
   fun rerunAvailable(): Boolean = false
   fun getStopIcon(): Icon? = null
 

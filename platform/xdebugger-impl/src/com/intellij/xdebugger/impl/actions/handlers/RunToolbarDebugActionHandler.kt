@@ -45,7 +45,7 @@ abstract class RunToolbarDebugActionHandler() : DebuggerActionHandler() {
 
 class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
   override fun isEnabled(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
-    return session.isPaused && !session.isReadOnly
+    return session.isPaused
   }
 
   override fun perform(session: XDebugSessionImpl, dataContext: DataContext?) {
