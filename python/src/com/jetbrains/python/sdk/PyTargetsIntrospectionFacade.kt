@@ -2,18 +2,25 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.*
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 
-class PyTargetsIntrospectionFacade(val mySdk: Sdk) {
-  private val myTargetEnvRequest = checkNotNull(PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(mySdk))
+class PyTargetsIntrospectionFacade(val mySdk: Sdk, val project: Project) {
+  private val pyRequest: HelpersAwareTargetEnvironmentRequest =
+    checkNotNull(PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project))
+
+  private val myTargetEnvRequest: TargetEnvironmentRequest
+    get() = pyRequest.targetEnvironmentRequest
 
   init {
     check(mySdk !is Disposable || !Disposer.isDisposed(mySdk))
@@ -43,7 +50,7 @@ class PyTargetsIntrospectionFacade(val mySdk: Sdk) {
 
   @Throws(ExecutionException::class)
   fun getInterpreterPaths(indicator: ProgressIndicator): List<String> {
-    val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.SYSPATH, targetEnvironmentRequest = myTargetEnvRequest)
+    val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.SYSPATH, helpersAwareTargetRequest = pyRequest)
     val environment = myTargetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
     val cmd = execution.buildTargetedCommandLine(environment, mySdk, emptyList())
     return cmd.execute(environment, indicator).stdoutLines
@@ -52,6 +59,6 @@ class PyTargetsIntrospectionFacade(val mySdk: Sdk) {
   @Throws(ExecutionException::class)
   fun synchronizeRemoteSourcesAndSetupMappings(indicator: ProgressIndicator) {
     if (isLocalTarget()) return
-    PyTargetsRemoteSourcesRefresher(mySdk).run(indicator)
+    PyTargetsRemoteSourcesRefresher(mySdk, project).run(indicator)
   }
 }

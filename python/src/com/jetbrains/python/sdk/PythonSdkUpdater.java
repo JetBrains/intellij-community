@@ -138,7 +138,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       }
       try {
         if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")) {
-          PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(sdk);
+          PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(sdk, myProject);
           String version = targetsFacade.getInterpreterVersion(indicator);
           commitSdkVersionIfChanged(sdk, version);
           if (targetsFacade.isLocalTarget()) {
