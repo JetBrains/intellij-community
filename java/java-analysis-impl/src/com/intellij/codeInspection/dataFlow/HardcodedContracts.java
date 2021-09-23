@@ -461,6 +461,7 @@ public final class HardcodedContracts {
             return name != null && (name.startsWith("is") || name.equals("describedAs") || name.equals("as"));
           })
           .flatMap(c -> constraintFromAssertJMatcher(type, c))
+          .nonNull()
           .toList();
       }
     }
