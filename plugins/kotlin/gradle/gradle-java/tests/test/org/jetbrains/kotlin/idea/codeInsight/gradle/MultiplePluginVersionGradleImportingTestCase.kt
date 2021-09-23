@@ -105,7 +105,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                         arrayOf("6.7.1", "1.4.0"),
                         arrayOf("6.8.2", "1.4.32"),
                         arrayOf("7.0.2", "1.5.10"),
-                        arrayOf("7.0.2", "1.5.20-RC-238"),
+                        arrayOf("7.0.2", "1.5.21"),
+                        arrayOf("7.0.2", "1.5.31"),
                         arrayOf("7.0.2", "master")
                     )
                 )
