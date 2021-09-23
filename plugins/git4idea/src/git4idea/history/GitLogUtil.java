@@ -240,9 +240,13 @@ public final class GitLogUtil {
                                         record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
   }
 
+  /**
+   * Sends hashes to process's stdin without closing it.
+   * This allows {@link com.intellij.execution.process.WinRunnerMediator} to send Ctrl+C
+   * through process's stdin in order to softly kill it.
+   * @see com.intellij.execution.process.WinRunnerMediator#sendCtrlEventThroughStream
+   */
   public static void sendHashesToStdin(@NotNull Collection<String> hashes, @NotNull GitHandler handler) {
-    // if we close this stream, WinRunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
-    // see WinRunnerMediator.sendCtrlEventThroughStream
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
                                                                       "\n",
                                                                       handler.getCharset(),
