@@ -328,10 +328,6 @@
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase$InitMappingsListenerActivity"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
@@ -345,6 +341,10 @@
               topic="com.intellij.openapi.vcs.changes.ChangeListListener"/>
     <listener class="com.intellij.vcs.changes.ChangeListScopeViewUpdater$InitialRefresh"
               topic="com.intellij.openapi.vcs.changes.LocalChangeListsLoadedListener"/>
+    <listener class="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase$InitMappingsListenerActivity"
+              topic="com.intellij.openapi.vcs.VcsMappingListener"/>
+    <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
+              topic="com.intellij.openapi.vcs.VcsMappingListener"/>
   </projectListeners>
 </idea-plugin>
 
