@@ -169,7 +169,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
         boolean clickOnTooltip = myBalloon != null &&
                                  myBalloon == JBPopupFactory.getInstance().getParentBalloonFor(myProcessingComponent);
-        if (myProcessingComponent == myCurrentComponent || (clickOnTooltip && getBalloonImpl() != null &&!getBalloonImpl().isClickProcessor())) {
+        if (myProcessingComponent == myCurrentComponent || (clickOnTooltip && !isClickProcessor(myBalloon))) {
           hideCurrent(me, null, null, null, !clickOnTooltip);
         }
       }
@@ -462,7 +462,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     myBalloon = builder.createBalloon();
 
     myBalloon.setAnimationEnabled(animationEnabled);
-    tooltip.setUi(getIdeTooltipUi());
+    tooltip.setUi(myBalloon instanceof IdeTooltip.Ui ? (IdeTooltip.Ui)myBalloon : null);
     myCurrentComponent = tooltip.getComponent();
     myX = effectivePoint.x;
     myY = effectivePoint.y;
@@ -486,14 +486,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
         hideCurrent(null, null, null);
       }
     }, tooltip.getDismissDelay());
-  }
-
-  private @Nullable BalloonImpl getBalloonImpl() {
-    return myBalloon instanceof BalloonImpl ? (BalloonImpl)myBalloon : null;
-  }
-
-  private @Nullable IdeTooltip.Ui getIdeTooltipUi() {
-    return myBalloon instanceof IdeTooltip.Ui ? (IdeTooltip.Ui)myBalloon : null;
   }
 
   @SuppressWarnings("UnusedParameters")
@@ -552,12 +544,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
-    return hideCurrent(me, null, action, event, getBalloonImpl() != null && getBalloonImpl().isAnimationEnabled());
+    return hideCurrent(me, null, action, event, isAnimationEnabled(myBalloon));
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me,
                               @Nullable IdeTooltip tooltipToShow) {
-    return hideCurrent(me, tooltipToShow, null, null, getBalloonImpl() != null && getBalloonImpl().isAnimationEnabled());
+    return hideCurrent(me, tooltipToShow, null, null, isAnimationEnabled(myBalloon));
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable IdeTooltip tooltipToShow, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
@@ -567,8 +559,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     }
 
     if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(new RelativePoint(me))) {
-      if (me.getButton() == MouseEvent.NOBUTTON || myBalloon == null ||
-          getBalloonImpl() != null && getBalloonImpl().isBlockClicks()) {
+      if (me.getButton() == MouseEvent.NOBUTTON || myBalloon == null || isBlockClicks(myBalloon)) {
         return false;
       }
     }
@@ -582,8 +573,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     if (myBalloon != null) {
       RelativePoint target = me != null ? new RelativePoint(me) : null;
       boolean isInsideOrMovingForward = target != null &&
-                                        (getIdeTooltipUi() != null && getIdeTooltipUi().isInside(target) ||
-                                         getBalloonImpl() != null && getBalloonImpl().isMovingForward(target));
+                                        (isInside(myBalloon, target) || isMovingForward(myBalloon, target));
       boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInsideOrMovingForward, action, event));
       boolean implicitMouseMove = me != null &&
                                   (me.getID() == MouseEvent.MOUSE_MOVED ||
@@ -824,5 +814,25 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
 
   public boolean isQueuedToShow(IdeTooltip tooltip) {
     return Comparing.equal(myQueuedTooltip, tooltip);
+  }
+
+  private static boolean isClickProcessor(Balloon balloon) {
+    return balloon instanceof BalloonImpl && ((BalloonImpl)balloon).isClickProcessor();
+  }
+
+  private static boolean isAnimationEnabled(Balloon balloon) {
+    return balloon instanceof BalloonImpl && ((BalloonImpl)balloon).isAnimationEnabled();
+  }
+
+  private static boolean isBlockClicks(Balloon balloon) {
+    return balloon instanceof BalloonImpl && ((BalloonImpl)balloon).isBlockClicks();
+  }
+
+  private static boolean isMovingForward(Balloon balloon, @NotNull RelativePoint target) {
+    return balloon instanceof BalloonImpl && ((BalloonImpl)balloon).isMovingForward(target);
+  }
+
+  private static boolean isInside(Balloon balloon, RelativePoint target) {
+    return balloon instanceof IdeTooltip.Ui && ((IdeTooltip.Ui)balloon).isInside(target);
   }
 }
