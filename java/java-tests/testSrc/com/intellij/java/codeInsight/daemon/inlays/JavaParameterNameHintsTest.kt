@@ -1154,6 +1154,19 @@ public class Test {
 }""")
   }
 
+  fun `test parameters have comments`() {
+    check("""
+public class Test {
+    static class A {
+      A(boolean leadingComment, boolean middleWithoutComments, boolean trailingComment){}
+    }
+
+    void foo() {
+      new A(/* comment not necessarily related to name */ true, <hint text="middleWithoutComments:"/>false, true /**/);
+    }
+}""")
+  }
+
   fun `test undo after typing space`() {
     check("""
 class C {
