@@ -155,7 +155,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
 
   private fun addRestoreCheck(delayMillis: Int, check: TaskRuntimeContext.() -> Boolean, restore: () -> Unit) {
     assert(lessonExecutor.currentTaskIndex == taskIndex)
-    data.delayMillis = delayMillis
+    data.delayBeforeRestore = delayMillis
     val previous = data.shouldRestore
     data.shouldRestore = { previous?.let { it() } ?: if (check(runtimeContext)) restore else null }
   }

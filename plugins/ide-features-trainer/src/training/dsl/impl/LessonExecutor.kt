@@ -72,7 +72,7 @@ internal class LessonExecutor(val lesson: KLesson,
                       var transparentRestore: Boolean? = null,
                       var highlightPreviousUi: Boolean? = null,
                       var propagateHighlighting: Boolean? = null,
-                      var delayMillis: Int = 0)
+                      var delayBeforeRestore: Int = 0)
 
   private val taskActions: MutableList<TaskInfo> = ArrayList()
 
@@ -338,11 +338,11 @@ internal class LessonExecutor(val lesson: KLesson,
           }
         }
       }
-      if (taskData.delayMillis == 0) {
+      if (taskData.delayBeforeRestore == 0) {
         restoreIfNeeded()
       }
       else {
-        Alarm().addRequest(restoreIfNeeded, taskData.delayMillis)
+        Alarm().addRequest(restoreIfNeeded, taskData.delayBeforeRestore)
       }
     }
     currentRestoreFuture = restoreRecorder.futureCheck { checkFunction(); false }
