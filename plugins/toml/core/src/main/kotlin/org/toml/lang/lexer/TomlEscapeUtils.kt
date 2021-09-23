@@ -7,16 +7,21 @@ package org.toml.lang.lexer
 
 import com.intellij.psi.tree.IElementType
 import org.toml.lang.psi.TOML_BASIC_STRINGS
+import org.toml.lang.psi.TOML_MULTILINE_STRINGS
 import org.toml.lang.psi.TOML_STRING_LITERALS
 
 fun String.unescapeToml(tokenType: IElementType): String {
     require(tokenType in TOML_STRING_LITERALS)
+    val unNewlined = when (tokenType) {
+        in TOML_MULTILINE_STRINGS -> this.removePrefix("\n")
+        else -> this
+    }
     return if (tokenType in TOML_BASIC_STRINGS) {
         val outChars = StringBuilder()
-        val result = parseTomlStringCharacters(tokenType, this, outChars).second
-        if (result) outChars.toString() else this
+        val result = parseTomlStringCharacters(tokenType, unNewlined, outChars).second
+        if (result) outChars.toString() else unNewlined
     } else {
-        this
+        unNewlined
     }
 }
 
