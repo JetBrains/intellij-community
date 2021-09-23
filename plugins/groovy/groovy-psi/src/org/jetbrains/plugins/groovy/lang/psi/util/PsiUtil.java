@@ -1512,4 +1512,9 @@ public final class PsiUtil {
     }
     return patterns;
   }
+
+  public static boolean isArrowStyleSwitchElement(@NotNull GrSwitchElement switchElement) {
+    GrCaseSection[] sections = switchElement.getCaseSections();
+    return ContainerUtil.and(sections, elem -> elem.getArrow() != null);
+  }
 }
