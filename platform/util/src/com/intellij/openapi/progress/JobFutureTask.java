@@ -3,8 +3,6 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.AccessToken;
 import kotlinx.coroutines.CompletableDeferred;
-import kotlinx.coroutines.CompletableJob;
-import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,29 +58,6 @@ public final class JobFutureTask<V> extends FutureTask<V> {
       }
       catch (Throwable e) {
         deferred.completeExceptionally(e);
-        throw e;
-      }
-    };
-  }
-
-  /**
-   * @see #jobCallable(CompletableDeferred, Callable)
-   */
-  public static @NotNull Runnable jobRunnable(@NotNull Runnable runnable) {
-    if (runnable instanceof JobFutureTask) {
-      return runnable;
-    }
-    CompletableJob job = JobKt.Job(currentJob());
-    return () -> {
-      try (AccessToken ignored = withJob(job)) {
-        runnable.run();
-        job.complete();
-      }
-      catch (JobCanceledException e) {
-        throw job.getCancellationException();
-      }
-      catch (Throwable e) {
-        job.completeExceptionally(e);
         throw e;
       }
     };
