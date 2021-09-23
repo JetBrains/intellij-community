@@ -173,7 +173,7 @@
                         displayNameSupplierClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier"
                         isInCommitToolWindow="true"/>
 
-    <statusBarWidgetProvider implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorProvider"/>
+    <statusBarWidgetFactory id="IncomingChanges" implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorFactory"/>
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier"/>
     <editorTabTitleProvider implementation="com.intellij.openapi.vcs.vfs.VcsFileEditorTabTitleProvider"/>
 
@@ -344,6 +344,8 @@
     <listener class="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase$InitMappingsListenerActivity"
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
     <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
+              topic="com.intellij.openapi.vcs.VcsMappingListener"/>
+    <listener class="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorFactory$Listener"
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
   </projectListeners>
 </idea-plugin>
