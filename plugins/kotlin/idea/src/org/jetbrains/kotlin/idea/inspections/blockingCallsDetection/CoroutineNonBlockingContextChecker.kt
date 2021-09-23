@@ -19,7 +19,13 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.isOverridableOrOverrides
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.receiverValue
-import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.BLOCKING_CONTEXT_ANNOTATION
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_CONTEXT
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_SCOPE
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.FLOW_PACKAGE_FQN
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.IO_DISPATCHER_FQN
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.NONBLOCKING_CONTEXT_ANNOTATION
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.findFlowOnCall
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -134,18 +140,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         call: ResolvedCall<out CallableDescriptor>,
         callExpression: KtCallExpression
     ): BlockingAllowed {
-        tailrec fun KtExpression.findFlowOnCall(): ResolvedCall<out CallableDescriptor>? {
-            val dotQualifiedExpression = this.getStrictParentOfType<KtDotQualifiedExpression>() ?: return null
-            val candidate = dotQualifiedExpression
-                .children
-                .asSequence()
-                .filterIsInstance<KtCallExpression>()
-                .mapNotNull { it.resolveToCall(BodyResolveMode.PARTIAL) }
-                .firstOrNull { it.isCalling(FqName(FLOW_ON_FQN)) }
-            return candidate ?: dotQualifiedExpression.findFlowOnCall()
-        }
-
-        val isInsideFlow = call.resultingDescriptor.fqNameSafe.asString().startsWith(FLOW_FQN)
+        val isInsideFlow = call.resultingDescriptor.fqNameSafe.asString().startsWith(FLOW_PACKAGE_FQN)
         if (!isInsideFlow) return BlockingAllowed.UNSURE
         val flowOnCall = callExpression.findFlowOnCall() ?: return BlockingAllowed.DEFINITELY_NO
         return checkBlockFriendlyDispatcherParameter(flowOnCall)
@@ -196,14 +191,6 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     }
 
     companion object {
-        private const val BLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.BlockingContext"
-        private const val NONBLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.NonBlockingContext"
-        private const val IO_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.IO"
-        private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
-        private const val COROUTINE_CONTEXT = "kotlin.coroutines.CoroutineContext"
-        private const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"
-        private const val FLOW_FQN = "kotlinx.coroutines.flow"
-
         private enum class BlockingAllowed(val isDefinitelyKnown: Boolean) {
             // could also be CONDITIONAL_YES with condition property provided
             DEFINITELY_YES(true),
