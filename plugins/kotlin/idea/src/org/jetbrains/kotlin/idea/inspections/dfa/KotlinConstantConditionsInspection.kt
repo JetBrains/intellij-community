@@ -85,7 +85,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         //      like var x = 0; x = x or y
         // TODO: do something with always false branches in exhaustive when statements
         // TODO: return x && y.let {return...}
-        // TODO: suppress x.let { true }
         var parent = expression.parent
         if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
             // Will be reported for parent qualified expression
@@ -113,7 +112,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
         }
-        if (isAlsoChain(expression)) return true
+        if (isAlsoChain(expression) || isLetConstant(expression)) return true
         when (value) {
             ConstantValue.TRUE -> {
                 if (isSmartCastNecessary(expression, true)) return true
@@ -192,10 +191,22 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     // Do not report on also, as it always returns the qualifier. If necessary, qualifier itself will be reported
     private fun isAlsoChain(expr: KtExpression): Boolean {
         val call = (expr as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression ?: return false
+        return isCallToMethod(call, "kotlin", "also")
+    }
+
+    // Do not report x.let { true } or x.let { false } as it's pretty evident
+    private fun isLetConstant(expr: KtExpression): Boolean {
+        val call = (expr as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression ?: return false
+        if (!isCallToMethod(call, "kotlin", "let")) return false
+        val lambda = call.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return false
+        return lambda.bodyExpression?.statements?.singleOrNull() is KtConstantExpression
+    }
+
+    private fun isCallToMethod(call: KtCallExpression, packageName: String, methodName: String): Boolean {
         val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
-        if (descriptor.name.asString() != "also") return false
+        if (descriptor.name.asString() != methodName) return false
         val packageFragment = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
-        return packageFragment.fqName.asString() == "kotlin"
+        return packageFragment.fqName.asString() == packageName
     }
 
     private fun isAssertion(parent: PsiElement?, value: Boolean): Boolean {

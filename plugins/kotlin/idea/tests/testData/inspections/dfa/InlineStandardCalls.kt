@@ -3,6 +3,9 @@ fun inlineLet() {
     val x = 5
     val y = x.let { if(<warning descr="Condition is always true">it == 5</warning>) 1 else 2 }
     if (<warning descr="Condition is always true">y == 1</warning>) {}
+    val z = x.let { true }
+    val z1 = x.let { false }
+    println(<warning descr="Condition is always false"><weak_warning descr="Value is always true">z</weak_warning> && <weak_warning descr="Value is always false">z1</weak_warning></warning>)
 }
 
 fun inlineLetQuestion(x: Int?) {
