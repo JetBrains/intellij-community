@@ -15,50 +15,50 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 
-class PyTargetsIntrospectionFacade(val mySdk: Sdk, val project: Project) {
+class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest =
-    checkNotNull(PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project))
+    checkNotNull(PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project))
 
-  private val myTargetEnvRequest: TargetEnvironmentRequest
+  private val targetEnvRequest: TargetEnvironmentRequest
     get() = pyRequest.targetEnvironmentRequest
 
   init {
-    check(mySdk !is Disposable || !Disposer.isDisposed(mySdk))
+    check(sdk !is Disposable || !Disposer.isDisposed(sdk))
   }
 
-  fun isLocalTarget(): Boolean = myTargetEnvRequest is LocalTargetEnvironmentRequest
+  fun isLocalTarget(): Boolean = targetEnvRequest is LocalTargetEnvironmentRequest
 
   @Throws(ExecutionException::class)
   fun getInterpreterVersion(indicator: ProgressIndicator): String? {
     // PythonExecution doesn't support launching a bare interpreter without a script or module
-    val cmdBuilder = TargetedCommandLineBuilder(myTargetEnvRequest)
-    val interpreterPath = getInterpreterPath(mySdk)
+    val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
+    val interpreterPath = getInterpreterPath(sdk)
     if (interpreterPath.isNullOrEmpty()) {
       throw IllegalStateException("Interpreter path is not configured")
     }
     cmdBuilder.setExePath(interpreterPath)
-    val sdkFlavor = mySdk.sdkFlavor
+    val sdkFlavor = sdk.sdkFlavor
     if (sdkFlavor == null) {
       throw IllegalStateException("SDK flavor is not recognized")
     }
     cmdBuilder.addParameter(sdkFlavor.versionOption)
     val cmd = cmdBuilder.build()
 
-    val environment = myTargetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
+    val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
     return sdkFlavor.getVersionStringFromOutput(cmd.execute(environment, indicator).stdout)
   }
 
   @Throws(ExecutionException::class)
   fun getInterpreterPaths(indicator: ProgressIndicator): List<String> {
     val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.SYSPATH, helpersAwareTargetRequest = pyRequest)
-    val environment = myTargetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-    val cmd = execution.buildTargetedCommandLine(environment, mySdk, emptyList())
+    val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
+    val cmd = execution.buildTargetedCommandLine(environment, sdk, emptyList())
     return cmd.execute(environment, indicator).stdoutLines
   }
 
   @Throws(ExecutionException::class)
   fun synchronizeRemoteSourcesAndSetupMappings(indicator: ProgressIndicator) {
     if (isLocalTarget()) return
-    PyTargetsRemoteSourcesRefresher(mySdk, project).run(indicator)
+    PyTargetsRemoteSourcesRefresher(sdk, project).run(indicator)
   }
 }
