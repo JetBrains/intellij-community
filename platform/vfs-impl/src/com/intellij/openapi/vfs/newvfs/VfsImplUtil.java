@@ -454,4 +454,15 @@ public final class VfsImplUtil {
     }
     return name.toString();
   }
+
+  @ApiStatus.Internal
+  public static String getRecordIdPath(int record) {
+    StringBuilder name = new StringBuilder(record);
+    int parent = FSRecords.getParent(record);
+    while (parent > 0) {
+      name.insert(0, parent + " -> ");
+      parent = FSRecords.getParent(parent);
+    }
+    return name.toString();
+  }
 }

@@ -554,7 +554,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       String message =
         "Name storage is in inconsistent state: name id consistency = " + (fileByName.getNameId() == FSRecords.getNameId(name));
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        message += "\nexpected path: " + VfsImplUtil.getRecordPath(id) + "\nactual path: " + VfsImplUtil.getRecordPath(fileByName.getId());
+        int actualId = fileByName.getId();
+        message += "\nexpected path = " + VfsImplUtil.getRecordPath(id) + ", id path = " + VfsImplUtil.getRecordIdPath(id) +
+                   "\nactual path = " + VfsImplUtil.getRecordPath(actualId) + ", id path = " + VfsImplUtil.getRecordIdPath(actualId);
       }
       LOG.error(message);
     }
