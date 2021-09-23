@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.util.registry.Registry;
 import kotlinx.coroutines.CompletableDeferred;
 import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.JobKt;
@@ -43,9 +41,6 @@ public final class JobFutureTask<V> extends FutureTask<V> {
    * </ul>
    */
   public static <V> @NotNull RunnableFuture<V> jobRunnableFuture(@NotNull Callable<V> callable) {
-    if (!propagateCancellation()) {
-      return new FutureTask<>(callable);
-    }
     return new JobFutureTask<>(CompletableDeferred(currentJob()), callable);
   }
 
@@ -74,7 +69,7 @@ public final class JobFutureTask<V> extends FutureTask<V> {
    * @see #jobCallable(CompletableDeferred, Callable)
    */
   public static @NotNull Runnable jobRunnable(@NotNull Runnable runnable) {
-    if (!propagateCancellation() || runnable instanceof JobFutureTask) {
+    if (runnable instanceof JobFutureTask) {
       return runnable;
     }
     CompletableJob job = JobKt.Job(currentJob());
@@ -91,9 +86,5 @@ public final class JobFutureTask<V> extends FutureTask<V> {
         throw e;
       }
     };
-  }
-
-  private static boolean propagateCancellation() {
-    return LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate");
   }
 }
