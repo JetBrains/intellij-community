@@ -59,7 +59,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   @Override
   public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    return lookup != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
+    return lookup != null || (myOriginalHandler != null && myOriginalHandler.isEnabled(editor, caret, dataContext));
   }
 
   private static void executeUpOrDown(LookupImpl lookup, boolean up) {
@@ -107,23 +107,13 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class UpInLookupAction extends EditorAction {
     public UpInLookupAction() {
-      super(new UpHandler(null) {
-        @Override
-        public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-          return LookupManager.getActiveLookup(editor) != null;
-        }
-      });
+      super(new UpHandler(null));
     }
   }
 
   public static class DownInLookupAction extends EditorAction {
     public DownInLookupAction() {
-      super(new DownHandler(null) {
-        @Override
-        public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-          return LookupManager.getActiveLookup(editor) != null;
-        }
-      });
+      super(new DownHandler(null));
     }
   }
 
