@@ -28,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.*;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -241,10 +242,8 @@ public final class GitLogUtil {
   }
 
   /**
-   * Sends hashes to process's stdin without closing it.
-   * This allows {@link com.intellij.execution.process.WinRunnerMediator} to send Ctrl+C
-   * through process's stdin in order to softly kill it.
-   * @see com.intellij.execution.process.WinRunnerMediator#sendCtrlEventThroughStream
+   * Sends hashes to process's stdin (without closing it on Windows).
+   * @see GitHandlerInputProcessorUtil#writeLines(Collection, String, Charset, boolean)
    */
   public static void sendHashesToStdin(@NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
