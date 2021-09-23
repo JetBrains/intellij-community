@@ -33,6 +33,9 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       }
       val conditionalType = switchElement.condition?.type ?: PsiType.NULL
       val patterns = cases.flatMap { it.expressions?.asList() ?: emptyList() }.filterNotNull()
+      if (patterns.isEmpty()) {
+        return
+      }
       when (conditionalType) {
         is PsiPrimitiveType -> handlePrimitiveType(switchElement, conditionalType, patterns)
         is PsiClassType -> {

@@ -1513,8 +1513,9 @@ public final class PsiUtil {
     return patterns;
   }
 
-  public static boolean isArrowStyleSwitchElement(@NotNull GrSwitchElement switchElement) {
+  public static boolean isPlainSwitchStatement(@NotNull GrSwitchElement switchElement) {
+    if (!(switchElement instanceof GrSwitchStatement)) return false;
     GrCaseSection[] sections = switchElement.getCaseSections();
-    return ContainerUtil.and(sections, elem -> elem.getArrow() != null);
+    return ContainerUtil.and(sections, elem -> elem.getColon() != null);
   }
 }

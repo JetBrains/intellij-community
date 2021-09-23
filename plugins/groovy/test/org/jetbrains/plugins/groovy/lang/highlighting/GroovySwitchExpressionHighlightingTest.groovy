@@ -186,4 +186,14 @@ def foo(b) {
 }
 """, GrSwitchExhaustivenessCheckInspection
   }
+
+  void 'test plain switch statement is not highligted'() {
+    highlightingTest """
+void main(String[] args) {
+       switch (10) {
+           case 20:
+               return
+       }
+    }"""
+  }
 }

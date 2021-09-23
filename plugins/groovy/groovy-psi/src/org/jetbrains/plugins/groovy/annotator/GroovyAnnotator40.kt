@@ -25,10 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClassElements
-import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClasses
-import org.jetbrains.plugins.groovy.lang.psi.util.getSealedElement
+import org.jetbrains.plugins.groovy.lang.psi.util.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
@@ -168,17 +165,25 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
 
   override fun visitSwitchStatement(switchStatement: GrSwitchStatement) {
     visitSwitchElement(switchStatement)
+    super.visitSwitchStatement(switchStatement)
   }
 
   override fun visitSwitchExpression(switchExpression: GrSwitchExpression) {
     visitSwitchElement(switchExpression)
+    super.visitSwitchExpression(switchExpression)
   }
 
   private fun visitSwitchElement(switchElement : GrSwitchElement) {
+    if (PsiUtil.isPlainSwitchStatement(switchElement)) {
+      // old-style switch statements are handled within the other classes
+      return
+    }
     val caseSections = switchElement.caseSections ?: emptyArray()
     if (caseSections.isEmpty()) {
-      switchElement.firstChild?.let { holder.newAnnotation(HighlightSeverity.ERROR,
-        GroovyBundle.message("inspection.message.case.or.default.branches.are.expected")).range(it).create() }
+      switchElement.firstChild?.let {
+        holder.newAnnotation(HighlightSeverity.ERROR,
+          GroovyBundle.message("inspection.message.case.or.default.branches.are.expected")).range(it).create()
+      }
     }
     checkArrowColonConsistency(caseSections)
     caseSections.forEach(this::visitCaseSection)
@@ -191,25 +196,20 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
       holder.newAnnotation(HighlightSeverity.ERROR,
         GroovyBundle.message("inspection.message.yield.or.throw.expected.in.case.section")).range(errorOwner).create()
     }
-    if (switchElement is GrSwitchExpression) {
-      super.visitSwitchExpression(switchElement)
-    }
-    else if (switchElement is GrSwitchStatement) {
-      super.visitSwitchStatement(switchElement)
-    }
   }
 
   private fun checkArrowColonConsistency(caseSections: Array<GrCaseSection>) {
-    val arrows = caseSections.mapNotNull(GrCaseSection::getArrow)
-    val colons = caseSections.mapNotNull(GrCaseSection::getColon)
-    if (arrows.isNotEmpty() && colons.isNotEmpty()) {
-      for (element in arrows + colons) {
-        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.mixing.arrows.colons.not.allowed")).range(element).create()
-      }
+    val arrows = caseSections.mapNotNull(GrCaseSection::getArrow).takeIf(List<*>::isNotEmpty) ?: return
+    val colons = caseSections.mapNotNull(GrCaseSection::getColon).takeIf(List<*>::isNotEmpty) ?: return
+    for (element in arrows + colons) {
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.mixing.arrows.colons.not.allowed")).range(element).create()
     }
   }
 
   override fun visitCaseSection(caseSection: GrCaseSection) {
+    if (caseSection.parentOfType<GrSwitchElement>()?.let(PsiUtil::isPlainSwitchStatement) == true) {
+      return
+    }
     val flow = ControlFlowUtils.getCaseSectionInstructions(caseSection)
     val returns = ControlFlowUtils.collectReturns(flow, false)
     for (returnStatement in returns.filterIsInstance<GrReturnStatement>()) {

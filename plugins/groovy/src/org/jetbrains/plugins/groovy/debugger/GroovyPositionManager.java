@@ -131,7 +131,7 @@ public class GroovyPositionManager implements PositionManager {
   private static GroovyPsiElement getEnclosingPsiForElement(PsiElement element) {
     while (true) {
       GroovyPsiElement parent = PsiTreeUtil.getParentOfType(element, GrSwitchExpression.class, GrFunctionalExpression.class, GrTypeDefinition.class);
-      if (!(parent instanceof GrSwitchElement) || PsiUtil.isArrowStyleSwitchElement((GrSwitchElement)parent)) {
+      if (!(parent instanceof GrSwitchElement && PsiUtil.isPlainSwitchStatement((GrSwitchElement)parent))) {
         return parent;
       } else {
         element = parent;
