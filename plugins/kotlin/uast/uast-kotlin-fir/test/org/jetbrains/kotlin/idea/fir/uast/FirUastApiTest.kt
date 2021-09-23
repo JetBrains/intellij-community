@@ -24,8 +24,6 @@ open class FirUastApiTest : AbstractFirUastTest() {
     }
 
     private val whitelist : Set<String> = setOf(
-        // TODO: interface method's `hasModifierProperty`
-        "uast-kotlin/testData/DefaultImpls.kt",
         // TODO: resolve to inline and stdlib
         "uast-kotlin/testData/Resolve.kt",
         // TODO: no lambda call receiver?
