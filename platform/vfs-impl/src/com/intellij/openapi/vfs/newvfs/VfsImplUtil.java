@@ -457,7 +457,7 @@ public final class VfsImplUtil {
 
   @ApiStatus.Internal
   public static String getRecordIdPath(int record) {
-    StringBuilder name = new StringBuilder(record);
+    StringBuilder name = new StringBuilder(String.valueOf(record));
     int parent = FSRecords.getParent(record);
     while (parent > 0) {
       name.insert(0, parent + " -> ");
