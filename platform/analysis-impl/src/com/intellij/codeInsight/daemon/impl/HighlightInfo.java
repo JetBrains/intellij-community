@@ -91,7 +91,7 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
 
-  private @Nullable Map<FileEditor, JComponent> fileLevelComponents;
+  private @Nullable Object fileLevelComponentsStorage;
 
   @Nullable("null means it the same as highlighter")
   RangeMarker fixMarker;
@@ -159,21 +159,55 @@ public class HighlightInfo implements Segment {
     setFlag(FROM_INJECTION_MASK, true);
   }
 
+  @SuppressWarnings("unchecked")
   void addFileLeverComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
-    if (fileLevelComponents == null) {
-      fileLevelComponents = new HashMap<>();
+    if (fileLevelComponentsStorage == null) {
+      fileLevelComponentsStorage = new Pair<>(fileEditor, component);
     }
-    fileLevelComponents.put(fileEditor, component);
+    else if (fileLevelComponentsStorage instanceof Pair) {
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      Map<FileEditor, JComponent> map = new HashMap<>();
+      map.put(pair.first, pair.second);
+      map.put(fileEditor, component);
+      fileLevelComponentsStorage = map;
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).put(fileEditor, component);
+    }
+    else {
+      LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
+    }
   }
 
+  @SuppressWarnings("unchecked")
   void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
-    if (fileLevelComponents != null) {
-      fileLevelComponents.remove(fileEditor);
+    if (fileLevelComponentsStorage instanceof Pair) {
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      if (pair.first == fileEditor) {
+        fileLevelComponentsStorage = null;
+      }
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).remove(fileEditor);
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
-    return fileLevelComponents != null ? fileLevelComponents.get(fileEditor) : null;
+    if (fileLevelComponentsStorage == null) {
+      return null;
+    }
+    else if (fileLevelComponentsStorage instanceof Pair) {
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      return pair.first == fileEditor ? pair.second : null;
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      return ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).get(fileEditor);
+    }
+    else {
+      LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
+      return null;
+    }
   }
 
   @Nullable
