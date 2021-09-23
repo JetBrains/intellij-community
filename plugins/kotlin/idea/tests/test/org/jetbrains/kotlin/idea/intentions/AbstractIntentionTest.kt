@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.google.common.collect.Lists
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -44,9 +43,8 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     protected open fun intentionTextDirectiveName(): String = "INTENTION_TEXT"
 
-    @Throws(Exception::class)
     private fun createIntention(testDataFile: File): IntentionAction {
-        val candidateFiles = Lists.newArrayList<File>()
+        val candidateFiles = mutableListOf<File>()
 
         var current: File? = testDataFile.parentFile
         while (current != null) {
@@ -57,21 +55,19 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
             current = current.parentFile
         }
 
-        if (candidateFiles.isEmpty()) {
-            throw AssertionError(
+        when (candidateFiles.size) {
+            0 -> throw AssertionError(
                 ".intention file is not found for " + testDataFile +
                         "\nAdd it to base directory of test data. It should contain fully-qualified name of intention class."
             )
-        }
-        if (candidateFiles.size > 1) {
-            throw AssertionError(
-                "Several .intention files are available for " + testDataFile +
-                        "\nPlease remove some of them\n" + candidateFiles
+            1 -> {
+                val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
+                return Class.forName(className).getDeclaredConstructor().newInstance() as IntentionAction
+            }
+            else -> throw AssertionError(
+                "Several .intention files are available for $testDataFile\nPlease remove some of them\n$candidateFiles"
             )
         }
-
-        val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
-        return Class.forName(className).newInstance() as IntentionAction
     }
 
     @Throws(Exception::class)
@@ -106,8 +102,9 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                     try {
                         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
-                        val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")
-                        if (minJavaVersion != null && !SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return@configureRegistryAndRun
+                        InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.let { minJavaVersion ->
+                            if (!SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return@configureRegistryAndRun
+                        }
 
                         if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
                             DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
@@ -200,12 +197,10 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                             try {
                                 myFixture.checkResultByFile(canonicalPathToExpectedFile)
                             } catch (e: ComparisonFailure) {
-                                KotlinTestUtils
-                                    .assertEqualsToFile(File(testDataPath, canonicalPathToExpectedFile), editor.document.text)
+                                KotlinTestUtils.assertEqualsToFile(afterFile, editor.document.text)
                             }
-
                         } else {
-                            KotlinTestUtils.assertEqualsToFile(File(testDataPath, canonicalPathToExpectedFile), value.text)
+                            KotlinTestUtils.assertEqualsToFile(afterFile, value.text)
                         }
                     }
                 }

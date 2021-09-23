@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: The value changed at 'v++' is never used
 fun foo() {
     val list = 1..4
 
@@ -8,6 +9,5 @@ fun foo() {
         // comment 2
         v++
         // end of loop
-// AFTER-WARNING: The value changed at 'v++' is never used
     }
 }

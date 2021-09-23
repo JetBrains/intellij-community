@@ -107,7 +107,7 @@
     </problem>
     <problem>
         <file>ThisReference.kt</file>
-        <line>12</line>
+        <line>13</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ThisReference.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>

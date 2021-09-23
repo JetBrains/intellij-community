@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Parameter 'b' is never used
 
 class Test {
     fun foo() {
@@ -16,7 +17,6 @@ class Test {
         })
 
         // Applicable
-// AFTER-WARNING: Parameter 'b' is never used
         bar(object : Runnable {
             override fun run() {
                 bar(object : Runnable {
