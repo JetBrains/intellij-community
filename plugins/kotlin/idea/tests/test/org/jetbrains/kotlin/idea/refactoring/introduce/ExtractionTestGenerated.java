@@ -3765,9 +3765,29 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlus.kt");
             }
 
-            @TestMetadata("integerPlusPartNotConst.kt")
-            public void testIntegerPlusPartNotConst() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusPartNotConst.kt");
+            @TestMetadata("integerPlusConstVal.kt")
+            public void testIntegerPlusConstVal() throws Exception {
+                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusConstVal.kt");
+            }
+
+            @TestMetadata("integerPlusConstValTwice.kt")
+            public void testIntegerPlusConstValTwice() throws Exception {
+                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusConstValTwice.kt");
+            }
+
+            @TestMetadata("integerPlusFun.kt")
+            public void testIntegerPlusFun() throws Exception {
+                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusFun.kt");
+            }
+
+            @TestMetadata("integerPlusVal.kt")
+            public void testIntegerPlusVal() throws Exception {
+                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusVal.kt");
+            }
+
+            @TestMetadata("integerPlusVar.kt")
+            public void testIntegerPlusVar() throws Exception {
+                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusVar.kt");
             }
 
             @TestMetadata("integerRem.kt")
