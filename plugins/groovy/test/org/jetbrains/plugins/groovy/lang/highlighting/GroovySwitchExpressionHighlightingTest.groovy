@@ -196,4 +196,31 @@ void main(String[] args) {
        }
     }"""
   }
+
+  void 'test unmatched null'() {
+    def inspection = new GrSwitchExhaustivenessCheckInspection()
+    inspection.enableNullCheck()
+    highlightingTest"""
+enum A { B }
+def foo(A b) {
+  def x = <weak_warning>switch</weak_warning> (b) {
+    case A.B -> 1
+  }
+}
+""", inspection
+  }
+
+  void 'test explicitly matched null'() {
+    def inspection = new GrSwitchExhaustivenessCheckInspection()
+    inspection.enableNullCheck()
+    highlightingTest"""
+enum A { B }
+def foo(A b) {
+  def x = switch (b) {
+    case A.B -> 1
+    case null -> 2
+  }
+}
+""", inspection
+  }
 }
