@@ -53,11 +53,15 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
     override fun runProcess(): ProcessOutput = doRunProcess(listener = null)
 
     private fun doRunProcess(listener: LineWiseProcessOutputListener?): ProcessOutput {
-      val generatorScriptExecution = prepareHelperScriptExecution(helperPackage = PythonHelper.GENERATOR3,
-        helpersAwareTargetRequest = pyRequest)
+      val generatorScriptExecution = prepareHelperScriptExecution(
+        helperPackage = PythonHelper.GENERATOR3,
+        helpersAwareTargetRequest = pyRequest
+      )
       generatorScriptExecution.addParameter("-d")
-      val skeletonsDownloadRoot = TargetEnvironment.DownloadRoot(localRootPath = Paths.get(mySkeletonsPath),
-        targetRootPath = TargetEnvironment.TargetPath.Temporary())
+      val skeletonsDownloadRoot = TargetEnvironment.DownloadRoot(
+        localRootPath = Paths.get(mySkeletonsPath),
+        targetRootPath = TargetEnvironment.TargetPath.Temporary()
+      )
       myTargetEnvRequest.downloadVolumes += skeletonsDownloadRoot
       generatorScriptExecution.addParameter(skeletonsDownloadRoot.getTargetDownloadPath())
       if (myAssemblyRefs.isNotEmpty()) {
