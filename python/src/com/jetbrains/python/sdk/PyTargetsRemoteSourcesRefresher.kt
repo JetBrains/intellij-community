@@ -36,27 +36,27 @@ import kotlin.io.path.div
 
 private const val STATE_FILE = ".state.json"
 
-class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk, project: Project) {
+class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, project: Project) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest =
-    checkNotNull(PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project))
+    checkNotNull(PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project))
 
-  private val myTargetEnvRequest: TargetEnvironmentRequest
+  private val targetEnvRequest: TargetEnvironmentRequest
     get() = pyRequest.targetEnvironmentRequest
 
   init {
-    assert(mySdk !is Disposable || !Disposer.isDisposed(mySdk))
+    assert(sdk !is Disposable || !Disposer.isDisposed(sdk))
   }
 
   @Throws(ExecutionException::class)
   fun run(indicator: ProgressIndicator) {
-    val localRemoteSourcesRoot = Files.createDirectories(Paths.get(PythonSdkUtil.getRemoteSourcesLocalPath(mySdk.homePath)))
+    val localRemoteSourcesRoot = Files.createDirectories(Paths.get(PythonSdkUtil.getRemoteSourcesLocalPath(sdk.homePath)))
 
     val localUploadDir = Files.createTempDirectory("remote_sync")
     val uploadVolume = TargetEnvironment.UploadRoot(localRootPath = localUploadDir, targetRootPath = TargetPath.Temporary())
-    myTargetEnvRequest.uploadVolumes += uploadVolume
+    targetEnvRequest.uploadVolumes += uploadVolume
 
     val downloadVolume = TargetEnvironment.DownloadRoot(localRootPath = localRemoteSourcesRoot, targetRootPath = TargetPath.Temporary())
-    myTargetEnvRequest.downloadVolumes += downloadVolume
+    targetEnvRequest.downloadVolumes += downloadVolume
 
     val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.REMOTE_SYNC, helpersAwareTargetRequest = pyRequest)
 
@@ -74,12 +74,12 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk, project: Project) {
     execution.addParameter(downloadVolume.getTargetDownloadPath())
 
     val targetIndicator = TargetProgressIndicatorAdapter(indicator)
-    val environment = myTargetEnvRequest.prepareEnvironment(targetIndicator)
+    val environment = targetEnvRequest.prepareEnvironment(targetIndicator)
 
     // XXX Make it automatic
     environment.uploadVolumes.values.forEach { it.upload(".", targetIndicator) }
 
-    val cmd = execution.buildTargetedCommandLine(environment, mySdk, emptyList())
+    val cmd = execution.buildTargetedCommandLine(environment, sdk, emptyList())
     cmd.execute(environment, indicator)
 
     // XXX Make it automatic
@@ -113,7 +113,7 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk, project: Project) {
       }
       rootZip.deleteExisting()
     }
-    mySdk.remoteSdkAdditionalData!!.setPathMappings(pathMappings)
+    sdk.remoteSdkAdditionalData!!.setPathMappings(pathMappings)
   }
 
   private class StateFile {

@@ -33,12 +33,12 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
     PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project ?: ProjectManager.getInstance().defaultProject)
   )
 
-  private val myTargetEnvRequest: TargetEnvironmentRequest
+  private val targetEnvRequest: TargetEnvironmentRequest
     get() = pyRequest.targetEnvironmentRequest
 
-  private val myFoundBinaries: MutableSet<String> = HashSet()
+  private val foundBinaries: MutableSet<String> = HashSet()
 
-  private fun isLocalTarget() = myTargetEnvRequest is LocalTargetEnvironmentRequest
+  private fun isLocalTarget() = targetEnvRequest is LocalTargetEnvironmentRequest
 
   override fun commandBuilder(): Builder {
     val builder = TargetedBuilder()
@@ -62,7 +62,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
         localRootPath = Paths.get(mySkeletonsPath),
         targetRootPath = TargetEnvironment.TargetPath.Temporary()
       )
-      myTargetEnvRequest.downloadVolumes += skeletonsDownloadRoot
+      targetEnvRequest.downloadVolumes += skeletonsDownloadRoot
       generatorScriptExecution.addParameter(skeletonsDownloadRoot.getTargetDownloadPath())
       if (myAssemblyRefs.isNotEmpty()) {
         generatorScriptExecution.addParameter("-c")
@@ -72,7 +72,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
       if (myExtraSysPath.isNotEmpty()) {
         generatorScriptExecution.addParameter("-s")
         // TODO [targets-api] are these paths come from target or from the local machine?
-        val pathSeparatorOnTarget = myTargetEnvRequest.targetPlatform.platform.pathSeparator
+        val pathSeparatorOnTarget = targetEnvRequest.targetPlatform.platform.pathSeparator
         generatorScriptExecution.addParameter(myExtraSysPath.joinToString(separator = pathSeparatorOnTarget.toString()))
       }
       for (extraArg in myExtraArgs) {
@@ -85,7 +85,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
           generatorScriptExecution.addParameter(myTargetModulePath)
         }
       }
-      val targetEnvironment = myTargetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
+      val targetEnvironment = targetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
       var skeletonsStateJson: String? = null
       if (!isLocalTarget()) {
         try {
@@ -114,12 +114,12 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
   }
 
   override fun runGeneration(builder: Builder, indicator: ProgressIndicator?): MutableList<GenerationResult> {
-    myFoundBinaries.clear()
+    foundBinaries.clear()
     val results = super.runGeneration(builder, indicator)
     results.asSequence()
       .map { it.moduleOrigin }
       .filter { PySkeletonHeader.BUILTIN_NAME != it }
-      .toCollection(myFoundBinaries)
+      .toCollection(foundBinaries)
     return results
   }
 
@@ -128,7 +128,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
       return FileUtil.exists(name)
     }
     else {
-      return name in myFoundBinaries
+      return name in foundBinaries
     }
   }
 }
