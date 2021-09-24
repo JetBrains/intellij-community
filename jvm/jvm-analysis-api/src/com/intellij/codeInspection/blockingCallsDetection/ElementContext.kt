@@ -1,41 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.blockingCallsDetection;
+package com.intellij.codeInspection.blockingCallsDetection
 
-import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 
-import java.util.Collection;
+open class ElementContext(
+  open val element: PsiElement,
+  val inspectionSettings: BlockingCallInspectionSettings
+)
 
-public final class MethodContext {
+class MethodContext(override val element: PsiMethod,
+                    private val myCurrentChecker: BlockingMethodChecker,
+                    val checkers: Collection<BlockingMethodChecker>,
+                    inspectionSettings: BlockingCallInspectionSettings): ElementContext(element, inspectionSettings) {
 
-  private final PsiMethod myMethod;
-  private final BlockingMethodChecker myCurrentChecker;
-  private final Collection<BlockingMethodChecker> myCheckers;
-
-  public MethodContext(@NotNull PsiMethod method,
-                       @NotNull BlockingMethodChecker currentChecker,
-                       @NotNull Collection<BlockingMethodChecker> checkers) {
-    myMethod = method;
-    myCurrentChecker = currentChecker;
-    myCheckers = checkers;
-  }
-
-  public @NotNull PsiMethod getMethod() {
-    return myMethod;
-  }
-
-  public @NotNull Collection<BlockingMethodChecker> getCheckers() {
-    return myCheckers;
-  }
-
-  public boolean isMethodNonBlocking() {
-    for (BlockingMethodChecker checker : myCheckers) {
-      if (myCurrentChecker != checker) {
-        if (checker.isMethodNonBlocking(new MethodContext(myMethod, checker, myCheckers))) {
-          return true;
+  val isMethodNonBlocking: Boolean
+    get() {
+      for (checker in checkers) {
+        if (myCurrentChecker !== checker) {
+          if (checker.isMethodNonBlocking(MethodContext(element, checker, checkers, inspectionSettings))) {
+            return true
+          }
         }
       }
+      return false
     }
-    return false;
-  }
 }

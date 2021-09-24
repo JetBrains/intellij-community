@@ -32,7 +32,7 @@ public interface BlockingMethodChecker {
   }
 
   default boolean isMethodBlocking(@NotNull MethodContext methodContext) {
-    return isMethodBlocking(methodContext.getMethod());
+    return isMethodBlocking(methodContext.getElement());
   }
 
   default boolean isMethodNonBlocking(@NotNull MethodContext methodContext) {
@@ -40,9 +40,19 @@ public interface BlockingMethodChecker {
   }
 
   /**
-   * @param element PsiElement (e.g. method call or reference) which is located in "non-blocking" code fragment
-   * @return empty array if cannot provide any fixes, non-empty array of quick fixes otherwise
+   * @param methodContext metadata that provides info about inspection settings and PsiElement (e.g. method call or reference)
+   *                      which is located in "non-blocking" code fragment
+   * @return empty array if one cannot provide any fixes, non-empty array of quick fixes otherwise
    */
+  default LocalQuickFix @NotNull [] getQuickFixesFor(@NotNull ElementContext elementContext) {
+    return LocalQuickFix.EMPTY_ARRAY;
+  }
+
+  /**
+   * @deprecated Override {@link #getQuickFixesFor(ElementContext)} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   default LocalQuickFix @NotNull [] getQuickFixesFor(@NotNull PsiElement element) {
     return LocalQuickFix.EMPTY_ARRAY;
   }

@@ -31,7 +31,7 @@ internal class CoroutineBlockingMethodChecker : BlockingMethodChecker {
     }
 
     override fun isMethodNonBlocking(context: MethodContext): Boolean {
-        val uMethod = context.method.toUElement()
+        val uMethod = context.element.toUElement()
         val sourcePsi = uMethod?.sourcePsi ?: return false
         return sourcePsi is KtNamedFunction && sourcePsi.modifierList?.hasSuspendModifier() == true
     }

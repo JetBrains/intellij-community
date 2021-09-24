@@ -21,9 +21,9 @@ final class ThrowsTypeBlockingMethodChecker implements BlockingMethodChecker {
 
   @Override
   public boolean isMethodBlocking(@NotNull MethodContext context) {
-    if (!isInStandardLibrary(context.getMethod())) return false;
+    if (!isInStandardLibrary(context.getElement())) return false;
 
-    for (PsiClassType throwType : context.getMethod().getThrowsList().getReferencedTypes()) {
+    for (PsiClassType throwType : context.getElement().getThrowsList().getReferencedTypes()) {
       PsiClass resolvedExceptionClass = throwType.resolve();
       if (resolvedExceptionClass == null) continue;
 
