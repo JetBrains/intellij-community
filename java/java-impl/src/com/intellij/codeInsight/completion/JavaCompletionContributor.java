@@ -64,7 +64,6 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.SealedUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.EntryStream;
@@ -109,22 +108,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           return aClass != null && aClass.isEnum();
         }
       }))));
-  private static final ElementPattern<PsiElement> IN_SEALED_SWITCH = psiElement()
-    .withSuperParent(2, psiElement(PsiCaseLabelElementList.class)
-      .withParent(psiElement(PsiSwitchLabelStatementBase.class)
-                    .withSuperParent(2, psiElement(PsiSwitchBlock.class)
-                      .with(new PatternCondition<>("sealedExpressionType") {
-                        @Override
-                        public boolean accepts(@NotNull PsiSwitchBlock psiSwitchBlock, ProcessingContext context) {
-                          final PsiExpression expression = psiSwitchBlock.getExpression();
-                          if (expression == null) return false;
-                          final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-                          return aClass != null && aClass.hasModifierProperty(PsiModifier.SEALED);
-                        }
-                      })
-                    )
-      )
-    );
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_CASE_LABEL_ELEMENT_LIST =
     psiElement().withSuperParent(2, psiElement(PsiCaseLabelElementList.class));
 
@@ -308,28 +291,12 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return new OrFilter(new ClassFilter(PsiClass.class), constantVariablesFilter);
     }
 
-    final PsiResolveHelper resolver = JavaPsiFacade.getInstance(position.getProject()).getResolveHelper();
-    final PsiClass selectorClass = resolver.resolveReferencedClass(selectorType.getCanonicalText(), null);
-    if (selectorClass == null) return TrueFilter.INSTANCE;
-
-    if (IN_SEALED_SWITCH.accepts(position)) {
-      final Collection<PsiClass> classes = SealedUtils.findSameFileInheritorsClasses(selectorClass);
-      return new ClassFilter(PsiClass.class) {
-        @Override
-        public boolean isAcceptable(Object element, PsiElement context) {
-          if (!(element instanceof PsiClass)) return false;
-
-          final PsiClass aClass = (PsiClass)element;
-
-          return selectorClass == aClass || classes.contains(aClass);
-        }
-      };
-    }
+    final PsiClass typeClass = PsiUtil.resolveClassInType(selectorType);
 
     final ClassFilter inheritorsFilter = new ClassFilter(PsiClass.class) {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
-        return element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, selectorClass, true);
+        return element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, typeClass, true);
       }
     };
 
@@ -337,9 +304,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return new OrFilter(constantVariablesFilter, inheritorsFilter);
     }
 
-    if (selectorType instanceof PsiClassType) return inheritorsFilter;
-
-    return TrueFilter.INSTANCE;
+    return selectorType instanceof PsiClassType
+           ? inheritorsFilter
+           : TrueFilter.INSTANCE;
   }
 
   @Contract(pure = true)
