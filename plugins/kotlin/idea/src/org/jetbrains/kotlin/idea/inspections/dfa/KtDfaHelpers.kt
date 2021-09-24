@@ -20,10 +20,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.project.builtIns
@@ -73,7 +70,7 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
         is ClassDescriptor -> when (val fqNameUnsafe = descriptor.fqNameUnsafe) {
             FqNames._boolean -> DfTypes.BOOLEAN
             FqNames._byte -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
-            FqNames._char -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.toLong(), Character.MAX_VALUE.toLong()))
+            FqNames._char -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.code.toLong(), Character.MAX_VALUE.code.toLong()))
             FqNames._short -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
             FqNames._int -> DfTypes.INT
             FqNames._long -> DfTypes.LONG
@@ -172,7 +169,34 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     }
 }
 
-internal fun KtExpression.getKotlinType(): KotlinType? = analyze(BodyResolveMode.PARTIAL).getType(this)
+internal fun KtExpression.getKotlinType(): KotlinType? {
+    var parent = this.parent
+    if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
+        parent = parent.parent
+    }
+    while (parent is KtParenthesizedExpression) {
+        parent = parent.parent
+    }
+    // In (call() as? X), the call() type might be inferred to be X due to peculiarities
+    // of Kotlin type system. This produces an unpleasant effect for data flow analysis:
+    // it assumes that this cast never fails, thus result is never null, which is actually wrong
+    // So we have to patch the original call type, widening it to its upper bound.
+    // Current implementation is not always precise and may result in skipping a useful warning.
+    if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.text == "as?") {
+        val call = resolveToCall()
+        if (call != null) {
+            val descriptor = call.resultingDescriptor
+            val typeDescriptor = descriptor.original.returnType?.constructor?.declarationDescriptor
+            if (typeDescriptor is TypeParameterDescriptor) {
+                val upperBound = typeDescriptor.upperBounds.singleOrNull()
+                if (upperBound != null) {
+                    return upperBound
+                }
+            }
+        }
+    }
+    return analyze(BodyResolveMode.PARTIAL).getType(this)
+}
 
 /**
  * JVM-patched array element type (e.g. Int? for Array<Int>)
