@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -22,9 +22,11 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
  * The number of submitted tasks is unrestricted.
+ *
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
  */
 public final class BoundedTaskExecutor extends AbstractExecutorService {
+
   private volatile boolean myShutdown;
   @NotNull
   private final String myName;
@@ -52,10 +54,10 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     myName = name;
     myBackendExecutor = backendExecutor;
     if (maxThreads < 1) {
-      throw new IllegalArgumentException("maxThreads must be >=1 but got: "+maxThreads);
+      throw new IllegalArgumentException("maxThreads must be >=1 but got: " + maxThreads);
     }
     if (backendExecutor instanceof BoundedTaskExecutor) {
-      throw new IllegalArgumentException("backendExecutor is already BoundedTaskExecutor: "+backendExecutor);
+      throw new IllegalArgumentException("backendExecutor is already BoundedTaskExecutor: " + backendExecutor);
     }
     myMaxThreads = maxThreads;
     myChangeThreadName = changeThreadName;
@@ -227,7 +229,8 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     }
   }
 
-  public synchronized void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+  public synchronized void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit)
+    throws ExecutionException, InterruptedException, TimeoutException {
     CountDownLatch started = new CountDownLatch(myMaxThreads);
     CountDownLatch readyToFinish = new CountDownLatch(1);
     Runnable runnable = new Runnable() {
@@ -249,7 +252,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     };
     // Submit 'myMaxTasks' runnables and wait for them all to start.
     // They will spread to all executor threads and ensure the previously submitted tasks are completed.
-    // Wait for all empty runnables to finish to free up the threads.
+    // Wait for all empty runnables to finish freeing up the threads.
     List<Future<?>> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), __ -> {
       LastTask wait = new LastTask(runnable);
       execute(wait);
@@ -295,7 +298,11 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   public String toString() {
     return "BoundedExecutor(" + myMaxThreads + ")" + (isShutdown() ? " SHUTDOWN " : "") +
            "; inProgress: " + (int)myStatus.get() +
-           (myTaskQueue.isEmpty() ? "" : "; queue: " + myTaskQueue.size() + "[" + ContainerUtil.map(myTaskQueue, BoundedTaskExecutor::info) + "]") +
+           (
+             myTaskQueue.isEmpty()
+             ? ""
+             : "; queue: " + myTaskQueue.size() + "[" + ContainerUtil.map(myTaskQueue, BoundedTaskExecutor::info) + "]"
+           ) +
            "; name: " + myName;
   }
 }
