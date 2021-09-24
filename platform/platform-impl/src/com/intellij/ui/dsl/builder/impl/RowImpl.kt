@@ -142,6 +142,12 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
+  override fun visibleIf(predicate: ComponentPredicate): Row {
+    visible(predicate())
+    predicate.addListener { visible(it) }
+    return this
+  }
+
   fun visibleFromParent(parentVisible: Boolean): RowImpl {
     doVisible(parentVisible && visible)
     return this

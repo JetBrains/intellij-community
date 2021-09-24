@@ -1,16 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
 import org.junit.Test
 import javax.swing.JComponent
+import javax.swing.JLabel
 import kotlin.random.Random
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-class BuilderTest {
+class EnabledVisibleTest {
 
   @Test
-  fun testEnabled() {
-    testEnabledVisible({ entity, value ->
+  fun testNestedEnabled() {
+    testNestedEnabledVisible({ entity, value ->
       when (entity) {
         is Panel -> entity.enabled(value)
         is Row -> entity.enabled(value)
@@ -21,8 +26,8 @@ class BuilderTest {
   }
 
   @Test
-  fun testVisible() {
-    testEnabledVisible({ entity, value ->
+  fun testNestedVisible() {
+    testNestedEnabledVisible({ entity, value ->
       when (entity) {
         is Panel -> entity.visible(value)
         is Row -> entity.visible(value)
@@ -32,7 +37,50 @@ class BuilderTest {
     }, { jComponent -> jComponent.isVisible })
   }
 
-  private fun testEnabledVisible(setState: (entity: Any, value: Boolean) -> Unit, getState: (JComponent) -> Boolean) {
+  @Test
+  fun testVisibleIf() {
+    lateinit var checkBoxText: Cell<JBCheckBox>
+    lateinit var checkBoxRow: Cell<JBCheckBox>
+    lateinit var textField: JBTextField
+    lateinit var label: JLabel
+    panel {
+      row {
+        checkBoxRow = checkBox("")
+          .applyToComponent { isSelected = true }
+        checkBoxText = checkBox("")
+          .applyToComponent { isSelected = true }
+      }
+
+      row("visibleIf test row") {
+        textField = textField()
+          .visibleIf(checkBoxText.selected)
+          .component
+        label = label("")
+          .component
+      }.visibleIf(checkBoxRow.selected)
+    }
+
+    assertTrue(label.isVisible)
+    assertTrue(textField.isVisible)
+
+    checkBoxText.component.isSelected = false
+    assertTrue(label.isVisible)
+    assertFalse(textField.isVisible)
+
+    checkBoxText.component.isSelected = true
+    assertTrue(label.isVisible)
+    assertTrue(textField.isVisible)
+
+    checkBoxRow.component.isSelected = false
+    assertFalse(label.isVisible)
+    assertFalse(textField.isVisible)
+
+    checkBoxRow.component.isSelected = true
+    assertTrue(label.isVisible)
+    assertTrue(textField.isVisible)
+  }
+
+  private fun testNestedEnabledVisible(setState: (entity: Any, value: Boolean) -> Unit, getState: (JComponent) -> Boolean) {
     val iterationCount = 100
     val entities = mutableListOf<Any>()
     lateinit var cell: Cell<JComponent>

@@ -107,6 +107,8 @@ interface Row {
    */
   fun visible(isVisible: Boolean): Row
 
+  fun visibleIf(predicate: ComponentPredicate): Row
+
   /**
    * Sets enabled state of the row including comment [Row.comment] and all children recursively.
    * The row is disabled while there is a disabled parent

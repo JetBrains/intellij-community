@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -334,6 +335,25 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
             }
           }
         }.horizontalAlign(HorizontalAlign.RIGHT)
+      }
+
+      group("Control visibility by visibleIf") {
+        lateinit var checkBoxText: Cell<JBCheckBox>
+        lateinit var checkBoxRow: Cell<JBCheckBox>
+
+        row {
+          checkBoxRow = checkBox("Row")
+            .applyToComponent { isSelected = true }
+          checkBoxText = checkBox("textField")
+            .applyToComponent { isSelected = true }
+        }
+
+        row("visibleIf test row") {
+          textField()
+            .applyToComponent { text = "textField" }
+            .visibleIf(checkBoxText.selected)
+          label("some label")
+        }.visibleIf(checkBoxRow.selected)
       }
     }
   }
