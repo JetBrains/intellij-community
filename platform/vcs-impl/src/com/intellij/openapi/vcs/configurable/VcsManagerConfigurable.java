@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -26,11 +27,18 @@ import java.util.List;
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
-public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
-  implements Configurable.NoScroll, Configurable.WithEpDependencies {
+public final class VcsManagerConfigurable extends SortedConfigurableGroup implements Configurable.WithEpDependencies {
+  private static final String ID = "project.propVCSSupport.Mappings";
+  private static final int GROUP_WEIGHT = 45;
+
   @NotNull private final Project myProject;
 
   public VcsManagerConfigurable(@NotNull Project project) {
+    super(ID,
+          VcsBundle.message("version.control.main.configurable.name"),
+          VcsBundle.message("version.control.main.configurable.description"),
+          ID,
+          GROUP_WEIGHT);
     myProject = project;
   }
 
@@ -39,23 +47,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     return Arrays.asList(
       VcsEP.EP_NAME, VcsConfigurableProvider.EP_NAME
     );
-  }
-
-  @Override
-  public String getDisplayName() {
-    return VcsBundle.message("version.control.main.configurable.name");
-  }
-
-  @Override
-  @NotNull
-  public String getHelpTopic() {
-    return "project.propVCSSupport.Mappings";
-  }
-
-  @Override
-  @NotNull
-  public String getId() {
-    return getHelpTopic();
   }
 
   @Override
