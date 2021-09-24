@@ -66,6 +66,8 @@ internal object CoroutineBlockingCallInspectionUtils {
     const val BLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.BlockingContext"
     const val NONBLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.NonBlockingContext"
     const val IO_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.IO"
+    const val MAIN_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Main"
+    const val DEFAULT_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Default"
     const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
     const val COROUTINE_CONTEXT = "kotlin.coroutines.CoroutineContext"
     const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"

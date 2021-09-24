@@ -25,8 +25,10 @@ import org.jetbrains.kotlin.idea.core.receiverValue
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.BLOCKING_CONTEXT_ANNOTATION
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_CONTEXT
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_SCOPE
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.DEFAULT_DISPATCHER_FQN
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.FLOW_PACKAGE_FQN
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.IO_DISPATCHER_FQN
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.MAIN_DISPATCHER_FQN
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.NONBLOCKING_CONTEXT_ANNOTATION
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.findFlowOnCall
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
@@ -180,7 +182,11 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         if (hasNonBlockingAnnotation) return NONBLOCKING
 
         val fqnOrNull = fqNameOrNull()?.asString() ?: return NONBLOCKING
-        return if (fqnOrNull == IO_DISPATCHER_FQN) BLOCKING else NONBLOCKING
+        return when(fqnOrNull) {
+            IO_DISPATCHER_FQN -> BLOCKING
+            MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NONBLOCKING
+            else -> UNSURE
+        }
     }
 
     private fun union(vararg checks: () -> ContextType): ContextType {
