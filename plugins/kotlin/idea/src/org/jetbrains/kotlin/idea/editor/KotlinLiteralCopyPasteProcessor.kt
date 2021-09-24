@@ -155,21 +155,22 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
                 } ?: ""
 
             val tripleQuoteRe = Regex("[\"]{3,}")
-            var indentToAdd = ""
-            templateTokenSequence.mapIndexed { index, chunk ->
-                when (chunk) {
-                    is LiteralChunk -> {
-                        val replaced = chunk.text.replace("\$", "\${'$'}").let { escapedDollar ->
-                            tripleQuoteRe.replace(escapedDollar) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
+            buildString {
+                val tokens = templateTokenSequence.toList()
+                for ((index, chunk) in tokens.withIndex()) {
+                    val indentToAdd = if (tokens.getOrNull(index - 1) is NewLineChunk) indent else ""
+                    when (chunk) {
+                        is LiteralChunk -> {
+                            val replaced = chunk.text.replace("\$", "\${'$'}").let { escapedDollar ->
+                                tripleQuoteRe.replace(escapedDollar) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
+                            }
+                            append(indentToAdd + replaced)
                         }
-                        (indentToAdd + replaced).also { indentToAdd = "" }
+                        is EntryChunk -> append(indentToAdd + chunk.text)
+                        is NewLineChunk -> append("\n")
                     }
-                    is EntryChunk ->
-                        (indentToAdd + chunk.text).also { indentToAdd = "" }
-                    is NewLineChunk ->
-                        "\n".also { indentToAdd = indent }
                 }
-            }.joinToString(separator = "")
+            }
         }
     }
 }
