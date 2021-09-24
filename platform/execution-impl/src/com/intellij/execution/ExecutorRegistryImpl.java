@@ -151,14 +151,16 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           }
         }
         else {
-          ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
-          ExecutorAction wrappedMainAction = new RunToolbarProcessMainAction(process, executor);
+          if (!process.isTemporaryProcess()) {
+            ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
+            ExecutorAction wrappedMainAction = new RunToolbarProcessMainAction(process, executor);
 
-          registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
-                                myRunWidgetIdToAction);
+            registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
+                                  myRunWidgetIdToAction);
 
-          registerActionInGroup(actionManager, process.getMainActionId(), wrappedMainAction, RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
-                                myRunWidgetIdToAction);
+            registerActionInGroup(actionManager, process.getMainActionId(), wrappedMainAction, RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
+                                  myRunWidgetIdToAction);
+          }
         }
       });
     }

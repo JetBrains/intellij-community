@@ -32,10 +32,18 @@ class RunToolbarComponentService(val project: Project) {
         override fun processTerminating(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
             if (env.project == project) {
-              stop(env)
+              terminating(env)
             }
           }
         }
+
+/*        override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+          ApplicationManager.getApplication().invokeLater {
+            if (env.project == project) {
+              terminated(env)
+            }
+          }
+        }*/
       })
 
       extraSlots.addListener(object : ActiveListener {
@@ -63,13 +71,23 @@ class RunToolbarComponentService(val project: Project) {
       }
     }
   }
-
-  private fun stop(env: ExecutionEnvironment) {
+/*
+  private fun terminated(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions.remove(env.executionId)
       LOG.info("new active process removed: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
       if(extraSlots.active) {
-        extraSlots.processStopped(env.executionId)
+        extraSlots.processTerminated(env.executionId)
+      }
+    }
+  }*/
+
+  private fun terminating(env: ExecutionEnvironment) {
+    if(isRelevant(env)) {
+      executions.remove(env.executionId)
+      LOG.info("new active process terminating: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
+      if(extraSlots.active) {
+        extraSlots.processTerminating(env)
       }
     }
   }
