@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import javax.swing.Icon
 
 class CompilerWarningIntentionAction(private val name: @IntentionFamilyName String): AbstractEmptyIntentionAction(), LowPriorityAction, Iconable {
-    override fun getText(): String = KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning.0", name)
+    override fun getText(): String = KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning.0.options", name)
 
     override fun getFamilyName(): String = name
 

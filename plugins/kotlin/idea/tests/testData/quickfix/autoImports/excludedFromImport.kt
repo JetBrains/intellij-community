@@ -1,6 +1,6 @@
 // "Import" "false"
 // WITH_RUNTIME
-// ACTION: Compiler warning 'UNUSED_EXPRESSION'
+// ACTION: Compiler warning 'UNUSED_EXPRESSION' options
 // ACTION: Create local variable 'FunctionReference'
 // ACTION: Create object 'FunctionReference'
 // ACTION: Create parameter 'FunctionReference'
