@@ -69,7 +69,7 @@ def parse_args(gen_version):
     )
     parser.add_argument(
         '--state-file', metavar='PATH',
-        type=argparse.FileType('r', encoding='utf-8'),
+        type=argparse.FileType('rb'),
         help='Path to the input ".state.json" file. If "-", the file is passed via '
              'stdin. The resulting ".state.json" will be generated automatically in '
              'the skeletons directory.'
@@ -157,7 +157,7 @@ def main():
             state_json = json.loads(sys.stdin.readline())  # utf-8 by default
         else:
             with args.state_file as f:
-                state_json = json.load(f)
+                state_json = json.loads(f.read().decode(encoding='utf-8'))
     else:
         state_json = None
 
