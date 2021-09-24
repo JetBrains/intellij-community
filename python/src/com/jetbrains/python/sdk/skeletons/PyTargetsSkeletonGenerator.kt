@@ -7,13 +7,16 @@ import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
+import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.exists
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -22,7 +25,6 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Paths
 import kotlin.io.path.div
 
@@ -85,29 +87,36 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
           generatorScriptExecution.addParameter(myTargetModulePath)
         }
       }
-      val targetEnvironment = targetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
-      var skeletonsStateJson: String? = null
       if (!isLocalTarget()) {
-        try {
-          skeletonsStateJson = Files.readString(Paths.get(skeletonsPath) / STATE_MARKER_FILE)
-          generatorScriptExecution.addParameter("--state-file-policy")
-          generatorScriptExecution.addParameter("readwrite")
+        val existingStateFile = Paths.get(skeletonsPath) / STATE_MARKER_FILE
+        if (existingStateFile.exists()) {
+          val stateFileUploadRoot = TargetEnvironment.UploadRoot(
+            localRootPath = Files.createTempDirectory("generator3"),
+            targetRootPath = TargetEnvironment.TargetPath.Temporary(),
+          )
+          targetEnvRequest.uploadVolumes += stateFileUploadRoot
+          Files.copy(existingStateFile, stateFileUploadRoot.localRootPath / STATE_MARKER_FILE)
+          generatorScriptExecution.addParameter("--state-file")
+          generatorScriptExecution.addParameter(stateFileUploadRoot.getTargetUploadPath().getRelativeTargetPath(STATE_MARKER_FILE))
         }
-        catch (e: NoSuchFileException) {
-          generatorScriptExecution.addParameter("--state-file-policy")
-          generatorScriptExecution.addParameter("write")
+        else {
+          generatorScriptExecution.addParameter("--init-state-file")
         }
       }
 
+      val targetEnvironment = targetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
+      
+      // XXX Make it automatic
+      targetEnvironment.uploadVolumes.values.forEach { it.upload(".", TargetProgressIndicator.EMPTY) }
+      
       val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, mySdk, emptyList())
       val process = targetEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
       val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
       val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
       listener?.let { capturingProcessHandler.addProcessListener(LineWiseProcessOutputListener.Adapter(it)) }
-      if (skeletonsStateJson != null) {
-        sendLineToProcessInput(capturingProcessHandler, skeletonsStateJson)
-      }
       val result = capturingProcessHandler.runProcess()
+      
+      // XXX Make it automatic
       targetEnvironment.downloadVolumes.values.forEach { it.download(".", EmptyProgressIndicator()) }
       return result
     }

@@ -23,6 +23,7 @@ from generator3_tests import GeneratorTestCase, python2_only, python3_only, test
 
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
+ARGPARSE_ERROR_CODE = 2
 _helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__file__)))
 
 ProcessResult = collections.namedtuple('GeneratorResults', ('exit_code', 'stdout', 'stderr'))
@@ -437,7 +438,8 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
 
 
 class StatePassingGenerationTest(FunctionalGeneratorTestCase):
-    default_generator_extra_args = ['--state-file-policy', 'readwrite', '--name-pattern', 'mod?']
+    default_generator_extra_args = ['--state-file', '-',
+                                    '--name-pattern', 'mod?']
     default_generator_extra_syspath = ['mocks', 'binaries']
 
     def test_existing_updated_due_to_required_gen_version(self):
@@ -533,10 +535,13 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                 }
             }
         }
-        self.check_generator_output(extra_args=['--state-file-policy', 'readwrite', '--name-pattern', 'mod'],
-                                    gen_version='0.1',
-                                    custom_required_gen=True,
-                                    input=json.dumps(state))
+        self.check_generator_output(
+            extra_args=['--state-file', '-',
+                        '--name-pattern', 'mod'],
+            gen_version='0.1',
+            custom_required_gen=True,
+            input=json.dumps(state)
+        )
 
     def test_new_modules_are_added_to_state_json(self):
         state = {
@@ -567,16 +572,19 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
         self.check_generator_output(input=json.dumps(state), gen_version='0.1', custom_required_gen=True)
 
     def test_only_leaving_state_file_no_read(self):
-        self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod?'])
+        self.check_generator_output(extra_args=['--init-state-file',
+                                                '--name-pattern', 'mod?'])
 
     def test_state_indication_for_builtin_module(self):
-        result = self.run_generator(extra_args=['--state-file-policy', 'write', '--name-pattern', '_ast'])
+        result = self.run_generator(extra_args=['--init-state-file',
+                                                '--name-pattern', '_ast'])
         self.assertIsNotNone(result.state_json)
         self.assertIn('_ast', result.state_json['sdk_skeletons'])
         self.assertEqual('GENERATED', result.state_json['sdk_skeletons']['_ast']['status'])
 
     def test_modification_time_left_in_state_json_for_new_binaries(self):
-        result = self.run_generator(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod'],
+        result = self.run_generator(extra_args=['--init-state-file',
+                                                '--name-pattern', 'mod'],
                                     extra_env={ENV_TEST_MODE_FLAG: None})
         self.assertIsNotNone(result.state_json)
         self.assertIn('bin_mtime', result.state_json['sdk_skeletons']['mod'])
@@ -597,6 +605,15 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     input=json.dumps(state))
 
     def test_state_json_for_up_to_date_skeletons_retains_original_gen_version(self):
-        self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod'],
+        self.check_generator_output(extra_args=['--init-state-file',
+                                                '--name-pattern', 'mod'],
                                     gen_version='0.2',
                                     custom_required_gen=True)
+
+    def test_state_json_accepted_as_path_to_file(self):
+        self.check_generator_output(
+            extra_args=[
+                '--state-file', self.resolve_in_test_data('.state.json'),
+                '--name-pattern', 'mod*',
+            ],
+        )
