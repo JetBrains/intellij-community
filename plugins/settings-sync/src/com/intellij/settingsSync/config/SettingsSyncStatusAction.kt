@@ -4,9 +4,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.settingsSync.SETTINGS_SYNC_ENABLED_PROPERTY
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.util.SystemProperties
 
 class SettingsSyncStatusAction : AnAction(message("title.settings.sync")) {
   override fun actionPerformed(e: AnActionEvent) {
@@ -15,6 +17,10 @@ class SettingsSyncStatusAction : AnAction(message("title.settings.sync")) {
 
   override fun update(e: AnActionEvent) {
     val p = e.presentation
+    if (!SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)) {
+      p.isEnabledAndVisible = false
+      return
+    }
     when(getStatus()) {
       SyncStatus.ON -> {
         p.icon = AllIcons.General.InspectionsOK // TODO<rv>: Change icon

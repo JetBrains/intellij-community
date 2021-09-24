@@ -1,13 +1,17 @@
 package com.intellij.settingsSync.config
 
 import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.AlertMessagesManager
+import com.intellij.settingsSync.SETTINGS_SYNC_ENABLED_PROPERTY
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.layout.*
+import com.intellij.util.SystemProperties
 import javax.swing.JCheckBox
 
 class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")) {
@@ -125,4 +129,10 @@ class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync"
     }
   }
 
+}
+
+class SettingsSyncConfigurableProvider: ConfigurableProvider() {
+  override fun createConfigurable(): Configurable = SettingsSyncConfigurable()
+
+  override fun canCreateConfigurable() = SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 }

@@ -14,7 +14,7 @@
     <applicationConfigurable id="settings.sync"
                              key="title.settings.sync"
                              bundle="messages.SettingsSyncBundle"
-                             instance="com.intellij.settingsSync.config.SettingsSyncConfigurable"
+                             provider="com.intellij.settingsSync.config.SettingsSyncConfigurableProvider"
                              groupId="root"
                              groupWeight="5"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.auth.SettingsSyncAuthService"/>
