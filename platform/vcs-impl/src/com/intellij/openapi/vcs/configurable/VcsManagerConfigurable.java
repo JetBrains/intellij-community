@@ -5,7 +5,6 @@ import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfig
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -19,7 +18,6 @@ import com.intellij.openapi.vcs.impl.VcsEP;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,7 +29,6 @@ import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
   implements Configurable.NoScroll, Configurable.WithEpDependencies {
   @NotNull private final Project myProject;
-  private Configurable myDelegate;
 
   public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
@@ -42,43 +39,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     return Arrays.asList(
       VcsEP.EP_NAME, VcsConfigurableProvider.EP_NAME
     );
-  }
-
-  @Override
-  public JComponent createComponent() {
-    myDelegate = new VcsGeneralSettingsConfigurable(myProject);
-    return myDelegate.createComponent();
-  }
-
-  @Override
-  public boolean hasOwnContent() {
-    return true;
-  }
-
-  @Override
-  public boolean isModified() {
-    return myDelegate != null && myDelegate.isModified();
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    super.apply();
-    myDelegate.apply();
-  }
-
-  @Override
-  public void reset() {
-    super.reset();
-    myDelegate.reset();
-  }
-
-  @Override
-  public void disposeUIResources() {
-    super.disposeUIResources();
-    if (myDelegate != null) {
-      myDelegate.disposeUIResources();
-      myDelegate = null;
-    }
   }
 
   @Override
@@ -102,6 +62,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   protected Configurable[] buildConfigurables() {
     List<Configurable> result = new ArrayList<>();
 
+    result.add(new VcsGeneralSettingsConfigurable(myProject));
     result.add(new VcsMappingConfigurable(myProject));
     if (Registry.is("vcs.ignorefile.generation", true)) {
       result.add(new IgnoredSettingsPanel(myProject));
