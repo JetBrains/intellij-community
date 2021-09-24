@@ -741,11 +741,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           if (repositorySession instanceof DefaultRepositorySystemSession) {
             DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
             myImporterSpy.setIndicator(myCurrentIndicator);
-            session
-              .setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+            session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
 
             if (myWorkspaceMap != null) {
-              session.setWorkspaceReader(new Maven3WorkspaceReader(myWorkspaceMap));
+              session.setWorkspaceReader(new Workspace3Reader(myWorkspaceMap));
             }
 
             session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
@@ -753,6 +752,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           }
 
           List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
+          fillModuleCache(repositorySession, buildingResults);
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
             MavenProject project = buildingResult.getProject();
@@ -803,6 +803,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     });
 
     return executionResults;
+  }
+
+  private static void fillModuleCache(RepositorySystemSession session, List<ProjectBuildingResult> buildingResults) {
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    if (VersionComparatorUtil.compare(mavenVersion, "3.3.1") < 0) return;
+    if (session instanceof DefaultRepositorySystemSession) {
+      Map<MavenId, Model> cacheMavenModelMap = new HashMap<MavenId, Model>((int)(buildingResults.size() * 1.5));
+      for (ProjectBuildingResult result : buildingResults) {
+        Model model = result.getProject().getModel();
+        cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
+      }
+      ((DefaultRepositorySystemSession)session).setWorkspaceReader(new Maven3WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
+    }
   }
 
   @NotNull

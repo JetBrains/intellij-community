@@ -15,29 +15,24 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import org.apache.maven.model.Model;
-import org.apache.maven.repository.internal.MavenWorkspaceReader;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.repository.WorkspaceRepository;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-public class Maven3WorkspaceReader implements MavenWorkspaceReader {
+public class Workspace3Reader implements WorkspaceReader {
 
   private final WorkspaceRepository myRepository = new WorkspaceRepository();
-  private final WorkspaceReader myWorkspaceReader;
-  private final Map<MavenId, Model> myMavenModelMap;
 
-  public Maven3WorkspaceReader(@Nullable WorkspaceReader workspaceReader, @NotNull Map<MavenId, Model> mavenModelMap) {
-    myWorkspaceReader = workspaceReader;
-    myMavenModelMap = mavenModelMap;
+  private final MavenWorkspaceMap myWorkspaceMap;
+
+  public Workspace3Reader(MavenWorkspaceMap workspaceMap) {
+    myWorkspaceMap = workspaceMap;
   }
 
   @Override
@@ -47,16 +42,30 @@ public class Maven3WorkspaceReader implements MavenWorkspaceReader {
 
   @Override
   public File findArtifact(Artifact artifact) {
-    return myWorkspaceReader == null ? null : myWorkspaceReader.findArtifact(artifact);
+    MavenWorkspaceMap.Data resolved = myWorkspaceMap.findFileAndOriginalId(new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion()));
+    if (resolved == null) return null;
+
+    return resolved.getFile(artifact.getExtension());
+  }
+
+  private static boolean equals(String s1, String s2) {
+    return s1 == null ? s2 == null : s1.equals(s2);
   }
 
   @Override
   public List<String> findVersions(Artifact artifact) {
-    return myWorkspaceReader == null ? Collections.<String>emptyList() : myWorkspaceReader.findVersions(artifact);
-  }
+    List<String> res = new ArrayList<String>();
 
-  @Override
-  public Model findModel(Artifact artifact) {
-    return myMavenModelMap.get(new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion()));
+    for (MavenId id : myWorkspaceMap.getAvailableIds()) {
+      if (equals(id.getArtifactId(), artifact.getArtifactId()) && equals(id.getGroupId(), artifact.getGroupId())) {
+        String version = id.getVersion();
+
+        if (version != null) {
+          res.add(version);
+        }
+      }
+    }
+
+    return res;
   }
 }
