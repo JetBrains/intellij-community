@@ -8,13 +8,24 @@ import com.intellij.util.getValue
 import com.intellij.util.setValue
 import junit.framework.TestCase.*
 import kotlinx.coroutines.*
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
 
 private const val TIMEOUT_MS: Long = 1000
+
+fun submitTasks(service: ExecutorService, task: () -> Unit) {
+  service.execute(task)
+  service.submit(task)
+}
+
+fun submitTasksBlocking(service: ExecutorService, task: () -> Unit) {
+  val callable = Callable(task)
+  val callables = listOf(callable, callable)
+  service.invokeAny(callables) // one of callables may not be executed
+  service.invokeAll(callables)
+}
 
 fun neverEndingStory(): Nothing {
   while (true) {
@@ -56,8 +67,8 @@ fun waitAssertCompletedWithCancellation(future: Future<*>) {
 }
 
 fun Job.waitJoin(): Unit = runBlocking {
+  join()
   withTimeout(TIMEOUT_MS) {
-    join()
   }
 }
 
@@ -73,10 +84,9 @@ fun waitAssertCancelled(job: Job) {
 
 fun assertCurrentJobIsChildOf(parent: Job): Job {
   val current = requireNotNull(Cancellation.currentJob())
-  if (current !in parent.children) {
-    @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-    throw current.getCancellationException()
-  }
+  val children = parent.children.toSet()
+  current.ensureActive()
+  assertTrue(current in children)
   return current
 }
 

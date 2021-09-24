@@ -15,10 +15,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
@@ -40,29 +38,23 @@ class CancellationPropagationTest : BasePlatformTestCase() {
 
   @Test
   fun `job tree`() {
-    val counter = AtomicInteger()
+    val b1 = AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded-1", 1)
+    val b2 = AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded-2", 2)
+    val bs1 = AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled-1", 1)
+    val bs2 = AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled-2", 2)
+    val boundedServices = listOf(b1, b2, bs1, bs2)
+    val services = listOf(service, scheduledService) + boundedServices
 
-    fun tasks(service: ExecutorService, task: () -> Unit) {
-      val f = {
-        counter.incrementAndGet()
-        task()
-      }
-      service.execute(f)
-      val callable = Callable(f)
-      service.submit(callable)
-      val callables = listOf(Callable(f), Callable(f))
-      service.invokeAny(callables)
-      service.invokeAll(callables)
-    }
-
-    val services = listOf(
-      service,
-      scheduledService,
-    )
-
-    fun tasks(task: () -> Unit) {
+    fun tasks(executingService: ExecutorService?, task: (ExecutorService) -> Unit) {
       for (service in services) {
-        tasks(service, task)
+        val serviceTask = {
+          task(service)
+        }
+        submitTasks(service, serviceTask)
+        if (executingService !in boundedServices) {
+          // don't block bounded services
+          submitTasksBlocking(service, serviceTask)
+        }
       }
     }
 
@@ -82,9 +74,9 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     }
 
     withRootJob { rootJob ->
-      tasks {
+      tasks(executingService = null) { service ->
         val child = assertCurrentJob(parent = rootJob)
-        tasks {
+        tasks(executingService = service) {
           assertCurrentJob(parent = child)
         }
       }
@@ -93,12 +85,6 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     failureTrace?.let {
       throw it
     }
-
-    fun expectedTaskCount(serviceTasks: Int): Int {
-      val tasksInLayer = services.size * serviceTasks
-      return tasksInLayer * (tasksInLayer + 1)
-    }
-    assertTrue(counter.get() in expectedTaskCount(5)..expectedTaskCount(6))
   }
 
   @Test
