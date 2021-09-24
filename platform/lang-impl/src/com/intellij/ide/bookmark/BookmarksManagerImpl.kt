@@ -40,12 +40,12 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       notifier.defaultGroupChanged(old, group)
     }
 
-  val snapshot: List<Pair<BookmarkGroup, Bookmark>>
-    get() = mutableListOf<Pair<BookmarkGroup, Bookmark>>().also {
+  internal val snapshot: List<BookmarkOccurrence>
+    get() = mutableListOf<BookmarkOccurrence>().also {
       synchronized(notifier) {
         for (group in allGroups) {
           for (bookmark in group.getBookmarks()) {
-            it.add(group to bookmark)
+            it.add(BookmarkOccurrence(group, bookmark, it.size, it))
           }
         }
       }
