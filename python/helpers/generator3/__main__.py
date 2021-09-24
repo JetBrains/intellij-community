@@ -68,12 +68,15 @@ def parse_args(gen_version):
         help='Limit generation only to the modules in `sys.builtin_module_names`.'
     )
     parser.add_argument(
-        '--state-file-policy', metavar='TYPE',
-        choices=('readwrite', 'write'),
-        help='Controls the behavior regarding ".state.json" files: '
-             '"readwrite" means that the initial state will be read from stdin '
-             'and the resulting one will written in the output directory '
-             'together with skeletons, with "write" it will only be written.'
+        '--state-file', metavar='PATH',
+        type=argparse.FileType('r', encoding='utf-8'),
+        help='Path to the input ".state.json" file. If "-", the file is passed via '
+             'stdin. The resulting ".state.json" will be generated automatically in '
+             'the skeletons directory.'
+    )
+    parser.add_argument(
+        '--init-state-file', action='store_true',
+        help='Generate a new ".state.json" file in the skeletons directory.'
     )
 
     # Common flags
@@ -147,10 +150,14 @@ def main():
                 sys.path.append(p)
         note("Altered sys.path: %r", sys.path)
 
-    if args.state_file_policy == 'readwrite':
+    if args.state_file:
         # We can't completely shut off stdin in case Docker-based interpreter to use
         # json.load() and have to retreat to reading the content line-wise
-        state_json = json.loads(sys.stdin.readline())  # utf-8 by default
+        if args.state_file.name == '<stdin>':
+            state_json = json.loads(sys.stdin.readline())  # utf-8 by default
+        else:
+            with args.state_file as f:
+                state_json = json.load(f)
     else:
         state_json = None
 
@@ -169,10 +176,12 @@ def main():
         generator3.extra.zip_stdlib(target_roots, args.zip_roots_archive)
         sys.exit(0)
 
-    generator = SkeletonGenerator(output_dir=args.output_dir,
-                                  roots=target_roots,
-                                  state_json=state_json,
-                                  write_state_json=args.state_file_policy is not None)
+    generator = SkeletonGenerator(
+        output_dir=args.output_dir,
+        roots=target_roots,
+        state_json=state_json,
+        write_state_json=bool(args.init_state_file or args.state_file)
+    )
 
     timer = Timer()
     if not args.mod_name:
