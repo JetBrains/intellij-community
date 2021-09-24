@@ -1,299 +1,216 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.impl;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.content.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
-import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.visible.VisiblePackRefresher;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
+import com.intellij.ui.content.TabbedContent
+import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
+import com.intellij.vcs.log.impl.VcsLogManager.LogWindowKind
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
+import com.intellij.vcs.log.visible.VisiblePackRefresher
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
+import java.util.*
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+internal class VcsLogTabsWatcher(private val project: Project, private val postponableLogRefresher: PostponableLogRefresher) : Disposable {
+  private val toolwindowListenerDisposable = Disposer.newDisposable()
 
-public final class VcsLogTabsWatcher implements Disposable {
-  private static final Logger LOG = Logger.getInstance(VcsLogTabsWatcher.class);
+  private val toolWindow: ToolWindow? get() = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
 
-  private final @NotNull Project myProject;
-  private final @NotNull PostponableLogRefresher myRefresher;
-
-  private final @NotNull Disposable myListenersDisposable = Disposer.newDisposable();
-
-  public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher) {
-    myProject = project;
-    myRefresher = refresher;
-
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ToolWindowManagerListener.TOPIC, new MyToolWindowManagerListener());
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileManagerListener());
-
-    installContentListeners();
+  init {
+    val connection = project.messageBus.connect(this)
+    connection.subscribe(ToolWindowManagerListener.TOPIC, MyToolWindowManagerListener())
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, MyFileManagerListener())
+    installContentListeners()
   }
 
-  public @NotNull Disposable addTabToWatch(@NotNull String logId, @NotNull VisiblePackRefresher refresher,
-                                           @NotNull VcsLogManager.LogWindowKind kind, boolean isClosedOnDispose) {
-    VcsLogWindow window;
-    switch (kind) {
-      case TOOL_WINDOW:
-        window = new VcsLogToolWindowTab(logId, refresher, isClosedOnDispose);
-        break;
-      case EDITOR:
-        window = new VcsLogEditorTab(logId, refresher, isClosedOnDispose);
-        break;
-      default:
-        window = new VcsLogWindow(logId, refresher);
+
+  fun addTabToWatch(logId: String, refresher: VisiblePackRefresher,
+                    kind: LogWindowKind, isClosedOnDispose: Boolean): Disposable {
+    val window = when (kind) {
+      LogWindowKind.TOOL_WINDOW -> VcsLogToolWindowTab(logId, refresher, isClosedOnDispose)
+      LogWindowKind.EDITOR -> VcsLogEditorTab(logId, refresher, isClosedOnDispose)
+      else -> VcsLogWindow(logId, refresher)
     }
-    return myRefresher.addLogWindow(window);
+    return postponableLogRefresher.addLogWindow(window)
   }
 
-  private void installContentListeners() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ToolWindow toolWindow = getToolWindow();
-    if (toolWindow != null) {
-      addContentManagerListener(toolWindow, new MyRefreshPostponedEventsListener(toolWindow), myListenersDisposable);
+  private fun installContentListeners() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    toolWindow?.let { window ->
+      addContentManagerListener(window, MyRefreshPostponedEventsListener(window), toolwindowListenerDisposable)
     }
   }
 
-  private void removeContentListeners() {
-    Disposer.dispose(myListenersDisposable);
+  private fun removeContentListeners() {
+    Disposer.dispose(toolwindowListenerDisposable)
   }
 
-  private void selectionChanged(@NotNull String tabId) {
-    VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(), window -> window.getId().equals(tabId));
+  private fun selectionChanged(tabId: String) {
+    val logWindow = postponableLogRefresher.logWindows.find { window -> window.id == tabId }
     if (logWindow != null) {
-      LOG.debug("Selected log window '" + logWindow + "'");
-      VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TAB_NAVIGATED, null, myProject);
-      myRefresher.refresherActivated(logWindow.getRefresher(), false);
+      LOG.debug("Selected log window '$logWindow'")
+      VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TAB_NAVIGATED, null, project)
+      postponableLogRefresher.refresherActivated(logWindow.refresher, false)
     }
   }
 
-  private void closeLogTabs() {
-    ToolWindow window = getToolWindow();
-    if (window != null) {
-      List<String> toolWindowTabs = getToolWindowTabsToClose();
-      for (String tabId : toolWindowTabs) {
-        boolean closed = VcsLogContentUtil.closeLogTab(window.getContentManager(), tabId);
-        LOG.assertTrue(closed, "Could not find content component for tab " + tabId + "\nExisting content: " +
-                               Arrays.toString(window.getContentManager().getContents()) + "\nTabs to close: " + toolWindowTabs);
+  private fun closeLogTabs() {
+    toolWindow?.let { window ->
+      val toolWindowTabs = getToolWindowTabsToClose()
+      for (tabId in toolWindowTabs) {
+        val closed = VcsLogContentUtil.closeLogTab(window.contentManager, tabId)
+        LOG.assertTrue(closed, """
+   Could not find content component for tab $tabId
+   Existing content: ${Arrays.toString(window.contentManager.contents)}
+   Tabs to close: $toolWindowTabs
+   """.trimIndent())
       }
     }
-
-    List<String> editorTabs = getEditorTabsToClose();
-    boolean closed = VcsLogEditorUtilKt.closeLogTabs(myProject, editorTabs);
-    LOG.assertTrue(closed, "Could not close tabs: " + editorTabs);
+    val editorTabs = getEditorTabsToClose()
+    val closed = closeLogTabs(project, editorTabs)
+    LOG.assertTrue(closed, "Could not close tabs: $editorTabs")
   }
 
-  private @NotNull List<String> getToolWindowTabsToClose() {
-    return StreamEx.of(myRefresher.getLogWindows())
-      .select(VcsLogToolWindowTab.class)
-      .filter(VcsLogToolWindowTab::isClosedOnDispose)
-      .map(VcsLogWindow::getId)
-      .toList();
+  private fun getToolWindowTabsToClose(): List<String> {
+    return postponableLogRefresher.logWindows.filterIsInstance(VcsLogToolWindowTab::class.java).filter {
+      it.isClosedOnDispose
+    }.map { it.id }
   }
 
-  private @NotNull List<String> getEditorTabsToClose() {
-    return StreamEx.of(myRefresher.getLogWindows())
-      .select(VcsLogEditorTab.class)
-      .filter(VcsLogEditorTab::isClosedOnDispose)
-      .map(VcsLogWindow::getId)
-      .toList();
+  private fun getEditorTabsToClose(): List<String> {
+    return postponableLogRefresher.logWindows.filterIsInstance(VcsLogEditorTab::class.java).filter {
+      it.isClosedOnDispose
+    }.map { it.id }
   }
 
-  private @Nullable ToolWindow getToolWindow() {
-    return ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+  override fun dispose() {
+    closeLogTabs()
+    removeContentListeners()
   }
 
-  @Override
-  public void dispose() {
-    closeLogTabs();
-    removeContentListeners();
-  }
-
-  private static @Nullable String getSelectedToolWindowTabId(@Nullable ToolWindow toolWindow) {
-    if (toolWindow == null || !toolWindow.isVisible()) {
-      return null;
-    }
-
-    Content content = toolWindow.getContentManager().getSelectedContent();
-    if (content != null) {
-      return VcsLogContentUtil.getId(content);
-    }
-    return null;
-  }
-
-  private static @NotNull Set<String> getSelectedEditorTabIds(@NotNull Project project) {
-    return VcsLogEditorUtilKt.findSelectedLogIds(project);
-  }
-
-  private static void addContentManagerListener(@NotNull ToolWindow window,
-                                                @NotNull ContentManagerListener listener,
-                                                @NotNull Disposable disposable) {
-    window.addContentManagerListener(listener);
-    Disposer.register(disposable, () -> {
-      if (!window.isDisposed()) {
-        ContentManager contentManager = window.getContentManagerIfCreated();
-        if (contentManager != null) contentManager.removeContentManagerListener(listener);
-      }
-    });
-  }
-
-  private final class VcsLogToolWindowTab extends VcsLogWindow {
-    private final boolean myIsClosedOnDispose;
-
-    private VcsLogToolWindowTab(@NotNull String id, @NotNull VisiblePackRefresher refresher, boolean isClosedOnDispose) {
-      super(id, refresher);
-      myIsClosedOnDispose = isClosedOnDispose;
-    }
-
-    @Override
-    public boolean isVisible() {
-      String selectedTab = getSelectedToolWindowTabId(getToolWindow());
-      return getId().equals(selectedTab);
-    }
-
-    public boolean isClosedOnDispose() {
-      return myIsClosedOnDispose;
+  private inner class VcsLogToolWindowTab(id: String, refresher: VisiblePackRefresher,
+                                          val isClosedOnDispose: Boolean) : VcsLogWindow(id, refresher) {
+    override fun isVisible(): Boolean {
+      return id == getSelectedToolWindowTabId(toolWindow)
     }
   }
 
-  private final class VcsLogEditorTab extends VcsLogWindow {
-    private final boolean myIsClosedOnDispose;
-
-    private VcsLogEditorTab(@NotNull String id, @NotNull VisiblePackRefresher refresher, boolean isClosedOnDispose) {
-      super(id, refresher);
-      myIsClosedOnDispose = isClosedOnDispose;
-    }
-
-    @Override
-    public boolean isVisible() {
-      return getSelectedEditorTabIds(myProject).contains(getId());
-    }
-
-    public boolean isClosedOnDispose() {
-      return myIsClosedOnDispose;
+  private inner class VcsLogEditorTab(id: String, refresher: VisiblePackRefresher,
+                                      val isClosedOnDispose: Boolean) : VcsLogWindow(id, refresher) {
+    override fun isVisible(): Boolean {
+      return findSelectedLogIds(project).contains(id)
     }
   }
 
-  private final class MyToolWindowManagerListener implements ToolWindowManagerListener {
-    @Override
-    public void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
+  private inner class MyToolWindowManagerListener : ToolWindowManagerListener {
+    override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
       if (ids.contains(ChangesViewContentManager.TOOLWINDOW_ID)) {
-        installContentListeners();
+        installContentListeners()
       }
     }
 
-    @Override
-    public void toolWindowUnregistered(@NotNull String id, @NotNull ToolWindow toolWindow) {
-      if (id.equals(ChangesViewContentManager.TOOLWINDOW_ID)) {
-        removeContentListeners();
+    override fun toolWindowUnregistered(id: String, toolWindow: ToolWindow) {
+      if (id == ChangesViewContentManager.TOOLWINDOW_ID) {
+        removeContentListeners()
       }
     }
   }
 
-  private class MyFileManagerListener implements FileEditorManagerListener {
-    @Override
-    public void selectionChanged(@NotNull FileEditorManagerEvent e) {
-      FileEditor editor = e.getNewEditor();
-      if (editor != null) {
-        for (String tabId : VcsLogEditorUtilKt.getLogIds(editor)) {
-          VcsLogTabsWatcher.this.selectionChanged(tabId);
+  private inner class MyFileManagerListener : FileEditorManagerListener {
+    override fun selectionChanged(e: FileEditorManagerEvent) {
+      e.newEditor?.let { editor ->
+        for (tabId in getLogIds(editor)) {
+          this@VcsLogTabsWatcher.selectionChanged(tabId)
         }
       }
     }
   }
 
-  private final class MyRefreshPostponedEventsListener extends VcsLogTabsListener {
-    private MyRefreshPostponedEventsListener(@NotNull ToolWindow toolWindow) {
-      super(myProject, toolWindow, myListenersDisposable);
-    }
-
-    @Override
-    protected void selectionChanged(@NotNull String tabId) {
-      VcsLogTabsWatcher.this.selectionChanged(tabId);
+  private inner class MyRefreshPostponedEventsListener(toolWindow: ToolWindow)
+    : VcsLogTabsListener(project, toolWindow, toolwindowListenerDisposable) {
+    override fun selectionChanged(tabId: String) {
+      this@VcsLogTabsWatcher.selectionChanged(tabId)
     }
   }
 
-  private abstract static class VcsLogTabsListener
-    implements ToolWindowManagerListener, PropertyChangeListener, ContentManagerListener {
-    private final @NotNull ToolWindow myToolWindow;
+  private abstract class VcsLogTabsListener(project: Project, private val window: ToolWindow, disposable: Disposable) :
+    ToolWindowManagerListener, PropertyChangeListener, ContentManagerListener {
 
-    private VcsLogTabsListener(@NotNull Project project, @NotNull ToolWindow toolWindow, @NotNull Disposable disposable) {
-      myToolWindow = toolWindow;
-
-      project.getMessageBus().connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, this);
-      Disposer.register(disposable, () -> {
-        ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
-        if (contentManager == null) return;
-        for (Content content : contentManager.getContents()) {
-          if (content instanceof TabbedContent) {
-            content.removePropertyChangeListener(this);
-          }
-        }
-      });
-    }
-
-    protected abstract void selectionChanged(@NotNull String tabId);
-
-    private void selectionChanged() {
-      String tabId = getSelectedToolWindowTabId(myToolWindow);
-      if (tabId != null) {
-        selectionChanged(tabId);
-      }
-    }
-
-    @Override
-    public void selectionChanged(@NotNull ContentManagerEvent event) {
-      if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
-        String tabId = VcsLogContentUtil.getId(event.getContent());
-        if (tabId != null) {
-          selectionChanged(tabId);
+    init {
+      project.messageBus.connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, this)
+      Disposer.register(disposable) {
+        val contentManager = window.contentManagerIfCreated ?: return@register
+        for (content in contentManager.contents) {
+          (content as? TabbedContent)?.removePropertyChangeListener(this)
         }
       }
     }
 
-    @Override
-    public void contentAdded(@NotNull ContentManagerEvent event) {
-      Content content = event.getContent();
-      if (content instanceof TabbedContent) {
-        content.addPropertyChangeListener(this);
+    protected abstract fun selectionChanged(tabId: String)
+
+    private fun selectionChanged() {
+      getSelectedToolWindowTabId(window)?.let { selectionChanged(it) }
+    }
+
+    override fun selectionChanged(event: ContentManagerEvent) {
+      if (ContentManagerEvent.ContentOperation.add == event.operation) {
+        VcsLogContentUtil.getId(event.content)?.let { selectionChanged(it) }
       }
     }
 
-    @Override
-    public void contentRemoved(@NotNull ContentManagerEvent event) {
-      Content content = event.getContent();
-      if (content instanceof TabbedContent) {
-        content.removePropertyChangeListener(this);
+    override fun contentAdded(event: ContentManagerEvent) {
+      (event.content as? TabbedContent)?.addPropertyChangeListener(this)
+    }
+
+    override fun contentRemoved(event: ContentManagerEvent) {
+      (event.content as? TabbedContent)?.removePropertyChangeListener(this)
+    }
+
+    override fun toolWindowShown(toolWindow: ToolWindow) {
+      if (window === toolWindow) selectionChanged()
+    }
+
+    override fun propertyChange(evt: PropertyChangeEvent) {
+      if (evt.propertyName == Content.PROP_COMPONENT) {
+        selectionChanged()
       }
     }
+  }
 
-    @Override
-    public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-      if (myToolWindow == toolWindow) selectionChanged();
+  companion object {
+    private val LOG = Logger.getInstance(VcsLogTabsWatcher::class.java)
+
+    private fun getSelectedToolWindowTabId(toolWindow: ToolWindow?): String? {
+      if (toolWindow == null || !toolWindow.isVisible) {
+        return null
+      }
+      val content = toolWindow.contentManager.selectedContent ?: return null
+      return VcsLogContentUtil.getId(content)
     }
 
-    @Override
-    public void propertyChange(@NotNull PropertyChangeEvent evt) {
-      if (evt.getPropertyName().equals(Content.PROP_COMPONENT)) {
-        selectionChanged();
+    private fun addContentManagerListener(window: ToolWindow,
+                                          listener: ContentManagerListener,
+                                          disposable: Disposable) {
+      window.addContentManagerListener(listener)
+      Disposer.register(disposable) {
+        if (!window.isDisposed) {
+          val contentManager = window.contentManagerIfCreated
+          contentManager?.removeContentManagerListener(listener)
+        }
       }
     }
   }
