@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import unicode_literals
 
 import argparse
@@ -176,10 +177,14 @@ class RemoteSync(object):
         self._name_counts[root_name] += 1
         return zip_name
 
+    @staticmethod
+    def sanitize_path(path):
+        return os.path.normpath(_decode_path(path))
+
     def sanitize_roots(self, roots):
         result = []
         for root in roots:
-            normalized = os.path.normpath(root)
+            normalized = self.sanitize_path(root)
             if (not os.path.isdir(normalized) or
                     path_is_under(normalized, _helpers_root) and
                     not path_is_under(normalized, sys.prefix) and
@@ -189,7 +194,7 @@ class RemoteSync(object):
         return result
 
     def sanitize_output_dir(self, output_dir):
-        normalized = os.path.normpath(output_dir)
+        normalized = self.sanitize_path(output_dir)
         for root in self.roots:
             if path_is_under(normalized, root):
                 raise ValueError('Output directory {!r} cannot belong to root {!r}'
@@ -227,13 +232,55 @@ class RemoteSync(object):
         return path
 
 
+def _decode_cmd_arg(arg):
+    if not isinstance(arg, bytes):
+        return arg
+    # Inspired by how Click handles command line arguments encoding
+    # in 7.x Python 2 compatible version.
+    stdin_enc = getattr(sys.stdin, "encoding", None)
+    if stdin_enc:
+        try:
+            return arg.decode(stdin_enc)
+        except UnicodeDecodeError:
+            pass
+    return _decode_path(arg)
+
+
+def _decode_path(path):
+    if not isinstance(path, bytes):
+        return path
+    fs_enc = sys.getfilesystemencoding() or sys.getdefaultencoding()
+    try:
+        return path.decode(fs_enc)
+    except UnicodeDecodeError:
+        pass
+    return path.decode("utf-8", "replace")
+
+
+class ArgparseTypes:
+    @staticmethod
+    def path(arg):
+        return _decode_cmd_arg(arg)
+
+    @staticmethod
+    def path_list(arg):
+        return [ArgparseTypes.path(p) for p in arg.split(os.pathsep)]
+
+
 def main():
-    parser = argparse.ArgumentParser(description='Collects sources in the given roots and packs '
-                                                 'them in individual ZIP archives.')
-    parser.add_argument('output_dir', metavar='OUTPUT_DIR',
+    parser = argparse.ArgumentParser(
+        description='Collects sources in the given roots and packs them in individual '
+                    'ZIP archives.'
+    )
+    parser.add_argument('output_dir', metavar='PATH', type=ArgparseTypes.path,
                         help='Directory to collect ZIP archives with sources into.')
-    parser.add_argument('--state-file', type=argparse.FileType('r', encoding='utf-8'),
+    parser.add_argument('--state-file', type=argparse.FileType('rb'),
                         help='State of the last synchronization in JSON.')
+    decoded_sys_path = [_decode_path(p) for p in sys.path]
+    parser.add_argument('--roots', metavar='PATH_LIST', dest='roots',
+                        type=ArgparseTypes.path_list, default=decoded_sys_path,
+                        help='Roots to scan separated by `os.pathsep`, '
+                             '`sys.path` by default.')
     args = parser.parse_args()
 
     state_file = args.state_file
@@ -243,9 +290,11 @@ def main():
         state_json = json.loads(state_file.readline())
     else:
         with args.state_file as f:
-            state_json = json.load(f)
+            # Python 3.5 cannot handle byte content passed to json.load()
+            # even when encoding is specified
+            state_json = json.loads(f.read().decode('utf-8'))
 
-    RemoteSync(roots=sys.path,
+    RemoteSync(roots=args.roots,
                output_dir=args.output_dir,
                state_json=state_json).run()
 

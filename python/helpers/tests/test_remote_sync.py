@@ -3,8 +3,11 @@ from __future__ import unicode_literals
 
 import json
 import os
+import subprocess
+import sys
 import textwrap
 
+import remote_sync
 import six
 from remote_sync import RemoteSync
 from testing import HelpersTestCase
@@ -447,11 +450,42 @@ class RemoteSyncTest(HelpersTestCase):
             ]
         })
 
-    def test_state_json_non_ascii_paths(self):
+    def test_output_state_json_non_ascii_paths(self):
         """Checks that non-ASCII paths are written without escaping in .state.json."""
         self.collect_sources(['по-русски'])
-        with open(self.resolve_in_temp_dir('.state.json')) as state_file:
+        out_state_json = self.resolve_in_temp_dir('.state.json')
+        with open(out_state_json, 'r', encoding='utf-8') as state_file:
             self.assertIn('"по-русски.zip"', state_file.read())
+
+    def test_input_state_json_with_non_ascii_paths(self):
+        """Checks that .state.json with non-ASCII paths is correctly decoded."""
+        # Run a real process to test input JSON decoding
+        subprocess.check_output(
+            [sys.executable, remote_sync.__file__,
+             '--roots', self.resolve_in_test_data('по-русски'),
+             '--state-file', self.resolve_in_test_data('.state.json'),
+             self.temp_dir],
+        )
+        self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
+            "roots": [
+                {
+                    "path": self.resolve_in_test_data("по-русски"),
+                    "zip_name": "по-русски.zip",
+                    "valid_entries": {
+                        "балалайка.py": {
+                            "mtime": self.mtime('по-русски/балалайка.py'),
+                        }
+                    },
+                    "invalid_entries": []
+                }
+            ]
+        })
+
+    def test_smoke_check_command_line_parsing(self):
+        """Checks that we don't use any Python 2-incompatible API in argparse."""
+        output = subprocess.check_output([sys.executable, remote_sync.__file__, "-h"],
+                                         universal_newlines=True)
+        self.assertIn('usage: remote_sync.py', output)
 
     def collect_sources(self, roots_inside_test_data, output_dir=None, state_json=None):
         if output_dir is None:
