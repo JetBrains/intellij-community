@@ -326,4 +326,37 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
     assertConfigurationForTask("build --info -PmyKey=myVal -DmyKey=myVal", "build", projectElement)
     assertConfigurationForTask("test --debug -PmyKey=myVal -DmyKey=myVal", "test", projectElement)
   }
+
+  @Test
+  fun `test configurations are not from context`() {
+    val projectData = generateAndImportTemplateProject()
+    createAndAddRunConfiguration("""build :test --tests "TestCase"""").let { configuration ->
+      runReadActionAndWait {
+        val context = getContextByLocation(projectData["project"]["TestCase"].element)
+        val producer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
+        assertFalse(producer.isConfigurationFromContext(configuration, context))
+      }
+    }
+    createAndAddRunConfiguration("""a b c d e f :test --tests "TestCase"""").let { configuration ->
+      runReadActionAndWait {
+        val context = getContextByLocation(projectData["project"]["TestCase"].element)
+        val producer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
+        assertFalse(producer.isConfigurationFromContext(configuration, context))
+      }
+    }
+    createAndAddRunConfiguration("""build :test --tests "TestCase.test1"""").let { configuration ->
+      runReadActionAndWait {
+        val context = getContextByLocation(projectData["project"]["TestCase"]["test1"].element)
+        val producer = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
+        assertFalse(producer.isConfigurationFromContext(configuration, context))
+      }
+    }
+    createAndAddRunConfiguration("""a b c d e f :test --tests "TestCase.test1"""").let { configuration ->
+      runReadActionAndWait {
+        val context = getContextByLocation(projectData["project"]["TestCase"]["test1"].element)
+        val producer = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
+        assertFalse(producer.isConfigurationFromContext(configuration, context))
+      }
+    }
+  }
 }
