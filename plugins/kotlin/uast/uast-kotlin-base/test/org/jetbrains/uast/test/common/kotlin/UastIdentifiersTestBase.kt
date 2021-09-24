@@ -45,18 +45,6 @@ interface UastIdentifiersTestBase : UastPluginSelection, UastFileComparisonTestB
             KotlinTestUtils.assertEqualsToFile(refNamesFile, refNamesContent)
         }
 
-        try {
-            file.testIdentifiersParents()
-        } catch (e: AssertionError) {
-            if (isExpectedToFail(filePath))
-                return
-            else
-                throw e
-        }
-        if (isExpectedToFail(filePath)) {
-            KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
-        }
-
         cleanUpIdenticalFile(
             identifiersFile,
             getIdentifiersFile(filePath, "$counterpartSuffix$TXT"),
@@ -69,5 +57,17 @@ interface UastIdentifiersTestBase : UastPluginSelection, UastFileComparisonTestB
             getIdenticalRefNamesFile(filePath),
             kind = "refNames"
         )
+
+        try {
+            file.testIdentifiersParents()
+        } catch (e: AssertionError) {
+            if (isExpectedToFail(filePath))
+                return
+            else
+                throw e
+        }
+        if (isExpectedToFail(filePath)) {
+            KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
+        }
     }
 }
