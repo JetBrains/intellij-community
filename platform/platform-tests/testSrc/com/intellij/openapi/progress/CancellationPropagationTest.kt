@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.testFramework.RegistryKeyRule
+import com.intellij.testFramework.UncaughtExceptionsRule
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
@@ -9,6 +10,7 @@ import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,6 +23,13 @@ import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
 class CancellationPropagationTest : BasePlatformTestCase() {
+
+  companion object {
+
+    @ClassRule
+    @JvmField
+    val uncaughtExceptionsRule = UncaughtExceptionsRule()
+  }
 
   @Rule
   @JvmField
@@ -152,6 +161,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
           rootCancelled.waitUp()
           wasCancelled = Cancellation.isCancelled()
           finished.up()
+          ProgressManager.checkCanceled()
         }
       }
       lock.up()
@@ -267,5 +277,19 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     }
     val loggedError = loggedError(canThrow)
     assertSame(t, loggedError)
+  }
+
+  @Test
+  fun `unhandled manual JCE from execute`() {
+    val jce = JobCanceledException()
+    val canThrow = Semaphore(1)
+    withRootJob {
+      service.execute {
+        canThrow.waitUp()
+        throw jce
+      }
+    }
+    val loggedError = loggedError(canThrow) as IllegalStateException
+    assertSame(jce, loggedError.cause)
   }
 }

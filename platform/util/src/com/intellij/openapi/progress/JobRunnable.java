@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 
 import static com.intellij.openapi.progress.Cancellation.currentJob;
 import static com.intellij.openapi.progress.Cancellation.withJob;
@@ -31,7 +32,12 @@ public final class JobRunnable implements Runnable {
       myJob.complete();
     }
     catch (JobCanceledException e) {
-      throw myJob.getCancellationException();
+      if (!myJob.isCancelled()) {
+        throw new IllegalStateException("JobCanceledException must be thrown by ProgressManager.checkCanceled()", e);
+      }
+    }
+    catch (CancellationException e) {
+      myJob.completeExceptionally(e);
     }
     catch (Throwable e) {
       myJob.completeExceptionally(e);
