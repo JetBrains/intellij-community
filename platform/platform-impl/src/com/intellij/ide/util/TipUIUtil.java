@@ -20,7 +20,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TextAccessor;
@@ -35,6 +34,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -174,6 +175,7 @@ public final class TipUIUtil {
               String.format("/%s/%s", retriever.myPath, retriever.mySubPath.length() > 0 ? retriever.mySubPath + "/" : "");
 
             //Here and onwards we'll use path properties from successful tip retriever to get images and css
+            updateShortcuts(text);
             updateImages(text, retriever.myLoader, tipImagesLocation, component);
             final InputStream cssResourceStream = ResourceUtil.getResourceAsStream(retriever.myLoader, retriever.myPath, cssFile);
             cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
@@ -183,8 +185,6 @@ public final class TipUIUtil {
         //All retrievers have failed, return error.
         if (tipContent == null) return getCantReadText(tip);
       }
-
-      updateShortcuts(text);
       String replaced = text.toString();
       //It's just cleaner expression here that we ca configure entities elsewhere and just replace them here in one loop.
       for (final TipEntity entity : ENTITIES) {
@@ -214,87 +214,103 @@ public final class TipUIUtil {
 
   private static void updateImages(StringBuilder text, ClassLoader tipLoader, String tipPath, Component component) {
     final boolean dark = StartupUiUtil.isUnderDarcula();
+    final boolean hidpi = JBUI.isPixHiDPI(component);
 
-    int index = text.indexOf("<img", 0);
-    while (index != -1) {
-      final int end = text.indexOf(">", index + 1);
-      if (end == -1) return;
-      final String img = text.substring(index, end + 1).replace('\r', ' ').replace('\n', ' ');
-      int srcIndex = img.indexOf("src=\"");
-      int endIndex = img.indexOf("\"", srcIndex + 6);
-      if (srcIndex == -1 && endIndex == -1) {
-        srcIndex = img.indexOf("src='");
-        endIndex = img.indexOf("'", srcIndex + 6);
-      }
-      if (endIndex != -1) {
-        String src = img.substring(srcIndex + 5, endIndex);
-        String srcWithoutExtension = FileUtil.getNameWithoutExtension(src);
+    final Document tipHtml = Jsoup.parse(text.toString());
+    tipHtml.outputSettings().prettyPrint(false);
 
-        if (!srcWithoutExtension.endsWith("_dark") && !srcWithoutExtension.endsWith("@2x") || tipLoader == null) {
-          boolean hidpi = JBUI.isPixHiDPI(component);
-          String suffix = (dark ? "_dark" : "") + "." + FileUtilRt.getExtension(src);
-          String path = srcWithoutExtension + suffix;
-          String path2x = srcWithoutExtension + "@2x" + suffix;
-          String canonicalPath = getImageCanonicalPath(hidpi ? path2x : path, tipLoader, tipPath);
-          try {
-            boolean fallbackUpscale = false;
-            boolean fallbackDownscale = false;
+    //Let's use JSOUP because normalizing HTML manually is less reliable
+    tipHtml.getElementsByTag("img")
+      .forEach(img -> {
 
-            BufferedImage image;
-            URL actualURL;
+        final String src = img.attributes().getIgnoreCase("src");
+        final TodImage baseImage = TodImage.of(src);
+        //Here we're preparing the list of images in the order of their preference.
+        //We need to be thorough and account for all possible combinations
+        final ArrayList<TodImage> imagesToTryLight = new ArrayList<>();
+        final ArrayList<TodImage> imagesToTryDark = new ArrayList<>();
+
+        imagesToTryLight.add(baseImage);
+        imagesToTryLight.add(baseImage.retina());
+
+        imagesToTryDark.add(baseImage.dark());
+        imagesToTryDark.add(baseImage.dark().retina());
+
+        if (hidpi) {
+          Collections.reverse(imagesToTryLight);
+          Collections.reverse(imagesToTryDark);
+        }
+        final ArrayList<TodImage> imagesToTry = new ArrayList<>();
+        if (dark) {
+          imagesToTry.addAll(imagesToTryDark);
+          imagesToTry.addAll(imagesToTryLight);
+        }
+        else {
+          imagesToTry.addAll(imagesToTryLight);
+          imagesToTry.addAll(imagesToTryDark);
+        }
+        //By this point we have all the possible images to try out;
+        // that's our fallback in case someone did some weird combination of src attribute/actual images in bundle
+        try {
+          BufferedImage image = null;
+          boolean fallbackUpscale = false;
+          boolean fallbackDownscale = false;
+          URL actualURL = null;
+
+          for (final TodImage i : imagesToTry) {
             try {
-              actualURL = new URL(canonicalPath);
+              actualURL = new URL(getImageCanonicalPath(i.toString(), tipLoader, tipPath));
               image = read(actualURL);
             }
-            catch (IOException e) {
+            catch (IOException ignored) {
               if (hidpi) {
-                fallbackUpscale = true;
-                actualURL = new URL(getImageCanonicalPath(path, tipLoader, tipPath));
+                fallbackUpscale = baseImage.isRetina() && !i.isRetina();
               }
               else {
-                fallbackDownscale = true;
-                actualURL = new URL(getImageCanonicalPath(path2x, tipLoader, tipPath));
+                fallbackDownscale = !baseImage.isRetina() && i.isRetina();
               }
-              image = read(actualURL);
             }
-
-            String newImgTag;
-            newImgTag = "<img src=\"" + actualURL.toExternalForm() + "\" ";
-            int w = image.getWidth();
-            int h = image.getHeight();
-            if (hidpi) {
-              // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
-              float k = 2f;
-              if (StartupUiUtil.isJreHiDPI(component)) {
-                // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
-                k = JBUIScale.sysScale(component);
-              }
-              w /= k;
-              h /= k;
-            }
-            // round the user scale for better quality
-            int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUIScale.scale(1f));
-            w = userScale * w;
-            h = userScale * h;
-            if (fallbackUpscale) {
-              w *= 2;
-              h *= 2;
-            }
-            else if (fallbackDownscale) {
-              w /= 2;
-              h /= 2;
-            }
-            newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
-            newImgTag += ">";
-            text.replace(index, end + 1, newImgTag);
+            //Found something, look no further
+            if (image != null) break;
           }
-          catch (Exception ignore) {
-            LOG.warn("Cannot find icon with path [" + src + "]");
+          //Let's not ignore author specified values here
+          int w = intValueOf(img.attributes().getIgnoreCase("width"), image.getWidth());
+          if (hidpi) {
+            // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
+            float k = 2f;
+            if (StartupUiUtil.isJreHiDPI(component)) {
+              // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
+              k = JBUIScale.sysScale(component);
+            }
+            w /= k;
           }
+          // round the user scale for better quality
+          int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUIScale.scale(1f));
+          w = userScale * w;
+          if (fallbackUpscale) {
+            w *= 2;
+          }
+          else if (fallbackDownscale) {
+            w /= 2;
+          }
+          //Actually we don't need height, let the browser take care of that
+          img.attr("src", actualURL.toExternalForm());
+          img.attr("width", String.valueOf(w));
         }
-      }
-      index = text.indexOf("<img", index + 1);
+        catch (Exception e) {
+          LOG.warn("ToD: cannot load image [" + src + "]", e);
+        }
+      });
+    text.replace(0, text.length(), tipHtml.outerHtml());
+  }
+
+  private static int intValueOf(final String raw, int substitute) {
+    try {
+      return Integer.parseInt(raw);
     }
+    catch (NumberFormatException ignore) {
+    }
+    return substitute;
   }
 
   private static @NotNull String getImageCanonicalPath(@NotNull String path, @Nullable ClassLoader tipLoader, @NotNull String tipPath) {
@@ -316,6 +332,9 @@ public final class TipUIUtil {
   }
 
   private static void updateShortcuts(StringBuilder text) {
+
+
+
     int lastIndex = 0;
     while (true) {
       lastIndex = text.indexOf(SHORTCUT_ENTITY, lastIndex);
@@ -584,6 +603,134 @@ public final class TipUIUtil {
     @Override
     public JComponent getComponent() {
       return this;
+    }
+  }
+
+
+  static class TodImage {
+
+    static final String RETINA_SUFFIX = "@2x";
+    static final String DARK_SUFFIX = "_dark";
+
+    private final String name;
+    private final String extension;
+    private final String defaultExtension;
+    private final boolean dark;
+    private final boolean retina;
+
+    private TodImage(final @NotNull String name) {
+
+      final CharSequence tempExtension = FileUtil.getExtension(name, "");
+
+      extension = tempExtension.toString();
+      defaultExtension = tempExtension.toString();
+
+      String tempName = FileUtil.getNameWithoutExtension(name);
+
+      if (tempName.endsWith(DARK_SUFFIX)) {
+        dark = true;
+        tempName = StringUtil.substringBeforeLast(name, DARK_SUFFIX);
+      }
+      else {
+        dark = false;
+      }
+
+      if (tempName.endsWith(RETINA_SUFFIX)) {
+        retina = true;
+        tempName = StringUtil.substringBeforeLast(name, RETINA_SUFFIX);
+      }
+      else {
+        retina = false;
+      }
+
+      this.name = tempName;
+    }
+
+    private TodImage(String name,
+                     String extension,
+                     boolean dark,
+                     boolean retina) {
+      this(name, extension, dark, retina, extension);
+    }
+
+    private TodImage(String name,
+                     String extension,
+                     boolean dark,
+                     boolean retina,
+                     String defaultExtension) {
+
+      this.name = name;
+      this.extension = extension;
+      this.defaultExtension = defaultExtension;
+      this.dark = dark;
+      this.retina = retina;
+    }
+
+    @NotNull
+    public String getName() {
+      return name;
+    }
+
+    @NotNull
+    public String getExtension() {
+      return extension;
+    }
+
+    public boolean isDark() {
+      return dark;
+    }
+
+    public boolean isRetina() {
+      return retina;
+    }
+
+    @NotNull
+    public TipUIUtil.TodImage dark() {
+      return new TodImage(name, extension, true, retina);
+    }
+
+    @NotNull
+    public TipUIUtil.TodImage nonDark() {
+      return new TodImage(name, extension, false, retina);
+    }
+
+    @NotNull
+    public TipUIUtil.TodImage retina() {
+      return new TodImage(name, extension, dark, true);
+    }
+
+    @NotNull
+    public TipUIUtil.TodImage nonRetina() {
+      return new TodImage(name, extension, dark, false);
+    }
+
+    @NotNull
+    public TipUIUtil.TodImage withExtension(final @NotNull String extension) {
+      return new TodImage(name, extension, dark, retina);
+    }
+
+    @NotNull
+    public TipUIUtil.TodImage withName(final @NotNull String name) {
+      return new TodImage(name, extension, dark, retina);
+    }
+
+    @NotNull
+    public TipUIUtil.TodImage base() {
+      return new TodImage(name, defaultExtension, false, false);
+    }
+
+    @Override
+    public String toString() {
+      return name +
+             (retina ? RETINA_SUFFIX : "") +
+             (dark ? DARK_SUFFIX : "") +
+             "." +
+             extension;
+    }
+
+    @NotNull
+    public static TipUIUtil.TodImage of(final @NotNull String src) {
+      return new TodImage(src);
     }
   }
 }
