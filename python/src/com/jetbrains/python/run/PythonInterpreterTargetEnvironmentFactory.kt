@@ -19,6 +19,11 @@ interface PythonInterpreterTargetEnvironmentFactory {
   fun getTargetType(): TargetEnvironmentType<*>
 
   /**
+   * Mutable targets are SSH, WSL. Immutable targets are Docker images and Docker Compose services.
+   */
+  fun isMutable(configuration: TargetEnvironmentConfiguration): Boolean?
+
+  /**
    * Comply with the credentials-based Python SDKs.
    *
    * @param project is might be required for specific targets to retrieve the project-specific data
