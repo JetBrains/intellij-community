@@ -545,4 +545,6 @@ public abstract class QuickFixFactory {
 
   @Nullable
   public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo);
+
+  public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
 }
