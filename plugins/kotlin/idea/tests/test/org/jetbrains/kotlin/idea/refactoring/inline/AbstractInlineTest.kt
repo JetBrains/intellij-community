@@ -22,7 +22,7 @@ import java.io.File
 abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
     protected fun doTest(unused: String) {
         val testDataFile = testDataFile()
-        val afterFile = File(testDataPath, "${fileName()}.after")
+        val afterFile = testDataFile("${fileName()}.after")
 
         val mainFileName = testDataFile.name
         val mainFileBaseName = FileUtil.getNameWithoutExtension(mainFileName)
