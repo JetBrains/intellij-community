@@ -36,8 +36,6 @@ import org.jetbrains.plugins.feature.suggester.getSelection
 import org.jetbrains.plugins.feature.suggester.handleAction
 
 class EditorActionsListener : AnActionListener {
-    private val copyPasteManager = CopyPasteManager.getInstance()
-
     override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
         if (!action.isSupportedAction()) return
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
@@ -45,7 +43,7 @@ class EditorActionsListener : AnActionListener {
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
         when (action) {
             is CopyAction -> {
-                val copiedText = copyPasteManager.contents?.asString() ?: return
+                val copiedText = CopyPasteManager.getInstance().contents?.asString() ?: return
                 handleAction(
                     project,
                     EditorCopyAction(
@@ -57,7 +55,7 @@ class EditorActionsListener : AnActionListener {
                 )
             }
             is CutAction -> {
-                val text = copyPasteManager.contents?.asString() ?: return
+                val text = CopyPasteManager.getInstance().contents?.asString() ?: return
                 handleAction(
                     project,
                     EditorCutAction(
@@ -69,7 +67,7 @@ class EditorActionsListener : AnActionListener {
                 )
             }
             is PasteAction -> {
-                val pastedText = copyPasteManager.contents?.asString() ?: return
+                val pastedText = CopyPasteManager.getInstance().contents?.asString() ?: return
                 val caretOffset = editor.getCaretOffset()
                 handleAction(
                     project,
@@ -170,7 +168,7 @@ class EditorActionsListener : AnActionListener {
                 )
             }
             is PasteAction -> {
-                val pastedText = copyPasteManager.contents?.asString() ?: return
+                val pastedText = CopyPasteManager.getInstance().contents?.asString() ?: return
                 val caretOffset = editor.getCaretOffset()
                 handleAction(
                     project,
