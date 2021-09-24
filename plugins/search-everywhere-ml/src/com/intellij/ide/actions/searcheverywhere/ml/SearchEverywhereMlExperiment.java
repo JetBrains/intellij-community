@@ -13,12 +13,10 @@ import java.util.Locale;
 public class SearchEverywhereMlExperiment {
   private static final int NUMBER_OF_GROUPS = 4;
 
-  private final int myExperimentGroup;
   private final boolean myIsExperimentalMode;
 
   public SearchEverywhereMlExperiment() {
     myIsExperimentalMode = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
-    myExperimentGroup = myIsExperimentalMode ? EventLogConfiguration.getInstance().getBucket() % NUMBER_OF_GROUPS : -1;
   }
 
   public boolean isAllowed() {
@@ -30,7 +28,7 @@ public class SearchEverywhereMlExperiment {
     if (isDisableLoggingAndExperiments() || isDisableExperiments(tab)) return false;
 
     final int tabExperimentGroup = getExperimentGroupForTab(tab);
-    return myExperimentGroup == tabExperimentGroup;
+    return getExperimentGroup() == tabExperimentGroup;
   }
 
   private boolean isDisableLoggingAndExperiments() {
@@ -51,6 +49,13 @@ public class SearchEverywhereMlExperiment {
   }
 
   public int getExperimentGroup() {
-    return myExperimentGroup;
+    if (!myIsExperimentalMode) {
+      return -1;
+    }
+    else {
+      int experimentGroup = EventLogConfiguration.getInstance().getBucket() % NUMBER_OF_GROUPS;
+      int registryExperimentGroup = Registry.intValue("search.everywhere.ml.experiment.group");
+      return registryExperimentGroup >= 0 ? registryExperimentGroup : experimentGroup;
+    }
   }
 }

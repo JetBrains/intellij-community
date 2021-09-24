@@ -29,6 +29,9 @@
     <registryKey defaultValue="false"
                  description="When enabled ML logs and experiments in Search Everywhere will be disabled"
                  key="search.everywhere.force.disable.logging.ml"/>
+    <registryKey defaultValue="-1"
+                 description="Defines the experiment group number. Negative value will be ignored."
+                 key="search.everywhere.ml.experiment.group"/>
   </extensions>
 
   <extensionPoints>
