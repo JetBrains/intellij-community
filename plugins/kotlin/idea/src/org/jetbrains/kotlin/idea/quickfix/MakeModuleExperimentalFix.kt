@@ -7,8 +7,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.CompilerSettings
-import org.jetbrains.kotlin.config.additionalArgumentsAsList
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.fqNameIsExisting
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.projectStructure.module
@@ -26,18 +27,20 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 open class MakeModuleExperimentalFix(
     file: KtFile,
     private val module: Module,
-    private val annotationFqName: FqName
+    annotationFqName: FqName
 ) : KotlinQuickFixAction<KtFile>(file) {
-    private val experimentalPrefix = if (module.toDescriptor()?.fqNameIsExisting(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == true)
-        "opt-in"
-    else
-        "use-experimental"
+
+    private val experimentalPrefix =
+        if (module.toDescriptor()?.fqNameIsExisting(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == true)
+            "-opt-in"
+        else
+            "-Xuse-experimental"
 
     override fun getText(): String = KotlinBundle.message("add.0.to.module.1.compiler.arguments", compilerArgument, module.name)
 
     override fun getFamilyName(): String = KotlinBundle.message("add.an.opt.in.requirement.marker.compiler.argument")
 
-    private val compilerArgument = "-X$experimentalPrefix=$annotationFqName"
+    private val compilerArgument = "$experimentalPrefix=$annotationFqName"
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
@@ -58,17 +61,9 @@ open class MakeModuleExperimentalFix(
     }
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        if (module.getBuildSystemType() != BuildSystemType.JPS) return false
-        val facet = KotlinFacet.get(module) ?: return true
-        val facetSettings = facet.configuration.settings
-        val compilerSettings = facetSettings.compilerSettings ?: return true
-        return if (annotationFqName != OptInNames.REQUIRES_OPT_IN_FQ_NAME && annotationFqName != OptInNames.OLD_EXPERIMENTAL_FQ_NAME) {
-            compilerArgument !in compilerSettings.additionalArgumentsAsList
-        } else {
-            compilerSettings.additionalArgumentsAsList.none {
-                it.startsWith("-Xopt-in=") || it.startsWith("-Xuse-experimental=") || it.startsWith("-Xexperimental=")
-            }
-        }
+        // This fix can be used for JPS only as it changes facet settings,
+        // and Gradle and Maven facets are reset when the project is reloaded.
+        return module.getBuildSystemType() == BuildSystemType.JPS
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
