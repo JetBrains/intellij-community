@@ -5,10 +5,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.CachedIntentions;
-import com.intellij.codeInsight.intention.impl.EditIntentionSettingsAction;
-import com.intellij.codeInsight.intention.impl.EnableDisableIntentionAction;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -350,6 +347,13 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
           List<IntentionAction> enableDisableIntentionAction = new ArrayList<>();
           enableDisableIntentionAction.add(new EnableDisableIntentionAction(action));
           enableDisableIntentionAction.add(new EditIntentionSettingsAction(action));
+          if (IntentionShortcutManager.getInstance().hasShortcut(action)) {
+            enableDisableIntentionAction.add(new EditShortcutToIntentionAction(action));
+            enableDisableIntentionAction.add(new RemoveIntentionActionShortcut(action));
+          }
+          else {
+            enableDisableIntentionAction.add(new AssignShortcutToIntentionAction(action));
+          }
           HighlightInfo.IntentionActionDescriptor descriptor =
             new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null);
           if (!fixes.contains(descriptor)) {

@@ -117,6 +117,7 @@ public interface IdeActions {
   String GROUP_CUT_COPY_PASTE = "CutCopyPasteGroup";
   String GROUP_EDITOR_TAB_POPUP = "EditorTabPopupMenu";
   String GROUP_HELP_MENU = "HelpMenu";
+  String GROUP_INTENTIONS = "Intentions";
 
   String ACTION_CVS_ADD = "Cvs.Add";
   String ACTION_CVS_COMMIT = "Cvs.Commit";

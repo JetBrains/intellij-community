@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionManager
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 
 
@@ -159,6 +159,9 @@ object DirectiveBasedActionUtils {
         "Show argument name hints",
         "Show hints for suspending calls",
         "Add 'JUnit",
-        "Add 'testng"
+        "Add 'testng",
+        CodeInsightBundle.message("assign.intention.shortcut"),
+        CodeInsightBundle.message("edit.intention.shortcut"),
+        CodeInsightBundle.message("remove.intention.shortcut"),
     )
 }

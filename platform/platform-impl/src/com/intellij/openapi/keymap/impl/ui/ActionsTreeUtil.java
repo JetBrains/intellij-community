@@ -42,6 +42,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.intellij.codeInsight.intention.IntentionShortcuts.WRAPPER_PREFIX;
+
 public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
@@ -372,6 +374,19 @@ public final class ActionsTreeUtil {
     return group;
   }
 
+  private static Group createIntentionsGroup(Condition<? super AnAction> filtered) {
+    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    List<String> ids = actionManager.getActionIdList(WRAPPER_PREFIX);
+    ids.sort(null);
+    Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, null);
+    for (String id : ids) {
+      if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
+        group.addActionId(id);
+      }
+    }
+    return group;
+  }
+
   private static Group createQuickListsGroup(final Condition<? super AnAction> filtered, final String filter, final boolean forceFiltering, final QuickList[] quickLists) {
     Arrays.sort(quickLists, Comparator.comparing(QuickList::getActionId));
 
@@ -535,6 +550,7 @@ public final class ActionsTreeUtil {
       }
     }
     mainGroup.addGroup(createMacrosGroup(wrappedFilter));
+    mainGroup.addGroup(createIntentionsGroup(wrappedFilter));
     mainGroup.addGroup(createQuickListsGroup(wrappedFilter, filter, forceFiltering, quickLists));
     mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter));
     mainGroup.addGroup(createOtherGroup(wrappedFilter, mainGroup, keymap));
