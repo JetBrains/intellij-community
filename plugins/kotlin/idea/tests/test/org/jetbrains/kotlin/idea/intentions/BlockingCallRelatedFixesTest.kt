@@ -139,6 +139,35 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun `test add flowOn to flow generator`() {
+        myFixture.configureByText(
+            "ioDispatcherInFlow.kt",
+            """
+            import kotlinx.coroutines.flow.flow
+
+            fun flowFix() {
+                flow<Int> { <warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">blo<caret>ck</warning>()}
+            }
+        """.trimIndent()
+        )
+        myFixture.checkHighlighting()
+
+        val action = myFixture.getAvailableIntention("Flow on 'Dispatchers.IO'")
+        myFixture.launchAction(action!!)
+
+        myFixture.checkResult(
+            """
+            import kotlinx.coroutines.Dispatchers
+            import kotlinx.coroutines.flow.flow
+
+            fun flowFix() {
+                flow<Int> { block() }
+                    .flowOn(Dispatchers.IO)
+            }
+        """.trimIndent()
+        )
+    }
+
     fun `test replace unknown dispatcher in flow`() {
         myFixture.configureByText(
             "ioDispatcherInFlow.kt",
