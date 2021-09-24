@@ -64,3 +64,24 @@ interface MyFuture<T> {
     fun get():T?
 }
 class X
+
+fun updateChain(b: Boolean, c: Boolean): Int {
+    var x = 0
+    if (b) x = x or 1
+    if (c) x = x or 2
+    return x
+}
+fun updateChainBoolean(b: Boolean, c: Boolean): Boolean {
+    var x = false
+    x = x || b
+    x = x || c
+    return x
+}
+fun updateChainInterrupted(b: Boolean, c: Boolean): Int {
+    var x = 0
+    x++
+    <warning descr="Value is always zero">x--</warning>
+    if (b) x = <weak_warning descr="Value is always zero">x</weak_warning> or 1
+    if (c) x = x or 2
+    return x
+}

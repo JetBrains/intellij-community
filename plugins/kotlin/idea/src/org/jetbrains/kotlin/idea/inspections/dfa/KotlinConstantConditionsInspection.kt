@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
@@ -66,12 +67,15 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         private fun recordExpressionValue(anchor: KotlinAnchor, state: DfaMemoryState, value: DfaValue) {
             val oldVal = constantConditions[anchor]
             if (oldVal == ConstantValue.UNKNOWN) return
-            var newVal = when (state.getDfType(value)) {
+            var newVal = when (val dfType = state.getDfType(value)) {
                 DfTypes.TRUE -> ConstantValue.TRUE
                 DfTypes.FALSE -> ConstantValue.FALSE
                 DfTypes.NULL -> ConstantValue.NULL
-                DfTypes.intValue(0), DfTypes.longValue(0) -> ConstantValue.ZERO
-                else -> ConstantValue.UNKNOWN
+                else -> {
+                    val constVal: Number? = dfType.getConstantOfType(Number::class.java)
+                    if (constVal != null && (constVal == 0 || constVal == 0L)) ConstantValue.ZERO
+                    else ConstantValue.UNKNOWN
+                }
             }
             if (oldVal != null && oldVal != newVal) {
                 newVal = ConstantValue.UNKNOWN
@@ -81,8 +85,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
-        // TODO: suppress when constant initial value of mutable variable is used and variable is declared just before
-        //      like var x = 0; x = x or y
         // TODO: do something with always false branches in exhaustive when statements
         // TODO: return x && y.let {return...}
         var parent = expression.parent
@@ -112,7 +114,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
         }
-        if (isAlsoChain(expression) || isLetConstant(expression)) return true
+        if (isAlsoChain(expression) || isLetConstant(expression) || isUpdateChain(expression)) return true
         when (value) {
             ConstantValue.TRUE -> {
                 if (isSmartCastNecessary(expression, true)) return true
@@ -186,6 +188,42 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return true
         }
         return expression.isUsedAsStatement(expression.analyze(BodyResolveMode.FULL))
+    }
+
+    private fun isUpdateChain(expression: KtExpression): Boolean {
+        // x = x or ..., etc.
+        if (expression !is KtSimpleNameExpression) return false
+        val binOp = expression.parent as? KtBinaryExpression ?: return false
+        val op = binOp.operationReference.text
+        if (op != "or" && op != "and" && op != "xor" && op != "||" && op != "&&") return false
+        val assignment = binOp.parent as? KtBinaryExpression ?: return false
+        if (assignment.operationToken != KtTokens.EQ) return false
+        val left = assignment.left
+        if (left !is KtSimpleNameExpression || !left.textMatches(expression.text)) return false
+        val variable = expression.mainReference.resolve() as? KtProperty ?: return false
+        val varParent = variable.parent as? KtBlockExpression ?: return false
+        var context: PsiElement = assignment
+        var block = context.parent
+        while (block is KtContainerNode ||
+                block is KtBlockExpression && block.statements.first() == context ||
+                block is KtIfExpression && block.then?.parent == context && block.`else` == null && !hasWritesTo(block.condition, variable)) {
+            context = block
+            block = context.parent
+        }
+        if (block !== varParent) return false
+        var curExpression = variable.nextSibling
+        while (curExpression != context) {
+            if (hasWritesTo(curExpression, variable)) return false
+            curExpression = curExpression.nextSibling
+        }
+        return true
+    }
+
+    private fun hasWritesTo(block: PsiElement?, variable: KtProperty): Boolean {
+        return !PsiTreeUtil.processElements(block, KtSimpleNameExpression::class.java) { ref ->
+            val write = ref.mainReference.isReferenceTo(variable) && ref.readWriteAccess(false).isWrite
+            !write
+        }
     }
 
     // Do not report on also, as it always returns the qualifier. If necessary, qualifier itself will be reported
