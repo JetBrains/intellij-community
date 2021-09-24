@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
 
+import com.intellij.codeInspection.blockingCallsDetection.ElementContext
 import com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -58,7 +59,8 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         return languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
     }
 
-    override fun isContextNonBlockingFor(element: PsiElement): Boolean {
+    override fun isContextNonBlockingFor(elementContext: ElementContext): Boolean {
+        val element = elementContext.element
         if (element !is KtCallExpression) return false
 
         val containingLambda = element.parents

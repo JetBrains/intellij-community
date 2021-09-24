@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker
+import com.intellij.codeInspection.blockingCallsDetection.ElementContext
 import com.intellij.codeInspection.blockingCallsDetection.MethodContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -36,7 +37,8 @@ internal class CoroutineBlockingMethodChecker : BlockingMethodChecker {
         return sourcePsi is KtNamedFunction && sourcePsi.modifierList?.hasSuspendModifier() == true
     }
 
-    override fun getQuickFixesFor(element: PsiElement): Array<LocalQuickFix> {
+    override fun getQuickFixesFor(elementContext: ElementContext): Array<LocalQuickFix> {
+        val element = elementContext.element
         if (element !is KtCallExpression) return emptyArray()
         val resolvedCall = element.parentOfType<KtCallExpression>()?.resolveToCall(BodyResolveMode.PARTIAL)
 

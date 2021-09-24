@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UMethod;
@@ -32,8 +35,8 @@ public final class AnnotationBasedNonBlockingContextChecker implements NonBlocki
   }
 
   @Override
-  public boolean isContextNonBlockingFor(@NotNull PsiElement element) {
-    UCallExpression callExpression = UastContextKt.toUElement(element, UCallExpression.class);
+  public boolean isContextNonBlockingFor(@NotNull ElementContext elementContext) {
+    UCallExpression callExpression = UastContextKt.toUElement(elementContext.getElement(), UCallExpression.class);
     if (callExpression == null) return false;
 
     UMethod callingMethod = UastUtils.getParentOfType(callExpression, UMethod.class);

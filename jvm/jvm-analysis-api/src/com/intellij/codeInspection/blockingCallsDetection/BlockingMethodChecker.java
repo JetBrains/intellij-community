@@ -40,7 +40,7 @@ public interface BlockingMethodChecker {
   }
 
   /**
-   * @param methodContext metadata that provides info about inspection settings and PsiElement (e.g. method call or reference)
+   * @param elementContext metadata that provides info about inspection settings and PsiElement (e.g. method call or reference)
    *                      which is located in "non-blocking" code fragment
    * @return empty array if one cannot provide any fixes, non-empty array of quick fixes otherwise
    */
