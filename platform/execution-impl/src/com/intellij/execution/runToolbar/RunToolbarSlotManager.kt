@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.execution.*
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.ide.ActivityTracker
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -233,6 +234,8 @@ class RunToolbarSlotManager(val project: Project) {
     else {
       addNewProcessOnBottom(env)
     }
+
+    ActivityTracker.getInstance().inc()
   }
 
   private fun addNewProcessOnTop(env: ExecutionEnvironment) {
@@ -286,10 +289,19 @@ class RunToolbarSlotManager(val project: Project) {
 
   fun processTerminating(env: ExecutionEnvironment) {
     slotsData.values.firstOrNull { it.environment?.executionId == env.executionId }?.let {
+      it.environment = env
+    }
+    activeProcesses.updateActiveProcesses(slotsData)
+    updateState()
+    ActivityTracker.getInstance().inc()
+  }
+
+  fun processTerminated(executionId: Long) {
+    slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.let {
       if (it.environment?.getRunToolbarProcess()?.isTemporaryProcess() == true) {
         if (it == mainSlotData && slotsData.size == 1) {
-            it.clear()
-            it.configuration = RunManager.getInstance(project).selectedConfiguration
+          it.clear()
+          it.configuration = RunManager.getInstance(project).selectedConfiguration
         } else {
           removeSlot(it.id, false)
         }
@@ -298,9 +310,10 @@ class RunToolbarSlotManager(val project: Project) {
         it.environment = null
       }
     }
-    LOG.info("SLOT MANAGER process stopped: ${env.executionId} ")
+    LOG.info("SLOT MANAGER process stopped: $executionId ")
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
+    ActivityTracker.getInstance().inc()
   }
 
   fun extraSlotCount(): Int {
@@ -443,7 +456,7 @@ class ActiveProcesses {
 
   internal fun updateActiveProcesses(slotsData: MutableMap<String, SlotDate>) {
     processes.clear()
-    val list = slotsData.values.filter { it.environment?.isRunning() == true }.toMutableList()
+    val list = slotsData.values.filter { it.environment != null }.toMutableList()
     activeSlots = list
     list.mapNotNull { it.environment }.forEach{ environment ->
       environment.getRunToolbarProcess()?.let {

@@ -155,6 +155,10 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     }
   }
 
+  override fun paintBorder(g: Graphics) {
+    paintActiveBorder(g)
+  }
+
   override fun paint(g: Graphics) {
     super.paint(g)
     paintActiveBorder(g)

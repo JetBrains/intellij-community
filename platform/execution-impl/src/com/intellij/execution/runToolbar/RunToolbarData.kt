@@ -64,7 +64,7 @@ private fun getConfiguration(dataContext: DataContext): RunnerAndConfigurationSe
 }
 
 internal fun AnActionEvent.isActiveProcess(): Boolean {
-  return this.environment()?.isRunning() ?: false
+  return this.environment() != null
 }
 
 internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
@@ -101,6 +101,15 @@ fun ExecutionEnvironment.isRunning(): Boolean? {
   return this.contentToReuse?.processHandler?.let {
     !it.isProcessTerminating && !it.isProcessTerminated
   }
+}
+
+
+fun AnActionEvent.isProcessTerminating(): Boolean {
+  return this.environment()?.isProcessTerminating() == true
+}
+
+fun ExecutionEnvironment.isProcessTerminating(): Boolean {
+  return this.contentToReuse?.processHandler?.isProcessTerminating == true
 }
 
 internal fun AnActionEvent.id(): String? {

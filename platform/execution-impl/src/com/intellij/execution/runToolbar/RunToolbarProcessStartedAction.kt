@@ -104,10 +104,13 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
         isVisible = presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
           environment.getRunToolbarProcess()?.let {
             updatePresentation(it)
+            if(environment.isProcessTerminating()) {
+              process.text = ActionsBundle.message("action.RunToolbarRemoveSlotAction.terminating")
+            }
             true
           }
-        } ?: false
 
+        } ?: false
       }
 
       private fun updatePresentation(it: RunToolbarProcess) {

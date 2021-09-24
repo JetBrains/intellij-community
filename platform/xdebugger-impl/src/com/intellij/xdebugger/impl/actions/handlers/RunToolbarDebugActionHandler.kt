@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.execution.runToolbar.environment
+import com.intellij.execution.runToolbar.isProcessTerminating
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -21,7 +22,7 @@ abstract class RunToolbarDebugActionHandler() : DebuggerActionHandler() {
   override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
     if (LightEdit.owns(project)) return false
     return getSession(event)?.let { session ->
-      isEnabled(session, event.dataContext)
+      !event.isProcessTerminating() && isEnabled(session, event.dataContext)
     } ?: false
 
   }
