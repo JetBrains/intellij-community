@@ -17,7 +17,7 @@ internal class GradleKotlinBuildSystemType : KotlinBuildSystemType {
     override val name = "Gradle"
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = object : GradleBuildSystemStep<KotlinNewProjectWizard.Step>(parent) {
-        private var buildSystemType: BuildSystemType = BuildSystemType.GradleKotlinDsl
+        var buildSystemType: BuildSystemType = BuildSystemType.GradleKotlinDsl
 
         override val sdkComboBox: Cell<JdkComboBox>
             get() = parentStep.sdkComboBox
