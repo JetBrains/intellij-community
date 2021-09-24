@@ -25,8 +25,13 @@ public interface NonBlockingContextChecker {
    *                      to check if it is placed in code fragment where thread block is not allowed
    * @return true if code fragment for {@code element} is considered "non-blocking", false otherwise
    */
-  default boolean isContextNonBlockingFor(@NotNull ElementContext elementContext) {
-    return isContextNonBlockingFor(elementContext.getElement());
+  default ContextType isContextNonBlockingFor(@NotNull ElementContext elementContext) {
+    if (isContextNonBlockingFor(elementContext.getElement())) {
+      return ContextType.NONBLOCKING.INSTANCE;
+    }
+    else {
+      return ContextType.BLOCKING.INSTANCE;
+    }
   }
 
   /**

@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
 
+import com.intellij.codeInspection.blockingCallsDetection.ContextType
+import com.intellij.codeInspection.blockingCallsDetection.ContextType.BLOCKING
+import com.intellij.codeInspection.blockingCallsDetection.ContextType.NONBLOCKING
 import com.intellij.codeInspection.blockingCallsDetection.ElementContext
 import com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker
 import com.intellij.psi.PsiElement
@@ -59,43 +62,44 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         return languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
     }
 
-    override fun isContextNonBlockingFor(elementContext: ElementContext): Boolean {
+    override fun isContextNonBlockingFor(elementContext: ElementContext): ContextType {
         val element = elementContext.element
-        if (element !is KtCallExpression) return false
+        if (element !is KtCallExpression) return BLOCKING
 
         val containingLambda = element.parents
             .filterIsInstance<KtLambdaExpression>()
             .firstOrNull()
         val containingArgument = containingLambda?.getParentOfType<KtValueArgument>(true, KtCallableDeclaration::class.java)
         if (containingArgument != null) {
-            val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return false
-            val call = callExpression.resolveToCall(BodyResolveMode.PARTIAL) ?: return false
+            val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return BLOCKING
+            val call = callExpression.resolveToCall(BodyResolveMode.PARTIAL) ?: return BLOCKING
 
             val blockingFriendlyDispatcherUsed = checkBlockingFriendlyDispatcherUsed(call, callExpression)
             if (blockingFriendlyDispatcherUsed.isDefinitelyKnown) {
-                return blockingFriendlyDispatcherUsed != BlockingAllowed.DEFINITELY_YES
+                return if (blockingFriendlyDispatcherUsed != BlockingAllowed.DEFINITELY_YES) NONBLOCKING else BLOCKING
             }
 
-            val parameterForArgument = call.getParameterForArgument(containingArgument) ?: return false
-            val type = parameterForArgument.returnType ?: return false
+            val parameterForArgument = call.getParameterForArgument(containingArgument) ?: return BLOCKING
+            val type = parameterForArgument.returnType ?: return BLOCKING
 
             if (type.isBuiltinFunctionalType) {
                 val hasRestrictSuspensionAnnotation = type.getReceiverTypeFromFunctionType()
                     ?.isRestrictsSuspensionReceiver(getLanguageVersionSettings(element)) ?: false
-                return !hasRestrictSuspensionAnnotation && type.isSuspendFunctionType
+                return if (!hasRestrictSuspensionAnnotation && type.isSuspendFunctionType) NONBLOCKING else BLOCKING
             }
         }
 
         if (containingLambda == null) {
-            return element.parentsOfType<KtNamedFunction>()
+            val isInSuspendFunctionBody = element.parentsOfType<KtNamedFunction>()
                 .take(2)
                 .firstOrNull { function -> function.nameIdentifier != null }
                 ?.hasModifier(KtTokens.SUSPEND_KEYWORD) ?: false
+            return if (isInSuspendFunctionBody) NONBLOCKING else BLOCKING
         }
         val containingPropertyOrFunction: KtCallableDeclaration? =
             containingLambda.getParentOfTypes(true, KtProperty::class.java, KtNamedFunction::class.java)
-        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return true
-        return containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true
+        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return NONBLOCKING
+        return if (containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) NONBLOCKING else BLOCKING
     }
 
     private fun checkBlockingFriendlyDispatcherUsed(
@@ -192,7 +196,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         return overallResult
     }
 
-    companion object {
+    companion object {//todo remove and use ContextType
         private enum class BlockingAllowed(val isDefinitelyKnown: Boolean) {
             // could also be CONDITIONAL_YES with condition property provided
             DEFINITELY_YES(true),

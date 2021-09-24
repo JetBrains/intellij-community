@@ -2,10 +2,8 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
-import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
-import com.intellij.codeInspection.AnalysisUastUtil;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.*;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -70,7 +68,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     return new BlockingMethodInNonBlockingContextVisitor(holder, blockingMethodCheckers, nonBlockingContextCheckers, getSettings());
   }
 
-  private @NotNull BlockingCallInspectionSettings getSettings() {
+  public BlockingCallInspectionSettings getSettings() {
     return new BlockingCallInspectionSettings(myConsiderUnknownContextBlocking);
   }
 
@@ -147,11 +145,11 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     return project;
   }
 
-  private static class BlockingMethodInNonBlockingContextVisitor extends PsiElementVisitor {
+  private class BlockingMethodInNonBlockingContextVisitor extends PsiElementVisitor {
     private final ProblemsHolder myHolder;
     private final List<BlockingMethodChecker> myBlockingMethodCheckers;
     private final List<NonBlockingContextChecker> myNonBlockingContextCheckers;
-    private BlockingCallInspectionSettings mySettings;
+    private final BlockingCallInspectionSettings mySettings;
 
     BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
                                               List<BlockingMethodChecker> blockingMethodCheckers,
@@ -169,7 +167,11 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
       if (callExpression == null) return;
 
-      if (!isContextNonBlockingFor(element, myNonBlockingContextCheckers, mySettings)) return;
+      ContextType contextType = isContextNonBlockingFor(element, myNonBlockingContextCheckers, mySettings);
+      if (contextType instanceof ContextType.BLOCKING ||
+          (contextType instanceof ContextType.UNSURE && myConsiderUnknownContextBlocking)) {
+        return;
+      }
       ProgressIndicatorProvider.checkCanceled();
 
       PsiMethod referencedMethod = callExpression.resolve();
@@ -181,12 +183,15 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       if (elementToHighLight == null) return;
 
       ElementContext elementContext = new ElementContext(element, mySettings);
-      LocalQuickFix[] quickFixes = StreamEx.of(myBlockingMethodCheckers)
-        .flatArray(checker -> checker.getQuickFixesFor(elementContext))
-        .toArray(LocalQuickFix.EMPTY_ARRAY);
+      StreamEx<LocalQuickFix> fixesStream = StreamEx.of(myBlockingMethodCheckers)
+        .flatArray(checker -> checker.getQuickFixesFor(elementContext));
+
+      if (contextType instanceof ContextType.UNSURE && !myConsiderUnknownContextBlocking) {
+        fixesStream = fixesStream.append(new ConsiderUnknownContextBlockingFix());
+      }
       myHolder.registerProblem(elementToHighLight,
                                JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor"),
-                               quickFixes);
+                               fixesStream.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
@@ -209,13 +214,28 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     return false;
   }
 
-  private static boolean isContextNonBlockingFor(PsiElement element,
-                                                 List<? extends NonBlockingContextChecker> nonBlockingContextCheckers,
-                                                 BlockingCallInspectionSettings settings) {
-    return nonBlockingContextCheckers.stream().anyMatch(extension -> {
+  private static ContextType isContextNonBlockingFor(PsiElement element,
+                                                     List<? extends NonBlockingContextChecker> nonBlockingContextCheckers,
+                                                     BlockingCallInspectionSettings settings) {
+    ElementContext elementContext = new ElementContext(element, settings);
+    for (NonBlockingContextChecker checker : nonBlockingContextCheckers) {
       ProgressIndicatorProvider.checkCanceled();
-      ElementContext elementContext = new ElementContext(element, settings);
-      return extension.isContextNonBlockingFor(elementContext);
-    });
+      ContextType checkResult = checker.isContextNonBlockingFor(elementContext);
+      if (checkResult.isDefinitelyKnown()) return checkResult;
+    }
+    return ContextType.UNSURE.INSTANCE;
+  }
+
+  private class ConsiderUnknownContextBlockingFix implements LocalQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      BlockingMethodInNonBlockingContextInspection.this.myConsiderUnknownContextBlocking = true;
+      DaemonCodeAnalyzer.getInstance(project).restart(descriptor.getPsiElement().getContainingFile());
+    }
   }
 }
