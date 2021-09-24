@@ -15,10 +15,10 @@ import java.util.concurrent.ExecutorService
 class NGramFileListener(private val project: Project) : FileEditorManagerListener.Before {
   override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
     if (LightEdit.owns(project)) return
+    val language = (file.fileType as? LanguageFileType)?.language ?: return
+    if (!NGram.isSupported(language)) return
     ReadAction.nonBlocking(Runnable {
       if (!file.isValid) return@Runnable
-      val language = (file.fileType as? LanguageFileType)?.language ?: return@Runnable
-      if (!NGram.isSupported(language)) return@Runnable
       NGramModelRunnerManager.getInstance(project).processFile(PsiManager.getInstance(project).findFile(file) ?: return@Runnable, language)
     }).inSmartMode(project).submit(executor)
 
