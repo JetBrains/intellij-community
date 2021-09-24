@@ -7575,11 +7575,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/classUseExperimental.kt");
         }
 
-        @TestMetadata("doNotSwitchOn.kt")
-        public void testDoNotSwitchOn() throws Exception {
-            runTest("testData/quickfix/experimental/doNotSwitchOn.kt");
-        }
-
         @TestMetadata("existingFileAnnotationWithPackage.kt")
         public void testExistingFileAnnotationWithPackage() throws Exception {
             runTest("testData/quickfix/experimental/existingFileAnnotationWithPackage.kt");
@@ -7703,6 +7698,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("switchOn.kt")
         public void testSwitchOn() throws Exception {
             runTest("testData/quickfix/experimental/switchOn.kt");
+        }
+
+        @TestMetadata("switchOnWithAnotherMarker.kt")
+        public void testSwitchOnWithAnotherMarker() throws Exception {
+            runTest("testData/quickfix/experimental/switchOnWithAnotherMarker.kt");
         }
 
         @TestMetadata("typeAlias.kt")
