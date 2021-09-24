@@ -14576,6 +14576,259 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/unnecessaryOptInAnnotation")
+    public static class UnnecessaryOptInAnnotation extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("derivedClassUsage.kt")
+        public void testDerivedClassUsage() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/derivedClassUsage.kt");
+        }
+
+        @TestMetadata("necessaryAnnotation.kt")
+        public void testNecessaryAnnotation() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryAnnotation.kt");
+        }
+
+        @TestMetadata("necessaryArraySet.kt")
+        public void testNecessaryArraySet() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryArraySet.kt");
+        }
+
+        @TestMetadata("necessaryClassInstanceDeclaration.kt")
+        public void testNecessaryClassInstanceDeclaration() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryClassInstanceDeclaration.kt");
+        }
+
+        @TestMetadata("necessaryClassTwoMarkers.kt")
+        public void testNecessaryClassTwoMarkers() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryClassTwoMarkers.kt");
+        }
+
+        @TestMetadata("necessaryDerivedClass.kt")
+        public void testNecessaryDerivedClass() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDerivedClass.kt");
+        }
+
+        @TestMetadata("necessaryDerivedClassParentMethod.kt")
+        public void testNecessaryDerivedClassParentMethod() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDerivedClassParentMethod.kt");
+        }
+
+        @TestMetadata("necessaryFqAnnotation.kt")
+        public void testNecessaryFqAnnotation() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFqAnnotation.kt");
+        }
+
+        @TestMetadata("necessaryImportAlias.kt")
+        public void testNecessaryImportAlias() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryImportAlias.kt");
+        }
+
+        @TestMetadata("necessaryInlineFunction.kt")
+        public void testNecessaryInlineFunction() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryInlineFunction.kt");
+        }
+
+        @TestMetadata("necessaryInlineReifiedFunction.kt")
+        public void testNecessaryInlineReifiedFunction() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryInlineReifiedFunction.kt");
+        }
+
+        @TestMetadata("necessaryOverride.kt")
+        public void testNecessaryOverride() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverride.kt");
+        }
+
+        @TestMetadata("necessaryOverrideInterface.kt")
+        public void testNecessaryOverrideInterface() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverrideInterface.kt");
+        }
+
+        @TestMetadata("necessaryOverrideProperty1.kt")
+        public void testNecessaryOverrideProperty1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverrideProperty1.kt");
+        }
+
+        @TestMetadata("necessaryOverrideProperty2.kt")
+        public void testNecessaryOverrideProperty2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverrideProperty2.kt");
+        }
+
+        @TestMetadata("necessaryOverrideWithSuper.kt")
+        public void testNecessaryOverrideWithSuper() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverrideWithSuper.kt");
+        }
+
+        @TestMetadata("necessaryProperty1.kt")
+        public void testNecessaryProperty1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryProperty1.kt");
+        }
+
+        @TestMetadata("necessaryProperty2.kt")
+        public void testNecessaryProperty2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryProperty2.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter1.kt")
+        public void testNecessaryPropertySetter1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter1.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter2.kt")
+        public void testNecessaryPropertySetter2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter2.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter3.kt")
+        public void testNecessaryPropertySetter3() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter3.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter4.kt")
+        public void testNecessaryPropertySetter4() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter4.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter5.kt")
+        public void testNecessaryPropertySetter5() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter5.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter6.kt")
+        public void testNecessaryPropertySetter6() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter6.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter7.kt")
+        public void testNecessaryPropertySetter7() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter7.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter8.kt")
+        public void testNecessaryPropertySetter8() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter8.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter9.kt")
+        public void testNecessaryPropertySetter9() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter9.kt");
+        }
+
+        @TestMetadata("necessaryTypeAlias1.kt")
+        public void testNecessaryTypeAlias1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryTypeAlias1.kt");
+        }
+
+        @TestMetadata("necessaryTypeAlias2.kt")
+        public void testNecessaryTypeAlias2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryTypeAlias2.kt");
+        }
+
+        @TestMetadata("necessaryTypeAlias3.kt")
+        public void testNecessaryTypeAlias3() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryTypeAlias3.kt");
+        }
+
+        @TestMetadata("necessaryValueParameter.kt")
+        public void testNecessaryValueParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueParameter.kt");
+        }
+
+        @TestMetadata("necessaryWasExperimental.kt")
+        public void testNecessaryWasExperimental() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryWasExperimental.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionArgument1.kt")
+        public void testNesessaryFunctionArgument1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionArgument1.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionArgument2.kt")
+        public void testNesessaryFunctionArgument2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionArgument2.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionBlockBody.kt")
+        public void testNesessaryFunctionBlockBody() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionBlockBody.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionExpressionBody.kt")
+        public void testNesessaryFunctionExpressionBody() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionExpressionBody.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionResult.kt")
+        public void testNesessaryFunctionResult() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionResult.kt");
+        }
+
+        @TestMetadata("nesessaryTemplateParameter1.kt")
+        public void testNesessaryTemplateParameter1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryTemplateParameter1.kt");
+        }
+
+        @TestMetadata("redundantClassTwoMarkers.kt")
+        public void testRedundantClassTwoMarkers() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantClassTwoMarkers.kt");
+        }
+
+        @TestMetadata("redundantClassTwoMarkersBothUseless.kt")
+        public void testRedundantClassTwoMarkersBothUseless() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantClassTwoMarkersBothUseless.kt");
+        }
+
+        @TestMetadata("redundantImportAlias.kt")
+        public void testRedundantImportAlias() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantImportAlias.kt");
+        }
+
+        @TestMetadata("redundantProperty.kt")
+        public void testRedundantProperty() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantProperty.kt");
+        }
+
+        @TestMetadata("redundantPropertyGetter.kt")
+        public void testRedundantPropertyGetter() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantPropertyGetter.kt");
+        }
+
+        @TestMetadata("redundantValueParameter.kt")
+        public void testRedundantValueParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantValueParameter.kt");
+        }
+
+        @TestMetadata("redundantWasExperimental1.kt")
+        public void testRedundantWasExperimental1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantWasExperimental1.kt");
+        }
+
+        @TestMetadata("redundantWasExperimental2.kt")
+        public void testRedundantWasExperimental2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantWasExperimental2.kt");
+        }
+
+        @TestMetadata("redundantWasExperimental3.kt")
+        public void testRedundantWasExperimental3() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantWasExperimental3.kt");
+        }
+
+        @TestMetadata("typeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/typeAlias.kt");
+        }
+
+        @TestMetadata("unmarkedClass.kt")
+        public void testUnmarkedClass() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/unmarkedClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unnecessaryVariable")
     public static class UnnecessaryVariable extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
