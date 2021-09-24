@@ -24,10 +24,12 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
                                 USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
-                UDeclarationsExpression [@null @null var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>...@null var v: java.lang.String = var465978a0.<anonymous class>()] = Undetermined
-                    ULocalVariable (name = var465978a0) [@null @null var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
+                UDeclarationsExpression [@null @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>...@null var v: java.lang.String = var465978a0.<anonymous class>()] = Undetermined
+                    ULocalVariable (name = var465978a0) [@null @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
                         UAnnotation (fqName = null) [@null]
-                        UAnnotation (fqName = null) [@null]
+                        UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "UNCHECKED_CAST")]
+                            UNamedExpression (name = names) [names = "UNCHECKED_CAST"] = Undetermined
+                                ULiteralExpression (value = "UNCHECKED_CAST") ["UNCHECKED_CAST"] = "UNCHECKED_CAST"
                         UBinaryExpressionWithType [data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] = Undetermined
                             USimpleNameReferenceExpression (identifier = data) [data] = Undetermined
                             UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) [kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] = Undetermined
