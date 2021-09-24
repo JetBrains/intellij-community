@@ -16,9 +16,9 @@ import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.remote.RemoteSdkPropertiesPaths
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PythonHelpersLocator
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkType
 
@@ -63,7 +63,8 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
  */
 private fun getInterpreterPath(sdk: Sdk?): String? {
   if (sdk == null) return null
-  return sdk.sdkAdditionalData?.let { (it as? PyRemoteSdkAdditionalDataBase)?.interpreterPath } ?: sdk.homePath
+  // `RemoteSdkPropertiesPaths` suits both `PyRemoteSdkAdditionalDataBase` and `PyTargetAwareAdditionalData`
+  return sdk.sdkAdditionalData?.let { (it as? RemoteSdkPropertiesPaths)?.interpreterPath } ?: sdk.homePath
 }
 
 data class Upload(val localPath: String, val targetPath: TargetEnvironmentFunction<String>)
