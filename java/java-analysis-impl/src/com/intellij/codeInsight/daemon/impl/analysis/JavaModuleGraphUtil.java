@@ -90,30 +90,47 @@ public final class JavaModuleGraphUtil {
   }
 
   public static @Nullable PsiJavaModule findDescriptorByModule(@Nullable Module module, boolean inTests) {
-    if (module != null) {
-      Project project = module.getProject();
-      JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-      List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(rootType);
-      List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
-      if (files.size() == 1) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
-        if (psiFile instanceof PsiJavaFile) {
-          return ((PsiJavaFile)psiFile).getModuleDeclaration();
-        }
+    if (module == null) return null;
+    CachedValuesManager valuesManager = CachedValuesManager.getManager(module.getProject());
+    PsiJavaModule javaModule = inTests //to have different providers for production and tests
+                            ? valuesManager.getCachedValue(module, () -> createModuleCacheResult(module, true))
+                            : valuesManager.getCachedValue(module, () -> createModuleCacheResult(module, false));
+    return javaModule != null && javaModule.isValid() ? javaModule : null;
+  }
+
+  @NotNull
+  private static Result<PsiJavaModule> createModuleCacheResult(@NotNull Module module,
+                                                               boolean inTests) {
+    Project project = module.getProject();
+    return new Result<>(findDescriptionByModuleInner(module, inTests), 
+                        ProjectRootModificationTracker.getInstance(project), 
+                        PsiModificationTracker.SERVICE.getInstance(project));
+  }
+
+  @Nullable
+  private static PsiJavaModule findDescriptionByModuleInner(@NotNull Module module, boolean inTests) {
+    Project project = module.getProject();
+    JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+    List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(rootType);
+    List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
+    if (files.size() == 1) {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
+      if (psiFile instanceof PsiJavaFile) {
+        return ((PsiJavaFile)psiFile).getModuleDeclaration();
       }
-      else if (files.isEmpty()) {
-        files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
-        if (files.size() == 1) {
-          VirtualFile manifest = files.get(0);
-          PsiFile manifestPsi = PsiManager.getInstance(project).findFile(manifest);
-          assert manifestPsi != null : manifest;
-          return CachedValuesManager.getCachedValue(manifestPsi, () -> {
-            String name = LightJavaModule.claimedModuleName(manifest);
-            LightJavaModule result =
-              name != null ? LightJavaModule.create(PsiManager.getInstance(project), manifest.getParent().getParent(), name) : null;
-            return Result.create(result, manifestPsi, ProjectRootModificationTracker.getInstance(project));
-          });
-        }
+    }
+    else if (files.isEmpty()) {
+      files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
+      if (files.size() == 1) {
+        VirtualFile manifest = files.get(0);
+        PsiFile manifestPsi = PsiManager.getInstance(project).findFile(manifest);
+        assert manifestPsi != null : manifest;
+        return CachedValuesManager.getCachedValue(manifestPsi, () -> {
+          String name = LightJavaModule.claimedModuleName(manifest);
+          LightJavaModule result =
+            name != null ? LightJavaModule.create(PsiManager.getInstance(project), manifest.getParent().getParent(), name) : null;
+          return Result.create(result, manifestPsi, ProjectRootModificationTracker.getInstance(project));
+        });
       }
     }
 
