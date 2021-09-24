@@ -70,7 +70,11 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
   private fun installContentListeners() {
     ApplicationManager.getApplication().assertIsDispatchThread()
     toolWindow?.let { window ->
-      addContentManagerListener(window, MyRefreshPostponedEventsListener(window), toolwindowListenerDisposable)
+      addContentManagerListener(window, object : VcsLogTabsListener(project, window, mainDisposable) {
+        override fun selectionChanged(tabId: String) {
+          tabSelectedCallback(tabId)
+        }
+      }, toolwindowListenerDisposable)
     }
   }
 
@@ -98,13 +102,6 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
       if (id == ChangesViewContentManager.TOOLWINDOW_ID) {
         removeContentListeners()
       }
-    }
-  }
-
-  private inner class MyRefreshPostponedEventsListener(toolWindow: ToolWindow)
-    : VcsLogTabsListener(project, toolWindow, toolwindowListenerDisposable) {
-    override fun selectionChanged(tabId: String) {
-      tabSelectedCallback(tabId)
     }
   }
 
