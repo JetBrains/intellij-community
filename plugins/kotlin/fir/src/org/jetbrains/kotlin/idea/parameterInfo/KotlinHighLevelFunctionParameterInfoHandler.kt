@@ -9,14 +9,16 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -146,14 +148,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 // functional values (see FunctionalValue*.kt tests), and Java functions (see useJava*FromLib.kt tests).
                 // HL API gets a different symbol because a new ScopeSession() is used, and therefore a new enhanced FirFunction is created.
                 val candidateToMatch = candidateInfo.candidate.restoreSymbol() ?: return@analyse
-                val (candidate, argumentMapping) = candidatesWithMapping.firstOrNull { it.candidate == candidateToMatch } ?: return@analyse
+                val (candidate, argumentMapping, substitutor) = candidatesWithMapping.firstOrNull { it.candidate == candidateToMatch }
+                    ?: return@analyse
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
                 val isArraySetCall = candidate.callableIdIfNonLocal?.let {
                     val isSet = it.callableName == OperatorNameConventions.SET
                     isSet && callElement is KtArrayAccessExpression
                 } ?: false
-                // TODO: Get substituted value parameters. Not currently available in HL API. See SubstituteFromArguments*.kt tests
                 val valueParameters = candidate.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
                 val setValueParameter = if (isArraySetCall) candidate.valueParameters.last() else null
 
@@ -170,7 +172,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                         // TODO: Add hasSynthesizedParameterNames to HL API.
                         // See resolveValueParameters() in core/descriptors.jvm/src/org/jetbrains/kotlin/load/java/lazy/descriptors/LazyJavaScope.kt
                         val hasSynthesizedParameterNames = false
-                        val parameterText = renderParameter(parameter, includeName = !hasSynthesizedParameterNames)
+                        val parameterText = renderParameter(parameter, substitutor, includeName = !hasSynthesizedParameterNames)
                         put(index, parameterText)
                     }
                 }
@@ -195,6 +197,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     arguments,
                     currentArgumentIndex,
                     argumentMapping,
+                    substitutor,
                     setValueParameter
                 )
 
@@ -223,7 +226,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    private fun KtAnalysisSession.renderParameter(parameter: KtValueParameterSymbol, includeName: Boolean): String {
+    private fun KtAnalysisSession.renderParameter(
+        parameter: KtValueParameterSymbol,
+        substitutor: KtSubstitutor,
+        includeName: Boolean
+    ): String {
         return buildString {
             val annotationFqNames =
                 parameter.annotations
@@ -244,7 +251,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 append(": ")
             }
 
-            append(parameter.annotatedType.type.render(KtTypeRendererOptions.SHORT_NAMES))
+            val unsubstitutedType = parameter.annotatedType.type
+            val substitutedType = substitutor.substituteOrSelf(unsubstitutedType)
+            val typeToRender = substitutedType.takeUnless { it is KtClassErrorType } ?: unsubstitutedType
+            append(typeToRender.render(KtTypeRendererOptions.SHORT_NAMES))
 
             if (parameter.hasDefaultValue) {
                 // TODO: append(" = " + defaultValue).
@@ -282,6 +292,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         arguments: List<KtExpression>,
         currentArgumentIndex: Int,
         argumentMapping: LinkedHashMap<KtExpression, KtValueParameterSymbol>,
+        substitutor: KtSubstitutor,
         setValueParameter: KtValueParameterSymbol?
     ): Boolean {
         for ((index, argument) in arguments.withIndex()) {
@@ -290,8 +301,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             if (parameterForArgument == setValueParameter) continue
 
             val argumentType = argument.getKtType() ?: error("Argument should have a KtType")
-            val parameterType = parameterForArgument.annotatedType.type
-            if (argumentType.isNotSubTypeOf(parameterType)) {
+            val substitutedParameterType = substitutor.substituteOrSelf(parameterForArgument.annotatedType.type)
+            if (argumentType.isNotSubTypeOf(substitutedParameterType)) {
                 return true
             }
         }
