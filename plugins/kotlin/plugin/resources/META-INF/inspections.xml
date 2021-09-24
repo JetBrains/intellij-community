@@ -2927,6 +2927,15 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.redundant.assequence.call" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnnecessaryOptInAnnotationInspection"
+                     groupPath="Kotlin"
+                     groupName="Redundant constructs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     runForWholeFile="true"
+                     key="inspection.unnecessary.opt_in.annotation.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 
 </idea-plugin>
