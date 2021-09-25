@@ -4,7 +4,9 @@ package com.intellij.ide.plugins.marketplace
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.auth.PluginHostAuthService
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
@@ -66,19 +68,25 @@ open class MarketplacePluginDownloadService {
   @Throws(IOException::class)
   open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
     val file = getPluginTempFile()
-    return HttpRequests.request(pluginUrl).gzip(false).productNameAsUserAgent().connect(
-      HttpRequests.RequestProcessor { request: HttpRequests.Request ->
-        request.saveToFile(file, indicator)
-        val pluginFileUrl = getPluginFileUrl(request.connection)
-        if (pluginFileUrl.endsWith(".zip")) {
-          renameFileToZipRoot(file)
-        }
-        else {
-          val contentDisposition: String? = request.connection.getHeaderField("Content-Disposition")
-          val url = request.connection.url.toString()
-          guessPluginFile(contentDisposition, url, file, pluginUrl)
-        }
-      })
+    val pluginAuthService = service<PluginHostAuthService>()
+    return HttpRequests
+      .request(pluginUrl)
+      .tuner(pluginAuthService.connectionTuner)
+      .gzip(false)
+      .productNameAsUserAgent()
+      .connect(
+        HttpRequests.RequestProcessor { request: HttpRequests.Request ->
+          request.saveToFile(file, indicator)
+          val pluginFileUrl = getPluginFileUrl(request.connection)
+          if (pluginFileUrl.endsWith(".zip")) {
+            renameFileToZipRoot(file)
+          }
+          else {
+            val contentDisposition: String? = request.connection.getHeaderField("Content-Disposition")
+            val url = request.connection.url.toString()
+            guessPluginFile(contentDisposition, url, file, pluginUrl)
+          }
+        })
   }
 
   @Throws(IOException::class)
@@ -93,17 +101,26 @@ open class MarketplacePluginDownloadService {
     val blockMapFileUrl = "$pluginFileUrl$BLOCKMAP_ZIP_SUFFIX"
     val pluginHashFileUrl = "$pluginFileUrl$HASH_FILENAME_SUFFIX"
     try {
-      val newBlockMap = HttpRequests.request(blockMapFileUrl).productNameAsUserAgent().connect { request ->
-        request.inputStream.use { input ->
-          getBlockMapFromZip(input)
+      val pluginAuthService = service<PluginHostAuthService>()
+      val newBlockMap = HttpRequests
+        .request(blockMapFileUrl)
+        .tuner(pluginAuthService.connectionTuner)
+        .productNameAsUserAgent()
+        .connect { request ->
+          request.inputStream.use { input ->
+            getBlockMapFromZip(input)
+          }
         }
-      }
       LOG.info("Plugin's blockmap file downloaded")
-      val newPluginHash = HttpRequests.request(pluginHashFileUrl).productNameAsUserAgent().connect { request ->
-        request.inputStream.reader().buffered().use { input ->
-          objectMapper.readValue(input.readText(), FileHash::class.java)
+      val newPluginHash = HttpRequests
+        .request(pluginHashFileUrl)
+        .tuner(pluginAuthService.connectionTuner)
+        .productNameAsUserAgent()
+        .connect { request ->
+          request.inputStream.reader().buffered().use { input ->
+            objectMapper.readValue(input.readText(), FileHash::class.java)
+          }
         }
-      }
       LOG.info("Plugin's hash file downloaded")
 
       val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input ->
@@ -215,11 +232,16 @@ private fun getPluginFileUrl(connection: URLConnection): String {
 private data class GuessFileParameters(val contentDisposition: String?, val url: String)
 
 private fun getPluginFileUrlAndGuessFileParameters(pluginUrl: String): Pair<String, GuessFileParameters> {
-  return HttpRequests.request(pluginUrl).productNameAsUserAgent().connect { request ->
-    val connection = request.connection
-    Pair(getPluginFileUrl(connection),
-         GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
-  }
+  val pluginAuthService = service<PluginHostAuthService>()
+  return HttpRequests
+    .request(pluginUrl)
+    .tuner(pluginAuthService.connectionTuner)
+    .productNameAsUserAgent()
+    .connect { request ->
+      val connection = request.connection
+      Pair(getPluginFileUrl(connection),
+        GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
+    }
 }
 
 private fun getPrevPluginArchive(prevPlugin: Path): Path {
