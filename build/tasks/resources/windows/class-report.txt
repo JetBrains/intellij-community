@@ -10566,7 +10566,7 @@ org/jetbrains/idea/maven/utils/MavenMergingUpdateQueue.class:plugins\maven\lib\m
 org/jetbrains/kotlin/console/actions/RunKotlinConsoleAction.class:plugins\Kotlin\lib\kotlin-plugin.jar
 com/sun/xml/bind/v2/runtime/property/ArrayReferenceNodeProperty$MixedTextLoader.class:lib\platform-impl.jar
 com/sun/xml/bind/v2/runtime/property/PropertyFactory$1.class:lib\platform-impl.jar
-icons/KotlinIdeaIcons.class:plugins\Kotlin\lib\kotlin-plugin.jar
+icons/KotlinIcons.class:plugins\Kotlin\lib\kotlin-plugin.jar
 com/sun/xml/bind/v2/runtime/Name.class:lib\platform-impl.jar
 com/sun/xml/bind/v2/runtime/reflect/TransducedAccessor.class:lib\platform-impl.jar
 com/intellij/build/ViewManager.class:lib\platform-api.jar

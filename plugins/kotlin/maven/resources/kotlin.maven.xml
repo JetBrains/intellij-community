@@ -109,15 +109,15 @@
       <separator />
 
       <action id="KotlinGenerateMavenCompileExecutionAction"
-              icon="/org/jetbrains/kotlin/idea/icons/kotlin13.png"
+              icon="/org/jetbrains/kotlin/idea/icons/kotlin13.svg"
               class="org.jetbrains.kotlin.idea.maven.actions.GenerateMavenCompileExecutionAction"/>
 
       <action id="KotlinGenerateMavenTestCompileExecutionAction"
-              icon="/org/jetbrains/kotlin/idea/icons/kotlin13.png"
+              icon="/org/jetbrains/kotlin/idea/icons/kotlin13.svg"
               class="org.jetbrains.kotlin.idea.maven.actions.GenerateMavenTestCompileExecutionAction"/>
 
       <action id="KotlinGenerateMavenPluginAction"
-              icon="/org/jetbrains/kotlin/idea/icons/kotlin13.png"
+              icon="/org/jetbrains/kotlin/idea/icons/kotlin13.svg"
               class="org.jetbrains.kotlin.idea.maven.actions.GenerateMavenPluginAction"/>
 
       <add-to-group group-id="GenerateGroup" anchor="last" />
