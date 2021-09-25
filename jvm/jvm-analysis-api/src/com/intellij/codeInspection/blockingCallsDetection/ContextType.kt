@@ -2,20 +2,21 @@
 package com.intellij.codeInspection.blockingCallsDetection
 
 sealed class ContextType(
-  val isDefinitelyKnown: Boolean
+  val isDefinitelyKnown: Boolean,
+  val priority: Int
 ) {
   /*
-   * Blocking calls inside are NOT ALLOWED
-   */
-  object NONBLOCKING : ContextType(true)
+     * Blocking calls inside are NOT ALLOWED
+     */
+  object NONBLOCKING : ContextType(true, 1)
 
   /*
    * Blocking calls inside are ALLOWED
    */
-  object BLOCKING : ContextType(true)
+  object BLOCKING : ContextType(true, 0)
 
   /*
    * No information about whether it is ok to call blocking methods inside current context or not
    */
-  object UNSURE : ContextType(false)
+  object UNSURE : ContextType(false, -1)
 }

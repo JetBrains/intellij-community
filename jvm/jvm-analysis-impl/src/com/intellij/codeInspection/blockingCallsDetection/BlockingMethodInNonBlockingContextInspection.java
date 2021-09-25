@@ -217,13 +217,19 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   private static ContextType isContextNonBlockingFor(PsiElement element,
                                                      List<? extends NonBlockingContextChecker> nonBlockingContextCheckers,
                                                      BlockingCallInspectionSettings settings) {
+    ContextType effectiveContextType = ContextType.UNSURE.INSTANCE;
     ElementContext elementContext = new ElementContext(element, settings);
     for (NonBlockingContextChecker checker : nonBlockingContextCheckers) {
       ProgressIndicatorProvider.checkCanceled();
       ContextType checkResult = checker.isContextNonBlockingFor(elementContext);
-      if (checkResult.isDefinitelyKnown()) return checkResult;
+      effectiveContextType = chooseType(effectiveContextType, checkResult);
+      if (effectiveContextType instanceof ContextType.NONBLOCKING) return effectiveContextType;
     }
-    return ContextType.UNSURE.INSTANCE;
+    return effectiveContextType;
+  }
+
+  private static ContextType chooseType(ContextType first, ContextType second) {
+    return first.getPriority() > second.getPriority() ? first : second;
   }
 
   private class ConsiderUnknownContextBlockingFix implements LocalQuickFix {
