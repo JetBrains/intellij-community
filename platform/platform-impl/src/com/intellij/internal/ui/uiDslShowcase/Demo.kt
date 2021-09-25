@@ -2,4 +2,4 @@
 package com.intellij.internal.ui.uiDslShowcase
 
 @Target(AnnotationTarget.FUNCTION)
-annotation class Demo(val title: String, val description: String)
+annotation class Demo(val title: String, val description: String, val scrollbar: Boolean = false)

@@ -29,7 +29,7 @@ fun demoComments(): DialogPanel {
     }
 
     row("Row4:") {
-      commentNoWrap("Free comment that is not wrapped when contains a very long text, which exceeds available space in the window")
+      commentNoWrap("Free comment that is not wrapped when contains a very long text, which exceeds available space in the window. To check behaviour reduce size of this dialog")
     }
 
     row("Row5:") {

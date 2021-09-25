@@ -92,7 +92,7 @@ interface Row {
   fun rowComment(@NlsContexts.DetailedDescription comment: String,
                  maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Row
 
-  fun <T : JComponent> cell(component: T): Cell<T>
+  fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
 
   /**
    * Adds an empty cell in the grid

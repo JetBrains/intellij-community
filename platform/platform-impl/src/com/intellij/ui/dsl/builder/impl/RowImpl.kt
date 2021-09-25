@@ -88,8 +88,8 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun <T : JComponent> cell(component: T): CellImpl<T> {
-    val result = CellImpl(dialogPanelConfig, component, this)
+  override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
+    val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
 
     if (component is JRadioButton) {
@@ -346,9 +346,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun textArea(): Cell<JBTextArea> {
     val textArea = JBTextArea()
-    val result = CellImpl(dialogPanelConfig, textArea, this, JBScrollPane(textArea))
-    cells.add(result)
-    return result
+    return cell(textArea, JBScrollPane(textArea))
   }
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {

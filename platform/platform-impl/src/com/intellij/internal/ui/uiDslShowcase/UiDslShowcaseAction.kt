@@ -6,9 +6,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import java.awt.Dimension
 import javax.swing.JComponent
 import kotlin.reflect.KFunction
@@ -17,8 +21,11 @@ import kotlin.reflect.jvm.javaMethod
 
 const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/src/com/intellij/internal/ui/uiDslShowcase/"
 val DEMOS = arrayOf(
+  ::demoBasics,
+  ::demoRowLayout,
   ::demoComponentLabels,
-  ::demoComments
+  ::demoComments,
+  ::demoComponents
 )
 
 class UiDslShowcaseAction : DumbAwareAction("UI DSL Showcase") {
@@ -65,9 +72,24 @@ private class UiDslShowcaseDialog(project: Project?) : DialogWrapper(project, nu
         browserLink("View source", BASE_URL + fileName)
       }.bottomGap(BottomGap.MEDIUM)
 
-      row {
-        cell(demo.call())
+      val dialogPanel = demo.call()
+      if (annotation.scrollbar) {
+        row {
+          cell(dialogPanel, JBScrollPane(dialogPanel))
+            .horizontalAlign(HorizontalAlign.FILL)
+            .verticalAlign(VerticalAlign.FILL)
+            .resizableColumn()
+        }.resizableRow()
       }
+      else {
+        row {
+          cell(dialogPanel)
+        }
+      }
+
+      val disposable = Disposer.newDisposable()
+      dialogPanel.registerValidators(disposable)
+      Disposer.register(myDisposable, disposable)
     }
 
     tabbedPane.add(annotation.title, content)
