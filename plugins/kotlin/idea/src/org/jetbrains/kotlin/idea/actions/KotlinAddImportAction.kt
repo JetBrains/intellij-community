@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions
 
@@ -24,6 +10,7 @@ import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.psi.PsiDocumentManager
@@ -32,7 +19,6 @@ import com.intellij.psi.WeighingService
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.ProximityLocation
 import com.intellij.psi.util.proximity.PsiProximityComparator
-import com.intellij.ui.popup.list.ListPopupImpl
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -196,23 +182,20 @@ class KotlinAddImportAction internal constructor(
             return true
         }
 
-        object : ListPopupImpl(project, getVariantSelectionPopup(variantsList)) {
-            private val psiRenderer = DefaultPsiElementCellRenderer()
+        JBPopupFactory.getInstance().createListPopup(project, getVariantSelectionPopup(variantsList)) {
+            val psiRenderer = DefaultPsiElementCellRenderer()
 
-            @Suppress("UNCHECKED_CAST")
-            override fun getListElementRenderer(): ListCellRenderer<AutoImportVariant> {
-                return ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
-                    JPanel(BorderLayout()).apply {
-                        add(
-                            psiRenderer.getListCellRendererComponent(
-                                list,
-                                value.declarationToImport,
-                                index,
-                                isSelected,
-                                cellHasFocus
-                            )
+            ListCellRenderer<AutoImportVariant> { list, value, index, isSelected, cellHasFocus ->
+                JPanel(BorderLayout()).apply {
+                    add(
+                        psiRenderer.getListCellRendererComponent(
+                            list,
+                            value.declarationToImport,
+                            index,
+                            isSelected,
+                            cellHasFocus
                         )
-                    }
+                    )
                 }
             }
         }.showInBestPositionFor(editor)

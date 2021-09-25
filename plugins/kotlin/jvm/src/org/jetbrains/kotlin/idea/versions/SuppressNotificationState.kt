@@ -1,18 +1,15 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.kotlin.idea.configuration.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.configuration.toModuleGroup
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 @State(name = "SuppressABINotification")
 class SuppressNotificationState : PersistentStateComponent<SuppressNotificationState> {
@@ -26,7 +23,7 @@ class SuppressNotificationState : PersistentStateComponent<SuppressNotificationS
     }
 
     companion object {
-        fun getInstance(project: Project) = ServiceManager.getService(project, SuppressNotificationState::class.java)
+        fun getInstance(project: Project): SuppressNotificationState = project.getServiceSafe()
 
         fun isKotlinNotConfiguredSuppressed(moduleGroup: ModuleSourceRootGroup): Boolean {
             val baseModule = moduleGroup.baseModule

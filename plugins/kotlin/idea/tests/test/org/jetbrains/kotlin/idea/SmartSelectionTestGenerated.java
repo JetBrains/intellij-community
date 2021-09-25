@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea;
 
@@ -24,6 +21,21 @@ import org.junit.runner.RunWith;
 public class SmartSelectionTestGenerated extends AbstractSmartSelectionTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTestSmartSelection, this, testDataFilePath);
+    }
+
+    @TestMetadata("afterRightParenthesis.kt")
+    public void testAfterRightParenthesis() throws Exception {
+        runTest("testData/smartSelection/afterRightParenthesis.kt");
+    }
+
+    @TestMetadata("afterRightParenthesis2.kt")
+    public void testAfterRightParenthesis2() throws Exception {
+        runTest("testData/smartSelection/afterRightParenthesis2.kt");
+    }
+
+    @TestMetadata("afterRightParenthesis3.kt")
+    public void testAfterRightParenthesis3() throws Exception {
+        runTest("testData/smartSelection/afterRightParenthesis3.kt");
     }
 
     @TestMetadata("beforeComment.kt")

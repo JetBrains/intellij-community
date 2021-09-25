@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -15,7 +16,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,6 +32,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.MODULES, listener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, listener);
   }
 
   @Override
@@ -62,7 +66,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return result;
   }
 
-  private class MyModulesListener implements ModuleRootListener, ModuleListener {
+  private class MyModulesListener implements ModuleRootListener, ModuleListener, AdditionalLibraryRootsListener {
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
       scheduleMappedRootsUpdate();
@@ -75,6 +79,14 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
     @Override
     public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
+      scheduleMappedRootsUpdate();
+    }
+
+    @Override
+    public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
+                                    @NotNull Collection<? extends VirtualFile> oldRoots,
+                                    @NotNull Collection<? extends VirtualFile> newRoots,
+                                    @NotNull String libraryNameForDebug) {
       scheduleMappedRootsUpdate();
     }
   }

@@ -133,7 +133,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           Icon tagIcon = TagManager.appendTags(element, this);
           append(group.getText(myView),
                  patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
-          Icon icon = node.getGroup().getIcon(expanded);
+          Icon icon = group.getIcon(expanded);
           if (tagIcon != null) {
             icon = new RowIcon(tagIcon, icon);
           }

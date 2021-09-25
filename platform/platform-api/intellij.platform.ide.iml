@@ -47,5 +47,6 @@
     <orderEntry type="library" name="icu4j" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
   </component>
 </module>

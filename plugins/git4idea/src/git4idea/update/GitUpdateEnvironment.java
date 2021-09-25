@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
 import com.intellij.openapi.components.Service;
@@ -73,7 +73,6 @@ public final class GitUpdateEnvironment implements UpdateEnvironment {
   }
 
   @Override
-  @RequiresEdt
   public boolean hasCustomNotification() {
     // If the log won't be refreshed after update, we won't be able to build a visible pack for the updated range.
     // Unless we force refresh it by hands, but if we do it, calculating update project info would take enormous amount of time & memory.

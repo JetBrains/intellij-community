@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A "root" class in compiler subsystem - allows one to register a custom compiler or a compilation task, register/unregister a compilation listener
@@ -47,23 +46,8 @@ public abstract class CompilerManager {
    * @deprecated use {@link CompileTask} extension instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addCompiler(@NotNull Compiler compiler);
-
-  /**
-   * Registers a custom translating compiler. Input and output filetype sets allow compiler manager
-   * to sort translating compilers so that output of one compiler will be used as input for another one
-   *
-   * @param compiler compiler implementation
-   * @param inputTypes a set of filetypes that compiler accepts as input
-   * @param outputTypes a set of filetypes that compiler can generate
-   *
-   * @deprecated this method is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
-   * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
-   * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 
   /**
    * Unregisters a custom compiler.

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ReadAction;
@@ -12,8 +12,6 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.vfs.impl.local.DirectoryAccessChecker;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -78,10 +76,6 @@ final class RefreshWorker {
       myHelper.scheduleDeletion(root);
       root.markClean();
       return;
-    }
-
-    if (fs instanceof LocalFileSystemBase) {
-      DirectoryAccessChecker.refresh();
     }
 
     checkAndScheduleChildRefresh(fs, persistence, root.getParent(), root, attributes);

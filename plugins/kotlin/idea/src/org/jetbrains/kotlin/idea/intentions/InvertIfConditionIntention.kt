@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -56,13 +53,12 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
         commentSaver.restore(commentRestoreRange)
 
         val newIfCondition = newIf.condition
-        val simplifyIntention = ConvertBinaryExpressionWithDemorgansLawIntention()
         (newIfCondition as? KtPrefixExpression)?.let {
             //use De Morgan's law only for negated condition to not make it more complex
             if (it.operationReference.getReferencedNameElementType() == KtTokens.EXCL) {
                 val binaryExpr = (it.baseExpression as? KtParenthesizedExpression)?.expression as? KtBinaryExpression
-                if (binaryExpr != null && simplifyIntention.isApplicableTo(binaryExpr)) {
-                    simplifyIntention.applyTo(binaryExpr)
+                if (binaryExpr != null) {
+                    ConvertBinaryExpressionWithDemorgansLawIntention.convertIfPossible(binaryExpr)
                 }
             }
         }

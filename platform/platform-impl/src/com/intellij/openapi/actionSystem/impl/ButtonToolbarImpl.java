@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
 
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 class ButtonToolbarImpl extends JPanel {
   private final String myPlace;
   private final PresentationFactory myPresentationFactory;

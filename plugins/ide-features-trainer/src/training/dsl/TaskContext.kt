@@ -26,6 +26,12 @@ abstract class TaskContext : LearningDslBase {
 
   open val taskId: TaskId = TaskId(0)
 
+  /**
+   * This property can be set to the true if you want that the next task restore will jump over the current task.
+   * Default `null` value is reserved for the future automatic transparent restore calculation.
+   */
+  open var transparentRestore: Boolean? = null
+
   /** Put here some initialization for the task */
   open fun before(preparation: TaskRuntimeContext.() -> Unit) = Unit
 

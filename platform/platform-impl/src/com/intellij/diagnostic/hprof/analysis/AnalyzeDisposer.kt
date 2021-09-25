@@ -206,7 +206,7 @@ internal class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     assert(!nav.isNull())
     nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myDisposedObjects")
     nav.goToInstanceField("com.intellij.util.containers.WeakHashMap", "myMap")
-    nav.goToInstanceField("com.intellij.util.containers.RefHashMap\$MyMap", "_set")
+    nav.goToInstanceField("com.intellij.util.containers.RefHashMap\$MyMap", "keys")
     val weakKeyClass = nav.classStore["com.intellij.util.containers.WeakHashMap\$WeakKey"]
 
     nav.getReferencesCopy().forEach {

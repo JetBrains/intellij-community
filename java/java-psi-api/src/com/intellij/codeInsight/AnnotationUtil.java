@@ -734,15 +734,6 @@ public class AnnotationUtil {
     return isAnnotated(listOwner, annotations, CHECK_TYPE);
   }
 
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull Collection<String> annotations,
-                                    boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotations, flags(checkHierarchy, true, true));
-  }
-
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")

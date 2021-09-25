@@ -20,7 +20,8 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -79,10 +80,10 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
     int[] layoutIndexes = new int[end - start];
     List<Integer> headNodeIndexes = new ArrayList<>();
 
-    TObjectIntHashMap<CommitId> commitIdToInteger = reverseCommitIdMap(permanentCommitsInfo, permanentGraphSize);
+    Object2IntMap<CommitId> commitIdToInteger = reverseCommitIdMap(permanentCommitsInfo, permanentGraphSize);
     for (int row = start; row < end; row++) {
       CommitId commitId = commitsIdMap.get(row - start);
-      int layoutIndex = oldLayout.getLayoutIndex(commitIdToInteger.get(commitId));
+      int layoutIndex = oldLayout.getLayoutIndex(commitIdToInteger.getInt(commitId));
       layoutIndexes[row - start] = layoutIndex;
       if (asLiteLinearGraph(newLinearGraph).getNodes(row - start, LiteLinearGraph.NodeFilter.UP).isEmpty()) {
         headNodeIndexes.add(row - start);
@@ -108,15 +109,16 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
       for (int row = 0; row < commitsIdMap.size(); row++) {
         ints[row] = (Integer)commitsIdMap.get(row);
       }
+      //noinspection unchecked
       return (NotNullFunction<Integer, CommitId>)new IntegerCommitIdMapFunction(CompressedIntList.newInstance(ints));
     }
     return new CommitIdMapFunction<>(commitsIdMap);
   }
 
   @NotNull
-  private static <CommitId> TObjectIntHashMap<CommitId> reverseCommitIdMap(@NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
-                                                                           int size) {
-    TObjectIntHashMap<CommitId> result = new TObjectIntHashMap<>();
+  private static <CommitId> Object2IntMap<CommitId> reverseCommitIdMap(@NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
+                                                                       int size) {
+    Object2IntMap<CommitId> result = new Object2IntOpenHashMap<>();
     for (int i = 0; i < size; i++) {
       result.put(permanentCommitsInfo.getCommitId(i), i);
     }

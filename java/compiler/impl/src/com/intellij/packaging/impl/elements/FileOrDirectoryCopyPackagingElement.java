@@ -79,7 +79,7 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
           }
           return Unit.INSTANCE;
         });
-      }, true);
+      });
   }
 
   @NotNull

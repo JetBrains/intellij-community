@@ -140,7 +140,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
   }
 
   static boolean hasPrefixAt(String text, int offset, String prefix) {
-    if (text.isEmpty() || offset < 0 || offset >= text.length()) {
+    if (offset < 0 || offset >= text.length()) {
       return false;
     }
     return text.regionMatches(true, offset, prefix, 0, prefix.length());

@@ -1,12 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.observable.properties
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 
-open class AtomicLazyProperty<T>(private val initial: () -> T) : AtomicProperty<T> {
+open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableProperty<T>(), AtomicProperty<T> {
 
   private val value = AtomicReference<Any?>(UNINITIALIZED_VALUE)
 
@@ -19,12 +17,12 @@ open class AtomicLazyProperty<T>(private val initial: () -> T) : AtomicProperty<
 
   override fun set(value: T) {
     this.value.set(value)
-    changeListeners.forEach { it(value) }
+    fireChangeEvent(value)
   }
 
   override fun updateAndGet(update: (T) -> T): T {
     val newValue = update(update)
-    changeListeners.forEach { it(newValue) }
+    fireChangeEvent(newValue)
     return newValue
   }
 
@@ -36,25 +34,7 @@ open class AtomicLazyProperty<T>(private val initial: () -> T) : AtomicProperty<
 
   override fun reset() {
     value.set(UNINITIALIZED_VALUE)
-    resetListeners.forEach { it() }
-  }
-
-  override fun afterChange(listener: (T) -> Unit) {
-    changeListeners.add(listener)
-  }
-
-  override fun afterReset(listener: () -> Unit) {
-    resetListeners.add(listener)
-  }
-
-  override fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) {
-    changeListeners.add(listener)
-    Disposer.register(parentDisposable, Disposable { changeListeners.remove(listener) })
-  }
-
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
-    resetListeners.add(listener)
-    Disposer.register(parentDisposable, Disposable { resetListeners.remove(listener) })
+    fireResetEvent()
   }
 
   companion object {

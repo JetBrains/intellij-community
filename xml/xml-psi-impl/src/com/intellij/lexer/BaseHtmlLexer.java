@@ -310,19 +310,6 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
    *
    * @deprecated Use {@link HtmlEmbeddedContentSupport} API
    */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected boolean endOfTheEmbeddment(String name) {
-    logLegacyLexer();
-    return false;
-  }
-
-  /**
-   * This API does no longer work.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Nullable

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.codereview.OpenReviewButton
+import com.intellij.collaboration.ui.codereview.OpenReviewButtonViewModel
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
@@ -16,8 +18,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
-import com.intellij.collaboration.ui.codereview.OpenReviewButton
-import com.intellij.collaboration.ui.codereview.OpenReviewButtonViewModel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -85,9 +85,8 @@ internal object GHPRListComponent {
       DataManager.registerDataProvider(it) { dataId ->
         if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
       }
-      PopupHandler.installSelectionListPopup(it,
-                                             actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup,
-                                             ActionPlaces.UNKNOWN, actionManager)
+      val groupId = "Github.PullRequest.ToolWindow.List.Popup"
+      PopupHandler.installSelectionListPopup(it, actionManager.getAction(groupId) as ActionGroup, groupId)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
       ListSpeedSearch(it) { item -> item.title }

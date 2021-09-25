@@ -708,14 +708,21 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @NotNull
     @Override
     public String getDisplayName() {
+      List<String> parentGroupPath;
       if (parent instanceof ModuleGroupNode) {
         ModuleGroup parentGroup = ((ModuleGroupNode)parent).getModuleGroup();
-        List<String> groupPath = myModuleGroup.getGroupPathList();
-        if (parentGroup != null && ContainerUtil.startsWith(groupPath, parentGroup.getGroupPathList())) {
-          return StringUtil.join(groupPath.subList(parentGroup.getGroupPathList().size(), groupPath.size()), ".");
-        }
+        parentGroupPath = parentGroup != null ? parentGroup.getGroupPathList() : Collections.emptyList();
       }
-      return super.getDisplayName();
+      else {
+        parentGroupPath = Collections.emptyList();
+      }
+      List<String> groupPath = myModuleGroup.getGroupPathList();
+      if (ContainerUtil.startsWith(groupPath, parentGroupPath)) {
+        return StringUtil.join(groupPath.subList(parentGroupPath.size(), groupPath.size()), ".");
+      }
+      else {
+        return StringUtil.join(groupPath, ".");
+      }
     }
 
     @Override

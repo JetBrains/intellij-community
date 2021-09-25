@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -12,6 +13,12 @@ import kotlin.properties.Delegates.observable
 
 class GHPRDiffController(private val diffRequestModel: GHPRDiffRequestModel,
                          private val diffRequestProducer: DiffRequestChainProducer) {
+  init {
+    diffRequestModel.addFilePathSelectionListener {
+      diffRequestModel.selectedFilePath?.let(::selectFilePath)
+    }
+  }
+
   var activeTree by observable<ActiveTree?>(null) { _, _, current ->
     val tree = when (current) {
       ActiveTree.FILES -> filesTree
@@ -47,6 +54,14 @@ class GHPRDiffController(private val diffRequestModel: GHPRDiffRequestModel,
     val selection = tree.let { VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change } }
     // do not reset selection to zero
     if (!selection.isEmpty) diffRequestModel.requestChain = selection.let(diffRequestProducer::getRequestChain)
+  }
+
+  private fun selectFilePath(filePath: FilePath) {
+    when (activeTree) {
+      ActiveTree.COMMITS -> commitsTree
+      ActiveTree.FILES -> filesTree
+      else -> null
+    }?.selectFile(filePath)
   }
 
   enum class ActiveTree {

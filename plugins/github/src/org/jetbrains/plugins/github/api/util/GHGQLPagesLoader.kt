@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.util
 
+import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import java.util.*
@@ -46,10 +46,10 @@ abstract class GHGQLPagesLoader<T, R>(private val executor: GithubApiRequestExec
     iterationDataRef.set(IterationData(true))
   }
 
-  protected abstract fun extractPageInfo(result: T): GHGQLPageInfo
+  protected abstract fun extractPageInfo(result: T): GraphQLCursorPageInfoDTO
   protected abstract fun extractResult(result: T): R
 
   private class IterationData(val hasNext: Boolean, val timestamp: Date? = null, val cursor: String? = null) {
-    constructor(page: GHGQLPageInfo, timestamp: Date) : this(page.hasNextPage, timestamp, page.endCursor)
+    constructor(page: GraphQLCursorPageInfoDTO, timestamp: Date) : this(page.hasNextPage, timestamp, page.endCursor)
   }
 }

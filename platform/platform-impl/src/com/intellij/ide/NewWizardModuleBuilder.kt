@@ -8,15 +8,16 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import org.jetbrains.annotations.Nullable
 import java.io.File
 
 private val LOG = logger<NewWizardModuleBuilder<*>>()
 abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
   abstract val step: NewModuleStep<T>
 
-  abstract fun setupProject(project: Project)
+  abstract fun setupProject(project: Project, context: WizardContext)
 
-  fun createProject(): Project? {
+  fun createProject(context: WizardContext): @Nullable Project? {
     val name = step.baseSettings.name
     val path = step.baseSettings.path
 
@@ -27,7 +28,7 @@ abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
       return null
     }
 
-    setupProject(project)
+    setupProject(project, context)
     return project
   }
 

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf
 
@@ -12,6 +9,7 @@ class PerfTestBuilder<SV, TV> {
     private lateinit var name: String
     private var warmUpIterations: Int = 5
     private var iterations: Int = 20
+    private var fastIterations: Boolean = false
     private var setUp: (TestData<SV, TV>) -> Unit = { }
     private lateinit var test: (TestData<SV, TV>) -> Unit
     private var tearDown: (TestData<SV, TV>) -> Unit = { }
@@ -23,6 +21,7 @@ class PerfTestBuilder<SV, TV> {
             testName = name,
             warmUpIterations = warmUpIterations,
             iterations = iterations,
+            fastIterations = fastIterations,
             setUp = setUp,
             test = test,
             tearDown = tearDown,
@@ -44,6 +43,10 @@ class PerfTestBuilder<SV, TV> {
 
     fun iterations(iterations: Int) {
         this.iterations = iterations
+    }
+
+    fun fastIterations(fastIterations: Boolean) {
+        this.fastIterations = fastIterations
     }
 
     fun setUp(setUp: (TestData<SV, TV>) -> Unit) {

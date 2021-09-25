@@ -394,7 +394,7 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
 
   val platformPrefix = PlatformUtils.getPlatformPrefix()
   // should be the only plugin in lib (only for Ultimate and WebStorm for now)
-  val pathResolver = ClassPathXmlPathResolver(classLoader)
+  val pathResolver = ClassPathXmlPathResolver(classLoader, isRunningFromSources = isRunningFromSources)
   if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
       (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || (!isUnitTestMode && !isRunningFromSources))) {
     val dataLoader = object : DataLoader {
@@ -577,7 +577,7 @@ fun getDescriptorsToMigrate(dir: Path,
 fun createPathResolverForPlugin(descriptor: IdeaPluginDescriptorImpl, checkPluginJarFiles: Boolean): PathResolver {
   if (PluginManagerCore.isRunningFromSources() && descriptor.pluginPath.fileSystem == FileSystems.getDefault() &&
       descriptor.pluginPath.toString().contains("out/classes")) {
-    return ClassPathXmlPathResolver(descriptor.pluginClassLoader)
+    return ClassPathXmlPathResolver(descriptor.pluginClassLoader, isRunningFromSources = false)
   }
   else if (checkPluginJarFiles) {
     val pluginJarFiles = ArrayList<Path>()
@@ -598,7 +598,7 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
                                              result = PluginLoadingResult(brokenPluginVersions = emptyMap(),
                                                                           productBuildNumber = Supplier { buildNumber },
                                                                           checkModuleDependencies = false))
-  LoadDescriptorsFromClassPathAction(urlsFromClassPath, context, null, ClassPathXmlPathResolver(loader)).compute()
+  LoadDescriptorsFromClassPathAction(urlsFromClassPath, context, null, ClassPathXmlPathResolver(loader, isRunningFromSources = false)).compute()
   context.result.finishLoading()
   return context.result.getEnabledPlugins()
 }
@@ -677,13 +677,10 @@ private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, Stri
 
     val result = context.result
     ForkJoinTask.invokeAll(tasks)
-    val usePluginClassLoader = PluginManagerCore.usePluginClassLoader
     for (task in tasks) {
       task.rawResult?.let {
-        if (!usePluginClassLoader) {
-          it.setUseCoreClassLoader()
-        }
-        result.add(it, /* overrideUseIfCompatible = */false)
+        it.setUseCoreClassLoader()
+        result.add(it, overrideUseIfCompatible = false)
       }
     }
   }
@@ -721,9 +718,7 @@ private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, Stri
                                                  isBundled = true,
                                                  isEssential = isEssential,
                                                  pluginPath = file.parent.parent)
-          if (descriptor != null) {
-            descriptor.jarFiles = null
-          }
+          descriptor?.jarFiles = null
           return descriptor
         }
       }

@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
@@ -41,11 +40,11 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
     val extensions = if (name == null) allExtensions.values else listOf(allExtensions[name] ?: return)
     if (extensions.isEmpty()) return
 
-    val factory = GroovyPsiElementFactory.getInstance(containingFile.project)
+    val factory = PsiElementFactory.getInstance(containingFile.project)
     val manager = containingFile.manager
 
     for (extension in extensions) {
-      val type = factory.createTypeElement(extension.rootTypeFqn, containingFile).type
+      val type = GradleExtensionType(factory.createTypeByFQClassName(extension.rootTypeFqn, place.resolveScope))
       if (processProperties) {
         val extensionProperty = GradleExtensionProperty(extension.name, type, containingFile)
         if (!processor.execute(extensionProperty, state)) {
@@ -55,7 +54,8 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
       if (processMethods) {
         val extensionMethod = GrLightMethodBuilder(manager, extension.name).apply {
           returnType = type
-          addParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
+          addAndGetParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
+            .putUserData(DELEGATES_TO_KEY, DelegatesToInfo(type, Closure.DELEGATE_FIRST))
         }
         if (!processor.execute(extensionMethod, state)) {
           return

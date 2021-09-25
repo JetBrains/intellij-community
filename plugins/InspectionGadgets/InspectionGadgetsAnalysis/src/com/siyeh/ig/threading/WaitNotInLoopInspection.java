@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class WaitNotInLoopInspection extends BaseInspection {
@@ -27,8 +27,7 @@ public class WaitNotInLoopInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "wait.not.in.loop.problem.descriptor");
+    return InspectionGadgetsBundle.message("wait.not.in.loop.problem.descriptor");
   }
 
   @Override
@@ -36,15 +35,25 @@ public class WaitNotInLoopInspection extends BaseInspection {
     return new WaitNotInLoopVisitor();
   }
 
+  static boolean isCheckedInLoop(PsiMethodCallExpression expression) {
+    final PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiLoopStatement.class, PsiMember.class, PsiLambdaExpression.class);
+    if (parent instanceof PsiAnonymousClass || parent instanceof PsiLambdaExpression) {
+      // condition is probably checked in a loop somewhere else
+      return true;
+    }
+    if (!(parent instanceof PsiLoopStatement)) {
+      return false;
+    }
+    final PsiStatement body = ((PsiLoopStatement)parent).getBody();
+    return PsiTreeUtil.isAncestor(body, expression, true);
+  }
+
   private static class WaitNotInLoopVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!ThreadingUtils.isWaitCall(expression)) {
-        return;
-      }
-      if (ControlFlowUtils.isInLoop(expression)) {
+      if (!ThreadingUtils.isWaitCall(expression) || isCheckedInLoop(expression)) {
         return;
       }
       registerMethodCallError(expression);

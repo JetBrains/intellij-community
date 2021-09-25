@@ -18,7 +18,6 @@ package com.intellij.psi.search;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,25 +141,6 @@ public interface PsiElementProcessor<T extends PsiElement> {
     @Override
     public boolean execute(@NotNull T element) {
       return setFound(element);
-    }
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.psi.SyntaxTraverser} API instead. E.g.
-   * {@code SyntaxTraverser.psiTraverser(root).filter(ElementType.class).filter(additionalFilter).first()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  class FindFilteredElement<T extends PsiElement> extends FindElement<T> {
-    private final PsiElementFilter myFilter;
-
-    public FindFilteredElement(@NotNull PsiElementFilter filter) {
-      myFilter = filter;
-    }
-
-    @Override
-    public boolean execute(@NotNull T element) {
-      return !myFilter.isAccepted(element) || super.execute(element);
     }
   }
 }

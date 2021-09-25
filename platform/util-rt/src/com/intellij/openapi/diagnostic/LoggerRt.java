@@ -24,7 +24,12 @@ public abstract class LoggerRt {
         ourFactory = new IdeaFactory();
       }
       catch (Throwable t) {
-        ourFactory = new JavaFactory();
+        try {
+          ourFactory = new Slf4JFactory();
+        }
+        catch (Throwable t2) {
+          ourFactory = new JavaFactory();
+        }
       }
     }
     return ourFactory;
@@ -65,7 +70,9 @@ public abstract class LoggerRt {
   }
 
   public abstract void info(@Nullable String message, @Nullable Throwable t);
+
   public abstract void warn(@Nullable String message, @Nullable Throwable t);
+
   public abstract void error(@Nullable String message, @Nullable Throwable t);
 
   private static class JavaFactory implements Factory {
@@ -91,7 +98,55 @@ public abstract class LoggerRt {
     }
   }
 
-  private static final class IdeaFactory implements Factory {
+  private abstract static class ReflectionBasedFactory implements Factory {
+    @Override
+    public LoggerRt getInstance(String category) {
+      try {
+        final Object logger = getLogger(category);
+        return new LoggerRt() {
+          @Override
+          public void info(@Nullable String message, @Nullable Throwable t) {
+            try {
+              ReflectionBasedFactory.this.info(message, t, logger);
+            }
+            catch (Exception ignored) {
+            }
+          }
+
+          @Override
+          public void warn(@Nullable String message, @Nullable Throwable t) {
+            try {
+              ReflectionBasedFactory.this.warn(message, t, logger);
+            }
+            catch (Exception ignored) {
+            }
+          }
+
+          @Override
+          public void error(@Nullable String message, @Nullable Throwable t) {
+            try {
+              ReflectionBasedFactory.this.error(message, t, logger);
+            }
+            catch (Exception ignored) {
+            }
+          }
+        };
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    protected abstract void error(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception;
+
+    protected abstract void warn(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception;
+
+    protected abstract void info(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception;
+
+    protected abstract Object getLogger(String category) throws Exception;
+  }
+
+  private static final class IdeaFactory extends ReflectionBasedFactory {
     private final Method myGetInstance;
     private final Method myInfo;
     private final Method myWarn;
@@ -110,38 +165,64 @@ public abstract class LoggerRt {
     }
 
     @Override
-    public LoggerRt getInstance(String category) {
-      try {
-        final Object logger = myGetInstance.invoke(null, category);
-        return new LoggerRt() {
-          @Override
-          public void info(@Nullable String message, @Nullable Throwable t) {
-            try {
-              myInfo.invoke(logger, message, t);
-            }
-            catch (Exception ignored) { }
-          }
+    protected void error(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception {
+      myError.invoke(logger, message, t);
+    }
 
-          @Override
-          public void warn(@Nullable String message, @Nullable Throwable t) {
-            try {
-              myWarn.invoke(logger, message, t);
-            }
-            catch (Exception ignored) { }
-          }
+    @Override
+    protected void warn(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception {
+      myWarn.invoke(logger, message, t);
+    }
 
-          @Override
-          public void error(@Nullable String message, @Nullable Throwable t) {
-            try {
-              myError.invoke(logger, message, t);
-            }
-            catch (Exception ignored) { }
-          }
-        };
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    @Override
+    protected void info(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception {
+      myInfo.invoke(logger, message, t);
+    }
+
+    @Override
+    protected Object getLogger(String category) throws Exception {
+      return myGetInstance.invoke(null, category);
+    }
+  }
+
+  private static final class Slf4JFactory extends ReflectionBasedFactory {
+    private final Method myGetLogger;
+    private final Method myInfo;
+    private final Method myWarn;
+    private final Method myError;
+
+    private Slf4JFactory() throws Exception {
+      final Class<?> loggerFactoryClass = Class.forName("org.slf4j.LoggerFactory");
+      myGetLogger = loggerFactoryClass.getMethod("getLogger", String.class);
+      myGetLogger.setAccessible(true);
+
+      final Class<?> loggerClass = Class.forName("org.slf4j.Logger");
+      myInfo = loggerClass.getMethod("info", String.class, Throwable.class);
+      myInfo.setAccessible(true);
+      myWarn = loggerClass.getMethod("warn", String.class, Throwable.class);
+      myInfo.setAccessible(true);
+      myError = loggerClass.getMethod("error", String.class, Throwable.class);
+      myError.setAccessible(true);
+    }
+
+    @Override
+    protected void error(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception {
+      myError.invoke(logger, message, t);
+    }
+
+    @Override
+    protected void warn(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception {
+      myWarn.invoke(logger, message, t);
+    }
+
+    @Override
+    protected void info(@Nullable String message, @Nullable Throwable t, Object logger) throws Exception {
+      myInfo.invoke(logger, message, t);
+    }
+
+    @Override
+    protected Object getLogger(String category) throws Exception {
+      return myGetLogger.invoke(null, category);
     }
   }
 }

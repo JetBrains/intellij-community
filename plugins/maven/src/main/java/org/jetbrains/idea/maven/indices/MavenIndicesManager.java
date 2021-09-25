@@ -6,9 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +38,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MavenIndicesManager implements Disposable {
   private static final String ELEMENT_ARCHETYPES = "archetypes";
@@ -49,7 +52,44 @@ public final class MavenIndicesManager implements Disposable {
 
   private static final String LOCAL_REPOSITORY_ID = "local";
   private final @NotNull Project myProject;
-  private MavenServerDownloadListener myDownloadListener;
+
+
+  private final AtomicBoolean myInitStarted = new AtomicBoolean(false);
+
+  private class IndexKeeper implements @NotNull Disposable {
+    private final MavenIndexerWrapper myIndexer;
+    private final MavenIndices myIndices;
+    private final List<MavenArchetype> myUserArchetypes;
+    private final MavenServerDownloadListener myDownloadListener;
+
+    private IndexKeeper(MavenIndexerWrapper indexer,
+                        MavenIndices indices,
+                        List<MavenArchetype> archetypes, MavenServerDownloadListener downloadListener) {
+      myIndexer = indexer;
+      myIndices = indices;
+      myUserArchetypes = archetypes;
+      myDownloadListener = downloadListener;
+      MavenServerManager.getInstance().addDownloadListener(downloadListener);
+    }
+
+    @Override
+    public void dispose() {
+      try {
+        myIndices.close();
+      }
+      catch (Exception e) {
+        MavenLog.LOG.error("", e);
+      }
+
+      MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
+      if (mavenServerManager != null) {
+        mavenServerManager.removeDownloadListener(myDownloadListener);
+      }
+      clear();
+    }
+  }
+
+  private final CompletableFuture<IndexKeeper> myKeeper = new CompletableFuture<>();
 
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
@@ -57,8 +97,6 @@ public final class MavenIndicesManager implements Disposable {
 
   private volatile Path myTestIndicesDir;
 
-  private volatile MavenIndexerWrapper myIndexer;
-  private volatile MavenIndices myIndices;
 
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
@@ -66,7 +104,6 @@ public final class MavenIndicesManager implements Disposable {
   private final IndexFixer myIndexFixer = new IndexFixer();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
-  private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
 
   /**
    * @deprecated use {@link MavenIndicesManager#getInstance(Project)}
@@ -95,39 +132,62 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private MavenIndices getIndicesObject() {
-    ensureInitialized();
-    return myIndices;
+    IndexKeeper indexKeeper = ensureInitialized();
+    return indexKeeper.myIndices;
   }
 
-  private void ensureInitialized() {
-    if (doInitIndicesFields()) return;
-
-    ArrayList<MavenArchetype> archetypes = loadUserArchetypes(getUserArchetypesFile());
-    if (archetypes != null) {
-      myUserArchetypes = archetypes;
+  @NotNull
+  private IndexKeeper ensureInitialized() {
+    if (myInitStarted.compareAndSet(false, true)) {
+      startInitialization();
     }
+
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    do {
+      ProgressManager.checkCanceled();
+      try {
+        IndexKeeper indexKeeper = myKeeper.get(10, TimeUnit.MILLISECONDS);
+        if (indexKeeper != null) return indexKeeper;
+      } catch (TimeoutException ignore){
+      }
+      catch (Exception e){
+        throw new RuntimeException(e);
+      }
+    }
+    while (true);
   }
 
-  private synchronized boolean doInitIndicesFields() {
-    if (myIndices != null) return true;
-    myIndexer = MavenServerManager.getInstance().createIndexer(myProject);
-    myDownloadListener = new MavenServerDownloadListener() {
-      @Override
-      public void artifactDownloaded(File file, String relativePath) {
-        addArtifact(file, relativePath);
-      }
-    };
-    MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
-
-    myIndices = new MavenIndices(myIndexer, getIndicesDir().toFile(), new MavenSearchIndex.IndexListener() {
-      @Override
-      public void indexIsBroken(@NotNull MavenSearchIndex index) {
-        if (index instanceof MavenIndex) {
-          scheduleUpdate(null, Collections.singletonList((MavenIndex)index), false);
+  private void startInitialization() {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        MavenIndexerWrapper indexer = MavenServerManager.getInstance().createIndexer(myProject);
+        MavenServerDownloadListener downloadListener = new MavenServerDownloadListener() {
+          @Override
+          public void artifactDownloaded(File file, String relativePath) {
+            addArtifact(file, relativePath);
+          }
+        };
+        MavenIndices indices = new MavenIndices(indexer, getIndicesDir().toFile(), new MavenSearchIndex.IndexListener() {
+          @Override
+          public void indexIsBroken(@NotNull MavenSearchIndex index) {
+            if (index instanceof MavenIndex) {
+              scheduleUpdate(null, Collections.singletonList((MavenIndex)index), false);
+            }
+          }
+        });
+        ArrayList<MavenArchetype> archetypes = loadUserArchetypes(getUserArchetypesFile());
+        if (archetypes == null) {
+          archetypes = new ArrayList<>();
         }
+        IndexKeeper keeper = new IndexKeeper(indexer, indices, archetypes, downloadListener);
+        Disposer.register(this, keeper);
+        myKeeper.complete(keeper);
+      }
+      catch (Exception e) {
+        MavenLog.LOG.error(e);
+        myKeeper.completeExceptionally(e);
       }
     });
-    return false;
   }
 
   @NotNull
@@ -139,38 +199,9 @@ public final class MavenIndicesManager implements Disposable {
 
   @Override
   public void dispose() {
-    doShutdown();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       PathKt.delete(getIndicesDir());
     }
-  }
-
-  private synchronized void doShutdown() {
-    if (myDownloadListener != null) {
-      MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
-      if (mavenServerManager != null) {
-        mavenServerManager.removeDownloadListener(myDownloadListener);
-      }
-      myDownloadListener = null;
-    }
-
-    if (myIndices != null) {
-      try {
-        myIndices.close();
-      }
-      catch (Exception e) {
-        MavenLog.LOG.error("", e);
-      }
-      myIndices = null;
-    }
-
-    clear();
-    myIndexer = null;
-  }
-
-  @TestOnly
-  public void doShutdownInTests() {
-    doShutdown();
   }
 
   public List<MavenIndex> getIndices() {
@@ -202,7 +233,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   @Nullable
-  public synchronized MavenIndex createIndexForLocalRepo(Project project, @Nullable File localRepository) {
+  public MavenIndex createIndexForLocalRepo(Project project, @Nullable File localRepository) {
     if (localRepository == null) {
       return null;
     }
@@ -237,7 +268,9 @@ public final class MavenIndicesManager implements Disposable {
   private void addArtifact(File artifactFile, String relativePath) {
     String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
 
-    MavenIndex index = getIndicesObject().find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
+    MavenIndices indices = getIndicesObject();
+    if (indices == null) return;
+    MavenIndex index = indices.find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
     if (index != null) {
       index.addArtifact(artifactFile);
     }
@@ -369,10 +402,10 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   public Set<MavenArchetype> getArchetypes() {
-    ensureInitialized();
-    Set<MavenArchetype> result = new HashSet<>(myIndexer.getArchetypes());
-    result.addAll(myUserArchetypes);
-    for (MavenIndex index : myIndices.getIndices()) {
+    IndexKeeper indexKeeper = ensureInitialized();
+    Set<MavenArchetype> result = new HashSet<>(indexKeeper.myIndexer.getArchetypes());
+    result.addAll(indexKeeper.myUserArchetypes);
+    for (MavenIndex index : indexKeeper.myIndices.getIndices()) {
       result.addAll(index.getArchetypes());
     }
 
@@ -383,8 +416,8 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   public void addArchetype(MavenArchetype archetype) {
-    ensureInitialized();
-    List<MavenArchetype> archetypes = myUserArchetypes;
+    IndexKeeper indexKeeper = ensureInitialized();
+    List<MavenArchetype> archetypes = indexKeeper.myUserArchetypes;
     int idx = archetypes.indexOf(archetype);
     if (idx >= 0) {
       archetypes.set(idx, archetype);
@@ -393,7 +426,7 @@ public final class MavenIndicesManager implements Disposable {
       archetypes.add(archetype);
     }
 
-    saveUserArchetypes();
+    saveUserArchetypes(archetypes);
   }
 
   private static ArrayList<MavenArchetype> loadUserArchetypes(Path file) {
@@ -435,9 +468,9 @@ public final class MavenIndicesManager implements Disposable {
     }
   }
 
-  private void saveUserArchetypes() {
+  private void saveUserArchetypes(List<MavenArchetype> userArchetypes) {
     Element root = new Element(ELEMENT_ARCHETYPES);
-    for (MavenArchetype each : myUserArchetypes) {
+    for (MavenArchetype each : userArchetypes) {
       Element childElement = new Element(ELEMENT_ARCHETYPE);
       childElement.setAttribute(ELEMENT_GROUP_ID, each.groupId);
       childElement.setAttribute(ELEMENT_ARTIFACT_ID, each.artifactId);

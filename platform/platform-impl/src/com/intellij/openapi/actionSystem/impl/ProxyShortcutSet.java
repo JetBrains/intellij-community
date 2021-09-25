@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-final class ProxyShortcutSet implements ShortcutSet {
+public final class ProxyShortcutSet implements ShortcutSet {
   private final String myActionId;
 
   ProxyShortcutSet(@NotNull String actionId) {
@@ -19,5 +19,10 @@ final class ProxyShortcutSet implements ShortcutSet {
   public Shortcut @NotNull [] getShortcuts() {
     KeymapManager manager = KeymapManager.getInstance();
     return manager != null ? manager.getActiveKeymap().getShortcuts(myActionId) : Shortcut.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public String getActionId() {
+    return myActionId;
   }
 }

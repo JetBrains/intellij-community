@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
@@ -39,7 +40,6 @@ import java.util.Map;
  * For this test, we will enlarge the use scope to include libraries.
  */
 public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtureTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -103,7 +103,8 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
     return false;
   }
 
-  public static class LibraryUseScopeEnlarger extends UseScopeEnlarger {
+  @InternalIgnoreDependencyViolation
+  final static class LibraryUseScopeEnlarger extends UseScopeEnlarger {
     @Override
     public @Nullable SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
       return LibraryScopeCache.getInstance(element.getProject()).getLibrariesOnlyScope();

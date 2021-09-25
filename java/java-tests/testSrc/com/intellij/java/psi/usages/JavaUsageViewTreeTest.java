@@ -42,7 +42,7 @@ public class JavaUsageViewTreeTest extends LightJavaCodeInsightFixtureTestCase {
     PsiReference ref = ReferencesSearch.search(foo).findFirst();
     assertNotNull(ref);
     assertEquals("<root> (1)\n" +
-               " Found usages (1)\n" +
+               " Usages in (1)\n" +
                "  A (1)\n" +
                "   bar() (1)\n" +
                "    3{    foo();\n", myFixture.getUsageViewTreeTextRepresentation(Collections.singleton(new UsageInfo(ref))));

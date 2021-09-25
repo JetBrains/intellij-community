@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Extend this class if there is a long lasting formatting operation which may block EDT. The actual formatting code is placed then
@@ -105,16 +106,6 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   protected abstract @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest formattingRequest);
 
   /**
-   * Merge changes if the document has changed since {@code asyncFormat()} was called. The default implementation does nothing and
-   * rejects the updated text.
-   *
-   * @param document The current document.
-   * @param updatedText The updated text to merge into the documents.
-   */
-  @SuppressWarnings("unused")
-  protected void mergeChanges(@NotNull Document document, @NotNull String updatedText) {}
-
-  /**
    * @return A notification group ID to use when error messages are shown to an end user.
    */
   protected abstract @NotNull String getNotificationGroupId();
@@ -151,7 +142,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     private volatile @Nullable FormattingTask myTask;
 
-    private volatile FormattingRequestState myState = FormattingRequestState.NOT_STARTED;
+    private final AtomicReference<FormattingRequestState> myStateRef = new AtomicReference<>(FormattingRequestState.NOT_STARTED);
 
     private FormattingRequestImpl(@NotNull FormattingContext formattingContext,
                                   @NotNull Document document,
@@ -173,10 +164,9 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     private boolean cancel() {
       FormattingTask formattingTask = myTask;
-      if (formattingTask != null && myState == FormattingRequestState.RUNNING) {
-        myState = FormattingRequestState.CANCELLING;
+      if (formattingTask != null && myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
         if (formattingTask.cancel()) {
-          myState = FormattingRequestState.CANCELLED;
+          myStateRef.set(FormattingRequestState.CANCELLED);
           myTaskSemaphore.release();
           return true;
         }
@@ -209,23 +199,20 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     private void runTask(@Nullable ProgressIndicator indicator) {
       FormattingTask task = myTask;
-      if (task != null) {
+      if (task != null && myStateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
         try {
           myTaskSemaphore.acquire();
-          myState = FormattingRequestState.RUNNING;
           task.run();
           long waitTime = 0;
           while (waitTime < getTimeout() * 1000L) {
             if (myTaskSemaphore.tryAcquire(RETRY_PERIOD, TimeUnit.MILLISECONDS)) {
-              myState = FormattingRequestState.COMPLETED;
               myTaskSemaphore.release();
               break;
             }
             if (indicator != null) indicator.checkCanceled();
             waitTime += RETRY_PERIOD;
           }
-          if (!myState.equals(FormattingRequestState.COMPLETED)) {
-            myState = FormattingRequestState.EXPIRED;
+          if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
             FormattingNotificationService.getInstance(myContext.getProject()).reportError(
               getNotificationGroupId(), getName(),
               CodeStyleBundle.message("async.formatting.service.timeout", getName(), Integer.toString(getTimeout())));
@@ -244,32 +231,36 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     @Override
     public void onTextReady(@NotNull final String updatedText) {
-      if (!myState.equals(FormattingRequestState.RUNNING)) return;
-      myTaskSemaphore.release();
-      ApplicationManager.getApplication().invokeLater(() ->{
-        CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-          try {
-            WriteAction.run((ThrowableRunnable<Throwable>)() -> {
-              if (myDocument.getModificationStamp() > myInitialModificationStamp) {
-                mergeChanges(myDocument, updatedText);
-              }
-              else {
-                myDocument.setText(updatedText);
-              }
-            });
-          }
-          catch (Throwable throwable) {
-            LOG.error(throwable);
-          }
+      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myTaskSemaphore.release();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+            try {
+              WriteAction.run((ThrowableRunnable<Throwable>)() -> {
+                if (myDocument.getModificationStamp() > myInitialModificationStamp) {
+                  for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
+                    if (merger.updateDocument(myDocument, updatedText)) break;
+                  }
+                }
+                else {
+                  myDocument.setText(updatedText);
+                }
+              });
+            }
+            catch (Throwable throwable) {
+              LOG.error(throwable);
+            }
+          });
         });
-      });
+      }
     }
 
     @Override
     public void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
-      if (!myState.equals(FormattingRequestState.RUNNING)) return;
-      myTaskSemaphore.release();
-      FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
+      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myTaskSemaphore.release();
+        FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
+      }
     }
   }
 

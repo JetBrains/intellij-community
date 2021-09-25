@@ -54,6 +54,10 @@ public class Parsing {
     return getParsingContext().getFunctionParser();
   }
 
+  public @NotNull PatternParsing getPatternParser() {
+    return getParsingContext().getPatternParser();
+  }
+
   protected boolean checkMatches(final IElementType token, @NotNull @ParsingError String message) {
     if (myBuilder.getTokenType() == token) {
       myBuilder.advanceLexer();

@@ -1,3 +1,5 @@
+// BLOCK_CODE_FRAGMENT
+
 fun foo() {
     <caret>val a = 1
 }

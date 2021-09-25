@@ -725,6 +725,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return isValid();
   }
 
+  /**
+   * @return true if filesystem inherits {@link LocalFileSystem} (including temporary)
+   */
   public boolean isInLocalFileSystem() {
     return false;
   }

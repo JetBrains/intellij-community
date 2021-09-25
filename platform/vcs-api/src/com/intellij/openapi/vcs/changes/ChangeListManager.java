@@ -78,6 +78,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated use {@link #invokeAfterUpdate(Runnable, InvokeAfterUpdateMode, String, ModalityState)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable @Nls String title,

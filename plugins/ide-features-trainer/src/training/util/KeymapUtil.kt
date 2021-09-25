@@ -59,10 +59,14 @@ object KeymapUtil {
     if (keyStroke == null) return Pair("", emptyList())
     val modifiers = getModifiersText(keyStroke.modifiers)
     val keyCode = keyStroke.keyCode
-    val key = specificKeyString(keyCode)
+    var key = specificKeyString(keyCode)
               ?: if (SystemInfo.isMac) MacKeymapUtil.getKeyText(keyCode) else KeyEvent.getKeyText(keyCode)
 
-    val separator = "\u00A0\u00A0\u00A0"
+    if (key.length == 1) getStringForMacSymbol(key[0])?.let {
+      key = key + "\u00A0" + it
+    }
+
+    val separator = "\u00A0\u00A0\u00A0\u00A0"
     val intervals = mutableListOf<IntRange>()
     val builder = StringBuilder()
 
@@ -75,7 +79,7 @@ object KeymapUtil {
     for (m in modifiers.getModifiers()) {
       val part = if (SystemInfo.isMac) {
         val modifierName = if (m.length == 1) getStringForMacSymbol(m[0]) else null
-        if (modifierName != null) m + modifierName else m
+        if (modifierName != null) m + "\u00A0" + modifierName else m
       }
       else m
 
@@ -103,58 +107,24 @@ object KeymapUtil {
 
   private fun String.getModifiers(): Array<String> = this.split("[ +]".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
-  @NlsSafe
-  fun decryptMacShortcut(shortcut: String): String {
-    if (shortcut.contains('→')) {
-      val split = shortcut.split('→')
-      if (split.size != 2) return shortcut
-      return decryptMacShortcut(split[0].trim()) + " →" + split[1]
-    }
-    val buffer = StringBuffer()
-    var shouldInsertPlus = false
-    for (c in shortcut) {
-      if (c.isWhitespace()) {
-        shouldInsertPlus = true
-      }
-      else {
-        if (shouldInsertPlus) {
-          buffer.append(" + ")
-        }
-        val stringForMacSymbol = getStringForMacSymbol(c)
-        if (stringForMacSymbol != null) {
-          buffer.append(stringForMacSymbol)
-          shouldInsertPlus = true
-        }
-        else {
-          buffer.append(c)
-          shouldInsertPlus = false
-        }
-      }
-    }
-    return buffer.toString()
-  }
-
   private fun getStringForMacSymbol(c: Char): String? {
+    if (!SystemInfo.isMac) return null
     when (c) {
-      '\u238B' -> return "Escape"
+      '\u238B' -> return "Esc"
       '\u21E5' -> return "Tab"
-      '\u21EA' -> return "Caps Lock"
+      '\u21EA' -> return "Caps"
       '\u21E7' -> return "Shift"
-      '\u2303' -> return "Control"
-      '\u2325' -> return "Option"
-      '\u2318' -> return "Command"
-      '\u23CE' -> return "Return"
+      '\u2303' -> return "Ctrl"
+      '\u2325' -> return "Opt"
+      '\u2318' -> return "Cmd"
+      '\u23CE' -> return "Enter"
       '\u232B' -> return "Backspace"
-      '\u2326' -> return "Delete"
+      '\u2326' -> return "Del"
       '\u2196' -> return "Home"
       '\u2198' -> return "End"
-      '\u21DE' -> return "Page Up"
-      '\u21DF' -> return "Page Down"
-      '\u2191' -> return "Up"
-      '\u2193' -> return "Down"
-      '\u2190' -> return "Left"
-      '\u2192' -> return "Right"
-      '\u21ED' -> return "Num Lock"
+      '\u21DE' -> return "PageUp"
+      '\u21DF' -> return "PageDown"
+      '\u21ED' -> return "NumLock"
       '\u2328' -> return "NumPad"
       else -> return null
     }

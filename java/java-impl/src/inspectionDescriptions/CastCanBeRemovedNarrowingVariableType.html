@@ -1,19 +1,19 @@
 <html>
 <body>
-Reports type casts which could be removed if the variable type is narrowed to the cast type. 
+Reports type casts that can be removed if the variable type is narrowed to the cast type.
 <p>Example:</p>
-<pre>
+<pre><code>
   Object x = "  string  ";
   System.out.println(((String)x).trim());
-</pre>
+</code></pre>
 <p>
-Here, changing the type of <code>x</code> to <code>String</code> will make the cast redundant. The suggested quick-fix updates variable type and
+Here, changing the type of <code>x</code> to <code>String</code> makes the cast redundant. The suggested quick-fix updates the variable type and
 removes all redundant casts on that variable:
 </p>
-<pre>
+<pre><code>
   String x = "  string  ";
   System.out.println(x.trim());
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2018.2</small></p>
 </body>

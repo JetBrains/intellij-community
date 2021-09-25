@@ -31,10 +31,10 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
   }
 
   private void appendNode(StringBuilder buf, @NotNull TreeNode node, String lineSeparator, String indent) {
-    final String childIndent;
+    String childIndent;
     if (node.getParent() != null) {
       childIndent = indent + "    ";
-      final HierarchyNodeDescriptor descriptor = myHierarchyBrowserBase.getDescriptor((DefaultMutableTreeNode)node);
+      HierarchyNodeDescriptor descriptor = HierarchyBrowserBase.getDescriptor((DefaultMutableTreeNode)node);
       if (descriptor != null) {
         buf.append(indent).append(descriptor.getHighlightedText().getText()).append(lineSeparator);
       }
@@ -53,13 +53,13 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
   @NotNull
   @Override
   public String getDefaultFilePath() {
-    final HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
+    HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
     return state != null && state.EXPORT_FILE_PATH != null ? state.EXPORT_FILE_PATH : "";
   }
 
   @Override
   public void exportedTo(@NotNull String filePath) {
-    final HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
+    HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
     if (state != null) {
       state.EXPORT_FILE_PATH = filePath;
     }

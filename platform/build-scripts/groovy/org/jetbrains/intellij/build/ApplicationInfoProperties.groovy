@@ -4,13 +4,20 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
-import java.nio.file.Path
 import java.text.MessageFormat
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 @CompileStatic
 class ApplicationInfoProperties {
+  private final String appInfoXml
   final String majorVersion
   final String minorVersion
   final String microVersion
@@ -24,7 +31,7 @@ class ApplicationInfoProperties {
    */
   final String minorVersionMainPart
   final String shortProductName
-  String productCode
+  final String productCode
   final String productName
   final String majorReleaseDate
   final String edition
@@ -37,8 +44,9 @@ class ApplicationInfoProperties {
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileStatic(TypeCheckingMode.SKIP)
-  ApplicationInfoProperties(Path appInfoXmlPath) {
-    def root = Files.newBufferedReader(appInfoXmlPath).withCloseable { new XmlParser().parse(it) }
+  private ApplicationInfoProperties(ProductProperties productProperties, String appInfoXml) {
+    this.appInfoXml = appInfoXml
+    def root = new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
 
     def versionTag = root.version.first()
     majorVersion = versionTag.@major
@@ -54,9 +62,17 @@ class ApplicationInfoProperties {
     shortProductName = namesTag.@product
     String buildNumber = root.build.first().@number
     int productCodeSeparator = buildNumber.indexOf('-')
+    String productCode = null
     if (productCodeSeparator != -1) {
       productCode = buildNumber.substring(0, productCodeSeparator)
     }
+    if (productProperties.customProductCode != null) {
+      productCode = productProperties.customProductCode
+    }
+    else if (productProperties.productCode != null && productCode == null) {
+      productCode = productProperties.productCode
+    }
+    this.productCode = productCode
     majorReleaseDate = root.build.first().@majorReleaseDate
     productName = namesTag.@fullname ?: shortProductName
     edition = namesTag.@edition
@@ -73,6 +89,10 @@ class ApplicationInfoProperties {
     patchesUrl = root."update-urls"[0]?.@"patches"
   }
 
+  ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
+    this(productProperties, findApplicationInfoInSources(project, productProperties, messages))
+  }
+
   String getUpperCaseProductName() { shortProductName.toUpperCase() }
 
   String getFullVersion() {
@@ -83,8 +103,47 @@ class ApplicationInfoProperties {
     edition != null ? productName + ' ' + edition : productName
   }
 
+  @Override
+  String toString() {
+    return appInfoXml
+  }
+
+  @NotNull
+  ApplicationInfoProperties patch(BuildContext buildContext) {
+    String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
+    ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
+    String builtinPluginsRepoUrl = ""
+    if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "$productCode-plugins/plugins.xml")
+      if (builtinPluginsRepoUrl.startsWith("http:")) {
+        buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
+      }
+    }
+    def patchedAppInfoXml = BuildUtils.replaceAll(appInfoXml, Map.<String, String> of(
+      "BUILD_NUMBER", buildContext.fullBuildNumber,
+      "BUILD_DATE", date,
+      "BUILD", buildContext.buildNumber,
+      "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
+    ), "__")
+    return new ApplicationInfoProperties(buildContext.productProperties, patchedAppInfoXml)
+  }
+
   //copy of ApplicationInfoImpl.shortenCompanyName
   private static String shortenCompanyName(String name) {
     return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.")
+  }
+
+  private static @NotNull String findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
+    JpsModule module = project.modules.find { it.name == productProperties.applicationInfoModule }
+    if (module == null) {
+      messages.error("Cannot find required '${productProperties.applicationInfoModule}' module")
+    }
+    def appInfoRelativePath = "idea/${productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
+    def appInfoFile = module.sourceRoots.collect { new File(it.file, appInfoRelativePath) }.find { it.exists() }
+    if (appInfoFile == null) {
+      messages.error("Cannot find $appInfoRelativePath in '$module.name' module")
+      return null
+    }
+    return Files.readString(appInfoFile.toPath())
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.Parameterized;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestFrameworkUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -144,7 +145,7 @@ public final class PathManagerEx {
    * @return path to 'community' project home irrespective of current project
    */
   public static @NotNull String getCommunityHomePath() {
-    return PathManager.getCommunityHomePath();
+    return PlatformTestUtil.getCommunityPath();
   }
 
   /**
@@ -152,7 +153,7 @@ public final class PathManagerEx {
    */
   public static String getHomePath(Class<?> testClass) {
     TestDataLookupStrategy strategy = isLocatedInCommunity() ? TestDataLookupStrategy.COMMUNITY : determineLookupStrategy(testClass);
-    return strategy == TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE ? PathManager.getCommunityHomePath() : PathManager.getHomePath();
+    return strategy == TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE ? getCommunityHomePath() : PathManager.getHomePath();
   }
 
   /**
@@ -161,7 +162,7 @@ public final class PathManagerEx {
    * @return file under the home directory of 'community' project
    */
   public static @NotNull File findFileUnderCommunityHome(@NotNull String relativePath) {
-    return findFileByRelativePath(PathManager.getCommunityHomePath(), relativePath).toFile();
+    return findFileByRelativePath(getCommunityHomePath(), relativePath).toFile();
   }
 
   /**

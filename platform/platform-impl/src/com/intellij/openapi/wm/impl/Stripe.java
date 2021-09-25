@@ -451,8 +451,8 @@ class Stripe extends JPanel implements UISettingsListener {
     return new Rectangle(point, screenRec.getSize()).intersects(
       new Rectangle(-DROP_DISTANCE_SENSITIVITY,
                     -DROP_DISTANCE_SENSITIVITY,
-                    getWidth() + DROP_DISTANCE_SENSITIVITY,
-                    getHeight() + DROP_DISTANCE_SENSITIVITY)
+                    getWidth() + 2 * DROP_DISTANCE_SENSITIVITY,
+                    getHeight() + 2 * DROP_DISTANCE_SENSITIVITY)
     );
   }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
-import com.intellij.model.SymbolResolveResult
+import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.util.TextRange
@@ -22,8 +22,8 @@ internal class EvaluatorReference(
            ?: TextRange.create(absoluteRanges.first().startOffset, absoluteRanges.last().endOffset)
   }
 
-  override fun resolveReference(): Collection<SymbolResolveResult> {
-    return targetElements.map(PsiSymbolService.getInstance()::asSymbol).map(SymbolResolveResult::fromSymbol)
+  override fun resolveReference(): Collection<Symbol> {
+    return targetElements.map(PsiSymbolService.getInstance()::asSymbol)
   }
 
   override fun toString(): String = "EvaluatorReference(origin=$origin, targetElements=$targetElements)"

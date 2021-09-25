@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.debugger.attach;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -27,9 +26,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xdebugger.attach.XLocalAttachDebugger;
-import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
-import com.intellij.xdebugger.attach.XLocalAttachGroup;
+import com.intellij.xdebugger.attach.*;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
@@ -38,17 +35,24 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
-  private static final Key<List<XLocalAttachDebugger>> DEBUGGERS_KEY = Key.create("PyLocalAttachDebuggerProvider.DEBUGGERS");
+public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
+  private static final Key<List<XAttachDebugger>> DEBUGGERS_KEY = Key.create("PyLocalAttachDebuggerProvider.DEBUGGERS");
 
   @NotNull
   @Override
-  public XLocalAttachGroup getAttachGroup() {
+  public XAttachPresentationGroup<ProcessInfo> getPresentationGroup() {
     return PyLocalAttachGroup.INSTANCE;
+  }
+
+  @Override
+  public boolean isAttachHostApplicable(@NotNull XAttachHost attachHost) {
+    return attachHost instanceof LocalAttachHost;
   }
 
   /**
@@ -59,7 +63,7 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
    * @return list of debuggers for attaching to process
    */
   @NotNull
-  private static List<XLocalAttachDebugger> getAttachDebuggersForAllLocalSdks(@NotNull Project project) {
+  private static List<XAttachDebugger> getAttachDebuggersForAllLocalSdks(@NotNull Project project) {
     Sdk selected = null;
     RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
     if (settings != null) {
@@ -71,13 +75,13 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
 
     final Sdk selectedSdk = selected;
     // most recent python version goes first
-    final List<XLocalAttachDebugger> result = PythonSdkUtil.getAllLocalCPythons()
-                                                           .stream()
-                                                           .filter(sdk -> sdk != selectedSdk)
-                                                           .filter(sdk -> !PythonSdkUtil.isInvalid(sdk))
-                                                           .sorted(PreferredSdkComparator.INSTANCE)
-                                                           .map(PyLocalAttachDebugger::new)
-                                                           .collect(Collectors.toList());
+    final List<XAttachDebugger> result = PythonSdkUtil.getAllLocalCPythons()
+      .stream()
+      .filter(sdk -> sdk != selectedSdk)
+      .filter(sdk -> !PythonSdkUtil.isInvalid(sdk))
+      .sorted(PreferredSdkComparator.INSTANCE)
+      .map(PyLocalAttachDebugger::new)
+      .collect(Collectors.toList());
     if (selectedSdk != null) {
       result.add(0, new PyLocalAttachDebugger(selectedSdk));
     }
@@ -86,16 +90,17 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
 
   @NotNull
   @Override
-  public List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                          @NotNull ProcessInfo processInfo,
-                                                          @NotNull UserDataHolder contextHolder) {
+  public List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                     @NotNull XAttachHost hostInfo,
+                                                     @NotNull ProcessInfo processInfo,
+                                                     @NotNull UserDataHolder contextHolder) {
     final String filter = PyDebuggerOptionsProvider.getInstance(project).getAttachProcessFilter();
     if (StringUtil.containsIgnoreCase(processInfo.getCommandLine(), filter)) {
-      List<XLocalAttachDebugger> result;
+      List<XAttachDebugger> result;
 
       if (processInfo.getExecutableCannonicalPath().isPresent() &&
           new File(processInfo.getExecutableCannonicalPath().get()).exists()) {
-        result = Lists.newArrayList(new PyLocalAttachDebugger(processInfo.getExecutableCannonicalPath().get()));
+        result = new ArrayList<>(Arrays.asList(new PyLocalAttachDebugger(processInfo.getExecutableCannonicalPath().get())));
       }
       else {
         result = contextHolder.getUserData(DEBUGGERS_KEY);
@@ -109,8 +114,8 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
     }
     return Collections.emptyList();
   }
-  
-  private static class PyLocalAttachDebugger implements XLocalAttachDebugger {
+
+  private static class PyLocalAttachDebugger implements XAttachDebugger {
     private final String mySdkHome;
     @NotNull @NlsSafe private final String myName;
 
@@ -131,8 +136,10 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
     }
 
     @Override
-    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
-      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), mySdkHome);
+    public void attachDebugSession(@NotNull Project project,
+                                   @NotNull XAttachHost hostInfo,
+                                   @NotNull ProcessInfo info) throws ExecutionException {
+      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, info.getPid(), mySdkHome);
       runner.launch();
     }
   }

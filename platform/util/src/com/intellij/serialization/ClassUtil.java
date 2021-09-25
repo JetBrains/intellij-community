@@ -56,6 +56,11 @@ public final class ClassUtil {
         return false;
       }
 
+      String fullName = aClass.getName();
+      if (fullName.equals("java.util.Arrays$ArrayList") || fullName.equals("java.util.Collections$SingletonList")) {
+        return false;
+      }
+
       Class<?> declaringClass = aClass.getDeclaringClass();
       return declaringClass == null || !"ImmutableCollections".equals(declaringClass.getSimpleName());
     }

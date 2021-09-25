@@ -15,4 +15,8 @@ public interface FileEditorNavigatable extends Navigatable {
   default boolean isUseCurrentWindow() {
     return false;
   }
+
+  default boolean isUsePreviewTab() {
+    return false;
+  }
 }

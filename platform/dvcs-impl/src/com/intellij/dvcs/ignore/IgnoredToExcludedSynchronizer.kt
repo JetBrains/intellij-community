@@ -22,10 +22,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.roots.OrderEnumerator
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -65,6 +62,8 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
     project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) = updateNotificationState()
     })
+    project.messageBus.connect(this).subscribe(AdditionalLibraryRootsListener.TOPIC,
+                                               (AdditionalLibraryRootsListener { _, _, _, _ -> updateNotificationState() }))
   }
 
   private fun updateNotificationState() {

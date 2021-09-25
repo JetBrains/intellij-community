@@ -59,8 +59,7 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
       }
       else if (element instanceof PsiMethod) {
         PsiMethod psiMethod = (PsiMethod)element;
-        return PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY,
-                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
+        return PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, 0);
       }
     }
 

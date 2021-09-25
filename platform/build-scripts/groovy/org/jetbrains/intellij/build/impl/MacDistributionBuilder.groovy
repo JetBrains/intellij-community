@@ -113,51 +113,50 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.notifyArtifactBuilt(macZipPath)
       }
       else {
-        buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
-          boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
-                             !SystemProperties.getBooleanProperty("build.is.personal", false)
-          def jreManager = buildContext.bundledJreManager
+        boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
+                           !SystemProperties.getBooleanProperty("build.is.personal", false)
+        def jreManager = buildContext.bundledJreManager
 
-          def tasks = new ArrayList<BuildTaskRunnable>()
+        def tasks = new ArrayList<BuildTaskRunnable>()
 
-          // With JRE
-          if (buildContext.options.buildDmgWithBundledJre) {
-            for (arch in [JvmArchitecture.x64, JvmArchitecture.aarch64]) {
-              String suffix = (arch == JvmArchitecture.x64) ? "" : "-${arch.fileSuffix}"
-              String archStr = arch.toString()
+        // With JRE
+        if (buildContext.options.buildDmgWithBundledJre) {
+          for (arch in [JvmArchitecture.x64, JvmArchitecture.aarch64]) {
+            String suffix = (arch == JvmArchitecture.x64) ? "" : "-${arch.fileSuffix}"
+            String archStr = arch.toString()
 
-              def additional = buildContext.paths.tempDir.resolve("mac-additional-files-for-" + archStr)
-              Files.createDirectories(additional)
-              customizer.copyAdditionalFiles(buildContext, additional.toString(), arch)
+            def additional = buildContext.paths.tempDir.resolve("mac-additional-files-for-" + archStr)
+            Files.createDirectories(additional)
+            customizer.copyAdditionalFiles(buildContext, additional.toString(), arch)
 
-              File jreArchive = jreManager.findJreArchive(OsFamily.MACOS, arch)
-              if (jreArchive.file) {
-                tasks.add(BuildTaskRunnable.task("dmg-" + archStr) { buildContext ->
-                  buildContext.executeStep("Building dmg with JRE for " + archStr, "mac_dmg_jre_" + archStr) {
-                    MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                                  additional.toString(), jreArchive.absolutePath, suffix, notarize)
-                  }
-                })
-              }
-              else {
-                buildContext.messages.info("Skipping building macOS distribution for $archStr with bundled JRE because JRE archive is missing")
-              }
+            File jreArchive = jreManager.findJreArchive(OsFamily.MACOS, arch)
+            if (jreArchive.file) {
+              tasks.add(BuildTaskRunnable.task("dmg-" + archStr) { buildContext ->
+                buildContext.executeStep("Building dmg with JRE for " + archStr, "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr") {
+                  MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                                additional.toString(), jreArchive.absolutePath, suffix, notarize)
+                }
+              })
+            }
+            else {
+              buildContext.messages.info(
+                "Skipping building macOS distribution for $archStr with bundled JRE because JRE archive is missing")
             }
           }
-
-          // Without JRE
-          if (buildContext.options.buildDmgWithoutBundledJre) {
-            tasks.add(BuildTaskRunnable.task("dmg-no-jdk") { buildContext ->
-              buildContext.executeStep("Building dmg without JRE", "mac_dmg_no_jre") {
-                MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                              null, null, "-no-jdk", notarize)
-              }
-            })
-          }
-
-          BuildTasksImpl.runInParallel(tasks, buildContext)
-          FileUtil.delete(Paths.get(macZipPath))
         }
+
+        // Without JRE
+        if (buildContext.options.buildDmgWithoutBundledJre) {
+          tasks.add(BuildTaskRunnable.task("dmg-no-jdk") { buildContext ->
+            buildContext.executeStep("Building dmg without JRE", "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre") {
+              MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                            null, null, "-no-jdk", notarize)
+            }
+          })
+        }
+
+        BuildTasksImpl.runInParallel(tasks, buildContext)
+        FileUtil.delete(Paths.get(macZipPath))
       }
     }
   }

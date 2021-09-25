@@ -12,14 +12,11 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.TaskData
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.substringBeforeLast
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.FindSymbolParameters
 import icons.GradleIcons
@@ -158,16 +155,10 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
     }
   }
 
-  private fun fetchTasks(project: Project): Map<String, MultiMap<String, TaskData>> {
-    return CachedValuesManager.getManager(project).getCachedValue(project) {
-      CachedValueProvider.Result.create(getGradleTasksMap(project), ExternalProjectsDataStorage.getInstance(project))
-    }
-  }
-
   private fun createContext(project: Project, context: RunAnythingContext, dataContext: DataContext): Context {
     val externalProjectPath = context.getProjectPath()
     val gradlePath = context.getGradlePath(project)
-    val tasks = fetchTasks(project)[externalProjectPath] ?: MultiMap()
+    val tasks = getGradleTasks(project)[externalProjectPath] ?: MultiMap()
     val executor = EXECUTOR_KEY.getData(dataContext)
     return Context(context, project, gradlePath, externalProjectPath, tasks, executor)
   }

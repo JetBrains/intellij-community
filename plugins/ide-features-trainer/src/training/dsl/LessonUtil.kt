@@ -45,13 +45,13 @@ import training.util.learningToolWindow
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
-import javax.swing.JWindow
 import javax.swing.KeyStroke
 
 object LessonUtil {
@@ -217,7 +217,7 @@ object LessonUtil {
     }
   }
 
-  fun adjustPopupPosition(project: Project, popupWindow: JWindow): Boolean {
+  fun adjustPopupPosition(project: Project, popupWindow: Window): Boolean {
     val learningToolWindow = learningToolWindow(project) ?: return false
     val learningComponent = learningToolWindow.component
     val learningRectangle = Rectangle(learningComponent.locationOnScreen, learningToolWindow.component.size)
@@ -262,6 +262,15 @@ object LessonUtil {
 
 fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
+}
+
+fun TaskContext.proceedLink() {
+  val gotIt = CompletableFuture<Boolean>()
+  runtimeText {
+    removeAfterDone = true
+    LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
+  }
+  addStep(gotIt)
 }
 
 fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {

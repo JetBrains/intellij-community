@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
@@ -259,12 +259,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @NotNull
-  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull PsiType type) {
+  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @Nullable PsiType type) {
     return addParameter(name, type, false);
   }
 
   @NotNull
-  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull PsiType type, boolean isOptional) {
+  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @Nullable PsiType type, boolean isOptional) {
     GrLightParameter param = new GrLightParameter(name, type, this).setOptional(isOptional);
     return addParameter(param);
   }

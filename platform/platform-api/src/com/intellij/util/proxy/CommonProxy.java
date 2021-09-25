@@ -248,6 +248,10 @@ public final class CommonProxy extends ProxySelector {
     }
   }
 
+  public Authenticator getAuthenticator() {
+    return myAuthenticator;
+  }
+
   private class CommonAuthenticator extends Authenticator {
     @Override
     protected PasswordAuthentication getPasswordAuthentication() {

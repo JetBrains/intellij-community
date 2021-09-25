@@ -112,8 +112,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   }
 
   protected void update(Runnable noStorageChange,
-                        BiConsumer<? super WorkspaceEntityStorageBuilder, ? super PackagingElementEntity> changeOnBuilder,
-                        boolean filterCustomElements) {
+                        BiConsumer<? super WorkspaceEntityStorageBuilder, ? super PackagingElementEntity> changeOnBuilder) {
     update(
       () -> {
         noStorageChange.run();
@@ -122,14 +121,12 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
       (builder, element) -> {
         changeOnBuilder.accept(builder, element);
         return null;
-      },
-      filterCustomElements
+      }
     );
   }
 
   protected <T> T update(Supplier<? extends T> noStorageChange,
-                         BiFunction<? super WorkspaceEntityStorageBuilder, ? super PackagingElementEntity, T> changeOnBuilder,
-                         boolean filterCustomElements) {
+                         BiFunction<? super WorkspaceEntityStorageBuilder, ? super PackagingElementEntity, T> changeOnBuilder) {
     if (myStorage == null) {
       return noStorageChange.get();
     }
@@ -144,9 +141,6 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
         WorkspaceEntityStorageBuilder builder = ((VersionedEntityStorageOnBuilder)myStorage).getBuilder();
         MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
         PackagingElementEntity entity = (PackagingElementEntity)ContainerUtil.getFirstItem(mapping.getEntities(this));
-        if (filterCustomElements && entity instanceof CustomPackagingElementEntity) {
-          return nativeValue;
-        }
         if (entity == null) {
           throw new RuntimeException("Cannot find an entity");
         }

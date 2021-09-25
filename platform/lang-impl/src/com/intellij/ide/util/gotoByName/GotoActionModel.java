@@ -322,6 +322,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
    * This method may be removed in future versions
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
     return defaultActionForeground(isSelected, true, presentation);
   }

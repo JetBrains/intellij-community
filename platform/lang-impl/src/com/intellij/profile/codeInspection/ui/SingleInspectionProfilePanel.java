@@ -57,6 +57,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -100,6 +101,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     @Override
     protected void filterChanged() {
       filterTree();
+      updateEmptyText();
     }
   };
   private boolean myModified;
@@ -548,6 +550,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
+    updateEmptyText();
+
     final TreeTableTree tree = myTreeTable.getTree();
     tree.putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
     tree.setRowHeight(renderer.getTreeCellRendererComponent(tree, "xxx", true, true, false, 0, true).getPreferredSize().height);
@@ -752,7 +756,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       myOptionsPanel.removeAll();
-      final JPanel severityPanel = new JPanel(new GridBagLayout());
+      JPanel severityPanel = new JPanel(new GridBagLayout());
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
 
       final Set<String> scopesNames = new HashSet<>();
@@ -901,16 +905,12 @@ public class SingleInspectionProfilePanel extends JPanel {
           });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
-        severityPanel.add(new JBLabel(InspectionsBundle.message("inspection.scopes.and.severities")),
-                          new GridBagConstraints(0, 0, 1, 1, 1.0, 0,
-                                                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                 JBUI.insets(0, 0, UIUtil.DEFAULT_VGAP, 10),
-                                                 0, 0));
-        severityPanel.add(panel,
-                          new GridBagConstraints(0, 1, 1, 1, 0, 1.0,
-                                                 GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                 JBUI.insets(0, 0, 0, 0),
-                                                 0, 0));
+        severityPanel = UI.PanelFactory
+          .panel(panel)
+          .withLabel(InspectionsBundle.message("inspection.scopes.and.severities"))
+          .moveLabelOnTop()
+          .resizeY(true)
+          .createPanel();
         severityPanelWeightY = 0.3;
       }
       myOptionsPanel
@@ -1234,6 +1234,26 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public JComponent getPreferredFocusedComponent() {
     return myTreeTable;
+  }
+
+  private void updateEmptyText() {
+    final var emptyText = myTreeTable.getEmptyText();
+    emptyText.setText(AnalysisBundle.message("inspections.settings.empty.text"));
+    if (!myInspectionsFilter.isEmptyFilter()) {
+      emptyText.appendLine(
+        AnalysisBundle.message("inspections.settings.empty.text.link"),
+        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+        e -> { myInspectionsFilter.reset(); }
+      );
+    } else {
+      for (EmptyInspectionTreeLinkProvider provider : EmptyInspectionTreeLinkProvider.EP_NAME.getExtensionList()) {
+        emptyText.appendLine(
+          provider.getText(),
+          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+          provider.getActionListener(this)
+        );
+      }
+    }
   }
 
   private final class MyFilterComponent extends FilterComponent {

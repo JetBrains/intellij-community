@@ -60,18 +60,6 @@ public abstract class LayoutPassInfoBase extends LayoutPassInfo {
     return 0;
   }
 
-  @Deprecated
-  @Override
-  public int getColumnCount(int row) {
-    return 0;
-  }
-
-  @Deprecated
-  @Override
-  public TabInfo getTabAt(int row, int column) {
-    return null;
-  }
-
   private static class MaxDimensions {
     final Dimension myLabel = new Dimension();
     final Dimension myToolbar = new Dimension();

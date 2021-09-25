@@ -31,6 +31,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -54,6 +55,7 @@ import java.net.*;
 import java.util.Arrays;
 import java.util.Enumeration;
 
+import static com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager.createVMParameters;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
@@ -212,8 +214,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       progressListenerClazz != null ? myProject.getService(progressListenerClazz)
                                     : createBuildView(buildDescriptor, consoleView);
 
-    ExternalSystemRunConfiguration.EP_NAME
-      .forEachExtensionSafe(extension -> extension.attachToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings()));
+    ExternalSystemRunConfigurationExtensionManager.attachToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
@@ -348,10 +349,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
   @Nullable
   private String getJvmParametersSetup() throws ExecutionException {
-    final SimpleJavaParameters extensionsJP = new SimpleJavaParameters();
-    for (ExternalSystemRunConfigurationExtension extension : ExternalSystemRunConfiguration.EP_NAME.getExtensionList()) {
-      extension.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
-    }
+    SimpleJavaParameters extensionsJP = createVMParameters(myConfiguration, myEnv.getRunnerSettings(), myEnv.getExecutor());
+
     String jvmParametersSetup = "";
     if (myDebugPort <= 0) {
       final ParametersList allVMParameters = new ParametersList();

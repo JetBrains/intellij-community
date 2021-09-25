@@ -1,14 +1,10 @@
-/*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.platform
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.config.isJps
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.platform.TargetPlatform
 
 interface DefaultIdeTargetPlatformKindProvider {
     val defaultPlatform: TargetPlatform
@@ -21,7 +17,7 @@ interface DefaultIdeTargetPlatformKindProvider {
                     return JvmPlatforms.defaultJvmPlatform
                 }
 
-                return ServiceManager.getService(DefaultIdeTargetPlatformKindProvider::class.java).defaultPlatform
+                return ApplicationManager.getApplication().getService(DefaultIdeTargetPlatformKindProvider::class.java).defaultPlatform
             }
     }
 }

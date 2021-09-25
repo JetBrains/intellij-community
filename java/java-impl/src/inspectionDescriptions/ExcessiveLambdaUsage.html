@@ -1,12 +1,13 @@
 <html>
 <body>
-Reports if a trivial lambda expression is used where there's an alternative method which behaves the same way, but accepts a concrete value
-instead of a lambda. This simplifies the code.
+Reports if a trivial lambda expression is used in cases in which there's an alternative method that behaves in the same way, but accepts a concrete value
+instead of a lambda.
+<p>This inspection helps simplify the code.</p>
 <p>Example:</p>
 <pre>
   Optional.orElseGet(() -> null)
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   Optional.orElse(null)
 </pre>

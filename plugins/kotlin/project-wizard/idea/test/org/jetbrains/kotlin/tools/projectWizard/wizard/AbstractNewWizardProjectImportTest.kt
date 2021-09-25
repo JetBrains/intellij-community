@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
@@ -23,6 +20,7 @@ import org.jetbrains.kotlin.idea.scripting.gradle.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.tools.projectWizard.cli.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ServicesManager
@@ -114,7 +112,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
         directory: Path,
         distributionTypeSettings: DistributionType = DistributionType.WRAPPED
     ) {
-        com.intellij.openapi.components.ServiceManager.getService(project, GradleSettings::class.java)?.apply {
+        project.getService<GradleSettings>()?.apply {
             isOfflineWork = GradleEnvironment.Headless.GRADLE_OFFLINE?.toBoolean() ?: isOfflineWork
             serviceDirectoryPath = GradleEnvironment.Headless.GRADLE_SERVICE_DIRECTORY ?: serviceDirectoryPath
         }

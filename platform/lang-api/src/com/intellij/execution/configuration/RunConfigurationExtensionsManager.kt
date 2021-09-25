@@ -109,8 +109,8 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     }
   }
 
-  fun createFragments(configuration: U): List<SettingsEditorFragment<U, *>> {
-    val list = ArrayList<SettingsEditorFragment<U, *>>()
+  fun <V : U> createFragments(configuration: V): List<SettingsEditorFragment<V, *>> {
+    val list = ArrayList<SettingsEditorFragment<V, *>>()
     processApplicableExtensions(configuration) { t ->
       val fragments = t.createFragments(configuration)
       if (fragments != null) {

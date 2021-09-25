@@ -41,7 +41,6 @@ class GHAccountsListModel(private val project: Project)
     account.name = authData.login
     newCredentials[account] = authData.token
     notifyCredentialsChanged(account)
-    accountsListModel.contentsChanged(account)
   }
 
   override fun addAccount(server: GithubServerPath, login: String, token: String) {
@@ -49,7 +48,6 @@ class GHAccountsListModel(private val project: Project)
     accountsListModel.add(account)
     newCredentials[account] = token
     notifyCredentialsChanged(account)
-    accountsListModel.contentsChanged(account)
   }
 
   override fun isAccountUnique(login: String, server: GithubServerPath): Boolean =

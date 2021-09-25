@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
@@ -36,6 +37,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   private val ROBOTO = SimpleAttributeSet()
   private val CODE = SimpleAttributeSet()
   private val LINK = SimpleAttributeSet()
+
+  private var codeFontSize = UISettings.instance.fontSize.toInt()
 
   private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
   private val INTERNAL_PARAGRAPH_STYLE = SimpleAttributeSet()
@@ -132,7 +135,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   private fun initStyleConstants() {
     val fontSize = UISettings.instance.fontSize.toInt()
 
-    StyleConstants.setForeground(INACTIVE, UISettings.instance.passedColor)
+    StyleConstants.setForeground(INACTIVE, UISettings.instance.inactiveColor)
 
     StyleConstants.setFontFamily(REGULAR, fontFamily)
     StyleConstants.setFontSize(REGULAR, fontSize)
@@ -147,7 +150,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
     EditorColorsManager.getInstance().globalScheme.editorFontName
     StyleConstants.setFontFamily(CODE, EditorColorsManager.getInstance().globalScheme.editorFontName)
-    StyleConstants.setFontSize(CODE, fontSize)
+    StyleConstants.setFontSize(CODE, codeFontSize)
 
     StyleConstants.setFontFamily(LINK, fontFamily)
     StyleConstants.setUnderline(LINK, true)
@@ -337,6 +340,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   override fun paintComponent(g: Graphics) {
+    adjustCodeFontSize(g)
     try {
       paintMessages(g)
     }
@@ -347,6 +351,17 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     super.paintComponent(g)
     paintLessonCheckmarks(g)
     drawTaskNumbers(g)
+  }
+
+  private fun adjustCodeFontSize(g: Graphics) {
+    val fontSize = StyleConstants.getFontSize(CODE)
+    val labelFont = UISettings.instance.plainFont
+    val (numberFont, _, _) = getNumbersFont(labelFont, g)
+    if (numberFont.size != fontSize) {
+      StyleConstants.setFontSize(CODE, numberFont.size)
+      codeFontSize = numberFont.size
+      redrawMessages()
+    }
   }
 
   private fun paintLessonCheckmarks(g: Graphics) {
@@ -396,6 +411,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       val yOffset = baseLineY + (numberHeight - textLetterHeight)
       val backupColor = g.color
       g.color = color
+      GraphicsUtil.setupAAPainting(g)
       g.drawString(s, xOffset, yOffset)
       g.color = backupColor
     }
@@ -405,7 +421,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     if (activeMessages.lastOrNull()?.state != MessageState.PASSED || panelMode == false) { // lesson can be opened as passed
       val firstActiveMessage = firstActiveMessage()
       if (firstActiveMessage != null) {
-        val color = if (panelMode) UISettings.instance.activeTaskNumberColor else UISettings.instance.tooltipTaskNumber
+        val color = if (panelMode) UISettings.instance.activeTaskNumberColor else UISettings.instance.tooltipTaskNumberColor
         paintNumber(firstActiveMessage, color)
       }
     }
@@ -474,7 +490,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
             }
           }
           MessagePart.MessageType.CODE -> {
-            val needColor = if (panelMode) UISettings.instance.codeBorderColor else UISettings.instance.tooltipCodeBackgroundColor
+            val needColor = UISettings.instance.codeBorderColor
             drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
               if (panelMode) {
                 g2d.draw(r2d)

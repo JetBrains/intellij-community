@@ -1,20 +1,20 @@
 <html>
 <body>
-Reports annotation parameter assignment if it is assigned to its <code>default</code> value.
+Reports an annotation parameter assignment if it is assigned to its <code>default</code> value.
 <p>Example:</p>
-<pre>
+<pre><code>
   @interface Test {
       Class<?> expected() default Throwable.class;
   }
 
   @Test(expected = Throwable.class)
   void testSmth() {}
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   @Test()
   void testSmth() {}
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

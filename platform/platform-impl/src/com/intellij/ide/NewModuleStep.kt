@@ -24,26 +24,57 @@ abstract class NewModuleStep<T> : ModuleWizardStep() {
   final override fun getComponent() = panel
 
   fun LayoutBuilder.nameAndPath() {
-    row {
-      twoColumnRow(
-        { label(UIBundle.message("label.project.wizard.new.project.name")) },
-        { textField(baseSettings::name) }
-      )
-    }
-    row {
-      twoColumnRow(
-        { label(UIBundle.message("label.project.wizard.new.project.location")) },
-        {
-          textFieldWithBrowseButton(baseSettings::path, UIBundle.message("dialog.title.project.name"), /*context.project*/null,
-                                    FileChooserDescriptorFactory.createSingleFolderDescriptor())
-        }
-      )
-    }
+    twoColumnRow(
+      { label(UIBundle.message("label.project.wizard.new.project.name")) },
+      { textField(baseSettings::name) }
+    )
+
+    twoColumnRow(
+      { label(UIBundle.message("label.project.wizard.new.project.location")) },
+      {
+        textFieldWithBrowseButton(baseSettings::path, UIBundle.message("dialog.title.project.name"), /*context.project*/null,
+                                  FileChooserDescriptorFactory.createSingleFolderDescriptor())
+      }
+    )
   }
 
   fun LayoutBuilder.gitCheckbox() {
     row {
-      checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), baseSettings::git).withLargeLeftGap()
+      checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), baseSettings::git)
+    }
+  }
+
+  fun LayoutBuilder.advancedModuleSettings() {
+    var selected: ComponentPredicate? = null
+    row {
+      val checkBox = checkBox(UIBundle.message("label.project.wizard.new.project.advanced.settings"))
+      selected = checkBox.selected
+    }
+
+    row {
+      row {
+        cell { label(UIBundle.message("label.project.wizard.new.project.module.name")).visibleIf(selected!!) }
+        cell {
+          textField(baseSettings::moduleName).visibleIf(selected!!)
+        }
+      }
+
+      row{
+        cell { label(UIBundle.message("label.project.wizard.new.project.content.root")).visibleIf(selected!!) }
+        cell {
+          textFieldWithBrowseButton(baseSettings::contentRoot, UIBundle.message("label.project.wizard.new.project.content.root"), null,
+                                    FileChooserDescriptorFactory.createSingleFolderDescriptor()).visibleIf(selected!!)
+        }
+      }
+
+      row{
+        cell { label(UIBundle.message("label.project.wizard.new.project.module.file.location")).visibleIf(selected!!) }
+        cell {
+          textFieldWithBrowseButton(baseSettings::moduleFileLocation,
+                                    UIBundle.message("label.project.wizard.new.project.module.file.location"), null,
+                                    FileChooserDescriptorFactory.createSingleFolderDescriptor()).visibleIf(selected!!)
+        }
+      }
     }
   }
 
@@ -75,4 +106,8 @@ class BaseNewProjectSettings(initPath: String) {
   var path: String = initPath
   var name: String = NewModuleStep.findNonExistingFileName(initPath, "untitled", "")
   var git: Boolean = false
+
+  var moduleName: String = ""
+  var contentRoot: String = ""
+  var moduleFileLocation: String = ""
 }

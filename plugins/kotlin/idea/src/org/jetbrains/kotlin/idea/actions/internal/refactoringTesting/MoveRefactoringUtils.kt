@@ -1,13 +1,9 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -42,7 +38,7 @@ internal fun gitReset(project: Project, projectRoot: VirtualFile) {
     val resetLineHandler = gitLineHandlerCtor.newInstance(project, projectRoot, gitCommandReset)
     gitLineHandlerAddParameters.invoke(resetLineHandler, listOf("--hard", "HEAD"))
 
-    val gitService = ServiceManager.getService(gitCls)
+    val gitService = ApplicationManager.getApplication().getService(gitCls)
     val runCommandResult = runCommand.invoke(gitService, resetLineHandler)
 
     val gitResetResultCode = getExitCode.invoke(runCommandResult) as Int

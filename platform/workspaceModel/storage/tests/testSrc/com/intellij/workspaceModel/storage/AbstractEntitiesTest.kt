@@ -5,6 +5,7 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Test
 
 class AbstractEntitiesTest {
@@ -118,5 +119,37 @@ class AbstractEntitiesTest {
     val children = storage.entities(LeftEntity::class.java).last().children.toList()
     assertEquals(middleEntity2, children[0])
     assertEquals(middleEntity1, children[1])
+  }
+
+  @Test
+  fun `keep children ordering after rbs 1`() {
+    val builder = WorkspaceEntityStorageBuilder.create()
+    val middleEntity1 = builder.addMiddleEntity("One")
+    val middleEntity2 = builder.addMiddleEntity("Two")
+    builder.addLeftEntity(sequenceOf(middleEntity1, middleEntity2))
+
+    val target = WorkspaceEntityStorageBuilder.create()
+
+    target.replaceBySource({ true }, builder)
+
+    val children = target.toStorage().entities(LeftEntity::class.java).last().children.toList()
+    assertEquals(middleEntity1.property, (children[0] as MiddleEntity).property)
+    assertEquals(middleEntity2.property, (children[1] as MiddleEntity).property)
+  }
+
+  @Test
+  fun `keep children ordering after rbs 2`() {
+    val builder = WorkspaceEntityStorageBuilder.create()
+    val middleEntity1 = builder.addMiddleEntity("One")
+    val middleEntity2 = builder.addMiddleEntity("Two")
+    builder.addLeftEntity(sequenceOf(middleEntity2, middleEntity1))
+
+    val target = WorkspaceEntityStorageBuilder.create()
+
+    target.replaceBySource({ true }, builder)
+
+    val children = target.toStorage().entities(LeftEntity::class.java).last().children.toList()
+    assertEquals(middleEntity2.property, (children[0] as MiddleEntity).property)
+    assertEquals(middleEntity1.property, (children[1] as MiddleEntity).property)
   }
 }

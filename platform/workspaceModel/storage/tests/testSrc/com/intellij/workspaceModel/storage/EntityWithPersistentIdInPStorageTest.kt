@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import org.hamcrest.CoreMatchers
@@ -82,7 +81,7 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `add entity with existing persistent id`() {
-    builder = WorkspaceEntityStorageBuilderImpl.create(ConsistencyCheckingMode.DISABLED)
+    builder = WorkspaceEntityStorageBuilderImpl.create()
     expectedException.expectCause(CoreMatchers.isA(PersistentIdAlreadyExistsException::class.java))
     builder.addNamedEntity("MyName")
     builder.addNamedEntity("MyName")
@@ -90,7 +89,7 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `add entity with existing persistent id - restoring after exception`() {
-    builder = WorkspaceEntityStorageBuilderImpl.create(ConsistencyCheckingMode.DISABLED)
+    builder = WorkspaceEntityStorageBuilderImpl.create()
     try {
       builder.addNamedEntity("MyName")
       builder.addNamedEntity("MyName")
@@ -103,7 +102,7 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `modify entity to repeat persistent id`() {
-    builder = WorkspaceEntityStorageBuilderImpl.create(ConsistencyCheckingMode.DISABLED)
+    builder = WorkspaceEntityStorageBuilderImpl.create()
     expectedException.expectCause(CoreMatchers.isA(PersistentIdAlreadyExistsException::class.java))
     builder.addNamedEntity("MyName")
     val namedEntity = builder.addNamedEntity("AnotherId")
@@ -114,7 +113,7 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `modify entity to repeat persistent id - restoring after exception`() {
-    builder = WorkspaceEntityStorageBuilderImpl.create(ConsistencyCheckingMode.DISABLED)
+    builder = WorkspaceEntityStorageBuilderImpl.create()
     try {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")

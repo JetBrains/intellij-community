@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
@@ -74,7 +71,7 @@ class JavaToKotlinInlineHandler : AbstractCrossLanguageInlineHandler() {
 
         val unwrappedElement = unwrapElement(unwrappedUsage, referenced)
         val replacementStrategy = referenced.findUsageReplacementStrategy(withValidation = false) ?: kotlin.run {
-            LOG.error("Can't find strategy for ${unwrappedElement.getKotlinFqName()} => ${unwrappedElement.text}")
+            LOG.error("Can't find strategy for ${unwrappedElement::class} (${unwrappedElement.getKotlinFqName()}) => ${unwrappedElement.text}")
             return
         }
 

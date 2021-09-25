@@ -2,10 +2,13 @@
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.TestLibrary
+
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
 @CompileStatic
 abstract class GroovycTestBase extends GroovyCompilerTest {
@@ -23,13 +26,15 @@ abstract class GroovycTestBase extends GroovyCompilerTest {
 
     def msg = make().find { it.message.contains('InvalidType') }
     assert msg?.virtualFile
-    ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
+    runInEdtAndWait {
+      ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
+    }
 
     def messages = make()
     assert messages
     def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
-    assert myFixture.findClass("Groovy3") == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
+    assert ReadAction.compute { myFixture.findClass("Groovy3") == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)}
   }
 
   void "test config script"() {

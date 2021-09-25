@@ -96,7 +96,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
           ent.setPathInArchive(pathInJar);
           return Unit.INSTANCE;
         });
-    }, true);
+    });
   }
 
   @Override

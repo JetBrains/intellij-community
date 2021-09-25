@@ -37,7 +37,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,12 +46,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
-  /**
-   * @deprecated Use {@link #getName()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String NAME = "Dependencies";
 
   private ClasspathPanelImpl myPanel;
   private ClasspathFormatPanel myClasspathFormatPanel;

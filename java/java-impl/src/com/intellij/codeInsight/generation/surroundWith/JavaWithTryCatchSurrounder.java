@@ -82,7 +82,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
 
     for (int i = 0; i < exceptions.size(); i++) {
       PsiClassType exception = exceptions.get(i);
-      String name = new VariableNameGenerator(tryBlock, VariableKind.PARAMETER).byType(exception).byName("e", "ex", "exc").generate(false);
+      String name = new VariableNameGenerator(tryBlock, VariableKind.PARAMETER).byName("e", "ex", "exc").byType(exception).generate(false);
       PsiCatchSection catchSection;
       try {
         catchSection = factory.createCatchSection(exception, name, tryBlock);

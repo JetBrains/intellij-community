@@ -260,12 +260,12 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
   @Nullable
   private static PsiElement findStatementBeforeCaret(ASTNode node) {
-    return findBeforeCaret(node, PyStatement.class);
+    return findBeforeCaret(node, PyStatement.class, PyStatementPart.class);
   }
 
   @Nullable
   private static PsiElement findStatementAfterCaret(ASTNode node) {
-    return findAfterCaret(node, PyStatement.class);
+    return findAfterCaret(node, PyStatement.class, PyStatementPart.class);
   }
 
   private static PsiElement findBeforeCaret(ASTNode atCaret, Class<? extends PsiElement>... classes) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.TObjectHashingStrategy
 import groovy.transform.CompileStatic
@@ -68,6 +69,7 @@ class GradleDaemonServices {
         PathManager.getJarForClass(DynamicBundle),
         PathManager.getJarForClass(AbstractBundle),
         PathManager.getJarForClass(TObjectHashingStrategy),
+        PathManager.getJarForClass(HashingStrategy),
         PathManager.getJarForClass(Hash),
         PathManager.getJarForClass(Function)
       ))

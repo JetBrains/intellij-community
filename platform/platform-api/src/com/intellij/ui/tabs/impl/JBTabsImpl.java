@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -224,15 +225,6 @@ public class JBTabsImpl extends JComponent
 
   private JBTabsImpl(@NotNull Project project, @NotNull Disposable parent) {
     this(project, IdeFocusManager.getInstance(project), parent);
-  }
-
-  /**
-   * @deprecated Do not pass ActionManager.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public JBTabsImpl(@Nullable Project project, @SuppressWarnings("unused") @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
-    this(project, focusManager, parent);
   }
 
   public JBTabsImpl(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
@@ -2823,7 +2815,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean isSingleRow() {
-    return mySingleRow || Registry.is("ide.new.editor.tabs.ui");
+    return mySingleRow || ExperimentalUI.isNewEditorTabs();
   }
 
   public boolean isSideComponentVertical() {

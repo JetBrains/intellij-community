@@ -1,23 +1,14 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf
 
 import org.jetbrains.kotlin.idea.perf.profilers.*
 import org.jetbrains.kotlin.idea.perf.util.*
-import org.jetbrains.kotlin.idea.perf.whole.WholeProjectPerformanceTest.Companion.nsToMs
-import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
-import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.util.PerformanceCounter
-import java.io.*
+import java.io.FileInputStream
 import java.lang.ref.WeakReference
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.math.*
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
@@ -90,12 +81,17 @@ class Stats(
     private fun toTimingsMs(statInfosArray: Array<StatInfos>) =
         statInfosArray.map { info -> info?.let { it[TEST_KEY] as? Long }?.nsToMs ?: 0L }.toLongArray()
 
-    private fun calcMean(statInfosArray: Array<StatInfos>): Mean = calcMean(toTimingsMs(statInfosArray))
+    private fun calcMean(statInfosArray: Array<StatInfos>): Mean =
+        calcMean(toTimingsMs(statInfosArray))
+
+    private fun stabilityPercentage(mean: Mean): Int =
+        round(mean.stdDev * 100.0 / mean.mean).toInt()
 
     fun <SV, TV> perfTest(
         testName: String,
         warmUpIterations: Int = 5,
         iterations: Int = 20,
+        fastIterations: Boolean = false,
         setUp: (TestData<SV, TV>) -> Unit = { },
         test: (TestData<SV, TV>) -> Unit,
         tearDown: (TestData<SV, TV>) -> Unit = { },
@@ -104,6 +100,7 @@ class Stats(
         val warmPhaseData = PhaseData(
             iterations = warmUpIterations,
             testName = testName,
+            fastIterations = fastIterations,
             setUp = setUp,
             test = test,
             tearDown = tearDown
@@ -111,6 +108,7 @@ class Stats(
         val mainPhaseData = PhaseData(
             iterations = iterations,
             testName = testName,
+            fastIterations = fastIterations,
             setUp = setUp,
             test = test,
             tearDown = tearDown
@@ -125,8 +123,7 @@ class Stats(
                 if (testName != WARM_UP) {
                     // do not estimate stability for warm-up
                     if (!testName.contains(WARM_UP)) {
-                        val calcMean = calcMean(statInfoArray)
-                        val stabilityPercentage = round(calcMean.stdDev * 100.0 / calcMean.mean).toInt()
+                        val stabilityPercentage = stabilityPercentage(calcMean(statInfoArray))
                         logMessage { "$testName stability is $stabilityPercentage %" }
                         val stabilityName = "$name: $testName stability"
 
@@ -311,6 +308,15 @@ class Stats(
                         PerformanceCounter.resetAllCounters()
                     }
                 }
+
+                if (phaseData.fastIterations && attempt > 0) {
+                    val subArray = statInfosArray.take(attempt + 1).toTypedArray()
+                    val stabilityPercentage = stabilityPercentage(calcMean(subArray))
+                    val stable = stabilityPercentage <= acceptanceStabilityLevel
+                    if (stable) {
+                        return subArray
+                    }
+                }
             }
         } catch (t: Throwable) {
             logMessage(t) { "error at ${phaseData.testName}" }
@@ -446,7 +452,8 @@ data class PhaseData<SV, TV>(
     val testName: String,
     val setUp: (TestData<SV, TV>) -> Unit,
     val test: (TestData<SV, TV>) -> Unit,
-    val tearDown: (TestData<SV, TV>) -> Unit
+    val tearDown: (TestData<SV, TV>) -> Unit,
+    val fastIterations: Boolean = false
 )
 
 data class TestData<SV, TV>(var setUpValue: SV?, var value: TV?) {

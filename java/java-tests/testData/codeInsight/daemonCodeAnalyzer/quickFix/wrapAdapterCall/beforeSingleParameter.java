@@ -1,4 +1,4 @@
-// "Wrap parameter using 'new File()'" "true"
+// "Wrap argument using 'new File()'" "true"
 import java.io.File;
 
 class Test {

@@ -1,11 +1,8 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.j2k
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
@@ -21,6 +18,6 @@ interface J2KPostProcessingRegistrar {
 
     companion object {
         val instance: J2KPostProcessingRegistrar
-            get() = ServiceManager.getService(J2KPostProcessingRegistrar::class.java)
+            get() = service()
     }
 }

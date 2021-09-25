@@ -39,11 +39,11 @@ class MarkerCache {
   private final SmartPointerTracker myPointers;
   private UpdatedRanges myUpdatedRanges;
 
-  MarkerCache(SmartPointerTracker pointers) {
+  MarkerCache(@NotNull SmartPointerTracker pointers) {
     myPointers = pointers;
   }
 
-  private UpdatedRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
+  private @NotNull UpdatedRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
     int eventCount = events.size();
     assert eventCount > 0;
 
@@ -65,7 +65,7 @@ class MarkerCache {
     return answer;
   }
 
-  private static ManualRangeMarker @NotNull [] createMarkers(List<? extends SelfElementInfo> infos) {
+  private static ManualRangeMarker @NotNull [] createMarkers(@NotNull List<? extends SelfElementInfo> infos) {
     ManualRangeMarker[] markers = new ManualRangeMarker[infos.size()];
     int i = 0;
     while (i < markers.length) {
@@ -84,11 +84,11 @@ class MarkerCache {
     return markers;
   }
 
-  private static boolean rangeEquals(SelfElementInfo info, int start, int end, boolean greedy) {
+  private static boolean rangeEquals(@NotNull SelfElementInfo info, int start, int end, boolean greedy) {
     return start == info.getPsiStartOffset() && end == info.getPsiEndOffset() && greedy == info.isGreedy();
   }
 
-  private static UpdatedRanges applyEvents(@NotNull List<? extends DocumentEvent> events, final UpdatedRanges struct) {
+  private static @NotNull UpdatedRanges applyEvents(@NotNull List<? extends DocumentEvent> events, @NotNull UpdatedRanges struct) {
     FrozenDocument frozen = struct.myResultDocument;
     ManualRangeMarker[] resultMarkers = struct.myMarkers.clone();
     for (DocumentEvent event : events) {

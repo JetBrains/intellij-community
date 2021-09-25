@@ -53,7 +53,9 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
 
     setContent(consoleLog.component)
 
-    toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", consoleLog.orCreateActions, false).component
+    val verticalToolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", consoleLog.orCreateActions, false)
+    verticalToolbar.setTargetComponent(this)
+    toolbar = verticalToolbar.component
 
     Disposer.register(this, consoleLog)
     service<EventLogListenersManager>().subscribe(eventLogListener, recorderId)
@@ -74,6 +76,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     topToolbarActions.add(EditEventsTestSchemeAction(recorderId))
     val toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true)
     toolbar.setShowSeparatorTitles(true)
+    toolbar.setTargetComponent(this)
     return toolbar.component
   }
 

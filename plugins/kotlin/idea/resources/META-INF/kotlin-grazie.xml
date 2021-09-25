@@ -1,5 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinGrammarCheckingStrategy"/>
+    <textExtractor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinTextExtractor"/>
+    <problemFilter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinProblemFilter"/>
   </extensions>
 </idea-plugin>

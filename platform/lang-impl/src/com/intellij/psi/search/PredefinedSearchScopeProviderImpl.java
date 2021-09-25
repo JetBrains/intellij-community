@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
@@ -246,9 +246,9 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
   }
 
   @Nullable
-  private static SearchScope getSelectedFilesScope(@NotNull Project project,
-                                                   @Nullable DataContext dataContext,
-                                                   @Nullable PsiFile currentFile) {
+  public static SearchScope getSelectedFilesScope(@NotNull Project project,
+                                                  @Nullable DataContext dataContext,
+                                                  @Nullable PsiFile currentFile) {
     VirtualFile[] filesOrDirs = dataContext == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (filesOrDirs == null || filesOrDirs.length == 0 ||
         filesOrDirs.length == 1 && currentFile != null && filesOrDirs[0].equals(currentFile.getVirtualFile())) {

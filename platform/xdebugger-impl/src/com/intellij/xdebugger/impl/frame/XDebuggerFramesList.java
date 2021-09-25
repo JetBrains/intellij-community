@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -10,7 +11,6 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
@@ -18,6 +18,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -160,6 +161,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   protected @Nullable Navigatable getSelectedFrameNavigatable() {
     XStackFrame frame = getSelectedFrame();
     Navigatable navigatable = frame != null ? getFrameNavigatable(frame) : null;
+    if (navigatable instanceof OpenFileDescriptor) {
+      ((OpenFileDescriptor)navigatable).setUsePreviewTab(true);
+    }
     return navigatable != null ? keepFocus(navigatable) : null;
   }
 
@@ -167,8 +171,8 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
    * Forbids focus requests unless the editor area is already focused.
    */
   private @NotNull Navigatable keepFocus(@NotNull Navigatable navigatable) {
-    Component editorAreaComponent = FileEditorManagerEx.getInstanceEx(myProject).getComponent();
-    boolean isEditorAreaFocused = IdeFocusManager.getInstance(myProject).getFocusedDescendantFor(editorAreaComponent) != null;
+    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+    boolean isEditorAreaFocused = IJSwingUtilities.hasFocus(fileEditorManager.getComponent());
     return isEditorAreaFocused ? navigatable : new Navigatable() {
       @Override
       public void navigate(boolean requestFocus) {

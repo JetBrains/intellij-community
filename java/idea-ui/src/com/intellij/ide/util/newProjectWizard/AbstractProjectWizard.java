@@ -355,4 +355,9 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   public void setDelegate(@Nullable WizardDelegate delegate) {
     myDelegate = delegate;
   }
+
+  @NotNull
+  public WizardContext getWizardContext() {
+    return myWizardContext;
+  }
 }

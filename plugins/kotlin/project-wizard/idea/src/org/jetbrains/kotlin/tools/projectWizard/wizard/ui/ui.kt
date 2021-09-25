@@ -1,8 +1,7 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ThrowableComputable
@@ -116,11 +115,10 @@ fun ToolbarDecorator.createPanelWithPopupHandler(popupTarget: JComponent) = crea
         ToolbarDecorator.findAddButton(this@toolbarApply)?.let(this::add)
         ToolbarDecorator.findRemoveButton(this@toolbarApply)?.let(this::add)
     }
-    PopupHandler.installPopupHandler(
+    PopupHandler.installPopupMenu(
         popupTarget,
         actionGroup,
-        ActionPlaces.UNKNOWN,
-        ActionManager.getInstance()
+        "ToolbarDecoratorPopup"
     )
 }
 

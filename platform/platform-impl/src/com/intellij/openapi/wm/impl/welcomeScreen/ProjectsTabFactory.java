@@ -79,8 +79,9 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
               }
             });
 
-          JComponent projectActionsPanel = createActionsToolbar().getComponent();
-
+          ActionToolbar actionsToolbar = createActionsToolbar();
+          actionsToolbar.setTargetComponent(projectsPanel.myList);
+          JComponent projectActionsPanel = actionsToolbar.getComponent();
           northPanel.add(projectSearch, BorderLayout.CENTER);
           northPanel.add(projectActionsPanel, BorderLayout.EAST);
           mainPanel.add(northPanel, BorderLayout.NORTH);

@@ -1,10 +1,9 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -57,7 +56,7 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
         }
 
         if (outOfCodeBlock) {
-            kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
+            incModificationCount()
         }
     }
 
@@ -75,7 +74,7 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
                     messageBusConnection.deliverImmediately()
 
                     if (physical) {
-                        kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
+                        incModificationCount()
                         perModuleOutOfCodeBlockTrackerUpdater.onKotlinPhysicalFileOutOfBlockChange(file, true)
                     }
                 }
@@ -89,13 +88,27 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
             val kotlinTrackerInternalIDECount = modificationTrackerImpl.forLanguage(KotlinLanguage.INSTANCE).modificationCount
             if (kotlinModificationCount == kotlinTrackerInternalIDECount) {
                 // Some update that we are not sure is from Kotlin language, as Kotlin language tracker wasn't changed
-                kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
+                incModificationCount()
             } else {
                 kotlinModificationCount = kotlinTrackerInternalIDECount
             }
 
             perModuleOutOfCodeBlockTrackerUpdater.onPsiModificationTrackerUpdate()
         })
+
+        messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+            override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+                incModificationCount()
+            }
+
+            override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                incModificationCount()
+            }
+        })
+    }
+
+    fun incModificationCount() {
+        kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
     }
 
     override fun dispose() = Unit

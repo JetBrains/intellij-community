@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ import java.io.IOException;
 public interface DnDEvent extends Transferable, UserDataHolder {
   DnDAction getAction();
 
-  void updateAction(DnDAction action);
+  void updateAction(@NotNull DnDAction action);
 
   Object getAttachedObject();
 

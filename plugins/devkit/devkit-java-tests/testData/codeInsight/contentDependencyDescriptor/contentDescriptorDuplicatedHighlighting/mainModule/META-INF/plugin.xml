@@ -4,8 +4,8 @@
   <version>1.0</version>
 
   <content>
-    <module name="<error descr="Module with such name already exists">anotherModule</error>" package="mypackage.subpackage"/>
-    <module name="<error descr="Module with such name already exists">anotherModule</error>" package="mypackage.subpackage"/>
+    <module name="<error descr="Module with such name already exists">anotherModule</error>"/>
+    <module name="<error descr="Module with such name already exists">anotherModule</error>"/>
   </content>
 
 </idea-plugin>

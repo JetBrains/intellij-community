@@ -40,7 +40,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                                  indent: Int,
                                  isParentRowLabeled: Boolean,
                                  forComponent: Boolean,
-                                 columnIndex: Int) {
+                                 columnIndex: Int,
+                                 anchorComponent: JComponent? = null) {
       val cc = CC()
       val commentRow = parent.createChildRow()
       commentRow.isComment = true
@@ -53,8 +54,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         cc.skip()
       }
-      else {
+      else if (anchorComponent == null || anchorComponent is JToggleButton) {
         cc.horizontal.gapBefore = gapToBoundSize(indent + parent.spacing.indentLevel, true)
+      }
+      else {
+        cc.horizontal.gapBefore = gapToBoundSize(indent, true)
       }
     }
 
@@ -422,15 +426,25 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = builder.componentConstraints.getOrPut(this) { CC() }
 
   fun addCommentRow(@Nls comment: String, maxLineLength: Int, forComponent: Boolean) {
-    val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
-    addCommentRow(commentComponent, forComponent)
+    addCommentRow(comment, maxLineLength, forComponent, null)
   }
 
+  // not using @JvmOverloads to maintain binary compatibility
+  fun addCommentRow(@Nls comment: String, maxLineLength: Int, forComponent: Boolean, anchorComponent: JComponent?) {
+    val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+    addCommentRow(commentComponent, forComponent, anchorComponent)
+  }
+
+  // not using @JvmOverloads to maintain binary compatibility
   fun addCommentRow(component: JComponent, forComponent: Boolean) {
+    addCommentRow(component, forComponent, null)
+  }
+
+  fun addCommentRow(component: JComponent, forComponent: Boolean, anchorComponent: JComponent?) {
     gapAfter = "${spacing.commentVerticalTopGap}px!"
 
     val isParentRowLabeled = labeled
-    createCommentRow(this, component, indent, isParentRowLabeled, forComponent, columnIndex)
+    createCommentRow(this, component, indent, isParentRowLabeled, forComponent, columnIndex, anchorComponent)
   }
 
   private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: CC): Boolean {
@@ -538,12 +552,12 @@ private class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun comment(text: String, maxLineLength: Int, forComponent: Boolean): CellBuilder<T> {
-    row.addCommentRow(text, maxLineLength, forComponent)
+    row.addCommentRow(text, maxLineLength, forComponent, component)
     return this
   }
 
   override fun commentComponent(component: JComponent, forComponent: Boolean): CellBuilder<T> {
-    row.addCommentRow(component, forComponent)
+    row.addCommentRow(component, forComponent, this.component)
     return this
   }
 

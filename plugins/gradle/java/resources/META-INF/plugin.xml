@@ -89,7 +89,7 @@
 
     <starter.moduleImporter implementation="org.jetbrains.plugins.gradle.starters.GradleStarterModuleImporter"/>
 
-    <dependencyCollector implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyCollector"/>
+    <dependencyCollector kind="java" implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyCollector"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyUpdater"/>
   </extensions>
 </idea-plugin>

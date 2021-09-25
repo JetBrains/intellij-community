@@ -6,13 +6,22 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+
+fun getGradleTasks(project: Project): Map<String, MultiMap<String, TaskData>> {
+  return CachedValuesManager.getManager(project).getCachedValue(project) {
+    CachedValueProvider.Result.create(getGradleTasksMap(project), ExternalProjectsDataStorage.getInstance(project))
+  }
+}
 
 /**
  * @return `external module path (path to the directory) -> {gradle module path -> {[tasks of this module]}}`
@@ -22,7 +31,7 @@ fun getGradleTasksMap(project: Project): Map<String, MultiMap<String, TaskData>>
   return getGradleTaskNodesMap(project).mapValues { (_, moduleTasks) ->
     val transformed = MultiMap.create<String, TaskData>()
     for ((gradleModulePath, moduleTaskNodes) in moduleTasks.entrySet()) {
-      transformed.putValues(gradleModulePath,  moduleTaskNodes.map { it.data })
+      transformed.putValues(gradleModulePath, moduleTaskNodes.map { it.data })
     }
     transformed
   }

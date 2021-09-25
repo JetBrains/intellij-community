@@ -17,10 +17,11 @@ public final class FsRoot extends VirtualDirectoryImpl {
                 @NotNull VfsData vfsData,
                 @NotNull NewVirtualFileSystem fs,
                 @NotNull String pathBeforeSlash,
-                @NotNull FileAttributes attributes) throws VfsData.FileAlreadyCreatedException {
+                @NotNull FileAttributes attributes,
+                @NotNull String originalDebugPath) throws VfsData.FileAlreadyCreatedException {
     super(id, vfsData.getSegment(id, true), new VfsData.DirectoryData(), null, fs);
     if (!looksCanonical(pathBeforeSlash)) {
-      throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
+      throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'. FS: "+fs+"; attributes: "+attributes+"; original path: '"+originalDebugPath+"'");
     }
     myPathWithOneSlash = pathBeforeSlash + '/';
     VfsData.Segment segment = getSegment();

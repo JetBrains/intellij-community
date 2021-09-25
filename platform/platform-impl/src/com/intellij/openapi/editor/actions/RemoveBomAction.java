@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -88,7 +87,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
           indicator.setFraction(i*1.0/filesToProcess.size());
           indicator.setText2(StringUtil.shortenPathWithEllipsis(virtualFile.getPresentableUrl(), 40));
           byte[] bom = virtualFile.getBOM();
-          if (virtualFile instanceof NewVirtualFile && bom != null) {
+          if (bom != null) {
             if (isBOMMandatory(virtualFile) ) {
               filesUnableToProcess.add(virtualFile);
             }
@@ -116,14 +115,13 @@ public class RemoveBomAction extends AnAction implements DumbAware {
 
   private static void doRemoveBOM(@NotNull VirtualFile virtualFile, byte @NotNull [] bom) {
     virtualFile.setBOM(null);
-    NewVirtualFile file = (NewVirtualFile)virtualFile;
     try {
-      byte[] bytes = file.contentsToByteArray();
+      byte[] bytes = virtualFile.contentsToByteArray();
       byte[] contentWithStrippedBom = Arrays.copyOfRange(bytes, bom.length, bytes.length);
-      WriteAction.runAndWait(() -> file.setBinaryContent(contentWithStrippedBom));
+      WriteAction.runAndWait(() -> virtualFile.setBinaryContent(contentWithStrippedBom));
     }
     catch (IOException ex) {
-      LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + file, ex);
+      LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + virtualFile, ex);
     }
   }
 

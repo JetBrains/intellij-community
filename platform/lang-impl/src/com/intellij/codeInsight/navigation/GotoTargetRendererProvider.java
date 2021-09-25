@@ -8,8 +8,12 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
+/**
+ * @deprecated use {@link GotoTargetPresentationProvider}
+ */
+@Deprecated
 public interface GotoTargetRendererProvider {
+
   ExtensionPointName<GotoTargetRendererProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoTargetRendererProvider");
 
   @Nullable

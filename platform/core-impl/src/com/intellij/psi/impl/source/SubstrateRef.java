@@ -78,7 +78,7 @@ public abstract class SubstrateRef {
     };
   }
 
-  public static SubstrateRef createAstStrongRef(@NotNull final ASTNode node) {
+  public static @NotNull SubstrateRef createAstStrongRef(@NotNull final ASTNode node) {
     return new SubstrateRef() {
 
       @NotNull
@@ -105,9 +105,9 @@ public abstract class SubstrateRef {
   }
 
   public static class StubRef extends SubstrateRef {
-    private final StubElement myStub;
+    private final StubElement<?> myStub;
 
-    public StubRef(@NotNull StubElement stub) {
+    public StubRef(@NotNull StubElement<?> stub) {
       myStub = stub;
     }
 
@@ -125,7 +125,7 @@ public abstract class SubstrateRef {
 
     @Override
     public boolean isValid() {
-      StubElement parent = myStub.getParentStub();
+      StubElement<?> parent = myStub.getParentStub();
       if (parent == null) {
         LOG.error("No parent for stub " + myStub + " of class " + myStub.getClass());
         return false;
@@ -137,7 +137,7 @@ public abstract class SubstrateRef {
     @NotNull
     @Override
     public PsiFile getContainingFile() {
-      StubElement stub = myStub;
+      StubElement<?> stub = myStub;
       while (!(stub instanceof PsiFileStub)) {
         stub = stub.getParentStub();
       }
@@ -148,7 +148,7 @@ public abstract class SubstrateRef {
       return reportError(stub);
     }
 
-    private PsiFile reportError(StubElement stub) {
+    private PsiFile reportError(@NotNull StubElement<?> stub) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
 
       String reason = ((PsiFileStubImpl<?>)stub).getInvalidationReason();

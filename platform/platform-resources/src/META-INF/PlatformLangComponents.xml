@@ -16,8 +16,17 @@
 
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
-      <implementation-class>com.intellij.openapi.module.impl.ModuleManagerComponent</implementation-class>
+      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge</implementation-class>
       <loadForDefaultProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.module.impl.ExternalModuleListStorage</interface-class>
@@ -104,11 +113,11 @@
   <module-components>
     <component>
       <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerComponent</implementation-class>
+      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.facet.FacetManager</interface-class>
-      <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
+      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge</implementation-class>
     </component>
   </module-components>
 

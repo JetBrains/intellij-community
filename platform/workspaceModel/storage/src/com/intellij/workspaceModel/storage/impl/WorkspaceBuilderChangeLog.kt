@@ -18,16 +18,16 @@ class WorkspaceBuilderChangeLog {
 
   internal fun <T : WorkspaceEntity> addReplaceEvent(entityId: EntityId,
                                                      copiedData: WorkspaceEntityData<T>,
-                                                     addedChildren: List<Pair<ConnectionId, EntityId>>,
-                                                     removedChildren: List<Pair<ConnectionId, EntityId>>,
-                                                     parentsMapRes: Map<ConnectionId, EntityId?>) {
+                                                     addedChildren: List<Pair<ConnectionId, ChildEntityId>>,
+                                                     removedChildren: Set<Pair<ConnectionId, ChildEntityId>>,
+                                                     parentsMapRes: Map<ConnectionId, ParentEntityId?>) {
     modificationCount++
 
     val existingChange = changeLog[entityId]
-    val replaceEvent = ChangeEntry.ReplaceEntity(copiedData, addedChildren, removedChildren, parentsMapRes)
+    val replaceEvent = ChangeEntry.ReplaceEntity(copiedData, addedChildren, removedChildren.toList(), parentsMapRes)
 
     val makeReplaceEvent = { replaceEntity: ChangeEntry.ReplaceEntity<*> ->
-      val removedChildrenSet = removedChildren.toSet()
+      val removedChildrenSet = removedChildren
       val addedChildrenSet = addedChildren.toSet()
       val newAddedChildren = (replaceEntity.newChildren.toSet() - removedChildrenSet + (addedChildrenSet - replaceEntity.removedChildren.toSet())).toList()
       val newRemovedChildren = (replaceEntity.removedChildren.toSet() - addedChildrenSet + (removedChildrenSet - replaceEntity.newChildren.toSet())).toList()
@@ -114,9 +114,9 @@ internal sealed class ChangeEntry {
 
   data class ReplaceEntity<E : WorkspaceEntity>(
     val newData: WorkspaceEntityData<E>,
-    val newChildren: List<Pair<ConnectionId, EntityId>>,
-    val removedChildren: List<Pair<ConnectionId, EntityId>>,
-    val modifiedParents: Map<ConnectionId, EntityId?>
+    val newChildren: List<Pair<ConnectionId, ChildEntityId>>,
+    val removedChildren: List<Pair<ConnectionId, ChildEntityId>>,
+    val modifiedParents: Map<ConnectionId, ParentEntityId?>
   ) : ChangeEntry()
 
   data class ReplaceAndChangeSource<E : WorkspaceEntity>(

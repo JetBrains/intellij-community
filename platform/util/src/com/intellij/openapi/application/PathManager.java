@@ -154,9 +154,7 @@ public final class PathManager {
       }
       catch (IOException ignore) { }
     }
-    do {
-      root = root.getParent();
-    } while (root != null && !isIdeaHome(root));
+    do root = root.getParent(); while (root != null && !isIdeaHome(root));
     return root != null ? root.toString() : null;
   }
 

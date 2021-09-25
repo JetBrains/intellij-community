@@ -35,6 +35,7 @@
     <httpRequestHandler implementation="org.jetbrains.ide.OpenSettingsService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
 
+    <applicationService serviceImplementation="org.jetbrains.ide.ToolboxRestServiceConfig" preload="true"/>
     <httpRequestHandler implementation="org.jetbrains.ide.ToolboxRestService"/>
     <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxUpdateNotificationHandler"/>
     <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxRestartNotificationHandler"/>

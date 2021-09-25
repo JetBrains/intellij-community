@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.*
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
@@ -32,6 +33,13 @@ object StorageUtil {
   fun saveInfo(version: Int, isValid: Boolean, storageDirectory: Path) {
     val infoFile = storageDirectory.resolve(STORAGE_INFO_FILE)
     infoFile.writeText(GSON.toJson(StorageInfo(version, isValid, System.currentTimeMillis())))
+  }
+
+  fun <K, V> PersistentHashMap<K, V>.getOrLogError(key: K): V? = try {
+    this.get(key)
+  } catch (e: IOException) {
+    LOG.warn(e)
+    null
   }
 
   fun <K> PersistentHashMap<K, *>.isEmpty(): Boolean = this.processKeysWithExistingMapping { false }

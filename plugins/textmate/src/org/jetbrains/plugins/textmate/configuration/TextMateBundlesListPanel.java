@@ -28,8 +28,7 @@ import java.util.*;
 
 import static com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createMultipleFoldersDescriptor;
 import static com.intellij.ui.ToolbarDecorator.createDecorator;
-import static org.jetbrains.plugins.textmate.TextMateServiceImpl.INSTALLED_BUNDLES_PATH;
-import static org.jetbrains.plugins.textmate.TextMateServiceImpl.PREINSTALLED_BUNDLES_PATH;
+import static org.jetbrains.plugins.textmate.TextMateServiceImpl.BUNDLED_BUNDLES_PATH;
 
 public class TextMateBundlesListPanel implements Disposable {
   private static final String TEXTMATE_LAST_ADDED_BUNDLE = "textmate.last.added.bundle";
@@ -62,7 +61,7 @@ public class TextMateBundlesListPanel implements Disposable {
 
   private static boolean isBuiltin(BundleConfigBean bean) {
     String path = bean != null ? bean.getPath() : null;
-    return path != null && (path.startsWith(PREINSTALLED_BUNDLES_PATH) || path.startsWith(INSTALLED_BUNDLES_PATH));
+    return path != null && path.startsWith(BUNDLED_BUNDLES_PATH);
   }
 
   @NotNull

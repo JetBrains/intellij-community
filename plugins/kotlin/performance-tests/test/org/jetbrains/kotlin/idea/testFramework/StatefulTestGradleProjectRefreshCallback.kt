@@ -1,11 +1,8 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.testFramework
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback
@@ -38,7 +35,7 @@ class StatefulTestGradleProjectRefreshCallback(
             error = Error("Got null external project after Gradle import")
             return
         }
-        ServiceManager.getService(ProjectDataManager::class.java).importData(externalProject, project, true)
+        service<ProjectDataManager>().importData(externalProject, project, true)
     }
 
     override fun onFailure(errorMessage: String, errorDetails: String?) {

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -43,7 +44,8 @@ public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightF
     moduleBuilder.addLibrary("core", PathUtil.getJarPathForClass(Project.class));
     moduleBuilder.addLibrary("editor", PathUtil.getJarPathForClass(Editor.class));
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(IntentionActionBean.class));
-    moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(IncorrectOperationException.class));
+    moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
+    moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable.class));
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
   }

@@ -246,9 +246,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @Nullable
   private static SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileImpl) {
-      IStubFileElementType stubType = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
+      IStubFileElementType<?> stubType = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
       if (stubType != null && stubType.shouldBuildStubFor(containingFile.getViewProvider().getVirtualFile())) {
-        StubBasedPsiElement stubPsi = (StubBasedPsiElement)element;
+        StubBasedPsiElement<?> stubPsi = (StubBasedPsiElement<?>)element;
         int stubId = PsiAnchor.calcStubIndex(stubPsi);
         if (stubId != -1) {
           return new AnchorElementInfo(element, (PsiFileImpl)containingFile, stubId, stubPsi.getElementType());
@@ -268,18 +268,18 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return myElementInfo;
   }
 
-  static boolean pointsToTheSameElementAs(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
+  static boolean pointsToTheSameElementAs(@NotNull SmartPsiElementPointer<?> pointer1, @NotNull SmartPsiElementPointer<?> pointer2) {
     if (pointer1 == pointer2) return true;
     ProgressManager.checkCanceled();
     if (pointer1 instanceof SmartPsiElementPointerImpl && pointer2 instanceof SmartPsiElementPointerImpl) {
-      SmartPsiElementPointerImpl impl1 = (SmartPsiElementPointerImpl)pointer1;
-      SmartPsiElementPointerImpl impl2 = (SmartPsiElementPointerImpl)pointer2;
+      SmartPsiElementPointerImpl<?> impl1 = (SmartPsiElementPointerImpl<?>)pointer1;
+      SmartPsiElementPointerImpl<?> impl2 = (SmartPsiElementPointerImpl<?>)pointer2;
       SmartPointerElementInfo elementInfo1 = impl1.getElementInfo();
       SmartPointerElementInfo elementInfo2 = impl2.getElementInfo();
-      if (!elementInfo1.pointsToTheSameElementAs(elementInfo2, ((SmartPsiElementPointerImpl)pointer1).myManager)) return false;
+      if (!elementInfo1.pointsToTheSameElementAs(elementInfo2, impl1.myManager)) return false;
       PsiElement cachedElement1 = impl1.getCachedElement();
       PsiElement cachedElement2 = impl2.getCachedElement();
-      return cachedElement1 == null || cachedElement2 == null || Comparing.equal(cachedElement1, cachedElement2);
+      return cachedElement1 == null || cachedElement2 == null || cachedElement1.equals(cachedElement2);
     }
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }

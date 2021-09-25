@@ -101,18 +101,16 @@ final class PersistentFSTreeAccessor {
       }
       return result.toIntArray();
     }
-    else {
-      try (DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
-        final int count = DataInputOutputUtil.readINT(input);
-        int[] result = ArrayUtil.newIntArray(count);
-        int prevId = 0;
-        for (int i = 0; i < count; i++) {
-          DataInputOutputUtil.readINT(input); // Name
-          prevId = result[i] = DataInputOutputUtil.readINT(input) + prevId; // Id
-        }
-        return result;
+    try (DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
+      if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
+      final int count = DataInputOutputUtil.readINT(input);
+      int[] result = ArrayUtil.newIntArray(count);
+      int prevId = 0;
+      for (int i = 0; i < count; i++) {
+        DataInputOutputUtil.readINT(input); // Name
+        prevId = result[i] = DataInputOutputUtil.readINT(input) + prevId; // Id
       }
+      return result;
     }
   }
 

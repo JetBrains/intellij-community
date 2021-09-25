@@ -8,11 +8,11 @@ import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.psi.PsiFile
-import com.intellij.ui.popup.list.ListPopupImpl
 
 open class JvmClassIntentionActionGroup(
   actions: List<JvmGroupIntentionAction>,
@@ -61,9 +61,9 @@ open class JvmClassIntentionActionGroup(
       }
     }
 
-    return object : ListPopupImpl(project, step) {
+    return JBPopupFactory.getInstance().createListPopup(project, step) {
       // TODO JvmClass renderer
-      override fun getListElementRenderer() = PsiClassListCellRenderer()
+      PsiClassListCellRenderer()
     }
   }
 }

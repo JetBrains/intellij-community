@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -8,6 +8,7 @@ import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.icons.AllIcons.Toolwindows
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -94,8 +95,12 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
     }
   }
 
-  private fun notify(problem: Problem, state: SetUpdateState) {
-    if (project.isDisposed) return
+  private fun notify(problem: Problem, state: SetUpdateState, later: Boolean = true) {
+    if (state == SetUpdateState.IGNORED || project.isDisposed) return
+    if (later && Registry.`is`("ide.problems.view.notify.later")) {
+      ApplicationManager.getApplication().invokeLater { notify(problem, state, false) }
+      return // notify listeners later on EDT
+    }
     when (state) {
       SetUpdateState.ADDED -> {
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemAppeared(problem)

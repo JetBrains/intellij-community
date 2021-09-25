@@ -115,6 +115,97 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   }
 
   @Test
+  fun testMergeEventWithFilteredData() {
+    val startTimeMs = System.currentTimeMillis()
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2", count = 3)
+    expected.event.addData("start_time", startTimeMs)
+
+    testLogger(
+      { logger ->
+        val group = EventLogGroup("group.id", 2)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 100 + System.currentTimeMillis()), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 4202 + System.currentTimeMillis()), false)
+      }, expected)
+  }
+
+  @Test
+  fun testMergeEventWithFilteredDataAndOtherFields() {
+    val startTimeMs = System.currentTimeMillis()
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2", count = 3)
+    expected.event.addData("start_time", startTimeMs)
+    expected.event.addData("type", "open")
+
+    testLogger(
+      { logger ->
+        val group = EventLogGroup("group.id", 2)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs, "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 1000 + System.currentTimeMillis(), "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 402 + System.currentTimeMillis(), "type" to "open"), false)
+      }, expected)
+  }
+
+  @Test
+  fun testMergeEventWithFilteredDataAndOtherDifferentFields() {
+    val startTimeMs1 = System.currentTimeMillis()
+    val startTimeMs2 = 1000 + System.currentTimeMillis()
+    val startTimeMs3 = 402 + System.currentTimeMillis()
+
+    val first = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
+    val second = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs2, "type" to "close"))
+    val third = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
+
+    testLogger(
+      { logger ->
+        val group = EventLogGroup("group.id", 2)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
+        val l = 1000 + System.currentTimeMillis()
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2, "type" to "close"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
+      }, first, second, third)
+  }
+
+  @Test
+  fun testMergeEventWithFilteredDataAndOtherDifferentFieldsSize() {
+    val startTimeMs1 = System.currentTimeMillis()
+    val startTimeMs2 = 1000 + System.currentTimeMillis()
+    val startTimeMs3 = 402 + System.currentTimeMillis()
+
+    val first = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
+    val second = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs2))
+    val third = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
+
+    testLogger(
+      { logger ->
+        val group = EventLogGroup("group.id", 2)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
+        val l = 1000 + System.currentTimeMillis()
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
+      }, first, second, third)
+  }
+
+  @Test
+  fun testMergeEventWithFilteredDataAndOtherDifferentFieldsSize2() {
+    val startTimeMs1 = System.currentTimeMillis()
+    val startTimeMs2 = 1000 + System.currentTimeMillis()
+    val startTimeMs3 = 402 + System.currentTimeMillis()
+
+    val first = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
+    val second = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs2, "value" to 13, "result" to "succeed"))
+    val third = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
+
+    testLogger(
+      { logger ->
+        val group = EventLogGroup("group.id", 2)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
+        val l = 1000 + System.currentTimeMillis()
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2, "value" to 13, "result" to "succeed"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
+      }, first, second, third)
+  }
+
+  @Test
   fun testStateEventWithData() {
     val data = HashMap<String, Any>()
     data["name"] = "myOption"

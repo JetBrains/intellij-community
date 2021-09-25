@@ -4,14 +4,25 @@ package git4idea.cherrypick
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import git4idea.i18n.GitBundle
 import git4idea.test.*
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
+@RunWith(Parameterized::class)
+class GitCherryPickNoAutoCommitTest(private val createChangelistAutomatically: Boolean) : GitCherryPickTest() {
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun getModulesCount() = listOf(true, false)
+  }
 
   override fun setUp() {
     super.setUp()
     appSettings.isAutoCommitOnCherryPick = false
+    setValueForTest(vcsAppSettings::CREATE_CHANGELISTS_AUTOMATICALLY, createChangelistAutomatically)
   }
 
+  @Test
   fun `test commit dialog shown on cherry pick`() {
     branch("feature")
     val commit = file("f.txt").create().addCommit("fix #1").hash()
@@ -23,6 +34,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
   }
 
+  @Test
   fun `test cherry pick and commit`() {
     branch("feature")
     val commit = file("f.txt").create().addCommit("fix #1").hash()
@@ -41,6 +53,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     changeListManager.assertOnlyDefaultChangelist()
   }
 
+  @Test
   fun `test cherry-pick from protected branch should add suffix by default`() {
     branch("feature")
     val commit = file("f.txt").create().addCommit("fix #1").hash()
@@ -60,6 +73,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     changeListManager.assertOnlyDefaultChangelist()
   }
 
+  @Test
   fun `test cherry pick and cancel commit`() {
     branch("feature")
     val commit = file("f.txt").create().addCommit("fix #1").hash()
@@ -68,12 +82,18 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit)
 
-    val list = changeListManager.assertChangeListExists("fix #1")
+    val list = if (vcsAppSettings.CREATE_CHANGELISTS_AUTOMATICALLY) {
+      changeListManager.assertChangeListExists("fix #1")
+    }
+    else {
+      changeListManager.defaultChangeList
+    }
     assertNoNotification()
     updateChangeListManager()
     assertChanges(list, "f.txt")
   }
 
+  @Test
   fun `test cherry pick 2 commits`() {
     branch("feature")
     val commits = (1..2).map {
@@ -93,6 +113,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     changeListManager.assertOnlyDefaultChangelist()
   }
 
+  @Test
   fun `test cherry pick 2 commits, but cancel second`() {
     branch("feature")
     val (commit1, commit2) = (1..2).map {
@@ -114,26 +135,36 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
       ${shortHash(commit2)} fix #2
       """ + GitBundle.message("apply.changes.operation.successful.for.commits", "cherry-pick", 1) + """
       ${shortHash(commit1)} fix #1""")
-    val list = changeListManager.assertChangeListExists("fix #2")
+    val list = if (vcsAppSettings.CREATE_CHANGELISTS_AUTOMATICALLY) {
+      changeListManager.assertChangeListExists("fix #2")
+    }
+    else {
+      changeListManager.defaultChangeList
+    }
     assertChanges(list, "2.txt")
   }
 
+  @Test
   fun `test dirty tree conflicting with commit`() {
     `check dirty tree conflicting with commit`()
   }
 
+  @Test
   fun `test untracked file conflicting with commit`() {
     `check untracked file conflicting with commit`()
   }
 
+  @Test
   fun `test conflict with cherry-picked commit should show merge dialog`() {
     `check conflict with cherry-picked commit should show merge dialog`()
   }
 
+  @Test
   fun `test resolve conflicts and commit`() {
     `check resolve conflicts and commit`()
   }
 
+  @Test
   fun `test cherry-pick changes in renamed file`() {
     val initialName = "a.txt"
     file(initialName).create("This file has name $initialName").addCommit("Create $initialName")

@@ -59,7 +59,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
           logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
           return
         }
-        val primaryLanguage = lesson.module.primaryLanguage
+        val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
         resetPrimaryLanguage(primaryLanguage)
         OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson)
       }

@@ -1,18 +1,18 @@
 <html>
 <body>
-Reports a package that is exported or opened to the same Java 9 module where it's defined.
-The quick-fix removes such directives from <code>module-info.java</code>
+Reports a package that is exported to or opened in the same Java 9 module in which it is already defined.
+The quick-fix removes such directives from <code>module-info.java</code>.
 <p>Example:</p>
-<pre>
+<pre><code>
   module com.mycomp {
     exports com.mycomp.main to com.mycomp;
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   module main {
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the language level of the project or module is 9 or higher.</p>
 </body>

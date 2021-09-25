@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 internal object PluginSignatureChecker {
   private val LOG = logger<PluginSignatureChecker>()
 
-  private val cache = Caffeine
+  private val jetBrainsCertificateRevokedCache = Caffeine
     .newBuilder()
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build<String, Optional<Boolean>>()
@@ -46,37 +46,80 @@ internal object PluginSignatureChecker {
   }
 
   @JvmStatic
-  fun verifyPluginByAllCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File): Boolean {
-    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
-    val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates.orEmpty() + jbCert
-    return isSignedBy(descriptor, pluginFile, *certificates.toTypedArray())
+  fun verifyPluginByAllCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File, showAcceptDialog: Boolean = true): Boolean {
+    val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates.orEmpty()
+    return if (showAcceptDialog) {
+      isSignedInWithAcceptDialog(descriptor, pluginFile, certificates)
+    }
+    else {
+      isSignedInBackground(descriptor, pluginFile, certificates)
+    }
   }
 
   @JvmStatic
-  fun verifyPluginByCustomCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File): Boolean {
+  fun verifyPluginByCustomCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File, showAcceptDialog: Boolean = true): Boolean {
     val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates
     if (certificates.isEmpty()) return true
-    return isSignedBy(descriptor, pluginFile, *certificates.toTypedArray())
+    return isSignedBy(descriptor, pluginFile, showAcceptDialog, *certificates.toTypedArray())
   }
 
   @JvmStatic
-  fun verifyPluginByJetBrains(descriptor: IdeaPluginDescriptor, pluginFile: File): Boolean {
-    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
-    val isRevoked = isCertificatesRevoked(jbCert)
-    if (isRevoked) {
-      return processRevokedCertificate(descriptor)
+  fun verifyPluginByJetBrains(
+    descriptor: IdeaPluginDescriptor,
+    pluginFile: File,
+    showAcceptDialog: Boolean = true
+  ): Boolean {
+    return if (showAcceptDialog) {
+      isSignedInWithAcceptDialog(descriptor, pluginFile)
     }
-    return isSignedBy(descriptor, pluginFile, jbCert)
+    else {
+      isSignedInBackground(descriptor, pluginFile)
+    }
   }
 
-  private fun isCertificatesRevoked(vararg certificates: Certificate): Boolean {
-    val isRevokedCached = cache.getIfPresent(this.javaClass.name)?.get()
+  private fun isSignedInBackground(
+    descriptor: IdeaPluginDescriptor,
+    pluginFile: File,
+    certificates: List<Certificate> = emptyList()
+  ): Boolean {
+    val jbCert = jetbrainsCertificate ?: return false
+    val isRevoked = runCatching { isJetBrainsCertificateRevoked() }.getOrNull() ?: return false
+    if (isRevoked) {
+      LOG.info("Plugin ${pluginFile.name} has revoked JetBrains certificate")
+      return false
+    }
+    val allCerts = certificates + jbCert
+    return isSignedBy(descriptor, pluginFile, showAcceptDialog = false, *allCerts.toTypedArray())
+  }
+
+  private fun isSignedInWithAcceptDialog(
+    descriptor: IdeaPluginDescriptor,
+    pluginFile: File,
+    certificates: List<Certificate> = emptyList()
+  ): Boolean {
+    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
+    val isRevoked = try {
+      isJetBrainsCertificateRevoked()
+    }
+    catch (e: IllegalArgumentException) {
+      return processSignatureWarning(descriptor, e.message ?: IdeBundle.message("jetbrains.certificate.invalid"))
+    }
+    if (isRevoked) {
+      LOG.info("Plugin ${pluginFile.name} has revoked JetBrains certificate")
+      return processRevokedCertificate(descriptor)
+    }
+    val allCerts = certificates + jbCert
+    return isSignedBy(descriptor, pluginFile, showAcceptDialog = true, *allCerts.toTypedArray())
+  }
+
+  private fun isJetBrainsCertificateRevoked(): Boolean {
+    val isRevokedCached = jetBrainsCertificateRevokedCache.getIfPresent(this.javaClass.name)?.get()
     if (isRevokedCached != null) return isRevokedCached
-    val cert509Lists = certificates.mapNotNull { it as? X509Certificate }
+    val cert509Lists = listOfNotNull(jetbrainsCertificate as? X509Certificate)
     val lists = getRevocationLists(cert509Lists)
     val revokedCertificates = CertificateUtils.findRevokedCertificate(cert509Lists, lists)
     val isRevoked = revokedCertificates != null
-    cache.put(this.javaClass.name, Optional.of(isRevoked))
+    jetBrainsCertificateRevokedCache.put(this.javaClass.name, Optional.of(isRevoked))
     return isRevoked
   }
 
@@ -84,8 +127,14 @@ internal object PluginSignatureChecker {
     val certsExceptCA = certs.subList(0, certs.size - 1)
     return certsExceptCA.mapNotNull { certificate ->
       val crlUris = CertificateUtils.getCrlUris(certificate)
-      if (crlUris.isEmpty()) throw IllegalArgumentException("CRL not found for certificate")
-      if (crlUris.size > 1) throw IllegalArgumentException("Multiple CRL URI found in certificate")
+      if (crlUris.isEmpty()) {
+        LOG.error("CRL not found for certificate")
+        throw IllegalArgumentException("CRL not found for certificate")
+      }
+      if (crlUris.size > 1) {
+        LOG.error("Multiple CRL URI found in certificate")
+        throw IllegalArgumentException("Multiple CRL URI found in certificate")
+      }
       val crlURI = crlUris.first()
       val certificateFactory = CertificateFactory.getInstance("X.509")
       val inputStream = HttpRequests.request(crlURI.toURL().toExternalForm())
@@ -96,10 +145,18 @@ internal object PluginSignatureChecker {
     }
   }
 
-  private fun isSignedBy(descriptor: IdeaPluginDescriptor, pluginFile: File, vararg certificate: Certificate): Boolean {
+  private fun isSignedBy(
+    descriptor: IdeaPluginDescriptor,
+    pluginFile: File,
+    showAcceptDialog: Boolean = true,
+    vararg certificate: Certificate,
+  ): Boolean {
     val errorMessage = verifyPluginAndGetErrorMessage(descriptor, pluginFile, *certificate)
-    if (errorMessage != null) {
+    if (errorMessage != null && showAcceptDialog) {
       return processSignatureWarning(descriptor, errorMessage)
+    }
+    if (errorMessage != null) {
+      return false
     }
     return true
   }

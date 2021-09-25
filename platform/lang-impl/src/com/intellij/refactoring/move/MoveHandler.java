@@ -30,12 +30,6 @@ import java.util.List;
 import java.util.Set;
 
 public class MoveHandler implements RefactoringActionHandler {
-  /**
-   * @deprecated Use {@link #getRefactoringName()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String REFACTORING_NAME = "Move";
 
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor

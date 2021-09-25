@@ -14,6 +14,7 @@ import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
@@ -21,7 +22,6 @@ import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -36,26 +36,27 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Collectors
 
 @ApiStatus.Internal
-class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable) : Disposable, WorkspaceModelCache {
-  private val cacheFile: Path
-  private val invalidateProjectCacheMarkerFile: File
+class WorkspaceModelCacheImpl(private val project: Project) : Disposable, WorkspaceModelCache {
+  override val enabled = (!ApplicationManager.getApplication().isUnitTestMode && Registry.`is`("ide.new.project.model.cache"))
+                         || forceEnableCaching
+
+  private val cacheFile by lazy { initCacheFile() }
+  private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate").toFile() }
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
+  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager,
+                                                                                WorkspaceModelCacheImpl::collectExternalCacheVersions)
 
   init {
-    Disposer.register(parentDisposable, this)
+    if (enabled) {
+      LOG.debug("Project Model Cache at $cacheFile")
 
-    cacheFile = initCacheFile()
-    invalidateProjectCacheMarkerFile = project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate").toFile()
-
-    LOG.debug("Project Model Cache at $cacheFile")
-
-    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChange) {
-        LOG.debug("Schedule cache update")
-        saveAlarm.request()
-      }
-    })
+      WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          LOG.debug("Schedule cache update")
+          saveAlarm.request()
+        }
+      })
+    }
   }
 
   private fun initCacheFile(): Path {
@@ -105,7 +106,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
 
   override fun dispose() = Unit
 
-  fun loadCache(): WorkspaceEntityStorage? {
+  override fun loadCache(): WorkspaceEntityStorage? {
     try {
       if (!cacheFile.exists()) return null
 
@@ -119,7 +120,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       LOG.debug("Loading project model cache from $cacheFile")
 
       val stopWatch = Stopwatch.createStarted()
-      val builder = cacheFile.inputStream().use { serializer.deserializeCache(it, ConsistencyCheckingMode.defaultIde()) }
+      val builder = cacheFile.inputStream().use { serializer.deserializeCache(it) }
       LOG.debug("Loaded project model cache from $cacheFile in ${stopWatch.stop()}")
 
       return builder
@@ -167,7 +168,13 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
   }
 
   object PluginAwareEntityTypesResolver : EntityTypesResolver {
-    override fun getPluginId(clazz: Class<*>): String? = PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.name)?.idString
+    override fun getPluginId(clazz: Class<*>): String? {
+      val className = clazz.name
+      if (className.startsWith("[")) {
+        return PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.componentType.name)?.idString
+      }
+      return PluginManager.getInstance().getPluginOrPlatformByClassName(className)?.idString
+    }
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {
       val id = pluginId?.let { PluginId.getId(it) }
@@ -179,7 +186,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
         plugin.pluginClassLoader ?: ApplicationManager::class.java.classLoader
       }
 
-      if (name.startsWith("[")) return Class.forName(name)
+      if (name.startsWith("[")) return Class.forName(name, true, classloader)
       return classloader.loadClass(name)
     }
   }
@@ -187,6 +194,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
   companion object {
     private val LOG = logger<WorkspaceModelCacheImpl>()
     internal const val DATA_DIR_NAME = "project-model-cache"
+    private var forceEnableCaching = false
 
     @TestOnly
     var testCacheFile: File? = null
@@ -214,6 +222,11 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       return WORKSPACE_MODEL_CACHE_VERSION_EP
         .extensions()
         .collect(Collectors.toMap(WorkspaceModelCacheVersion::getId, WorkspaceModelCacheVersion::getVersion))
+    }
+
+    fun forceEnableCaching(disposable: Disposable) {
+      forceEnableCaching = true
+      Disposer.register(disposable) { forceEnableCaching = false }
     }
   }
 }

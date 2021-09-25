@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -866,6 +866,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public @Nullable ToolsImpl getToolsOrNull(@NotNull String name, @Nullable Project project) {
     initInspectionTools(project);
     return myTools.get(name);
+  }
+
+  public Collection<ToolsImpl> getTools(@Nullable Project project) {
+    initInspectionTools(project);
+    return myTools.values();
   }
 
   public void enableAllTools(Project project) {

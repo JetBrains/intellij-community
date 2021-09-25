@@ -113,6 +113,12 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
   public static @NotNull DfaValue getArrayElementValue(@NotNull DfaValueFactory factory,
                                                        @Nullable DfaValue array,
                                                        @NotNull LongRangeSet indexSet) {
+    if (array instanceof DfaTypeValue) {
+      PsiVariable var = array.getDfType().getConstantOfType(PsiVariable.class);
+      if (var != null) {
+        array = new PlainDescriptor(var).createValue(factory, null);
+      }
+    }
     if (!(array instanceof DfaVariableValue)) return factory.getUnknown();
     if (indexSet.isEmpty()) return factory.getUnknown();
     long min = indexSet.min();

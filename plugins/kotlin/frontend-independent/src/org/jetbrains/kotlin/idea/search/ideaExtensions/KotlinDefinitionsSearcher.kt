@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -39,7 +25,6 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
-import java.util.*
 
 class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
     override fun execute(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in PsiElement>): Boolean {
@@ -102,13 +87,12 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
 
         private fun isDelegated(element: PsiElement): Boolean = element is KtLightMethod && element.isDelegated
 
-        private fun isFieldParameter(parameter: KtParameter): Boolean {
-            return runReadAction { KtPsiUtil.getClassIfParameterIsProperty(parameter) != null }
+        private fun isFieldParameter(parameter: KtParameter): Boolean = runReadAction {
+            KtPsiUtil.getClassIfParameterIsProperty(parameter) != null
         }
 
         private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiElement>): Boolean {
-            val psiClass = runReadAction { klass.providedToLightClass() ?: providedCreateKtFakeLightClass(klass) }
-                as? KtLightClass
+            val psiClass = runReadAction { klass.providedToLightClass() ?: providedCreateKtFakeLightClass(klass) } as? KtLightClass
                 ?: return false //TODO Implement FIR support for not nullable providedCreateKtFakeLightClass
 
             val searchScope = runReadAction { psiClass.useScope }
@@ -116,7 +100,7 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
                 return processLightClassLocalImplementations(psiClass, searchScope, consumer)
             }
 
-            return ContainerUtil.process(ClassInheritorsSearch.search(psiClass, true), consumer)
+            return runReadAction { ContainerUtil.process(ClassInheritorsSearch.search(psiClass, true), consumer) }
         }
 
         private fun processLightClassLocalImplementations(
@@ -141,49 +125,44 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
             }
         }
 
-        private fun processFunctionImplementations(function: KtFunction, scope: SearchScope, consumer: Processor<PsiElement>): Boolean {
-            return runReadAction {
-                function.toPossiblyFakeLightMethods().firstOrNull()?.forEachImplementation(scope, consumer::process) ?: true
-            }
+        private fun processFunctionImplementations(
+            function: KtFunction,
+            scope: SearchScope,
+            consumer: Processor<PsiElement>,
+        ): Boolean = runReadAction {
+            function.toPossiblyFakeLightMethods().firstOrNull()?.forEachImplementation(scope, consumer::process) ?: true
         }
 
         private fun processPropertyImplementations(
             declaration: KtNamedDeclaration,
             scope: SearchScope,
             consumer: Processor<PsiElement>
-        ): Boolean {
-            return runReadAction {
-                processPropertyImplementationsMethods(declaration.toPossiblyFakeLightMethods(), scope, consumer)
-            }
+        ): Boolean = runReadAction {
+            processPropertyImplementationsMethods(declaration.toPossiblyFakeLightMethods(), scope, consumer)
         }
 
-        private fun processActualDeclarations(declaration: KtDeclaration, consumer: Processor<PsiElement>): Boolean {
-            return runReadAction {
-                if (!declaration.isExpectDeclaration()) true
-                else declaration.actualsForExpected().all(consumer::process)
-            }
+        private fun processActualDeclarations(declaration: KtDeclaration, consumer: Processor<PsiElement>): Boolean = runReadAction {
+            if (!declaration.isExpectDeclaration()) true
+            else declaration.actualsForExpected().all(consumer::process)
         }
 
         fun processPropertyImplementationsMethods(
             accessors: Iterable<PsiMethod>,
             scope: SearchScope,
             consumer: Processor<PsiElement>
-        ): Boolean {
-            return accessors.all { method ->
-                method.forEachOverridingMethod(scope) { implementation ->
-                    if (isDelegated(implementation)) return@forEachOverridingMethod true
+        ): Boolean = accessors.all { method ->
+            method.forEachOverridingMethod(scope) { implementation ->
+                if (isDelegated(implementation)) return@forEachOverridingMethod true
 
-                    val elementToProcess = runReadAction {
-                        val mirrorElement = (implementation as? KtLightMethod)?.kotlinOrigin
-                        when (mirrorElement) {
-                            is KtProperty, is KtParameter -> mirrorElement
-                            is KtPropertyAccessor -> if (mirrorElement.parent is KtProperty) mirrorElement.parent else implementation
-                            else -> implementation
-                        }
+                val elementToProcess = runReadAction {
+                    when (val mirrorElement = (implementation as? KtLightMethod)?.kotlinOrigin) {
+                        is KtProperty, is KtParameter -> mirrorElement
+                        is KtPropertyAccessor -> if (mirrorElement.parent is KtProperty) mirrorElement.parent else implementation
+                        else -> implementation
                     }
-
-                    consumer.process(elementToProcess)
                 }
+
+                consumer.process(elementToProcess)
             }
         }
     }

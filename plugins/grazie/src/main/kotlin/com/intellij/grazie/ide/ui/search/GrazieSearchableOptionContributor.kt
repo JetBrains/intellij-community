@@ -2,9 +2,9 @@
 package com.intellij.grazie.ide.ui.search
 
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.text.TextExtractor
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 
@@ -27,8 +27,8 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
     for (lang in Lang.values()) {
       processor.addProofreadOptions("${lang.displayName} ${lang.nativeName}", hit = msg("grazie.settings.proofreading.languages.text"))
     }
-    for (name in LanguageGrammarChecking.getStrategies().map { it.getName() }) {
-      processor.addGrammarOptions(name, hit = msg("grazie.settings.grammar.scope.file-types.text"))
+    for (language in TextExtractor.getSupportedLanguages()) {
+      processor.addGrammarOptions(language.displayName, hit = msg("grazie.settings.grammar.scope.file-types.text"))
     }
     processor.addGrammarOptions("grazie", null, null)
   }

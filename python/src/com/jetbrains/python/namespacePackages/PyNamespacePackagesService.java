@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.namespacePackages;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -9,13 +9,12 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.python.FoldersComponentTools;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -30,6 +29,7 @@ import java.util.List;
 @State(name = "PyNamespacePackagesService")
 public class PyNamespacePackagesService implements PersistentStateComponent<PyNamespacePackagesService> {
   private final List<VirtualFile> myNamespacePackageFolders = new ArrayList<>();
+  private final FoldersComponentTools myTools = new FoldersComponentTools(myNamespacePackageFolders);
   private final Module myModule;
 
   public PyNamespacePackagesService() {
@@ -46,7 +46,7 @@ public class PyNamespacePackagesService implements PersistentStateComponent<PyNa
 
   public @NotNull List<String> getNamespacePackageFolders() {
     removeInvalidNamespacePackageFolders();
-    return Collections.unmodifiableList(ContainerUtil.map(myNamespacePackageFolders, it -> it.getPath()));
+    return Collections.unmodifiableList(myTools.getFoldersAsStrings());
   }
 
   @Transient
@@ -56,19 +56,12 @@ public class PyNamespacePackagesService implements PersistentStateComponent<PyNa
   }
 
   public void setNamespacePackageFolders(@NotNull List<String> folders) {
-    myNamespacePackageFolders.clear();
-    for (String path: folders) {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-      if (virtualFile != null) {
-        myNamespacePackageFolders.add(virtualFile);
-      }
-    }
+    myTools.setFoldersAsStrings(folders);
   }
 
   @Transient
   public void setNamespacePackageFoldersVirtualFiles(@NotNull List<VirtualFile> folders) {
-    myNamespacePackageFolders.clear();
-    myNamespacePackageFolders.addAll(folders);
+  myTools.setFoldersAsVirtualFiles(folders);
   }
 
   public void toggleMarkingAsNamespacePackage(@NotNull VirtualFile directory) {

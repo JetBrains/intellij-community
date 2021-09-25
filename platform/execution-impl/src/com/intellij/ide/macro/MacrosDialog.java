@@ -325,19 +325,6 @@ public final class MacrosDialog extends DialogWrapper {
     }.installOn(myMacrosList);
   }
 
-  /**
-   * @deprecated Doesn't support user-defined path macros, use {@link #getSelectedMacroName()} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public Macro getSelectedMacro() {
-    final Item item = myMacrosList.getSelectedValue();
-    if (item instanceof MacroWrapper) {
-      return ((MacroWrapper)item).myMacro;
-    }
-    return null;
-  }
-
 
   public @Nullable String getSelectedMacroName() {
     final Item item = myMacrosList.getSelectedValue();

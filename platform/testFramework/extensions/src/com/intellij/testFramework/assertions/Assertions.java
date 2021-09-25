@@ -24,23 +24,23 @@ import java.util.List;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class Assertions extends org.assertj.core.api.Assertions {
-  @NotNull
-  public static JdomAssert assertThat(@Nullable Element element) {
+  public static @NotNull JdomAssert assertThat(@Nullable Element element) {
     return new JdomAssert(element);
   }
 
-  @NotNull
-  public static PathAssertEx assertThat(@Nullable Path actual) {
+  public static @NotNull PathAssertEx assertThat(@Nullable Path actual) {
     return new PathAssertEx(actual);
   }
 
-  @NotNull
-  public static StringAssertEx assertThat(@Nullable String actual) {
+  public static @NotNull StringAssertEx assertThat(@Nullable String actual) {
     return new StringAssertEx(actual);
   }
 
-  @NotNull
-  public static <ELEMENT> ListAssertEx<ELEMENT> assertThat(@Nullable List<? extends ELEMENT> actual) {
+  public static @NotNull CharSequenceEx assertThat(@Nullable CharSequence actual) {
+    return new CharSequenceEx(actual);
+  }
+
+  public static @NotNull <ELEMENT> ListAssertEx<ELEMENT> assertThat(@Nullable List<? extends ELEMENT> actual) {
     return new ListAssertEx<>(actual);
   }
 }

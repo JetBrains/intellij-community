@@ -222,10 +222,6 @@ public final class PyNames {
 
   public static final String PASS = "pass";
 
-  public static final String NOSE_TEST = "nose";
-  public static final String PY_TEST = "pytest";
-  public static final String TRIAL_TEST = "Twisted";
-
   public static final String TEST_CASE = "TestCase";
 
   public static final String PYCACHE = "__pycache__";
@@ -546,6 +542,8 @@ public final class PyNames {
   public static final String LAMBDA = "lambda";
   public static final String ASYNC = "async";
   public static final String AWAIT = "await";
+  public static final String MATCH = "match";
+  public static final String CASE = "case";
 
   /**
    * Contains keywords as of CPython 2.5.

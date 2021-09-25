@@ -72,7 +72,6 @@ private const val API_TIMEOUT_MILLIS = 10_000L
 private const val DATA_DEBOUNCE_MILLIS = 100L
 private const val SEARCH_DEBOUNCE_MILLIS = 200L
 
-@Suppress("EXPERIMENTAL_API_USAGE") // Just playing around... can't use StateFlows yet
 internal class PackageSearchDataService(
     override val project: Project
 ) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, LifetimeProvider, Disposable, CoroutineScope {
@@ -89,7 +88,7 @@ internal class PackageSearchDataService(
 
     private val dataProvider = ProjectDataProvider(PackageSearchApiClient(ServerURLs.base))
     private val operationFactory = PackageSearchOperationFactory()
-    private val operationExecutor = ModuleOperationExecutor(project)
+    private val operationExecutor = ModuleOperationExecutor()
     private val operationFailureRenderer = OperationFailureRenderer()
 
     private var knownRepositoriesRemoteInfo = listOf<ApiRepository>()
@@ -170,7 +169,7 @@ internal class PackageSearchDataService(
                 try {
                     performSearch(it.query, it.traceInfo)
                 } catch (e: Throwable) {
-                    logTrace(it.traceInfo, "onSearchQueryChangedFlow") { "Execution failed: ${e.message}" }
+                    logError(it.traceInfo, "onSearchQueryChangedFlow") { "Execution failed: ${e.message}" }
                 } finally {
                     setStatus(isSearching = false)
                 }
@@ -183,7 +182,7 @@ internal class PackageSearchDataService(
                 try {
                     onDataChanged(it)
                 } catch (e: Throwable) {
-                    logTrace(it, "onDataChangedFlow") { "Execution failed: ${e.message}" }
+                    logError(it, "onDataChangedFlow") { "Execution failed: ${e.message}" }
                 } finally {
                     setStatus(isRefreshingData = false)
                 }
@@ -402,7 +401,7 @@ internal class PackageSearchDataService(
         logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
 
         ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?.listDependenciesInProject(project, buildFile)
+            ?.listDependenciesInModule(this)
             ?.toList()
             ?: emptyList()
     }
@@ -497,7 +496,7 @@ internal class PackageSearchDataService(
 
     private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> = runReadAction {
         val declaredRepositories = (ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?.listRepositoriesInProject(project, buildFile)
+            ?.listRepositoriesInModule(this)
             ?.toList()
             ?: emptyList())
 

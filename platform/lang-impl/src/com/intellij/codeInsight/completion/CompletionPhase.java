@@ -199,13 +199,14 @@ public abstract class CompletionPhase implements Disposable {
   }
   public static class BgCalculation extends CompletionPhase {
     boolean modifiersChanged = false;
+    private final @NotNull ClientId ownerId = ClientId.getCurrent();
 
     public BgCalculation(final CompletionProgressIndicator indicator) {
       super(indicator);
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
-          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled() && ClientId.isCurrentlyUnderLocalId()) {
+          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled() && ownerId.equals(ClientId.getCurrent())) {
             indicator.scheduleRestart();
           }
         }

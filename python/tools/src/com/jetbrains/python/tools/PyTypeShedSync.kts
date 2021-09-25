@@ -2,6 +2,7 @@
 package com.jetbrains.python.tools
 
 import com.intellij.util.io.delete
+import com.intellij.util.text.nullize
 import com.jetbrains.python.psi.LanguageLevel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -210,25 +211,12 @@ fun sync(repo: Path, bundled: Path) {
     println("Removed: ${bundled.abs()}")
   }
 
-  val whiteList = setOf(".github",
-                        "scripts",
-                        "stdlib",
-                        "stubs",
-                        "tests",
-                        ".flake8",
-                        ".gitignore",
-                        "CONTRIBUTING.md",
-                        "LICENSE",
-                        "pre-commit",
-                        "pyproject.toml",
-                        "pyrightconfig.json",
-                        "README.md",
-                        "requirements-tests-py3.txt")
+  val exclude = setOf(".git", ".idea")
 
   Files
     .newDirectoryStream(repo)
     .forEach {
-      if (it.name() in whiteList) {
+      if (it.name() !in exclude) {
         val target = bundled.resolve(it.fileName)
 
         it.copyRecursively(target)
@@ -264,16 +252,23 @@ fun cleanTopLevelPackages(typeshed: Path, blackList: Set<String>) {
 }
 
 fun printStdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels(repo: Path, blackList: Set<String>) {
-  val lowestPython2 = LanguageLevel.PYTHON27.toPythonVersion()
-  val lowestPython3 = LanguageLevel.PYTHON36.toPythonVersion()
+  val lowestPython3 = LanguageLevel.SUPPORTED_LEVELS.filter { it.isPy3K }.minOrNull()!!
+  val latestPython = LanguageLevel.SUPPORTED_LEVELS.maxOrNull()!!
 
   val lines = Files
     .readAllLines(repo.resolve("stdlib/VERSIONS"))
+    .map { it.substringBefore('#') }
+    .filterNot { it.isBlank() }
     .map { it.split(": ", limit = 2) }
 
   lines.filter { it.size == 2 }
     .filter { it.first() !in blackList }
-    .filter { it.last().let { pythonVersion -> pythonVersion != lowestPython2 && pythonVersion != lowestPython3 } }
+    .filter {
+      val bounds = it.last()
+      val lowerBound = LanguageLevel.fromPythonVersion(bounds.substringBefore('-'))!!
+      val upperBound = LanguageLevel.fromPythonVersion(bounds.substringAfter('-').nullize(true)) ?: latestPython
+      lowestPython3.isOlderThan(lowerBound) || upperBound.isOlderThan(latestPython)
+    }
     .forEach { println("${it.first()}, ${it.last()}") }
 
   lines.filter { it.size != 2 }.forEach { println("WARN: malformed line: ${it.first()}") }

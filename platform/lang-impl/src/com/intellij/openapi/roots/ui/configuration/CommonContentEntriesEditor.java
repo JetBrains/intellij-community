@@ -160,7 +160,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
     myEditorsPanel.setBackground(UIUtil.getListBackground());
     JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel, true);
-    final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group);
+    final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group, "ContentEntryEditorToolbar");
     int border = myWithBorders ? 1 : 0;
     toolbarPanel.setBorder(new CustomLineBorder(1, 0, border, border));
 

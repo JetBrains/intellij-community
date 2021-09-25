@@ -10,10 +10,7 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class ModalityStateEx extends ModalityState {
   private final WeakList<Object> myModalEntities = new WeakList<>();
@@ -22,11 +19,11 @@ public final class ModalityStateEx extends ModalityState {
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  ModalityStateEx(Object @NotNull ... modalEntities) {
-    Collections.addAll(myModalEntities, modalEntities);
+  ModalityStateEx(@NotNull Collection<Object> modalEntities) {
+    myModalEntities.addAll(modalEntities);
   }
 
-  List<Object> getModalEntities() {
+  @NotNull List<Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
@@ -40,7 +37,7 @@ public final class ModalityStateEx extends ModalityState {
     List<Object> list = new ArrayList<>(modalEntities.size() + 1);
     list.addAll(modalEntities);
     list.add(anEntity);
-    return new ModalityStateEx(list.toArray());
+    return new ModalityStateEx(list);
   }
 
   void forceModalEntities(List<Object> entities) {

@@ -49,11 +49,15 @@ class BaseAdapter:
 
 class HTTPAdapter(BaseAdapter):
     __attrs__: Any
-    max_retries: int
+    max_retries: Retry
     config: Any
     proxy_manager: Any
     def __init__(
-        self, pool_connections: int = ..., pool_maxsize: int = ..., max_retries: Union[Retry, int] = ..., pool_block: bool = ...
+        self,
+        pool_connections: int = ...,
+        pool_maxsize: int = ...,
+        max_retries: Union[Retry, int, None] = ...,
+        pool_block: bool = ...,
     ) -> None: ...
     poolmanager: Any
     def init_poolmanager(self, connections, maxsize, block=..., **pool_kwargs): ...

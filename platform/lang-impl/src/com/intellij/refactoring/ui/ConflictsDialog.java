@@ -20,10 +20,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -78,6 +75,7 @@ public class ConflictsDialog extends DialogWrapper{
    * @deprecated use other CTORs
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
     myProject = project;

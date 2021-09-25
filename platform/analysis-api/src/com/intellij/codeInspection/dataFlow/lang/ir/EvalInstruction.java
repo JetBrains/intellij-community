@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An instruction that takes fixed number of operands from the stack and computes a single result without branching.
@@ -19,7 +20,7 @@ public abstract class EvalInstruction extends ExpressionPushingInstruction {
    * @param anchor PsiExpression to anchor to
    * @param operands number of operands
    */
-  protected EvalInstruction(DfaAnchor anchor, int operands) {
+  protected EvalInstruction(@Nullable DfaAnchor anchor, int operands) {
     super(anchor);
     myOperands = operands;
   }

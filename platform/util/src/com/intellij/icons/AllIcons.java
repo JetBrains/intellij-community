@@ -795,7 +795,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon PluginRestart = load("nodes/pluginRestart.svg", -1019519930808067545L, 0);
     /** 16x16 */ public static final @NotNull Icon PpInvalid = load("nodes/ppInvalid.svg", 5920894463075712399L, 0);
     /** 16x16 */ public static final @NotNull Icon PpJar = load("nodes/ppJar.svg", -8465610184724256396L, 0);
-    /** 16x16 */ public static final @NotNull Icon PpJdk = load("nodes/ppJdk.svg", -4119692495772510326L, 0);
+    /** 16x16 */ public static final @NotNull Icon PpJdk = load("nodes/ppJdk.svg", -223178507885405396L, 0);
     /** 16x16 */ public static final @NotNull Icon PpLib = load("nodes/ppLib.svg", -1728524175674971973L, 0);
     /** 16x16 */ public static final @NotNull Icon PpLibFolder = load("nodes/ppLibFolder.svg", -2300975326609844330L, 0);
     /** 16x16 */ public static final @NotNull Icon PpWeb = load("nodes/ppWeb.svg", -5038013880588459190L, 0);
@@ -847,18 +847,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WebFolder = load("nodes/webFolder.svg", 2222154280104242723L, 0);
     /** 16x16 */ public static final @NotNull Icon Weblistener = load("nodes/weblistener.svg", -7166837522849889039L, 0);
     /** 16x16 */ public static final @NotNull Icon WriteAccess = load("nodes/write-access.svg", 5767645715036234832L, 0);
-
-    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.ArrowDown */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon TreeDownArrow = load("nodes/treeDownArrow.png", 0L, 0);
-
-    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.ArrowRight */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon TreeRightArrow = load("nodes/treeRightArrow.png", 0L, 0);
   }
 
   public static final class ObjectBrowser {
@@ -1016,7 +1004,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("runConfigurations/testIgnored.svg", 6682967823487285741L, 0);
     /** 16x16 */ public static final @NotNull Icon TestMark = load("runConfigurations/testMark.svg", -728881308004144000L, 0);
     /** 16x16 */ public static final @NotNull Icon TestNotRan = load("runConfigurations/testNotRan.svg", -789681200569491786L, 0);
-    /** 16x16 */ public static final @NotNull Icon TestPassed = load("runConfigurations/testPassed.svg", -2517399281879006017L, 0);
+    /** 16x16 */ public static final @NotNull Icon TestPassed = load("runConfigurations/testPassed.svg", 4972281493010263166L, 0);
     /** 16x16 */ public static final @NotNull Icon TestPassedIgnored = load("runConfigurations/testPassedIgnored.svg", -7745522802914287125L, 0);
     /** 16x16 */ public static final @NotNull Icon TestPaused = load("runConfigurations/testPaused.svg", -8061842625938002652L, 0);
     /** 16x16 */ public static final @NotNull Icon TestSkipped = load("runConfigurations/testSkipped.svg", -2545611639014657363L, 0);
@@ -1052,8 +1040,13 @@ public class AllIcons {
   }
 
   public static final class Toolbar {
+    /** 16x16 */ public static final @NotNull Icon AddSlot = load("toolbar/addSlot.svg", 1430731334104066802L, 2);
+    /** 16x16 */ public static final @NotNull Icon Collapse = load("toolbar/collapse.svg", 4370618279390747985L, 2);
+    /** 16x16 */ public static final @NotNull Icon Expand = load("toolbar/expand.svg", 3799213482484983345L, 2);
     /** 16x16 */ public static final @NotNull Icon Filterdups = load("toolbar/filterdups.svg", 7814856965942396406L, 2);
     /** 16x16 */ public static final @NotNull Icon Locale = load("toolbar/locale.svg", 862613589331642871L, 2);
+    /** 16x16 */ public static final @NotNull Icon Pin = load("toolbar/pin.svg", -7623431009104566295L, 2);
+    /** 16x16 */ public static final @NotNull Icon RemoveSlot = load("toolbar/removeSlot.svg", 2058042260352087724L, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("toolbar/unknown.svg", -2160657314019007998L, 2);
     /** 16x16 */ public static final @NotNull Icon Xcode = load("toolbar/Xcode.svg", -5040536929822919298L, 2);
   }
@@ -1084,7 +1077,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("toolwindows/toolWindowAnalyzeDataflow.svg", 1296641742748522434L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("toolwindows/toolWindowAnt.svg", -8044985201571763562L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBuild = load("toolwindows/toolWindowBuild.svg", -5921532073527085775L, 2);
-    /** 13x13 */ public static final @NotNull Icon ToolWindowChanges = load("toolwindows/toolWindowChanges.svg", -4082264215914792510L, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowChanges = load("toolwindows/toolWindowChanges.svg", -7043388422082560811L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCommander = load("toolwindows/toolWindowCommander.svg", 2026695722773005232L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCommit = load("toolwindows/toolWindowCommit.svg", -9087996027653462829L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCoverage = load("toolwindows/toolWindowCoverage.svg", -6779027609579345964L, 2);

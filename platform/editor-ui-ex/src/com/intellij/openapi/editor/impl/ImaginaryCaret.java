@@ -95,7 +95,7 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @NotNull
   @Override
   public VisualPosition getVisualPosition() {
-    throw notImplemented();
+    return getEditor().offsetToVisualPosition(myStart);
   }
 
   @Override
@@ -127,7 +127,7 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public int getLeadSelectionOffset() {
-    throw notImplemented();
+    return getOffset();
   }
 
   @NotNull

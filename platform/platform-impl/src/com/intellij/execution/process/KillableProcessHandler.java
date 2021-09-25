@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -33,6 +33,11 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
+    myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
+  }
+
+  protected KillableProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
+    super(process, commandLine.getCommandLineString(), commandLine.getCharset());
     myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
@@ -172,7 +177,22 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          LOG.error("Failed to send Ctrl+C, fallback to default termination: " + getCommandLine(), e);
+          if (e.getMessage().contains(".exe terminated with exit code 6,")) {
+            // https://github.com/kohsuke/winp/blob/ec4ac6a988f6e3909c57db0abc4b02ff1b1d2e05/native/sendctrlc/main.cpp#L18
+            // WinP uses AttachConsole(pid) which might fail if the specified process does not have a console.
+            // In this case the error code returned is ERROR_INVALID_HANDLE (6).
+            // Let's fallback to the default termination without logging an error.
+            String msg = "Cannot send Ctrl+C to process without a console (fallback to default termination)";
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(msg + " " + getCommandLine());
+            }
+            else {
+              LOG.info(msg);
+            }
+          }
+          else {
+            LOG.error("Cannot send Ctrl+C (fallback to default termination) " + getCommandLine(), e);
+          }
         }
       }
     }

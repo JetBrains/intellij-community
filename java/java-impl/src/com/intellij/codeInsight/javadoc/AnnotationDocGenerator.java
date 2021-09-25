@@ -197,7 +197,7 @@ public final class AnnotationDocGenerator {
     AnnotationDocGenerator anno = new AnnotationDocGenerator(annotation, nameReferenceElement, context);
     if (anno.isNonDocumentedAnnotation()) return null;
 
-    if (!(shownAnnotations.add(annotation.getQualifiedName()) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) return null;
+    if (!(shownAnnotations.add(annotation.getQualifiedName()) || JavaDocInfoGenerator.isRepeatableAnnotationType(nameReferenceElement.resolve()))) return null;
     return anno;
   }
 }

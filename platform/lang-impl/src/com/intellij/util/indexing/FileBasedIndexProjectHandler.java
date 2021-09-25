@@ -27,6 +27,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 public final class FileBasedIndexProjectHandler {
   private static final Logger LOG = Logger.getInstance(FileBasedIndexProjectHandler.class);
@@ -95,15 +96,15 @@ public final class FileBasedIndexProjectHandler {
       indicator.setIndeterminate(false);
       indicator.setText(IndexingBundle.message("progress.indexing.updating"));
 
-      long start = System.currentTimeMillis();
+      long refreshedFilesCalcDuration = System.nanoTime();
       FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
       Collection<VirtualFile> files = fileBasedIndex.getFilesToUpdate(myProject);
-      long calcDuration = System.currentTimeMillis() - start;
+      refreshedFilesCalcDuration = System.nanoTime() - refreshedFilesCalcDuration;
 
-      LOG.info("Reindexing refreshed files: " + files.size() + " to update, calculated in " + calcDuration + "ms");
+      LOG.info("Reindexing refreshed files: " + files.size() + " to update, calculated in " + TimeUnit.NANOSECONDS.toMillis(refreshedFilesCalcDuration) + "ms");
       if (!files.isEmpty()) {
         PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-        indexChangedFiles(files, indicator, fileBasedIndex, myProject);
+        indexChangedFiles(files, indicator, fileBasedIndex, myProject, refreshedFilesCalcDuration);
         snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
       }
     }
@@ -111,8 +112,9 @@ public final class FileBasedIndexProjectHandler {
     private static void indexChangedFiles(@NotNull Collection<VirtualFile> files,
                                           @NotNull ProgressIndicator indicator,
                                           @NotNull FileBasedIndexImpl index,
-                                          @NotNull Project project) {
-      ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
+                                          @NotNull Project project,
+                                          long refreshedFilesCalcDuration) {
+      ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project, "On refresh of " + files.size() + " files");
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
       ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateStarted(project);
 
@@ -136,12 +138,14 @@ public final class FileBasedIndexProjectHandler {
         finally {
           Instant now = Instant.now();
           projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(indexingStart, now));
+          projectIndexingHistory.getTimes().setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
           projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
           projectIndexingHistory.getTimes().setTotalUpdatingTime(System.nanoTime() - projectIndexingHistory.getTimes().getTotalUpdatingTime());
         }
         ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
         scanningStatistics.setNumberOfScannedFiles(files.size());
         scanningStatistics.setNumberOfFilesForIndexing(files.size());
+        scanningStatistics.setScanningTime(refreshedFilesCalcDuration);
         projectIndexingHistory.addScanningStatistics(scanningStatistics);
         projectIndexingHistory.addProviderStatistics(fileSet.statistics);
 

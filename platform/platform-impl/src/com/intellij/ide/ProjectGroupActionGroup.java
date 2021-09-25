@@ -42,6 +42,7 @@ public class ProjectGroupActionGroup extends DefaultActionGroup implements DumbA
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myGroup.setExpanded(!myGroup.isExpanded());
+        RecentProjectsManagerBase.getInstanceEx().getState().intIncrementModificationCount();
         final JList list = getList(e);
         if (list != null) {
           final int index = list.getSelectedIndex();

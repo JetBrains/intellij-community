@@ -85,6 +85,9 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     if (isDumb(project) && !isDumbAware(commitCheck)) return null.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
 
     LOG.debug("Running commit check $commitCheck")
+    indicator.checkCanceled()
+    indicator.text = ""
+    indicator.text2 = ""
     return commitCheck.runCheck(indicator)
   }
 }

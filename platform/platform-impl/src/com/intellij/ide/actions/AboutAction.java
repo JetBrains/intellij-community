@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,11 @@ public class AboutAction extends AnAction implements DumbAware, LightEditCompati
   }
 
   public static void perform(@Nullable Project project) {
-    AboutPopup.show(WindowManager.getInstance().suggestParentWindow(project), false);
+    if (Registry.is("ide.new.about.dialog")) {
+      //new AboutDialogUI(project).show();
+      new AboutDialog(project).show();
+    } else {
+      AboutPopup.show(WindowManager.getInstance().suggestParentWindow(project), false);
+    }
   }
 }

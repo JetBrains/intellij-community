@@ -53,7 +53,7 @@ import java.util.List;
 public abstract class ASTDelegatePsiElement extends PsiElementBase {
   private static final Logger LOG = Logger.getInstance(ASTDelegatePsiElement.class);
 
-  private static final List EMPTY = Collections.emptyList();
+  private static <T> @NotNull List<T> EMPTY() { return Collections.emptyList(); }
 
   @Override
   public PsiFile getContainingFile() {
@@ -223,13 +223,13 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, s -> (T)s.getPsi());
   }
 
-  protected <T extends PsiElement> List<T> findChildrenByType(TokenSet elementType) {
-    List<T> result = EMPTY;
+  protected <T extends PsiElement> List<T> findChildrenByType(@NotNull TokenSet elementType) {
+    List<T> result = EMPTY();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
       final IElementType tt = child.getElementType();
       if (elementType.contains(tt)) {
-        if (result == EMPTY) {
+        if (result == ASTDelegatePsiElement.<T>EMPTY()) {
           result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
@@ -239,12 +239,12 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
-  protected <T extends PsiElement> List<T> findChildrenByType(IElementType elementType) {
-    List<T> result = EMPTY;
+  protected <T extends PsiElement> List<T> findChildrenByType(@NotNull IElementType elementType) {
+    List<T> result = EMPTY();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
       if (elementType == child.getElementType()) {
-        if (result == EMPTY) {
+        if (result == ASTDelegatePsiElement.<T>EMPTY()) {
           result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
@@ -254,7 +254,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
-  protected <T extends PsiElement> T @NotNull [] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
+  protected <T extends PsiElement> T @NotNull [] findChildrenByType(@NotNull TokenSet elementType, @NotNull Class<T> arrayClass) {
     return ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, s -> (T)s.getPsi());
   }
 

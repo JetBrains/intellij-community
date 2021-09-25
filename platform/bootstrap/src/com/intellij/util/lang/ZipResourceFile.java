@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -26,14 +27,19 @@ public final class ZipResourceFile implements ResourceFile {
 
   private final ImmutableZipFile zipFile;
 
-  public ZipResourceFile(@NotNull Path file) throws IOException {
+  public ZipResourceFile(@NotNull Path file) {
     ZipFilePool pool = ZipFilePool.POOL;
-    if (pool == null) {
-      zipFile = ImmutableZipFile.load(file);
+    try {
+      if (pool == null) {
+        zipFile = ImmutableZipFile.load(file);
+      }
+      else {
+        Object zipFile = pool.loadZipFile(file);
+        this.zipFile = (ImmutableZipFile)zipFile;
+      }
     }
-    else {
-      Object zipFile = pool.loadZipFile(file);
-      this.zipFile = (ImmutableZipFile)zipFile;
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 

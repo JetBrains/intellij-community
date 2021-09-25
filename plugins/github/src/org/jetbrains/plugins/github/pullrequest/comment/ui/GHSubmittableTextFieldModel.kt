@@ -24,7 +24,7 @@ open class GHSubmittableTextFieldModel(
     content.isReadOnly = true
     submitter(content.text).successOnEdt {
       content.isReadOnly = false
-      content.text = ""
+      content.clear()
     }.errorOnEdt {
       content.isReadOnly = false
       error = it

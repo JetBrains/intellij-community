@@ -27,6 +27,7 @@ data class DependencyConfig(
 }
 
 data class LibraryCategory(
+  val id: String,
   val icon: Icon?,
   @Nls val title: String,
   @Nls val description: String

@@ -21,7 +21,7 @@ interface DataLoader {
 }
 
 @ApiStatus.Internal
-class LocalFsDataLoader(private val basePath: Path) : DataLoader {
+class LocalFsDataLoader(val basePath: Path) : DataLoader {
   override val pool: ZipFilePool?
     get() = ZipFilePool.POOL
 

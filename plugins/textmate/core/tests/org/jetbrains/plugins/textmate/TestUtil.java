@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.bundles.BundleFactory;
@@ -10,6 +9,7 @@ import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 public class TestUtil {
   @NonNls public static final String BAT = "bat";
@@ -41,11 +41,11 @@ public class TestUtil {
   @NonNls public static final String TURTLE = "turtle";
 
   public static File getBundleDirectory(String bundleName) {
-    File bundleDirectory = new File(PathManager.getCommunityHomePath() + "/plugins/textmate/testData/bundles", bundleName);
+    File bundleDirectory = new File(getCommunityHomePath() + "/plugins/textmate/testData/bundles", bundleName);
     if (bundleDirectory.exists()) {
       return bundleDirectory;
     }
-    return new File(PathManager.getCommunityHomePath() + "/plugins/textmate/lib/bundles", bundleName);
+    return new File(getCommunityHomePath() + "/plugins/textmate/lib/bundles", bundleName);
   }
 
   public static Bundle getBundle(String bundleName) throws IOException {
@@ -54,9 +54,34 @@ public class TestUtil {
 
   public static TextMateScope scopeFromString(String scopeString) {
     TextMateScope scope = TextMateScope.EMPTY;
-    for (String scopeName : StringUtil.split(scopeString, " ")) {
+    for (String scopeName : scopeString.split(" ")) {
       scope = scope.add(scopeName);
     }
     return scope;
+  }
+
+  private static String getCommunityHomePath() {
+    URL url = TestUtil.class.getResource("/" + TestUtil.class.getName().replace('.', '/') + ".class");
+    if (url != null && url.getProtocol().equals("file")) {
+      try {
+        File file = new File(url.toURI().getPath());
+        while (file != null) {
+          String[] children = file.list();
+          if (children != null && ArrayUtil.contains(".idea", children)) {
+            if (ArrayUtil.contains("community", children)) {
+              return file.getPath() + "/community";
+            }
+            else {
+              return file.getPath();
+            }
+          }
+          file = file.getParentFile();
+        }
+      }
+      catch (Exception e) {
+        throw new Error(e);
+      }
+    }
+    throw new IllegalStateException("Failed to find community home path");
   }
 }

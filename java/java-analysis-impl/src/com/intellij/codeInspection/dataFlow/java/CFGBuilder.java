@@ -528,7 +528,7 @@ public class CFGBuilder {
       if (source == DfType.TOP) {
         add(new FlushVariableInstruction((DfaVariableValue)target));
       } else {
-        pushForWrite((DfaVariableValue)target).push(source).assign().pop();
+        push(source).assignTo((DfaVariableValue)target).pop();
       }
     }
     return this;
@@ -550,7 +550,7 @@ public class CFGBuilder {
       if (source == DfType.TOP) {
         flush(target).push(target);
       } else {
-        pushForWrite((DfaVariableValue)target).push(source).assign();
+        push(source).assignTo((DfaVariableValue)target);
       }
     } else {
       push(source);
@@ -638,7 +638,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder assignTo(PsiVariable var) {
-    return pushForWrite(PlainDescriptor.createVariableValue(getFactory(), var)).swap().assign();
+    return assignTo(PlainDescriptor.createVariableValue(getFactory(), var));
   }
 
   /**
@@ -651,7 +651,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder assignTo(DfaVariableValue var) {
-    return pushForWrite(var).swap().assign();
+    return add(new SimpleAssignmentInstruction(null, var));
   }
 
   /**

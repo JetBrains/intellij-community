@@ -4,6 +4,8 @@ package com.intellij.execution.target.local;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
+import com.intellij.execution.process.PtyCommandLineOptions;
 import com.intellij.execution.target.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,13 +21,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LocalTargetEnvironment extends TargetEnvironment {
+public class LocalTargetEnvironment extends TargetEnvironment implements TargetEnvironment.PtyTargetEnvironment {
   private final Map<UploadRoot, UploadableVolume> myUploadVolumes = new HashMap<>();
   private final Map<DownloadRoot, DownloadableVolume> myDownloadVolumes = new HashMap<>();
   private final Map<TargetPortBinding, Integer> myTargetPortBindings = new HashMap<>();
   private final Map<LocalPortBinding, ResolvedPortBinding> myLocalPortBindings = new HashMap<>();
 
-  public LocalTargetEnvironment(@NotNull TargetEnvironmentRequest request) {
+  public LocalTargetEnvironment(@NotNull LocalTargetEnvironmentRequest request) {
     super(request);
 
     for (UploadRoot uploadRoot : request.getUploadVolumes()) {
@@ -80,6 +82,16 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     }
   }
 
+  @Override
+  public @NotNull LocalTargetEnvironmentRequest getRequest() {
+    return (LocalTargetEnvironmentRequest)super.getRequest();
+  }
+
+  @Override
+  public boolean isWithPty() {
+    return getRequest().getPtyOptions() != null;
+  }
+
   private static @NotNull ResolvedPortBinding getResolvedPortBinding(int port) {
     HostPort hostPort = new HostPort("localhost", port);
     return new ResolvedPortBinding(hostPort, hostPort);
@@ -124,10 +136,17 @@ public class LocalTargetEnvironment extends TargetEnvironment {
   @NotNull
   public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
-      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously());
-      if (getRequest() instanceof LocalTargetEnvironmentRequest) {
-        generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)getRequest()).getParentEnvironmentType());
+      PtyCommandLineOptions ptyOptions = getRequest().getPtyOptions();
+      GeneralCommandLine generalCommandLine;
+      if (ptyOptions != null) {
+        PtyCommandLine ptyCommandLine = new PtyCommandLine(commandLine.collectCommandsSynchronously());
+        ptyCommandLine.withOptions(ptyOptions);
+        generalCommandLine = ptyCommandLine;
       }
+      else {
+        generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously());
+      }
+      generalCommandLine.withParentEnvironmentType(getRequest().getParentEnvironmentType());
       String inputFilePath = commandLine.getInputFilePath();
       if (inputFilePath != null) {
         generalCommandLine.withInput(new File(inputFilePath));

@@ -1,44 +1,57 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackContext;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
 import java.io.File;
 
 public abstract class AbstractCommand implements PlaybackCommand {
+
   private static final Logger LOG = Logger.getInstance(AbstractCommand.class);
 
-  public static final String CMD_PREFIX = "%";
+  public static final @NonNls String CMD_PREFIX = "%";
 
-  private final String myText;
+  private final @NonNls @NotNull String myText;
   private final int myLine;
   private final boolean myExecuteInAwt;
 
-  private File myScriptDir;
+  private @Nullable File myScriptDir;
 
-  public AbstractCommand(String text, int line) {
+  public AbstractCommand(@NotNull String text, int line) {
     this(text, line, false);
   }
 
-  public AbstractCommand(String text, int line, boolean executeInAwt) {
+  public AbstractCommand(@NotNull String text, int line, boolean executeInAwt) {
     myExecuteInAwt = executeInAwt;
     myText = text;
     myLine = line;
   }
 
-  public String getText() {
+  public final @NonNls @NotNull String getText() {
     return myText;
   }
 
-  public int getLine() {
+  public final int getLine() {
     return myLine;
+  }
+
+  @Override
+  public final @Nullable File getScriptDir() {
+    return myScriptDir;
+  }
+
+  public final void setScriptDir(@Nullable File scriptDir) {
+    myScriptDir = scriptDir;
   }
 
   @Override
@@ -47,10 +60,10 @@ public abstract class AbstractCommand implements PlaybackCommand {
   }
 
   @Override
-  public final Promise<Object> execute(final PlaybackContext context) {
+  public final @NotNull Promise<Object> execute(@NotNull PlaybackContext context) {
     try {
       if (isToDumpCommand()) {
-        dumpCommand(context);
+        context.code(getText(), getLine());
       }
       final AsyncPromise<Object> result = new AsyncPromise<>();
       Runnable runnable = () -> {
@@ -59,25 +72,26 @@ public abstract class AbstractCommand implements PlaybackCommand {
         }
         catch (Throwable e) {
           LOG.error(e);
-          context.error(e.getMessage(), getLine());
+          dumpError(context, e.getMessage());
           result.setError(e);
         }
       };
 
-      if (isAwtThread()) {
+      Application application = ApplicationManager.getApplication();
+      if (myExecuteInAwt) {
         // prevent previous action context affecting next action.
         // E.g. previous action may have called callback.setDone from inside write action, while
         // next action may not expect that
-        ApplicationManager.getApplication().invokeLater(runnable);
+        application.invokeLater(runnable);
       }
       else {
-        ApplicationManager.getApplication().executeOnPooledThread(runnable);
+        application.executeOnPooledThread(runnable);
       }
 
-     return result;
+      return result;
     }
     catch (Throwable e) {
-      context.error(e.getMessage(), getLine());
+      dumpError(context, e.getMessage());
       return Promises.rejectedPromise(e);
     }
   }
@@ -86,28 +100,9 @@ public abstract class AbstractCommand implements PlaybackCommand {
     return true;
   }
 
-  protected boolean isAwtThread() {
-    return myExecuteInAwt;
-  }
+  protected abstract @NotNull Promise<Object> _execute(@NotNull PlaybackContext context);
 
-  protected abstract Promise<Object> _execute(PlaybackContext context);
-
-  public void dumpCommand(PlaybackContext context) {
-    context.code(getText(), getLine());
-  }
-
-  public void dumpError(PlaybackContext context, final String text) {
+  protected final void dumpError(@NotNull PlaybackContext context, @NotNull String text) {
     context.error(text, getLine());
-  }
-
-  @Override
-  public File getScriptDir() {
-    return myScriptDir;
-  }
-
-
-  public PlaybackCommand setScriptDir(File scriptDir) {
-    myScriptDir = scriptDir;
-    return this;
   }
 }

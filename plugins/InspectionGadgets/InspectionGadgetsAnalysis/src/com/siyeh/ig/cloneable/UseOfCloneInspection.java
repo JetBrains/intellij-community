@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.cloneable;
 
 import com.intellij.psi.*;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -39,12 +38,10 @@ public class UseOfCloneInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String referenceName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.CLONE.equals(referenceName) || !expression.getArgumentList().isEmpty()) {
+      if (!CloneUtils.isCallToClone(expression)) {
         return;
       }
-      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
       if (qualifierExpression != null) {
         final PsiType type = qualifierExpression.getType();
         if (type instanceof PsiArrayType) {

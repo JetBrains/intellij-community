@@ -115,7 +115,8 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
     if (module == null) {
       return true;
     }
-    return PyTestsSharedKt.getRunnersThatRequireTestCaseClass().contains(TestRunnerService.getInstance(module).getProjectConfiguration());
+    var factory = TestRunnerService.getInstance(module).getSelectedFactory();
+    return factory.getOnlyClassesSupported();
   }
 
   private static boolean isTestCaseClassRequired(@NotNull final PsiElement anchor, @NotNull final ThreeState userProvidedValue) {

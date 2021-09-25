@@ -39,7 +39,7 @@ public final class RefCountingContentStorage extends AbstractStorage {
                                    @NotNull ExecutorService writeRequestExecutor,
                                    boolean doNotZipCaches,
                                    boolean useContentHashes) throws IOException {
-    super(path, capacityAllocationPolicy, true);
+    super(path, capacityAllocationPolicy);
 
     myDoNotZipCaches = doNotZipCaches;
     myWriteRequestExecutor = writeRequestExecutor;

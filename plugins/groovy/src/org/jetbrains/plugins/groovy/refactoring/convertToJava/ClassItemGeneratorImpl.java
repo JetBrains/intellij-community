@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.google.common.collect.ImmutableSortedSet;
@@ -39,6 +39,7 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator.convertToJavaIdentifier;
 
 /**
  * @author Maxim.Medvedev
@@ -117,7 +118,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       TypeWriter.writeType(builder, retType, method, classNameProvider);
       builder.append(' ');
     }
-    builder.append(name);
+    builder.append(convertToJavaIdentifier(name));
 
     if (method instanceof GroovyPsiElement) {
       context.searchForLocalVarsToWrap((GroovyPsiElement)method);

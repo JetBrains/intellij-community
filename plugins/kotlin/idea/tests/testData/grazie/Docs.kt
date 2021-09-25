@@ -51,7 +51,7 @@ class ExampleClassWithTypos<T>(val name: String) {
 // Just some
 // text here
 
-// <warning descr="UPPERCASE_SENTENCE_START">just</warning> some text here
+// just <warning descr="EN_A_VS_AN">an</warning> text here
 
 /**
  * В коробке лежало <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.

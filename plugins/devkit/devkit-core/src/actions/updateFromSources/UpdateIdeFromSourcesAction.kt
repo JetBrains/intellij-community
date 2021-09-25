@@ -50,7 +50,6 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 

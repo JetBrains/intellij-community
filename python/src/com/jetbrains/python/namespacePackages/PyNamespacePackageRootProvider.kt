@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.namespacePackages
 
 import com.intellij.openapi.Disposable
@@ -69,7 +69,7 @@ class PyNamespacePackageRootProvider: PyRootTypeProvider() {
     return PyBundle.message("python.namespace.packages.description")
   }
 
-  override fun getColor(): Color {
+  override fun getRootsGroupColor(): Color {
     return EASTERN_BLUE
   }
 
@@ -83,13 +83,6 @@ class PyNamespacePackageRootProvider: PyRootTypeProvider() {
   private fun getCurrentNamespacePackages(): List<VirtualFile> = myNamespacePackages.values().mapNotNull { it.file }
 
   companion object {
-    private fun findContentEntryForFile(virtualFile: VirtualFile, editor: PyContentEntriesEditor): ContentEntry? {
-      return editor.contentEntries.find {
-        val possibleContentEntry = it.file
-        possibleContentEntry != null && VfsUtilCore.isAncestor(possibleContentEntry, virtualFile, false)
-      }
-    }
-
     private val EASTERN_BLUE: Color = JBColor(0x29A5AD, 0x29A5AD)
   }
 }

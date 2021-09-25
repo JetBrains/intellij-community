@@ -7,7 +7,7 @@
   <xi:include href="/META-INF/SpellCheckerPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/JsonPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/intellij.json.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/structuralsearch.xml" xpointer="xpointer(/idea-plugin/*)">

@@ -75,7 +75,6 @@ import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -105,6 +104,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -817,9 +817,9 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull String getCommunityPath() {
-    final String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
+    String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
     if (new File(homePath, "community/.idea").isDirectory()) {
-      return homePath + File.separatorChar + "community";
+      homePath = homePath + File.separatorChar + "community";
     }
     return homePath;
   }
@@ -966,7 +966,7 @@ public final class PlatformTestUtil {
 
   public static <T> void assertComparisonContractNotViolated(@NotNull List<? extends T> values,
                                                              @NotNull Comparator<? super T> comparator,
-                                                             @NotNull Equality<? super T> equality) {
+                                                             @NotNull BiPredicate<? super T, ? super T> equality) {
     for (int i1 = 0; i1 < values.size(); i1++) {
       for (int i2 = i1; i2 < values.size(); i2++) {
         T value1 = values.get(i1);
@@ -974,7 +974,7 @@ public final class PlatformTestUtil {
 
         int result12 = comparator.compare(value1, value2);
         int result21 = comparator.compare(value2, value1);
-        if (equality.equals(value1, value2)) {
+        if (equality.test(value1, value2)) {
           if (result12 != 0) fail(String.format("Equal, but not 0: '%s' - '%s'", value1, value2));
           if (result21 != 0) fail(String.format("Equal, but not 0: '%s' - '%s'", value2, value1));
         }

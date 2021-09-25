@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.SystemProperties;
 
 /**
  * @author Konstantin Bulenkov
@@ -13,18 +13,18 @@ public final class EditorFontsConstants {
   }
 
   public static int getMaxEditorFontSize() {
-    return JBUIScale.scale(Registry.intValue("ide.editor.max.font.size", 40));
+    return JBUIScale.scale(SystemProperties.getIntProperty("ide.editor.max.font.size", 40));
   }
 
   public static int getDefaultEditorFontSize() {
     return JBUIScale.scale(12);
   }
 
-  public static float getMinEditorLineSpacing() {return .6f;}
+  public static float getMinEditorLineSpacing() { return .6f; }
 
-  public static float getMaxEditorLineSpacing() {return 3f;}
+  public static float getMaxEditorLineSpacing() { return 3f; }
 
-  public static float getDefaultEditorLineSpacing() {return 1f;}
+  public static float getDefaultEditorLineSpacing() { return 1f; }
 
   public static int checkAndFixEditorFontSize(int size) {
     return round(getMinEditorFontSize(), getMaxEditorFontSize(), size);

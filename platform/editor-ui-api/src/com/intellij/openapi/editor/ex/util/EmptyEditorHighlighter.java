@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
    * @deprecated Avoid specifying text attributes. Use {@link TextAttributesKey} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public void setAttributes(TextAttributes attributes) {
     myCachedAttributes = attributes;
   }

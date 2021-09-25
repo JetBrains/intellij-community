@@ -88,7 +88,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
     @Override
     public boolean isUpdateInBackground() {
-      return delegate instanceof UpdateInBackground && ((UpdateInBackground)delegate).isUpdateInBackground();
+      return UpdateInBackground.isUpdateInBackground(delegate);
     }
 
     @Override

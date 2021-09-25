@@ -1,12 +1,9 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -19,7 +16,7 @@ import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class PluginStartupService : Disposable {
 
-    fun register(project: Project) {
+    fun register() {
         val eventMulticaster = EditorFactory.getInstance().eventMulticaster
         val documentListener: DocumentListener = object : DocumentListener {
             override fun documentChanged(e: DocumentEvent) {
@@ -32,7 +29,7 @@ class PluginStartupService : Disposable {
         }
         eventMulticaster.addDocumentListener(documentListener, this)
 
-        val indexPatternSearch = ServiceManager.getService(IndexPatternSearch::class.java)
+        val indexPatternSearch = service<IndexPatternSearch>()
         val kotlinTodoSearcher = KotlinTodoSearcher()
         indexPatternSearch.registerExecutor(kotlinTodoSearcher)
 

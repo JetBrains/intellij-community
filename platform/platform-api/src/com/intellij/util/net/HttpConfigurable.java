@@ -654,13 +654,5 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
-
-  /** @deprecated use {@link #getJvmProperties(boolean, URI)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
-    List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
-    return ContainerUtil.map(properties, p -> KeyValue.create(p.first, p.second));
-  }
   //</editor-fold>
 }

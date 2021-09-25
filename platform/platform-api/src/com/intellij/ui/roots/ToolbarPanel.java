@@ -27,6 +27,10 @@ import java.awt.*;
  * @author Eugene Zhuravlev
  */
 public class ToolbarPanel extends JPanel{
+  /**
+   * @deprecated use {@link #ToolbarPanel(JComponent, ActionGroup, String)} instead and specify action place for toolbar explicitly
+   */
+  @Deprecated
   public ToolbarPanel(JComponent contentComponent, ActionGroup actions) {
     this(contentComponent, actions, ActionPlaces.UNKNOWN);
   }

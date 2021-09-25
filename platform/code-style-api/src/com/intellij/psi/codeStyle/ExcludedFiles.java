@@ -4,6 +4,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
 import com.intellij.formatting.fileSet.FileSetDescriptorFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -12,6 +13,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ExcludedFiles {
@@ -54,6 +56,22 @@ public class ExcludedFiles {
 
   public void clear() {
     myDescriptors.clear();
+  }
+
+  public List<FileSetDescriptor> getDescriptors(@NotNull String descriptorType) {
+    return ContainerUtil.filter(myDescriptors, descriptor -> descriptorType.equals(descriptor.getType()));
+  }
+
+  public void setDescriptors(@NotNull String descriptorType, @NotNull List<FileSetDescriptor> descriptors) {
+    myDescriptors.removeIf(descriptor -> descriptorType.equals(descriptor.getType()));
+    myDescriptors.addAll(descriptors);
+    Collections.sort(myDescriptors, (d1, d2) -> {
+      int result = StringUtil.compare(d1.getType(), d2.getType(), false);
+      if (result != 0) return result;
+      result = StringUtil.compare(d1.getName(), d2.getName(), false);
+      if (result != 0) return result;
+      return StringUtil.compare(d1.getPattern(), d2.getPattern(), false);
+    });
   }
 
   public boolean equals(@NotNull Object o) {

@@ -95,6 +95,35 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
   }
 
+  fun testEmptyLineDeleted() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+              <html>
+              <caret>
+              </html>
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+    PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
+    myInjectionFixture.assertInjectedContent("<html>\n</html>")
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+              <html>
+            
+              </html>
+    """.trimIndent())
+  }
+
+
   fun testYamlToYamlInjection() {
     myFixture.configureByText("test.yaml", """
         myyaml: |

@@ -95,26 +95,6 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
     return RenamerFactory.EP_NAME.extensions().flatMap(factory -> factory.createRenamers(dataContext).stream());
   }
 
-  /**
-   * @deprecated no longer used since RenameElementAction doesn't extend BaseRefactoringAction anymore; use {@code false}
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  public final boolean isAvailableInEditorOnly() {
-    return false;
-  }
-
-  /**
-   * @deprecated no longer used since RenameElementAction doesn't extend BaseRefactoringAction anymore; use {@link #isRenameEnabledOnElements}
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  public final boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
-    return isRenameEnabledOnElements(elements);
-  }
-
   public static boolean isRenameEnabledOnElements(PsiElement @NotNull [] elements) {
     if (elements.length != 1) return false;
 

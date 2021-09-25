@@ -973,7 +973,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     app.assertIsDispatchThread();
 
     // editors in modal context
-    List<Editor> editors = myEditorTracker.getActiveEditors();
+    List<? extends Editor> editors = myEditorTracker.getActiveEditors();
     Collection<FileEditor> activeTextEditors;
     if (editors.isEmpty()) {
       activeTextEditors = Collections.emptyList();
@@ -1016,16 +1016,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
     }
     return result;
-  }
-
-  /**
-   * @deprecated Use {@link DaemonCodeAnalyzerImpl#serializeCodeInsightPasses(boolean)} instead
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(boolean flag) {
-    serializeCodeInsightPasses(flag);
   }
 
   /**

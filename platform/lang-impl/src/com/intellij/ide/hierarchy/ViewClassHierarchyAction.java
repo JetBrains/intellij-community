@@ -33,7 +33,7 @@ public final class ViewClassHierarchyAction extends ChangeViewTypeActionBase {
   }
 
   @Override
-  public final void update(@NotNull final AnActionEvent event) {
+  public final void update(@NotNull AnActionEvent event) {
     super.update(event);
     TypeHierarchyBrowserBase browser = getHierarchyBrowser(event.getDataContext());
     event.getPresentation().setEnabled(browser != null && !browser.isInterface());

@@ -9,7 +9,7 @@ fun foo(): Any {
     if (en2 is En) {
         // Here we had smart casts to En / Any
         // should be always En
-        val a: Any = <info descr="Smart cast to En">en2</info>
+        val a: Any = <info descr="Smart cast to En" tooltip="Smart cast to En">en2</info>
         return a
     }
     return ""

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -41,6 +41,11 @@ import org.jetbrains.org.objectweb.asm.Opcodes
  */
 @CompileStatic
 abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
+  @Override
+  protected boolean runInDispatchThread() {
+    return false
+  }
+
   @Override protected void setUp() {
     new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.setUp()
@@ -164,6 +169,17 @@ class Bar extends Foo {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {} ')
     def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo {}')
     def goo = myFixture.addFileToProject('Goo.groovy', 'class Goo extends Bar {}')
+    assertEmpty(make())
+
+    touch(foo.virtualFile)
+    touch(goo.virtualFile)
+    assertEmpty(make())
+  }
+
+  void testTransitiveDependencyViaAnnotation() {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
+    myFixture.addFileToProject('Bar.groovy', 'class Bar { Bar plugin(@DelegatesTo(Foo) c) {} }')
+    def goo = myFixture.addFileToProject('Goo.groovy', '@groovy.transform.CompileStatic class Goo { def x(Bar bar) { bar.plugin {} } }')
     assertEmpty(make())
 
     touch(foo.virtualFile)

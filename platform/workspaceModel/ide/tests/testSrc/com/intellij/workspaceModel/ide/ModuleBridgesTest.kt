@@ -22,8 +22,8 @@ import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
@@ -471,7 +471,7 @@ class ModuleBridgesTest {
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
+      source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {

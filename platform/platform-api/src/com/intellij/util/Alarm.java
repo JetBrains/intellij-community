@@ -48,7 +48,7 @@ public class Alarm implements Disposable {
   private final Object LOCK = new Object();
   private final ThreadToUse myThreadToUse;
 
-  private JComponent myActivationComponent;
+  private JComponent myActivationComponent; // accessed in EDT only
 
   @Override
   public void dispose() {
@@ -106,6 +106,21 @@ public class Alarm implements Disposable {
     this(threadToUse, null);
   }
 
+  /**
+   * Creates alarm for EDT which executes its requests only when the {@param activationComponent} is shown on screen
+   */
+  public Alarm(@NotNull JComponent activationComponent, @NotNull Disposable parent) {
+    this(ThreadToUse.SWING_THREAD, parent);
+    myActivationComponent = activationComponent;
+    //noinspection ResultOfObjectAllocationIgnored
+    new UiNotifyConnector(activationComponent, new Activatable() {
+      @Override
+      public void showNotify() {
+        flushPending();
+      }
+    });
+  }
+
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
     if (threadToUse == ThreadToUse.SHARED_THREAD) {
@@ -133,8 +148,8 @@ public class Alarm implements Disposable {
 
   public void addRequest(@NotNull Runnable request, int delayMillis, boolean runWithActiveFrameOnly) {
     if (runWithActiveFrameOnly && !ApplicationManager.getApplication().isActive()) {
-      final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-      final MessageBusConnection connection = bus.connect(this);
+      MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+      MessageBusConnection connection = bus.connect(this);
       connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(@NotNull IdeFrame ideFrame) {
@@ -164,44 +179,51 @@ public class Alarm implements Disposable {
   }
 
   public void addComponentRequest(@NotNull Runnable request, int delayMillis) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert myActivationComponent != null;
     _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
 
   public void addComponentRequest(@NotNull Runnable request, long delayMillis) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert myActivationComponent != null;
     _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
 
-  public void addRequest(@NotNull Runnable request, int delayMillis, final @Nullable ModalityState modalityState) {
+  public void addRequest(@NotNull Runnable request, int delayMillis, @Nullable ModalityState modalityState) {
     LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
     _addRequest(request, delayMillis, modalityState);
   }
 
-  public void addRequest(@NotNull Runnable request, long delayMillis, final @Nullable ModalityState modalityState) {
+  public void addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
     LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
     _addRequest(request, delayMillis, modalityState);
   }
 
-  protected void cancelAllAndAddRequest(@NotNull Runnable request, int delayMillis, @Nullable ModalityState modalityState) {
+  void cancelAllAndAddRequest(@NotNull Runnable request, int delayMillis, @Nullable ModalityState modalityState) {
     synchronized (LOCK) {
       cancelAllRequests();
       _addRequest(request, delayMillis, modalityState);
     }
   }
 
-  protected void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
+  void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
+    Request requestToSchedule = new Request(request, modalityState, delayMillis);
     synchronized (LOCK) {
       checkDisposed();
-      Request requestToSchedule = new Request(request, modalityState, delayMillis);
-
-      if (myActivationComponent == null || myActivationComponent.isShowing()) {
+      if (myActivationComponent == null || isActivationComponentShowing()) {
         add(requestToSchedule);
       }
       else if (!myPendingRequests.contains(requestToSchedule)) {
         myPendingRequests.add(requestToSchedule);
       }
     }
+  }
+
+  private boolean isActivationComponentShowing() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert myActivationComponent != null;
+    return myActivationComponent.isShowing();
   }
 
   // must be called under LOCK
@@ -242,12 +264,11 @@ public class Alarm implements Disposable {
   // returns number of requests canceled
   public int cancelAllRequests() {
     synchronized (LOCK) {
-      return cancelAllRequests(myRequests) +
-             cancelAllRequests(myPendingRequests);
+      return cancelAllRequests(myRequests) + cancelAllRequests(myPendingRequests);
     }
   }
 
-  private int cancelAllRequests(@NotNull List<Request> list) {
+  private int cancelAllRequests(@NotNull List<? extends Request> list) {
     int count = list.size();
     for (Request request : list) {
       request.cancel();
@@ -258,6 +279,7 @@ public class Alarm implements Disposable {
 
   @TestOnly
   public void drainRequestsInTest() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     for (Runnable task : getUnfinishedRequests()) {
       task.run();
     }
@@ -322,7 +344,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  private final class Request implements Runnable {
+  private class Request implements Runnable {
     private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
     private Future<?> myFuture; // guarded by LOCK
@@ -330,7 +352,7 @@ public class Alarm implements Disposable {
     private final ClientId myClientId;
 
     @Async.Schedule
-    private Request(final @NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
+    private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
         myTask = task;
 
@@ -346,7 +368,7 @@ public class Alarm implements Disposable {
         if (myDisposed) {
           return;
         }
-        final Runnable task;
+        Runnable task;
         synchronized (LOCK) {
           task = myTask;
           myTask = null;
@@ -414,7 +436,12 @@ public class Alarm implements Disposable {
     }
   }
 
-  public @NotNull Alarm setActivationComponent(final @NotNull JComponent component) {
+  /**
+   * @deprecated use {@link #Alarm(JComponent, Disposable)} instead
+   */
+  @Deprecated
+  public @NotNull Alarm setActivationComponent(@NotNull JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myActivationComponent = component;
     //noinspection ResultOfObjectAllocationIgnored
     new UiNotifyConnector(component, new Activatable() {

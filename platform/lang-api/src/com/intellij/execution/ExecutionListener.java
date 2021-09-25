@@ -14,6 +14,9 @@ public interface ExecutionListener extends EventListener {
   default void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {}
 
   default void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env) {}
+  default void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, Throwable cause) {
+    processNotStarted(executorId, env);
+  }
 
   /**
    * Called before {@link ProcessHandler#startNotify()}.

@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -212,13 +211,4 @@ public abstract class BaseOutputReader extends BaseDataReader {
   }
 
   protected abstract void onTextAvailable(@NotNull String text);
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public BaseOutputReader(@NotNull Reader reader, @Nullable SleepingPolicy policy) {
-    this(reader, Options.withPolicy(policy));
-  }
-  //</editor-fold>
 }

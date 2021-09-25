@@ -82,7 +82,7 @@ internal class MarketplaceSearchPluginData(
   val rating: Double = 0.0,
   val name: String = "",
   val cdate: Long? = null,
-  val vendor: String = "",
+  val organization: String = "",
   @get:JsonProperty("updateId")
   val externalUpdateId: String? = null,
   @get:JsonProperty("id")
@@ -94,7 +94,7 @@ internal class MarketplaceSearchPluginData(
     pluginNode.name = name
     pluginNode.rating = "%.2f".format(Locale.US, rating)
     pluginNode.downloads = downloads
-    pluginNode.vendor = vendor
+    pluginNode.organization = organization
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId
     if (cdate != null) pluginNode.date = cdate

@@ -10,6 +10,7 @@ open class RuleGroup(rules: Set<String>) {
 
   val rules: Set<String> = Collections.unmodifiableSet(rules)
 
+  @Suppress("MemberVisibilityCanBePrivate")
   companion object {
     /** An abstract category for all rules that warn that sentences should be capitalized */
     const val SENTENCE_START_CASE = "UPPERCASE_SENTENCE_START"
@@ -35,6 +36,7 @@ open class RuleGroup(rules: Set<String>) {
      * Rules that allow for single sentences to be lowercase and lack starting/finishing punctuation,
      * useful in comments or commit messages
      */
+    @JvmField
     val UNDECORATED_SINGLE_SENTENCE = CASING + PUNCTUATION
   }
 

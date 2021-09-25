@@ -78,8 +78,7 @@ class ServiceViewActionProvider {
   }
 
   void installPopupHandler(@NotNull JComponent component) {
-    ActionGroup actions = (ActionGroup)ActionManager.getInstance().getAction(SERVICE_VIEW_ITEM_POPUP);
-    PopupHandler.installPopupHandler(component, actions, ActionPlaces.SERVICES_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(component, SERVICE_VIEW_ITEM_POPUP, ActionPlaces.SERVICES_POPUP);
   }
 
   ActionToolbar createMasterComponentToolbar(@NotNull JComponent component) {

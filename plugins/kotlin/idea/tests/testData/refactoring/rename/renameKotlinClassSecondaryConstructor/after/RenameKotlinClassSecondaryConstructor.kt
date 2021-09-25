@@ -7,4 +7,4 @@ class Y2 : TestX {
     constructor(): super(1) {}
 }
 
-val x = TestX(1)
+val testX = TestX(1)

@@ -27,6 +27,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private final RangeMarker myRangeMarker;
 
   private boolean myUseCurrentWindow;
+  private boolean myUsePreviewTab;
   private ScrollType myScrollType = ScrollType.CENTER;
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
@@ -174,6 +175,16 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   @Override
   public boolean isUseCurrentWindow() {
     return myUseCurrentWindow;
+  }
+
+  public OpenFileDescriptor setUsePreviewTab(boolean usePreviewTab) {
+    myUsePreviewTab = usePreviewTab;
+    return this;
+  }
+
+  @Override
+  public boolean isUsePreviewTab() {
+    return myUsePreviewTab;
   }
 
   public void setScrollType(@NotNull ScrollType scrollType) {

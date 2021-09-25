@@ -209,7 +209,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     EditSourceOnDoubleClickHandler.install(tree);
     new TreeSpeedSearch(tree);
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions());
+    PopupHandler.installPopupMenu(tree, createTreePopupActions(), "CyclicDependenciesPopup");
   }
 
   private void updateLeftTreeModel() {

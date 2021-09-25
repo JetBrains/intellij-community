@@ -2,9 +2,13 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
@@ -12,6 +16,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
@@ -48,6 +53,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   ActionPopupMenuImpl(@NotNull String place, @NotNull ActionGroup group,
                       @NotNull ActionManagerImpl actionManager,
                       @Nullable PresentationFactory factory) {
+    if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
+      LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
+               "Any string unique enough to deduce the popup menu location will do.", new Throwable("popup menu creation trace"));
+    }
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
   }
@@ -139,6 +148,17 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
         }
       }
       super.show(component, x, y);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      //noinspection RedundantSuppression
+      if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
+        long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
+        //noinspection HardCodedStringLiteral, UnresolvedPluginConfigReference
+        new Notification("", "Context menu invocation took " + time + "ms", NotificationType.INFORMATION).notify(null);
+      }
     }
 
     @Override

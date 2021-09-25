@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -787,7 +787,9 @@ public final class PsiImplUtil {
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
-  public static VirtualFile getModuleVirtualFile(@NotNull PsiJavaModule module) {
-    return module instanceof LightJavaModule ? ((LightJavaModule)module).getRootVirtualFile() : module.getContainingFile().getVirtualFile();
+  public static @NotNull VirtualFile getModuleVirtualFile(@NotNull PsiJavaModule module) {
+    VirtualFile file = module instanceof LightJavaModule ? ((LightJavaModule)module).getRootVirtualFile() : module.getContainingFile().getVirtualFile();
+    if (file == null) throw new IllegalArgumentException("Module '" + module + "' has lost its VF");
+    return file;
   }
 }

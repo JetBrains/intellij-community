@@ -53,7 +53,7 @@ public final class XDebuggerTreePanel implements DnDSource {
   }
 
   @Override
-  public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
+  public boolean canStartDragging(final DnDAction action, final @NotNull Point dragOrigin) {
     return getNodesToDrag().length > 0;
   }
 
@@ -62,7 +62,7 @@ public final class XDebuggerTreePanel implements DnDSource {
   }
 
   @Override
-  public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
+  public DnDDragStartBean startDragging(final DnDAction action, final @NotNull Point dragOrigin) {
     return new DnDDragStartBean(getNodesToDrag());
   }
 

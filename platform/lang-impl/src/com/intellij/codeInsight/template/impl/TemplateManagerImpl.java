@@ -40,11 +40,8 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   private final Project myProject;
   private static final Key<Boolean> ourTemplateTesting = Key.create("TemplateTesting");
 
-  private final TemplateManagerListener myEventPublisher;
-
   public TemplateManagerImpl(@NotNull Project project) {
     myProject = project;
-    myEventPublisher = project.getMessageBus().syncPublisher(TEMPLATE_STARTED_TOPIC);
     EditorFactoryListener myEditorFactoryListener = new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -167,9 +164,9 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       else {
         editor.getSelectionModel().removeSelection();
       }
-      templateState
-        .start(substituteTemplate((TemplateImpl)template, editor), processor, predefinedVarValues);
-      myEventPublisher.templateStarted(templateState);
+      TemplateImpl substitutedTemplate = substituteTemplate((TemplateImpl)template, editor);
+
+      templateState.start(substitutedTemplate, processor, predefinedVarValues);
     };
     if (inSeparateCommand) {
       CommandProcessor.getInstance().executeCommand(myProject, r, AnalysisBundle.message("insert.code.template.command"), null);
@@ -449,7 +446,6 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
         predefinedVarValues.put(TemplateImpl.ARG, argument);
       }
       templateState.start(substituteTemplate(template, editor), processor, predefinedVarValues);
-      myEventPublisher.templateStarted(templateState);
     }, AnalysisBundle.message("insert.code.template.command"), null);
   }
 
@@ -542,15 +538,6 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       }
     }
     return false;
-  }
-
-  /**
-   * @deprecated use {@link #listApplicableTemplates(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset, boolean selectionOnly) {
-    return listApplicableTemplates(TemplateActionContext.create(file, null, offset, offset, selectionOnly));
   }
 
   public static List<TemplateImpl> listApplicableTemplates(@NotNull TemplateActionContext templateActionContext) {

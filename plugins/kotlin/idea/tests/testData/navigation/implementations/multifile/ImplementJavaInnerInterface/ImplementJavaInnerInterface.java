@@ -24,6 +24,6 @@ public class ImplementJavaInnerInterface {
     }
 }
 
-// REF: (in ImplementJavaInnerInterface.OtherJava).foo()
+// REF: of ImplementJavaInnerInterface.OtherJava.foo()
 // REF: (in KotlinTest).foo()
 // REF: <anonymous>.foo()

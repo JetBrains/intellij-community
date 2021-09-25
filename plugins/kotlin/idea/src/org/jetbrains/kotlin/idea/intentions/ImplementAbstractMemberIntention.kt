@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -9,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.ide.util.PsiClassListCellRenderer
+import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -179,7 +177,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         override fun getContainerText(element: PsiElement?, name: String?): String? {
             return when (element) {
                 is KtEnumEntry -> element.containingClassOrObject?.fqName?.asString()
-                is PsiClass -> PsiClassListCellRenderer.getContainerTextStatic(element)
+                is PsiClass -> PsiClassRenderingInfo.getContainerTextStatic(element)
                 else -> null
             }
         }

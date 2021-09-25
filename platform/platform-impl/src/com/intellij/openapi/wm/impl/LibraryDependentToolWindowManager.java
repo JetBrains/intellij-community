@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupActivity;
@@ -53,6 +54,7 @@ final class LibraryDependentToolWindowManager implements StartupActivity {
 
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> checkToolWindowStatuses(project)));
     LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull LibraryDependentToolWindow extension, @NotNull PluginDescriptor pluginDescriptor) {

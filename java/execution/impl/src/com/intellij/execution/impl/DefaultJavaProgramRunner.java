@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
-import com.intellij.execution.target.RunTargetsEnabled;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
@@ -104,9 +103,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
-        currentState instanceof TargetEnvironmentAwareRunProfileState &&
-        RunTargetsEnabled.get() &&
-        ((TargetEnvironmentAwareRunProfile)runProfile).needPrepareTarget()) {
+        currentState instanceof TargetEnvironmentAwareRunProfileState) {
       executionManager.startRunProfileWithPromise(environment, currentState, (ignored) -> {
         return doExecuteAsync((TargetEnvironmentAwareRunProfileState)currentState, environment);
       });

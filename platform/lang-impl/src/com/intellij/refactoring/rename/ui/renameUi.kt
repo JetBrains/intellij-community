@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.ui
 
 import com.intellij.model.Pointer
@@ -68,14 +68,12 @@ private suspend fun Pointer<out RenameTarget>.presentableText(): String? {
 
 @ProgressTitle
 internal suspend fun Pointer<out RenameTarget>.progressTitle(): String? {
-  return presentableText()?.let { presentableText ->
-    RefactoringBundle.message("rename.progress.title.0", presentableText)
-  }
+  val presentableText = presentableText() ?: return null
+  return RefactoringBundle.message("rename.progress.title.0", presentableText)
 }
 
 @Command
 internal suspend fun Pointer<out RenameTarget>.commandName(newName: String): String? {
-  return presentableText()?.let { presentableText ->
-    RefactoringBundle.message("rename.command.name.0.1", presentableText, newName)
-  }
+  val presentableText = presentableText() ?: return null
+  return RefactoringBundle.message("rename.command.name.0.1", presentableText, newName)
 }

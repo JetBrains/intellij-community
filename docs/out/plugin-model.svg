@@ -1,0 +1,119 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="579px" preserveAspectRatio="none" style="width:1917px;height:579px;background:#FFFFFF;" version="1.1" viewBox="0 0 1917 579" width="1917px" zoomAndPan="magnify">
+  <style>
+  @import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&amp;display=swap');
+  .text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+  }
+  .code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 14px;
+  }
+  .note {
+    stroke:#383838;
+    stroke-width:1.0;
+    fill: #EBEBEB;
+  }
+</style>
+  <defs>
+    <filter height="300%" id="f9ebwibwmmiuq" width="300%" x="-1" y="-1">
+      <feGaussianBlur result="blurOut" stdDeviation="2.0"/>
+      <feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/>
+      <feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/>
+      <feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/>
+    </filter>
+  </defs>
+  <g>
+    <!--MD5=[1085852dcf5b25a180ffe435ef773747]
+cluster PluginContent-->
+    <polygon fill="#FFFFFF" filter="url(#f9ebwibwmmiuq)" points="185,139,240,139,247,161.4063,1615,161.4063,1615,572,185,572,185,139" style="stroke:#000000;stroke-width:1.5;"/>
+    <line style="stroke:#000000;stroke-width:1.5;" x1="185" x2="247" y1="161.4063" y2="161.4063"/>
+    <text font-family="Roboto" font-size="14" font-weight="bold" textLength="49" x="189" y="153.9883">content</text>
+    <!--MD5=[8643c3a2e8ffb0c77ba1cfb35bcb9aeb]
+cluster ModuleDependencies-->
+    <polygon fill="#FFFFFF" filter="url(#f9ebwibwmmiuq)" points="383,308,479,308,486,330.4063,1127,330.4063,1127,532,383,532,383,308" style="stroke:#000000;stroke-width:1.5;"/>
+    <line style="stroke:#000000;stroke-width:1.5;" x1="383" x2="486" y1="330.4063" y2="330.4063"/>
+    <text font-family="Roboto" font-size="14" font-weight="bold" textLength="90" x="387" y="322.9883">dependencies</text>
+    <!--MD5=[7544cd838908b9c69ef913353da45cfc]
+cluster PluginDependencies-->
+    <polygon fill="#FFFFFF" filter="url(#f9ebwibwmmiuq)" points="1655,137,1751,137,1758,159.4063,1900,159.4063,1900,414,1655,414,1655,137" style="stroke:#000000;stroke-width:1.5;"/>
+    <line style="stroke:#000000;stroke-width:1.5;" x1="1655" x2="1758" y1="159.4063" y2="159.4063"/>
+    <text font-family="Roboto" font-size="14" font-weight="bold" textLength="90" x="1659" y="151.9883">dependencies</text>
+    <!--MD5=[c72e14692f063a08d1023b5b76acc947]
+entity M-->
+    <rect fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="159" x="771.5" y="182"/>
+    <text class="text" textLength="139" x="781.5" y="204.9883">module name="…" 0…N</text>
+    <!--MD5=[2e7f0958813e0c469f8dc1b0f09fcd25]
+entity M_N-->
+    <rect fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="142" x="217" y="354.5"/>
+    <text class="text" textLength="122" x="227" y="377.4883">module name="…" N</text>
+    <path class="note" d="M966,187 L966,196 L930.74,200 L966,204 L966,213.4883 A0,0 0 0 0 966,213.4883 L1332,213.4883 A0,0 0 0 0 1332,213.4883 L1332,197 L1322,187 L966,187 A0,0 0 0 0 966,187 " filter="url(#f9ebwibwmmiuq)"/>
+    <path class="note" d="M1322,187 L1322,197 L1332,197 L1322,187 "/>
+    <text class="code" textLength="52" x="972" y="205.5352">content</text>
+    <text class="text" textLength="290" x="1027" y="205.0703">is not allowed and is not supported for module.</text>
+    <path class="note" d="M1151.5,469 L1151.5,511.8125 L1590.5,511.8125 L1590.5,479 L1580.5,469 L1151.5,469 " filter="url(#f9ebwibwmmiuq)"/>
+    <path class="note" d="M1580.5,469 L1580.5,479 L1590.5,479 L1580.5,469 "/>
+    <text class="text" textLength="242" x="1157.5" y="486.9883">Module dependency is always optional.</text>
+    <text class="text" textLength="418" x="1157.5" y="503.3945">If the module depends on an unavailable plugin, it will not be loaded.</text>
+    <ellipse cx="495.9225" cy="372.6845" fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" rx="88.9225" ry="20.1845" style="stroke:#383838;stroke-width:1.5;"/>
+    <text class="text" textLength="139" x="426.24" y="375.5368">module name="…" 0…N</text>
+    <ellipse cx="496.2383" cy="490.5477" fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" rx="75.7383" ry="17.5477" style="stroke:#383838;stroke-width:1.5;"/>
+    <text class="text" textLength="107" x="439.7383" y="494.2918">plugin id="…" 0…N</text>
+    <path class="note" d="M620,351 L620,368.5 L585,372.5 L620,376.5 L620,393.8125 A0,0 0 0 0 620,393.8125 L1084,393.8125 A0,0 0 0 0 1084,393.8125 L1084,361 L1074,351 L620,351 A0,0 0 0 0 620,351 " filter="url(#f9ebwibwmmiuq)"/>
+    <path class="note" d="M1074,351 L1074,361 L1084,361 L1074,351 "/>
+    <text class="text" textLength="443" x="626" y="368.9883">The dependency is specified in a module descriptor itself in a new model,</text>
+    <text class="text" textLength="220" x="626" y="385.3945">not where the module is referenced.</text>
+    <ellipse cx="1786.9225" cy="200.1845" fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" rx="88.9225" ry="20.1845" style="stroke:#383838;stroke-width:1.5;"/>
+    <text class="text" textLength="139" x="1717.24" y="203.0368">module name="…" 0…N</text>
+    <ellipse cx="1787.2383" cy="372.5477" fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" rx="75.7383" ry="17.5477" style="stroke:#383838;stroke-width:1.5;"/>
+    <text class="text" textLength="107" x="1730.7383" y="376.2918">plugin id="…" 0…N</text>
+    <!--MD5=[626ad08abde0879284d52f51a0eb42aa]
+entity P-->
+    <rect fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="58" x="822" y="17.5"/>
+    <a href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md" target="_top" title="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md" xlink:actuate="onRequest" xlink:href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md" xlink:show="new" xlink:title="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md" xlink:type="simple">
+      <text fill="#1D1D1D" font-family="Roboto" font-size="14" lengthAdjust="spacing" text-decoration="underline" textLength="38" x="832" y="40.4883">plugin</text>
+    </a>
+    <path class="note" d="M6,6 L6,65.2188 L380,65.2188 L380,16 L370,6 L6,6 " filter="url(#f9ebwibwmmiuq)"/>
+    <path class="note" d="M370,6 L370,16 L380,16 L370,6 "/>
+    <text class="text" textLength="353" x="12" y="23.9883">Every plugin is a module, but not every module is a plugin.</text>
+    <text class="text" textLength="313" x="12" y="40.3945">A plugin is a group of related modules and for now,</text>
+    <text class="text" textLength="240" x="12" y="56.8008">it is the only way to distribute modules.</text>
+    <path class="note" d="M1588,22.5 L1588,48.9883 L1738,48.9883 L1738,32.5 L1728,22.5 L1588,22.5 " filter="url(#f9ebwibwmmiuq)"/>
+    <path class="note" d="M1728,22.5 L1728,32.5 L1738,32.5 L1728,22.5 "/>
+    <text class="text" textLength="74" x="1594" y="40.5703">Same as for</text>
+    <text class="code" textLength="52" x="1671" y="41.0352">module</text>
+    <!--MD5=[18548e575689829418d8810be97b2069]
+link M to M_N-->
+    <path d="M777.26,218.03 C774.14,218.7 771.04,219.36 768,220 C601.05,255.04 546.55,221.97 391,292 C357.01,307.3 324.05,335.9 304.91,354.31 " fill="none" id="M-M_N" style="stroke:#383838;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/>
+    <text class="text" textLength="295" x="517" y="263.9883">a sibling cannot access classes from each other</text>
+    <text class="text" textLength="205" x="563.5" y="280.3945">unless specified as a dependency</text>
+    <!--MD5=[efba78f2832f0953bcc7b785fff38546]
+link MDM to MDP-->
+    <!--MD5=[0ddd819f72541fbbce14226ed6701871]
+link ModuleDependencies to GMN17-->
+    <path d="M1127.0064,377.1829 C1127.1423,377.2454 1127.2798,377.3087 1127.4188,377.3727 C1127.975,377.6287 1128.5563,377.8963 1129.1621,378.1752 C1130.3736,378.7329 1131.6829,379.3356 1133.0841,379.9806 C1135.8866,381.2706 1139.0568,382.7298 1142.548,384.3369 C1156.5128,390.765 1175.6144,399.5575 1196.8663,409.34 C1239.37,428.905 1290.475,452.43 1326.29,468.92 " fill="none" id="ModuleDependencies-GMN17" style="stroke:#383838;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/>
+    <!--MD5=[0eaf612125eeae4d4d1a7850cb3c676f]
+link M to P-->
+    <path d="M851,181.66 C851,151.93 851,91.29 851,58.58 " fill="none" id="M-to-P" style="stroke:#383838;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/>
+    <polygon fill="#383838" points="851,53.58,847,62.58,851,58.58,855,62.58,851,53.58" style="stroke:#383838;stroke-width:1.0;"/>
+    <text class="text" textLength="332" x="852" y="108.9883">a module can access classes from a containing plugin</text>
+    <!--MD5=[e4fb0c60299c8c044b5242684082b752]
+link M to ModuleDependencies-->
+    <path d="M918.85,218.03 C983.8,235.65 1075.44,264.42 1100,292 C1102.925,295.285 1105.4202,298.9402 1107.5467,302.8277 C1108.0783,303.7995 1108.5869,304.7859 1109.0734,305.7847 C1109.3167,306.2841 1109.5544,306.7865 1109.7867,307.2918 C1109.8448,307.4182 1109.9026,307.5447 1109.96,307.6713 " fill="none" id="M-ModuleDependencies" style="stroke:#383838;stroke-width:1.0;"/>
+    <!--MD5=[711d33e56cf2a4ef8c19a038acc32917]
+link GMN22 to PluginContent-->
+    <path d="M193,65.18 C193,76.66 193,90.5944 193,105.0798 C193,112.3226 193,119.7031 193,126.9835 C193,130.6236 193,134.2388 193,137.7992 C193,138.0217 193,138.244 193,138.4661 " fill="none" id="GMN22-PluginContent" style="stroke:#383838;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/>
+    <!--MD5=[9121b255e8a8b7161fd4a52f9019ee5b]
+link PDM to PDP-->
+    <!--MD5=[5d0d5117ce265536cc3f9fbd2158cb1f]
+link GMN29 to PluginDependencies-->
+    <path d="M1663,48.71 C1663,67.31 1663,104.0075 1663,136.4825 " fill="none" id="GMN29-PluginDependencies" style="stroke:#383838;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/>
+    <!--MD5=[311b6aca1abd1a6ced7ad906cda1d4cc]
+link P to PluginContent-->
+    <path d="M821.66,39.3 C697.79,51.23 223.07,98.32 201,121 C198.0563,124.0238 195.7081,127.4589 193.8545,131.1615 C192.9277,133.0128 192.1246,134.931 191.4324,136.898 C191.2594,137.3897 191.0933,137.8846 190.9339,138.3821 C190.894,138.5065 190.8546,138.6311 190.8156,138.7558 " fill="none" id="P-PluginContent" style="stroke:#383838;stroke-width:1.0;"/>
+    <!--MD5=[4533ecc32d705aa5493b3e100c20ed9c]
+link P to PluginDependencies-->
+    <path d="M880.35,36.65 C1003.8,37.76 1480.35,46.84 1607,121 C1624.84,131.445 1638.535,150.0725 1647.915,166.505 C1650.26,170.6131 1652.3353,174.5841 1654.1383,178.2557 C1654.3637,178.7146 1654.5848,179.1689 1654.8016,179.6182 C1654.8558,179.7305 1654.9098,179.8425 1654.9635,179.9542 " fill="none" id="P-PluginDependencies" style="stroke:#383838;stroke-width:1.0;"/>
+  </g>
+</svg>

@@ -49,6 +49,7 @@ public final class WSLDistributionLegacy extends WSLDistribution {
 
   private WSLDistributionLegacy(@NotNull Path executablePath) {
     super(LEGACY_WSL, executablePath);
+    setVersion(1);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
@@ -13,13 +13,11 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 
 /**
  * @author anna
@@ -54,13 +52,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
 
   protected void configureMessageArea(@NotNull JEditorPane area) {
     String messageBody = myEnableLink ? IdeBundle.message("updates.configure.label") : "";
-    configureMessageArea(area, messageBody, null);
-  }
-
-  protected void configureMessageArea(@NotNull JEditorPane area,
-                                      @NotNull @Nls String messageBody,
-                                      @Nullable HyperlinkListener listener) {
-    HtmlChunk. Element html = new HtmlBuilder()
+    HtmlChunk.Element html = new HtmlBuilder()
       .append(HtmlChunk.head()
                 .addRaw(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
                 .child(HtmlChunk.styleTag("body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}")))
@@ -73,15 +65,12 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     area.setCaretPosition(0);
     area.setEditable(false);
 
-    if (listener == null && myEnableLink) {
-      listener = (e) -> {
+    if (myEnableLink) {
+      area.addHyperlinkListener((e) -> {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           ShowSettingsUtil.getInstance().editConfigurable(area, new UpdateSettingsConfigurable(false));
         }
-      };
-    }
-    if (listener != null) {
-      area.addHyperlinkListener(listener);
+      });
     }
   }
 }

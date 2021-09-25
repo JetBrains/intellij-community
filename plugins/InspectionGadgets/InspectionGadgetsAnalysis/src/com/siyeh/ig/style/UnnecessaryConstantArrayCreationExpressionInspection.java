@@ -1,23 +1,10 @@
-/*
- * Copyright 2008-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -34,8 +21,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.constant.array.creation.expression.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.constant.array.creation.expression.problem.descriptor");
   }
 
   @Override
@@ -57,14 +43,13 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.constant.array.creation.expression.family.quickfix");
+      return InspectionGadgetsBundle.message("unnecessary.constant.array.creation.expression.family.quickfix");
     }
 
     @Override
     @NotNull
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", "new "+myType);
+      return CommonQuickFixBundle.message("fix.remove", "new " + myType);
     }
 
     @Override
@@ -109,14 +94,15 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
       if (!variable.getType().equals(expressionType)) {
         return;
       }
-      PsiTypeElement typeElement = variable.getTypeElement();
+      final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null && typeElement.isInferredType()) {
         return;
       }
       if (hasGenericTypeParameters(variable)) {
         return;
       }
-      registerError(parent, expressionType.getPresentableText());
+      registerErrorAtOffset(parent, 0, expression.getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                            expressionType.getPresentableText());
     }
 
     private static boolean hasGenericTypeParameters(PsiVariable variable) {

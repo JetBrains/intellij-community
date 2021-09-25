@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
@@ -62,7 +63,7 @@ class JpsProjectSaveAllEntitiesTest {
     val builder = WorkspaceEntityStorageBuilder.create()
     val jarUrl = virtualFileManager.fromUrl("jar://${projectDir.systemIndependentPath}/lib/foo.jar!/")
     val libraryRoot = LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)
-    val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
+    val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
     builder.addLibraryEntity("foo", LibraryTableId.ProjectLibraryTableId, listOf(libraryRoot), emptyList(), source)
     val storage = builder.toStorage()
     serializers.saveAllEntities(storage, projectDir)
@@ -77,7 +78,7 @@ class JpsProjectSaveAllEntitiesTest {
     val serializers = createProjectSerializers(projectDir, virtualFileManager)
     val builder = WorkspaceEntityStorageBuilder.create()
     for (libName in listOf("a lib", "my-lib", "group-id:artifact-id")) {
-      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
+      val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
       builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), source)
     }
     val storage = builder.toStorage()
@@ -95,7 +96,7 @@ class JpsProjectSaveAllEntitiesTest {
 
     val builder = WorkspaceEntityStorageBuilder.create()
     for (libName in listOf("a lib", "my-lib", "group-id:artifact-id")) {
-      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
+      val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
       builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), source)
     }
     val storage = builder.toStorage()

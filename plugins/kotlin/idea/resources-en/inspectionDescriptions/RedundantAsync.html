@@ -1,6 +1,20 @@
 <html>
 <body>
-This inspection reports <b>async</b> call that is immediately followed by <b>await</b>.
-Such a call can be replaced with a kind of blocking call.
+<p>
+    Reports <code>async</code> call that is immediately followed by <code>await</code>.
+    Such a call can be replaced with a kind of blocking call.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+suspend fun test(ctx: CoroutineContext, scope: CoroutineScope) {
+    scope.async(ctx) { doSomeJob() }.await()
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+suspend fun test(ctx: CoroutineContext, scope: CoroutineScope) {
+    withContext(scope.coroutineContext + ctx) { doSomeJob() }
+}
+</code></pre>
 </body>
 </html>

@@ -487,7 +487,7 @@ public final class FindUsagesManager {
     String scopeString = options.searchScope.getDisplayName();
     presentation.setScopeText(scopeString);
     presentation.setSearchString(FindBundle.message("find.usages.of.element.tab.name", usagesString, longName));
-    presentation.setTabText(FindBundle.message("find.usages.of.element.in.scope.panel.title", usagesString, longName, scopeString));
+    presentation.setTabText(FindBundle.message("find.usages.of.element.in.scope.panel.title", longName, scopeString));
     presentation.setTabName(FindBundle.message("find.usages.of.element.tab.name", usagesString, UsageViewUtil.getShortName(psiElement)));
     presentation.setTargetsNodeText(StringUtil.capitalize(UsageViewUtil.getType(psiElement)));
     presentation.setOpenInNewTab(toOpenInNewTab);

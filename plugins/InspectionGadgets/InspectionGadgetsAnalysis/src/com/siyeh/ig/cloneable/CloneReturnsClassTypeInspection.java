@@ -153,7 +153,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       }
       final ReturnChecker checker = new ReturnChecker(r -> ExpressionUtils.isNullLiteral(r.getReturnValue()));
       body.accept(checker);
-      return checker.isReturnFound() ? checker.isOnlyValidReturns() : !ControlFlowUtils.codeBlockMayCompleteNormally(body);
+      return checker.isReturnFound() ? checker.allReturnsMatchPredicate() : !ControlFlowUtils.codeBlockMayCompleteNormally(body);
     }
   }
 
@@ -162,7 +162,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
     private final Predicate<PsiReturnStatement> myPredicate;
 
     private boolean myReturnFound = false;
-    private boolean myAllReturnsValid = true;
+    private boolean myallReturnsMatchPredicate = true;
 
     ReturnChecker(Predicate<PsiReturnStatement> predicate) {
       myPredicate = predicate;
@@ -177,7 +177,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
     @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
-      myAllReturnsValid = false;
+      myallReturnsMatchPredicate = false;
       stopWalking();
     }
 
@@ -185,14 +185,14 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       myReturnFound = true;
-      myAllReturnsValid &= myPredicate.test(statement);
-      if (!myAllReturnsValid) {
+      myallReturnsMatchPredicate &= myPredicate.test(statement);
+      if (!myallReturnsMatchPredicate) {
         stopWalking();
       }
     }
 
-    public boolean isOnlyValidReturns() {
-      return myAllReturnsValid;
+    public boolean allReturnsMatchPredicate() {
+      return myallReturnsMatchPredicate;
     }
 
     public boolean isReturnFound() {

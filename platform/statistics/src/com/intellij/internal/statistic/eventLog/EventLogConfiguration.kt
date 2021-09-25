@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.application.subscribe
 import com.intellij.internal.statistic.DeviceIdManager
+import com.intellij.internal.statistic.config.EventLogOptions.DEFAULT_ID_REVISION
+import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_DISABLED
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.UNDEFINED_DEVICE_ID
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessDeviceIdProperty
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessSaltProperty
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getSaltPropertyKey
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -24,7 +27,6 @@ import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
 import java.util.prefs.Preferences
 
 @ApiStatus.Internal
@@ -107,25 +109,38 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
 
   private val salt: ByteArray = getOrGenerateSalt()
   private val anonymizedCache = ConcurrentHashMap<String, String>()
-  private val machineIdConfigurationReference: AtomicReference<MachineIdConfiguration>
+  private val machineIdReference: AtomicLazyValue<MachineId>
 
-  val machineIdConfiguration: MachineIdConfiguration
-    get() = machineIdConfigurationReference.get()
+  val machineId: MachineId
+    get() = machineIdReference.getValue()
 
   init {
-    val configOptionsService = EventLogConfigOptionsService.getInstance()
-    machineIdConfigurationReference = AtomicReference(MachineIdConfiguration(configOptionsService.getMachineIdSalt(recorderId) ?: "",
-                                                                             getNonNegative(configOptionsService.getMachineIdRevision(recorderId))))
+    val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
+    machineIdReference = AtomicLazyValue { generateMachineId(configOptions.machineIdSalt, configOptions.machineIdRevision) }
 
     EventLogConfigOptionsService.TOPIC.subscribe(null, object : EventLogRecorderConfigOptionsListener(recorderId) {
       override fun onMachineIdConfigurationChanged(salt: @Nullable String?, revision: Int) {
-        machineIdConfigurationReference.updateAndGet { prevValue ->
+        machineIdReference.updateAndGet { prevValue ->
           if (salt != null && revision != -1 && revision > prevValue.revision) {
-            MachineIdConfiguration(salt, revision)
-          } else prevValue
+            generateMachineId(salt, revision)
+          }
+          else prevValue
         }
       }
     })
+  }
+
+  private fun generateMachineId(machineIdSalt: String?, value: Int): MachineId {
+    val salt = machineIdSalt ?: ""
+    if (salt == MACHINE_ID_DISABLED) {
+      return MachineId.DISABLED
+    }
+    val revision = if (value >= 0) value else DEFAULT_ID_REVISION
+    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrains$recorderId", salt)
+    if (machineId == null) {
+      return MachineId.UNKNOWN
+    }
+    return MachineId(machineId, revision)
   }
 
   fun anonymize(data: String): String {
@@ -135,8 +150,6 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
 
     return anonymizedCache.computeIfAbsent(data) { EventLogConfiguration.hashSha256(salt, it) }
   }
-
-  private fun getNonNegative(value: Int): Int = if (value >= 0) value else 0
 
   private fun String.shortedUUID(): String {
     val start = this.lastIndexOf('-')
@@ -197,5 +210,3 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
     return salt
   }
 }
-
-data class MachineIdConfiguration(val salt: String, val revision: Int)

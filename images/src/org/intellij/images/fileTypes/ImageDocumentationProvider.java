@@ -6,7 +6,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import org.intellij.images.index.ImageInfoIndex;
@@ -28,7 +27,7 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
 
     if (element instanceof PsiFileSystemItem && !((PsiFileSystemItem)element).isDirectory()) {
       final VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
-      if (file instanceof VirtualFileWithId && !DumbService.isDumb(element.getProject())) {
+      if (!DumbService.isDumb(element.getProject())) {
         ImageInfo imageInfo = ImageInfoIndex.getInfo(file, element.getProject());
         if (imageInfo != null) {
           int imageWidth = imageInfo.width;

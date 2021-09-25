@@ -189,7 +189,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         scheduleDiffUpdate(Couple.of(first, last));
       }
     });
-    addPopupMenuToComponent(myRevisionsList.getComponent(), actions);
+    PopupHandler.installPopupMenu(myRevisionsList.getComponent(), actions, "LvcsRevisionsListPopup");
 
 
     JPanel result = new JPanel(new BorderLayout());
@@ -222,21 +222,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     result.add(Separator.getInstance());
     result.add(new ContextHelpAction(getHelpId()));
     return result;
-  }
-
-  private static void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
-    comp.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component c, int x, int y) {
-        ActionPopupMenu m = createPopupMenu(ag);
-        m.getComponent().show(c, x, y);
-      }
-    });
-  }
-
-  private static ActionPopupMenu createPopupMenu(ActionGroup ag) {
-    ActionManager m = ActionManager.getInstance();
-    return m.createActionPopupMenu(ActionPlaces.UNKNOWN, ag);
   }
 
   private void scheduleDiffUpdate(@Nullable final Couple<Integer> toSelect) {

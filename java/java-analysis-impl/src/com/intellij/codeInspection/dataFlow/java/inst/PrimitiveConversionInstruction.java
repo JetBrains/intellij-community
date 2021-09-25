@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java.inst;
 
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
@@ -15,7 +15,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 public class PrimitiveConversionInstruction extends EvalInstruction {
   @NotNull private final PsiPrimitiveType myTargetType;
 
-  public PrimitiveConversionInstruction(@NotNull PsiPrimitiveType targetType, @Nullable PsiExpression expression) {
-    super(expression == null ? null : new JavaExpressionAnchor(expression), 1);
+  public PrimitiveConversionInstruction(@NotNull PsiPrimitiveType targetType, @Nullable DfaAnchor anchor) {
+    super(anchor, 1);
     myTargetType = targetType;
   }
 
@@ -37,20 +36,19 @@ public class PrimitiveConversionInstruction extends EvalInstruction {
                                 @NotNull DfaMemoryState state,
                                 @NotNull DfaValue @NotNull ... arguments) {
     DfaValue value = arguments[0];
-    PsiPrimitiveType type = myTargetType;
     if (value instanceof DfaBinOpValue) {
-      value = tryReduceOnCast(((DfaBinOpValue)value), state, type);
+      value = tryReduceOnCast(((DfaBinOpValue)value), state, myTargetType);
     }
 
     DfType dfType = state.getDfType(value);
     if (value instanceof DfaVariableValue && dfType instanceof DfIntType) {
-      LongRangeSet set = JvmPsiRangeSetUtil.typeRange(type);
+      LongRangeSet set = JvmPsiRangeSetUtil.typeRange(myTargetType);
       if (set != null && !LongRangeSet.all().equals(set) && ((DfIntType)dfType).meetRange(set).equals(dfType)) {
         return value;
       }
     }
     if (dfType instanceof DfPrimitiveType) {
-      return factory.fromDfType(((DfPrimitiveType)dfType).castTo(type));
+      return factory.fromDfType(((DfPrimitiveType)dfType).castTo(myTargetType));
     }
     return factory.getUnknown();
   }

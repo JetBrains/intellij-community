@@ -6,6 +6,8 @@
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.caches.FileAttributeService"
                         serviceImplementation="org.jetbrains.kotlin.idea.caches.FileAttributeServiceImpl"/>
 
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.caches.project.VfsCodeBlockModificationListener"/>
+
     <!-- since 192 use light service @Service instead of this declaration -->
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache"/>
 

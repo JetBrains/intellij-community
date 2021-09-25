@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.github.api.data
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.util.NlsSafe
 
+@GraphQLFragment("/graphql/fragment/labelInfo.graphql")
 class GHLabel(id: String,
               val url: String,
               @NlsSafe val name: String,

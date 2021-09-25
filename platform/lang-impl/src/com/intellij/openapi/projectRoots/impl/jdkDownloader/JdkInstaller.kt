@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.google.common.hash.Hashing
@@ -34,6 +34,8 @@ import java.nio.file.Paths
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Consumer
+import java.util.function.Predicate
 import kotlin.concurrent.withLock
 import kotlin.math.absoluteValue
 import kotlin.streams.toList
@@ -271,15 +273,13 @@ abstract class JdkInstallerBase {
           unpackJdkOnWsl(wslDistribution, item.packageType, downloadFile, targetDir, item.packageRootPrefix)
         }
         else {
-          val decompressor = item.packageType.openDecompressor(downloadFile)
-          //handle cancellation via postProcessor (instead of inheritance)
-          decompressor.postProcessor { indicator?.checkCanceled() }
-
-          val fullMatchPath = item.packageRootPrefix.trim('/')
-          if (fullMatchPath.isNotBlank()) {
-            decompressor.removePrefixPath(fullMatchPath)
-          }
-          decompressor.extract(targetDir)
+          item.packageType.openDecompressor(downloadFile)
+            .entryFilter { indicator?.checkCanceled(); true }
+            .let {
+              val fullMatchPath = item.packageRootPrefix.trim('/')
+              if (fullMatchPath.isBlank()) it else it.removePrefixPath(fullMatchPath)
+            }
+            .extract(targetDir)
         }
 
         runCatching { writeMarkerFile(request) }

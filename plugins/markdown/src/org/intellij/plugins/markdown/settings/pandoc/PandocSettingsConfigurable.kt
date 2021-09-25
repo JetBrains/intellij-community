@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
-import com.intellij.util.PathUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import java.io.File
@@ -64,7 +63,7 @@ class PandocSettingsConfigurable :
     }
   }
 
-  override fun getId(): String = "Settings.Pandoc"
+  override fun getId(): String = ID
 
   override fun apply() {
     pandocAppSettings.apply {
@@ -162,5 +161,9 @@ class PandocSettingsConfigurable :
   private fun getProject(): Project? {
     val projectList = ProjectManager.getInstance().openProjects
     return if (projectList.isNotEmpty()) projectList.first() else null
+  }
+
+  companion object {
+    const val ID = "Settings.Pandoc"
   }
 }

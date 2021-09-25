@@ -661,16 +661,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return new Point(preferredBounds.x, adjustedY);
   }
 
-  /**
-   * @see #addListener
-   * @deprecated use public API instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected void addPopupListener(@NotNull JBPopupListener listener) {
-    myListeners.add(listener);
-  }
-
   private @NotNull RelativePoint relativePointWithDominantRectangle(@NotNull JLayeredPane layeredPane, @NotNull Rectangle bounds) {
     Dimension size = getSizeForPositioning();
     List<Supplier<Point>> optionsToTry = Arrays.asList(() -> new Point(bounds.x + bounds.width, bounds.y),

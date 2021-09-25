@@ -26,6 +26,7 @@ public class ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;
   private final FunctionParsing functionParser;
+  private final PatternParsing patternParser;
   private final SyntaxTreeBuilder myBuilder;
   private final LanguageLevel myLanguageLevel;
   private final Deque<ParsingScope> myScopes;
@@ -36,6 +37,7 @@ public class ParsingContext {
     stmtParser = new StatementParsing(this);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
+    patternParser = new PatternParsing(this);
     myScopes = new ArrayDeque<>();
     myScopes.push(emptyParsingScope());
   }
@@ -68,6 +70,10 @@ public class ParsingContext {
 
   public FunctionParsing getFunctionParser() {
     return functionParser;
+  }
+
+  public @NotNull PatternParsing getPatternParser() {
+    return patternParser;
   }
 
   public SyntaxTreeBuilder getBuilder() {

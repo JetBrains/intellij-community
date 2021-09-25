@@ -1,16 +1,12 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.testFramework
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.TrustedProjectSettings
+import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
@@ -25,8 +21,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.UsefulTestCase.assertTrue
-import com.intellij.util.ThreeState
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
@@ -42,31 +38,42 @@ data class OpenProject(val projectPath: String, val projectName: String, val jdk
 
 enum class ProjectOpenAction {
     SIMPLE_JAVA_MODULE {
-        override fun openProject(projectPath: String, projectName: String, jdk: Sdk): Project {
+        override fun openProject(
+            application: TestApplicationManager,
+            projectPath: String,
+            projectName: String,
+            jdk: Sdk
+        ): Project {
             val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectPath)!!
 
-            val projectFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(projectPath))!!
+            return openingProject(application, project) {
+                val projectFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(projectPath))!!
 
-            val modulePath = "$projectPath/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}"
-            val srcFile = projectFile.findChild("src")!!
+                val modulePath = "$projectPath/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}"
+                val srcFile = projectFile.findChild("src")!!
 
-            val module = runWriteAction {
-                ProjectRootManager.getInstance(project).projectSdk = jdk
+                project.setupJdk(jdk)
 
-                val module = ModuleManager.getInstance(project).newModule(modulePath, ModuleTypeId.JAVA_MODULE)
-                PsiTestUtil.addSourceRoot(module, srcFile)
+                val module = runWriteAction {
 
-                module
+                    val module = ModuleManager.getInstance(project).newModule(modulePath, ModuleTypeId.JAVA_MODULE)
+                    PsiTestUtil.addSourceRoot(module, srcFile)
+
+                    module
+                }
+
+                ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, jdk)
             }
-
-            ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, jdk)
-
-            return project
         }
     },
 
     EXISTING_IDEA_PROJECT {
-        override fun openProject(projectPath: String, projectName: String, jdk: Sdk): Project {
+        override fun openProject(
+            application: TestApplicationManager,
+            projectPath: String,
+            projectName: String,
+            jdk: Sdk
+        ): Project {
             val projectManagerEx = ProjectManagerEx.getInstanceEx()
 
             val project =
@@ -77,18 +84,24 @@ enum class ProjectOpenAction {
                     )
                 ?: error("project $projectName at $projectPath is not loaded")
 
-            runWriteAction {
-                ProjectRootManager.getInstance(project).projectSdk = jdk
+            return openingProject(application, project) {
+                with(project) {
+                    trusted()
+                    setupJdk(jdk)
+                }
+
+                assertTrue(projectManagerEx.isProjectOpened(project), "project $projectName at $projectPath is not opened")
             }
-
-            assertTrue(projectManagerEx.openProject(project), "project $projectName at $projectPath is not opened")
-
-            return project
         }
     },
 
     GRADLE_PROJECT {
-        override fun openProject(projectPath: String, projectName: String, jdk: Sdk): Project {
+        override fun openProject(
+            application: TestApplicationManager,
+            projectPath: String,
+            projectName: String,
+            jdk: Sdk
+        ): Project {
             check(System.getProperty("org.gradle.native") == "false") {
                 "Please specify -Dorg.gradle.native=false due to known Gradle native issue"
             }
@@ -98,20 +111,20 @@ enum class ProjectOpenAction {
                         Paths.get(projectPath),
                         OpenProjectTask(projectName = projectName, isNewProject = true, showWelcomeScreen = false)
                     ) ?: error("project $projectName at $projectPath is not loaded")
-            assertTrue(
-                !project.isDisposed,
-                "Gradle project $projectName at $projectPath is accidentally disposed immediately after import"
-            )
 
-            project.service<TrustedProjectSettings>().trustedState = ThreeState.YES
+            return openingProject(application, project) {
+                assertTrue(
+                    !project.isDisposed,
+                    "Gradle project $projectName at $projectPath is accidentally disposed immediately after import"
+                )
 
-            runWriteAction {
-                ProjectRootManager.getInstance(project).projectSdk = jdk
+                with(project) {
+                    trusted()
+                    setupJdk(jdk)
+                }
+
+                refreshGradleProject(projectPath, project)
             }
-
-            refreshGradleProject(projectPath, project)
-
-            return project
         }
 
         private fun refreshGradleProjectIfNeeded(projectPath: String, project: Project) {
@@ -140,7 +153,23 @@ enum class ProjectOpenAction {
         }
     };
 
-    abstract fun openProject(projectPath: String, projectName: String, jdk: Sdk): Project
+    abstract fun openProject(application: TestApplicationManager, projectPath: String, projectName: String, jdk: Sdk): Project
+
+    protected fun Project.setupJdk(jdk: Sdk) = runWriteAction {
+        ProjectRootManager.getInstance(this).projectSdk = jdk
+    }
+
+    protected fun Project.trusted() = this.setTrusted(true)
+
+    protected fun openingProject(application: TestApplicationManager, project: Project, action: () -> Unit): Project {
+        return try {
+            action()
+            project
+        } catch (e: Throwable) {
+            application.closeProject(project)
+            throw e
+        }
+    }
 
     open fun postOpenProject(project: Project, openProject: OpenProject) {
         ApplicationManager.getApplication().executeOnPooledThread {
@@ -168,14 +197,13 @@ enum class ProjectOpenAction {
     companion object {
         fun openProject(openProject: OpenProject): Project {
             val project = openProject.projectOpenAction.openProject(
+                application = TestApplicationManager.getInstance(),
                 projectPath = openProject.projectPath,
                 projectName = openProject.projectName,
                 jdk = openProject.jdk
             )
 
             dispatchAllInvocationEvents()
-
-            runStartupActivities(project)
 
             logMessage { "project ${openProject.projectName} is ${if (project.isInitialized) "initialized" else "not initialized"}" }
 

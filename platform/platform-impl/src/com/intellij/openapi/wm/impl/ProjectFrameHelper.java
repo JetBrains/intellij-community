@@ -395,7 +395,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     project.getService(StatusBarWidgetsManager.class).updateAllWidgets();
-    PopupHandler.installPopupHandler(Objects.requireNonNull(getStatusBar()), StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
+    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
+    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
   }
 
   @Override

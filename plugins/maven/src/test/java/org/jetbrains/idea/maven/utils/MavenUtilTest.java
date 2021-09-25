@@ -10,6 +10,18 @@ import java.io.IOException;
 
 public class MavenUtilTest extends MavenTestCase {
 
+
+  public void testFindLocalRepoSchema12() throws IOException {
+    VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                                "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
+                                                                "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                                                                "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
+                                                                "  <localRepository>mytestpath</localRepository>" +
+                                                                "</settings>");
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+  }
+
+
   public void testFindLocalRepoSchema10() throws IOException {
     VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                                                 "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +

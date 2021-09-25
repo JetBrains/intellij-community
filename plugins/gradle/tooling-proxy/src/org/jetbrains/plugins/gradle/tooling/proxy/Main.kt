@@ -145,12 +145,13 @@ object Main {
                                           initScripts: Map<String, String>): List<File> {
     if (initScripts.isEmpty()) return emptyList()
     val projectDotGradleDir = File(workingDirectory, ".gradle")
-    projectDotGradleDir.mkdirs()
+    val ideaInitScriptsDir = File(projectDotGradleDir, "ideaInitScripts")
+    ideaInitScriptsDir.mkdirs()
     val arguments = mutableListOf<File>()
     for ((filePrefix, scriptContent) in initScripts) {
       val content = scriptContent.toByteArray()
       val contentSize = content.size
-      val initScriptFile = projectDotGradleDir.findSequentChild(filePrefix, "gradle") {
+      val initScriptFile = ideaInitScriptsDir.findSequentChild(filePrefix, "gradle") {
         if (!it.exists()) {
           it.writeText(scriptContent)
           return@findSequentChild true

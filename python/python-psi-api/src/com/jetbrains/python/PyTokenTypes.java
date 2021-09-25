@@ -25,6 +25,7 @@ public final class PyTokenTypes {
   public static final PyElementType AS_KEYWORD = new PyElementType("AS_KEYWORD");
   public static final PyElementType ASSERT_KEYWORD = new PyElementType("ASSERT_KEYWORD");
   public static final PyElementType BREAK_KEYWORD = new PyElementType("BREAK_KEYWORD");
+  public static final PyElementType CASE_KEYWORD = new PyElementType("CASE_KEYWORD");
   public static final PyElementType CLASS_KEYWORD = new PyElementType("CLASS_KEYWORD");
   public static final PyElementType CONTINUE_KEYWORD = new PyElementType("CONTINUE_KEYWORD");
   public static final PyElementType DEF_KEYWORD = new PyElementType("DEF_KEYWORD");
@@ -42,6 +43,7 @@ public final class PyTokenTypes {
   public static final PyElementType IN_KEYWORD = new PyElementType("IN_KEYWORD", "__contains__");
   public static final PyElementType IS_KEYWORD = new PyElementType("IS_KEYWORD");
   public static final PyElementType LAMBDA_KEYWORD = new PyElementType("LAMBDA_KEYWORD");
+  public static final PyElementType MATCH_KEYWORD = new PyElementType("MATCH_KEYWORD");
   public static final PyElementType NOT_KEYWORD = new PyElementType("NOT_KEYWORD");
   public static final PyElementType OR_KEYWORD = new PyElementType("OR_KEYWORD");
   public static final PyElementType PASS_KEYWORD = new PyElementType("PASS_KEYWORD");
@@ -152,6 +154,7 @@ public final class PyTokenTypes {
   public static final TokenSet WHITESPACE_OR_LINEBREAK = TokenSet.create(SPACE, TAB, FORMFEED, LINE_BREAK);
   public static final TokenSet OPEN_BRACES = TokenSet.create(LBRACKET, LBRACE, LPAR);
   public static final TokenSet CLOSE_BRACES = TokenSet.create(RBRACKET, RBRACE, RPAR);
+  public static final TokenSet ALL_BRACES = TokenSet.orSet(OPEN_BRACES, CLOSE_BRACES);
 
   public static final TokenSet NUMERIC_LITERALS = TokenSet.create(FLOAT_LITERAL, INTEGER_LITERAL, IMAGINARY_LITERAL);
   public static final TokenSet BOOL_LITERALS = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD);

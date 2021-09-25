@@ -36,9 +36,9 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   // After pause action has been invoked -  all output will be redirected to special
   // myPausedPrinter which will dump all buffered data after user will continue process.
   private final DeferingPrinter myPausedPrinter = new DeferingPrinter();
-  private boolean myPaused = false;
+  private boolean myPaused;
 
-  private int myMarkOffset = 0;
+  private int myMarkOffset;
 
   private final TestFrameworkPropertyListener<Boolean> myPropertyListener = new TestFrameworkPropertyListener<>() {
     @Override
@@ -71,17 +71,13 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   @Override
-  public void print(final String text, final ConsoleViewContentType contentType) {
+  public void print(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
     myConsole.print(text, contentType);
   }
 
   @Override
   public void onNewAvailable(@NotNull final Printable printable) {
-    if (myPaused) {
-      printable.printOn(myPausedPrinter);
-    } else {
-      printable.printOn(this);
-    }
+    printable.printOn(myPaused ? myPausedPrinter : this);
   }
 
   /**
@@ -131,7 +127,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   @Override
-  public void printHyperlink(final String text, final HyperlinkInfo info) {
+  public void printHyperlink(final @NotNull String text, final HyperlinkInfo info) {
     myConsole.printHyperlink(text, info);
   }
 
@@ -180,7 +176,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
   
   @Override
-  public void printExpectedActualHeader(String expected, String actual) {
+  public void printExpectedActualHeader(@NotNull String expected, @NotNull String actual) {
     myProperties.printExpectedActualHeader(this, expected, actual);
   }
 }

@@ -68,7 +68,8 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
         throw IllegalStateException("${javaClass.name} was already disposed", trace)
       }
       else throw IllegalStateException("${javaClass.name} was already disposed")
-    } else if (Disposer.isDebugMode()) {
+    }
+    else if (Disposer.isDebugMode()) {
       disposedStackTrace = Throwable()
     }
   }
@@ -135,7 +136,8 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
             Disposer.register(parentDisposable, it)
           }
           result.add(modifiableExtension)
-        } else {
+        }
+        else {
           result.add(readOnlyExtension)
         }
       }

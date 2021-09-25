@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.GHNodes
 
+@GraphQLFragment("/graphql/fragment/pullRequestReviewThread.graphql")
 class GHPullRequestReviewThread(id: String,
                                 val isResolved: Boolean,
                                 val line: Int,

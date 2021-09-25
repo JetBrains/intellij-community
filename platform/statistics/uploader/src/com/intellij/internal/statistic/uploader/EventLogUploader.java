@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.uploader;
 
-import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
-import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
-import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalRecorderConfig;
+import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
+import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
 import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,9 +113,12 @@ public final class EventLogUploader {
     try {
       String bucketOption = options.get(EventLogUploaderOptions.BUCKET_OPTION);
       String deviceOption = options.get(EventLogUploaderOptions.DEVICE_OPTION);
+      String machineIdOption = options.get(EventLogUploaderOptions.MACHINE_ID_OPTION);
+      String idRevisionOption = options.get(EventLogUploaderOptions.ID_REVISION_OPTION);
       int bucketInt = bucketOption != null ? Integer.parseInt(bucketOption) : -1;
-      if (deviceOption != null && bucketInt >= 0 && bucketInt < 256) {
-        return new DeviceConfiguration(deviceOption, bucketInt);
+      int idRevision = idRevisionOption != null ? Integer.parseInt(idRevisionOption) : -1;
+      if (deviceOption != null && bucketInt >= 0 && bucketInt < 256 && machineIdOption != null && idRevision >= 0) {
+        return new DeviceConfiguration(deviceOption, bucketInt, new MachineId(machineIdOption, idRevision));
       }
     }
     catch (NumberFormatException e) {

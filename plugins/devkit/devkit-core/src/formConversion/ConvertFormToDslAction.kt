@@ -27,7 +27,6 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UastVisibility
 import org.jetbrains.uast.toUElement
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 
 class ConvertFormToDslAction : AnAction() {

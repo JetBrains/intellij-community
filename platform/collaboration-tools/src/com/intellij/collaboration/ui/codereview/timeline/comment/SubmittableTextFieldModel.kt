@@ -30,4 +30,6 @@ interface SubmittableTextFieldModelContent {
   var isReadOnly: Boolean
 
   var isAcceptSlashR: Boolean
+
+  fun clear()
 }

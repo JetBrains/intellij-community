@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableConsumer;
@@ -68,7 +68,7 @@ public class UrlClassLoaderTest {
     List<String> resourceNames = new ArrayList<>();
     List<Path> files = new ArrayList<>();
 
-    for (File file : Objects.requireNonNull(new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles())) {
+    for (File file : Objects.requireNonNull(new File(PlatformTestUtil.getCommunityPath(), "lib").listFiles())) {
       if (file.getName().endsWith(".jar")) {
         files.add(file.toPath());
 
@@ -83,6 +83,9 @@ public class UrlClassLoaderTest {
         }
       }
     }
+
+    assertThat(files).isNotEmpty();
+    assertThat(resourceNames).isNotEmpty();
 
     int attemptCount = 1000;
     int threadCount = 3;

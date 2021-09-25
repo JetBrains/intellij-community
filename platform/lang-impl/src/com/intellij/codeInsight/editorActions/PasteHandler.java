@@ -187,7 +187,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       newText = preProcessor.preprocessOnPaste(project, file, editor, newText, rawText);
     }
 
-    int indentOptions = text.equals(newText) ? settings.REFORMAT_ON_PASTE : CodeInsightSettings.REFORMAT_BLOCK;
+    final boolean pastedTextWasChanged = !text.equals(newText);
+    int indentOptions = pastedTextWasChanged ? CodeInsightSettings.REFORMAT_BLOCK : settings.REFORMAT_ON_PASTE;
     text = newText;
 
     if (LanguageFormatting.INSTANCE.forContext(file) == null && indentOptions != CodeInsightSettings.NO_REFORMAT) {
@@ -214,7 +215,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     selectionModel.removeSelection();
 
-    final Ref<Boolean> skipIndentation = new Ref<>(Boolean.FALSE);
+    // `skipIndentation` is additionally used as marker for changed pasted test
+    // Any value, except `null` is a signal that the text was transformed.
+    // For the `CopyPasteFoldingProcessor` it means that folding data is not valid and cannot be applied.
+    final Ref<Boolean> skipIndentation = new Ref<>(pastedTextWasChanged ? Boolean.FALSE : null);
     for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
       //noinspection unchecked
       SlowOperations.allowSlowOperations(

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tests.targets.java
 
 import com.intellij.execution.PsiLocation
@@ -11,11 +11,11 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -33,7 +33,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
   /** Expected contents of [targetFilePath]. */
   abstract val targetFileContent: String
 
-  override fun getTestAppPath(): String = "${PathManager.getCommunityHomePath()}/platform/remote-servers/target-integration-tests/targetApp"
+  override fun getTestAppPath(): String = "${PlatformTestUtil.getCommunityPath()}/platform/remote-servers/target-integration-tests/targetApp"
 
   override fun setUpModule() {
     super.setUpModule()

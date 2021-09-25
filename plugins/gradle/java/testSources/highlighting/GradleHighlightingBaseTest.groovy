@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.highlighting
 
 import com.intellij.openapi.application.ReadAction
@@ -96,8 +96,8 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase implem
       try {
         ReadAction.run(test)
       }
-      catch (AssertionError e) {
-        throw new AssertionError(it, e)
+      catch (Throwable e) {
+        throw new Throwable(it, e)
       }
     }
   }

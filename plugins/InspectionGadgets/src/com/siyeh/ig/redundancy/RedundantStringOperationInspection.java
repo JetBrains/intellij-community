@@ -160,29 +160,26 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         PsiMethodCallExpression methodCall = getMethodCallExpression(params[0]);
 
         if (BYTE_ARRAY_OUTPUT_STREAM_INTO_BYTE_ARRAY.test(methodCall)) {
-          final TextRange range = new TextRange(0, expression.getTextLength());
-
           final PsiElement qualifier = methodCall.getMethodExpression().getQualifier();
           if (qualifier == null) return null;
 
           String newExpressionText = qualifier.getText() + ".toString(" + (params.length == 2 ? params[1].getText() : "") + ")";
           final LocalQuickFix fix = new ByteArrayOutputStreamToStringFix(newExpressionText);
 
-          return myManager.createProblemDescriptor(expression, range,
+          return myManager.createProblemDescriptor(expression, (TextRange)null,
                                                    InspectionGadgetsBundle.message("inspection.byte.array.output.stream.to.string.message"),
                                                    ProblemHighlightType.WARNING, myIsOnTheFly, fix);
         }
       }
       if (args.getExpressionCount() == 1) {
-        final CharArrayCreationArgument charArrayCreationArgument = getCharArrayCreationArgument(args);
+        final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(args);
         if (charArrayCreationArgument != null) {
-          TextRange range = new TextRange(0, expression.getTextLength());
           LocalQuickFix[] fixes = {
             new ReplaceWithValueOfFix(),
             new SetInspectionOptionFix(
               myInspection, "ignoreStringConstructor",
               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
-          return myManager.createProblemDescriptor(expression, range,
+          return myManager.createProblemDescriptor(expression, (TextRange)null,
                                                    JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "String.valueOf()"),
                                                    ProblemHighlightType.WARNING, myIsOnTheFly, fixes);
         }
@@ -592,7 +589,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     @Nullable
     private ProblemDescriptor getValueOfProblem(@NotNull PsiExpressionList argList) {
-      final CharArrayCreationArgument charArrayCreationArgument = getCharArrayCreationArgument(argList);
+      final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(argList);
       if (charArrayCreationArgument == null) return null;
       return myManager.createProblemDescriptor(charArrayCreationArgument.newExpression,
                                                new TextRange(0, charArrayCreationArgument.arrayInitializer.getStartOffsetInParent()),
@@ -1025,28 +1022,12 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiNewExpression expression = tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
       if (expression == null) return;
-      final CharArrayCreationArgument charArrayCreationArgument = getCharArrayCreationArgument(expression.getArgumentList());
+      final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(expression.getArgumentList());
       if (charArrayCreationArgument == null) return;
       CommentTracker ct = new CommentTracker();
       final String replacementText = "String.valueOf(" + ct.text(charArrayCreationArgument.initializer) + ")";
       PsiReplacementUtil.replaceExpression(expression, replacementText, ct);
     }
-  }
-
-  @Nullable
-  private static CharArrayCreationArgument getCharArrayCreationArgument(@Nullable PsiExpressionList argList) {
-    if (argList == null || argList.getExpressionCount() != 1) return null;
-    final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(argList.getExpressions()[0]);
-    final PsiNewExpression newExpression = tryCast(arg, PsiNewExpression.class);
-    if (newExpression == null || !TypeUtils.typeEquals("char[]", newExpression.getType())) return null;
-    final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
-    if (arrayInitializer == null) return null;
-    final PsiExpression[] initializers = arrayInitializer.getInitializers();
-    if (initializers.length != 1) return null;
-    final PsiExpression initializer = initializers[0];
-    final PsiType type = initializer.getType();
-    if (!PsiType.CHAR.equals(type) && !TypeUtils.typeEquals(JAVA_LANG_CHARACTER, type)) return null;
-    return new CharArrayCreationArgument(newExpression, arrayInitializer, initializer);
   }
 
   private static final class UnwrapArrayInitializerFix extends InspectionGadgetsFix {
@@ -1083,12 +1064,28 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull PsiArrayInitializerExpression arrayInitializer;
     @NotNull PsiExpression initializer;
 
-    CharArrayCreationArgument(@NotNull PsiNewExpression newExpression,
+    private CharArrayCreationArgument(@NotNull PsiNewExpression newExpression,
                               @NotNull PsiArrayInitializerExpression arrayInitializer,
                               @NotNull PsiExpression initializer) {
       this.newExpression = newExpression;
       this.arrayInitializer = arrayInitializer;
       this.initializer = initializer;
+    }
+
+    @Nullable
+    private static CharArrayCreationArgument from(@Nullable PsiExpressionList argList) {
+      if (argList == null || argList.getExpressionCount() != 1) return null;
+      final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(argList.getExpressions()[0]);
+      final PsiNewExpression newExpression = tryCast(arg, PsiNewExpression.class);
+      if (newExpression == null) return null;
+      final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
+      if (arrayInitializer == null || !TypeUtils.typeEquals("char[]", newExpression.getType())) return null;
+      final PsiExpression[] initializers = arrayInitializer.getInitializers();
+      if (initializers.length != 1) return null;
+      final PsiExpression initializer = initializers[0];
+      final PsiType type = initializer.getType();
+      if (!PsiType.CHAR.equals(type) && !TypeUtils.typeEquals(JAVA_LANG_CHARACTER, type)) return null;
+      return new CharArrayCreationArgument(newExpression, arrayInitializer, initializer);
     }
   }
 }

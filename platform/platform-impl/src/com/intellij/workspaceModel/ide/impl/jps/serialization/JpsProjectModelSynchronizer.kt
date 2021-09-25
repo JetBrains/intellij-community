@@ -34,7 +34,6 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -50,7 +49,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private lateinit var fileContentReader: JpsFileContentReaderWithCache
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
-  private val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
   private var activity: Activity? = null
   private var childActivity: Activity? = null
 
@@ -189,7 +187,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     childActivity = activity?.startChild("serializers creation")
     val serializers = prepareSerializers()
     registerListener()
-    val builder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
+    val builder = WorkspaceEntityStorageBuilder.create()
     childActivity = childActivity?.endAndStart("unloaded modules loading")
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
@@ -198,7 +196,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("project model changes saving (in queue)")
       return builder.toStorage() to sourcesToUpdate
-    } else {
+    }
+    else {
       childActivity?.end()
       childActivity = null
       activity?.end()

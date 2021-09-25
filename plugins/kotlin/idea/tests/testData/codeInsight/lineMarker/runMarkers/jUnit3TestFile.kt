@@ -16,11 +16,11 @@ open class NotATest2: NotATest() {
 
 }
 
-class <lineMarker descr="Run Test">SessionTest1</lineMarker>: TestCase() {
+class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest1</lineMarker>: TestCase() {
 
 }
 
-class <lineMarker descr="Run Test">SessionTest2</lineMarker>: TestCase() {
+class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest2</lineMarker>: TestCase() {
 
     override fun <lineMarker descr="Overrides function in 'TestCase'">setUp</lineMarker>() {
         super.setUp()
@@ -31,8 +31,8 @@ class <lineMarker descr="Run Test">SessionTest2</lineMarker>: TestCase() {
     }
 }
 
-class <lineMarker descr="Run Test">SessionTest</lineMarker>: TestCase() {
-    fun <lineMarker descr="Run Test">testSessionCreateDelete</lineMarker>() {
+class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest</lineMarker>: TestCase() {
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">testSessionCreateDelete</lineMarker>() {
 
     }
 

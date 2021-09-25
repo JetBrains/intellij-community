@@ -100,7 +100,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
     myGraphTable.setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
 
-    PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
+    PopupHandler.installPopupMenu(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, logUi.getColorManager(), this) {
       @Override
       protected void navigate(@NotNull CommitId commit) {

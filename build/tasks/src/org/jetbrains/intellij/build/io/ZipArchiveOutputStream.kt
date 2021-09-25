@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
 import java.io.Closeable
@@ -12,7 +12,7 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
   private var finished = false
   private var entryCount = 0
 
-  private val metadataBuffer = ByteBuffer.allocateDirect(5 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
+  private val metadataBuffer = ByteBuffer.allocateDirect(8 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
   // 1024K should be enough for end of central directory record
   private val buffer = ByteBuffer.allocateDirect(1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
 

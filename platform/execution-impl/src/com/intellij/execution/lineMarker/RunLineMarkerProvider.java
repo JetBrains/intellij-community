@@ -28,6 +28,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,7 +157,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
   static class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final DefaultActionGroup myActionGroup;
 
-    RunLineMarkerInfo(PsiElement element, Icon icon, Function<? super PsiElement, String> tooltipProvider, DefaultActionGroup actionGroup) {
+    RunLineMarkerInfo(PsiElement element, Icon icon, Function<? super PsiElement, @Nls String> tooltipProvider, DefaultActionGroup actionGroup) {
       super(element, element.getTextRange(), icon, tooltipProvider, null, GutterIconRenderer.Alignment.CENTER,
             () -> tooltipProvider.fun(element));
       myActionGroup = actionGroup;

@@ -22,15 +22,7 @@
                  description="Enable cache for the workspace model"/>
     <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="true" restartRequired="true"
                  description="Enable additional checks after replaceBySource and addDiff"/>
-    <registryKey key="ide.new.project.model.artifacts" defaultValue="false" restartRequired="true"
+    <registryKey key="ide.new.project.model.artifacts" defaultValue="true" restartRequired="true"
                  description="Use workspace model to store project artifacts"/>
-
-    <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
-                    serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl" />
-
-    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
-                    serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>
-
-    <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
   </extensions>
 </idea-plugin>

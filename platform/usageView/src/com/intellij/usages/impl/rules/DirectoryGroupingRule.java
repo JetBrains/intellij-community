@@ -77,6 +77,11 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.DIRECTORY_STRUCTURE.getAbsoluteRank();
+  }
+
+  @Override
   public @NotNull String getGroupingActionId() {
     return "UsageGrouping.Directory";
   }

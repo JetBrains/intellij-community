@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -32,8 +33,8 @@ public abstract class DelayedRunner implements Disposable {
 
   private int myChangesPastTime = NO_CHANGES;
 
-  public DelayedRunner(JComponent activationComponent) {
-    myAlarm = new Alarm().setActivationComponent(activationComponent);
+  public DelayedRunner(@NotNull JComponent activationComponent) {
+    myAlarm = new Alarm(activationComponent, this);
     queueChangesCheck();
   }
 

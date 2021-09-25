@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.*;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -43,7 +44,8 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
-import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
@@ -63,9 +65,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
-    myBackgroundRenderer = Registry.is("psi.element.list.cell.renderer.background")
-                           ? new PsiElementBackgroundListCellRenderer(this)
-                           : null;
+    myBackgroundRenderer =
+      Registry.is("psi.element.list.cell.renderer.background") && !ApplicationManager.getApplication().isHeadlessEnvironment()
+      ? new PsiElementBackgroundListCellRenderer(this)
+      : null;
   }
 
   private class MyAccessibleContext extends JPanel.AccessibleJPanel {
@@ -185,6 +188,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Nullable
   protected TextAttributes getNavigationItemAttributes(Object value) {
+    return getNavigationItemAttributesStatic(value);
+  }
+
+  private static @Nullable TextAttributes getNavigationItemAttributesStatic(Object value) {
     TextAttributes attributes = null;
 
     if (value instanceof NavigationItem) {
@@ -391,50 +398,88 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @SuppressWarnings("unchecked")
   @RequiresReadLock
   public final @NotNull TargetPresentation computePresentation(@NotNull PsiElement element) {
-    return computePresentationInner((T)element);
+    return targetPresentation(
+      (T)element,
+      myRenderingInfo,
+      this::getNavigationItemAttributes,
+      this::getItemLocation,
+      this::getErrorAttributes
+    );
   }
 
-  private @NotNull TargetPresentation computePresentationInner(@NotNull T element) {
-    @NlsSafe String name = Objects.requireNonNullElseGet(getElementText(element), () -> {
-      LOG.error("Null name for PSI element " + element.getClass() + " (by " + this + ")");
-      return LangBundle.message("label.unknown");
-    });
-    TargetPresentationBuilder builder = TargetPresentation.builder(name);
-    builder = builder.icon(getIcon(element));
+  private final PsiElementRenderingInfo<T> myRenderingInfo = new PsiElementRenderingInfo<T>() {
 
-    Project project = element.getProject();
+    @Override
+    public @Nullable Icon getIcon(@NotNull T element) {
+      return PsiElementListCellRenderer.this.getIcon(element);
+    }
 
-    VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
-
-    TextAttributes presentableAttributes = getNavigationItemAttributes(element);
-    if (presentableAttributes == null) {
-      Color color = vFile == null ? null : FileStatusManager.getInstance(project).getStatus(vFile).getColor();
-      if (color != null) {
-        presentableAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color).toTextAttributes();
+    @Override
+    public @NotNull String getPresentableText(@NotNull T element) {
+      String elementText = getElementText(element);
+      if (elementText == null) {
+        LOG.error("Null name for PSI element " + element.getClass() + " (by " + PsiElementListCellRenderer.this + ")");
+        return LangBundle.message("label.unknown");
       }
+      return elementText;
     }
-    boolean isProblemFile = vFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(vFile);
-    if (isProblemFile) {
-      TextAttributes errorAttributes = getErrorAttributes().toTextAttributes();
-      presentableAttributes = presentableAttributes == null ? errorAttributes
-                                                            : TextAttributes.merge(errorAttributes, presentableAttributes);
-    }
-    builder = builder.presentableTextAttributes(presentableAttributes);
 
-    if (vFile != null) {
+    @Override
+    public @Nullable String getContainerText(@NotNull T element) {
+      return PsiElementListCellRenderer.this.getContainerText(element, getPresentableText(element));
+    }
+  };
+
+  static <T extends PsiElement>
+  @NotNull TargetPresentation targetPresentation(@NotNull T element, @NotNull PsiElementRenderingInfo<? super T> renderingInfo) {
+    return targetPresentation(
+      element,
+      renderingInfo,
+      PsiElementListCellRenderer::getNavigationItemAttributesStatic,
+      PsiElementListCellRenderer::getModuleTextWithIcon,
+      () -> DEFAULT_ERROR_ATTRIBUTES
+    );
+  }
+
+  private static <T extends PsiElement>
+  @NotNull TargetPresentation targetPresentation(
+    @NotNull T element,
+    @NotNull PsiElementRenderingInfo<? super T> renderingInfo,
+    @NotNull Function<? super @NotNull T, ? extends @Nullable TextAttributes> presentableAttributesProvider,
+    @NotNull Function<? super @NotNull T, ? extends @Nullable TextWithIcon> locationProvider,
+    @NotNull Supplier<? extends @NotNull SimpleTextAttributes> errorAttributesSupplier
+  ) {
+    TargetPresentationBuilder builder = TargetPresentation.builder(renderingInfo.getPresentableText(element));
+    builder = builder.icon(renderingInfo.getIcon(element));
+
+    TextAttributes elementAttributes = presentableAttributesProvider.apply(element);
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
+    if (vFile == null) {
+      builder = builder.presentableTextAttributes(elementAttributes);
+    }
+    else {
+      Project project = element.getProject();
+      TextAttributes presentableAttributes = elementAttributes;
+      if (presentableAttributes == null) {
+        Color color = FileStatusManager.getInstance(project).getStatus(vFile).getColor();
+        if (color != null) {
+          presentableAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color).toTextAttributes();
+        }
+      }
+      if (WolfTheProblemSolver.getInstance(project).isProblemFile(vFile)) {
+        presentableAttributes = TextAttributes.merge(errorAttributesSupplier.get().toTextAttributes(), presentableAttributes);
+      }
+      builder = builder.presentableTextAttributes(presentableAttributes);
       builder = builder.backgroundColor(getFileBackgroundColor(project, vFile));
     }
 
-    String containerText = getContainerText(element, name);
+    String containerText = renderingInfo.getContainerText(element);
     if (containerText != null) {
       var matcher = CONTAINER_PATTERN.matcher(containerText);
-      builder = builder.containerText(
-        matcher.matches() ? matcher.group(2) : containerText,
-        isProblemFile ? getErrorAttributes().toTextAttributes() : null
-      );
+      builder = builder.containerText(matcher.matches() ? matcher.group(2) : containerText);
     }
 
-    TextWithIcon itemLocation = getItemLocation(element);
+    TextWithIcon itemLocation = locationProvider.apply(element);
     if (itemLocation != null) {
       builder = builder.locationText(itemLocation.getText(), itemLocation.getIcon());
     }

@@ -70,7 +70,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     }
 
     FontEditorPreview.installTrafficLights(myEditor);
-    myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
+    myBlinkingAlarm = new Alarm(myEditor.getComponent(), ((EditorImpl)myEditor).getDisposable());
     if (navigatable) {
       myEditor.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
         @Override

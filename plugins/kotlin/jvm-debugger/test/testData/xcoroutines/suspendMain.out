@@ -23,5 +23,3 @@ CoroutineInfo: -1 coroutine UNKNOWN
 Disconnected from the target VM
 
 Process finished with exit code 0
-hello
-bye

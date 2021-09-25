@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -26,7 +27,12 @@ abstract class CodeProcessorCheckinHandler(
     val processor = createCodeProcessor()
 
     withContext(Dispatchers.Default) {
-      processor.processFilesUnderProgress(EmptyProgressIndicator())
+      val noTextIndicator = NoTextIndicator(indicator)
+
+      ProgressManager.getInstance().executeProcessUnderProgress(
+        { processor.processFilesUnderProgress(noTextIndicator) },
+        noTextIndicator
+      )
     }
     FileDocumentManager.getInstance().saveAllDocuments()
 
@@ -36,4 +42,8 @@ abstract class CodeProcessorCheckinHandler(
   override fun showDetails(problem: CommitProblem) = Unit
 
   override fun runCheckinHandlers(runnable: Runnable) = Unit
+}
+
+internal class NoTextIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
+  override fun setText(text: String?) = Unit
 }

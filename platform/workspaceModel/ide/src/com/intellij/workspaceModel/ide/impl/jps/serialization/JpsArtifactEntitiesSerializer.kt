@@ -7,6 +7,8 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
@@ -41,7 +43,39 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
   }
 
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation) {
-    //todo implement this (it isn't needed in 211 and until workspace model is enabled for artifacts in 212)
+    /// XXX In fact, we suppose that all packaging element have a connection to the corresponding artifact.
+    // However, technically, it's possible to create a packaging element without artifact or connection to another packaging element.
+    // Here we could check that the amount of "processed" packaging elements equals to the amount of packaging elements in store,
+    //   but unfortunately [WorkspaceModel.entities] function doesn't work with abstract entities at the moment.
+    builder.entities(ArtifactEntity::class.java).forEach {
+      // Convert artifact to the new source
+      val artifactSource = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(configLocation)
+      builder.changeSource(it, artifactSource)
+
+      // Convert it's packaging elements
+      it.rootElement.forThisAndFullTree {
+        builder.changeSource(it, artifactSource)
+      }
+    }
+
+    // Convert properties
+    builder.entities(ArtifactPropertiesEntity::class.java).forEach {
+      builder.changeSource(it, it.artifact.entitySource)
+    }
+  }
+
+  private fun PackagingElementEntity.forThisAndFullTree(action: (PackagingElementEntity) -> Unit) {
+    action(this)
+    if (this is CompositePackagingElementEntity) {
+      this.children.forEach {
+        if (it is CompositePackagingElementEntity) {
+          it.forThisAndFullTree(action)
+        }
+        else {
+          action(it)
+        }
+      }
+    }
   }
 }
 
@@ -195,7 +229,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
           val moduleName = getOptionalAttribute("module-name")
           val parentId = when {
             moduleName != null -> LibraryTableId.ModuleLibraryTableId(ModuleId(moduleName))
-            else -> levelToLibraryTableId(level)
+            else -> LibraryNameGenerator.getLibraryTableId(level)
           }
           builder.addLibraryFilesPackagingElementEntity(LibraryId(name, parentId), source)
         }

@@ -373,19 +373,16 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
 
     return ReadAction.compute<List<DeclaredDependency>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
-        MavenProjectBundle.message("maven.model.error", module.name))
-      model.dependencies.dependencies.map {
-        val scope = it.scope.stringValue
-        val dataContext = object : DataContext {
-          override fun getData(dataId: String): Any? {
-            if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) {
-              return it.xmlElement
-            }
-            return null
-          }
-        }
-        DeclaredDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.stringValue, scope, dataContext)
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)
+                  ?: throw IllegalStateException(MavenProjectBundle.message("maven.model.error", module.name))
+      model.dependencies.dependencies.map { mavenDomDependency ->
+        DeclaredDependency(
+          groupId = mavenDomDependency.groupId.stringValue,
+          artifactId = mavenDomDependency.artifactId.stringValue,
+          version = mavenDomDependency.version.stringValue,
+          configuration = mavenDomDependency.scope.stringValue,
+          dataContext = DataContext { if (CommonDataKeys.PSI_ELEMENT.`is`(it)) mavenDomDependency.xmlElement else null }
+        )
       }
     }
   }

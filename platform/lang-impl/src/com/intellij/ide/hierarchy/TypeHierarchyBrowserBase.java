@@ -27,33 +27,28 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   private final MyDeleteProvider myDeleteElementProvider = new MyDeleteProvider();
 
-  public TypeHierarchyBrowserBase(final Project project, final PsiElement element) {
+  public TypeHierarchyBrowserBase(Project project, PsiElement element) {
     super(project, element);
   }
 
   protected abstract boolean isInterface(@NotNull PsiElement psiElement);
 
-  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, @NotNull String typeHierarchyActionGroupName) {
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(typeHierarchyActionGroupName);
-    createTreeAndSetupCommonActions(trees, group);
-  }
-
-  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, @NotNull ActionGroup group) {
-    final BaseOnThisTypeAction baseOnThisTypeAction = createBaseOnThisAction();
-    final JTree tree1 = createTree(true);
-    PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+  protected void createTreeAndSetupCommonActions(@NotNull Map<? super String, ? super JTree> trees, @NotNull String groupId) {
+    BaseOnThisTypeAction baseOnThisTypeAction = createBaseOnThisAction();
+    JTree tree1 = createTree(true);
+    PopupHandler.installPopupMenu(tree1, groupId, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP);
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree1);
     trees.put(getTypeHierarchyType(), tree1);
 
-    final JTree tree2 = createTree(true);
-    PopupHandler.installPopupHandler(tree2, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    JTree tree2 = createTree(true);
+    PopupHandler.installPopupMenu(tree2, groupId, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP);
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree2);
     trees.put(getSupertypesHierarchyType(), tree2);
 
-    final JTree tree3 = createTree(true);
-    PopupHandler.installPopupHandler(tree3, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    JTree tree3 = createTree(true);
+    PopupHandler.installPopupMenu(tree3, groupId, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP);
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree3);
     trees.put(getSubtypesHierarchyType(), tree3);
@@ -69,7 +64,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected abstract String getQualifiedName(PsiElement psiElement);
 
   @Override
-  protected Map<String, Supplier<String>> getPresentableNameMap() {
+  protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
     map.put(TYPE_HIERARCHY_TYPE, TypeHierarchyBrowserBase::getTypeHierarchyType);
     map.put(SUBTYPES_HIERARCHY_TYPE, TypeHierarchyBrowserBase::getSubtypesHierarchyType);
@@ -88,7 +83,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected void prependActions(@NotNull final DefaultActionGroup actionGroup) {
+  protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new ViewClassHierarchyAction());
     actionGroup.add(new ViewSupertypesHierarchyAction());
     actionGroup.add(new ViewSubtypesHierarchyAction());
@@ -102,7 +97,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  public final Object getData(@NotNull final String dataId) {
+  public final Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteElementProvider;
     }
@@ -123,12 +118,12 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   private final class MyDeleteProvider implements DeleteProvider {
     @Override
-    public final void deleteElement(@NotNull final DataContext dataContext) {
-      final PsiElement aClass = getSelectedElement();
+    public final void deleteElement(@NotNull DataContext dataContext) {
+      PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) return;
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting.class", getQualifiedName(aClass)));
       try {
-        final PsiElement[] elements = {aClass};
+        PsiElement[] elements = {aClass};
         DeleteHandler.deletePsiElement(elements, myProject);
       }
       finally {
@@ -137,12 +132,12 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final boolean canDeleteElement(@NotNull final DataContext dataContext) {
-      final PsiElement aClass = getSelectedElement();
+    public final boolean canDeleteElement(@NotNull DataContext dataContext) {
+      PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) {
         return false;
       }
-      final PsiElement[] elements = {aClass};
+      PsiElement[] elements = {aClass};
       return DeleteHandler.shouldEnableDeleteAction(elements);
     }
   }

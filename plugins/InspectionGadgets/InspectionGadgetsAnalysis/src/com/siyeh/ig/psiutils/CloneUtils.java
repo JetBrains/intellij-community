@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class CloneUtils {
+  private static final CallMatcher CLONE_MATCHER =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, HardcodedMethodConstants.CLONE).parameterCount(0);
 
   private CloneUtils() {}
+
+  public static boolean isCallToClone(@Nullable PsiMethodCallExpression expression) {
+    return CLONE_MATCHER.test(expression);
+  }
 
   public static boolean isCloneable(@Nullable PsiClass aClass) {
     return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_CLONEABLE);

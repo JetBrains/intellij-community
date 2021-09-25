@@ -1,4 +1,4 @@
-// "Wrap 2nd parameter using 'Math.toIntExact()'" "true"
+// "Wrap 2nd argument using 'Math.toIntExact()'" "true"
 public class Test {
 
   void longMethod(int k, int thisIsInt) {

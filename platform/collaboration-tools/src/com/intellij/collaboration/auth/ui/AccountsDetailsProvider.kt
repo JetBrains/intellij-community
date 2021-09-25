@@ -6,6 +6,7 @@ import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.ui.codereview.SingleValueModel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
+import java.awt.Image
 import javax.swing.Icon
 
 interface AccountsDetailsProvider<in A : Account, out D : AccountDetails> {
@@ -17,7 +18,7 @@ interface AccountsDetailsProvider<in A : Account, out D : AccountDetails> {
   fun getDetails(account: A): D?
 
   @RequiresEdt
-  fun getIcon(account: A): Icon?
+  fun getAvatarImage(account: A): Image?
 
   @RequiresEdt
   @Nls

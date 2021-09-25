@@ -8,4 +8,4 @@ fun test() {
 }
 
 // REF: (in TestFromJava).testMethod()
-// REF: (in BaseJava).testMethod()
+// REF: of BaseJava.testMethod()

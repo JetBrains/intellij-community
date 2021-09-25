@@ -17,5 +17,13 @@ public enum ToolWindowExtractorMode {
   /**
    * Create a separate ToolWindow instance for each client.
    */
-  PER_CLIENT
+  PER_CLIENT,
+  /**
+   * Create a separate ToolWindow instance in a separate window that will be sent via projector to client
+   */
+  PROJECTOR;
+
+  public boolean isPerClientLike() {
+    return this == PER_CLIENT || this == PROJECTOR;
+  }
 }

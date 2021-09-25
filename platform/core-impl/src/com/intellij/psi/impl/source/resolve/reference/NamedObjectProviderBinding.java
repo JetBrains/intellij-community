@@ -20,19 +20,19 @@ import java.util.*;
  * @author maxim
  */
 public abstract class NamedObjectProviderBinding implements ProviderBinding {
-  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMap = new HashMap<>(5);
-  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMapInsensitive = new HashMap<>(5);
+  private final Map<String, List<ProviderInfo<ElementPattern<?>>>> myNamesToProvidersMap = new HashMap<>(5);
+  private final Map<String, List<ProviderInfo<ElementPattern<?>>>> myNamesToProvidersMapInsensitive = new HashMap<>(5);
 
   public void registerProvider(@NonNls String @NotNull [] names,
-                               @NotNull ElementPattern filter,
+                               @NotNull ElementPattern<?> filter,
                                boolean caseSensitive,
                                @NotNull PsiReferenceProvider provider,
-                               final double priority) {
-    final Map<String, List<ProviderInfo<ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
+                               double priority) {
+    Map<String, List<ProviderInfo<ElementPattern<?>>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
-    for (final String attributeName : names) {
+    for (String attributeName : names) {
       String key = caseSensitive ? attributeName : StringUtil.toLowerCase(attributeName);
-      List<ProviderInfo<ElementPattern>> psiReferenceProviders = map.get(key);
+      List<ProviderInfo<ElementPattern<?>>> psiReferenceProviders = map.get(key);
 
       if (psiReferenceProviders == null) {
         map.put(key, psiReferenceProviders = new SmartList<>());
@@ -54,20 +54,12 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   }
 
   @Override
-  public void unregisterProvider(@NotNull final PsiReferenceProvider provider) {
-    for (final List<ProviderInfo<ElementPattern>> list : myNamesToProvidersMap.values()) {
-      for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(list)) {
-        if (trinity.provider.equals(provider)) {
-          list.remove(trinity);
-        }
-      }
+  public void unregisterProvider(@NotNull PsiReferenceProvider provider) {
+    for (List<ProviderInfo<ElementPattern<?>>> list : myNamesToProvidersMap.values()) {
+      list.removeIf(trinity -> trinity.provider.equals(provider));
     }
-    for (final List<ProviderInfo<ElementPattern>> list : myNamesToProvidersMapInsensitive.values()) {
-      for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(list)) {
-        if (trinity.provider.equals(provider)) {
-          list.remove(trinity);
-        }
-      }
+    for (List<ProviderInfo<ElementPattern<?>>> list : myNamesToProvidersMapInsensitive.values()) {
+      list.removeIf(trinity -> trinity.provider.equals(provider));
     }
   }
 
@@ -79,7 +71,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   protected abstract String getName(@NotNull PsiElement position);
 
   static void addMatchingProviders(@NotNull PsiElement position,
-                                   @Nullable final List<? extends ProviderInfo<ElementPattern>> providerList,
+                                   @Nullable List<? extends ProviderInfo<ElementPattern<?>>> providerList,
                                    @NotNull Collection<? super ProviderInfo<ProcessingContext>> output,
                                    @NotNull PsiReferenceService.Hints hints) {
     if (providerList == null) return;
@@ -88,7 +80,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < providerList.size(); i++) {
-      ProviderInfo<ElementPattern> info = providerList.get(i);
+      ProviderInfo<ElementPattern<?>> info = providerList.get(i);
       if (hints != PsiReferenceService.Hints.NO_HINTS && !info.provider.acceptsHints(position, hints)) {
         continue;
       }

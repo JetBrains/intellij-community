@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration.ui.notifications
 
@@ -14,13 +11,10 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
-import org.jetbrains.kotlin.idea.search.containsKotlinFile
 
 private const val KOTLIN_UPDATE_CODE_STYLE_GROUP_ID = "Update Kotlin code style"
 
-fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
-    if (!project.containsKotlinFile()) return
-
+internal fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
     if (CodeStyle.getSettings(project).kotlinCodeStyleDefaults() == KotlinStyleGuideCodeStyle.CODE_STYLE_ID) return
     if (SuppressKotlinCodeStyleComponent.getInstance(project).state.disableForAll) {
         return
@@ -63,7 +57,7 @@ class SuppressKotlinCodeStyleState : BaseState() {
     var disableForAll by property(false)
 }
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "SuppressKotlinCodeStyleNotification")
 class SuppressKotlinCodeStyleComponent : SimplePersistentStateComponent<SuppressKotlinCodeStyleState>(SuppressKotlinCodeStyleState()) {
     companion object {

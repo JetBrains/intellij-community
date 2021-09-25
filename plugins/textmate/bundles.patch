@@ -1,26 +1,26 @@
 diff --git a/community/plugins/textmate/lib/bundles/ruby/package.json b/community/plugins/textmate/lib/bundles/ruby/package.json
-index 020b1d6daf65..f3afc2909988 100644
---- a/community/plugins/textmate/lib/bundles/ruby/package.json
-+++ b/community/plugins/textmate/lib/bundles/ruby/package.json
-@@ -13,7 +13,7 @@
- 		"languages": [{
- 			"id": "ruby",
- 			"extensions": [ ".rb", ".rbx", ".rjs", ".gemspec", ".rake", ".ru", ".erb", ".podspec", ".rbi" ],
--			"filenames": [ "rakefile", "gemfile", "guardfile", "podfile", "capfile", "cheffile", "hobofile", "vagrantfile", "appraisals", "rantfile", "berksfile", "berksfile.lock", "thorfile", "puppetfile", "dangerfile", "brewfile", "fastfile", "appfile", "deliverfile", "matchfile", "scanfile", "snapfile", "gymfile" ],
-+			"filenames": [ "rakefile", "gemfile", "guardfile", "podfile", "capfile", "cheffile", "hobofile", "vagrantfile", "appraisals", "rantfile", "berksfile", "berksfile.lock", "thorfile", "puppetfile", "dangerfile", "brewfile", "fastfile", "appfile", "deliverfile", "matchfile", "scanfile", "snapfile", "gymfile", "Vagrantfile", ".simplecov" ],
- 			"aliases": [ "Ruby", "rb" ],
- 			"firstLine": "^#!\\s*/.*\\bruby\\b",
- 			"configuration": "./language-configuration.json"
+--- a/community/plugins/textmate/lib/bundles/ruby/package.json	(revision 31dee44c2ba420529fe593c83217eb6a16ec5784)
++++ b/community/plugins/textmate/lib/bundles/ruby/package.json	(date 1622045362227)
+@@ -49,7 +49,9 @@
+           "matchfile",
+           "scanfile",
+           "snapfile",
+-          "gymfile"
++          "gymfile",
++          "Vagrantfile",
++          ".simplecov"
+         ],
+         "aliases": [
+           "Ruby",
 diff --git a/community/plugins/textmate/lib/bundles/log/syntaxes/log.tmLanguage.json b/community/plugins/textmate/lib/bundles/log/syntaxes/log.tmLanguage.json
-index 1306563834a2..b997bfea53be 100644
---- a/community/plugins/textmate/lib/bundles/log/syntaxes/log.tmLanguage.json
-+++ b/community/plugins/textmate/lib/bundles/log/syntaxes/log.tmLanguage.json
+--- a/community/plugins/textmate/lib/bundles/log/syntaxes/log.tmLanguage.json	(revision 31dee44c2ba420529fe593c83217eb6a16ec5784)
++++ b/community/plugins/textmate/lib/bundles/log/syntaxes/log.tmLanguage.json	(date 1622045593073)
 @@ -17,7 +17,7 @@
  			"name": "comment log.verbose"
  		},
  		{
 -			"match": "(?<=^[\\s\\d\\p]*)\\bV\\b",
-+			"match": "(?<=^[\\s\\d\\p])\\bV\\b",
++			"match": "(?<=^[\\s\\d])\\bV\\b",
  			"name": "comment log.verbose"
  		},
  		{

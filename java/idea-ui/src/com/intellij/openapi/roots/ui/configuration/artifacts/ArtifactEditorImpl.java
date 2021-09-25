@@ -286,7 +286,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
 
     final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
     new ShowAddPackagingElementPopupAction(this).registerCustomShortcutSet(CommonShortcuts.getNew(), tree);
-    PopupHandler.installPopupHandler(tree, createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree, createPopupActionGroup(), "ArtifactLayoutTreePopup");
     ToolTipManager.sharedInstance().registerComponent(tree);
     rebuildTries();
     return getMainComponent();

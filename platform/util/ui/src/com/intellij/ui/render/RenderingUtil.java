@@ -4,13 +4,12 @@ package com.intellij.ui.render;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.JBUI.CurrentTheme;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Color;
+import java.awt.*;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.IconLoader.getDarkIcon;
@@ -202,9 +201,6 @@ public final class RenderingUtil {
   }
 
   private static JTable getTableFor(@NotNull JTree tree) {
-    @SuppressWarnings("deprecation")
-    Object property = tree.getClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY);
-    if (property instanceof JTable) return (JTable)property;
     JComponent sibling = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
     return sibling instanceof JTable ? (JTable)sibling : null;
   }

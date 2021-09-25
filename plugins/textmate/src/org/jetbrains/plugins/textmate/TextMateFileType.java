@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +79,12 @@ public final class TextMateFileType extends LanguageFileType implements FileType
       if (!isTypeShouldBeReplacedByTextMateType(originalFileType)) {
         return null;
       }
-      boolean textMateRecognizesMe = TextMateService.getInstance().getLanguageDescriptorByFileName(fileName) != null;
+      boolean textMateRecognizesMe = false;
+      try {
+        textMateRecognizesMe = TextMateService.getInstance().getLanguageDescriptorByFileName(fileName) != null;
+      }
+      catch (ProcessCanceledException ignored) {
+      }
       if (!textMateRecognizesMe) {
         return null;
       }

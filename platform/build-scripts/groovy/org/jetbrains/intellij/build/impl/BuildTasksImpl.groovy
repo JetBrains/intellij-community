@@ -31,9 +31,6 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.*
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.*
 import java.util.function.Function
 
@@ -298,29 +295,6 @@ idea.fatal.error.notification=disabled
     return propertiesFile
   }
 
-  @NotNull String patchApplicationInfo() {
-    Path sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
-    String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
-
-    ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
-    String builtinPluginsRepoUrl = ""
-    if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
-      if (builtinPluginsRepoUrl.startsWith("http:")) {
-        buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
-      }
-    }
-
-    return Files.readString(sourceFile)  // Android Studio: don't patch ApplicationInfo.xml
-
-    return BuildUtils.replaceAll(Files.readString(sourceFile), Map.<String, String>of(
-      "BUILD_NUMBER", buildContext.fullBuildNumber,
-      "BUILD_DATE", date,
-      "BUILD", buildContext.buildNumber,
-      "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
-    ), "__")
-  }
-
   @CompileStatic(TypeCheckingMode.SKIP)
   private void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
@@ -404,11 +378,10 @@ idea.fatal.error.notification=disabled
   @Override
   void compileModulesFromProduct() {
     checkProductProperties()
-    String patchedApplicationInfo = patchApplicationInfo()
-    compileModulesForDistribution(patchedApplicationInfo)
+    compileModulesForDistribution()
   }
 
-  private DistributionJARsBuilder compileModulesForDistribution(@NotNull String patchedApplicationInfo) {
+  private DistributionJARsBuilder compileModulesForDistribution() {
     def productLayout = buildContext.productProperties.productLayout
     List<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
@@ -432,11 +405,11 @@ idea.fatal.error.notification=disabled
         }
       }
     }
-    return compilePlatformAndPluginModules(patchedApplicationInfo, pluginsToPublish)
+    return compilePlatformAndPluginModules(pluginsToPublish)
   }
 
-  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull String patchedApplicationInfo, @NotNull Set<PluginLayout> pluginsToPublish) {
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
+  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Set<PluginLayout> pluginsToPublish) {
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, "$buildContext.applicationInfo", pluginsToPublish)
     compileModules(distributionJARsBuilder.getModulesForPluginsToPublish())
 
     //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
@@ -451,9 +424,8 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
     setupBundledMaven()
 
-    String patchedApplicationInfo = patchApplicationInfo()
     logFreeDiskSpace("before compilation")
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution()
     logFreeDiskSpace("after compilation")
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
@@ -503,7 +475,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_WINDOWS)) {
         tasks.add(createDistributionForOsTask("win", { BuildContext context ->
           context.windowsDistributionCustomizer?.
-            with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
+            with { new WindowsDistributionBuilder(context, it, propertiesFile, "$buildContext.applicationInfo") }
         }))
       }
       if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_LINUX)) {
@@ -577,14 +549,14 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
     def pluginsToPublish = new LinkedHashSet<PluginLayout>(
       DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
-    def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
+    def distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
     DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
     distributionJARsBuilder.buildNonBundledPlugins(true)
   }
 
   @Override
   void generateProjectStructureMapping(File targetFile) {
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, "$buildContext.applicationInfo")
     jarsBuilder.generateProjectStructureMapping(targetFile)
   }
 
@@ -971,7 +943,7 @@ idea.fatal.error.notification=disabled
   void runTestBuild() {
     checkProductProperties()
     setupBundledMaven()
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchApplicationInfo())
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution()
     distributionJARsBuilder.buildJARs()
     DistributionJARsBuilder.buildInternalUtilities(buildContext)
     scramble(buildContext)
@@ -997,8 +969,7 @@ idea.fatal.error.notification=disabled
     buildContext.options.targetOS = currentOs.osId
 
     setupBundledMaven()
-    String patchedApplicationInfo = patchApplicationInfo()
-    compileModulesForDistribution(patchedApplicationInfo).buildJARs(true)
+    compileModulesForDistribution().buildJARs(true)
     def osSpecificPlugins = DistributionJARsBuilder.getOsSpecificDistDirectory(currentOs, buildContext).resolve("plugins")
     if (Files.isDirectory(osSpecificPlugins)) {
       Files.newDirectoryStream(osSpecificPlugins).withCloseable { children ->

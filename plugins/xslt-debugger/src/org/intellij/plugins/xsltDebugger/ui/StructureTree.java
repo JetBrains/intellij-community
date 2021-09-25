@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.xsltDebugger.ui;
 
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -41,7 +40,7 @@ public class StructureTree extends Tree implements DataProvider {
     final DefaultActionGroup structureContextActions = DefaultActionGroup.createPopupGroup(() -> "StructureContext");
     structureContextActions.add(NavigateAction.getInstance());
     structureContextActions.add(new CopyValueAction(this));
-    PopupHandler.installFollowingSelectionTreePopup(this, structureContextActions, "XSLT.Debugger.GeneratedStructure", ActionManager.getInstance());
+    PopupHandler.installFollowingSelectionTreePopup(this, structureContextActions, "XSLT.Debugger.GeneratedStructure");
   }
 
   @Nullable

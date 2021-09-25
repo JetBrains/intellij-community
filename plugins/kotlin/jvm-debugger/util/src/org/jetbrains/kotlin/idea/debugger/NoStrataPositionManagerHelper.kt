@@ -1,12 +1,10 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
+import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -32,8 +30,6 @@ import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.org.objectweb.asm.*
-import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 fun isInlineFunctionLineNumber(file: VirtualFile, lineNumber: Int, project: Project): Boolean {
@@ -75,7 +71,7 @@ fun getLocationsOfInlinedLine(type: ReferenceType, position: SourcePosition, sou
 
     val lines = inlinedLinesNumbers(line + 1, position.file.name, FqName(type.name()), type.sourceName(), project, sourceSearchScope)
 
-    return lines.flatMap { type.locationsOfLine(it) }
+    return lines.flatMap { DebuggerUtilsAsync.locationsOfLineSync(type, it) }
 }
 
 fun isInCrossinlineArgument(ktElement: KtElement): Boolean {

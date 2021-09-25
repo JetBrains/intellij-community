@@ -4,7 +4,6 @@ package com.intellij.tasks.youtrack;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CustomTaskState;
@@ -83,8 +82,7 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
   public Task[] getIssues(@Nullable String query,
                           int offset,
                           int limit,
-                          boolean withClosed,
-                          @NotNull ProgressIndicator cancelled) throws Exception {
+                          boolean withClosed) throws Exception {
     List<YouTrackIssue> result = fetchIssues(query, offset, limit);
     return ContainerUtil.map2Array(result, YouTrackTask.class, issue -> new YouTrackTask(this, issue));
   }

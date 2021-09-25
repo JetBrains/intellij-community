@@ -1,20 +1,20 @@
 <html>
 <body>
-Reports condition chains where a value range is checked and where these condition chains can be simplified to a single check.
-<p>The quick-fix replaces the condition chain with the simplified expression:</p>
-<p>Before:</p>
+Reports condition chains in which a value range is checked and these condition chains can be simplified to a single check.
+<p>The quick-fix replaces a condition chain with a simplified expression:</p>
+<p>Example:</p>
 <pre>
   x > 2 && x &lt; 4
 </pre>
-<p>After:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   x == 3
 </pre>
-<p>Before:</p>
+<p>Example:</p>
 <pre>
   arr.length == 0 || arr.length > 1
 </pre>
-<p>After:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   arr.length != 1
 </pre>

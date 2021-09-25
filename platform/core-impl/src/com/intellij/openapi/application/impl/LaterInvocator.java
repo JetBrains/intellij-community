@@ -214,7 +214,7 @@ public final class LaterInvocator {
 
     Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.getOrDefault(project, new Stack<>(ModalityState.NON_MODAL));
     projectToModalEntitiesStack.put(project, modalEntitiesStack);
-    modalEntitiesStack.push(new ModalityStateEx(ArrayUtil.toObjectArray(ourModalEntities)));
+    modalEntitiesStack.push(new ModalityStateEx(ourModalEntities));
   }
 
   /**

@@ -1,22 +1,7 @@
-/*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PackageOracle
@@ -25,6 +10,7 @@ import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isSubpackageOf
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
@@ -49,13 +35,13 @@ class IdePackageOracleFactory(val project: Project) : PackageOracleFactory {
 
     private class JavaPackagesOracle(moduleInfo: IdeaModuleInfo, project: Project) : PackageOracle {
         private val scope = moduleInfo.contentScope()
-        private val facade = ServiceManager.getService(project, KotlinJavaPsiFacade::class.java)
+        private val facade: KotlinJavaPsiFacade = project.getServiceSafe()
 
         override fun packageExists(fqName: FqName) = facade.findPackage(fqName.asString(), scope) != null
     }
 
     private class KotlinSourceFilesOracle(moduleInfo: IdeaModuleInfo, private val project: Project) : PackageOracle {
-        private val cacheService = ServiceManager.getService(project, PerModulePackageCacheService::class.java)
+        private val cacheService: PerModulePackageCacheService = project.getServiceSafe()
         private val sourceModules = moduleInfo.projectSourceModules()
 
         override fun packageExists(fqName: FqName): Boolean {

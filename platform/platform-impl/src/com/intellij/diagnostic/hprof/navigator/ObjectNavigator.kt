@@ -65,6 +65,9 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
       assert(className == getClass().name.substringBeforeLast('!')) { "Expected $className, got ${getClass().name}" }
     }
     val indexOfField = getClass().allRefFieldNames(classStore).indexOfFirst { it == name }
+    if (indexOfField == -1) {
+      throw IllegalStateException("Can't find field $name in class $className")
+    }
     return refs.getLong(indexOfField)
   }
 

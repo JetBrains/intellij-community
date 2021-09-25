@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
-internal interface ModuleRootModelBridge: ModuleRootModel {
+internal interface ModuleRootModelBridge : ModuleRootModel {
   val storage: WorkspaceEntityStorage
   val moduleBridge: ModuleBridge
   val accessor: RootConfigurationAccessor

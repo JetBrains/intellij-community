@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -252,6 +253,11 @@ public final class UITheme {
     }
     String color = colorPalette.get(key);
     return color == null ? key.toLowerCase(Locale.ENGLISH) : color.toLowerCase(Locale.ENGLISH);
+  }
+
+  @TestOnly
+  public static Map<String, String> getColorPalette() {
+    return Collections.unmodifiableMap(colorPalette);
   }
 
   private static final @NonNls Map<String, String> colorPalette;

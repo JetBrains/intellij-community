@@ -94,7 +94,7 @@ public final class InsertPathAction extends AnAction {
         textField, descriptor != null? descriptor : FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), insertSystemDependentPaths
       );
       actionGroup.add(action);
-      MouseListener popupHandler = PopupHandler.installUnknownPopupHandler(textField, actionGroup);
+      MouseListener popupHandler = PopupHandler.installPopupMenu(textField, actionGroup, "InsertPathActionTextFieldPopup");
       action.savePopupHandler(popupHandler);
       textField.putClientProperty(INSERT_PATH_ACTION, action);
     }

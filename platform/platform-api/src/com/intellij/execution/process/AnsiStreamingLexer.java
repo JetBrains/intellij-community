@@ -83,13 +83,11 @@ class AnsiStreamingLexer {
     }
 
     myEndOffset++;
-    if (myBuffer.charAt(myEndOffset) == '[') {
-      myEndOffset++;
-      processCSISequence();
+
+    if (decodeEscapeSequence()) {
       return;
     }
-    // There can by anything from 0x40–0x5F  https://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences
-    // but we are ignoring this for now
+
     advanceToEscape();
   }
 
@@ -123,6 +121,25 @@ class AnsiStreamingLexer {
     else {
       // broken seqeuence, considering as a text
       advanceToEscape();
+    }
+  }
+
+  private boolean decodeEscapeSequence() {
+
+    // There can by anything from 0x40–0x5F  https://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences
+    // but we are ignoring most of it for now
+
+    switch (myBuffer.charAt(myEndOffset)) {
+      case '[':
+        myEndOffset++;
+        processCSISequence();
+        return true;
+      case '=': //DECKPAM
+        myElementType = CONTROL;
+        myEndOffset++;
+        return true;
+      default:
+        return false;
     }
   }
 

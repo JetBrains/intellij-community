@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.LoggerRt;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
@@ -11,10 +12,8 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.countChars;
-
 public class TextMateSelectorParser {
-  private static final Logger LOG = Logger.getInstance(TextMateSelectorParser.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSelectorParser.class);
   private static final int NESTING_WEIGH_INITIAL = 100;
   private static final int BASE_WEIGH = NESTING_WEIGH_INITIAL * 10;
 
@@ -152,8 +151,8 @@ public class TextMateSelectorParser {
     @Override
     public TextMateWeigh weigh(@NotNull TextMateScope scope) {
       CharSequence scopeName = scope.getScopeName();
-      if (scopeName != null && StringUtil.startsWith(scopeName, selector)) {
-        return new TextMateWeigh(BASE_WEIGH - scope.getDotsCount() + countChars(selector, '.'),
+      if (scopeName != null && StringUtilRt.startsWith(scopeName, selector)) {
+        return new TextMateWeigh(BASE_WEIGH - scope.getDotsCount() + Strings.countChars(selector, '.'),
                                  TextMateWeigh.Priority.NORMAL);
       }
       return TextMateWeigh.ZERO;

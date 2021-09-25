@@ -168,8 +168,8 @@ final class PortableCompilationCache {
         compileProject()
       }
       isAlreadyUpdated = true
-      context.options.incrementalCompilation = false
-      context.options.useCompiledClassesFromProjectOutput = true
+      context.options.incrementalCompilation = true
+      context.options.useCompiledClassesFromProjectOutput = false
     }
   }
 

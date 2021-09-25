@@ -1,7 +1,7 @@
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
 public class Wrongsignature2 {
    @org.junit.runners.Parameterized.Parameters
-   public static Integer <warning descr="Method 'regExValues()' should have return type Iterable or Object[]">regExValues</warning>() {
+   public static Integer <warning descr="Data provider method 'regExValues()' has an incorrect signature">regExValues</warning>() {
         return null;
     }
 }

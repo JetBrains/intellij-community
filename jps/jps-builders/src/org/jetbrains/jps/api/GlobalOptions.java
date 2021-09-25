@@ -20,7 +20,6 @@ package org.jetbrains.jps.api;
  */
 public interface GlobalOptions {
 
-  String GENERATE_CLASSPATH_INDEX_OPTION = "generate.classpath.index";
   String COMPILE_PARALLEL_OPTION = "compile.parallel";
   String ALLOW_PARALLEL_AUTOMAKE_OPTION = "allow.parallel.automake";
   String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";

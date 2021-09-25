@@ -17,8 +17,10 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
@@ -77,7 +79,8 @@ object AccountsPanelFactory {
                                             defaultAccountHolder: PersistentDefaultAccountHolder<A>,
                                             accountsModel: AccountsListModel<A, Cred>,
                                             detailsProvider: AccountsDetailsProvider<A, *>,
-                                            disposable: Disposable): CellBuilder<JComponent> {
+                                            disposable: Disposable,
+                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
 
     accountsModel.addCredentialsChangeListener(detailsProvider::reset)
     detailsProvider.loadingStateModel.addInvokeListener {
@@ -114,7 +117,7 @@ object AccountsPanelFactory {
     })
 
     return create(accountsModel) {
-      SimpleAccountsListCellRenderer(accountsModel, detailsProvider)
+      SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
     }(grow, push)
       .onIsModified(::isModified)
       .onReset(::reset)

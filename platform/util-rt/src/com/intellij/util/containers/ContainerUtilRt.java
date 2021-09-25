@@ -37,6 +37,7 @@ public final class ContainerUtilRt {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
     LinkedList<T> collection = new LinkedList<T>();

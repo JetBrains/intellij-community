@@ -132,7 +132,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     Object component = path.getLastPathComponent();
     if (component instanceof Node) {
       Node node = (Node)component;
-      return onValidThread(structure -> disposed || isNodeRemoved(node) ? null : function.apply(node));
+      return onValidThread(__ -> disposed || isNodeRemoved(node) ? null : function.apply(node));
     }
     return rejectedPromise("unexpected node: " + component);
   }
@@ -144,12 +144,12 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    */
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<? super Node, ? extends Result> function) {
-    return onValidThread(structure -> {
+    return onValidThread(struct -> {
       Node node = root.get();
       if (node == null) return null;
       if (node.matches(element)) return function.apply(node);
       ArrayDeque<Object> stack = new ArrayDeque<>();
-      for (Object e = element; e != null; e = structure.getParentElement(e)) stack.push(e);
+      for (Object e = element; e != null; e = struct.getParentElement(e)) stack.push(e);
       if (!node.matches(stack.pop())) return null;
       while (!stack.isEmpty()) {
         node = node.findChild(stack.pop());
@@ -164,7 +164,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    */
   @NotNull
   public final Promise<?> invalidate() {
-    return onValidThread(structure -> invalidateInternal(null, true));
+    return onValidThread(__ -> invalidateInternal(null, true));
   }
 
   /**
@@ -270,8 +270,8 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    */
   @NotNull
   public final Promise<TreeVisitor> promiseVisitor(@NotNull Object element) {
-    return onValidThread(structure -> new TreeVisitor.ByTreePath<>(
-      TreePathUtil.pathToCustomNode(element, structure::getParentElement),
+    return onValidThread(struct -> new TreeVisitor.ByTreePath<>(
+      TreePathUtil.pathToCustomNode(element, struct::getParentElement),
       node -> node instanceof Node ? ((Node)node).getElement() : null));
   }
 

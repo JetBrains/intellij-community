@@ -1,14 +1,11 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scripting.gradle.legacy
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class GradleStandaloneScriptActionsManager(val project: Project) {
     private val byFile = mutableMapOf<VirtualFile, GradleStandaloneScriptActions>()
@@ -33,7 +30,7 @@ class GradleStandaloneScriptActionsManager(val project: Project) {
     }
 
     companion object {
-        fun getInstance(project: Project) =
-            ServiceManager.getService(project, GradleStandaloneScriptActionsManager::class.java)
+        fun getInstance(project: Project): GradleStandaloneScriptActionsManager =
+            project.getServiceSafe()
     }
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Alarm
@@ -129,7 +130,7 @@ internal object OpenLessonActivities {
           LOG.error(Exception("Invalid learning project initialization: projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
           return
         }
-        cleanupAndOpenLesson(projectWhereToStartLesson, lesson)
+        prepareAndOpenLesson(projectWhereToStartLesson, lesson)
       }
       else {
         openLessonForPreparedProject(projectWhereToStartLesson, lesson)
@@ -140,14 +141,12 @@ internal object OpenLessonActivities {
     }
   }
 
-  private fun cleanupAndOpenLesson(project: Project, lessonToOpen: Lesson) {
-    val lessons = CourseManager.instance.lessonsForModules.filter { it.lessonType == LessonType.PROJECT }
+  private fun prepareAndOpenLesson(project: Project, lessonToOpen: Lesson, withCleanup: Boolean = true) {
     runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) {
-      LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
-
-      for (lesson in lessons) {
-        lesson.cleanup(project)
+      if (withCleanup) {
+        LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
       }
+      lessonToOpen.prepare(project)
 
       invokeLater {
         openLessonForPreparedProject(project, lessonToOpen)
@@ -176,10 +175,10 @@ internal object OpenLessonActivities {
       hideOtherViews(project)
     }
     // We need to ensure that the learning panel is initialized
-    learningToolWindow(project)?.let {
-      it.show()
+    if (showLearnPanel(project)) {
       openLessonWhenLearnPanelIsReady(project, lesson, vf)
-    } ?: waitLearningToolwindow(project, lesson, vf)
+    }
+    else waitLearningToolwindow(project, lesson, vf)
   }
 
   private fun openLessonWhenLearnPanelIsReady(project: Project, lesson: Lesson, vf: VirtualFile?) {
@@ -247,6 +246,9 @@ internal object OpenLessonActivities {
           if (toolWindow != null) {
             connect.disconnect()
             invokeLater {
+              if (toolWindow.anchor != ToolWindowAnchor.LEFT) {
+                toolWindow.setAnchor(ToolWindowAnchor.LEFT, null)
+              }
               toolWindow.show()
               openLessonWhenLearnPanelIsReady(project, lesson, vf)
             }
@@ -277,9 +279,8 @@ internal object OpenLessonActivities {
   }
 
   private fun openReadme(project: Project) {
-    val manager = ProjectRootManager.getInstance(project)
-    val root = manager.contentRoots[0]
-    val readme = root?.findFileByRelativePath("README.md") ?: return
+    val root = ProjectUtils.getProjectRoot(project)
+    val readme = root.findFileByRelativePath("README.md") ?: return
     val editors = FileEditorManager.getInstance(project).openFile(readme, true, true)
     (editors.singleOrNull() as? TextEditor)?.editor?.let {
       val action = ActionManager.getInstance().getAction(
@@ -332,14 +333,19 @@ internal object OpenLessonActivities {
     }
   }
 
-  private fun showLearnPanel(project: Project) {
-    learningToolWindow(project)?.show()
+  private fun showLearnPanel(project: Project): Boolean {
+    val learn = learningToolWindow(project) ?: return false
+    if (learn.anchor != ToolWindowAnchor.LEFT) {
+      learn.setAnchor(ToolWindowAnchor.LEFT, null)
+    }
+    learn.show()
+    return true
   }
 
   @RequiresEdt
   private fun openLessonWhenLearnProjectStart(lesson: Lesson, myLearnProject: Project) {
     if (lesson.properties.canStartInDumbMode) {
-      openLessonForPreparedProject(myLearnProject, lesson)
+      prepareAndOpenLesson(myLearnProject, lesson, withCleanup = false)
       return
     }
     fun openLesson() {
@@ -350,7 +356,7 @@ internal object OpenLessonActivities {
           // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
             DumbService.getInstance(myLearnProject).runWhenSmart {
-              openLessonForPreparedProject(myLearnProject, lesson)
+              prepareAndOpenLesson(myLearnProject, lesson, withCleanup = false)
             }
           }
           Alarm().addRequest(openWhenSmart, 500)
@@ -371,8 +377,9 @@ internal object OpenLessonActivities {
 
   @Throws(IOException::class)
   private fun getScratchFile(project: Project, lesson: Lesson, filename: String): VirtualFile {
+    val languageId = lesson.languageId ?: error("Scratch lesson ${lesson.id} should define language")
     var vf: VirtualFile? = null
-    val languageByID = findLanguageByID(lesson.languageId)
+    val languageByID = findLanguageByID(languageId)
     if (CourseManager.instance.mapModuleVirtualFile.containsKey(lesson.module)) {
       vf = CourseManager.instance.mapModuleVirtualFile[lesson.module]
       ScratchFileService.getInstance().scratchesMapping.setMapping(vf, languageByID)
@@ -412,11 +419,11 @@ internal object OpenLessonActivities {
       override fun compute(): VirtualFile {
         val learnProject = LearningUiManager.learnProject!!
 
-        val existedFile = lesson.existedFile ?: lesson.module.primaryLanguage.projectSandboxRelativePath
+        val existedFile = lesson.existedFile ?: lesson.module.primaryLanguage?.projectSandboxRelativePath
         val manager = ProjectRootManager.getInstance(learnProject)
         if (existedFile != null) {
-          val root = manager.contentRoots[0]
-          val findFileByRelativePath = root?.findFileByRelativePath(existedFile)
+          val root = ProjectUtils.getProjectRoot(learnProject)
+          val findFileByRelativePath = root.findFileByRelativePath(existedFile)
           if (findFileByRelativePath != null) return findFileByRelativePath
         }
 

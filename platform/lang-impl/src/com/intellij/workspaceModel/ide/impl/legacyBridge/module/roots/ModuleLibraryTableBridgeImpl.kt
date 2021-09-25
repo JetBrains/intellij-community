@@ -14,7 +14,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 
 internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : ModuleLibraryTableBase(), ModuleLibraryTableBridge {
   init {
@@ -52,7 +51,7 @@ internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBrid
     val library = LibraryBridgeImpl(
       libraryTable = this,
       project = module.project,
-      initialId = entity.persistentId(), 
+      initialId = entity.persistentId(),
       initialEntityStorage = moduleBridge.entityStorage,
       targetBuilder = null
     )

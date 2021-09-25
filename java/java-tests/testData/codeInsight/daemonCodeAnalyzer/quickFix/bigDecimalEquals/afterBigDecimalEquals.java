@@ -15,7 +15,7 @@ class BigDecimalEquals {
     if(!(foo.compareTo(bar) == 0)) {
       System.out.println("not equals");
     }
-    if(qux != null && qux.compareTo(bar) == 0) {
+    if(qux == null ? bar == null : qux.compareTo(bar) == 0) {
       System.out.println("equals");
     }
   }

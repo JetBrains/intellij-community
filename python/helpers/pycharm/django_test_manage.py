@@ -118,7 +118,7 @@ class PycharmTestManagementUtility(ManagementUtility):
 
   def execute(self):
     from django_test_runner import is_nosetest
-    if is_nosetest(settings) and "_JB_USE_OLD_RUNNERS" not in os.environ:
+    if is_nosetest(settings):
       # New way to run django-nose is to install teamcity-runners plugin
       # there is no easy way to get qname in 2.7 so string is used
       name = "teamcity.nose_report.TeamcityReport"

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -334,6 +334,11 @@ public abstract class AbstractLayoutCodeProcessor {
     return all;
   }
 
+  public static @NotNull @NlsSafe String getPresentablePath(@NotNull Project project, @NotNull PsiFile file) {
+    VirtualFile vFile = file.getVirtualFile();
+    return vFile != null ? ProjectUtil.calcRelativeToProjectPath(vFile, project) : file.getName();
+  }
+
   private class ProcessingTask implements SequentialTask {
     private final List<AbstractLayoutCodeProcessor> myProcessors;
 
@@ -376,7 +381,7 @@ public abstract class AbstractLayoutCodeProcessor {
         myFilesProcessed++;
 
         if (shouldProcessFile(file)) {
-          updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), getPresentablePath(file));
+          updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), getPresentablePath(myProject, file));
           DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> performFileProcessing(file));
         }
       }
@@ -422,11 +427,6 @@ public abstract class AbstractLayoutCodeProcessor {
     private void updateIndicatorText(@NotNull @NlsContexts.ProgressText String upperLabel, @NotNull @NlsContexts.ProgressDetails String downLabel) {
       myProgressIndicator.setText(upperLabel);
       myProgressIndicator.setText2(downLabel);
-    }
-
-    private @NlsSafe String getPresentablePath(@NotNull PsiFile file) {
-      VirtualFile vFile = file.getVirtualFile();
-      return vFile != null ? ProjectUtil.calcRelativeToProjectPath(vFile, myProject) : file.getName();
     }
 
     private void updateIndicatorFraction(int processed) {

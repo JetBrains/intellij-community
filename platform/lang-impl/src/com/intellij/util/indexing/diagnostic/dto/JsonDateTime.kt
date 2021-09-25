@@ -30,5 +30,7 @@ data class JsonDateTime(val instant: ZonedDateTime = ZonedDateTime.ofInstant(Ins
       JsonDateTime(ZonedDateTime.parse(p.valueAsString, DateTimeFormatter.ISO_ZONED_DATE_TIME))
   }
 
-  fun presentableDateTime(): String = instant.format(DateTimeFormatter.RFC_1123_DATE_TIME)
+  fun presentableDateTime(useSystemTimeZone: Boolean = true): String =
+    (if (useSystemTimeZone) instant.withZoneSameInstant(ZoneOffset.systemDefault()) else instant)
+      .format(DateTimeFormatter.RFC_1123_DATE_TIME)
 }

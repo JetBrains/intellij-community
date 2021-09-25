@@ -3,6 +3,5 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operati
 internal enum class PackageOperationType {
     INSTALL,
     UPGRADE,
-    DOWNGRADE,
-    REMOVE
+    SET
 }

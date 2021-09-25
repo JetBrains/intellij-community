@@ -31,6 +31,11 @@ class ChangelistConflictConfigurable(val project: Project)
     return panel {
       row {
         enableIf(changeListsEnabledPredicate)
+        checkBox(message("settings.changelists.create.automatically.checkbox"), appSettings::CREATE_CHANGELISTS_AUTOMATICALLY)
+      }
+
+      row {
+        enableIf(changeListsEnabledPredicate)
         checkBox(message("settings.partial.changelists.enable.checkbox"), appSettings::ENABLE_PARTIAL_CHANGELISTS)
           .onApply {
             ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()

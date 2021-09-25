@@ -12,10 +12,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Base class for account management application service
- * Accounts are persistently stored in [persistentAccounts]
+ * Accounts are stored in [accountsRepository]
  * Credentials are serialized and stored in [passwordSafe]
  *
- * @see [SimpleAccountsPersistentStateComponent]
  * @see [AccountsListener]
  */
 abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: String)
@@ -25,9 +24,9 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
     get() = PasswordSafe.instance
 
   private val persistentAccounts
-    get() = persistentAccounts()
+    get() = accountsRepository()
 
-  protected abstract fun persistentAccounts(): AccountsPersistentStateComponent<A, *>
+  protected abstract fun accountsRepository(): AccountsRepository<A>
 
   private val listeners = CopyOnWriteArrayList<AccountsListener<A>>()
 

@@ -149,7 +149,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private JRootPane considerShowingDialog(long now) {
     if (now - myLastUiUpdate > myDelayInMillis && myApp.isActive() &&
         myApp.getServiceIfCreated(DialogWrapperPeerFactory.class) != null) {
-      getDialog().myRepaintRunnable.run();
+      getDialog().getRepaintRunnable().run();
       showDialog();
       return getDialog().getPanel().getRootPane();
     }
@@ -183,7 +183,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
    * because they might access the model, which might be inconsistent at that moment.
    */
   private void paintProgress() {
-    getDialog().myRepaintRunnable.run();
+    getDialog().getRepaintRunnable().run();
 
     JPanel dialogPanel = getDialog().getPanel();
     dialogPanel.validate();

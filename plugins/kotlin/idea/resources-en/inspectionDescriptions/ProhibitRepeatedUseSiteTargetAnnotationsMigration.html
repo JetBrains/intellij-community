@@ -1,5 +1,16 @@
 <html>
 <body>
-Since Kotlin 1.4, it's forbidden to repeat annotation without <b>@Repeatable</b> annotation and <b>SOURCE</b> retention on property accessors.
+<p>Reports repeated annotation on property accessors which are not marked with <code>@Repeatable</code> annotation and <code>SOURCE</code> retention.</p>
+<p>As a result, those annotations will be compiled to the bytecode and it will be unclear which one will be loaded via reflection later.</p>
+<p><b>Example:</b></p>
+<pre><code>
+annotation class Foo(val x: Int)
+
+@get:<b>Foo</b>(10)
+val a: String
+    @<b>Foo</b>(20) get() = "foo" // annotation repeated twice but not marked as @Repeatable
+</code></pre>
+<!-- tooltip end -->
+<p>This inspection only reports if the Kotlin language level of the project or module is 1.4 or higher.</p>
 </body>
 </html>

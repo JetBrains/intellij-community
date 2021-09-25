@@ -6,26 +6,14 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 
 public final class GroovyFileType extends LanguageFileType {
-
-  /**
-   * @deprecated implement {@link GroovyEnabledFileType} in the FileType,
-   * or extend {@link LanguageFileType} and specify {@link GroovyLanguage#INSTANCE}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public static final List<FileType> GROOVY_FILE_TYPES = new ArrayList<>();
   public static final @NotNull GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "groovy";
 
@@ -64,7 +52,7 @@ public final class GroovyFileType extends LanguageFileType {
   }
 
   public static @NotNull FileType @NotNull [] getGroovyEnabledFileTypes() {
-    Collection<FileType> result = new LinkedHashSet<>(GROOVY_FILE_TYPES);
+    Collection<FileType> result = new LinkedHashSet<>();
     result.addAll(ContainerUtil.filter(
       FileTypeManager.getInstance().getRegisteredFileTypes(),
       GroovyFileType::isGroovyEnabledFileType

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -286,25 +287,19 @@ public final class CustomAntElementsRegistry {
       // check classpath attribute
       List<File> cpFiles = typedef.getClasspath().getValue();
       if (cpFiles != null) {
-        for (File file : cpFiles) {
-          paths.add(file.toPath());
-        }
+        addPathsSafe(paths, cpFiles);
       }
 
       final HashSet<AntFilesProvider> processed = new HashSet<>();
       final AntDomElement referencedPath = typedef.getClasspathRef().getValue();
       if (referencedPath instanceof AntFilesProvider) {
-        for (File cpFile : ((AntFilesProvider)referencedPath).getFiles(processed)) {
-          paths.add(cpFile.toPath());
-        }
+        addPathsSafe(paths, ((AntFilesProvider)referencedPath).getFiles(processed));
       }
       // check nested elements
       for (Iterator<AntDomElement> it = typedef.getAntChildrenIterator(); it.hasNext();) {
         AntDomElement child = it.next();
         if (child instanceof AntFilesProvider) {
-          for (File cpFile : ((AntFilesProvider)child).getFiles(processed)) {
-            paths.add(cpFile.toPath());
-          }
+          addPathsSafe(paths, ((AntFilesProvider)child).getFiles(processed));
         }
       }
 
@@ -314,6 +309,21 @@ public final class CustomAntElementsRegistry {
       if (cleanupNeeded) {
         ourIsBuildingClasspathForCustomTagLoading.remove();
       }
+    }
+  }
+
+  private static void addPathsSafe(List<Path> paths, List<File> cpFiles) {
+    for (File file : cpFiles) {
+      Path path;
+      try {
+        path = file.toPath();
+      }
+      catch (InvalidPathException e) {
+        LOG.info(e);
+        continue;
+      }
+
+      paths.add(path);
     }
   }
 

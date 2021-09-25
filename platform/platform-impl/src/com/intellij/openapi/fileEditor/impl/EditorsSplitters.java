@@ -68,6 +68,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.Reference;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,7 +85,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   @NonNls private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
 
-  private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
   private static final Key<Boolean> OPENED_IN_BULK = Key.create("EditorSplitters.opened.in.bulk");
   @NonNls public static final String SPLITTER_KEY = "EditorsSplitters";
 
@@ -610,7 +610,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       window.closeFile(file, false, moveFocus);
       if (window.getTabCount() == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         EditorWithProviderComposite newComposite = myManager.newEditorComposite(nextFile);
-        window.setEditor(newComposite, moveFocus); // newComposite can be null
+        if (newComposite != null) {
+          window.setEditor(newComposite, moveFocus);
+        }
       }
     }
     // cleanup windows with no tabs
@@ -752,15 +754,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   boolean containsWindow(@NotNull EditorWindow window) {
     return myWindows.contains(window);
-  }
-
-  /**
-   * @deprecated Use {@link #getEditorComposites()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public EditorWithProviderComposite @NotNull [] getEditorsComposites() {
-    return getEditorComposites().toArray(new EditorWithProviderComposite[0]);
   }
 
   public @NotNull List<EditorWithProviderComposite> getEditorComposites() {
@@ -950,6 +943,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         EditorWindow editorWindow = context == null ? createEditorWindow() : findWindowWith(context);
         windowRef.set(editorWindow);
         if (editorWindow != null) {
+          setCurrentWindow(editorWindow, false);
           if (tabSizeLimit != 1) {
             ComponentUtil.putClientProperty(editorWindow.getTabbedPane().getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit);
           }
@@ -974,9 +968,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
         else {
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+            .withSelectAsCurrent(false)
             .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
             .withIndex(i)
-            .withReopeningEditorsOnStartup();
+            .withReopeningOnStartup();
           try {
             virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
             Document document = ReadAction.compute(() -> {
@@ -986,12 +981,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
 
             fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
-            if (document != null) {
-              // This is just to make sure document reference is kept on stack till this point
-              // so that document is available for folding state deserialization in HistoryEntry constructor
-              // and that document will be created only once during file opening
-              document.putUserData(DUMMY_KEY, null);
-            }
+            // This is just to make sure document reference is kept on stack till this point
+            // so that document is available for folding state deserialization in HistoryEntry constructor
+            // and that document will be created only once during file opening
+            Reference.reachabilityFence(document);
             if (isCurrentTab) {
               focusedFile = virtualFile;
             }
@@ -1025,7 +1018,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         UIUtil.invokeLaterIfNeeded(() -> {
           EditorWithProviderComposite editor = window.findFileComposite(finalFocusedFile);
           if (editor != null) {
-            window.setEditor(editor, true, true);
+            window.setEditor(editor, true);
           }
         });
       }

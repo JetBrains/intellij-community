@@ -203,14 +203,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       myFilesPanel.add(label, BorderLayout.SOUTH);
     }
     DataManager.registerDataProvider(myFilesPanel, this);
-    myTable.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        final JPopupMenu popupMenu =
-          actionManager.createActionPopupMenu("DirDiffPanel", (ActionGroup)actionManager.getAction("DirDiffMenu")).getComponent();
-        popupMenu.show(comp, x, y);
-      }
-    });
+    PopupHandler.installPopupMenu(myTable, "DirDiffMenu", "DirDiffPanel");
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.addListener(new JBLoadingPanelListener.Adapter() {
       boolean showHelp = true;

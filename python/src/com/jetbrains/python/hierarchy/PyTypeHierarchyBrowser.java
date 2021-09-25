@@ -36,7 +36,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
+  protected void createTrees(@NotNull Map<? super String, ? super JTree> trees) {
     createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 
@@ -89,7 +89,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   @NotNull
   protected String getQualifiedName(PsiElement psiElement) {
     if (psiElement instanceof PyClass) {
-      final String name = ((PyClass)psiElement).getName();
+      String name = ((PyClass)psiElement).getName();
       if (name != null) {
         return name;
       }

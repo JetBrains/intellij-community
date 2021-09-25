@@ -34,6 +34,10 @@
     </extensionPoint>
 
     <extensionPoint name="ift.learning.course" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="training.learn.course.LearningCourseBase"/>
+    </extensionPoint>
+
+    <extensionPoint name="ift.learning.commonCourse" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="training.learn.course.LearningCourse"/>
     </extensionPoint>
   </extensionPoints>

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.properties.BundleNameEvaluator;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -16,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.include.FileIncludeManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -35,7 +35,6 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -134,29 +133,27 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
     @Override
     protected List<PropertiesFile> retrievePropertyFilesByBundleName(String bundleName, PsiElement element) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-      if (module == null) {
-        return Collections.emptyList();
-      }
-
+      PsiElement psiElement = CompletionUtil.getOriginalOrSelf(element);
       final String bundleNameToUse =
-        ObjectUtils.chooseNotNull(bundleName == null ? getPluginResourceBundle(element) : bundleName, myFallbackBundleName);
+        ObjectUtils.chooseNotNull(bundleName == null ? getPluginResourceBundle(psiElement) : bundleName,
+                                  myFallbackBundleName);
       if (bundleNameToUse == null) {
         return Collections.emptyList();
       }
 
-      final Project project = element.getProject();
+      final Project project = psiElement.getProject();
       final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
 
-      final List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, bundleNameToUse);
-      final List<PropertiesFile> allPropertiesFiles = new ArrayList<>(propertiesFiles);
-
-      if (propertiesFiles.isEmpty()) {
-        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-        allPropertiesFiles.addAll(propertiesReferenceManager.findPropertiesFiles(projectScope,
-                                                                                 bundleNameToUse, BundleNameEvaluator.DEFAULT));
+      final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
+      if (module != null) {
+        List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, bundleNameToUse);
+        if (!propertiesFiles.isEmpty()) {
+          return propertiesFiles;
+        }
       }
-      return allPropertiesFiles;
+
+      return propertiesReferenceManager.findPropertiesFiles(psiElement.getResolveScope(),
+                                                            bundleNameToUse, BundleNameEvaluator.DEFAULT);
     }
 
     @Nullable

@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
-class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable): OrderRootsCache(parentDisposable) {
+class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) : OrderRootsCache(parentDisposable) {
   private val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val myRootUrls = AtomicReference<ConcurrentMap<CacheKey, Array<String>>>()
   private val myRootVirtualFiles = AtomicReference<ConcurrentMap<CacheKey, Array<VirtualFile>>>()

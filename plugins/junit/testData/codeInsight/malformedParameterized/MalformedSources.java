@@ -33,8 +33,8 @@ class ValueSourcesTest {
   <warning descr="No value source is defined">@ValueSource()</warning>
   void testWithNoValues(int i) { }
 
-  @ParameterizedTest
-  <warning descr="Multiple parameters are not supported by this source">@ValueSource(ints = 1)</warning>
+  <warning descr="Multiple parameters are not supported by this source">@ParameterizedTest</warning>
+  @ValueSource(ints = 1)
   void testWithValuesMultipleParams(int i, int j) { }
 
   @ParameterizedTest

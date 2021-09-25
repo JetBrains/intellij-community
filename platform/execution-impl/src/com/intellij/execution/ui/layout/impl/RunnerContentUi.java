@@ -129,9 +129,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private boolean myUiLastStateWasRestored;
 
   private final Set<Object> myRestoreStateRequestors = new HashSet<>();
-  private String myTopLeftActionsPlace = ActionPlaces.UNKNOWN;
-  private String myTopMiddleActionsPlace = ActionPlaces.UNKNOWN;
-  private String myTopRightActionsPlace = ActionPlaces.UNKNOWN;
+  private String myTopLeftActionsPlace = "RunnerContentUI.topLeftToolbar";
+  private String myTopMiddleActionsPlace = "RunnerContentUI.topMiddleToolbar";
+  private String myTopRightActionsPlace = "RunnerContentUI.topRightToolbar";
   private final IdeFocusManager myFocusManager;
 
   private boolean myMinimizeActionEnabled = true;
@@ -1066,9 +1066,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return hasToolbarContent;
   }
 
-  private void setActions(Wrapper placeHolder, String place, DefaultActionGroup group) {
-    String adjustedPlace = place == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : place;
-    ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, group, true);
+  private void setActions(@NotNull Wrapper placeHolder, @NotNull String place, @NotNull DefaultActionGroup group) {
+    ActionToolbar tb = myActionManager.createActionToolbar(place, group, true);
     tb.setReservePlaceAutoPopupIcon(false);
     // see IDEA-262878, evaluate action on the toolbar should get the editor data context
     tb.setTargetComponent(Registry.is("debugger.new.tool.window.layout") ? myComponent : null);

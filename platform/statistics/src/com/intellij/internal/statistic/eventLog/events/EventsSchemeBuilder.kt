@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.google.gson.GsonBuilder
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import java.lang.reflect.Type
+import java.util.regex.Pattern
 import kotlin.system.exitProcess
 
 object EventsSchemeBuilder {
@@ -44,10 +45,25 @@ object EventsSchemeBuilder {
       is ObjectEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ObjectListEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ListEventField<*> -> {
+        if (field is StringListEventField.ValidatedByInlineRegexp) {
+          validateRegexp(field.regexp)
+        }
         hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet(), FieldDataType.ARRAY))
       }
-      is PrimitiveEventField -> hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet()))
+      is PrimitiveEventField -> {
+        if (field is StringEventField.ValidatedByInlineRegexp) {
+          validateRegexp(field.regexp)
+        }
+        hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet()))
+      }
     }
+  }
+
+  private fun validateRegexp(regexp: String) {
+    if (regexp == ".*") {
+      throw IllegalStateException("Regexp should be more strict to prevent accidentally reporting sensitive data.")
+    }
+    Pattern.compile(regexp)
   }
 
   private fun buildObjectEvenScheme(fieldName: String, fields: Array<out EventField<*>>,

@@ -1,5 +1,5 @@
 class NoThrows<caret> extends Parent implements Cloneable {
-
+    private String[] ss;
 }
 class Parent implements Cloneable {
 

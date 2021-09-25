@@ -23,27 +23,27 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBl
 
   override fun isMultiline(): Boolean = true
 
-  override fun getContentRanges(): List<TextRange> {
-    
-   return CachedValuesManager.getCachedValue(this, CachedValueProvider {
-      val myStart = textRange.startOffset
-      val indent = locateIndent()
+  override fun getContentRanges(): List<TextRange> = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+     val myStart = textRange.startOffset
+     val indent = locateIndent()
 
-      val contentRanges = linesNodes.mapNotNull { line ->
-        val first = line.first()
-        TextRange.create(first.textRange.startOffset - myStart
-                         + (if (first.elementType == YAMLTokenTypes.INDENT) indent else 0),
-                         line.last().textRange.endOffset - myStart)
-      }
+     val contentRanges = linesNodes.mapNotNull { line ->
+       val first = line.first()
+       val start = (first.textRange.startOffset - myStart
+                    + if (first.elementType == YAMLTokenTypes.INDENT) indent else 0)
+       val end = line.last().textRange.endOffset - myStart
+       if (start <= end)
+         TextRange.create(start, end)
+       else null
+     }
 
-      CachedValueProvider.Result.create((if (contentRanges.size == 1)
-        listOf(contentRanges.single().let { TextRange.create(it.endOffset, it.endOffset) })
-      else if (contentRanges.isEmpty())
-        emptyList()
-      else
-        contentRanges.tailOrEmpty()), PsiModificationTracker.MODIFICATION_COUNT)
-    })
-  }
+     CachedValueProvider.Result.create((if (contentRanges.size == 1)
+       listOf(contentRanges.single().let { TextRange.create(it.endOffset, it.endOffset) })
+     else if (contentRanges.isEmpty())
+       emptyList()
+     else
+       contentRanges.tailOrEmpty()), PsiModificationTracker.MODIFICATION_COUNT)
+   })
 
   fun hasExplicitIndent(): Boolean = explicitIndent != IMPLICIT_INDENT
 

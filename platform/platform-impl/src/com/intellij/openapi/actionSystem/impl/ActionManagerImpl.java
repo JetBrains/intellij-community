@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.AbstractBundle;
@@ -12,7 +12,10 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.AndroidStudioSystemHealthMonitorAdapter;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.RawPluginDescriptor;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
@@ -49,6 +52,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -60,6 +64,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,7 +141,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
 
-    registerActions(PluginManagerCore.getLoadedPlugins(null), true);
+    registerActions(PluginManagerCore.getLoadedPlugins(null));
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
     DYNAMIC_EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
@@ -160,26 +165,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @ApiStatus.Internal
-  public void registerActions(@NotNull List<IdeaPluginDescriptorImpl> plugins, @SuppressWarnings("unused") boolean initialStartup) {
+  public void registerActions(@NotNull List<IdeaPluginDescriptorImpl> plugins) {
     KeymapManagerEx keymapManager = Objects.requireNonNull(KeymapManagerEx.getInstanceEx());
-
-    for (IdeaPluginDescriptorImpl plugin : plugins) {
-      registerPluginActions(plugin, keymapManager);
-      for (PluginDependency pluginDependency : plugin.pluginDependencies) {
-        IdeaPluginDescriptorImpl subPlugin = pluginDependency.isDisabledOrBroken ? null : pluginDependency.subDescriptor;
-        if (subPlugin == null) {
-          continue;
-        }
-
-        registerPluginActions(subPlugin, keymapManager);
-        for (PluginDependency subPluginDependency : subPlugin.pluginDependencies) {
-          IdeaPluginDescriptorImpl subSubPlugin = subPluginDependency.isDisabledOrBroken ? null : subPluginDependency.subDescriptor;
-          if (subSubPlugin != null) {
-            registerPluginActions(subSubPlugin, keymapManager);
-          }
-        }
-      }
-    }
+    ContainerUtilKt.executeRegisterTask(plugins, it -> {
+      registerPluginActions(it, keymapManager);
+      return Unit.INSTANCE;
+    });
   }
 
   private static @NotNull AnActionListener publisher() {
@@ -500,13 +491,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  @Nullable
-  public AnAction getAction(@NotNull String id) {
+  public @Nullable AnAction getAction(@NotNull String id) {
     return getActionImpl(id, false);
   }
 
-  @Nullable
-  private AnAction getActionImpl(@NotNull String id, boolean canReturnStub) {
+  private @Nullable AnAction getActionImpl(@NotNull String id, boolean canReturnStub) {
     AnAction action;
     synchronized (myLock) {
       action = idToAction.get(id);
@@ -1268,19 +1257,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private @Nullable AnAction addToMap(@NotNull String actionId,
                                       @NotNull AnAction action,
                                       @Nullable ProjectType projectType) {
-    AnAction chameleonAction = idToAction.computeIfPresent(actionId,
-                                                           (__, old) -> old instanceof ChameleonAction
-                                                                        ? old
-                                                                        : new ChameleonAction(old, projectType));
-    if (chameleonAction != null) {
-      return ((ChameleonAction)chameleonAction).addAction(action, projectType);
-    }
-    else {
-      AnAction result = projectType != null ?
-                        new ChameleonAction(action, projectType) :
-                        action;
+    AnAction chameleonAction = idToAction.computeIfPresent(actionId, (__, old) -> {
+      return old instanceof ChameleonAction ? old : new ChameleonAction(old, projectType);
+    });
+    if (chameleonAction == null) {
+      AnAction result = projectType == null ? action : new ChameleonAction(action, projectType);
       idToAction.put(actionId, result);
       return result;
+    }
+    else {
+      return ((ChameleonAction)chameleonAction).addAction(action, projectType);
     }
   }
 
@@ -1301,7 +1287,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public void registerAction(@NotNull String actionId, @NotNull AnAction action) {
-    registerAction(actionId, action, null);
+    registerAction(actionId, action, null, null);
   }
 
   @Override

@@ -7,16 +7,23 @@ import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * Set of VirtualFiles optimized for compact storage of very large number of files
+ * Supports optimized {@link Collection#add(Object)} and {@link Collection#addAll(Collection)}
+ * without materialization of all containing files.
  * Remove operations are not supported.
  * NOT thread-safe.
  */
 public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
+  static final int BIT_SET_LIMIT = 1000;
+  static final int INT_SET_LIMIT = 10;
+
   // all non-VirtualFileWithId files and first several files are stored here
   private final Set<VirtualFile> weirdFiles = new HashSet<>();
   // when file set become large, they stored as id-set here
@@ -30,6 +37,15 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
 
   public CompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
     addAll(files);
+  }
+
+  //TODO hide it
+  @ApiStatus.Internal
+  public CompactVirtualFileSet(@NotNull IntSet fileIds) {
+    idSet = fileIds;
+    if (idSet.size() > BIT_SET_LIMIT) {
+      convertToBitSet();
+    }
   }
 
   @Override
@@ -64,27 +80,14 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
       }
       else if (idSet != null) {
         added = idSet.add(id);
-        if (idSet.size() > 1000) {
-          fileIds = new BitSet();
-          IntIterator iterator = idSet.iterator();
-          while (iterator.hasNext()) {
-            fileIds.set(iterator.nextInt());
-          }
-          this.idSet = null;
+        if (idSet.size() > BIT_SET_LIMIT) {
+          convertToBitSet();
         }
       }
       else {
         added = weirdFiles.add(file);
-        if (weirdFiles.size() > 10) {
-          idSet = new IntOpenHashSet(weirdFiles.size());
-          this.idSet = idSet;
-          for (Iterator<VirtualFile> iterator = weirdFiles.iterator(); iterator.hasNext(); ) {
-            VirtualFile wf = iterator.next();
-            if (wf instanceof VirtualFileWithId) {
-              idSet.add(((VirtualFileWithId)wf).getId());
-              iterator.remove();
-            }
-          }
+        if (weirdFiles.size() > INT_SET_LIMIT) {
+          convertToIntSet();
         }
       }
     }
@@ -92,6 +95,28 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
       added = weirdFiles.add(file);
     }
     return added;
+  }
+
+  private void convertToIntSet() {
+    IntSet idSet;
+    idSet = new IntOpenHashSet(weirdFiles.size());
+    this.idSet = idSet;
+    for (Iterator<VirtualFile> iterator = weirdFiles.iterator(); iterator.hasNext(); ) {
+      VirtualFile wf = iterator.next();
+      if (wf instanceof VirtualFileWithId) {
+        idSet.add(((VirtualFileWithId)wf).getId());
+        iterator.remove();
+      }
+    }
+  }
+
+  private void convertToBitSet() {
+    fileIds = new BitSet();
+    IntIterator iterator = idSet.iterator();
+    while (iterator.hasNext()) {
+      fileIds.set(iterator.nextInt());
+    }
+    this.idSet = null;
   }
 
   @Override
@@ -145,6 +170,61 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     BitSet ids = fileIds;
     IntSet idSet = this.idSet;
     return (ids == null ? 0 : ids.cardinality()) + (idSet == null ? 0 : idSet.size()) + weirdFiles.size();
+  }
+
+  @Override
+  public boolean addAll(Collection<? extends VirtualFile> c) {
+    if (frozen) {
+      throw new IllegalStateException();
+    }
+    if (c instanceof CompactVirtualFileSet) {
+      boolean modified = false;
+      CompactVirtualFileSet setToAdd = (CompactVirtualFileSet)c;
+      for (VirtualFile file : setToAdd.weirdFiles) {
+        if (add(file)) {
+          modified = true;
+        }
+      }
+
+      IntStream toAdd;
+      if (setToAdd.idSet != null) {
+        toAdd = setToAdd.idSet.intStream();
+      }
+      else if (setToAdd.fileIds != null) {
+        toAdd = setToAdd.fileIds.stream();
+      }
+      else {
+        return modified;
+      }
+
+      PrimitiveIterator.OfInt iterator = toAdd.iterator();
+      while (iterator.hasNext()) {
+        int id = iterator.nextInt();
+
+        if (fileIds == null && idSet == null) {
+          convertToIntSet();
+        }
+
+        if (fileIds != null) {
+          modified = !fileIds.get(id);
+          fileIds.set(id);
+        }
+        else if (idSet != null) {
+          modified = idSet.add(id);
+          if (idSet.size() > BIT_SET_LIMIT) {
+            convertToBitSet();
+          }
+        }
+        else {
+          throw new IllegalStateException();
+        }
+      }
+
+      return modified;
+    }
+    else {
+      return super.addAll(c);
+    }
   }
 
   @NotNull

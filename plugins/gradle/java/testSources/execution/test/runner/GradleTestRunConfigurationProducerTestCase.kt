@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -13,10 +14,14 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.testFramework.TestActionEvent
+import com.intellij.testIntegration.TestRunLineMarkerProvider
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.TasksToRun
+import org.jetbrains.plugins.gradle.util.findChildByType
+import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.runners.Parameterized
 import java.io.File
 import java.util.function.Consumer
@@ -29,6 +34,19 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       override fun getDataContext() = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT_ARRAY, elements, super.getDataContext())
       override fun containsMultipleSelection() = elements.size > 1
     }
+  }
+
+  private fun getGutterTestRunActionsByLocation(element: PsiNameIdentifierOwner) = runReadActionAndWait {
+    val identifier = element.identifyingElement!!
+    val info = TestRunLineMarkerProvider().getInfo(identifier)!!
+    val runAction = info.actions.first() as ExecutorAction
+    val context = getContextByLocation(element)
+    runAction.getChildren(TestActionEvent(context.dataContext))
+  }
+
+  protected fun assertGutterRunActionsSize(element: PsiNameIdentifierOwner, expectedSize: Int) {
+    val actions = getGutterTestRunActionsByLocation(element)
+    assertEquals(expectedSize, actions.size)
   }
 
   protected fun getConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContextImpl {
@@ -95,6 +113,17 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
         @Test public void test1() {}
         @Test public void test2() {}
         @Test public void test3() {}
+      }
+    """.trimIndent())
+    val testCaseWithMainFile = createProjectSubFile("src/test/java/org/example/TestCaseWithMain.java", """
+      package org.example;
+      import org.junit.Test;
+      import org.example.AbstractTestCase;
+      public class TestCaseWithMain extends AbstractTestCase {
+        @Test public void test1() {}
+        @Test public void test2() {}
+        @Test public void test3() {}
+        public static void main(String[] args) {}
       }
     """.trimIndent())
     val packageTestCaseFile = createProjectSubFile("src/test/java/pkg/TestCase.java", """
@@ -206,18 +235,19 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     })
     importProject()
     assertModulesContains("project", "project.module", "project.my_module")
-    val automationTestCase = extractJavaClassData(automationTestCaseFile)
-    val testCase = extractJavaClassData(testCaseFile)
-    val abstractTestCase = extractJavaClassData(abstractTestCaseFile)
-    val moduleTestCase = extractJavaClassData(moduleTestCaseFile)
-    val packageTestCase = extractJavaClassData(packageTestCaseFile)
-    val groovyTestCase = extractGroovyClassData(groovyTestCaseFile)
-    val myModuleTestCase = extractGroovyClassData(myModuleTestCaseFile)
+    val automationTestCase = extractClassData(automationTestCaseFile)
+    val testCase = extractClassData(testCaseFile)
+    val testCaseWithMain = extractClassData(testCaseWithMainFile)
+    val abstractTestCase = extractClassData(abstractTestCaseFile)
+    val moduleTestCase = extractClassData(moduleTestCaseFile)
+    val packageTestCase = extractClassData(packageTestCaseFile)
+    val groovyTestCase = extractClassData(groovyTestCaseFile)
+    val myModuleTestCase = extractClassData(myModuleTestCaseFile)
     val projectDir = findPsiDirectory(".")
     val moduleDir = findPsiDirectory("module")
     val myModuleDir = findPsiDirectory("my module")
     return ProjectData(
-      ModuleData("project", projectDir, testCase, packageTestCase, automationTestCase, abstractTestCase, groovyTestCase),
+      ModuleData("project", projectDir, testCase, testCaseWithMain, packageTestCase, automationTestCase, abstractTestCase, groovyTestCase),
       ModuleData("module", moduleDir, moduleTestCase),
       ModuleData("my module", myModuleDir, myModuleTestCase)
     )
@@ -229,25 +259,14 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     psiManager.findDirectory(virtualFile)!!
   }
 
-  private fun extractJavaClassData(file: VirtualFile) = runReadActionAndWait {
+  private fun extractClassData(file: VirtualFile) = runReadActionAndWait {
     val psiManager = PsiManager.getInstance(myProject)
     val psiFile = psiManager.findFile(file)!!
     val psiClass = psiFile.findChildByType<PsiClass>()
-    val psiMethods = psiClass.findChildrenByType<PsiMethod>()
+    val psiMethods = psiClass.methods
     val methods = psiMethods.map { MethodData(it.name, it) }
     ClassData(psiClass.qualifiedName!!, psiClass, methods)
   }
-
-  private fun extractGroovyClassData(file: VirtualFile) = runReadActionAndWait {
-    val psiManager = PsiManager.getInstance(myProject)
-    val psiFile = psiManager.findFile(file)!!
-    val psiClass = psiFile.findChildByType<PsiClass>()
-    val classBody = psiClass.findChildByElementType("CLASS_BODY")
-    val psiMethods = classBody.findChildrenByType<PsiMethod>()
-    val methods = psiMethods.map { MethodData(it.name, it) }
-    ClassData(psiClass.qualifiedName!!, psiClass, methods)
-  }
-
 
   protected open class Mapping<D>(val data: Map<String, D>) {
     operator fun get(key: String): D = data.getValue(key)
@@ -255,19 +274,19 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected class ProjectData(
     vararg modules: ModuleData
-  ) : Mapping<ModuleData>(modules.map { it.name to it }.toMap())
+  ) : Mapping<ModuleData>(modules.associateBy { it.name })
 
   protected class ModuleData(
     val name: String,
     val root: PsiDirectory,
     vararg classes: ClassData
-  ) : Mapping<ClassData>(classes.map { it.name to it }.toMap())
+  ) : Mapping<ClassData>(classes.associateBy { it.name })
 
   protected class ClassData(
     val name: String,
     val element: PsiClass,
     methods: List<MethodData>
-  ) : Mapping<MethodData>(methods.map { it.name to it }.toMap())
+  ) : Mapping<MethodData>(methods.associateBy { it.name })
 
   protected class MethodData(
     val name: String,

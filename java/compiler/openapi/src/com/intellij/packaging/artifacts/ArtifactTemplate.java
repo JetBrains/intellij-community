@@ -31,7 +31,7 @@ public abstract class ArtifactTemplate {
     return new NewArtifactConfiguration(null, name, null);
   }
 
-  public void setUpArtifact(@NotNull Artifact artifact, @NotNull NewArtifactConfiguration configuration) {
+  public void setUpArtifact(@NotNull ModifiableArtifact artifact, @NotNull NewArtifactConfiguration configuration) {
   }
 
   public static class NewArtifactConfiguration {

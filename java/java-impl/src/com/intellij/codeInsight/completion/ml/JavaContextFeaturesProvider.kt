@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.ml
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil
+import com.intellij.codeInsight.completion.JavaIncorrectElements
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
 
@@ -22,7 +23,8 @@ class JavaContextFeaturesProvider : ContextFeatureProvider {
     if (JavaCompletionFeatures.isAfterMethodCall(environment)) {
       features["is_after_method_call"] = MLFeatureValue.binary(true)
     }
-    PsiTreeUtil.prevVisibleLeaf(environment.parameters.position)?.let { prevLeaf ->
+    val position = environment.parameters.position
+    PsiTreeUtil.prevVisibleLeaf(position)?.let { prevLeaf ->
       JavaCompletionFeatures.asKeyword(prevLeaf.text)?.let { keyword ->
         features["prev_neighbour_keyword"] = MLFeatureValue.categorical(keyword)
 
@@ -33,6 +35,13 @@ class JavaContextFeaturesProvider : ContextFeatureProvider {
           }
         }
       }
+    }
+    val positionMatcher = JavaIncorrectElements.matchPosition(position)
+    if (positionMatcher != null) {
+      val incorrectElementMatcher = positionMatcher.createIncorrectElementMatcher(position)
+      JavaIncorrectElements.putMatcher(incorrectElementMatcher, environment)
+
+      features["position_matcher"] = MLFeatureValue.className(positionMatcher::class.java)
     }
     return features
   }

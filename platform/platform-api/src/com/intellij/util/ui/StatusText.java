@@ -22,12 +22,6 @@ import java.util.List;
 
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
-  /**
-   * @deprecated Use {@link #getDefaultEmptyText()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
 
   private static final int Y_GAP = 2;
 

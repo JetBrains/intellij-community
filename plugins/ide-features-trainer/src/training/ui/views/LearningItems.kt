@@ -32,7 +32,7 @@ import javax.swing.border.EmptyBorder
 private val HOVER_COLOR: Color get() = JBColor.namedColor("Plugins.hoverBackground", JBColor(0xEDF6FE, 0x464A4D))
 
 class LearningItems(private val project: Project) : JPanel() {
-  var modules: List<IftModule> = emptyList()
+  var modules: Collection<IftModule> = emptyList()
   private val expanded: MutableSet<IftModule> = mutableSetOf()
 
   init {

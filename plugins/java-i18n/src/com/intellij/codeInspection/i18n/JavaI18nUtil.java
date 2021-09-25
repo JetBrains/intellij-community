@@ -74,21 +74,11 @@ public final class JavaI18nUtil {
     AnnotationContext context = AnnotationContext.fromExpression(expression);
     return context.allItems().anyMatch(owner -> {
       PsiAnnotation annotation = owner.findAnnotation(AnnotationUtil.PROPERTY_KEY);
-      if (annotation != null) {
-        UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
-        if (uAnnotation != null) {
-          if (resourceBundleRef != null) {
-            for (UNamedExpression attribute : uAnnotation.getAttributeValues()) {
-              final String name = attribute.getName();
-              if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
-                resourceBundleRef.set(attribute.getExpression());
-              }
-            }
-          }
-          return true;
-        }
+      if (annotation != null && resourceBundleRef != null) {
+        PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
+        resourceBundleRef.set(UastContextKt.toUElement(attributeValue, UExpression.class));
       }
-      return false;
+      return annotation != null;
     });
   }
 

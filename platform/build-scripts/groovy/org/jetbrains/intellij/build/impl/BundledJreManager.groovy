@@ -163,11 +163,11 @@ abstract class BundledJreManager {  // Android Studio: only instantiate subclass
     }
 
     String prefix
-    if (buildContext.options.bundledJrePrefix != null) {
-      prefix = buildContext.options.bundledJrePrefix
-    }
-    else if (arch == JvmArchitecture.x32 || buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
+    if (arch == JvmArchitecture.x32 || buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
       prefix = 'jbr-'
+    }
+    else if (buildContext.options.bundledJrePrefix != null) {
+      prefix = buildContext.options.bundledJrePrefix
     }
     else {
       prefix = "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"

@@ -24,6 +24,7 @@ import java.io.File;
  * @see LightJavaCodeInsightFixtureTestCase4 for JUnit4 variant
  * @author peter
  */
+@TestDataPath("$CONTENT_ROOT/testData")
 public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
   protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
     protected final LanguageLevel myLanguageLevel;

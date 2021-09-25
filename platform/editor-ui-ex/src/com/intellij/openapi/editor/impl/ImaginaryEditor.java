@@ -113,7 +113,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @NotNull
   @Override
   public SoftWrapModel getSoftWrapModel() {
-    throw notImplemented();
+    return new EmptySoftWrapModel();
   }
 
   @NotNull

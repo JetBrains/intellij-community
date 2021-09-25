@@ -1,13 +1,10 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.util.*
@@ -43,8 +40,7 @@ abstract class ImportInsertHelper {
 
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): ImportInsertHelper =
-            ServiceManager.getService<ImportInsertHelper>(project, ImportInsertHelper::class.java)
+        fun getInstance(project: Project): ImportInsertHelper = project.getServiceSafe()
     }
 }
 

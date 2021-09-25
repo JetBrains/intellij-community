@@ -58,17 +58,9 @@ public final class HighlightUtils {
    * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
    * Please use {@link #highlightElements(Collection, Editor)} instead.
    */
-  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection) {
-    highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"));
-  }
-
-  /**
-   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
-   * Please use {@link #highlightElements(Collection, String, Editor)} instead.
-   */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection, @NlsContexts.StatusBarText String statusBarText) {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection) {
     if (elementCollection.isEmpty()) {
       return;
     }
@@ -76,7 +68,7 @@ public final class HighlightUtils {
     Editor selectedTextEditor =
       FileEditorManager.getInstance(ContainerUtil.getFirstItem(elementCollection).getProject()).getSelectedTextEditor();
 
-    highlightElements(elementCollection, statusBarText, selectedTextEditor);
+    highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"), selectedTextEditor);
   }
 
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection,

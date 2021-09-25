@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
@@ -8,8 +8,6 @@ import com.intellij.openapi.application.AppUIExecutor.onUiThread
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.util.Disposer
@@ -17,16 +15,15 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.status.InlineProgressIndicator
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
-import com.intellij.util.ui.JBUI.Borders.emptyTop
 import com.intellij.util.ui.SwingHelper.createHtmlViewer
 import com.intellij.util.ui.SwingHelper.setHtml
 import com.intellij.util.ui.UIUtil.getErrorForeground
@@ -39,8 +36,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 import kotlin.properties.Delegates.observable
 
@@ -93,6 +88,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 
     setupShowProgressInStatusBar()
     setupProgressVisibilityDelay()
+    setupProgressSpinnerTooltip()
   }
 
   private fun setupShowProgressInStatusBar() =
@@ -116,12 +112,17 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
       .launchIn(scope + CoroutineName("Commit checks indicator visibility"))
   }
 
+  private fun setupProgressSpinnerTooltip() {
+    val tooltip = CommitChecksProgressIndicatorTooltip({ progress }, { failuresPanel.width })
+    tooltip.installOn(failuresPanel.iconLabel, this)
+  }
+
   override fun dispose() = Unit
 
-  override fun startProgress(): ProgressIndicator {
+  override fun startProgress(): ProgressIndicatorEx {
     check(progress == null) { "Commit checks indicator already created" }
 
-    val indicator = CommitChecksProgressIndicator()
+    val indicator = InlineCommitChecksProgressIndicator()
     Disposer.register(this, indicator)
 
     indicator.component.isVisible = false
@@ -198,37 +199,13 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
 }
 
-private class CommitChecksProgressIndicator : InlineProgressIndicator(true, CommitChecksTaskInfo()) {
-  init {
-    component.toolTipText = null
-  }
-
-  override fun createCompactTextAndProgress(component: JPanel) {
-    val textPanel = NonOpaquePanel(BorderLayout())
-    textPanel.border = emptyTop(5)
-    textPanel.add(myText, BorderLayout.CENTER)
-
-    component.add(myProgress, BorderLayout.CENTER)
-    component.add(textPanel, BorderLayout.SOUTH)
-
-    myText.recomputeSize()
-  }
-}
-
-private class CommitChecksTaskInfo : TaskInfo {
-  override fun getTitle(): String = message("progress.title.commit.checks")
-  override fun getCancelText(): String = ""
-  override fun getCancelTooltipText(): String = ""
-  override fun isCancellable(): Boolean = false
-}
-
 private class CommitCheckFailure(@Nls val text: String, val detailsViewer: () -> Unit)
 
 private class FailuresPanel : BorderLayoutPanel() {
   private var nextFailureId = 0
   private val failures = mutableMapOf<Int, CommitCheckFailure>()
 
-  private val iconLabel = JBLabel()
+  val iconLabel = JBLabel()
   private val description = createHtmlViewer(true, null, null, null)
 
   init {

@@ -1,14 +1,9 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.live
 
-import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.RunAll
@@ -24,7 +19,6 @@ import org.jetbrains.kotlin.idea.testFramework.Fixture
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
-import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.test.assertNotEquals
 
@@ -427,7 +421,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
                 }
                 fixture.use {
-                    cleanupCaches(project)
+                    project.cleanupCaches()
                 }
             }
         }

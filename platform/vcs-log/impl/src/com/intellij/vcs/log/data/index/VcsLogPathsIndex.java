@@ -20,11 +20,11 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StorageId;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.TByteObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -276,17 +276,18 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       this.id = id;
     }
 
-    private static final TByteObjectHashMap<ChangeKind> KINDS = new TByteObjectHashMap<>();
+    private static final ChangeKind[] KINDS;
 
     static {
+      KINDS = new ChangeKind[4];
       for (ChangeKind kind : values()) {
-        KINDS.put(kind.id, kind);
+        KINDS[kind.id] = kind;
       }
     }
 
     @NotNull
     public static ChangeKind getChangeKindById(byte id) throws IOException {
-      ChangeKind kind = KINDS.get(id);
+      ChangeKind kind = id >= 0 && id < KINDS.length ? KINDS[id] : null;
       if (kind == null) throw new IOException("Change kind by id " + id + " not found.");
       return kind;
     }
@@ -332,12 +333,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   private static final class LightFilePathKeyDescriptor implements KeyDescriptor<LightFilePath> {
     @NotNull private final List<VirtualFile> myRoots;
-    @NotNull private final TObjectIntHashMap<VirtualFile> myRootsReversed;
+    @NotNull private final Object2IntMap<VirtualFile> myRootsReversed;
 
     private LightFilePathKeyDescriptor(@NotNull Collection<VirtualFile> roots) {
       myRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
 
-      myRootsReversed = new TObjectIntHashMap<>();
+      myRootsReversed = new Object2IntOpenHashMap<>();
       for (int i = 0; i < myRoots.size(); i++) {
         myRootsReversed.put(myRoots.get(i), i);
       }
@@ -355,7 +356,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
     @Override
     public void save(@NotNull DataOutput out, LightFilePath value) throws IOException {
-      out.writeInt(myRootsReversed.get(value.getRoot()));
+      out.writeInt(myRootsReversed.getInt(value.getRoot()));
       IOUtil.writeUTF(out, value.getRelativePath());
     }
 

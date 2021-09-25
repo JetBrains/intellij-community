@@ -16,9 +16,12 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   /** This name will be used for generated file with lesson sample */
   open val fileName: String
-    get() = module.sanitizedName + "." + findLanguageByID(languageId)!!.associatedFileType!!.defaultExtension
+    get() {
+      val id = languageId
+      return module.sanitizedName + if (id != null) "." + findLanguageByID(id)!!.associatedFileType!!.defaultExtension else ""
+    }
 
-  open val languageId: String get() = module.primaryLanguage.primaryLanguage
+  open val languageId: String? get() = module.primaryLanguage?.primaryLanguage
 
   open val lessonType: LessonType get() = module.moduleType
 
@@ -27,7 +30,7 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   /** This method is called for all project-based lessons before the start of any project-based lesson */
   @RequiresBackgroundThread
-  open fun cleanup(project: Project) = Unit
+  open fun prepare(project: Project) = Unit
 
   open val properties: LessonProperties = LessonProperties()
 

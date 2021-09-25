@@ -3,9 +3,12 @@ package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
+import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.avatar.ScalingDeferredSquareImageIcon
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
@@ -16,8 +19,11 @@ import javax.swing.*
 
 class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
   private val listModel: AccountsListModel<A, *>,
-  private val detailsProvider: AccountsDetailsProvider<A, D>
+  private val detailsProvider: AccountsDetailsProvider<A, D>,
+  private val defaultAvatarIcon: Icon
 ) : ListCellRenderer<A>, JPanel() {
+
+  private val avatarIcons = mutableMapOf<A, Icon>()
 
   private val accountName = JLabel()
 
@@ -67,11 +73,17 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
       foreground = if (getDetails(account)?.name == null) primaryTextColor else secondaryTextColor
     }
     serverName.apply {
-      text = account.server.toString()
+      if (account is ServerAccount) {
+        isVisible = true
+        text = account.server.toString()
+      }
+      else {
+        isVisible = false
+      }
       foreground = secondaryTextColor
     }
     profilePicture.apply {
-      icon = getIcon(account)
+      icon = getAvatarIcon(account)
     }
     fullName.apply {
       text = getDetails(account)?.name
@@ -92,11 +104,21 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
     return this
   }
 
+  private fun getAvatarIcon(account: A): Icon {
+    val image = getAvatarImage(account)
+    if (image == null) return IconUtil.resizeSquared(defaultAvatarIcon, 40)
+    return avatarIcons.getOrPut(account) {
+      ScalingDeferredSquareImageIcon(40, defaultAvatarIcon, account) {
+        getAvatarImage(account)
+      }
+    }
+  }
+
   private fun isDefault(account: A): Boolean = account == listModel.defaultAccount
   private fun editAccount(parentComponent: JComponent, account: A) = listModel.editAccount(parentComponent, account)
 
   private fun getDetails(account: A): D? = detailsProvider.getDetails(account)
-  private fun getIcon(account: A): Icon? = detailsProvider.getIcon(account)
+  private fun getAvatarImage(account: A): Image? = detailsProvider.getAvatarImage(account)
 
   @Nls
   private fun getError(account: A): String? = detailsProvider.getErrorText(account)

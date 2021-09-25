@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IconProvider;
-import com.intellij.openapi.fileEditor.impl.NotSuitableForPreviewTab;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.psi.PsiElement;
@@ -16,12 +16,13 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class UIComponentVirtualFile extends LightVirtualFile implements VirtualFileWithoutContent, NotSuitableForPreviewTab {
+public class UIComponentVirtualFile extends LightVirtualFile implements VirtualFileWithoutContent {
   private final Content myUi;
 
   public UIComponentVirtualFile(@NotNull String name, Content ui) {
     super(name);
     myUi = ui;
+    putUserData(FileEditorManagerImpl.FORBID_PREVIEW_TAB, true);
   }
 
   public Content getUi() {

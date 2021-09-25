@@ -42,6 +42,11 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.FILE_STRUCTURE.getAbsoluteRank();
+  }
+
+  @Override
   public @Nullable String getGroupingActionId() {
     return "UsageGrouping.FileStructure";
   }

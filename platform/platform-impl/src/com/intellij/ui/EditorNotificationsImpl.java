@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
@@ -86,6 +87,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         updateAllNotifications();
       }
     });
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateAllNotifications()));
 
     EP_PROJECT.getPoint(project).addExtensionPointListener(
       new ExtensionPointListener<>() {

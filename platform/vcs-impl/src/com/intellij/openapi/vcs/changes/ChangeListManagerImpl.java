@@ -822,17 +822,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     });
   }
 
-  /**
-   * @return only roots for ignored folders, and ignored files
-   * @deprecated use {@link #getIgnoredFilePaths}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @NotNull
-  public List<VirtualFile> getIgnoredFiles() {
-    return mapNotNull(getIgnoredFilePaths(), FilePath::getVirtualFile);
-  }
-
   @NotNull
   @Override
   public List<FilePath> getIgnoredFilePaths() {

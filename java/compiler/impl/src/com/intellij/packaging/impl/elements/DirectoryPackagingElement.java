@@ -76,7 +76,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
           ent.setDirectoryName(newName);
           return Unit.INSTANCE;
         });
-      }, true
+      }
     );
   }
 

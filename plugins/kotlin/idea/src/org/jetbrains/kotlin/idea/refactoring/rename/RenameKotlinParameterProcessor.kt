@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -58,5 +55,10 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
         super.renameElement(element, newName, usages, listener)
 
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
+    }
+
+    override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
+        super.prepareRenaming(element, newName, allRenames, scope)
+        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 }

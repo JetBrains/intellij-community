@@ -6,6 +6,7 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
@@ -20,7 +21,8 @@ import java.util.Set;
 
 import static com.intellij.patterns.StandardPatterns.string;
 
-public class MockSubFacetDetector extends FacetBasedFrameworkDetector<Facet, MockFacetConfiguration> {
+@InternalIgnoreDependencyViolation
+public final class MockSubFacetDetector extends FacetBasedFrameworkDetector<Facet, MockFacetConfiguration> {
   public MockSubFacetDetector() {
     super("mock-sub-facet-detector");
   }

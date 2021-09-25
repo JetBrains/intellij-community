@@ -19,6 +19,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
@@ -432,8 +433,12 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testSealedGrandParent() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
-    doTest("Parent");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, () -> doTest("Parent"));
+  }
+
+  public void testRecordImplementsInterface() throws Exception {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
+    doSingleFileTest();
   }
 
   public void testNonAccessibleGrandParent() {

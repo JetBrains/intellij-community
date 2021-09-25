@@ -111,8 +111,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
         addSeparator()
         addAll(contextMenuOnlyActions)
       },
-      PLACE,
-      ActionManager.getInstance()
+      PLACE
     )
 
     title = GitBundle.message("rebase.interactive.dialog.title")

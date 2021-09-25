@@ -1,22 +1,22 @@
 <html>
 <body>
-Reports lambdas that can be replaced with method references. While it could be a matter of taste 
-often, method references are more clear and readable, compared to lambdas.
+Reports lambdas that can be replaced with method references. While often it could be a matter of taste, method references are more clear
+and readable compared to lambdas.
 <p>Example:</p>
-<pre>
+<pre><code>
   Runnable r = () -> System.out.println();
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   Runnable r = System.out::println;
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-  The inspection may suggest method references even if lambda doesn't call any method, like replacing <code>obj -> obj != null</code>
+  The inspection may suggest method references even if a lambda doesn't call any method, like replacing <code>obj -> obj != null</code>
   with <code>Objects::nonNull</code>. 
   Use the <a href="settings://preferences.sourceCode.Java?Lambda%20Body">Settings | Editor | Code Style | Java | Code Generation</a>
   settings to configure special method references.
 </p>
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 </body>
 </html>

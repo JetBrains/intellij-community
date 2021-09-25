@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -12,10 +11,7 @@ interface ExternalSystemProjectAware {
 
   /**
    * Collects settings files that are be watched
-   * This function is called on background thread in read action
-   * Please use [com.intellij.openapi.progress.ProgressManager.checkCanceled] while collecting
-   *
-   * @see [ReadAction.nonBlocking]
+   * This function can be called from any thread context to reduce UI freezes and CPU usage.
    */
   val settingsFiles: Set<String>
 

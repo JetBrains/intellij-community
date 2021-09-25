@@ -105,32 +105,38 @@ public final class LambdaUtil {
   @Contract("null -> false")
   public static boolean isValidLambdaContext(@Nullable PsiElement context) {
     context = PsiUtil.skipParenthesizedExprUp(context);
-    if (isAssignmentOrInvocationContext(context) || context instanceof PsiTypeCastExpression) {
+    if (context instanceof PsiTypeCastExpression) {
       return true;
     }
-    if (context instanceof PsiConditionalExpression) {
-      PsiElement parentContext = PsiUtil.skipParenthesizedExprUp(context.getParent());
-      if (isAssignmentOrInvocationContext(parentContext)) return true;
-      if (parentContext instanceof PsiConditionalExpression) {
-        return isValidLambdaContext(parentContext);
+
+    while (true) {
+      context = PsiUtil.skipParenthesizedExprUp(context);
+      if (isAssignmentOrInvocationContext(context)) {
+        return true;
       }
-    }
-    if (context instanceof PsiYieldStatement) {
-      PsiSwitchExpression switchExpression = ((PsiYieldStatement)context).findEnclosingExpression();
-      if (switchExpression != null) {
-        return isValidLambdaContext(switchExpression.getParent());
+      if (context instanceof PsiConditionalExpression) {
+        context = context.getParent();
+        continue;
       }
-    }
-    if (context instanceof PsiExpressionStatement) {
-      PsiElement parent = context.getParent();
-      if (parent instanceof PsiSwitchLabeledRuleStatement) {
-        PsiSwitchBlock switchBlock = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
-        if (switchBlock != null) {
-          return isValidLambdaContext(switchBlock.getParent());
+      if (context instanceof PsiYieldStatement) {
+        PsiSwitchExpression switchExpression = ((PsiYieldStatement)context).findEnclosingExpression();
+        if (switchExpression != null) {
+          context = switchExpression.getParent();
+          continue;
         }
       }
+      if (context instanceof PsiExpressionStatement) {
+        PsiElement parent = context.getParent();
+        if (parent instanceof PsiSwitchLabeledRuleStatement) {
+          PsiSwitchBlock switchBlock = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
+          if (switchBlock != null) {
+            context = switchBlock.getParent();
+            continue;
+          }
+        }
+      }
+      return false;
     }
-    return false;
   }
 
   @Contract("null -> false")
@@ -634,6 +640,14 @@ public final class LambdaUtil {
     return false;
   }
 
+  /**
+   * If called to check applicability or anything which may be required to determine type, outer caching prevention is required
+   * For example, {@link com.intellij.psi.impl.source.tree.java.PsiLambdaExpressionImpl#isAcceptable(PsiType, PsiMethod)}:
+   * {@code return LambdaUtil.performWithTargetType(this, leftType, () ->
+   *                                                LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null);}
+   *                                                
+   * otherwise calls to {@code expr#getType()} inside the method may lead to infinite recursion
+   */
   public static Map<PsiElement, @Nls String> checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
     Map<PsiElement, @Nls String> errors = new LinkedHashMap<>();
     if (PsiType.VOID.equals(functionalInterfaceReturnType)) {
@@ -663,7 +677,7 @@ public final class LambdaUtil {
     else if (functionalInterfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = getReturnExpressions(lambdaExpression);
       for (final PsiExpression expression : returnExpressions) {
-        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, expression::getType);
+        final PsiType expressionType = expression.getType();
         if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
           errors.put(expression, JavaPsiBundle.message("bad.return.type.in.lambda.expression", expressionType.getPresentableText(),
                                                        functionalInterfaceReturnType.getPresentableText()));

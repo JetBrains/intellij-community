@@ -101,7 +101,7 @@ public class GenerateAction extends DumbAwareAction implements UpdateInBackgroun
 
     @Override
     public boolean isUpdateInBackground() {
-      return myAction instanceof UpdateInBackground && ((UpdateInBackground)myAction).isUpdateInBackground();
+      return UpdateInBackground.isUpdateInBackground(myAction);
     }
 
     @Override

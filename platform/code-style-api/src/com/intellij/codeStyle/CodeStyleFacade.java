@@ -39,6 +39,7 @@ public abstract class CodeStyleFacade {
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getLineIndent(Editor, Language, int, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
     return getLineIndent(editor.getDocument(), offset);

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.completion.test
 
@@ -113,6 +110,8 @@ object ExpectedCompletionUtils {
 
     const val RUNTIME_TYPE: String = "RUNTIME_TYPE:"
 
+    const val BLOCK_CODE_FRAGMENT = "BLOCK_CODE_FRAGMENT"
+
     private const val COMPLETION_TYPE_PREFIX = "COMPLETION_TYPE:"
 
     val KNOWN_PREFIXES: List<String> = ImmutableList.of(
@@ -133,6 +132,7 @@ object ExpectedCompletionUtils {
         RUN_HIGHLIGHTING_BEFORE_PREFIX,
         RUNTIME_TYPE,
         COMPLETION_TYPE_PREFIX,
+        BLOCK_CODE_FRAGMENT,
         LightClassComputationControl.LIGHT_CLASS_DIRECTIVE,
         AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE
     )

@@ -33,7 +33,7 @@ internal sealed class TargetData {
 
     override val targets: List<SymbolWithProvider>
       get() = references.flatMap { reference ->
-        reference.resolveReference().map { SymbolWithProvider(it.target, provider(reference)) }
+        reference.resolveReference().map { SymbolWithProvider(it, provider(reference)) }
       }
 
     private fun provider(reference: PsiSymbolReference): Any? {

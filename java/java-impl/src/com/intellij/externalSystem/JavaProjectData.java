@@ -94,16 +94,6 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   }
 
   /**
-   * @deprecated use {@link ProjectSdkData#setSdkName} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public void setJdkVersion(@NotNull JavaSdkVersion jdkVersion) {
-    isSetJdkVersion = true;
-    this.jdkVersion = jdkVersion;
-  }
-
-  /**
    * @deprecated needed to support backward compatibility
    */
   @Nullable

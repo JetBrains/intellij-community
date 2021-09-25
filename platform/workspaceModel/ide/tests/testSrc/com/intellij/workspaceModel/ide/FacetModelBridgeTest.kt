@@ -3,10 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
-import com.intellij.facet.mock.MockFacet
-import com.intellij.facet.mock.MockFacetConfiguration
-import com.intellij.facet.mock.MockFacetType
-import com.intellij.facet.mock.registerFacetType
+import com.intellij.facet.mock.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModuleManager
@@ -59,6 +56,7 @@ class FacetModelBridgeTest {
   fun registerFacetType() {
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({}, disposableRule.disposable)
     registerFacetType(MockFacetType(), disposableRule.disposable)
+    registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }
 
   @Test
@@ -114,6 +112,43 @@ class FacetModelBridgeTest {
       val facet = assertOneElement(facets) as MockFacet
       assertEquals("MyFacet", facet.name)
       assertEquals("foo", facet.configuration.data)
+    }
+  }
+
+  @Test
+  fun `facet config immutable collections deserialization`() {
+    val builder = WorkspaceEntityStorageBuilder.create()
+
+    val baseDir = projectModel.baseProjectDir.rootPath.resolve("test")
+    val iprFile = baseDir.resolve("testProject.ipr")
+    val configLocation = toConfigLocation(iprFile, virtualFileManager)
+    val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
+
+    val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
+
+    builder.addFacetEntity("AnotherMockFacet", "AnotherMockFacetId", """
+      <AnotherFacetConfigProperties>
+        <firstElement>
+          <field>Android</field>
+        </firstElement>
+        <secondElement>
+          <field>Spring</field>
+        </secondElement>
+      </AnotherFacetConfigProperties>""", moduleEntity, null, source)
+
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
+      Disposer.register(disposableRule.disposable, Disposable {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      })
+
+      val module = ModuleManager.getInstance(project).findModuleByName("test") ?: throw AssertionFailedError("Module wasn't loaded")
+      val facets = FacetManager.getInstance(module).allFacets
+      val facet = assertOneElement(facets) as AnotherMockFacet
+      assertEquals("AnotherMockFacet", facet.name)
+      val configProperties = facet.configuration.myProperties
+      assertEquals("Android", configProperties.firstElement[0])
+      assertEquals("Spring", configProperties.secondElement[0])
     }
   }
 

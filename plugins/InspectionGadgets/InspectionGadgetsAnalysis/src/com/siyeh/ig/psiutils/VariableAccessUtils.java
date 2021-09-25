@@ -486,13 +486,14 @@ public final class VariableAccessUtils {
       PsiUtil.isLanguageLevel8OrHigher(initialization) &&
       !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) &&
       HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null);
+    final boolean canCaptureThis = initialization instanceof PsiField && !initialization.hasModifierProperty(PsiModifier.STATIC);
 
     final PsiType variableType = variable.getType();
     final PsiType initializationType = initialization.getType();
     final boolean sameType = Comparing.equal(variableType, initializationType);
     for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(containingScope))) {
       final PsiElement refElement = ref.getElement();
-      if (finalVariableIntroduction) {
+      if (finalVariableIntroduction || canCaptureThis) {
         final PsiElement element = PsiTreeUtil.getParentOfType(refElement, PsiClass.class, PsiLambdaExpression.class);
         if (element != null && PsiTreeUtil.isAncestor(containingScope, element, true)) {
           return false;

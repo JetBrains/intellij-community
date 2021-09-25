@@ -1,4 +1,4 @@
-from _typeshed import AnyPath, ReadableBuffer, WriteableBuffer
+from _typeshed import ReadableBuffer, StrOrBytesPath, WriteableBuffer
 from io import FileIO
 from typing import Iterable, List, Optional, Union
 
@@ -26,7 +26,7 @@ class _UnknownAsyncBinaryIO(AsyncBase[bytes]):
     @property
     def mode(self) -> str: ...
     @property
-    def name(self) -> Union[AnyPath, int]: ...
+    def name(self) -> Union[StrOrBytesPath, int]: ...
 
 class AsyncBufferedIOBase(_UnknownAsyncBinaryIO):
     async def read1(self, __size: int = ...) -> bytes: ...

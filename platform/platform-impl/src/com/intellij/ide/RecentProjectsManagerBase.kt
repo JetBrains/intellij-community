@@ -685,6 +685,19 @@ int32 "extendedState"
     }
   }
 
+  fun patchRecentPaths(patcher: (String) -> String?) {
+    synchronized(stateLock) {
+      for (path in state.additionalInfo.keys.toList()) {
+        patcher(path)?.let { newPath ->
+          state.additionalInfo.remove(path)?.let { info ->
+            state.additionalInfo[newPath] = info
+          }
+        }
+      }
+      modCounter.incrementAndGet()
+    }
+  }
+
   @Internal
   class MyAppLifecycleListener : AppLifecycleListener {
     override fun projectOpenFailed() {

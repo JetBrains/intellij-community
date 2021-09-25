@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.LoadingState;
@@ -381,7 +381,13 @@ public class GeneralCommandLine implements UserDataHolder {
       return startProcess(commands);
     }
     catch (IOException e) {
-      LOG.debug(e);
+      if (SystemInfoRt.isWindows) {
+        String mode = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
+        SecurityManager sm = System.getSecurityManager();
+        if ("false".equalsIgnoreCase(mode) || sm != null) {
+          e.addSuppressed(new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null)));
+        }
+      }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
   }

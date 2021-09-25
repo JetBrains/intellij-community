@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -29,8 +26,8 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun isConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean =
         psiReference.isConstructorUsage(ktClassOrObject)
 
-    override fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, actionString: String): List<PsiElement> =
-        org.jetbrains.kotlin.idea.refactoring.checkSuperMethods(declaration, ignore, actionString)
+    override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> =
+        org.jetbrains.kotlin.idea.refactoring.getSuperMethods(declaration, ignore)
 
     override fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope =
         org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope.sourcesAndLibraries(delegate, project)

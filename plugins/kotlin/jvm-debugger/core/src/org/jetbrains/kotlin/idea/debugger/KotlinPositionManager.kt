@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger
 
@@ -13,6 +10,7 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils.*
 import com.intellij.debugger.engine.PositionManagerEx
 import com.intellij.debugger.engine.evaluation.EvaluationContext
+import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
@@ -45,6 +43,7 @@ import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
@@ -56,7 +55,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.ArrayList
 
 class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerEx() {
-    private val stackFrameInterceptor: StackFrameInterceptor = myDebugProcess.project.getService()
+    private val stackFrameInterceptor: StackFrameInterceptor = myDebugProcess.project.getServiceSafe()
 
     private val allKotlinFilesScope = object : DelegatingGlobalSearchScope(
         KotlinSourceFilterScope.projectAndLibrariesSources(GlobalSearchScope.allScope(myDebugProcess.project), myDebugProcess.project)
@@ -311,7 +310,7 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
 
             val line = position.line + 1
 
-            val locations = type.locationsOfLine(KOTLIN_STRATA_NAME, null, line)
+            val locations = DebuggerUtilsAsync.locationsOfLineSync(type, KOTLIN_STRATA_NAME, null, line)
             if (locations == null || locations.isEmpty()) {
                 throw NoDataException.INSTANCE
             }

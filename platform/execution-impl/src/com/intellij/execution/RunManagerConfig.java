@@ -2,7 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,18 +18,18 @@ public final class RunManagerConfig {
   @NonNls private static final String DELETION_FROM_POPUP_REQUIRES_CONFIRMATION = "deletionFromPopupRequiresConfirmation";
   @NonNls private static final String STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION = "stopIncompatibleRequiresConfirmation";
 
-  @NonNls private static final String RECENTS_LIMIT_REGISTRY_KEY = "temporary.configurations.limit";
+  @NonNls private static final String RECENTS_LIMIT_KEY = "temporary.configurations.limit";
 
   public RunManagerConfig(@NotNull PropertiesComponent propertiesComponent) {
     myPropertiesComponent = propertiesComponent;
   }
 
   public int getRecentsLimit() {
-    return Math.max(MIN_RECENT_LIMIT, Registry.get(RECENTS_LIMIT_REGISTRY_KEY).asInteger());
+    return AdvancedSettings.getInt(RECENTS_LIMIT_KEY);
   }
 
   public void setRecentsLimit(int recentsLimit) {
-    Registry.get(RECENTS_LIMIT_REGISTRY_KEY).setValue(recentsLimit);
+    AdvancedSettings.setInt(RECENTS_LIMIT_KEY, recentsLimit);
   }
 
   public void migrateToRegistry() {

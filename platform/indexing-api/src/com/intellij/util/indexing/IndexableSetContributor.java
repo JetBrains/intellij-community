@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,15 @@ public abstract class IndexableSetContributor {
    */
   @NotNull
   public abstract Set<VirtualFile> getAdditionalRootsToIndex();
+
+  /**
+   * @return contributor's debug name for indexing diagnostic report.
+   */
+  @NonNls
+  @NotNull
+  public String getDebugName() {
+    return toString();
+  }
 
   @NotNull
   private static Set<VirtualFile> filterOutNulls(@NotNull IndexableSetContributor contributor,

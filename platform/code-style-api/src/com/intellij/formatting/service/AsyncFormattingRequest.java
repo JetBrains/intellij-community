@@ -2,7 +2,6 @@
 package com.intellij.formatting.service;
 
 import com.intellij.formatting.FormattingContext;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,13 +46,18 @@ public interface AsyncFormattingRequest {
 
   /**
    * Call this method when resulting formatted text is available. If the original document has changed, the result will be merged with
-   * {@link AsyncDocumentFormattingService#mergeChanges(Document, String)} method.
+   * an available {@link DocumentMerger} extension. If there are no suitable document merge extensions, the result will be ignored.
+   * <p>
+   * <b>Note:</b> {@code onTextReady()} may be called only once, subsequent calls will be ignored.
    * @param updatedText New document text.
    */
   void onTextReady(@NotNull String updatedText);
 
   /**
    * Show an error notification to an end user. The notification uses {@link AsyncDocumentFormattingService#getNotificationGroupId()}.
+   * <p>
+   * <b>Note:</b> {@code onError()} may be called only once, subsequent calls will be ignored.
+   *
    * @param title The notification title.
    * @param message The notification message.
    */

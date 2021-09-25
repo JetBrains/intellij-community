@@ -21,10 +21,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,7 +164,7 @@ public class AddMethodQualifierFix implements IntentionAction {
         }
       };
 
-    ListPopupImpl popup = new ListPopupImpl(project, step);
+    JBPopup popup = JBPopupFactory.getInstance().createListPopup(project, step, (baseRenderer) -> baseRenderer);
     popup.showInBestPositionFor(editor);
   }
 

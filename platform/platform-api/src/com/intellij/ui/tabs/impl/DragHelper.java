@@ -23,7 +23,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
-public class DragHelper extends MouseDragHelper {
+public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   private final JBTabsImpl myTabs;
   private TabInfo myDragSource;
   private Rectangle myDragOriginalRec;

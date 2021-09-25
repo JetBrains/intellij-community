@@ -14,7 +14,7 @@ import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 
 internal object BranchesDashboardUtil {
 
@@ -119,7 +119,7 @@ internal object BranchesDashboardUtil {
                          myCommits: Set<Int>): Boolean {
     // branch is "my" if all its exclusive commits are made by me
     val exclusiveCommits = findExclusiveCommits(log, branchName, repo) ?: return false
-    if (exclusiveCommits.isEmpty) return false
+    if (exclusiveCommits.isEmpty()) return false
 
     for (commit in exclusiveCommits) {
       if (!myCommits.contains(commit)) {
@@ -130,7 +130,7 @@ internal object BranchesDashboardUtil {
     return true
   }
 
-  private fun findExclusiveCommits(log: VcsProjectLog, branchName: String, repo: GitRepository): TIntHashSet? {
+  private fun findExclusiveCommits(log: VcsProjectLog, branchName: String, repo: GitRepository): IntSet? {
     val dataPack = log.dataManager!!.dataPack
 
     val ref = dataPack.findBranch(branchName, repo.root) ?: return null

@@ -78,7 +78,7 @@ public interface JBTabs {
 
   void requestFocus();
 
-  JBTabs setNavigationActionBinding(String prevActiobId, String nextActionId);
+  JBTabs setNavigationActionBinding(String prevActionId, String nextActionId);
   JBTabs setNavigationActionsEnabled(boolean enabled);
 
   @NotNull

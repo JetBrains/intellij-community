@@ -1,4 +1,4 @@
-from _typeshed import AnyPath
+from _typeshed import StrOrBytesPath
 from typing import BinaryIO, Iterable, List, Optional, Tuple, Union
 
 from ..base import AsyncBase
@@ -33,6 +33,6 @@ class AsyncTextIOWrapper(AsyncBase[str]):
     @property
     def newlines(self) -> Union[str, Tuple[str, ...], None]: ...
     @property
-    def name(self) -> Union[AnyPath, int]: ...
+    def name(self) -> Union[StrOrBytesPath, int]: ...
     @property
     def mode(self) -> str: ...

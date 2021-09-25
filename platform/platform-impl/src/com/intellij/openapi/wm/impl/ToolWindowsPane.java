@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -53,6 +54,8 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance(ToolWindowsPane.class);
   @NonNls public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
+  //The width of topmost 'resize' area when toolwindow caption is used for both resize and drag
+  public static final int HEADER_RESIZE_WIDTH = 8;
 
   private final JFrame frame;
 
@@ -148,6 +151,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     add(layeredPane, JLayeredPane.DEFAULT_LAYER);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    if (Registry.is("ide.new.tool.window.dnd")) {
+      new ToolWindowDragHelper(parentDisposable, this).start();
+    }
   }
 
   void initDocumentComponent(@NotNull Project project) {
@@ -200,7 +206,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static boolean isSquareStripeUI() {
-    return Registry.is("ide.new.stripes.ui");
+    return ExperimentalUI.isNewToolWindowsStripes();
   }
 
   @Override
@@ -407,6 +413,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   @Nullable
   Stripe getStripeFor(@NotNull Rectangle screenRectangle, @NotNull Stripe preferred) {
+    if (!new Rectangle(getLocationOnScreen(), getSize()).intersects(screenRectangle)) {
+      return null;
+    }
+
     if (preferred.containsScreen(screenRectangle)) {
       return preferred;
     }
@@ -583,7 +593,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       stripe.reset();
     }
 
-    if (Registry.is("ide.new.stripes.ui")) {
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
       if (myLeftToolbar != null) myLeftToolbar.reset();
       if (myRightToolbar != null) myRightToolbar.reset();
     }

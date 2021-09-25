@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
@@ -93,15 +93,16 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     showShelvedChangesDiff(dc, false);
   }
 
-  public static void showShelvedChangesDiff(final DataContext dc, boolean withLocal) {
+  public static @Nullable ListSelection<? extends ChangeDiffRequestChain.Producer> createDiffProducers(@NotNull DataContext dc, boolean withLocal){
     final Project project = CommonDataKeys.PROJECT.getData(dc);
-    if (project == null) return;
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
+    if (project == null) return null;
+
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return null;
 
     final String base = project.getBasePath();
     if (base == null) {
       LOG.error("No base path for project " + project);
-      return;
+      return null;
     }
 
     ListSelection<ShelvedWrapper> wrappers = ShelvedChangesViewManager.getSelectedChangesOrAll(dc);
@@ -109,7 +110,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
     final PatchesPreloader preloader = new PatchesPreloader(project);
 
-    ListSelection<ShelveDiffRequestProducer> diffRequestProducers = wrappers.map(s -> {
+    return wrappers.map(s -> {
       ShelvedChange textChange = s.getShelvedChange();
       if (textChange != null) {
         return processTextChange(project, base, patchContext, preloader, textChange, withLocal);
@@ -120,7 +121,14 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       }
       return null;
     });
-    if (diffRequestProducers.isEmpty()) return;
+  }
+
+  public static void showShelvedChangesDiff(@NotNull DataContext dc, boolean withLocal) {
+    Project project = CommonDataKeys.PROJECT.getData(dc);
+    if (project == null) return;
+
+    ListSelection<? extends ChangeDiffRequestChain.Producer> diffRequestProducers = createDiffProducers(dc, withLocal);
+    if (diffRequestProducers == null || diffRequestProducers.isEmpty()) return;
 
     DiffRequestChain chain = new ChangeDiffRequestChain(diffRequestProducers.getList(), diffRequestProducers.getSelectedIndex());
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.FRAME);

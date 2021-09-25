@@ -14,7 +14,7 @@ import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.javaFX.JavaFXBundle
 import javax.swing.Icon
 
-internal open class JavaFxModuleBuilder : StarterModuleBuilder() {
+internal class JavaFxModuleBuilder : StarterModuleBuilder() {
   override fun getBuilderId(): String = "javafx"
   override fun getNodeIcon(): Icon = AllIcons.Nodes.Module
   override fun getPresentableName(): String = JavaFXBundle.JAVA_FX

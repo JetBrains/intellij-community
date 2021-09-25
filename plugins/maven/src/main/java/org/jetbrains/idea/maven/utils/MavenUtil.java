@@ -947,6 +947,9 @@ public class MavenUtil {
     if (element == null) {
       element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
     }
+    if (element == null) {
+      element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0"));
+    }
     return element;
   }
 
@@ -957,6 +960,9 @@ public class MavenUtil {
     }
     if (elements.isEmpty()) {
       elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
+    }
+    if (elements.isEmpty()) {
+      elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0"));
     }
     return elements;
   }

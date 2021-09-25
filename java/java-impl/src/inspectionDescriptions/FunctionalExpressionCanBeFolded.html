@@ -1,19 +1,19 @@
 <html>
 <body>
-Reports method references or lambda expressions which point to a method of their own functional interface type and hence can be
+Reports method references or lambda expressions that point to a method of their own functional interface type and hence can be
 replaced with their qualifiers removing unnecessary object allocation.
 
-<p>For example:</p>
-<pre>
+<p>Example:</p>
+<pre><code>
   SwingUtilities.invokeLater(r::run);
   SwingUtilities.invokeAndWait(() -> r.run());
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   SwingUtilities.invokeLater(r);
   SwingUtilities.invokeAndWait(r);
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>Reports only if the language level of the project or module is 8 or higher</p>
+<p>Reports only if the language level of the project or module is 8 or higher.</p>
 </body>
 </html>

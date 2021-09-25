@@ -3,7 +3,6 @@ package com.intellij.grazie.utils
 
 import org.languagetool.rules.RuleMatch
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 fun RuleMatch.toIntRange(offset: Int = 0) = IntRange(fromPos + offset, toPos + offset - 1)
 

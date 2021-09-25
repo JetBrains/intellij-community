@@ -15,11 +15,18 @@
  */
 package git4idea.cherrypick
 
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.i18n.GitBundle
 import git4idea.test.*
 
 abstract class GitCherryPickTest : GitSingleRepoTest() {
+  protected lateinit var vcsAppSettings: VcsApplicationSettings
+
+  override fun setUp() {
+    super.setUp()
+    vcsAppSettings = VcsApplicationSettings.getInstance()
+  }
 
   protected fun `check dirty tree conflicting with commit`() {
     val file = file("c.txt")

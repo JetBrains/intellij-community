@@ -40,10 +40,9 @@ import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
-import com.jetbrains.python.testing.PyTestFrameworkService;
+import com.jetbrains.python.testing.PyTestsSharedKt;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
-import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -139,13 +138,11 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
         final Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
-
-          for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
-            if (PyTestFrameworkService.getSdkReadableNameByFramework(framework).equals(selectedItem)) {
-              if (!VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, framework)) {
-                return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", framework),
-                                            createQuickFix(sdk, facetErrorPanel, framework));
-              }
+          if (selectedItem instanceof String) {
+            var factory = PyTestsSharedKt.getFactoryById(selectedItem.toString());
+            if (factory != null && !factory.isFrameworkInstalled(sdk)) {
+              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", factory.getName()),
+                                          createQuickFix(sdk, facetErrorPanel, factory.getPackageRequired()));
             }
           }
         }
@@ -167,8 +164,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           @Override
           public void finished(List<ExecutionException> exceptions) {
             if (exceptions.isEmpty()) {
-              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(),
-                                                                               name);
               facetErrorPanel.getValidatorsManager().validate();
             }
           }

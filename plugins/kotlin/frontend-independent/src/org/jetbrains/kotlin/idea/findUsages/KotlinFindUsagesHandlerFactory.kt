@@ -1,38 +1,15 @@
-/*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.findUsages
 
-import com.intellij.CommonBundle
-import com.intellij.find.FindBundle
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesHandler.NULL_HANDLER
 import com.intellij.find.findUsages.FindUsagesHandlerFactory
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory
-import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.searches.OverridingMethodsSearch
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundleIndependent
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.checkSuperMethods
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
 import org.jetbrains.kotlin.idea.findUsages.handlers.DelegatingFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindMemberUsagesHandler
@@ -40,7 +17,6 @@ import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinTypeParameterFindUsag
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactory() {
     val javaHandlerFactory = JavaFindUsagesHandlerFactory(project)
@@ -80,38 +56,8 @@ class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactor
             is KtClassOrObject ->
                 return KotlinFindClassUsagesHandler(element, this)
 
-            is KtParameter -> {
-                if (!forHighlightUsages) {
-                    if (element.hasValOrVar()) {
-                        val declarationsToSearch = checkSuperMethods(
-                            element,
-                            null,
-                            KotlinBundleIndependent.message("find.usages.action.text.find.usages.of")
-                        )
-
-                        return handlerForMultiple(element, declarationsToSearch)
-                    }
-                    val function = element.ownerFunction
-                    if (function != null && function.isOverridable()) {
-                        val psiMethod = function.providedToLightMethods().singleOrNull()
-                        if (psiMethod != null) {
-                            val hasOverridden = OverridingMethodsSearch.search(psiMethod).any()
-                            if (hasOverridden && askWhetherShouldSearchForParameterInOverridingMethods(element)) {
-                                val parametersCount = psiMethod.parameterList.parametersCount
-                                val parameterIndex = element.parameterIndex()
-                                assert(parameterIndex < parametersCount)
-                                val overridingParameters = OverridingMethodsSearch.search(psiMethod, true)
-                                    .filter { it.parameterList.parametersCount == parametersCount }
-                                    .mapNotNull { it.parameterList.parameters[parameterIndex].unwrapped }
-                                return handlerForMultiple(element, listOf(element) + overridingParameters)
-                            }
-                        }
-
-                    }
-                }
-
-                return KotlinFindMemberUsagesHandler.getInstance(element, factory = this)
-            }
+            is KtParameter -> return if (!forHighlightUsages) handlerForMultiple(element, listOf(element))
+                                     else KotlinFindMemberUsagesHandler.getInstance(element, factory = this)
 
             is KtNamedFunction, is KtProperty, is KtConstructor<*> -> {
                 val declaration = element as KtNamedDeclaration
@@ -119,14 +65,7 @@ class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactor
                 if (forHighlightUsages) {
                     return KotlinFindMemberUsagesHandler.getInstance(declaration, factory = this)
                 }
-
-                val declarationsToSearch = checkSuperMethods(
-                    declaration,
-                    null,
-                    KotlinBundleIndependent.message("find.usages.action.text.find.usages.of")
-                )
-
-                return handlerForMultiple(declaration, declarationsToSearch)
+                return handlerForMultiple(declaration, listOf(declaration))
             }
 
             is KtTypeParameter ->
@@ -152,15 +91,5 @@ class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactor
 
             else -> DelegatingFindMemberUsagesHandler(originalDeclaration, declarations, factory = this)
         }
-    }
-
-    private fun askWhetherShouldSearchForParameterInOverridingMethods(parameter: KtParameter): Boolean {
-        return Messages.showOkCancelDialog(
-            parameter.project,
-            JavaBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.name),
-            JavaBundle.message("find.parameter.usages.in.overriding.methods.title"),
-            CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(),
-            Messages.getQuestionIcon()
-        ) == Messages.OK
     }
 }

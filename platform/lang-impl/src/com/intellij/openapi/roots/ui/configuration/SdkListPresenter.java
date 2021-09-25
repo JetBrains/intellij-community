@@ -147,8 +147,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
       String home = item.homePath;
       String version = item.version;
 
-      Icon icon = type.getIconForAddAction();
-      if (Objects.equals(icon, IconUtil.getAddIcon())) icon = type.getIcon();
+      Icon icon = type.getIcon();
       if (icon == null) icon = IconUtil.getAddIcon();
       setIcon(icon);
       append(presentDetectedSdkPath(home));
@@ -200,6 +199,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
         .forNullSdk(selected)
         .customize(this);
       getAccessibleContext().setAccessibleName(ProjectBundle.message("jdk.combo.box.no.sdk.item.accessibility"));
+      setIcon(null);
     }
     else if (value instanceof SdkReferenceItem) {
       SdkReferenceItem item = (SdkReferenceItem)value;

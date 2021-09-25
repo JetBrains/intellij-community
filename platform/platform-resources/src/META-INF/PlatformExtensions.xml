@@ -120,6 +120,8 @@
     <experimentalFeature id="wsl.execute.with.wsl.exe" percentOfUsers="100">
       <description>Run WSL commands using wsl.exe, e.g. "wsl.exe --distribution Ubuntu-20.04" (available since Windows 10 update 1903).</description>
     </experimentalFeature>
+    <registryKey key="wsl.list.prefer.verbose.output" os="windows" defaultValue="true" restartRequired="false"
+                 description="Use 'wsl.exe -l -v' to get distribution list. If it's disabled 'wsl.exe -l -q' will be used."/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
@@ -750,7 +752,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <postStartupActivity implementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl$EventLogSubscribeActivity"/>
 <!-- Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered in androidstudio.xml
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider" order="first"/>
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
 Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered in androidstudio.xml -->
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.SearchEverywhereEventLoggerProvider" order="first"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService"/>
@@ -851,6 +853,8 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <actionPromoter implementation="com.intellij.ide.actions.WindowActionPromoter"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsGlobalSummaryManager"/>
 
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModelCache"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
@@ -947,6 +951,16 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserXmlService" />
     <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"
                         serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>
+
+    <!-- Actions on Save -->
+    <!--
+    <projectConfigurable groupId="tools"
+                         groupWeight="170"
+                         instance="com.intellij.ide.actionsOnSave.ActionsOnSaveConfigurable"
+                         id="actions.on.save"
+                         bundle="messages.IdeBundle"
+                         key="actions.on.save.page.title"/>
+    -->
 
     <!--troubleshooting-->
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.AboutTroubleInfoCollector"/>
@@ -1207,11 +1221,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <newProjectWizard implementation="com.intellij.ide.HTMLNewProjectWizard"/>
 
-    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.GradleKotlin"/>
-    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.GradleGroovy"/>
-    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.Maven"/>
-    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.Intellij"/>
-
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
     <applicationConfigurable id="advanced.settings"
@@ -1224,6 +1233,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="temporary.configurations.limit" default="4" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
@@ -1258,8 +1268,12 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
-              topic="com.intellij.openapi.fileTypes.FileTypeListener" />
-    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true" activeInTestMode="false"
+              topic="com.intellij.openapi.fileTypes.FileTypeListener"/>
+    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true"
+              activeInTestMode="false"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+
+    <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity" topic="com.intellij.ide.AppLifecycleListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 </idea-plugin>

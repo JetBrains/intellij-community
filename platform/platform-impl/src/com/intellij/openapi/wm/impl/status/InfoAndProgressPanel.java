@@ -242,6 +242,13 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
         openProcessPopup(false);
       }
 
+      if (original.isFinished(info)) {
+        // already finished, progress might not send another finished message
+        removeProgress(expanded);
+        removeProgress(compact);
+        return;
+      }
+
       runQuery();
     }
   }

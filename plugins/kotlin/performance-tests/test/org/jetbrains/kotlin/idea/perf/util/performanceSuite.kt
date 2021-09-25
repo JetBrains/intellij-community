@@ -1,16 +1,13 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.util
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -18,6 +15,7 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -46,6 +44,7 @@ import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultPro
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.testFramework.*
+import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.close
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -144,6 +143,7 @@ class PerformanceSuite {
                 stats(stats)
                 warmUpIterations(config.warmup)
                 iterations(config.iterations)
+                fastIterations(config.fastIterations)
                 setUp {
                     before()
                 }
@@ -187,8 +187,9 @@ class PerformanceSuite {
                 }
             }
 
-            fixture("src/HelloMain.kt").use {
-                highlight(it)
+            fixture("src/HelloMain.kt").use { fixture ->
+                highlight(fixture).firstOrNull { it.severity == HighlightSeverity.WARNING }
+                    ?: error("`[UNUSED_PARAMETER] Parameter 'args' is never used` has to be highlighted")
             }
         }
 
@@ -212,6 +213,13 @@ class PerformanceSuite {
                         jdkTableImpl.internalJdk.homePath!!
                     }
 
+                    val roots = mutableListOf<String>()
+                    roots += homePath
+                    System.getenv("JDK_18")?.let {
+                        roots += it
+                    }
+                    VfsRootAccess.allowRootAccess(rootDisposable, *roots.toTypedArray())
+
                     val javaSdk = JavaSdk.getInstance()
                     val jdk = javaSdk.createJdk("1.8", homePath)
                     val internal = javaSdk.createJdk("IDEA jdk", homePath)
@@ -229,7 +237,13 @@ class PerformanceSuite {
     }
 
 
-    class StatsScopeConfig(var name: String? = null, var warmup: Int = 2, var iterations: Int = 5, var profilerConfig: ProfilerConfig = ProfilerConfig())
+    class StatsScopeConfig(
+        var name: String? = null,
+        var warmup: Int = 2,
+        var iterations: Int = 5,
+        var fastIterations: Boolean = false,
+        var profilerConfig: ProfilerConfig = ProfilerConfig()
+    )
 
     class ProjectScopeConfig(val path: String, val openWith: ProjectOpenAction, val refresh: Boolean = false) {
         val name: String = path.lastPathSegment()
@@ -335,14 +349,19 @@ class PerformanceSuite {
             Fixture.openFileInEditor(project, path).psiFile.also { openFiles.add(it.virtualFile) }
 
         fun fixture(path: String): Fixture {
-            val fixture = Fixture.openFixture(project, path)
+            return fixture(Fixture.projectFileByName(project, path).virtualFile)
+        }
+
+        fun fixture(file: VirtualFile): Fixture {
+            val fixture = Fixture.openFixture(project, file)
             openFiles.add(fixture.vFile)
-            if (Fixture.isAKotlinScriptFile(path)) {
+            val fileName = file.name
+            if (Fixture.isAKotlinScriptFile(fileName)) {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(fixture.psiFile)
             }
-            if (path.endsWith(KotlinFileType.EXTENSION)) {
+            if (fileName.endsWith(KotlinFileType.EXTENSION)) {
                 assert(fixture.psiFile is KtFile) {
-                    "$path expected to be a Kotlin file"
+                    "$file expected to be a Kotlin file"
                 }
             }
             return fixture
@@ -354,12 +373,12 @@ class PerformanceSuite {
         fun close(editorFile: PsiFile?) {
             commitAllDocuments()
             editorFile?.virtualFile?.let {
-                FileEditorManager.getInstance(project).closeFile(it)
+                project.close(it)
             }
         }
 
-        fun <T> measure(vararg name: String, f: MeasurementScope<T>.() -> Unit): List<T?> {
-            val after = { PsiManager.getInstance(project).dropPsiCaches() }
+        fun <T> measure(vararg name: String, clearCaches: Boolean = true, f: MeasurementScope<T>.() -> Unit): List<T?> {
+            val after = { if (clearCaches) PsiManager.getInstance(project).dropPsiCaches() }
             return app.stats.measure(name.joinToString("-"), f, after)
         }
 

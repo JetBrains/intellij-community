@@ -51,6 +51,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class PopupFactoryImpl extends JBPopupFactory {
@@ -412,6 +413,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
     ListPopupImpl popup = new ListPopupImpl(step);
     popup.setMaxRowCount(maxRowCount);
     return popup;
+  }
+
+  @Override
+  public @NotNull ListPopup createListPopup(@NotNull Project project,
+                                            @NotNull ListPopupStep step,
+                                            @NotNull Function<ListCellRenderer, ListCellRenderer> cellRendererProducer) {
+    return new ListPopupImpl(project, step) {
+      @Override
+      protected ListCellRenderer<?> getListElementRenderer() {
+        return cellRendererProducer.apply(super.getListElementRenderer());
+      }
+    };
   }
 
   @NotNull

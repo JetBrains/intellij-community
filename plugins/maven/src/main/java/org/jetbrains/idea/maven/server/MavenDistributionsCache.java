@@ -12,16 +12,15 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.execution.MavenExternalParameters;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,24 +68,7 @@ public class MavenDistributionsCache {
     }
     
     String multiModuleDir = myWorkingDirToMultimoduleMap.computeIfAbsent(workingDirectory, this::resolveMultimoduleDirectory);
-    return myVmSettingsMap.computeIfAbsent(multiModuleDir, this::readVmOptions);
-  }
-
-  private @NotNull String readVmOptions(@NotNull String multiModuleDir) {
-    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(multiModuleDir);
-    if (baseDir == null) return settings.getImportingSettings().getVmOptionsForImporter();
-    VirtualFile mvn = baseDir.findChild(".mvn");
-    if (mvn == null) return settings.getImportingSettings().getVmOptionsForImporter();
-    VirtualFile jdkOpts = mvn.findChild("jvm.config");
-    if (jdkOpts == null) return settings.getImportingSettings().getVmOptionsForImporter();
-    try {
-      return new String(jdkOpts.contentsToByteArray(true), jdkOpts.getCharset());
-    }
-    catch (IOException e) {
-      MavenLog.LOG.warn(e);
-      return settings.getImportingSettings().getVmOptionsForImporter();
-    }
+    return myVmSettingsMap.computeIfAbsent(multiModuleDir, MavenExternalParameters::readJvmConfigOptions);
   }
 
   public @NotNull MavenDistribution getMavenDistribution(@Nullable String workingDirectory) {

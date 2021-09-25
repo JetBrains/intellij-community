@@ -1,14 +1,11 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -44,7 +41,7 @@ class QuickFixes {
     }
 
     companion object {
-        fun getInstance(): QuickFixes = ServiceManager.getService(QuickFixes::class.java)
+        fun getInstance(): QuickFixes = service()
     }
 }
 

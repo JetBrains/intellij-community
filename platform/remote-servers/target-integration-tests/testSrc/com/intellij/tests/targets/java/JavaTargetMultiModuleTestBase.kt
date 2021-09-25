@@ -3,13 +3,13 @@ package com.intellij.tests.targets.java
 
 import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.testframework.TestSearchScope
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.PlatformTestUtil
 import org.junit.Test
 
 abstract class JavaTargetMultiModuleTestBase(executionMode: ExecutionMode) : CommonJavaTargetTestBase(executionMode) {
-  override fun getTestAppPath(): String = "${PathManager.getCommunityHomePath()}/platform/remote-servers/target-integration-tests/multiModuleTargetApp"
+  override fun getTestAppPath(): String = "${PlatformTestUtil.getCommunityPath()}/platform/remote-servers/target-integration-tests/multiModuleTargetApp"
 
   override fun setUpModule() {
     super.setUpModule()

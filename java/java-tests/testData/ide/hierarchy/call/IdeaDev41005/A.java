@@ -4,3 +4,9 @@ class A {
     d.xyzzy();
   }
 }
+class B {
+  public void xyzzy() {
+  }
+}
+class D extends B {
+}

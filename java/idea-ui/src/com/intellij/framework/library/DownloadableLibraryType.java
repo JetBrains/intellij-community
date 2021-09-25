@@ -84,6 +84,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
    * @deprecated use {@link #DownloadableLibraryType(String, String, String, URL...)} instead and override {@link #getLibraryTypeIcon()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public DownloadableLibraryType(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> libraryCategoryName,
                                  @NotNull String libraryTypeId,
                                  @NotNull String groupId,

@@ -3,4 +3,4 @@ fun some() {
     jClass.<caret>setListener {}
 }
 
-// REF: (in JavaTest.SomeJavaClass).setListener(SAMInterface)
+// REF: of JavaTest.SomeJavaClass.setListener(SAMInterface)

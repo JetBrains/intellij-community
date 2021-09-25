@@ -71,7 +71,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     statusBar.addWidget(new LightEditLineSeparatorWidgetWrapper(project), StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
                         this);
 
-    PopupHandler.installPopupHandler(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
+    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
     StatusBarWidgetsManager statusBarWidgetsManager = project.getService(StatusBarWidgetsManager.class);
     ApplicationManager.getApplication().invokeLater(() -> {
       statusBarWidgetsManager.updateAllWidgets();

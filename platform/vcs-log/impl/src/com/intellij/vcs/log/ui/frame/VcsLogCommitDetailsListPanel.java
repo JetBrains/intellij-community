@@ -176,7 +176,7 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
               return Unit.INSTANCE;
             });
           }
-        });
+        }, o -> Disposer.isDisposed(myGraphTable));
       });
     }
 

@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.Map;
  * @deprecated Usages only in Ruby. Move to Ruby module?
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class CommandLineArgumentsProvider {
     /**
    * @return Commands to execute (one command corresponds to one add argument)

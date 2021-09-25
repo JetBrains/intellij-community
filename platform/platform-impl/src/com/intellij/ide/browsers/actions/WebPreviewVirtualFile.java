@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.actions;
 
-import com.intellij.openapi.fileEditor.impl.NotSuitableForPreviewTab;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class WebPreviewVirtualFile extends LightVirtualFile implements NotSuitableForPreviewTab {
+public class WebPreviewVirtualFile extends LightVirtualFile {
   private final VirtualFile myFile;
   private final Url myPreviewUrl;
 
@@ -20,6 +20,7 @@ public class WebPreviewVirtualFile extends LightVirtualFile implements NotSuitab
     myPreviewUrl = previewUrl;
     setFileType(WebPreviewFileType.INSTANCE);
     setWritable(false);
+    putUserData(FileEditorManagerImpl.FORBID_PREVIEW_TAB, true);
   }
 
   @Override

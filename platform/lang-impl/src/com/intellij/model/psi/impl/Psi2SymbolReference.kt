@@ -2,7 +2,6 @@
 package com.intellij.model.psi.impl
 
 import com.intellij.model.Symbol
-import com.intellij.model.SymbolResolveResult
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.util.TextRange
@@ -16,16 +15,15 @@ internal class Psi2SymbolReference(private val psiReference: PsiReference) : Psi
 
   override fun getRangeInElement(): TextRange = psiReference.rangeInElement
 
-  override fun resolveReference(): Collection<SymbolResolveResult> {
+  override fun resolveReference(): Collection<Symbol> {
     if (psiReference is PsiPolyVariantReference) {
-      return psiReference.multiResolve(false).filter {
-        it.element != null
-      }.map(PsiSymbolService.getInstance()::asSymbolResolveResult)
+      return psiReference.multiResolve(false).mapNotNull {
+        it.element
+      }.map(PsiSymbolService.getInstance()::asSymbol)
     }
     else {
       val resolved: PsiElement = psiReference.resolve() ?: return emptyList()
-      val symbol = PsiSymbolService.getInstance().asSymbol(resolved)
-      return listOf(SymbolResolveResult.fromSymbol(symbol))
+      return listOf(PsiSymbolService.getInstance().asSymbol(resolved))
     }
   }
 

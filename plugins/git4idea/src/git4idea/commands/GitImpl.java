@@ -105,7 +105,7 @@ public class GitImpl extends GitImplBase {
     final Set<FilePath> files = new HashSet<>();
     for (String relPath : output.split("\u0000")) {
       ProgressManager.checkCanceled();
-      if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
+      if (!relPath.startsWith(fileStatusPrefix)) continue;
 
       String relativePath = relPath.substring(fileStatusPrefix.length());
       files.add(GitContentRevision.createPath(root, relativePath, relativePath.endsWith("/")));

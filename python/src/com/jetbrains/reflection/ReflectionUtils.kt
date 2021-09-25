@@ -47,7 +47,7 @@ private class SimpleProperty(private val propertyName: String,
   override fun getName() = propertyName
   override fun getType() = String::class.java
   override fun get() = provider.getPropertyValue(propertyName)
-  override fun set(value: Any?) = provider.setPropertyValue(propertyName, value?.toString())
+  override fun set(value: Any?) = provider.setPropertyValue(propertyName, value)
 }
 
 /**
@@ -55,8 +55,8 @@ private class SimpleProperty(private val propertyName: String,
  */
 interface SimplePropertiesProvider {
   val propertyNames: List<String>
-  fun setPropertyValue(propertyName: String, propertyValue: String?)
-  fun getPropertyValue(propertyName: String): String?
+  fun setPropertyValue(propertyName: String, propertyValue: Any?)
+  fun getPropertyValue(propertyName: String): Any?
 }
 
 class Properties(val properties: List<Property>, val instance: Any) {

@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
-import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.ide.plugins.DependencyCollectorBean
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
@@ -80,11 +80,11 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
 }
 
 fun collectDependencyUnknownFeatures(project: Project): List<UnknownFeature> {
-  return DependencyCollector.EP_NAME.extensions.flatMap { dependencyCollector ->
-    dependencyCollector.collectDependencies(project).map { coordinate ->
+  return DependencyCollectorBean.EP_NAME.extensions.flatMap { dependencyCollectorBean ->
+    dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
       UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
                      IdeBundle.message("plugins.advertiser.feature.dependency"),
-                     dependencyCollector.dependencyKind + ":" + coordinate, null)
+                     dependencyCollectorBean.kind + ":" + coordinate, null)
     }
-  }
+  }.filterNot { UnknownFeaturesCollector.getInstance(project).isIgnored(it) }
 }

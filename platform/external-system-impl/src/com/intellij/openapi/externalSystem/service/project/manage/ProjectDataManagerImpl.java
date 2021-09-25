@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
@@ -96,6 +99,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
 
     long allStartTime = System.currentTimeMillis();
+    Activity activity = StartUpMeasurer.startActivity("project data importing total", ActivityCategory.GRADLE_IMPORT);
     try {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());
@@ -133,6 +137,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
       project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
         .onImportFinished(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
+      activity.end();
       trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {

@@ -5,13 +5,11 @@
 
   "ui": {
     "*": {
-      "background": "#ececec",
-      "foreground": "#1d1d1d",
-      "selectionBackground": "system",
-      "selectionBackgroundInactive": "system",
-      "selectionForeground": "system",
+      "selectionBackground": "#2961DA",
+      "selectionBackgroundInactive": "#D8D8D8",
+      "selectionForeground": "#ffffff",
       "selectionForegroundInactive": "#000000",
-      "selectionInactiveBackground": "system"
+      "selectionInactiveBackground": "#D8D8D8"
     },
 
     "ActionButton": {
@@ -37,6 +35,7 @@
     "Borders.ContrastBorderColor": "#c9c9c9",
 
     "Button": {
+      "background": "#ececec",
       "border": "com.intellij.laf.macos.MacIntelliJButtonBorder",
       "UI": "com.intellij.laf.macos.MacIntelliJButtonUI"
     },

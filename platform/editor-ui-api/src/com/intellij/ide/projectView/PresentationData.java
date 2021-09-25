@@ -139,7 +139,6 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   /**
    * @param closedIcon the closed icon for the node.
-   * @see #setIcons(Icon)
    * @deprecated Different icons for open/closed no longer supported. Use setIcon instead
    *             Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
    *             in a non-tree view.
@@ -153,27 +152,12 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   /**
    * @param openIcon the open icon for the node.
-   * @see #setIcons(Icon)
    * @deprecated Different icons for open/closed no longer supported. This function is no op.
    *             Sets the icon shown for the node when it is expanded in the tree.
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setOpenIcon(Icon openIcon) {
-  }
-
-  /**
-   * @param icon the icon for the node.
-   * @see #setOpenIcon(Icon)
-   * @see #setClosedIcon(Icon)
-   * @deprecated Different icons for open/closed no longer supported. Use setIcon instead.
-   *             Sets both the open and closed icons of the node to the specified icon.
-   */
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void setIcons(Icon icon) {
-    setIcon(icon);
   }
 
   /**

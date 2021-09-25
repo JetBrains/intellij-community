@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.ide.plugins.loadExtensionWithText
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.stubs.StubIndexKey
@@ -43,6 +44,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
 
 const val testInfraExtensionFile = "_test_extension"
 
+@InternalIgnoreDependencyViolation
 class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
   override fun createFileIndexingStatusProcessor(project: Project): FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor? =
     null

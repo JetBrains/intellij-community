@@ -1,23 +1,26 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.util
 
 import java.io.File
-import java.util.*
 
 fun main(args: Array<String>) {
-    val argFile = File(args[0])
-    val groupBy = argFile.listFiles()
+    uploadAggregateResults(File(args[0]))
+}
+
+internal fun uploadAggregateResults(folder: File) {
+    val groupBy = folder.listFiles()
         .filter { it.length() > 0 && it.name.startsWith("stats-") && it.extension == "json" }
         .groupBy { it.name.replace("stats-", "").split("_")[0] }
+
+    groupBy.forEach { (n, files) ->
+        files.map(File::loadBenchmark).writeCSV(n)
+    }
 
     groupBy.forEach { (k, v) ->
         if (v.isEmpty()) return@forEach
 
-        val benchmarks = v.map { it.loadBenchmark() }
+        val benchmarks = v.map(File::loadBenchmark)
 
         benchmarks.forEach { benchmark ->
             benchmark.metrics.firstOrNull { it.metricName == "" }?.let { metric ->

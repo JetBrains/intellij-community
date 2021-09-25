@@ -408,6 +408,9 @@
     <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="true"
                  description="Generate assertions for @RequiresEdt and similar annotations.
                  The assertions are added by instrumenting class files during compilation."/>
+    <registryKey key="tmh.generate.line.numbers" defaultValue="true"
+                 description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
+                 This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>

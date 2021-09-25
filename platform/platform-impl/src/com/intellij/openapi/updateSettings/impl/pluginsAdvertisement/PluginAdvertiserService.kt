@@ -28,7 +28,7 @@ open class PluginAdvertiserService {
       get() = service<PluginAdvertiserService>()
   }
 
-  fun run(
+  open fun run(
     project: Project,
     customPlugins: List<PluginNode>,
     unknownFeatures: Collection<UnknownFeature>,

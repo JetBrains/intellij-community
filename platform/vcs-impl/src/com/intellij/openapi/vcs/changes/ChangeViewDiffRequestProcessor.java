@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -183,6 +183,24 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return myCurrentChange;
   }
 
+  /**
+   * In case of conflict, will select first change with this file path
+   */
+  @Deprecated
+  protected void selectFilePath(@NotNull FilePath filePath) {
+    Wrapper changeToSelect = ContainerUtil.find(getAllChanges().iterator(), change -> change.getFilePath().equals(filePath));
+
+    if (changeToSelect != null) {
+      myCurrentChange = changeToSelect;
+      selectChange(changeToSelect);
+    }
+  }
+
+  @Nullable
+  protected FilePath getSelectedFilePath() {
+    return myCurrentChange != null ? myCurrentChange.getFilePath() : null;
+  }
+
   @Override
   protected boolean hasNextChange(boolean fromUpdate) {
     PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
@@ -317,6 +335,9 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   public abstract static class Wrapper {
     @NotNull
+    public abstract FilePath getFilePath();
+
+    @NotNull
     public abstract Object getUserObject();
 
     @Nullable
@@ -353,10 +374,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       return change;
     }
 
+    @Override
+    public @NotNull FilePath getFilePath() {
+      return ChangesUtil.getFilePath(change);
+    }
+
     @Nullable
     @Override
     public String getPresentableName() {
-      return ChangesUtil.getFilePath(change).getName();
+      return getFilePath().getName();
     }
 
     @Nullable
@@ -397,6 +423,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     public UnversionedFileWrapper(@NotNull FilePath path) {
       this.path = path;
+    }
+
+    @Override
+    public @NotNull FilePath getFilePath() {
+      return path;
     }
 
     @NotNull

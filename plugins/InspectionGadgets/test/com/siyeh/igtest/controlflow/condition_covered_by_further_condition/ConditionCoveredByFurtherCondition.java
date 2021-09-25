@@ -141,8 +141,9 @@ public class ConditionCoveredByFurtherCondition {
         if(<warning descr="Condition 'x == X.A' covered by subsequent condition 'x != X.C'">x == X.A</warning> || x != X.C) {}
     }
 
-    void testDereferenceOk(int[] arr1, int[] arr2) {
-        if(<warning descr="Condition 'arr1.length == 0' covered by subsequent conditions">arr1.length == 0</warning> || arr2.length == 0 || arr1.length != arr2.length) {
+    void testDereferenceNotOk(int[] arr1, int[] arr2) {
+        // if arr2 is nullable and can be null only if arr1.length == 0 then we introduce new potential NPE
+        if(arr1.length == 0 || arr2.length == 0 || arr1.length != arr2.length) {
 
         }
     }

@@ -56,16 +56,6 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   }
 
   /**
-   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
-   */
-  @Transient
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public boolean isUseAutoImport() {
-    return true;
-  }
-
-  /**
    * @deprecated Auto-import cannot be disabled
    * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
    */

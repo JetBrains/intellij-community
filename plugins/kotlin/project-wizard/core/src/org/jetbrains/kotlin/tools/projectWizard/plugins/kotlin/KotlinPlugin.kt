@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 
@@ -150,8 +147,9 @@ class KotlinPlugin(context: Context) : Plugin(context) {
         val createSourcesetDirectories by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runAfter(KotlinPlugin.createModules)
             withAction {
-                fun Path.createKotlinAndResourceDirectories(moduleConfigurator: ModuleConfigurator) =
-                    with(service<FileSystemWizardService>()) {
+                fun Path?.createKotlinAndResourceDirectories(moduleConfigurator: ModuleConfigurator): TaskResult<Unit> {
+                    if (this == null) return UNIT_SUCCESS
+                    return with(service<FileSystemWizardService>()) {
                         createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.kotlinDirectoryName) andThen
                                 if (createResourceDirectories.settingValue) {
                                     createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.resourcesDirectoryName)
@@ -159,6 +157,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
                                     UNIT_SUCCESS
                                 }
                     }
+                }
 
                 forEachModule { moduleIR ->
                     moduleIR.sourcesets.mapSequenceIgnore { sourcesetIR ->

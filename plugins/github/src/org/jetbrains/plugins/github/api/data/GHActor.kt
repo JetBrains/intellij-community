@@ -3,7 +3,9 @@ package org.jetbrains.plugins.github.api.data
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.intellij.collaboration.api.dto.GraphQLFragment
 
+@GraphQLFragment("/graphql/fragment/actorInfo.graphql")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false,
               defaultImpl = GHActor::class)
 @JsonSubTypes(

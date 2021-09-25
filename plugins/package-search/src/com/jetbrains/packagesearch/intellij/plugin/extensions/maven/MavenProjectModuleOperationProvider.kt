@@ -1,7 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensions.maven
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
@@ -16,14 +15,6 @@ internal class MavenProjectModuleOperationProvider : AbstractProjectModuleOperat
         projectModuleType is MavenProjectModuleType
 
     override fun hasSupportFor(project: Project, psiFile: PsiFile?) = MavenUtil.isPomFile(project, psiFile?.virtualFile)
-
-    override fun refreshProject(project: Project, virtualFile: VirtualFile) {
-        val projectsManager = MavenProjectsManager.getInstance(project)
-
-        ProjectRefreshingListener.doOnNextChange(projectsManager) {
-            projectsManager.forceUpdateProjects(projectsManager.projects)
-        }
-    }
 }
 
 private object ProjectRefreshingListener : MavenProjectsManager.Listener {

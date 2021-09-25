@@ -24,12 +24,12 @@ public class UIComponentFileType extends FakeFileType {
 
     @Override
     public @NotNull @Nls String getDisplayName() {
-      return "UI File Type description";
+      return "UI File Type description"; //NON-NLS
     }
 
     @Override
     public @NlsContexts.Label @NotNull String getDescription() {
-      return "UI File type";
+      return "UI File type"; //NON-NLS
     }
 
     @Override

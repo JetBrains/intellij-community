@@ -12,24 +12,26 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 public abstract class ChangeHierarchyViewActionBase extends ToggleAction {
-  public ChangeHierarchyViewActionBase(String text, String description, Icon icon) {this(() -> text, () -> description, icon);}
+  public ChangeHierarchyViewActionBase(String text, String description, Icon icon) {
+    this(() -> text, () -> description, icon);
+  }
 
   public ChangeHierarchyViewActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description, Icon icon) {
     super(text, description, icon);
   }
 
   @Override
-  public final boolean isSelected(@NotNull final AnActionEvent event) {
-    final HierarchyBrowserBaseEx browser = getHierarchyBrowser(event.getDataContext());
+  public final boolean isSelected(@NotNull AnActionEvent event) {
+    HierarchyBrowserBaseEx browser = getHierarchyBrowser(event.getDataContext());
     return browser != null && getTypeName().equals(browser.getCurrentViewType());
   }
 
   protected abstract String getTypeName();
 
   @Override
-  public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+  public final void setSelected(@NotNull AnActionEvent event, boolean flag) {
     if (flag) {
-      final HierarchyBrowserBaseEx browser = getHierarchyBrowser(event.getDataContext());
+      HierarchyBrowserBaseEx browser = getHierarchyBrowser(event.getDataContext());
       ApplicationManager.getApplication().invokeLater(() -> {
         if (browser != null) {
           browser.changeView(getTypeName());
@@ -39,10 +41,10 @@ public abstract class ChangeHierarchyViewActionBase extends ToggleAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
-    final Presentation presentation = event.getPresentation();
-    final HierarchyBrowserBaseEx browser = getHierarchyBrowser(event.getDataContext());
+    Presentation presentation = event.getPresentation();
+    HierarchyBrowserBaseEx browser = getHierarchyBrowser(event.getDataContext());
     presentation.setEnabled(browser != null && browser.isValidBase());
   }
 

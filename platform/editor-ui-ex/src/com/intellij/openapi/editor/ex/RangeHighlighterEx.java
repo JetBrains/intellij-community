@@ -72,16 +72,6 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
     return getGutterIconRenderer() != null || getLineMarkerRenderer() != null;
   }
 
-  /**
-   * @deprecated Use {@link #getErrorStripeMarkColor(EditorColorsScheme)} directly,
-   * it's impossible to tell if a highlighter should be rendered in a scroll bar since an editor can have a custom color scheme
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default boolean isRenderedInScrollBar() {
-    return getErrorStripeMarkColor(null) != null;
-  }
-
   default void copyFrom(@NotNull RangeHighlighterEx other) {
     setAfterEndOfLine(other.isAfterEndOfLine());
     setGreedyToLeft(other.isGreedyToLeft());

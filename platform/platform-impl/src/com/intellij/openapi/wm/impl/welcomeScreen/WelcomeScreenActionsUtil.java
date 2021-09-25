@@ -124,12 +124,14 @@ public class WelcomeScreenActionsUtil {
       });
       myIconButton.addActionListener(l -> performAnActionForComponent(action, myIconButton));
       Wrapper iconWrapper = new Wrapper(myIconButton);
+      iconWrapper.setFocusable(false);
       iconWrapper.setBorder(JBUI.Borders.empty(0, 30));
 
       myLabel = new JBLabel(Objects.requireNonNull(getTemplateText()), SwingConstants.CENTER);
       myLabel.setOpaque(false);
 
       myPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, JBUI.scale(12), false, false));
+      myPanel.setFocusable(false);
       myPanel.add(iconWrapper);
       myPanel.add(myLabel);
       myIconButton.getAccessibleContext().setAccessibleName(myLabel.getText());

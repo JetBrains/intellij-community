@@ -120,11 +120,6 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public @NotNull Icon getIconForAddAction() {
-    return AllIcons.General.AddJdk;
-  }
-
-  @Override
   public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;

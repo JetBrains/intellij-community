@@ -4,5 +4,5 @@ open class KotlinBase {
   open var <caret>some = "Test"
 }
 
-// REF: (in testing.jj.JavaBase).getSome()
-// REF: (in testing.jj.JavaBase).setSome(String)
+// REF: of testing.jj.JavaBase.getSome()
+// REF: of testing.jj.JavaBase.setSome(String)

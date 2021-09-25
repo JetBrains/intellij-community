@@ -257,7 +257,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL);
     actionGroup.add(new ConvertModuleLibraryToRepositoryLibraryAction(this, getStructureConfigurableContext()));
-    PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myEntryTable, actionGroup, "ClassPathEntriesPopup");
   }
 
   @NotNull
@@ -441,9 +441,13 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(this, provider, library, myState.getProject(),
                                                                               presentation, getStructureConfigurableContext());
     dialog.setContextModule(getRootModel().getModule());
-    dialog.show();
-    myEntryTable.repaint();
-    getProjectStructureConfigurable().getModulesConfig().getTree().repaint();
+    if (dialog.showAndGet()) {
+      if (table == null) {
+        rootsChanged();
+      }
+      myEntryTable.repaint();
+      getProjectStructureConfigurable().getModulesConfig().getTree().repaint();
+    }
   }
 
   private void removeSelectedItems(final List<Object[]> removedRows) {

@@ -263,7 +263,6 @@ public final class ModifierKeyDoubleClickHandler {
           return false;
         }
         ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
-        ActionsCollectorImpl.recordCustomActionInvoked(actionEvent.getProject(), "DoubleShortcut", event, action.getClass());
         return true;
       }
       finally {

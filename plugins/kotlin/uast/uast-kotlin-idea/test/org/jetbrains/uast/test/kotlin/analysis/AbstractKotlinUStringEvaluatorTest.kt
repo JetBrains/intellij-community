@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.kotlin.analysis
 
 import com.intellij.psi.util.PartiallyKnownString
@@ -8,6 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.*
+import org.jetbrains.uast.analysis.UNeDfaConfiguration
 import org.jetbrains.uast.analysis.UStringEvaluator
 import kotlin.test.fail as kotlinFail
 
@@ -35,7 +37,7 @@ abstract class AbstractKotlinUStringEvaluatorTest : KotlinLightCodeInsightFixtur
         @Language("kotlin") source: String,
         expected: String,
         additionalSetup: () -> Unit = {},
-        configuration: () -> UStringEvaluator.Configuration = { UStringEvaluator.Configuration() },
+        configuration: () -> UNeDfaConfiguration<PartiallyKnownString> = { UNeDfaConfiguration() },
         additionalAssertions: (PartiallyKnownString) -> Unit = {}
     ) {
         additionalSetup()

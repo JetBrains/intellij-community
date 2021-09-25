@@ -16,7 +16,10 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -45,14 +48,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new MyCopyAction());
-    myHelpArea.addMouseListener(
-      new PopupHandler(){
-        @Override
-        public void invokePopup(final Component comp,final int x,final int y){
-          ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
-        }
-      }
-    );
+    PopupHandler.installPopupMenu(myHelpArea, group, "ConfigurationHelpAreaPopup");
 
     FixedSizeButton copyButton = new FixedSizeButton(22);
     copyButton.setIcon(PlatformIcons.COPY_ICON);

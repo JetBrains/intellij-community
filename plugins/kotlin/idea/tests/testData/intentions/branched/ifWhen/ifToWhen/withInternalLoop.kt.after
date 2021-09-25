@@ -1,7 +1,7 @@
 // WITH_RUNTIME
 
 fun testIf(xs: List<Any>) {
-    loop@ for (x in xs) {
+    for (x in xs) {
         when (x) {
             is String -> {
                 for (c in x) {
@@ -9,7 +9,7 @@ fun testIf(xs: List<Any>) {
                 }
             }
             is Int -> {
-                break@loop
+                break
             }
             else -> {
                 println(x)

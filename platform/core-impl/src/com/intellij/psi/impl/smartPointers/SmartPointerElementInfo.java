@@ -33,9 +33,9 @@ abstract class SmartPointerElementInfo {
   @Nullable
   abstract Segment getRange(@NotNull SmartPointerManagerImpl manager);
 
-  void cleanup() {
-  }
-
   @Nullable
   abstract Segment getPsiRange(@NotNull SmartPointerManagerImpl manager);
+
+  void cleanup() {
+  }
 }

@@ -279,7 +279,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       }
 
       @Override
-      public void print(String text, ConsoleViewContentType contentType) {
+      public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
         try {
           final DataOutputStream writer = getFileWriter();
           if (writer != null) {
@@ -296,7 +296,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       }
 
       @Override
-      public void printHyperlink(String text, HyperlinkInfo info) {
+      public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
         if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
           final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
           try {
@@ -401,14 +401,14 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
         for (Printable currentPrintable : currentPrintables) {
           currentPrintable.printOn(new Printer() {
             @Override
-            public void print(String text, ConsoleViewContentType contentType) {
+            public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
               if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
                 printStream.print(text);
               }
             }
 
             @Override
-            public void printHyperlink(String text, HyperlinkInfo info) {
+            public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
               printStream.print(text);
             }
 

@@ -589,6 +589,6 @@ public final class CustomMethodHandlers {
 
   private static @NotNull DfType isNaN(DfaCallArguments arguments, DfaMemoryState state, DfType nan) {
     DfType type = state.getDfType(arguments.myArguments[0]);
-    return type.isSuperType(nan) ? type.equals(FLOAT_NAN) ? TRUE : BOOLEAN : FALSE;
+    return type.isSuperType(nan) ? type.equals(FLOAT_NAN) || type.equals(DOUBLE_NAN) ? TRUE : BOOLEAN : FALSE;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ public class ImportSpecImpl implements ImportSpec {
   private boolean isPreviewMode;
   private boolean createDirectoriesForEmptyContentRoots;
   private boolean isReportRefreshError;
+  @NotNull private ThreeState myNavigateToError = ThreeState.UNSURE;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
@@ -103,6 +105,15 @@ public class ImportSpecImpl implements ImportSpec {
 
   public void setReportRefreshError(boolean isReportRefreshError) {
     this.isReportRefreshError = isReportRefreshError;
+  }
+
+  @Override
+  public @NotNull ThreeState isNavigateToError() {
+    return myNavigateToError;
+  }
+
+  public void setNavigateToError(@NotNull ThreeState navigateToError) {
+    myNavigateToError = navigateToError;
   }
 
   @Nullable

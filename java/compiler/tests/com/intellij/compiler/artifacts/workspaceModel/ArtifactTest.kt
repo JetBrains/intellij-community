@@ -327,6 +327,43 @@ class ArtifactTest : ArtifactsTestCase() {
     TestCase.assertEquals("Name-17", directoryElement.directoryName)
   }
 
+  fun `test custom composite package element with adding new child`() {
+    assumeTrue(WorkspaceModel.enabledForArtifacts)
+
+    PackagingElementType.EP_NAME.point.registerExtension(MyCompositeWorkspacePackagingElementType, this.testRootDisposable)
+
+    val artifactRoot = ArtifactRootElementImpl()
+    val element_0 = MyCompositeWorkspacePackagingElement("Name-14", "Name-13")
+    artifactRoot.addFirstChild(element_0)
+    invokeAndWaitIfNeeded {
+      runWriteAction {
+        ArtifactManager.getInstance(project).addArtifact("Artifact-0", PlainArtifactType.getInstance(), artifactRoot)
+      }
+    }
+
+    invokeAndWaitIfNeeded {
+      runWriteAction {
+        val artifactManager = ArtifactManager.getInstance(project)
+        val artifact = artifactManager.artifacts.single()
+        val modifiableModel = artifactManager.createModifiableModel()
+        val modifiableArtifact = modifiableModel.getOrCreateModifiableArtifact(artifact)
+        val element_2_2 = DirectoryPackagingElement("Name-1")
+        (modifiableArtifact.rootElement.children.single() as CompositePackagingElement<*>).addFirstChild(element_2_2)
+        modifiableModel.commit()
+      }
+    }
+
+    val artifact = ArtifactManager.getInstance(project).artifacts.single()
+    val rootChildren = artifact.rootElement.children
+    TestCase.assertEquals(1, rootChildren.size)
+    val customElement = rootChildren.single() as MyCompositeWorkspacePackagingElement
+    TestCase.assertEquals("Name-14", customElement.state.data)
+    TestCase.assertEquals("Name-13", customElement.state.name)
+
+    val directoryElement = customElement.children.single() as DirectoryPackagingElement
+    TestCase.assertEquals("Name-1", directoryElement.directoryName)
+  }
+
   fun `test complicated packaging elements structure`() {
     assumeTrue(WorkspaceModel.enabledForArtifacts)
 

@@ -8,7 +8,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.lang.annotation.AnnotationBuilder
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.model.SymbolResolveResult
 import com.intellij.model.presentation.PresentableSymbol
 import com.intellij.model.presentation.SymbolPresentation
 import com.intellij.navigation.NavigatableSymbol
@@ -30,7 +29,7 @@ class UrlReference(private val element: PsiElement,
 
   override fun getRangeInElement(): TextRange = rangeInElement
 
-  override fun resolveReference(): Collection<SymbolResolveResult> = listOf(SymbolResolveResult.fromSymbol(UrlSymbol(url)))
+  override fun resolveReference(): Collection<Symbol> = listOf(UrlSymbol(url))
 
   override fun highlightMessage() = HyperlinkAnnotator.getMessage()
 

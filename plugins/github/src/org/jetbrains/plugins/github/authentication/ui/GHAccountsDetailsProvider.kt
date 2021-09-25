@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
-import com.intellij.collaboration.ui.codereview.avatar.ScalingDeferredSquareImageIcon
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -19,7 +17,6 @@ import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.util.concurrent.CompletableFuture
@@ -28,6 +25,8 @@ internal class GHAccountsDetailsProvider(progressIndicatorsProvider: ProgressInd
                                          private val accountManager: GHAccountManager,
                                          private val accountsModel: GHAccountsListModel)
   : LoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(progressIndicatorsProvider) {
+
+  override val defaultIcon = IconUtil.resizeSquared(GithubIcons.DefaultAvatar, 40)
 
   override fun scheduleLoad(account: GithubAccount,
                             indicator: ProgressIndicator): CompletableFuture<DetailsLoadingResult<GithubUserDetailed>> {
@@ -38,15 +37,8 @@ internal class GHAccountsDetailsProvider(progressIndicatorsProvider: ProgressInd
     return ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
       val (details, scopes) = GHSecurityUtil.loadCurrentUserWithScopes(executor, it, account.server)
       if (!GHSecurityUtil.isEnoughScopes(scopes.orEmpty())) return@submitIOTask noScopes()
-      val icon = details.avatarUrl?.let { url ->
-        ScalingDeferredSquareImageIcon(40, GithubIcons.DefaultAvatar, url) { key ->
-          CachingGHUserAvatarLoader.getInstance().requestAvatar(executor, key).join()
-        }
-      } ?: IconUtil.resizeSquared(GithubIcons.DefaultAvatar, 40)
-      DetailsLoadingResult<GithubUserDetailed>(details, icon, null, false)
-    }.exceptionally {
-      val error = CompletableFutureUtil.extractError(it)
-      DetailsLoadingResult(null, null, error.message, error is GithubAuthenticationException)
+      val image = details.avatarUrl?.let { url -> CachingGHUserAvatarLoader.getInstance().requestAvatar(executor, url).join() }
+      DetailsLoadingResult<GithubUserDetailed>(details, image, null, false)
     }.successOnEdt(ModalityState.any()) {
       accountsModel.accountsListModel.contentsChanged(account)
       it

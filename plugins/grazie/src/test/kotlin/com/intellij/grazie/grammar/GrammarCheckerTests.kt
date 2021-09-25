@@ -34,7 +34,7 @@ class GrammarCheckerTests : GrazieTestBase() {
     val text = "Tot he world, my dear friend"
     val tokens = plain(text).toList()
     val fixes = check(tokens)
-    fixes.single().assertTypoIs(IntRange(0, 5), listOf("To the"), text)
+    fixes.single().assertTypoIs(IntRange(0, 5), listOf("To the"))
   }
 
   @Test
@@ -42,7 +42,7 @@ class GrammarCheckerTests : GrazieTestBase() {
     val text = listOf("Tot he world, my dear friend!\n", "This is the start of a message.\n", "The end is also here world\n")
     val tokens = plain(text)
     val fixes = check(tokens)
-    fixes.single().assertTypoIs(IntRange(0, 5), listOf("To the"), text[0])
+    fixes.single().assertTypoIs(IntRange(0, 5), listOf("To the"))
   }
 
   @Test
@@ -50,7 +50,7 @@ class GrammarCheckerTests : GrazieTestBase() {
     val text = listOf("Hello world!\n", "This is the start of a message.\n", "It is a the friend\n")
     val tokens = plain(text)
     val fixes = check(tokens)
-    fixes.single().assertTypoIs(IntRange(6, 10), listOf("a", "the"), text[2])
+    fixes.single().assertTypoIs(IntRange(6, 10), listOf("a", "the"))
   }
 
   @Test
@@ -58,10 +58,11 @@ class GrammarCheckerTests : GrazieTestBase() {
     val text = listOf("Hello. World,, tot he.\n", "This are my friend.")
     val tokens = plain(text)
     val fixes = check(tokens).toList()
-    Assert.assertEquals(3, fixes.size)
-    fixes[0].assertTypoIs(IntRange(12, 13), listOf(","), text[0])
-    fixes[1].assertTypoIs(IntRange(15, 20), listOf("to the"), text[0])
-    fixes[2].assertTypoIs(IntRange(0, 3), listOf("These"), text[1])
+    Assert.assertEquals(4, fixes.size)
+    fixes[0].assertTypoIs(IntRange(12, 13), listOf(","))
+    fixes[1].assertTypoIs(IntRange(15, 20), listOf("to the"))
+    fixes[2].assertTypoIs(IntRange(0, 3), listOf("These"))
+    fixes[3].assertTypoIs(IntRange(5, 7), listOf("is"))
   }
 
   @Test
@@ -70,9 +71,10 @@ class GrammarCheckerTests : GrazieTestBase() {
                       "    This are my friend.    ")
     val tokens = plain(text)
     val fixes = check(tokens).toList()
-    Assert.assertEquals(3, fixes.size)
-    fixes[0].assertTypoIs(IntRange(27, 28), listOf(","), text[0])
-    fixes[1].assertTypoIs(IntRange(30, 35), listOf("to the"), text[0])
-    fixes[2].assertTypoIs(IntRange(4, 7), listOf("These"), text[2])
+    Assert.assertEquals(4, fixes.size)
+    fixes[0].assertTypoIs(IntRange(27, 28), listOf(","))
+    fixes[1].assertTypoIs(IntRange(30, 35), listOf("to the"))
+    fixes[2].assertTypoIs(IntRange(4, 7), listOf("These"))
+    fixes[3].assertTypoIs(IntRange(9, 11), listOf("is"))
   }
 }

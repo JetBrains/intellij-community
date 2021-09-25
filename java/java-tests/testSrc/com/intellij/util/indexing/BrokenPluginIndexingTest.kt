@@ -2,6 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.ide.plugins.loadExtensionWithText
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.Disposer
@@ -50,9 +51,10 @@ class BrokenPluginIndexingTest : JavaCodeInsightFixtureTestCase() {
   }
 }
 
-class BrokenPluginException : RuntimeException()
+internal class BrokenPluginException : RuntimeException()
 
-class BrokenFileBasedIndexExtension : ScalarIndexExtension<Int>() {
+@InternalIgnoreDependencyViolation
+internal class BrokenFileBasedIndexExtension : ScalarIndexExtension<Int>() {
   override fun getIndexer() = DataIndexer<Int, Void, FileContent> { throw BrokenPluginException() }
   override fun getName() = INDEX_ID
   override fun getKeyDescriptor() = EnumeratorIntegerDescriptor.INSTANCE!!

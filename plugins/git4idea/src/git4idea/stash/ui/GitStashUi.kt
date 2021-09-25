@@ -31,7 +31,7 @@ class GitStashUi(private val project: Project, isEditorDiffPreview: Boolean, dis
 
   init {
     tree = GitStashTree(project, this)
-    PopupHandler.installPopupHandler(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
+    PopupHandler.installPopupMenu(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
 
     toolbar = buildToolbar()
 

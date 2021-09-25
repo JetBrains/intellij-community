@@ -1,12 +1,9 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.analyzer.common.CommonAnalysisParameters
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -24,8 +21,10 @@ import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.project.useCompositeAnalysis
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -52,8 +51,8 @@ class IdeaResolverForProject(
     modules,
     fallbackModificationTracker,
     delegateResolver,
-    ServiceManager.getService(projectContext.project, IdePackageOracleFactory::class.java),
-    ServiceManager.getService(projectContext.project, ResolutionAnchorProvider::class.java)
+    projectContext.project.getServiceSafe<IdePackageOracleFactory>(),
+    projectContext.project.getServiceSafe<ResolutionAnchorProvider>()
 ) {
     private val builtInsCache: BuiltInsCache =
         (delegateResolver as? IdeaResolverForProject)?.builtInsCache ?: BuiltInsCache(projectContext, this)
@@ -72,12 +71,12 @@ class IdeaResolverForProject(
     }
 
     override fun modulesContent(module: IdeaModuleInfo): ModuleContent<IdeaModuleInfo> =
-        ModuleContent(module, syntheticFilesByModule[module] ?: emptyList(), module.contentScope())
+        ModuleContent(module, syntheticFilesByModule[module] ?: emptyList(), getModuleContentScope(module))
 
     override fun builtInsForModule(module: IdeaModuleInfo): KotlinBuiltIns = builtInsCache.getOrCreateIfNeeded(module)
 
     override fun createResolverForModule(descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo): ResolverForModule {
-        val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), moduleInfo.contentScope())
+        val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), getModuleContentScope(moduleInfo))
 
         val languageVersionSettings =
             IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project, isReleaseCoroutines)
@@ -92,6 +91,15 @@ class IdeaResolverForProject(
             languageVersionSettings,
             sealedInheritorsProvider = IdeSealedClassInheritorsProvider
         )
+    }
+
+    private fun getModuleContentScope(moduleInfo: IdeaModuleInfo): GlobalSearchScope {
+        val baseScope = moduleInfo.contentScope()
+        return when (moduleInfo) {
+            is ScriptModuleInfo -> KotlinScriptSearchScope(moduleInfo.project, baseScope)
+            is ScriptDependenciesInfo -> KotlinScriptSearchScope(moduleInfo.project, baseScope)
+            else -> baseScope
+        }
     }
 
     private fun getResolverForModuleFactory(moduleInfo: IdeaModuleInfo): ResolverForModuleFactory {

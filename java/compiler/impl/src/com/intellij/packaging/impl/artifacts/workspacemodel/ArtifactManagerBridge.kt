@@ -20,6 +20,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.*
@@ -160,6 +161,9 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     val changed = mutableListOf<Triple<ArtifactBridge, String, ArtifactBridge>>()
     val changedArtifacts: MutableList<ArtifactBridge> = mutableListOf()
 
+    val modifiableToOriginal = BidirectionalMap<ArtifactBridge, ArtifactBridge>()
+    artifactModel.modifiableToOriginal.forEach { key, value -> modifiableToOriginal[key] = value }
+
     changes.forEach {
       when (it) {
         is EntityChange.Removed<*> -> current.artifactsMap.getDataByEntity(it.entity)?.let { it1 -> removed.add(it1) }
@@ -167,18 +171,19 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
         is EntityChange.Replaced -> {
           // Collect changes and transfer info from the modifiable bridge artifact to the original artifact
           val originalArtifact = artifactModel.diff.artifactsMap.getDataByEntity(it.newEntity)!!
-          val modifiableArtifact = artifactModel.modifiableToOriginal.getKeysByValue(originalArtifact)!!.single()
+          val modifiableArtifact = modifiableToOriginal.getKeysByValue(originalArtifact)!!.single()
           if (modifiableArtifact !== originalArtifact) {
             changedArtifacts.add(modifiableArtifact)
           }
           originalArtifact.copyFrom(modifiableArtifact)
           changed.add(Triple(originalArtifact, (it.oldEntity as ArtifactEntity).name, modifiableArtifact))
           originalArtifact.setActualStorage()
+          modifiableToOriginal.remove(modifiableArtifact, originalArtifact)
         }
       }
     }
 
-    artifactModel.modifiableToOriginal.entries.forEach { (modifiable, original) ->
+    modifiableToOriginal.entries.forEach { (modifiable, original) ->
       if (modifiable !== original) {
         changedArtifacts.add(modifiable)
         val oldName = original.name

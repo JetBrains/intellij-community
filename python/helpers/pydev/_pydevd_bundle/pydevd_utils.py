@@ -2,7 +2,6 @@ from __future__ import nested_scopes
 
 import os
 import traceback
-import warnings
 
 import pydevd_file_utils
 
@@ -37,12 +36,15 @@ def save_main_module(file, module_name):
     sys.modules[module_name] = sys.modules['__main__']
     sys.modules[module_name].__name__ = module_name
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        warnings.simplefilter("ignore", category=PendingDeprecationWarning)
+    try:
+        from importlib.machinery import ModuleSpec
+        from importlib.util import module_from_spec
+        m = module_from_spec(ModuleSpec('__main__', loader=None))
+    except:
+        # A fallback for Python <= 3.4
         from imp import new_module
+        m = new_module('__main__')
 
-    m = new_module('__main__')
     sys.modules['__main__'] = m
     if hasattr(sys.modules[module_name], '__loader__'):
         m.__loader__ = getattr(sys.modules[module_name], '__loader__')

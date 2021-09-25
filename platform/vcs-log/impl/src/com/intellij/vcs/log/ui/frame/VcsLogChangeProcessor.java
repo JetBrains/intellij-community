@@ -1,15 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
+import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.IdeBorderFactory;
@@ -20,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
@@ -32,7 +38,9 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     super(project, isInEditor ? DiffPlaces.DEFAULT : DiffPlaces.VCS_LOG_VIEW);
     myIsInEditor = isInEditor;
     myBrowser = browser;
-    myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    if (!isInEditor) {
+      myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    }
     Disposer.register(disposable, this);
 
     myBrowser.addListener(() -> updatePreviewLater(), this);
@@ -61,6 +69,31 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     return wrap(VcsTreeModelData.all(myBrowser.getViewer()));
   }
 
+  @Override
+  protected @Nullable AnAction createGoToChangeAction() {
+    return new MyGoToChangePopupProvider().createGoToChangeAction();
+  }
+
+  private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
+    @Override
+    public @NotNull List<? extends DiffRequestProducer> getActualProducers() {
+      return getAllChanges()
+        .map(wrapper -> wrapper.createProducer(getProject()))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+    }
+
+    @Override
+    public void selectFilePath(@NotNull FilePath filePath) {
+      VcsLogChangeProcessor.this.selectFilePath(filePath);
+    }
+
+    @Nullable
+    @Override
+    public FilePath getSelectedFilePath() {
+      return VcsLogChangeProcessor.this.getSelectedFilePath();
+    }
+  }
 
   @NotNull
   private Stream<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {

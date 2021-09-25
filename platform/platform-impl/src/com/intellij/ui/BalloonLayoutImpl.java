@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -281,7 +282,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     JComponent layeredPane = pane != null ? pane.getLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
 
-    if (pane != null && Registry.is("ide.new.stripes.ui", false)) {
+    if (pane != null && ExperimentalUI.isNewToolWindowsStripes()) {
       eachColumnX += pane.getX();
     }
 

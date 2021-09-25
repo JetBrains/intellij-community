@@ -10,6 +10,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -21,6 +22,7 @@ import java.io.File;
 /**
  * @author peter
  */
+@TestDataPath("$CONTENT_ROOT/testData")
 public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
   protected JavaCodeInsightTestFixture myFixture;
   private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.model.SymbolResolveResult;
+import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -187,12 +187,12 @@ public class ResolveCache implements Disposable {
 
   @ApiStatus.Experimental
   public interface PsiSymbolReferenceResolver<@NotNull R extends PsiSymbolReference> {
-    @NotNull Collection<? extends @NotNull SymbolResolveResult> resolve(R reference);
+    @NotNull Collection<? extends @NotNull Symbol> resolve(R reference);
   }
 
   @ApiStatus.Experimental
   public <@NotNull R extends PsiSymbolReference>
-  @NotNull Collection<? extends @NotNull SymbolResolveResult> resolveWithCaching(
+  @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(
     R ref,
     @NotNull PsiSymbolReferenceResolver<? super R> resolver
   ) {
@@ -201,7 +201,7 @@ public class ResolveCache implements Disposable {
 
   @ApiStatus.Experimental
   public <@NotNull R extends PsiSymbolReference>
-  @NotNull Collection<? extends @NotNull SymbolResolveResult> resolveWithCaching(
+  @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(
     R ref,
     boolean preventRecursion,
     @NotNull PsiSymbolReferenceResolver<? super R> resolver
@@ -210,7 +210,7 @@ public class ResolveCache implements Disposable {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     boolean physical = ref.getElement().isPhysical();
     int index = getIndex(false, true);
-    Collection<? extends SymbolResolveResult> results = resolve(
+    Collection<? extends Symbol> results = resolve(
       ref, getMap(physical, index), preventRecursion,
       () -> resolver.resolve(ref)
     );

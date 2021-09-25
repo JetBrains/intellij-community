@@ -23,4 +23,9 @@ class JetBrainsAnnotationSupport implements AnnotationPackageSupport {
         throw new IllegalStateException("Unexpected value: " + nullability);
     }
   }
+
+  @Override
+  public boolean isTypeUseAnnotationLocationRestricted() {
+    return true;
+  }
 }

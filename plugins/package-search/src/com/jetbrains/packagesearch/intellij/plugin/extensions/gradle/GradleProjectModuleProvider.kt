@@ -63,7 +63,7 @@ internal open class GradleProjectModuleProvider : ProjectModuleProvider {
         val externalRootProject = findExternalProject(project, module) ?: return null
         val buildFile = externalRootProject.buildFile ?: return null
         val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.absolutePath) ?: return null
-        val nativeModule = ModuleUtilCore.findModuleForFile(buildVirtualFile, project) ?: return null
+        val nativeModule = runReadAction { ModuleUtilCore.findModuleForFile(buildVirtualFile, project) } ?: return null
 
         return ProjectModule(
             name = externalRootProject.name,

@@ -6,17 +6,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressWindowTestCase
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.use
+import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
+import kotlinx.coroutines.*
 
 @SkipInHeadlessEnvironment
 class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Backgroundable, BackgroundableProcessIndicator>>() {
@@ -44,19 +41,8 @@ class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Back
   }
 
   override suspend fun createAndRunProcessOffEdt(deferredProcess: CompletableDeferred<Pair<Task.Backgroundable, BackgroundableProcessIndicator>>, mayComplete: Semaphore) {
-    suspendCancellableCoroutine<Unit> { cont ->
-      val task = object : TestTask(project) {
-        override fun run(indicator: ProgressIndicator) {
-          mayComplete.waitFor(TIMEOUT_MS)
-          cont.resume(Unit)
-        }
-      }
-      val indicator = BackgroundableProcessIndicator(task.project, task, statusBar)
-      cont.invokeOnCancellation { indicator.cancel() }
-
-      deferredProcess.complete(Pair(task, indicator))
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator)
-    }
+    val (_, indicator) = createProcess().also { deferredProcess.complete(it) }
+    ProgressManager.getInstance().runProcess({ mayComplete.waitFor(TIMEOUT_MS) }, indicator)
   }
 
   override fun showDialog(process: Pair<Task.Backgroundable, BackgroundableProcessIndicator>) {
@@ -69,6 +55,30 @@ class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Back
 
   override fun assertInitialized(process: Pair<Task.Backgroundable, BackgroundableProcessIndicator>) {
     assertContainsOrdered(statusBar.backgroundProcesses, process)
+  }
+
+  fun `test can start off EDT, already finished when processing EventQueue`(): Unit = runBlocking {
+    withTimeout(TIMEOUT_MS) {
+      val mayComplete = Semaphore(1)
+      val deferredProcess = CompletableDeferred<Pair<Task.Backgroundable, BackgroundableProcessIndicator>>()
+
+      val job = launch(Dispatchers.Default) {
+        assertIsNotDispatchThread()
+        createAndRunProcessOffEdt(deferredProcess, mayComplete)
+      }
+
+      val process = try {
+        deferredProcess.await().also { process ->
+          assertUninitialized(process)
+        }
+      }
+      finally {
+        mayComplete.up()
+      }
+      job.join()
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() // tries to initialize on EDT
+      assertUninitialized(process)
+    }
   }
 
   private open class TestTask(project: Project) : Task.Backgroundable(project, "Test Task") {

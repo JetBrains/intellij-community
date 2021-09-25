@@ -105,10 +105,6 @@ public abstract class YAMLBlockScalarTextEvaluator<T extends YAMLBlockScalarImpl
    */
   @NotNull
   protected final ChompingIndicator getChompingIndicator() {
-    Boolean forceKeepChomping = myHost.getContainingFile().getOriginalFile().getUserData(FORCE_KEEP_CHOMPING);
-    if (forceKeepChomping != null && forceKeepChomping) {
-      return ChompingIndicator.KEEP;
-    }
     ASTNode headerNode = myHost.getNthContentTypeChild(0);
     assert headerNode != null;
 
@@ -140,8 +136,4 @@ public abstract class YAMLBlockScalarTextEvaluator<T extends YAMLBlockScalarImpl
     STRIP,
     KEEP
   }
-
-  /** It is temporary solution. Please Do not use it in production! */
-  @ApiStatus.Internal
-  public static final Key<Boolean> FORCE_KEEP_CHOMPING = new Key<>("Force keep chomping indicator");
 }

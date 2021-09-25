@@ -51,7 +51,7 @@ def run_stubtest(typeshed_dir: Path) -> int:
             "--whitelist",
             str(whitelist_dir / combined_whitelist),
         ]
-    if sys.version_info < (3, 9):
+    if sys.version_info < (3, 10):
         # As discussed in https://github.com/python/typeshed/issues/3693, we only aim for
         # positional-only arg accuracy for the latest Python version.
         cmd += ["--ignore-positional-only"]
@@ -62,7 +62,7 @@ def run_stubtest(typeshed_dir: Path) -> int:
         print(
             "\nNB: stubtest output depends on the Python version (and system) it is run with. "
             "See README.md for more details.\n"
-            "NB: We only check positional-only arg accuracy for Python 3.9.\n"
+            "NB: We only check positional-only arg accuracy for Python 3.10.\n"
             "\nCommand run was: {}\n".format(" ".join(cmd)),
             file=sys.stderr,
         )

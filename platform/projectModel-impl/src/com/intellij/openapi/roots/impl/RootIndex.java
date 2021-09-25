@@ -89,6 +89,7 @@ class RootIndex {
       myPackagePrefixByRoot.put(root, packagePrefix);
     }
     storeContentsBeneathExcluded(allRoots, hierarchies);
+    storeOutsideProjectRootsButHasContentInside();
 
     myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
       @Override
@@ -96,6 +97,27 @@ class RootIndex {
         return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
       }
     };
+  }
+
+  private void storeOutsideProjectRootsButHasContentInside() {
+    nextRoot:
+    for (VirtualFile root : new ArrayList<>(myRootInfos.keySet())) {
+      for (VirtualFile v = root.getParent(); v != null; v = v.getParent()) {
+        DirectoryInfo info = myRootInfos.get(v);
+        if (info == NonProjectDirectoryInfo.OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH) {
+          break;
+        }
+        if (info != null) continue nextRoot;
+      }
+      // mark all [root.parent .. disk root] as OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH
+      for (VirtualFile v = root.getParent(); v != null; v = v.getParent()) {
+        DirectoryInfo info = myRootInfos.get(v);
+        if (info == NonProjectDirectoryInfo.OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH) {
+          break;
+        }
+        myRootInfos.put(v, NonProjectDirectoryInfo.OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH);
+      }
+    }
   }
 
   private void storeContentsBeneathExcluded(@NotNull Set<? extends VirtualFile> allRoots, @NotNull List<? extends List<VirtualFile>> hierarchies) {
@@ -613,7 +635,8 @@ class RootIndex {
           if (info != null) return info;
         }
       }
-    } else {
+    }
+    else {
       for (VirtualFile each = file; each != null; each = each.getParent()) {
         DirectoryInfo info = getOwnInfo(each);
         if (info != null) return info;

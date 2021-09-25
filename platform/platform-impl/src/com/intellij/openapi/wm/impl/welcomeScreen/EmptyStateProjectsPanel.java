@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.DropDownLink;
@@ -17,7 +18,10 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FocusUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -25,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.PRIMARY_BUTTONS_NUM;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.LargeIconWithTextWrapper;
@@ -77,8 +82,23 @@ class EmptyStateProjectsPanel extends BorderLayoutPanel {
 
   @NotNull
   private static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
-    ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true);
+    ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true) {
+      private boolean wasFocusRequested = false;
+
+      @Override
+      protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
+        super.actionsUpdated(forced, newVisibleActions);
+        if (forced && !newVisibleActions.isEmpty() && getComponents().length > 0 && !wasFocusRequested) {
+          ObjectUtils.doIfNotNull(FocusUtil.findFocusableComponentIn(getComponents()[0], null),
+                                  (Function<Component, Object>)component -> {
+                                    wasFocusRequested = true;
+                                    return IdeFocusManager.getGlobalInstance().requestFocus(component, true);
+                                  });
+        }
+      }
+    };
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.setTargetComponent(actionToolbar.getComponent());
     actionToolbar.setBorder(JBUI.Borders.emptyTop(27));
     actionToolbar.setOpaque(false);
     return actionToolbar;

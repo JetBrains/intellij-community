@@ -188,15 +188,19 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         if (successes + errors == rootPaths.size()) {
           if (!project.isDisposed()) {
             try {
-              Set<String> affectedRoots = getAffectedOutputRoots(
-                outputPathsFile, context, modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
-              if (!affectedRoots.isEmpty()) {
-                if (context.isCollectionOfGeneratedFilesEnabled()) {
-                  context.addDirtyOutputPathsProvider(() -> affectedRoots);
+              if (GradleImprovedHotswapDetection.isEnabled()) {
+                GradleImprovedHotswapDetection.processInitScriptOutput(context, outputPathsFile);
+              } else {
+                Set<String> affectedRoots = getAffectedOutputRoots(
+                  outputPathsFile, context, modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
+                if (!affectedRoots.isEmpty()) {
+                  if (context.isCollectionOfGeneratedFilesEnabled()) {
+                    context.addDirtyOutputPathsProvider(() -> affectedRoots);
+                  }
+                  // refresh on output roots is required in order for the order enumerator to see all roots via VFS
+                  // have to refresh in case of errors too, because run configuration may be set to ignore errors
+                  CompilerUtil.refreshOutputRoots(affectedRoots);
                 }
-                // refresh on output roots is required in order for the order enumerator to see all roots via VFS
-                // have to refresh in case of errors too, because run configuration may be set to ignore errors
-                CompilerUtil.refreshOutputRoots(affectedRoots);
               }
             }
             finally {
@@ -242,13 +246,19 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         String outputFilePath = FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath());
         GradleVersion v68 = GradleVersion.version("6.8");
 
-        VersionSpecificInitScript simple =
-          new VersionSpecificInitScript(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath),
-                                        "ijpathcollect", (v) -> v.compareTo(v68) < 0);
+        String initScript;
+        String initScriptUsingService;
 
-        VersionSpecificInitScript services =
-          new VersionSpecificInitScript(String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath),
-                                        "ijpathcollect", (v) -> v.compareTo(v68) >= 0);
+        if (GradleImprovedHotswapDetection.isEnabled()) {
+          initScript = GradleImprovedHotswapDetection.getInitScript(outputPathsFile);
+          initScriptUsingService = GradleImprovedHotswapDetection.getInitScriptUsingService(outputPathsFile);
+        } else {
+          initScript = String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath);
+          initScriptUsingService = String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath);
+        }
+
+        var simple = new VersionSpecificInitScript(initScript, "ijpathcollect", v -> v.compareTo(v68) < 0);
+        var services = new VersionSpecificInitScript(initScriptUsingService, "ijpathcollect", v -> v.compareTo(v68) >= 0);
 
         userData.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, Arrays.asList(simple, services));
       }

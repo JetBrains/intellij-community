@@ -61,7 +61,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
   }
 
   @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+  public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
     return myBeanProvider != null
            && myAsSource
            && myBeanProvider.fun(new DnDActionInfo(action, dragOrigin)) != null;
@@ -69,7 +69,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
 
 
   @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+  public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
     return  myBeanProvider.fun(new DnDActionInfo(action, dragOrigin));
   }
 

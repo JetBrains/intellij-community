@@ -118,7 +118,7 @@ public final class NewProjectUtil {
         }
         else {
           if (Experiments.getInstance().isFeatureEnabled("new.project.wizard") && projectBuilder instanceof NewWizardModuleBuilder) {
-            newProject = ((NewWizardModuleBuilder<?>)projectBuilder).createProject();
+            newProject = ((NewWizardModuleBuilder<?>)projectBuilder).createProject(wizard.getWizardContext());
             projectDir = Paths.get(newProject.getBasePath());
             projectFile = projectDir;
           }

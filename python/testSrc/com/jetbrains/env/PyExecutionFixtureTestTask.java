@@ -147,7 +147,6 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     myFixture = fixtureFactory.createCodeInsightFixture(fixtureBuilder.getFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
-    PyEnvTestToolsKt.replaceServicesWithMocks(myFixture.getProjectDisposable());
 
     final Module module = myFixture.getModule();
     assert module != null;

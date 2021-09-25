@@ -1,2 +1,1 @@
-// This file is needed because the packForXcode task requires the source code to be present to generate the XCode framework.
-// Feel free to remove this file as soon as you have created some code in this source set.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.

@@ -2,6 +2,8 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.core.CoreBundle
+import com.intellij.find.FindBundle
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -16,7 +18,6 @@ import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskRuntimeContext
 import training.dsl.checkToolWindowState
 import training.dsl.closeAllFindTabs
-import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
@@ -24,6 +25,7 @@ abstract class DeclarationAndUsagesLesson
   : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name")) {
   abstract fun LessonContext.setInitialPosition()
   abstract override val existedFile: String
+  abstract val entityName: String
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
@@ -74,7 +76,7 @@ abstract class DeclarationAndUsagesLesson
         text(LessonsBundle.message("declaration.and.usages.find.usages", action(it)))
 
         triggerByUiComponentAndHighlight { ui: BaseLabel ->
-          ui.text?.contains(LearnBundle.message("usages.tab.name")) ?: false
+          ui.javaClass.simpleName == "ContentTabLabel" && (ui.text?.contains(entityName) ?: false)
         }
         restoreIfModifiedOrMoved()
         test {
@@ -94,7 +96,9 @@ abstract class DeclarationAndUsagesLesson
         }
         restoreByUi()
         text(LessonsBundle.message("declaration.and.usages.pin.motivation", strong(UIBundle.message("tool.window.name.find"))))
-        text(LessonsBundle.message("declaration.and.usages.right.click.tab", strong(LearnBundle.message("usages.tab.name"))))
+        text(LessonsBundle.message("declaration.and.usages.right.click.tab",
+                                   strong(FindBundle.message("find.usages.of.element.in.scope.panel.title",
+                                                             entityName, CoreBundle.message("scope.name.all.places")))))
       }
 
       task("PinToolwindowTab") {

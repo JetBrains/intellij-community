@@ -77,7 +77,7 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
         final String toolwindowId = getAttributeValue(extension, "toolWindowId");
         final String displayType = getAttributeValue(extension, "displayType");
         final String logByDefault = getAttributeValue(extension, "isLogByDefault");
-        Icon logIcon = logByDefault == null || !"false".equals(logByDefault) ? AllIcons.Ide.Notification.NoEvents : null;
+        Icon logIcon = !"false".equals(logByDefault) ? AllIcons.Ide.Notification.NoEvents : null;
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), value)
                        .withTailText(toolwindowId != null ? " (" + toolwindowId + ")" : "")

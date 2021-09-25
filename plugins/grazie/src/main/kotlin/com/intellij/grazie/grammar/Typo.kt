@@ -1,68 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.grammar
 
-import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.utils.*
-import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.languagetool.rules.IncorrectExample
-import org.languagetool.rules.Rule
-import org.languagetool.rules.RuleMatch
-import org.slf4j.LoggerFactory
 
-data class Typo(val location: Location, val info: Info, val fixes: LinkedSet<String> = LinkedSet()) {
-  companion object {
-    private val logger = LoggerFactory.getLogger(Typo::class.java)
-  }
-
-  data class Location(val errorRange: IntRange, val patternRange: IntRange, val textRanges: Collection<IntRange> = emptyList(),
-                      val pointer: PsiPointer<PsiElement>? = null) {
-    val element: PsiElement?
-      get() = pointer?.element
-
-    val errorText = try {
-      pointer?.element?.text?.subSequence(errorRange)?.toString()
-    }
-    catch (t: Throwable) {
-      logger.warn("Got an exception during getting typo word:\n${pointer?.element!!.text}")
-      throw t
-    }
-
-    val patternText = try {
-      pointer?.element?.text?.subSequence(patternRange)?.toString()
-    }
-    catch (t: Throwable) {
-      logger.warn("Got an exception during getting pattern text:\n${pointer?.element!!.text}")
-      throw t
-    }
-  }
-
-  data class Info(val lang: Lang, val rule: Rule, private val myShortMessage: String, val message: String) {
-    val shortMessage: String by lazy {
-      myShortMessage.trimToNull() ?: rule.description.trimToNull() ?: rule.category.name
-    }
-
-    val incorrectExample: IncorrectExample? by lazy {
-      val withCorrections = rule.incorrectExamples.filter { it.corrections.isNotEmpty() }.takeIf { it.isNotEmpty() }
-      (withCorrections ?: rule.incorrectExamples).minBy { it.example.length }
-    }
-  }
-
-  /** Constructor for LangTool, applies fixes to RuleMatch (Main constructor doesn't apply fixes) */
-  constructor(match: RuleMatch, lang: Lang, offset: Int = 0) : this(
-    Location(match.toIntRange(offset), IntRange(match.patternFromPos, match.patternToPos - 1).withOffset(offset)),
-    Info(lang, match.rule, match.shortMessage, match.messageSanitized),
-    LinkedSet(match.getSuggestedReplacements())
-  )
-
-  val category: Category?
-    @Deprecated("Use RuleGroup instead")
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-    get() {
-      val category = info.rule.category.name
-      return Category.values().find { it.name == category }
-    }
-
+@Deprecated("Use TextProblem instead")
+class Typo {
   /**
    * A grammar typo category
    *

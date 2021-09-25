@@ -13,7 +13,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
 
-internal class ModuleOperationExecutor(private val project: Project) {
+internal class ModuleOperationExecutor {
 
     /** This **MUST** run on EDT */
     fun doOperation(operation: PackageSearchOperation<*>) = try {
@@ -37,10 +37,9 @@ internal class ModuleOperationExecutor(private val project: Project) {
 
         logDebug("ModuleOperationExecutor#installPackage()") { "Installing package ${operation.model.displayName} in ${projectModule.name}" }
 
-        operationProvider.addDependencyToProject(
+        operationProvider.addDependencyToModule(
             operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model, operation.newVersion, operation.newScope),
-            project = project,
-            virtualFile = projectModule.buildFile
+            module = projectModule
         ).throwIfAnyFailures()
 
         logTrace("ModuleOperationExecutor#installPackage()") { "Package ${operation.model.displayName} installed in ${projectModule.name}" }
@@ -53,10 +52,9 @@ internal class ModuleOperationExecutor(private val project: Project) {
 
         logDebug("ModuleOperationExecutor#removePackage()") { "Removing package ${operation.model.displayName} from ${projectModule.name}" }
 
-        operationProvider.removeDependencyFromProject(
+        operationProvider.removeDependencyFromModule(
             operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model),
-            project = project,
-            virtualFile = projectModule.buildFile
+            module = projectModule
         ).throwIfAnyFailures()
 
         logTrace("ModuleOperationExecutor#removePackage()") { "Package ${operation.model.displayName} removed from ${projectModule.name}" }
@@ -69,10 +67,9 @@ internal class ModuleOperationExecutor(private val project: Project) {
 
         logDebug("ModuleOperationExecutor#changePackage()") { "Changing package ${operation.model.displayName} in ${projectModule.name}" }
 
-        operationProvider.updateDependencyInProject(
+        operationProvider.updateDependencyInModule(
             operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model, operation.newVersion, operation.newScope),
-            project = project,
-            virtualFile = projectModule.buildFile
+            module = projectModule
         ).throwIfAnyFailures()
 
         logTrace("ModuleOperationExecutor#changePackage()") { "Package ${operation.model.displayName} changed in ${projectModule.name}" }
@@ -100,7 +97,7 @@ internal class ModuleOperationExecutor(private val project: Project) {
 
         logDebug("ModuleOperationExecutor#installRepository()") { "Installing repository ${operation.model.displayName} in ${projectModule.name}" }
 
-        operationProvider.addRepositoryToProject(operation.model, project, projectModule.buildFile)
+        operationProvider.addRepositoryToModule(operation.model, projectModule)
             .throwIfAnyFailures()
 
         logTrace("ModuleOperationExecutor#installRepository()") { "Repository ${operation.model.displayName} installed in ${projectModule.name}" }
@@ -113,7 +110,7 @@ internal class ModuleOperationExecutor(private val project: Project) {
 
         logDebug("ModuleOperationExecutor#removeRepository()") { "Removing repository ${operation.model.displayName} from ${projectModule.name}" }
 
-        operationProvider.removeRepositoryFromProject(operation.model, project, projectModule.buildFile)
+        operationProvider.removeRepositoryFromModule(operation.model, projectModule)
             .throwIfAnyFailures()
 
         logTrace("ModuleOperationExecutor#removeRepository()") { "Repository ${operation.model.displayName} removed from ${projectModule.name}" }

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.Pair;
@@ -25,6 +26,7 @@ import javax.swing.tree.TreePath;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public final class CustomizationUtil {
   private static final Logger LOG = Logger.getInstance(CustomizationUtil.class);
@@ -264,14 +266,17 @@ public final class CustomizationUtil {
   }
 
   @NotNull
-  public static MouseListener installPopupHandler(JComponent component, @NotNull String groupId, String place) {
-    return PopupHandler.installPopupHandler(
+  public static MouseListener installPopupHandler(@NotNull JComponent component, @NotNull String groupId, @NotNull String place) {
+    Supplier<ActionGroup> actionGroupSupplier = () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
+    PopupHandler popupHandler = PopupHandler.installPopupMenu(
       component, new ActionGroup() {
         @Override
         public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
+          ActionGroup group = actionGroupSupplier.get();
           return group == null ? EMPTY_ARRAY : group.getChildren(e);
         }
-      }, place, ActionManager.getInstance(), null);
+      }, place);
+    PopupMenuPreloader.install(component, place, popupHandler, actionGroupSupplier);
+    return popupHandler;
   }
 }

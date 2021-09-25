@@ -26,9 +26,15 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
       return true;
     }
   };
-  static final NonProjectDirectoryInfo NOT_UNDER_PROJECT_ROOTS = new NonProjectDirectoryInfo("not under project roots");
+  static final NonProjectDirectoryInfo NOT_UNDER_PROJECT_ROOTS = new NonProjectDirectoryInfo("not under project roots"){
+    @Override
+    boolean hasContentEntriesBeneath() {
+      return false;
+    }
+  };
   static final NonProjectDirectoryInfo INVALID = new NonProjectDirectoryInfo("invalid");
-  static final NonProjectDirectoryInfo NOT_SUPPORTED_VIRTUAL_FILE_IMPLEMENTATION = new NonProjectDirectoryInfo("not supported VirtualFile implementation");
+  // there are some content entries strictly beneath this dir and it is guaranteed there are no content entries above
+  static final NonProjectDirectoryInfo OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH = new NonProjectDirectoryInfo("outside project root but has content beneath");
   private final String myDebugName;
 
   private NonProjectDirectoryInfo(@NotNull String debugName) {
@@ -113,8 +119,11 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
   }
 
   @Override
-  public boolean processContentBeneathExcluded(@NotNull VirtualFile dir,
-                                               @NotNull Processor<? super VirtualFile> processor) {
+  public boolean processContentBeneathExcluded(@NotNull VirtualFile dir, @NotNull Processor<? super VirtualFile> processor) {
+    return true;
+  }
+
+  boolean hasContentEntriesBeneath() {
     return true;
   }
 

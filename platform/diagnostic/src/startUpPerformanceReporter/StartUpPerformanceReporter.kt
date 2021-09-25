@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
@@ -145,7 +146,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
       val classReport = System.getProperty("idea.log.class.list.file")
       if (!classReport.isNullOrBlank()) {
-        generateJarAccessLog(Path.of(classReport))
+        generateJarAccessLog(Path.of(FileUtil.expandUserHome(classReport)))
       }
       return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
     }

@@ -230,7 +230,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_CYCLIC_DEPENDENCIES));
     group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_MODULE_DEPENDENCIES));
 
-    PopupHandler.installPopupHandler(tree, group, ActionPlaces.UNKNOWN);
+    PopupHandler.installPopupMenu(tree, group, "ModuleDependenciesPopup");
   }
 
   private void updateSplitterProportion() {

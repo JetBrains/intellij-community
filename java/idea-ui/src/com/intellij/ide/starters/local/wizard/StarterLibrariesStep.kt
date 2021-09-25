@@ -1,11 +1,11 @@
 package com.intellij.ide.starters.local.wizard
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ui.LibraryDescriptionPanel
 import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
-import com.intellij.icons.AllIcons
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -33,7 +33,7 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
-class StarterLibrariesStep(contextProvider: StarterContextProvider) : ModuleWizardStep() {
+open class StarterLibrariesStep(contextProvider: StarterContextProvider) : ModuleWizardStep() {
   protected val starterContext = contextProvider.starterContext
   protected val starterSettings: StarterWizardSettings = contextProvider.settings
   protected val moduleBuilder: StarterModuleBuilder = contextProvider.moduleBuilder
@@ -311,6 +311,7 @@ class StarterLibrariesStep(contextProvider: StarterContextProvider) : ModuleWiza
   }
 
   private fun updateLibrariesList(starter: Starter, init: Boolean) {
+    val previouslyExpandedGroups = getExpandedCategories()
     val librariesRoot = CheckedTreeNode()
 
     val categoryNodes = mutableMapOf<LibraryCategory, DefaultMutableTreeNode>()
@@ -350,17 +351,54 @@ class StarterLibrariesStep(contextProvider: StarterContextProvider) : ModuleWiza
     selectedLibraryIds.removeIf { !starterLibraryIds.contains(it) }
 
     librariesList.model = DefaultTreeModel(librariesRoot)
-    for ((_, node) in categoryNodes) {
-      librariesList.expandPath(TreeUtil.getPath(librariesRoot, node))
-    }
+    expandCategories(categoryNodes, librariesRoot, previouslyExpandedGroups, init)
+
     if (libraryNodes.isNotEmpty()) {
-      librariesList.selectionModel.addSelectionPath(TreeUtil.getPath(librariesRoot, libraryNodes.first()))
+      val toExpand = libraryNodes.find { librariesList.isExpanded(TreeUtil.getPath(librariesRoot, it.parent)) }
+      if (toExpand != null) {
+        librariesList.selectionModel.addSelectionPath(TreeUtil.getPath(librariesRoot, toExpand))
+      }
     }
 
     for ((library, node) in selectedLibraries) {
       updateIncludedLibraries(library, node)
     }
     updateSelectedLibraries()
+  }
+
+  private fun expandCategories(categoryNodes: MutableMap<LibraryCategory, DefaultMutableTreeNode>,
+                               librariesRoot: CheckedTreeNode,
+                               expandedCategories: List<LibraryCategory>,
+                               isInitial: Boolean) {
+    if (isInitial) {
+      val collapsedCategories = moduleBuilder.getCollapsedDependencyCategoriesInternal()
+      for ((_, node) in categoryNodes) {
+        val categoryId = (node.userObject as? LibraryCategory)?.id
+        val path = TreeUtil.getPath(librariesRoot, node)
+        if (!collapsedCategories.contains(categoryId)) {
+          librariesList.expandPath(path)
+        }
+        else {
+          librariesList.collapsePath(path)
+        }
+      }
+    }
+    else {
+      for (group in expandedCategories) {
+        val newGroup = categoryNodes.entries.find { it.key == group }
+        if (newGroup != null) {
+          val path = TreeUtil.getPath(librariesRoot, newGroup.value)
+          librariesList.expandPath(path)
+        }
+      }
+    }
+  }
+
+  private fun getExpandedCategories(): List<LibraryCategory> {
+    val librariesRoot = getLibrariesRoot() ?: return emptyList()
+    return librariesRoot.children().toList()
+      .filter { librariesList.isExpanded(TreeUtil.getPath(librariesRoot, it)) }
+      .mapNotNull { (it as? DefaultMutableTreeNode)?.userObject as? LibraryCategory }
   }
 
   private fun updateIncludedLibraries(library: Library, node: CheckedTreeNode) {

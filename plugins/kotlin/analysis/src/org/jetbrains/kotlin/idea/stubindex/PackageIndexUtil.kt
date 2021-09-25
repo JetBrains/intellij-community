@@ -1,13 +1,8 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import org.jetbrains.kotlin.name.FqName
@@ -57,19 +52,12 @@ object PackageIndexUtil {
         searchScope: GlobalSearchScope,
         project: Project
     ): Boolean {
-        val ids = StubIndex.getInstance().getContainingIds(
+        val files = StubIndex.getInstance().getContainingFiles(
             KotlinExactPackagesIndex.getInstance().key,
             packageFqName.asString(),
             project,
             searchScope
         )
-        val fs = PersistentFS.getInstance() as PersistentFSImpl
-        while (ids.hasNext()) {
-            val file = fs.findFileByIdIfCached(ids.next())
-            if (file != null && file in searchScope) {
-                return true
-            }
-        }
-        return false
+        return files.any { it in searchScope }
     }
 }

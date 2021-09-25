@@ -528,7 +528,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final Process process;
       final boolean useSudo = askForSudo && PySdkExtKt.adminPermissionsNeeded(mySdk);
       if (useSudo) {
-        process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
+        process = ExecUtil.sudo(commandLine, PySdkBundle.message("python.sdk.packaging.enter.your.password.to.make.changes"));
       }
       else {
         process = commandLine.createProcess();

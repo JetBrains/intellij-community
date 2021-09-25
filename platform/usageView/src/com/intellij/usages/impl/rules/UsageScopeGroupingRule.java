@@ -48,6 +48,11 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.SCOPE.getAbsoluteRank();
+  }
+
+  @Override
   public String getGroupingActionId() {
     return "UsageGrouping.Scope";
   }

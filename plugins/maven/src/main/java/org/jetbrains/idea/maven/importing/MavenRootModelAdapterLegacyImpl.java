@@ -429,15 +429,6 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     return result.get();
   }
 
-  /**
-   * @deprecated use {@link MavenArtifact#getLibraryName()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static String makeLibraryName(@NotNull MavenArtifact artifact) {
-    return artifact.getLibraryName();
-  }
-
   public static boolean isMavenLibrary(@Nullable Library library) {
     return library != null && MavenArtifact.isMavenLibrary(library.getName());
   }

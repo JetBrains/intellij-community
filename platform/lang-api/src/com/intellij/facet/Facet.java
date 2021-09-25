@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +128,11 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return myExternalSource;
   }
 
-  void setExternalSource(ProjectModelExternalSource externalSource) {
+  /**
+   * This method marked as public only for the [FacetManagerBridge] and shouldn't be used anywhere outside
+   */
+  @ApiStatus.Internal
+  public void setExternalSource(ProjectModelExternalSource externalSource) {
     myExternalSource = externalSource;
   }
 

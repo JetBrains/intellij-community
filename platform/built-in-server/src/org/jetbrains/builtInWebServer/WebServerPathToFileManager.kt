@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -93,6 +94,10 @@ class WebServerPathToFileManager(private val project: Project) {
         clearCache()
       }
     })
+    project.messageBus.connect().subscribe(AdditionalLibraryRootsListener.TOPIC,
+                                           AdditionalLibraryRootsListener { _, _, _, _ ->
+                                             clearCache()
+                                           })
   }
 
   companion object {

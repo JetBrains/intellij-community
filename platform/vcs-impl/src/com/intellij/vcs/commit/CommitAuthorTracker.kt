@@ -7,10 +7,12 @@ import java.util.*
 
 interface CommitAuthorTracker {
   var commitAuthor: VcsUser?
+  var commitAuthorDate: Date?
 
   fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable)
 }
 
 interface CommitAuthorListener : EventListener {
   fun commitAuthorChanged()
+  fun commitAuthorDateChanged()
 }

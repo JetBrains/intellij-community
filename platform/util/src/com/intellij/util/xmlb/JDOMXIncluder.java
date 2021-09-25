@@ -4,8 +4,10 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.Stack;
-import org.jdom.*;
-import org.jetbrains.annotations.ApiStatus;
+import org.jdom.Content;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.Namespace;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,15 +58,6 @@ public final class JDOMXIncluder {
     else {
       throw new XIncludeException("No root element");
     }
-  }
-
-  /**
-   * @deprecated Use {@link #resolveRoot(Element, URL)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @NotNull Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
-    return new Document(resolveRoot(original.getRootElement(), new URL((base))));
   }
 
   /**

@@ -13,6 +13,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -315,7 +316,7 @@ public final class ProjectUtil {
       else {
         Ref<ProjectOpenProcessor> ref = new Ref<>();
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          ref.set(new SelectProjectOpenProcessorDialog(processors, virtualFile).showAndGetChoice());
+          ref.set(SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile));
         });
         processor = ref.get();
         if (processor == null) {
@@ -345,7 +346,7 @@ public final class ProjectUtil {
       }
       else {
         processorFuture = CompletableFuture.supplyAsync(() -> {
-          return new SelectProjectOpenProcessorDialog(processors, virtualFile).showAndGetChoice();
+          return SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile);
         }, ApplicationManager.getApplication()::invokeLater);
       }
     }
@@ -657,9 +658,14 @@ public final class ProjectUtil {
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
+    return getUserHomeProjectDir();
+  }
+
+  @NotNull
+  private static String getUserHomeProjectDir() {
     final String userHome = SystemProperties.getUserHome();
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
-    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode()) {
+    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
       productName = ApplicationNamesInfo.getInstance().getProductName();
     }
     return userHome.replace('/', File.separatorChar) + File.separator + productName + "Projects";
@@ -672,12 +678,19 @@ public final class ProjectUtil {
   public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
     Project result = null;
 
-    for (Path file : list) {
-      result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
-      if (result != null) {
-        LOG.debug(location + ": load project from ", file);
-        return result;
+    try
+    {
+      for (Path file : list) {
+        result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
+        if (result != null) {
+          LOG.debug(location + ": load project from ", file);
+          return result;
+        }
       }
+    }
+    catch (ProcessCanceledException ex) {
+      LOG.debug(location + ": skip project opening");
+      return null;
     }
 
     for (Path file : list) {
@@ -714,7 +727,7 @@ public final class ProjectUtil {
 
   @NotNull
   @SystemDependent
-  public static String getProjectsPath() {
+  public static String getProjectsPath() { //todo: merge somehow with getBaseDir
     Application application = ApplicationManager.getApplication();
     String fromSettings = application == null || application.isHeadlessEnvironment() ? null :
                           GeneralSettings.getInstance().getDefaultProjectDirectory();
@@ -727,9 +740,15 @@ public final class ProjectUtil {
       String propertyValue = System.getProperty(propertyName);
       ourProjectsPath = propertyValue != null
                         ? PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '\"'))
-                        : PathManager.getConfigPath() + File.separator + PROJECTS_DIR;
+                        : getProjectsDirDefault();
     }
     return ourProjectsPath;
+  }
+
+  @NotNull
+  private static String getProjectsDirDefault() {
+    if (PlatformUtils.isDataGrip()) return getUserHomeProjectDir();
+    return PathManager.getConfigPath() + File.separator + PROJECTS_DIR;
   }
 
   public static @NotNull Path getProjectPath(@NotNull String name) {

@@ -16,6 +16,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -289,7 +290,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
+  private void doTestNoQuickFixes(@NotNull Class<? extends PsiElement> @NotNull ... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
 
     myFixture.doHighlighting();

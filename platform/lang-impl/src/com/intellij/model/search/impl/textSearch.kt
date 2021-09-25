@@ -42,11 +42,13 @@ internal fun buildTextUsageQuery(
     .inScope(effectiveSearchScope)
     .buildLeafOccurrenceQuery()
   val filteredOccurrenceQuery = if (comments && strings && plainText) {
-    occurrenceQuery.filtering(::isApplicableOccurrence)
+    occurrenceQuery.filtering {
+      isApplicableOccurrence(it, searchStringLength)
+    }
   }
   else {
     occurrenceQuery.filtering {
-      isApplicableOccurrence(it, comments, strings, plainText)
+      isApplicableOccurrence(it, searchStringLength, comments, strings, plainText)
     }
   }
   return filteredOccurrenceQuery.mapping { occurrence: TextOccurrence ->
@@ -54,20 +56,26 @@ internal fun buildTextUsageQuery(
   }
 }
 
-private fun isApplicableOccurrence(occurrence: TextOccurrence): Boolean {
+private fun isApplicableOccurrence(occurrence: TextOccurrence, searchStringLength: Int): Boolean {
   for ((element, offsetInElement) in occurrence.walkUp()) {
-    if (hasDeclarationsOrReferences(element, offsetInElement)) {
+    if (hasDeclarationsOrReferences(element, offsetInElement, searchStringLength)) {
       return false
     }
   }
   return true
 }
 
-private fun isApplicableOccurrence(occurrence: TextOccurrence, comments: Boolean, strings: Boolean, plainText: Boolean): Boolean {
+private fun isApplicableOccurrence(
+  occurrence: TextOccurrence,
+  searchStringLength: Int,
+  comments: Boolean,
+  strings: Boolean,
+  plainText: Boolean
+): Boolean {
   var isComment = false
   var isString = false
   for ((element, offsetInElement) in occurrence.walkUp()) {
-    if (hasDeclarationsOrReferences(element, offsetInElement)) {
+    if (hasDeclarationsOrReferences(element, offsetInElement, searchStringLength)) {
       return false
     }
     isComment = isComment || CommentUtilCore.isCommentTextElement(element)
@@ -80,6 +88,12 @@ private fun isApplicableOccurrence(occurrence: TextOccurrence, comments: Boolean
 
 private fun TextOccurrence.walkUp(): Iterator<Pair<PsiElement, Int>> = walkUp(element, offsetInElement)
 
-private fun hasDeclarationsOrReferences(element: PsiElement, offsetInElement: Int): Boolean {
-  return hasDeclarationsInElement(element, offsetInElement) || hasReferencesInElement(element, offsetInElement)
+private fun hasDeclarationsOrReferences(
+  element: PsiElement,
+  startOffsetInElement: Int,
+  searchStringLength: Int
+): Boolean {
+  val endOffsetInElement = startOffsetInElement + searchStringLength
+  return hasDeclarationsInElement(element, startOffsetInElement, endOffsetInElement) ||
+         hasReferencesInElement(element, startOffsetInElement, endOffsetInElement)
 }

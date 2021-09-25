@@ -2,7 +2,7 @@
 package com.intellij.grazie.ide.fus
 
 import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.grammar.Typo
+import com.intellij.grazie.text.TextProblem
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 
@@ -16,10 +16,10 @@ internal object GrazieFUSCounter {
     }
   }
 
-  fun typoFound(typo: Typo) = log("typo.found") {
-    addData("id", typo.info.rule.id)
-    addData("fixes", typo.fixes.size)
-    addProject(typo.location.element?.project)
+  fun typoFound(problem: TextProblem) = log("typo.found") {
+    addData("id", problem.rule.globalId)
+    addData("fixes", problem.corrections.size)
+    addProject(problem.text.commonParent.project)
   }
 
   private fun log(eventId: String, body: FeatureUsageData.() -> Unit) {

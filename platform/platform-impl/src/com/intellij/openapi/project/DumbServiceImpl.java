@@ -45,7 +45,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.DeprecationStripePanel;
 import com.intellij.util.ui.UIUtil;
@@ -67,7 +66,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     = new ExtensionPointName<>("com.intellij.requiredForSmartModeStartupActivity");
 
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
-  private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
   private final AtomicReference<State> myState;
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
@@ -209,7 +207,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public boolean isDumb() {
     if (!ApplicationManager.getApplication().isReadAccessAllowed() &&
         Registry.is("ide.check.is.dumb.contract")) {
-      ourErrorLogger.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
+      LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
                            new IllegalStateException());
     }
     return myState.get() != State.SMART;

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.exists
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -274,7 +275,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         INHERITED_JDK_TYPE -> ModuleDependencyItem.InheritedSdkDependency
         LIBRARY_TYPE -> {
           val level = dependencyElement.getAttributeValueStrict(LEVEL_ATTRIBUTE)
-          val parentId = levelToLibraryTableId(level)
+          val parentId = LibraryNameGenerator.getLibraryTableId(level)
           val libraryId = LibraryId(dependencyElement.getAttributeValueStrict(NAME_ATTRIBUTE), parentId)
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
         }
@@ -282,8 +283,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val libraryElement = dependencyElement.getChild(LIBRARY_TAG)!!
           // TODO. Probably we want a fixed name based on hashed library roots
           val nameAttributeValue = libraryElement.getAttributeValue(NAME_ATTRIBUTE)
-          val originalName = nameAttributeValue ?: "$UNNAMED_LIBRARY_NAME_PREFIX${nextUnnamedLibraryIndex++}"
-          val name = generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
+          val originalName = nameAttributeValue ?: "${LibraryNameGenerator.UNNAMED_LIBRARY_NAME_PREFIX}${nextUnnamedLibraryIndex++}"
+          val name = LibraryNameGenerator.generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
           moduleLibraryNames.add(name)
           val tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId())
           loadLibrary(name, libraryElement, tableId, builder, entitySource, virtualFileManager, false)

@@ -129,7 +129,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     // Create layout
     ImageContainerPane view = new ImageContainerPane(imageComponent);
-    view.addMouseListener(new EditorMouseAdapter());
+    PopupHandler.installPopupMenu(view, ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
     view.addMouseListener(new FocusRequester());
 
     myScrollPane = ScrollPaneFactory.createScrollPane(view, true);
@@ -587,20 +587,6 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
     }
   }
-
-  private static final class EditorMouseAdapter extends PopupHandler {
-    @Override
-    public void invokePopup(Component comp, int x, int y) {
-      // Single right click
-      ActionManager actionManager = ActionManager.getInstance();
-      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_POPUP);
-      ActionPopupMenu menu = actionManager.createActionPopupMenu(ImageEditorActions.ACTION_PLACE, actionGroup);
-      JPopupMenu popupMenu = menu.getComponent();
-      popupMenu.pack();
-      popupMenu.show(comp, x, y);
-    }
-  }
-
 
   @Override
   @Nullable

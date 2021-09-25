@@ -795,13 +795,11 @@ public class ListPluginComponent extends JPanel {
                                null;
 
       if (action != null) {
-        ActionManager.getInstance().tryToExecute(
-          action,
-          event,
-          this,
-          ActionPlaces.UNKNOWN,
-          true
-        );
+        ActionManager.getInstance().tryToExecute(action,
+                                                 event,
+                                                 this,
+                                                 ActionPlaces.UNKNOWN,
+                                                 true);
       }
     }
   }
@@ -845,8 +843,7 @@ public class ListPluginComponent extends JPanel {
                                                                      ListPluginComponent::getPluginDescriptor);
   }
 
-  private SelectionBasedPluginModelAction.@NotNull UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
-
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
     return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel,
                                                                  true,
                                                                  this,

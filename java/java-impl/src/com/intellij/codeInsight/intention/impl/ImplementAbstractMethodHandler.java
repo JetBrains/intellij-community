@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.ide.util.PsiElementCellRenderingInfo;
+import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -171,10 +171,10 @@ public class ImplementAbstractMethodHandler {
   }
 
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
-    private final PsiElementCellRenderingInfo<PsiClass> myInfo = PsiClassListCellRenderer.INFO;
+    private final PsiElementRenderingInfo<PsiClass> myInfo = PsiClassRenderingInfo.INSTANCE;
 
     void sort(PsiElement[] result) {
-      final Comparator<PsiClass> comparator = myInfo.getComparator();
+      final Comparator<PsiClass> comparator = PsiElementRenderingInfo.getComparator(myInfo);
       Arrays.sort(result, (o1, o2) -> {
         if (o1 instanceof PsiEnumConstant && o2 instanceof PsiEnumConstant) {
           return ((PsiEnumConstant)o1).getName().compareTo(((PsiEnumConstant)o2).getName());
@@ -187,13 +187,13 @@ public class ImplementAbstractMethodHandler {
 
     @Override
     public String getElementText(PsiElement element) {
-      return element instanceof PsiClass ? myInfo.getElementText((PsiClass)element)
+      return element instanceof PsiClass ? myInfo.getPresentableText((PsiClass)element)
                                          : ((PsiEnumConstant)element).getName();
     }
 
     @Override
     protected String getContainerText(PsiElement element, String name) {
-      return element instanceof PsiClass ? PsiClassListCellRenderer.getContainerTextStatic(element)
+      return element instanceof PsiClass ? PsiClassRenderingInfo.getContainerTextStatic(element)
                                          : ((PsiEnumConstant)element).getContainingClass().getQualifiedName();
     }
   }

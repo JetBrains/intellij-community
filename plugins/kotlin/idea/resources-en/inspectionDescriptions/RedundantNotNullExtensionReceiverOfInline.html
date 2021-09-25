@@ -1,7 +1,16 @@
 <html>
 <body>
-This inspection reports inline functions with not-null extension receivers which does not use the fact that extension receiver is not null.
-Such functions are dangerous to call in Kotlin 1.2 on actual nullable flexible receiver type.
-Consider making receiver type nullable.
+<p>Reports inline functions with not nullable extension receivers which does not use the fact that extension receiver is not nullable.</p>
+<p>
+    In Kotlin 1.0 or 1.1, calls of <code>inline fun</code> with flexible nullable extension (platform type with unknown nullability)
+    receiver did not include nullability check in bytecode, but in Kotlin 1.2 this problem is fixed
+    (see <a href="https://youtrack.jetbrains.com/issue/KT-12899">KT-12899</a>), nullability check is included into bytecode.
+</p>
+<p>
+    Thus functions which do not use the fact that extension receiver is not nullable are dangerous in Kotlin until 1.2 and it's
+    recommended to make such functions to have nullable receiver.
+</p>
+<!-- tooltip end -->
+<p>This inspection only reports if the Kotlin language level of the project or module is lower than 1.2.</p>
 </body>
 </html>

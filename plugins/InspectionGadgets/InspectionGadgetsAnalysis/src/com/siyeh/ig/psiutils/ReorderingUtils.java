@@ -423,6 +423,12 @@ public final class ReorderingUtils {
   public static boolean isSideEffectFree(PsiExpression expression, boolean allowNpe) {
     // Disallow anything which may throw or produce side effect
     return PsiTreeUtil.processElements(expression, element -> {
+      if (element instanceof PsiMethodCallExpression) {
+        PsiMethod method = ((PsiMethodCallExpression)element).resolveMethod();
+        if (method == null || !JavaMethodContractUtil.isPure(method)) return false;
+        PsiClass aClass = method.getContainingClass();
+        return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
+      }
       if (element instanceof PsiCallExpression || element instanceof PsiArrayAccessExpression ||
           element instanceof PsiTypeCastExpression || isErroneous(element)) {
         return false;

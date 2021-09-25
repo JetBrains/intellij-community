@@ -85,6 +85,7 @@ public final class DvcsUtil {
   @NlsSafe
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {
     return VcsImplUtil.getShortVcsRootName(project, root);
   }

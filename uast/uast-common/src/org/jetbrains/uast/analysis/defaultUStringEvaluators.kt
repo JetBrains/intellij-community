@@ -10,17 +10,14 @@ import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
 import org.jetbrains.uast.*
 
-object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> {
+object UStringBuilderEvaluator : BuilderLikeExpressionEvaluator<PartiallyKnownString> {
   override val buildMethod: ElementPattern<PsiMethod>
     get() = PsiJavaPatterns.psiMethod().withName("toString").definedInClass("java.lang.StringBuilder")
 
-  override val dslBuildMethodDescriptor: UStringEvaluator.DslMethodDescriptor<PartiallyKnownString?>
-    get() = UStringEvaluator.DslMethodDescriptor(
+  override val dslBuildMethodDescriptor: DslLikeMethodDescriptor<PartiallyKnownString>
+    get() = DslLikeMethodDescriptor(
       PsiJavaPatterns.psiMethod().withName("buildString").definedInClass("kotlin.text.StringsKt__StringBuilderKt"),
-      UStringEvaluator.DslLambdaDescriptor(
-        UStringEvaluator.LambdaPlace.Last,
-        0
-      ) { PartiallyKnownString("") }
+      DslLambdaDescriptor(DslLambdaPlace.Last, 0) { PartiallyKnownString(listOf()) }
     )
 
   override val allowSideEffects: Boolean
@@ -33,32 +30,33 @@ object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator
            qualifiedChain.drop(1).all { callPattern.accepts(it) }
   }
 
-  override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>
+  override val methodDescriptions: Map<ElementPattern<PsiMethod>, BuilderMethodEvaluator<PartiallyKnownString>>
     get() = mapOf(
-      PsiJavaPatterns.psiMethod().withName("append").definedInClass(
-        "java.lang.StringBuilder") to { call, currentResult, stringEvaluator, config, isStrict ->
-        val entries = currentResult?.segments?.toMutableList()
-                      ?: mutableListOf<StringEntry>(StringEntry.Unknown(call.sourcePsi!!, TextRange(0, 1)))
-        val argument = call.getArgumentForParameter(0)?.let { argument -> stringEvaluator.calculateValue(argument, config) }
-        if (argument != null) {
-          if (isStrict) {
-            entries.addAll(argument.segments)
+      PsiJavaPatterns.psiMethod().withName("append").definedInClass("java.lang.StringBuilder") to
+        BuilderMethodEvaluator { call, currentResult, stringEvaluator, config, isStrict ->
+          val entries = currentResult?.segments?.toMutableList()
+                        ?: mutableListOf<StringEntry>(StringEntry.Unknown(call.sourcePsi!!, TextRange(0, 1)))
+          val argument = call.getArgumentForParameter(0)?.let { argument -> stringEvaluator.calculateValue(argument, config) }
+          if (argument != null) {
+            if (isStrict) {
+              entries.addAll(argument.segments)
+            }
+            else {
+              entries.add(StringEntry.Unknown(
+                call.sourcePsi!!,
+                TextRange(0, call.sourcePsi!!.textLength),
+                possibleValues = listOf(PartiallyKnownString(argument.segments), PartiallyKnownString(listOf()))
+              ))
+            }
           }
-          else {
-            entries.add(StringEntry.Unknown(
-              call.sourcePsi!!,
-              TextRange(0, call.sourcePsi!!.textLength),
-              possibleValues = listOf(PartiallyKnownString(argument.segments), PartiallyKnownString(""))
-            ))
-          }
-        }
 
-        PartiallyKnownString(entries)
-      },
-      PsiJavaPatterns.psiMethod().definedInClass("java.lang.StringBuilder").constructor(true) to { call, _, stringEvaluator, config, _ ->
-        call.getArgumentForParameter(0)?.let { argument ->
-          stringEvaluator.calculateValue(argument, config)
+          PartiallyKnownString(entries)
+        },
+      PsiJavaPatterns.psiMethod().definedInClass("java.lang.StringBuilder").constructor(true) to
+        BuilderMethodEvaluator { call, _, stringEvaluator, config, _ ->
+          call.getArgumentForParameter(0)?.let { argument ->
+            stringEvaluator.calculateValue(argument, config)
+          } ?: PartiallyKnownString(listOf())
         }
-      }
     )
 }

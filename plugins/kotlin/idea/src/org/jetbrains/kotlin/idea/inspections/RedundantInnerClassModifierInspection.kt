@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -22,15 +19,18 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = classVisitor(fun(targetClass) {
         val innerModifier = targetClass.modifierList?.getModifier(KtTokens.INNER_KEYWORD) ?: return
+        if (targetClass.containingClassOrObject.safeAs<KtObjectDeclaration>()?.isObjectLiteral() == true) return
         val outerClasses = targetClass.parentsOfType<KtClass>().dropWhile { it == targetClass }.toSet()
         if (outerClasses.isEmpty() || outerClasses.any { it.isLocal || it.isInner() }) return
         if (targetClass.hasOuterClassMemberReference(outerClasses)) return
@@ -60,6 +60,9 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
                     }
                     if (reference is PsiClass && reference.parent is PsiClass) {
                         return@anyDescendantOfType reference.getJavaClassDescriptor()?.isInner == true
+                    }
+                    if (reference is KtObjectDeclaration || (reference as? KtDeclaration)?.containingClassOrObject is KtObjectDeclaration) {
+                        return@anyDescendantOfType false
                     }
                     val referenceContainingClass = reference?.getStrictParentOfType<KtClass>()
                     if (referenceContainingClass != null) {

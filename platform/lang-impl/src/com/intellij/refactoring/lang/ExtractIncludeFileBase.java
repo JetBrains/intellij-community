@@ -264,7 +264,6 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return extractFileType.getDefaultExtension();
   }
 
-  @Deprecated
   @TestOnly
   public boolean isValidRange(final T firstToExtract, final T lastToExtract) {
     return verifyChildRange(firstToExtract, lastToExtract);

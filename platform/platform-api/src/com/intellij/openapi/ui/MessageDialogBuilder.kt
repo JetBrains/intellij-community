@@ -50,13 +50,6 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
     }
   }
 
-  @Deprecated(message = "Pass parentComponent to show", level = DeprecationLevel.ERROR)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  fun parentComponent(parentComponent: Component?): T {
-    this.parentComponent = parentComponent
-    return getThis()
-  }
-
   @Deprecated(message = "Pass project to show", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun project(project: Project?): T {

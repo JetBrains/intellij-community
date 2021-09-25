@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -117,6 +117,20 @@ object EventFields {
 
   @JvmStatic
   fun LongList(@NonNls name: String): LongListEventField = LongListEventField(name)
+
+  /**
+   * Please choose regexp carefully to avoid reporting any sensitive data.
+   */
+  @JvmStatic
+  fun StringValidatedByInlineRegexp(@NonNls name: String, @NonNls regexp: String): StringEventField =
+    StringEventField.ValidatedByInlineRegexp(name, regexp)
+
+  /**
+   * Please choose regexp carefully to avoid reporting any sensitive data.
+   */
+  @JvmStatic
+  fun StringListValidatedByInlineRegexp(@NonNls name: String, @NonNls regexp: String): StringListEventField =
+    StringListEventField.ValidatedByInlineRegexp(name, regexp)
 
   @JvmField
   val InputEvent = object : PrimitiveEventField<FusInputEvent?>() {

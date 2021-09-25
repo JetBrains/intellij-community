@@ -11,12 +11,13 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl
 import com.intellij.vcs.log.graph.utils.exclusiveNodes
 import com.intellij.vcs.log.graph.utils.subgraphDifference
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 
 fun RefsModel.findBranch(name: String, root: VirtualFile): VcsRef? = VcsLogUtil.findBranch(this, root, name)
 fun DataPack.findBranch(name: String, root: VirtualFile): VcsRef? = refsModel.findBranch(name, root)
 
-fun DataPack.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: VcsLogStorage): TIntHashSet? {
+fun DataPack.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: VcsLogStorage): IntSet? {
   if (withoutRef.root != withRef.root) return null
 
   val withRefIndex = storage.getCommitIndex(withRef.commitHash, withRef.root)
@@ -25,8 +26,8 @@ fun DataPack.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: Vc
   return subgraphDifference(withRefIndex, withoutRefIndex)
 }
 
-fun DataPack.subgraphDifference(withRefIndex: Int, withoutRefIndex: Int): TIntHashSet? {
-  if (withRefIndex == withoutRefIndex) return TIntHashSet()
+fun DataPack.subgraphDifference(withRefIndex: Int, withoutRefIndex: Int): IntSet? {
+  if (withRefIndex == withoutRefIndex) return IntOpenHashSet()
 
   @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return null
 
@@ -36,7 +37,7 @@ fun DataPack.subgraphDifference(withRefIndex: Int, withoutRefIndex: Int): TIntHa
   if (withRefNode < 0 || withoutRefNode < 0) return null
 
   val withRefNodeIds = permanentGraphInfo.linearGraph.subgraphDifference(withRefNode, withoutRefNode)
-  return TroveUtil.map2IntSet(withRefNodeIds) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
+  return IntCollectionUtil.map2IntSet(withRefNodeIds) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }
 
 fun DataPack.containsAll(commits: Collection<CommitId>, storage: VcsLogStorage): Boolean {
@@ -49,7 +50,7 @@ fun DataPack.containsAll(commits: Collection<CommitId>, storage: VcsLogStorage):
   return nodeIds.size == commits.size && nodeIds.all { it >= 0 }
 }
 
-fun DataPack.exclusiveCommits(ref: VcsRef, refsModel: RefsModel, storage: VcsLogStorage): TIntHashSet? {
+fun DataPack.exclusiveCommits(ref: VcsRef, refsModel: RefsModel, storage: VcsLogStorage): IntSet? {
   val refIndex = storage.getCommitIndex(ref.commitHash, ref.root)
   @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return null
   val refNode = permanentGraphInfo.permanentCommitsInfo.getNodeId(refIndex)
@@ -58,7 +59,7 @@ fun DataPack.exclusiveCommits(ref: VcsRef, refsModel: RefsModel, storage: VcsLog
   val exclusiveNodes = permanentGraphInfo.linearGraph.exclusiveNodes(refNode) { node ->
     refsModel.isBranchHead(permanentGraphInfo.permanentCommitsInfo.getCommitId(node))
   }
-  return TroveUtil.map2IntSet(exclusiveNodes) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
+  return IntCollectionUtil.map2IntSet(exclusiveNodes) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }
 
 private fun RefsModel.isBranchHead(commitId: Int) = refsToCommit(commitId).any { it.type.isBranch }

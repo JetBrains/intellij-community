@@ -774,11 +774,17 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                     @NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionRVContentProvider contentProvider) {
     for (Tools currentTools : tools) {
-      for (ScopeToolState state : contentProvider.getTools(currentTools)) {
-        InspectionToolWrapper toolWrapper = state.getTool();
-        if (context.getPresentation(toolWrapper).hasReportedProblems() || contentProvider.checkReportedProblems(context, toolWrapper)) {
-          return true;
+      boolean hasProblems = ReadAction.compute(() -> {
+        for (ScopeToolState state : contentProvider.getTools(currentTools)) {
+          InspectionToolWrapper toolWrapper = state.getTool();
+          if (context.getPresentation(toolWrapper).hasReportedProblems() || contentProvider.checkReportedProblems(context, toolWrapper)) {
+            return true;
+          }
         }
+        return false;
+      });
+      if (hasProblems) {
+        return true;
       }
     }
     return false;

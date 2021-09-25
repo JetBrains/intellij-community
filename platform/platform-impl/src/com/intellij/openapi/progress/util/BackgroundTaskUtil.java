@@ -191,10 +191,20 @@ public final class BackgroundTaskUtil {
    */
   @CalledInAny
   public static @NotNull ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Runnable runnable) {
+    return execute(AppExecutorUtil.getAppExecutorService(), parent, runnable);
+  }
+
+  /**
+   * Does tha same as {@link BackgroundTaskUtil#executeOnPooledThread(Disposable, Runnable)} method but allows to use
+   * custom {@link Executor} instance.
+   */
+  @CalledInAny
+  public static @NotNull ProgressIndicator execute(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable runnable) {
     ProgressIndicator indicator = new EmptyProgressIndicator();
     indicator.start();
 
-    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(runnable, indicator), AppExecutorUtil.getAppExecutorService());
+    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(runnable, indicator),
+                                                             executor);
 
     Disposable disposable = () -> {
       if (indicator.isRunning()) indicator.cancel();

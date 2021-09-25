@@ -123,6 +123,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
     return null;
   }
 
+  @Override
   @NotNull
   public WizardContext getWizardContext() {
     return myWizardContext;

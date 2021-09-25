@@ -3,12 +3,9 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.SettingsEntryPointAction;
-import com.intellij.ide.actions.SettingsEntryPointAction.IconState;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -17,7 +14,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
@@ -29,17 +25,21 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.ide.actions.SettingsEntryPointAction.*;
+
 /**
  * @author Alexander Lobas
  */
-final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPointAction.ActionProvider {
+final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static final String NEXT_RUN_KEY_BUILD = "NextRunPlatformUpdateBuild";
   private static final String NEXT_RUN_KEY_VERSION = "NextRunPlatformUpdateVersion";
 
+  private static boolean myNewPlatformUpdate;
   private static @Nullable String myNextRunPlatformUpdateVersion;
   private static @Nullable PlatformUpdates.Loaded myPlatformUpdateInfo;
   private static @Nullable Collection<? extends IdeaPluginDescriptor> myIncompatiblePlugins;
 
+  private static Set<String> myAlreadyShownPluginUpdates;
   private static @Nullable Collection<PluginDownloader> myUpdatedPlugins;
   private static @Nullable Collection<PluginNode> myCustomRepositoryPlugins;
 
@@ -65,7 +65,8 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
         myNextRunPlatformUpdateVersion = properties.getValue(NEXT_RUN_KEY_VERSION);
 
         if (myNextRunPlatformUpdateVersion != null) {
-          SettingsEntryPointAction.updateState(IconState.ApplicationUpdate);
+          myNewPlatformUpdate = true;
+          updateState();
         }
         else {
           properties.unsetValue(NEXT_RUN_KEY_BUILD);
@@ -123,7 +124,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
   private static void newPlatformUpdate() {
     setPlatformUpdateInfo(null);
     newPlatformUpdate(null, null, (String)null);
-    SettingsEntryPointAction.updateState(IconState.Current);
+    updateState();
   }
 
   public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
@@ -131,11 +132,12 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
                                        @NotNull Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     setPlatformUpdateInfo(platformUpdateInfo);
     newPlatformUpdate(updatedPlugins, incompatiblePlugins, null);
-    SettingsEntryPointAction.updateState(IconState.ApplicationUpdate);
+    updateState();
   }
 
   private static void setPlatformUpdateInfo(@Nullable PlatformUpdates.Loaded platformUpdateInfo) {
     myPlatformUpdateInfo = platformUpdateInfo;
+    myNewPlatformUpdate = platformUpdateInfo != null;
 
     PropertiesComponent properties = PropertiesComponent.getInstance();
     if (platformUpdateInfo == null) {
@@ -161,15 +163,18 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
                                       @NotNull Collection<PluginNode> customRepositoryPlugins) {
     myUpdatedPlugins = updatedPlugins;
     myCustomRepositoryPlugins = customRepositoryPlugins;
-    SettingsEntryPointAction.updateState(IconState.ApplicationComponentUpdate);
+    updateState();
   }
 
   private static void newUpdatedPlugins(@Nullable Collection<PluginDownloader> updatedPlugins) {
     myUpdatedPlugins = updatedPlugins == null || updatedPlugins.isEmpty() ? null : updatedPlugins;
-    SettingsEntryPointAction.updateState(IconState.Current);
+    updateState();
   }
 
   static void removePluginsUpdate(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
+    if (myAlreadyShownPluginUpdates != null) {
+      myAlreadyShownPluginUpdates.removeIf(name -> descriptors.stream().anyMatch(descriptor -> name.equals(descriptor.getName())));
+    }
     if (myUpdatedPlugins != null) {
       Set<PluginId> pluginIds = ContainerUtil.map2Set(descriptors,
                                                       IdeaPluginDescriptor::getPluginId);
@@ -181,22 +186,30 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
     }
   }
 
+  private static boolean isAlreadyShownPluginUpdates() {
+    return myUpdatedPlugins == null || ContainerUtil.isEmpty(myAlreadyShownPluginUpdates) ||
+           myUpdatedPlugins.stream().anyMatch(plugin -> !myAlreadyShownPluginUpdates.contains(plugin.getPluginName()));
+  }
+
+  private static void updateAlreadyShownPluginUpdates() {
+    if (myUpdatedPlugins != null) {
+      if (myAlreadyShownPluginUpdates == null) {
+        myAlreadyShownPluginUpdates = new HashSet<>();
+      }
+      myUpdatedPlugins.forEach(plugin -> myAlreadyShownPluginUpdates.add(plugin.getPluginName()));
+    }
+  }
+
   private static void setEnableUpdateAction(boolean value) {
     myEnableUpdateAction = value;
   }
 
   @Override
-  public @NotNull Collection<AnAction> getUpdateActions(@NotNull DataContext context) {
-    List<AnAction> actions = new ArrayList<>();
+  public @NotNull Collection<UpdateAction> getUpdateActions(@NotNull DataContext context) {
+    Collection<UpdateAction> actions = new ArrayList<>();
 
     if (myNextRunPlatformUpdateVersion != null) {
-      actions.add(new DumbAwareAction(IdeBundle.message("settings.entry.point.update.ide.action",
-                                                        ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                        myNextRunPlatformUpdateVersion)) {
-        {
-          getTemplatePresentation().putClientProperty(ICON_KEY, IconState.ApplicationUpdate);
-        }
-
+      actions.add(new IdeUpdateAction(myNextRunPlatformUpdateVersion) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Project project = e.getProject();
@@ -232,7 +245,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
                               pluginResults.getPluginNods(),
                               null);
 
-            UpdateSettingsEntryPointActionProvider.actionPerformed(project);
+            super.actionPerformed(e);
           }
           else {
             if (platformUpdateInfo instanceof PlatformUpdates.ConnectionError) {
@@ -252,27 +265,26 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
       });
     }
     else if (myPlatformUpdateInfo != null) {
-      actions.add(new DumbAwareAction(IdeBundle.message("settings.entry.point.update.ide.action",
-                                                        ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                        myPlatformUpdateInfo.getNewBuild().getVersion())) {
-        {
-          getTemplatePresentation().putClientProperty(ICON_KEY, IconState.ApplicationUpdate);
-        }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          UpdateSettingsEntryPointActionProvider.actionPerformed(e.getProject());
-        }
-      });
+      actions.add(new IdeUpdateAction(myPlatformUpdateInfo.getNewBuild().getVersion()));
     }
     // todo[AL/RS] separate action for plugins compatible with both old and new builds
     else if (myUpdatedPlugins != null) {
       int size = myUpdatedPlugins.size();
 
-      actions.add(new DumbAwareAction(size == 1
-                                      ? IdeBundle.message("settings.entry.point.update.plugin.action",
-                                                          myUpdatedPlugins.iterator().next().getPluginName())
-                                      : IdeBundle.message("settings.entry.point.update.plugins.action", size)) {
+      actions.add(new UpdateAction(size == 1
+                                   ? IdeBundle.message("settings.entry.point.update.plugin.action",
+                                                       myUpdatedPlugins.iterator().next().getPluginName())
+                                   : IdeBundle.message("settings.entry.point.update.plugins.action", size)) {
+        @Override
+        public boolean isNewAction() {
+          return isAlreadyShownPluginUpdates();
+        }
+
+        @Override
+        public void markAsRead() {
+          updateAlreadyShownPluginUpdates();
+        }
+
         @Override
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(myEnableUpdateAction);
@@ -294,14 +306,34 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
     return actions;
   }
 
-  private static void actionPerformed(@Nullable Project project) {
-    UpdateInfoDialog dialog = new UpdateInfoDialog(project,
-                                                   Objects.requireNonNull(myPlatformUpdateInfo),
-                                                   true,
-                                                   myUpdatedPlugins,
-                                                   myIncompatiblePlugins);
-    if (dialog.showAndGet()) {
-      newPlatformUpdate();
+  private static class IdeUpdateAction extends UpdateAction {
+    protected IdeUpdateAction(@NotNull String version) {
+      super(IdeBundle.message("settings.entry.point.update.ide.action", ApplicationNamesInfo.getInstance().getFullProductName(), version));
+    }
+
+    @Override
+    public boolean isIdeUpdate() {
+      return true;
+    }
+
+    @Override
+    public boolean isNewAction() {
+      return myNewPlatformUpdate;
+    }
+
+    @Override
+    public void markAsRead() {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      myNewPlatformUpdate = false;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      UpdateInfoDialog dialog = new UpdateInfoDialog(e.getProject(), Objects.requireNonNull(myPlatformUpdateInfo),
+                                                     true, myUpdatedPlugins, myIncompatiblePlugins);
+      if (dialog.showAndGet()) {
+        newPlatformUpdate();
+      }
     }
   }
 }

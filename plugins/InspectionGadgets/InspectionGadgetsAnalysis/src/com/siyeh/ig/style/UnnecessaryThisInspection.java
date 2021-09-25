@@ -28,7 +28,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
@@ -71,14 +70,19 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement thisToken = descriptor.getPsiElement();
-      final PsiReferenceExpression thisExpression = (PsiReferenceExpression)PsiUtil.skipParenthesizedExprUp(thisToken.getParent());
-      assert thisExpression != null;
-      final String newExpression = thisExpression.getReferenceName();
-      if (newExpression == null) {
-        return;
-      }
-      PsiReplacementUtil.replaceExpression(thisExpression, newExpression, new CommentTracker());
+      final PsiElement thisParenthesized = findBiggestParenthesizedExpr(thisToken);
+      new CommentTracker().deleteAndRestoreComments(thisParenthesized);
     }
+  }
+
+  private static PsiElement findBiggestParenthesizedExpr(@NotNull PsiElement element){
+    PsiElement current = element;
+    PsiElement parent = element.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      current = parent;
+      parent = current.getParent();
+    }
+    return current;
   }
 
   @Override
@@ -87,6 +91,18 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
   }
 
   private class UnnecessaryThisVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitThisExpression(PsiThisExpression expression) {
+      super.visitThisExpression(expression);
+      PsiElement parenthesizedThis = findBiggestParenthesizedExpr(expression);
+      if (parenthesizedThis.getParent() instanceof PsiNewExpression) {
+        final PsiReference qualifier = expression.getQualifier();
+        if (qualifier == null || qualifier.resolve() == PsiTreeUtil.getParentOfType(expression, PsiClass.class)) {
+          registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        }
+      }
+    }
 
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {

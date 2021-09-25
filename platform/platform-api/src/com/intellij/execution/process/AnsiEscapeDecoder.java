@@ -117,7 +117,7 @@ public class AnsiEscapeDecoder {
    * @deprecated use {@link ColoredTextAcceptor} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public interface ColoredChunksAcceptor extends ColoredTextAcceptor {
     void coloredChunksAvailable(@NotNull List<Pair<String, Key>> chunks);
   }

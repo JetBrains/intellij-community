@@ -10,6 +10,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -56,7 +57,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
-  public void updateAction(DnDAction action) {
+  public void updateAction(@NotNull DnDAction action) {
     myAction = action;
   }
 

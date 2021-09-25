@@ -4,27 +4,34 @@ package com.intellij.ide.actions;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 
-/**
- * @author Konstantin Bulenkov
- */
 public abstract class ActionsCollector {
   public static ActionsCollector getInstance() {
     return ApplicationManager.getApplication().getService(ActionsCollector.class);
   }
 
   /**
-   * Records explicitly whitelisted actions with input event
+   * @deprecated Don't use this method directly
+   *
+   * Actions executed with {@link ActionUtil#performActionDumbAwareWithCallbacks} are reported automatically.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context);
 
   /**
+   * Don't use this method directly unless absolutely necessary.
+   * Prefer executing action with {@link ActionUtil#performActionDumbAwareWithCallbacks}
+   * then it will be reported and its execution will be visible for other action listeners.
+   *
    * Records action id for global actions or action class name for actions generated on runtime.
    * Only actions from platform and JB plugins are recorded.
    */

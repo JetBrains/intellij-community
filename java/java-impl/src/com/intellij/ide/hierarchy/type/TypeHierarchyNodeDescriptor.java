@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
-  public TypeHierarchyNodeDescriptor(@NotNull Project project, HierarchyNodeDescriptor parentDescriptor, @NotNull PsiElement classOrFunctionalExpression, final boolean isBase) {
+  public TypeHierarchyNodeDescriptor(@NotNull Project project, HierarchyNodeDescriptor parentDescriptor, @NotNull PsiElement classOrFunctionalExpression, boolean isBase) {
     super(project, parentDescriptor, classOrFunctionalExpression, isBase);
   }
 
@@ -36,9 +36,9 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
       setIcon(getBaseMarkerIcon(getIcon()));
     }
 
-    final PsiElement psiElement = getPsiClass();
+    PsiElement psiElement = getPsiClass();
 
-    final CompositeAppearance oldText = myHighlightedText;
+    CompositeAppearance oldText = myHighlightedText;
 
     myHighlightedText = new CompositeAppearance();
 

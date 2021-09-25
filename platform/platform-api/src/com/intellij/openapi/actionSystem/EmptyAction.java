@@ -109,7 +109,7 @@ public final class EmptyAction extends AnAction {
 
     @Override
     public boolean isUpdateInBackground() {
-      return myDelegate instanceof UpdateInBackground && ((UpdateInBackground)myDelegate).isUpdateInBackground();
+      return UpdateInBackground.isUpdateInBackground(myDelegate);
     }
 
     @Override
@@ -170,7 +170,7 @@ public final class EmptyAction extends AnAction {
 
     @Override
     public boolean isUpdateInBackground() {
-      return myDelegate instanceof UpdateInBackground && ((UpdateInBackground)myDelegate).isUpdateInBackground();
+      return UpdateInBackground.isUpdateInBackground(myDelegate);
     }
 
     @Override

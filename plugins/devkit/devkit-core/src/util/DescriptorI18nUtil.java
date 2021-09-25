@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.lang.properties.BundleNameEvaluator;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -71,7 +72,8 @@ public final class DescriptorI18nUtil {
     final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(actions, IdeaPlugin.class, true);
     if (ideaPlugin == null) return false;
 
-    return PluginManagerCore.CORE_PLUGIN_ID.equals(ideaPlugin.getPluginId());
+    return PluginManagerCore.CORE_PLUGIN_ID.equals(ideaPlugin.getPluginId()) ||
+           !ideaPlugin.hasRealPluginId();
   }
 
   private static @Nullable PropertiesFile findCoreActionsBundlePropertiesFile(@Nullable Actions actions) {
@@ -80,12 +82,20 @@ public final class DescriptorI18nUtil {
     final Module module = actions.getModule();
     assert module != null;
     final Project project = module.getProject();
-    Module resourcesModule = ApplicationManager.getApplication().isUnitTestMode() ? module :
-                             ModuleManager.getInstance(project).findModuleByName("intellij.platform.resources.en");
-    if (resourcesModule == null) return null;
 
     final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
-    List<PropertiesFile> actionsBundleFiles = propertiesReferenceManager.findPropertiesFiles(resourcesModule, CORE_ACTIONS_BUNDLE);
+    List<PropertiesFile> actionsBundleFiles;
+
+    Module resourcesModule = ApplicationManager.getApplication().isUnitTestMode() ? module :
+                             ModuleManager.getInstance(project).findModuleByName("intellij.platform.resources.en");
+    // not in IDEA project -> search in library
+    if (resourcesModule == null) {
+      actionsBundleFiles = propertiesReferenceManager.findPropertiesFiles(actions.getResolveScope(), CORE_ACTIONS_BUNDLE,
+                                                                          BundleNameEvaluator.DEFAULT);
+    }
+    else {
+      actionsBundleFiles = propertiesReferenceManager.findPropertiesFiles(resourcesModule, CORE_ACTIONS_BUNDLE);
+    }
     return ObjectUtils.tryCast(ContainerUtil.getOnlyItem(actionsBundleFiles), PropertiesFile.class);
   }
 }

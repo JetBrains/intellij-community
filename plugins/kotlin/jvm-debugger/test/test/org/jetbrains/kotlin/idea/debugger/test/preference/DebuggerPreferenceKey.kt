@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 @file:Suppress("ClassName")
 
@@ -9,18 +6,13 @@ package org.jetbrains.kotlin.idea.debugger.test.preference
 
 import java.lang.reflect.ParameterizedType
 import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.javaType
 
 class DebuggerPreferenceKey<T : Any>(val name: String, val type: Class<*>, val defaultValue: T)
 
 private inline fun <reified T : Any> debuggerPreferenceKey(defaultValue: T): ReadOnlyProperty<Any, DebuggerPreferenceKey<T>> {
-    val clazz = T::class.java
-
-    return object : ReadOnlyProperty<Any, DebuggerPreferenceKey<T>> {
-        override fun getValue(thisRef: Any, property: KProperty<*>) = DebuggerPreferenceKey(property.name, clazz, defaultValue)
-    }
+    return ReadOnlyProperty { _, property -> DebuggerPreferenceKey(property.name, T::class.java, defaultValue) }
 }
 
 internal object DebuggerPreferenceKeys {
@@ -47,6 +39,8 @@ internal object DebuggerPreferenceKeys {
     val WATCH_FIELD_INITIALISATION by debuggerPreferenceKey(false)
 
     val JVM_TARGET by debuggerPreferenceKey("1.8")
+
+    val REFLECTION_PATCHING by debuggerPreferenceKey(true)
 
     val values: List<DebuggerPreferenceKey<*>> by lazy {
         DebuggerPreferenceKeys::class.declaredMemberProperties

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
@@ -65,7 +65,10 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
 
   internal fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
     if (!idMap.containsKey(plugin.pluginId)) {
-      incompletePlugins.put(plugin.pluginId, plugin)
+      val existingIncompletePlugin = incompletePlugins[plugin.pluginId]
+      if (existingIncompletePlugin == null || VersionComparatorUtil.compare(plugin.version, existingIncompletePlugin.version) > 0) {
+        incompletePlugins.put(plugin.pluginId, plugin)
+      }
     }
     if (error != null) {
       pluginErrors.put(plugin.pluginId, error)

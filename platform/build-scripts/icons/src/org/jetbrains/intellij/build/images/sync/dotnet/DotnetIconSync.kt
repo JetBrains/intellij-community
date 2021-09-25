@@ -13,8 +13,8 @@ internal object DotnetIconSync {
   private class SyncPath(val iconsPath: String, val devPath: String)
 
   private val syncPaths = listOf(
-    SyncPath("rider", "Rider/rider/icons/resources/rider"),
-    SyncPath("net", "Rider/rider/icons/resources/resharper")
+    SyncPath("rider", "Rider/Frontend/rider/icons/resources/rider"),
+    SyncPath("net", "Rider/Frontend/rider/icons/resources/resharper")
   )
 
   private val committer by lazy(::triggeredBy)
