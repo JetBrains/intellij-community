@@ -1,9 +1,6 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.highlighter
+package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -13,7 +10,16 @@ import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
-internal fun textAttributesKeyForPropertyDeclaration(declaration: PsiElement): TextAttributesKey? = when (declaration) {
+fun textAttributesKeyForKtElement(element: PsiElement): TextAttributesKey? {
+    return sequence {
+        yield(textAttributesKeyForTypeDeclaration(element))
+        yield(textAttributesKeyForKtFunction(element))
+        yield(textAttributesKeyForPropertyDeclaration(element))
+    }
+        .firstOrNull { it != null }
+}
+
+fun textAttributesKeyForPropertyDeclaration(declaration: PsiElement): TextAttributesKey? = when (declaration) {
     is KtProperty -> textAttributesForKtPropertyDeclaration(declaration)
     is KtParameter -> textAttributesForKtParameterDeclaration(declaration)
     is PsiLocalVariable -> Colors.LOCAL_VARIABLE
@@ -22,11 +28,11 @@ internal fun textAttributesKeyForPropertyDeclaration(declaration: PsiElement): T
     else -> null
 }
 
-internal fun textAttributesForKtParameterDeclaration(parameter: KtParameter) =
+fun textAttributesForKtParameterDeclaration(parameter: KtParameter): TextAttributesKey =
     if (parameter.valOrVarKeyword != null) Colors.INSTANCE_PROPERTY
     else Colors.PARAMETER
 
-internal fun textAttributesForKtPropertyDeclaration(property: KtProperty): TextAttributesKey? = when {
+fun textAttributesForKtPropertyDeclaration(property: KtProperty): TextAttributesKey? = when {
     property.isExtensionDeclaration() -> Colors.EXTENSION_PROPERTY
     property.isLocal -> Colors.LOCAL_VARIABLE
     property.isTopLevel -> {
@@ -42,8 +48,13 @@ internal fun textAttributesForKtPropertyDeclaration(property: KtProperty): TextA
 private fun KtProperty.isCustomPropertyDeclaration() =
     getter?.bodyExpression != null || setter?.bodyExpression != null
 
+fun textAttributesKeyForKtFunction(function: PsiElement): TextAttributesKey? = when (function) {
+    is KtFunction -> Colors.FUNCTION_DECLARATION
+    else -> null
+}
+
 @Suppress("UnstableApiUsage")
-internal fun textAttributesKeyForTypeDeclaration(declaration: PsiElement): TextAttributesKey? = when {
+fun textAttributesKeyForTypeDeclaration(declaration: PsiElement): TextAttributesKey? = when {
     declaration is KtTypeParameter || declaration is PsiTypeParameter -> Colors.TYPE_PARAMETER
     declaration is KtTypeAlias -> Colors.TYPE_ALIAS
     declaration is KtClass -> textAttributesForClass(declaration)
@@ -65,5 +76,5 @@ fun textAttributesForClass(klass: KtClass): TextAttributesKey = when {
     else -> Colors.CLASS
 }
 
-internal fun PsiElement.isAnnotationClass() =
+fun PsiElement.isAnnotationClass() =
     this is KtClass && isAnnotation() || this is PsiClass && isAnnotationType
