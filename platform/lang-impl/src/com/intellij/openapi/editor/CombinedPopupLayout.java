@@ -10,7 +10,7 @@ import java.awt.*;
 
 final class CombinedPopupLayout implements LayoutManager {
 
-  private static final int MAX_POPUP_WIDTH = 650;
+  private static final int MAX_POPUP_WIDTH = 950;
 
   private final @Nullable JComponent highlightInfoComponent;
   private final @Nullable JComponent quickDocComponent;

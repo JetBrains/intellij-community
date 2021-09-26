@@ -116,8 +116,8 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
           PsiClass aClass = ((PsiMethod)element).getContainingClass();
           if (aClass != null) {
             String qName = aClass.getQualifiedName();
-            return pair(qName, qName + new JavaDocInfoGenerator(aClass.getProject(), null, false)
-              .generateTypeParameters(aClass, true));
+            String typeParameters = JavaDocInfoGeneratorFactory.create(aClass.getProject(), null).generateTypeParameters(aClass, true);
+            return pair(qName, qName + typeParameters);
           }
           return null;
         }

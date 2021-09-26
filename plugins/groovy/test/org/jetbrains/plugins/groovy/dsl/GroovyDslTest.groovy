@@ -187,7 +187,8 @@ public class MyCategory {
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'param1', 'param2'
-    assert '<pre><b>param1:</b> java.lang.String</pre><p>My doc</p>' == generateDoc()
+    assert generateDoc() ==
+           '<pre><span style="">param1</span><span style="">:</span> <span style="color:#000000;">java.lang.String</span></pre><p>My doc</p>'
   }
 
   private String generateDoc() {
