@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <strings.h>
+#include <sys/select.h>
 
 // Output: [linux-ip] [external-port] [internal-port]
 // Connect to the external from Windows and to the internal from Linux
