@@ -111,6 +111,18 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     }
   }
 
+  /**
+   * @see com.jetbrains.python.remote.PyRemoteSdkAdditionalData.setSdkId
+   */
+  override fun setSdkId(sdkId: String?): Unit =
+    throw IllegalStateException("sdkId in this class is constructed based on fields, so it can't be set")
+
+  /**
+   * @see com.jetbrains.python.remote.PyRemoteSdkAdditionalData.getSdkId
+   */
+  // TODO [targets] Review the usages and probably deprecate this property as it does not seem to be sensible
+  override fun getSdkId(): String = targetEnvironmentConfiguration?.displayName + interpreterPath
+
   companion object {
     private const val DEFAULT_PYCHARM_HELPERS_DIR_NAME = ".pycharm_helpers"
 
