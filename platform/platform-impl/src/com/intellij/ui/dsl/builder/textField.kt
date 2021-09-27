@@ -53,6 +53,11 @@ fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) ->
   return bindIntText(PropertyBinding(getter, setter))
 }
 
+fun <T : JTextComponent> Cell<T>.text(text: String): Cell<T> {
+  component.text = text
+  return this
+}
+
 /**
  * Minimal width of text field in chars
  *

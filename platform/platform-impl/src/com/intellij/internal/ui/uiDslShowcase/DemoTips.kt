@@ -23,6 +23,12 @@ fun demoTips(): DialogPanel {
         .columns(COLUMNS_SHORT)
     }.rowComment("Configure width of textField, comboBox and textArea by columns method")
 
+    row("intTextField(0..1000, 100):") {
+      intTextField(0..1000, 100)
+        .text("500")
+    }.rowComment("Use Row.intTextField for input integer numbers. There is value validation, range validation and " +
+                 "supported up/down keys")
+
     group("Use Row.cell() to disable expanding components on whole width") {
       row("Row 1:") {
         textField()
