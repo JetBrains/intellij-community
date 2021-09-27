@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -964,10 +965,17 @@ public class MavenProject {
     return goal == null ? plugin.getConfigurationElement() : plugin.getGoalConfiguration(goal);
   }
 
-  public Element getPluginExecutionConfiguration(@Nullable String groupId, @Nullable String artifactId, @NotNull String executionId) {
+  private Element getPluginExecutionConfiguration(@Nullable String groupId, @Nullable String artifactId, @NotNull String executionId) {
     MavenPlugin plugin = findPlugin(groupId, artifactId);
     if (plugin == null) return null;
     return plugin.getExecutionConfiguration(executionId);
+  }
+
+  @NotNull
+  private List<Element> getCompileExecutionConfigurations() {
+    MavenPlugin plugin = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    if (plugin == null) return Collections.emptyList();
+    return plugin.getCompileExecutionConfigurations();
   }
 
   public @Nullable MavenPlugin findPlugin(@Nullable String groupId, @Nullable String artifactId) {
@@ -1025,19 +1033,25 @@ public class MavenProject {
   }
 
   private @Nullable String getCompilerLevel(String level) {
-    String result = MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), level);
-
-    if (result == null) {
-      result = myState.myProperties.getProperty("maven.compiler." + level);
-    }
-
-    return result;
+    return getCompilerConfigs().stream()
+      .map(element -> LanguageLevel.parse(MavenJDOMUtil.findChildValueByPath(element, level)))
+      .filter(Objects::nonNull)
+      .max(Comparator.naturalOrder())
+      .map(l -> String.valueOf(l.toJavaVersion().feature))
+      .orElseGet(() -> myState.myProperties.getProperty("maven.compiler." + level));
   }
 
   private @Nullable Element getCompilerConfig() {
     Element executionConfiguration = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
     if(executionConfiguration != null) return executionConfiguration;
     return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+  }
+
+  private @NotNull List<Element> getCompilerConfigs() {
+    List<Element> configurations = getCompileExecutionConfigurations();
+    if(!configurations.isEmpty()) return configurations;
+    Element configuration = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+    return configuration == null ? Collections.emptyList() : Collections.singletonList(configuration);
   }
 
   public @NotNull Properties getProperties() {
