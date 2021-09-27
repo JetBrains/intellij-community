@@ -133,11 +133,24 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     return (treeNode.parent as DefaultMutableTreeNode).userObject as Language
   }
 
+  fun apply() {
+    apply(tree.model.root as DefaultMutableTreeNode)
+  }
+
+  private fun apply(node: DefaultMutableTreeNode) {
+    if (node.userObject is InlayProviderSettingsModel) {
+      val model = node.userObject as InlayProviderSettingsModel
+      model.isEnabled = (node as CheckedTreeNode).isChecked
+      model.apply()
+    }
+    node.children().toList().forEach { apply(it as DefaultMutableTreeNode) }
+  }
+
   fun isModified(): Boolean {
     return isModified(tree.model.root as DefaultMutableTreeNode)
   }
 
-  fun isModified(node: DefaultMutableTreeNode): Boolean {
+  private fun isModified(node: DefaultMutableTreeNode): Boolean {
     if (node.userObject is InlayProviderSettingsModel) {
       val model = node.userObject as InlayProviderSettingsModel
       if (((node as CheckedTreeNode).isChecked != model.isEnabled) || model.isModified()) return true

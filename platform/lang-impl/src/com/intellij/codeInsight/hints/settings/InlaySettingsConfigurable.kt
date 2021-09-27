@@ -21,6 +21,7 @@ class InlaySettingsConfigurable(val project: Project) : Configurable {
   }
 
   override fun apply() {
+    panel.apply()
   }
 
   override fun getDisplayName(): String = CodeInsightBundle.message("settings.inlay.hints.panel.name")
