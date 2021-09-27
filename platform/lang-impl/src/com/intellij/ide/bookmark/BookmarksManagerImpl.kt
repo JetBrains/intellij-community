@@ -66,7 +66,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
         it.bookmarks.forEach { bookmark -> pairs.add(bookmark to group) }
       }
       for (pair in pairs) {
-        invoker.invokeLater { createBookmark(pair.first)?.let { pair.second.add(it, pair.first.type, pair.first.description, false) } }
+        invoker.invokeLater { createBookmark(pair.first)?.let { pair.second.add(it, pair.first.type, pair.first.description, -1) } }
       }
     }
   }
@@ -76,7 +76,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     val listener = object : BookmarksListener {
       override fun bookmarkAdded(old: com.intellij.ide.bookmarks.Bookmark) {
         val bookmark = LineBookmarkProvider.find(project)?.createBookmark(old.file, old.line) ?: return
-        group.add(bookmark, old.type, old.description, false)
+        group.add(bookmark, old.type, old.description, -1)
       }
     }
     project.messageBus.connect().subscribe(BookmarksListener.TOPIC, listener)
@@ -89,7 +89,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       val group = addOrReuseGroup(name, false)
       for (item in manager.getFavoritesListRootUrls(name)) {
         val bookmark = LineBookmarkProvider.find(project)?.createBookmark(item.data.first) ?: continue
-        group.add(bookmark, BookmarkType.DEFAULT, item.data.second ?: "", false)
+        group.add(bookmark, BookmarkType.DEFAULT, item.data.second ?: "", -1)
       }
     }
   }
@@ -216,14 +216,14 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
   }
 
-  private fun removeFromGroup(group: Group, bookmark: Bookmark): InManagerInfo? = synchronized(notifier) {
+  private fun removeFromGroup(group: Group, bookmark: Bookmark): Pair<InManagerInfo, InGroupInfo?>? = synchronized(notifier) {
     val info = allBookmarks[bookmark] ?: return null
     if (!info.groups.remove(group)) return null
     val removed = info.groups.isEmpty()
     if (removed) allBookmarks.remove(bookmark)
-    group.removeInfo(bookmark)
+    val result = info to group.removeInfo(bookmark)
     info.bookmarkRemoved(group, removed)
-    return info
+    return result
   }
 
   override fun remove() = synchronized(notifier) {
@@ -294,6 +294,60 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     return true
   }
 
+  private fun contains(group: Group) = allGroups.contains(group)
+  private fun contains(group: BookmarkGroup) = group is Group && contains(group)
+
+  private fun canDragInto(group: BookmarkGroup, occurrence: BookmarkOccurrence): Boolean {
+    val to = group as? Group ?: return false
+    val from = occurrence.group as? Group ?: return false
+    return allBookmarks[occurrence.bookmark]?.groups?.run { contains(from) && (from == to || !contains(to)) } ?: false
+  }
+
+  fun canDragInto(group: BookmarkGroup, occurrences: List<BookmarkOccurrence>) = synchronized(notifier) {
+    contains(group) && occurrences.all { canDragInto(group, it) }
+  }
+
+  fun dragInto(group: BookmarkGroup, occurrences: List<BookmarkOccurrence>) = synchronized(notifier) {
+    canDragInto(group, occurrences) && drag(group as Group, occurrences) { 0 }
+  }
+
+  fun canDrag(above: Boolean, occurrence: BookmarkOccurrence, occurrences: List<BookmarkOccurrence>) = synchronized(notifier) {
+    contains(occurrence.group) && occurrences.all { it != occurrence && canDragInto(occurrence.group, it) }
+  }
+
+  fun drag(above: Boolean, occurrence: BookmarkOccurrence, occurrences: List<BookmarkOccurrence>) = synchronized(notifier) {
+    canDrag(above, occurrence, occurrences) && drag(occurrence.group as Group, occurrences) {
+      val index = it.indexOf(occurrence.bookmark)
+      if (index < 0 || above) index else index + 1
+    }
+  }
+
+  fun canDrag(above: Boolean, group: BookmarkGroup, groups: List<BookmarkGroup>) = synchronized(notifier) {
+    (!above || group != defaultGroup) && contains(group) && groups.all { it != defaultGroup && it != group && contains(it) }
+  }
+
+  fun drag(above: Boolean, group: BookmarkGroup, groups: List<BookmarkGroup>): Boolean = synchronized(notifier) {
+    if (!canDrag(above, group, groups)) return false
+    val set = mutableSetOf<Group>()
+    groups.mapTo(set) { it as Group }
+    if (groups.size != set.size) return false
+    allGroups.removeAll(set)
+    set.forEach { notifier.groupRemoved(it) }
+    var index = allGroups.indexOf(group as Group).coerceAtLeast(0) // see #canDrag(Boolean, BookmarkGroup, List<BookmarkGroup>)
+    if (!above) index++
+    allGroups.addAll(index, set)
+    set.forEach { notifier.groupAdded(it) }
+    return true
+  }
+
+  private fun drag(group: Group, occurrences: List<BookmarkOccurrence>, indexSupplier: (Group) -> Int): Boolean {
+    val pairs = occurrences.mapNotNull { removeFromGroup(it.group as Group, it.bookmark) }.asReversed()
+    val index = indexSupplier(group).coerceAtLeast(0)
+    pairs.forEach { group.add(it.first.bookmark, it.first.type, it.second?.description ?: "", index) }
+    return true
+  }
+
+
   internal inner class Group(name: String) : BookmarkGroup {
     internal constructor(name: String, isDefault: Boolean, asFirst: Boolean) : this(name) {
       val index = when {
@@ -313,7 +367,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
         if (value.isNotBlank() && findGroup(value) == null) {
           field = value
           hash = value.hashCode() // notify only if the group is added
-          if (allGroups.contains(this)) notifier.groupRenamed(this)
+          if (contains(this)) notifier.groupRenamed(this)
         }
       }
 
@@ -326,12 +380,9 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
         }
       }
 
-    internal val isValid
-      get() = synchronized(notifier) { allGroups.contains(this) }
-
     private val groupBookmarks = mutableListOf<InGroupInfo>()
 
-    private fun indexOf(bookmark: Bookmark) = when (groupBookmarks.size) {
+    internal fun indexOf(bookmark: Bookmark) = when (groupBookmarks.size) {
       0 -> -1
       1 -> if (groupBookmarks[0].bookmark == bookmark) 0 else -1
       else -> {
@@ -364,17 +415,16 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
 
     override fun canAdd(bookmark: Bookmark) = synchronized(notifier) {
-      allGroups.contains(this) && indexOf(bookmark) < 0 && !(bookmark is LineBookmark && allBookmarks.contains(bookmark))
+      contains(this) && indexOf(bookmark) < 0 && !(bookmark is LineBookmark && allBookmarks.contains(bookmark))
     }
 
-    override fun add(bookmark: Bookmark, type: BookmarkType, description: String) = add(bookmark, type, description, true)
+    override fun add(bookmark: Bookmark, type: BookmarkType, description: String) = add(bookmark, type, description, 0)
 
-    internal fun add(bookmark: Bookmark, type: BookmarkType, description: String, asFirst: Boolean): Boolean = synchronized(notifier) {
+    internal fun add(bookmark: Bookmark, type: BookmarkType, description: String, index: Int): Boolean = synchronized(notifier) {
       if (!canAdd(bookmark)) return false // bookmark is already exist
       findInfo(type)?.changeType(BookmarkType.DEFAULT)
       val info = allBookmarks.computeIfAbsent(bookmark) { InManagerInfo(it, type) }
-      val index = if (asFirst) 0 else groupBookmarks.size
-      groupBookmarks.add(index, InGroupInfo(info.bookmark, description))
+      groupBookmarks.add(if (index < 0) groupBookmarks.size else index, InGroupInfo(info.bookmark, description))
       val added = info.groups.isEmpty()
       info.groups.add(this)
       info.bookmarkAdded(this, added)
@@ -403,7 +453,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     internal fun sortLater() = invoker.invokeLater { sort() }
 
     private fun sort() = synchronized(notifier) {
-      if (isValid) sort(groupBookmarks, this::compare) { notifier.bookmarksSorted(this) }
+      if (contains(this)) sort(groupBookmarks, this::compare) { notifier.bookmarksSorted(this) }
     }
 
     private fun compare(info1: InGroupInfo, info2: InGroupInfo): Int {

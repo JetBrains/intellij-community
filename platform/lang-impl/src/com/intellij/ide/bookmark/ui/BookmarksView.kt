@@ -6,6 +6,7 @@ import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
+import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
@@ -169,6 +170,15 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     tree.isRootVisible = false
     tree.showsRootHandles = true // TODO: fix auto-expand
+    if (!isPopup) {
+      val handler = DragAndDropHandler(this)
+      DnDSupport.createBuilder(tree)
+        .setDisposableParent(this)
+        .setBeanProvider(handler::createBean)
+        .setDropHandlerWithResult(handler)
+        .setTargetChecker(handler)
+        .install()
+    }
 
     tree.emptyText.initialize(tree)
     tree.addTreeSelectionListener(RestoreSelectionListener())
