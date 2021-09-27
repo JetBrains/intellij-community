@@ -607,6 +607,8 @@
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
     <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
                     interface="com.intellij.lang.documentation.DocumentationLinkResolver"/>
+    <extensionPoint name="lang.symbolDocumentation" dynamic="true"
+                    interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory"/>
   </extensionPoints>
 </idea-plugin>
 
