@@ -69,8 +69,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
         }
           .bottomGap(BottomGap.SMALL)
 
-        row {
-          label(JavaUiBundle.message("project.structure.name"))
+        row(JavaUiBundle.message("project.structure.name")) {
           textField()
             .bindText(nameProperty)
             .columns(28)
