@@ -3,6 +3,7 @@ package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.*;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,11 @@ public class Jsr305Support implements AnnotationPackageSupport {
     if (tqDefault == null) return null;
 
     Set<PsiAnnotation.TargetType> required = AnnotationTargetUtil.extractRequiredAnnotationTargets(tqDefault.findAttributeValue(null));
-    if (required == null || (!required.isEmpty() && !ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes)))) return null;
+    if (required == null || required.isEmpty()) return null;
+    boolean targetApplies = ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, placeTargetTypes) ?
+                            required.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE) :
+                            ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes));
+    if (!targetApplies) return null;
 
     for (PsiAnnotation qualifier : modList.getAnnotations()) {
       Nullability nullability = getJsr305QualifierNullability(qualifier);
