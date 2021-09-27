@@ -32,11 +32,11 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
         super.setUp()
         myFixture.addFileToProject(
             "org/jetbrains/annotations/BlockingContext.java",
-            """package org.jetbrains.annotations; public @interface BlockingContext {}"""
+            """package org.jetbrains.annotations; public @interface BlockingExecutor {}"""
         )
         myFixture.addFileToProject(
             "org/jetbrains/annotations/NonBlockingContext.java",
-            """package org.jetbrains.annotations; public @interface NonBlockingContext {}"""
+            """package org.jetbrains.annotations; public @interface NonBlockingExecutor {}"""
         )
         myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection::class.java)
     }
