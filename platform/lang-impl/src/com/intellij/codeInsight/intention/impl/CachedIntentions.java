@@ -1,19 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.GutterIntentionAction;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
-import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
@@ -29,8 +24,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.EmptyIcon;
@@ -40,18 +36,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 
 public final class CachedIntentions {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
 
-  private final Set<IntentionActionWithTextCaching> myIntentions = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myErrorFixes = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myInspectionFixes = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myGutters = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myNotifications = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myIntentions = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myErrorFixes = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myInspectionFixes = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myGutters = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myNotifications = new CopyOnWriteArraySet<>();
   private int myOffset;
+  private HighlightInfoType myHighlightInfoType;
+
   @Nullable
   private final Editor myEditor;
   @NotNull
@@ -111,6 +113,10 @@ public final class CachedIntentions {
     return myOffset;
   }
 
+  public HighlightInfoType getHighlightInfoType() {
+    return myHighlightInfoType;
+  }
+
   @NotNull
   public static CachedIntentions create(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
@@ -130,6 +136,7 @@ public final class CachedIntentions {
 
   public boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo newInfo, boolean callUpdate) {
     myOffset = newInfo.getOffset();
+    myHighlightInfoType = newInfo.getHighlightInfoType();
     boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myErrorFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myInspectionFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.intentionsToShow, myIntentions, callUpdate);
@@ -231,15 +238,12 @@ public final class CachedIntentions {
     }
 
     if (shouldCallIsAvailable) {
-      for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext(); ) {
-        IntentionActionWithTextCaching cachedAction = iterator.next();
-        IntentionAction action = cachedAction.getAction();
-        Pair<PsiFile, Editor> applicableIn = ShowIntentionActionsHandler
-          .chooseBetweenHostAndInjected(myFile, myEditor, injectedFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, action));
-        if (applicableIn  == null) {
-          iterator.remove();
-          changed = true;
-        }
+      List<IntentionActionWithTextCaching> notAvailableActions =
+        ContainerUtil.filter(cachedActions, (intention) -> !isAvailable(injectedFile, intention));
+      if (!notAvailableActions.isEmpty()) {
+        //noinspection SlowAbstractSetRemoveAll
+        cachedActions.removeAll(notAvailableActions);
+        changed = true;
       }
     }
 
@@ -259,15 +263,22 @@ public final class CachedIntentions {
         changed |= cachedActions.add(cachedAction);
       }
     }
-    for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext(); ) {
-      IntentionActionWithTextCaching cachedAction = iterator.next();
-      if (!wrappedNew.contains(cachedAction)) {
-        // action disappeared
-        iterator.remove();
-        changed = true;
-      }
+
+    List<IntentionActionWithTextCaching> disappearedActions = ContainerUtil.filter(cachedActions, (action) -> !wrappedNew.contains(action));
+    if (!disappearedActions.isEmpty()){
+      //noinspection SlowAbstractSetRemoveAll
+      cachedActions.removeAll(disappearedActions);
+      changed = true;
     }
     return changed;
+  }
+
+  private boolean isAvailable(PsiFile injectedFile, IntentionActionWithTextCaching intention) {
+    PairProcessor<PsiFile, Editor> getAvailableFileAndEditor =
+      (file, editor) -> ShowIntentionActionsHandler.availableFor(file, editor, intention.getAction());
+    Editor hostEditor = myEditor;
+    if (hostEditor == null) return false;
+    return ShowIntentionActionsHandler.chooseBetweenHostAndInjected(myFile, hostEditor, injectedFile, getAvailableFileAndEditor) != null;
   }
 
   @NotNull
@@ -333,47 +344,10 @@ public final class CachedIntentions {
     result.addAll(myGutters);
     result.addAll(myNotifications);
     result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
-    result.sort((o1, o2) -> {
-      int weight1 = getWeight(o1);
-      int weight2 = getWeight(o2);
-      if (weight1 != weight2) {
-        return weight2 - weight1;
-      }
-      return o1.compareTo(o2);
-    });
-    return result;
-  }
 
-  private int getWeight(@NotNull IntentionActionWithTextCaching action) {
-    IntentionAction a = action.getAction();
-    int group = getGroup(action).getPriority();
-    while (a instanceof IntentionActionDelegate && !(a instanceof PriorityAction)) {
-      a = ((IntentionActionDelegate)a).getDelegate();
-    }
-    if (a instanceof PriorityAction) {
-      return group + getPriorityWeight(((PriorityAction)a).getPriority());
-    }
-    if (a instanceof SuppressIntentionActionFromFix) {
-      if (((SuppressIntentionActionFromFix)a).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
-        return group - 1;
-      }
-    }
-    return group;
-  }
-
-  private static int getPriorityWeight(PriorityAction.Priority priority) {
-    switch (priority) {
-      case TOP:
-        return 20;
-      case HIGH:
-        return 3;
-      case LOW:
-        return -3;
-      case ERROR_FIX_LESS_IMPORTANT_THAN_INSPECTION_FIX:
-        return IntentionGroup.INSPECTION.getPriority() - IntentionGroup.ERROR.getPriority() - 1;
-      default:
-        return 0;
-    }
+    Language language = PsiUtilCore.getLanguageAtOffset(getFile(), getOffset());
+    IntentionsOrderProvider intentionsOrder = IntentionsOrderProvider.EXTENSION.forLanguage(language);
+    return intentionsOrder.getSortedIntentions(this, result);
   }
 
   @NotNull

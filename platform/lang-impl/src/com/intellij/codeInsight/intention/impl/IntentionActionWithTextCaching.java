@@ -164,6 +164,23 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return true;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof IntentionActionWithTextCaching)) return false;
+    IntentionActionWithTextCaching other = (IntentionActionWithTextCaching) o;
+    return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
+  }
+
+  private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
+    return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
+  }
+
+  @Override
+  public int hashCode() {
+    return getText().hashCode();
+  }
+
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
   private class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
                                              ShortcutProvider, PossiblyDumbAware {
