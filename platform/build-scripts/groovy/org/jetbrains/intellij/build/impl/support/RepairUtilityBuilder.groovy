@@ -14,7 +14,9 @@ import org.jetbrains.intellij.build.impl.BuildHelper
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.function.Consumer
 
 /**
  * Builds 'repair' command line utility which is a simple and automated way to fix the IDE when it cannot start:
@@ -70,9 +72,13 @@ class RepairUtilityBuilder {
     }
   }
 
-  static synchronized void generateManifest(BuildContext buildContext, String unpackedDistributionPath, String manifestFileNamePrefix) {
-    buildContext.executeStep("Generating installation integrity manifest file for $unpackedDistributionPath",
+  static synchronized void generateManifest(BuildContext buildContext, String unpackedDistribution, String manifestFileNamePrefix) {
+    buildContext.executeStep("Generating installation integrity manifest file for $unpackedDistribution",
                              BuildOptions.REPAIR_UTILITY_BUNDLE_STEP) {
+      Path unpackedDistributionPath = Paths.get(unpackedDistribution)
+      if (!Files.exists(unpackedDistributionPath)) {
+        buildContext.messages.error("$unpackedDistributionPath doesn't exist")
+      }
       if (BINARIES_CACHE == null) {
         BINARIES_CACHE = buildBinaries(buildContext)
       }
@@ -84,7 +90,16 @@ class RepairUtilityBuilder {
       def binaryPath = repairUtilityProjectHome(buildContext).resolve(binary.relativeSourcePath)
       def tmpDir = buildContext.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
       Files.createDirectories(tmpDir)
-      BuildHelper.runProcess(buildContext, [binaryPath.toString(), 'hashes', '-g', '--path', unpackedDistributionPath], tmpDir)
+      try {
+        BuildHelper.runProcess(buildContext, [binaryPath.toString(), 'hashes', '-g', '--path', unpackedDistribution], tmpDir)
+      }
+      catch (Throwable e) {
+        buildContext.messages.warning("Manifest generation failed, listing unpacked distribution content for debug:")
+        Files.walk(unpackedDistributionPath).withCloseable { files ->
+          files.forEach({ buildContext.messages.warning(it.toString()) } as Consumer<Path>)
+        }
+        throw e
+      }
       def manifest = tmpDir.resolve('manifest.json')
       if (!Files.exists(manifest)) {
         def repairLog = tmpDir.resolve('repair.log')
