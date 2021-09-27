@@ -15,7 +15,6 @@ import org.jetbrains.io.FileResponses.checkCache
 import org.jetbrains.io.FileResponses.getContentType
 import org.jetbrains.io.send
 import java.net.URL
-import java.nio.file.Path
 import java.util.*
 
 /**
@@ -42,15 +41,15 @@ class PreviewStaticServer : HttpRequestHandler() {
     resourceProviders.remove(resourceProvider.hashCode())
   }
 
-  private fun getProviderHash(path: Path): Int? {
-    return path.subpath(1, 2).toString().toIntOrNull()
+  private fun getProviderHash(path: String): Int? {
+    return path.split('/').getOrNull(2)?.toIntOrNull()
   }
 
-  private fun getStaticPath(path: Path): String {
-    return path.subpath(2, path.nameCount).toString()
+  private fun getStaticPath(path: String): String {
+    return path.split('/').drop(3).joinToString(separator = "/")
   }
 
-  private fun obtainResourceProvider(path: Path): ResourceProvider? {
+  private fun obtainResourceProvider(path: String): ResourceProvider? {
     val providerHash = getProviderHash(path) ?: return null
     return synchronized(resourceProviders) { resourceProviders.getOrDefault(providerHash, null) }
   }
@@ -59,12 +58,12 @@ class PreviewStaticServer : HttpRequestHandler() {
     if (!super.isSupported(request)) {
       return false
     }
-    val path = Path.of(request.uri())
+    val path = request.uri()
     return path.startsWith(prefixPath)
   }
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
-    val path = Path.of(urlDecoder.path())
+    val path = urlDecoder.path()
     check(path.startsWith(prefixPath)) { "prefix should have been checked by #isSupported" }
     val resourceProvider = obtainResourceProvider(path) ?: return false
     val resourceName = getStaticPath(path)
@@ -82,7 +81,7 @@ class PreviewStaticServer : HttpRequestHandler() {
 
   companion object {
     private const val prefixUuid = "4f800f8a-bbed-4dd8-b03c-00449c9f6698"
-    private val prefixPath = Path.of("/", prefixUuid)
+    private const val prefixPath = "/$prefixUuid"
 
     @JvmStatic
     val instance: PreviewStaticServer
