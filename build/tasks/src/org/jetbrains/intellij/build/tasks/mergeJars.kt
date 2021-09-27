@@ -15,6 +15,7 @@ import java.nio.file.PathMatcher
 import java.util.*
 import java.util.function.IntConsumer
 import java.util.zip.ZipEntry
+import kotlin.io.path.name
 
 sealed interface Source {
   val sizeConsumer: IntConsumer?
@@ -65,7 +66,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, logger: System.Logger?, dr
       }
       else {
         ImmutableZipFile.load((source as ZipSource).file).use { zipFile ->
-          val entries = getFilteredEntries(zipFile, uniqueNames, includeManifest = sources.size == 1)
+          val entries = getFilteredEntries(targetFile, zipFile, uniqueNames, includeManifest = sources.size == 1)
           writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
         }
       }
@@ -78,7 +79,8 @@ fun buildJar(targetFile: Path, sources: List<Source>, logger: System.Logger?, dr
   }
 }
 
-private fun getFilteredEntries(zipFile: ImmutableZipFile,
+private fun getFilteredEntries(targetFile: Path,
+                               zipFile: ImmutableZipFile,
                                uniqueNames: MutableSet<String>,
                                includeManifest: Boolean): Sequence<ImmutableZipEntry> {
   return zipFile.entries.asSequence().filter {
@@ -117,12 +119,14 @@ private fun getFilteredEntries(zipFile: ImmutableZipFile,
     name != "THIRD_PARTY_LICENSES.txt" &&
     name != "NOTICE.txt" &&
     name != "NOTICE.md" &&
-    name != "META-INF/maven" &&
-    !name.startsWith("META-INF/maven/") &&
+    (requiresMavenFiles(targetFile.name) || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
     !name.startsWith("META-INF/INDEX.LIST") &&
     (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
   }
 }
+
+private fun requiresMavenFiles(jarName: String): Boolean =
+  jarName.startsWith("junixsocket-") // junixsocket reads pom.properties from class path
 
 @Suppress("SpellCheckingInspection")
 private val excludedFromMergeLibs = java.util.Set.of(
