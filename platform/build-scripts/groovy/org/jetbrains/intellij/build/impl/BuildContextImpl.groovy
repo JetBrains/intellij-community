@@ -85,7 +85,7 @@ final class BuildContextImpl extends BuildContext {
 
     xBootClassPathJarNames = productProperties.xBootClassPathJarNames
     bootClassPathJarNames = List.of("util.jar")
-    applicationInfo = new ApplicationInfoProperties(project, productProperties, options, messages).patch(this)
+    applicationInfo = new ApplicationInfoProperties(project, productProperties, options, messages)  // Android Studio: don't .patch(this)
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
