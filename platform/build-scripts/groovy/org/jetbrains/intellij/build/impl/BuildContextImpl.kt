@@ -67,7 +67,7 @@ class BuildContextImpl : BuildContext {
     buildNumber = number ?: readSnapshotBuildNumber(paths.communityHomeDir)
     xBootClassPathJarNames = productProperties.xBootClassPathJarNames
     bootClassPathJarNames = listOf("util.jar", "util_rt.jar")
-    applicationInfo = ApplicationInfoPropertiesImpl(project, productProperties, options).patch(this)
+    applicationInfo = ApplicationInfoPropertiesImpl(project, productProperties, options)  // Android Studio: don't .patch(this)
     if (productProperties.productCode == null) {
       productProperties.productCode = applicationInfo.productCode
     }
