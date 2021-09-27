@@ -80,6 +80,10 @@ class YAMLFormattingContext {
 
   @Nullable
   Spacing computeSpacing(@NotNull Block parent, @Nullable Block child1, @NotNull Block child2) {
+    if (child1 instanceof ASTBlock && endsWithTemplate(((ASTBlock)child1).getNode())) {
+      return null;
+    }
+    
     if (child2 instanceof ASTBlock && startsWithTemplate(((ASTBlock)child2).getNode())) {
       return null;
     }
@@ -134,6 +138,14 @@ class YAMLFormattingContext {
     while (astNode != null) {
       if (astNode instanceof OuterLanguageElement) return true;
       astNode = astNode.getFirstChildNode();
+    }
+    return false;
+  }
+  
+  private static boolean endsWithTemplate(@Nullable ASTNode astNode) {
+    while (astNode != null) {
+      if (astNode instanceof OuterLanguageElement) return true;
+      astNode = astNode.getLastChildNode();
     }
     return false;
   }
