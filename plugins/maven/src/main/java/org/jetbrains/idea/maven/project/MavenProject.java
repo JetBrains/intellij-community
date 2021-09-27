@@ -1037,7 +1037,7 @@ public class MavenProject {
       .map(element -> LanguageLevel.parse(MavenJDOMUtil.findChildValueByPath(element, level)))
       .filter(Objects::nonNull)
       .max(Comparator.naturalOrder())
-      .map(l -> String.valueOf(l.toJavaVersion().feature))
+      .map(l -> l.toJavaVersion().toFeatureString())
       .orElseGet(() -> myState.myProperties.getProperty("maven.compiler." + level));
   }
 
