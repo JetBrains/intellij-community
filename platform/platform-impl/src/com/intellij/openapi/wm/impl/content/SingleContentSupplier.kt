@@ -46,6 +46,11 @@ interface SingleContentSupplier {
     return false
   }
 
+  @JvmDefault
+  fun close(tab: TabInfo) {
+    getTabs().removeTab(tab)
+  }
+
   /**
    * This method is called after a single view mode is activated.
    *

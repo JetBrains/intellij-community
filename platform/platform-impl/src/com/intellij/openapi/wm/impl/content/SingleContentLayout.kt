@@ -305,7 +305,7 @@ internal class SingleContentLayout(
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
           val tabLabel = e.component as? MyContentTabLabel
           if (tabLabel != null && tabLabel.content.isCloseable) {
-            retrieveInfo(tabLabel).let(jbTabs::removeTab)
+            tabLabel?.closeContent()
           }
         }
       }
@@ -465,8 +465,10 @@ internal class SingleContentLayout(
         retrieveInfo(this).let { jbTabs.select(it, true) }
       }
 
-      override fun closeContent() {
-        retrieveInfo(this).let(jbTabs::removeTab)
+      public override fun closeContent() {
+        retrieveInfo(this).let { info ->
+          getSingleContentOrNull()?.getSupplier()?.close(info)
+        }
       }
 
       override fun getData(dataId: String): Any? {
