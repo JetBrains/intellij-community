@@ -9,10 +9,10 @@ import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddAnnotationActions
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
+import com.intellij.psi.LambdaUtil
+import com.intellij.psi.PsiType
 import com.intellij.util.SmartList
-import org.jetbrains.uast.UField
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.UastVisibility
+import org.jetbrains.uast.*
 
 /**
  * Makes the visibility of a [UField] public.
@@ -43,4 +43,17 @@ fun UMethod.createMakeStaticActions(): List<IntentionAction> {
     actions.addAll(createAddAnnotationActions(jPsi, annotationRequest("kotlin.jvm.JvmStatic")))
   }
   return actions
+}
+
+fun ULambdaExpression.getReturnType(): PsiType? {
+  val lambdaType = functionalInterfaceType
+                   ?: getExpressionType()
+                   ?: uastParent?.let {
+                     when (it) {
+                       is UVariable -> it.type // in Kotlin local functions looks like lambda stored in variable
+                       is UCallExpression -> it.getParameterForArgument(this)?.type
+                       else -> null
+                     }
+                   }
+  return LambdaUtil.getFunctionalInterfaceReturnType(lambdaType)
 }
