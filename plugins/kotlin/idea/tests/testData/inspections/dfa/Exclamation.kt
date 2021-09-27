@@ -1,4 +1,7 @@
 // WITH_RUNTIME
+fun notNull(i:Int) {
+    i<warning descr="[UNNECESSARY_NOT_NULL_ASSERTION] Unnecessary non-null assertion (!!) on a non-null receiver of type Int">!!</warning>.toLong()
+}
 fun range(i : Int?) {
     if (i!! > 5) {
         if (<warning descr="Condition is always false">i<warning descr="[UNNECESSARY_NOT_NULL_ASSERTION] Unnecessary non-null assertion (!!) on a non-null receiver of type Int">!!</warning> < 3</warning>) {

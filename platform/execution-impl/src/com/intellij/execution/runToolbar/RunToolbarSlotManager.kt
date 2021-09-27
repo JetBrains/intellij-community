@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.execution.*
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.ide.ActivityTracker
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -233,6 +234,8 @@ class RunToolbarSlotManager(val project: Project) {
     else {
       addNewProcessOnBottom(env)
     }
+
+    ActivityTracker.getInstance().inc()
   }
 
   private fun addNewProcessOnTop(env: ExecutionEnvironment) {
@@ -284,11 +287,33 @@ class RunToolbarSlotManager(val project: Project) {
     update()
   }
 
-  fun processStopped(executionId: Long) {
-    slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.environment = null
+  fun processTerminating(env: ExecutionEnvironment) {
+    slotsData.values.firstOrNull { it.environment?.executionId == env.executionId }?.let {
+      it.environment = env
+    }
+    activeProcesses.updateActiveProcesses(slotsData)
+    updateState()
+    ActivityTracker.getInstance().inc()
+  }
+
+  fun processTerminated(executionId: Long) {
+    slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.let {
+      if (it.environment?.getRunToolbarProcess()?.isTemporaryProcess() == true) {
+        if (it == mainSlotData && slotsData.size == 1) {
+          it.clear()
+          it.configuration = RunManager.getInstance(project).selectedConfiguration
+        } else {
+          removeSlot(it.id, false)
+        }
+      }
+      else {
+        it.environment = null
+      }
+    }
     LOG.info("SLOT MANAGER process stopped: $executionId ")
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
+    ActivityTracker.getInstance().inc()
   }
 
   fun extraSlotCount(): Int {
@@ -334,7 +359,7 @@ class RunToolbarSlotManager(val project: Project) {
     update()
   }
 
-  internal fun removeSlot(id: String) {
+  internal fun removeSlot(id: String, warningNeeded: Boolean = true) {
     val index = dataIds.indexOf(id)
 
     fun remove() {
@@ -360,7 +385,9 @@ class RunToolbarSlotManager(val project: Project) {
 
     (if (index >= 0) getData(index) else if (mainSlotData.id == id) mainSlotData else null)?.let { slotDate ->
       slotDate.environment?.let {
-        if (Messages.showOkCancelDialog(
+        if(!warningNeeded) {
+          remove()
+        } else if (Messages.showOkCancelDialog(
             project,
             LangBundle.message("run.toolbar.remove.active.process.slot.message"),
             LangBundle.message("run.toolbar.remove.active.process.slot.title", it.runnerAndConfigurationSettings?.name ?: ""),
@@ -392,7 +419,7 @@ class RunToolbarSlotManager(val project: Project) {
 
     if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
       val runManager = RunManager.getInstance(project)
-      if (mainSlotData.configuration !=null && mainSlotData.configuration != runManager.selectedConfiguration) {
+      if (mainSlotData.configuration !=null && mainSlotData.configuration != runManager.selectedConfiguration && mainSlotData.environment?.getRunToolbarProcess()?.isTemporaryProcess() != true) {
         runManager.selectedConfiguration = mainSlotData.configuration
         LOG.info("SLOT MANAGER (saveSlotsConfiguration) change selected configuration by main: ${mainSlotData.configuration} ")
       }
@@ -429,7 +456,7 @@ class ActiveProcesses {
 
   internal fun updateActiveProcesses(slotsData: MutableMap<String, SlotDate>) {
     processes.clear()
-    val list = slotsData.values.filter{it.environment != null}.toMutableList()
+    val list = slotsData.values.filter { it.environment != null }.toMutableList()
     activeSlots = list
     list.mapNotNull { it.environment }.forEach{ environment ->
       environment.getRunToolbarProcess()?.let {

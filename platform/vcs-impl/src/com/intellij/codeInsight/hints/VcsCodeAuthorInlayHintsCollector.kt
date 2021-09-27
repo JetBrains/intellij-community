@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.hints.InlayHintsUtils.getDefaultInlayHintsProviderPopupActions
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
@@ -10,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsBundle.messagePointer
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.psi.PsiComment
@@ -35,7 +38,7 @@ internal class VcsCodeAuthorInlayHintsCollector(
 
     val range = getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
     val info = getCodeAuthorInfo(element.project, range, editor)
-    val presentation = buildPresentation(info, editor).shiftTo(range.startOffset, editor)
+    val presentation = buildPresentation(info, editor).addContextMenu(element.project).shiftTo(range.startOffset, editor)
 
     sink.addBlockElement(range.startOffset, false, true, BlockInlayPriority.CODE_VISION, presentation)
     return true
@@ -81,6 +84,11 @@ internal class VcsCodeAuthorInlayHintsCollector(
 
   private fun InlayPresentation.withUserIcon(): InlayPresentation =
     factory.seq(factory.smallScaledIcon(AllIcons.Vcs.Author), this)
+
+  private fun InlayPresentation.addContextMenu(project: Project): InlayPresentation =
+    MenuOnClickPresentation(this, project) {
+      getDefaultInlayHintsProviderPopupActions(VcsCodeAuthorInlayHintsProvider.KEY, messagePointer("title.code.author.inlay.hints"))
+    }
 
   private fun InlayPresentation.shiftTo(offset: Int, editor: Editor): InlayPresentation {
     val document = editor.document

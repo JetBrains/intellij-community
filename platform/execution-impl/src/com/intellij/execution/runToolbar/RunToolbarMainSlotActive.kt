@@ -2,7 +2,6 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.PROP_ACTIVE_ENVIRONMENT
-import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.updatePresentation
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -36,7 +35,7 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   }
 
   override fun update(e: AnActionEvent) {
-    updatePresentation(e)
+    RunToolbarProcessStartedAction.updatePresentation(e)
 
     if (!RunToolbarProcess.experimentalUpdating()) {
       e.mainState()?.let {
@@ -156,9 +155,11 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
     }
 
     private fun updateEnvironment() {
-      presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.getRunToolbarProcess()?.let {
-        background = it.pillColor
-        process.text = it.name
+      presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { env ->
+        env.getRunToolbarProcess()?.let {
+          background = it.pillColor
+          process.text = if(env.isProcessTerminating()) ActionsBundle.message("action.RunToolbarRemoveSlotAction.terminating") else it.name
+        }
       } ?: kotlin.run {
         isOpaque = false
       }

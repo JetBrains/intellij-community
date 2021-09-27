@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 
 /**
@@ -2926,5 +2927,13 @@ public final class ContainerUtil {
     }
     //noinspection unchecked
     return immutableList((T[])list.toArray());
+  }
+
+  public static <T> T reduce(@NotNull List<? extends T> list, T identity, @NotNull BinaryOperator<T> accumulator) {
+    T result = identity;
+    for (T t : list) {
+      result = accumulator.apply(result, t);
+    }
+    return result;
   }
 }

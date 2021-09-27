@@ -193,8 +193,8 @@ private fun updateApplicableVcsesTooltip(project: Project, component: JComponent
 private enum class ShowPatchAfterCreationEnum(private val text: () -> @Nls String,
                                               val state: Boolean?) {
   ASK({ message("show.patch.in.explorer.after.creation.combobox.text.ask") }, null),
-  YES({ message("show.patch.in.explorer.after.creation.combobox.text.show.in.file.manager", RevealFileAction.getFileManagerName()) }, true),
-  NO({ message("show.patch.in.explorer.after.creation.combobox.text.no") }, false);
+  NO({ message("show.patch.in.explorer.after.creation.combobox.text.no") }, false),
+  YES({ message("show.patch.in.explorer.after.creation.combobox.text.show.in.file.manager", RevealFileAction.getFileManagerName()) }, true);
 
   override fun toString(): String = text()
 

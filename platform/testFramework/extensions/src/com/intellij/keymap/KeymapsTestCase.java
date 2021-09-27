@@ -31,7 +31,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                   "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
     { "alt DOWN",                 "ShowContent", "MethodDown", "ShowSearchHistory"},
-    { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
     { "alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
     { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
     { "control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
@@ -134,7 +133,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
     { "meta R",                   "Refresh", "Rerun", "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
-    { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
+    { "meta 2",                   "ActivateBookmarksToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
     { "meta I",                   "DatabaseView.PropertiesAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
     { "meta N",                   "FileChooser.NewFolder", "Generate", "NewElement"},
@@ -164,7 +163,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control N",                "Generate", "NewElement"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
-    { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
+    { "meta 2",                   "ActivateBookmarksToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
     { "ctrl SPACE",               "ChangesView.SetDefault", "CodeCompletion"},
@@ -241,7 +240,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl V",             "PasteMultiple", "Terminal.Paste"},
     });
     put("Default for GNOME", new String[][] {
-    { "shift alt 1",              "SelectIn", "ProjectViewChangeView"},
     { "shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
     { "shift alt LEFT",           "PreviousEditorTab", "Diff.PrevChange", "Back"},
     { "shift alt RIGHT",          "NextEditorTab", "Diff.NextChange","Forward"},
@@ -251,7 +249,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control 2",                "FileChooser.GotoProject", "Stop", "DuplicatesForm.SendToRight"},
     { "control 3",                "FindWordAtCaret", "FileChooser.GotoModule"},
     { "control 5",                "Refresh", "Rerun"},
-    { "shift alt 1",              "SelectIn", "ProjectViewChangeView"},
     { "shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
     { "shift alt L",              "ReformatCode", "context.load"},
     });
@@ -421,7 +418,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   // @formatter:on
 
   @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = Set.of(
-    "ActivateCommitToolWindow", "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow",
+    "ActivateCommitToolWindow", "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateBookmarksToolWindow", "ActivateCommanderToolWindow",
     "ActivateServicesToolWindow",
     "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateStructureToolWindow",
     "ActivateProblemsViewToolWindow",

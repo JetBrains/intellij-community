@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 't' is never used
 abstract class Owner<T> {
 }
 

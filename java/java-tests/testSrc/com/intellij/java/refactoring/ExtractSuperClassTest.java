@@ -114,6 +114,11 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
            new RefactoringTestUtil.MemberDescriptor("a", PsiField.class));
   }
 
+  public void testAbstractInSuper() {
+    doTest("Test", "TestSubclass",
+           new RefactoringTestUtil.MemberDescriptor("y", PsiMethod.class, true));
+  }
+
   public void testSameTypeParameterName() {
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("A", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("B", PsiClass.class));
   }
@@ -216,14 +221,14 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
       }
       final HashSet<String> expectedConflicts = new HashSet<>(Arrays.asList(conflicts));
       final HashSet<String> actualConflicts = new HashSet<>(conflictsMap.values());
-      assertEquals(expectedConflicts.size(), actualConflicts.size());
+      assertEquals(actualConflicts.toString(), expectedConflicts.size(), actualConflicts.size());
       for (String actualConflict : actualConflicts) {
         if (!expectedConflicts.contains(actualConflict)) {
           fail("Unexpected conflict: " + actualConflict);
         }
       }
     } else if (!conflictsMap.isEmpty()) {
-      fail("Unexpected conflicts!!!");
+      fail("Unexpected conflicts!!!" + conflictsMap.toString());
     }
     processor.run();
   }

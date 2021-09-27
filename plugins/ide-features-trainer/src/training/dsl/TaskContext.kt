@@ -37,6 +37,14 @@ abstract class TaskContext : LearningDslBase {
    * */
   open var rehighlightPreviousUi: Boolean? = null
 
+  /**
+   * Can be set to true iff you need to propagate found highlighting component from the previous task as found from the current task.
+   * So it may be used as `previous.ui`. And will be rehighlighted on restore.
+   *
+   * The default `null` means true now, but it may be changed later.
+   */
+  open var propagateHighlighting: Boolean? = null
+
   /** Put here some initialization for the task */
   open fun before(preparation: TaskRuntimeContext.() -> Unit) = Unit
 
@@ -45,13 +53,14 @@ abstract class TaskContext : LearningDslBase {
    * @param [delayMillis] the delay before restore actions can be applied.
    *                      Delay may be needed to give pass condition take place.
    *                      It is a hack solution because of possible race conditions.
+   * @param [checkByTimer] Check by timer may be useful in UI detection tasks (in submenus for example).
    * @param [restoreRequired] returns true iff restore is needed
    */
-  open fun restoreState(restoreId: TaskId? = null, delayMillis: Int = 0, restoreRequired: TaskRuntimeContext.() -> Boolean) = Unit
+  open fun restoreState(restoreId: TaskId? = null, delayMillis: Int = 0, checkByTimer: Int? = null, restoreRequired: TaskRuntimeContext.() -> Boolean) = Unit
 
   /** Shortcut */
-  fun restoreByUi(restoreId: TaskId? = null, delayMillis: Int = 0) {
-    restoreState(restoreId, delayMillis) {
+  fun restoreByUi(restoreId: TaskId? = null, delayMillis: Int = 0, checkByTimer: Int? = null) {
+    restoreState(restoreId, delayMillis, checkByTimer) {
       previous.ui?.isShowing?.not() ?: true
     }
   }

@@ -59,7 +59,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   public @NotNull List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
-    @SuppressWarnings("deprecation")
+    //noinspection deprecation
     ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
     ExtensionPoint<T> point = area == null ? null : area.getExtensionPointIfRegistered(getName());
     return point == null ? Collections.emptyList() : point.getExtensionList();

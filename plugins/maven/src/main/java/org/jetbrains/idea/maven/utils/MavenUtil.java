@@ -1114,8 +1114,7 @@ public class MavenUtil {
   }
 
   public static boolean newModelEnabled(Project project) {
-    return Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
-           || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
+    return Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY, false);
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {

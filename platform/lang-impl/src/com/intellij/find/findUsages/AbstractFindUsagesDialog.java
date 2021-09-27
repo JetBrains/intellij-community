@@ -129,7 +129,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     if (myFindUsagesOptions instanceof PersistentFindUsagesOptions) {
       ((PersistentFindUsagesOptions)myFindUsagesOptions).storeDefaults(myProject);
     }
-    FindUsagesStatisticsCollector.logOptions(myProject, myFindUsagesOptions, myCbToOpenInNewTab.isSelected());
+    FindUsagesStatisticsCollector.logOptions(myProject, myFindUsagesOptions, isShowInSeparateWindow());
     return myFindUsagesOptions;
   }
 

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -138,7 +137,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   @Override
   public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                                 DependencyScope scope,
-                                                IdeModifiableModelsProvider provider,
+                                                ModifiableModelsProviderProxy provider,
                                                 MavenProject project) {
     return myDelegate.addLibraryDependency(artifact, scope, provider, project);
   }

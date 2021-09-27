@@ -21,8 +21,25 @@ public interface NonBlockingContextChecker {
   boolean isApplicable(@NotNull PsiFile file);
 
   /**
-   * @param element PsiElement (e.g. method call or reference) to check if it is placed in code fragment where thread block is not allowed
+   * @param elementContext metadata that provides info about inspection settings and PsiElement (e.g. method call or reference)
+   *                      to check if it is placed in code fragment where thread block is not allowed
    * @return true if code fragment for {@code element} is considered "non-blocking", false otherwise
    */
-  boolean isContextNonBlockingFor(@NotNull PsiElement element);
+  default ContextType isContextNonBlockingFor(@NotNull ElementContext elementContext) {
+    if (isContextNonBlockingFor(elementContext.getElement())) {
+      return ContextType.NONBLOCKING.INSTANCE;
+    }
+    else {
+      return ContextType.BLOCKING.INSTANCE;
+    }
+  }
+
+  /**
+   * @deprecated Override {@link #isContextNonBlockingFor(ElementContext)} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  default boolean isContextNonBlockingFor(@NotNull PsiElement element) {
+    return false;
+  }
 }

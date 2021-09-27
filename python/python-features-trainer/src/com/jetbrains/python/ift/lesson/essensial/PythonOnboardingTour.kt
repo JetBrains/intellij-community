@@ -465,14 +465,6 @@ class PythonOnboardingTour :
     }
   }
 
-  private fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
-    proposeRestore {
-      checkExpectedStateOfEditor(previous.sample) {
-        needToType.contains(it.replace(" ", ""))
-      }
-    }
-  }
-
   private fun TaskRuntimeContext.checkEditorModification(completionPosition: LessonSamplePosition, needChange: String): Boolean {
     val startOfChange = completionPosition.startOffset
     val sampleText = sample.text

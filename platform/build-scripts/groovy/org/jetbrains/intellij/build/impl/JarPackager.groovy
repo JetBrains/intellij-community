@@ -27,6 +27,8 @@ import java.util.function.Predicate
 import java.util.regex.Matcher
 import java.util.stream.Stream
 
+import static org.jetbrains.intellij.build.impl.ProjectLibraryData.PackMode
+
 @CompileStatic
 final class JarPackager {
   static void pack(Map<String, List<String>> actualModuleJars,
@@ -80,10 +82,9 @@ final class JarPackager {
       // kotlinx- libs to one kotlinx.jar
       mergeLibsByPredicate("kotlinx.jar", librariesToMerge, outputDir, layoutSpec, buildContext) { it.startsWith("kotlinx-") }
 
+      // see ClassPathUtil.getUtilClassPath
       Set<String> libsThatUsedInJps = Set.of(
-        "JDOM",
         "ASM",
-        "Trove4j",
         "aalto-xml",
         "netty-buffer",
         "netty-codec-http",
@@ -92,7 +93,20 @@ final class JarPackager {
         "gson",
         "Log4J",
         "Slf4j",
+        // see getBuildProcessApplicationClasspath - used in JPS
+        "lz4-java",
         "maven-resolver-provider",
+        "OroMatcher",
+        "jgoodies-forms",
+        "jgoodies-common",
+        "NanoXML",
+        // see ArtifactRepositoryManager.getClassesFromDependencies
+        "plexus-utils",
+        "Guava",
+        "http-client",
+        "commons-codec",
+        "commons-logging",
+        "commons-lang3"
       )
       mergeLibsByPredicate("3rd-party-rt.jar", librariesToMerge, outputDir, layoutSpec, buildContext) { libsThatUsedInJps.contains(it) }
     }
@@ -101,11 +115,8 @@ final class JarPackager {
     if (librariesToMerge.isEmpty()) {
       libSources = null
     }
-    else if (isRootDir) {
-      libSources = filesToSourceWithMappings(layoutSpec, outputDir.resolve(BaseLayout.PLATFORM_JAR), librariesToMerge, buildContext)
-    }
     else {
-      boolean isSeparateUberJar = actualModuleJars.size() != 1
+      boolean isSeparateUberJar = isRootDir || actualModuleJars.size() != 1
       Path uberJarFile = outputDir.resolve(isSeparateUberJar ? "3rd-party.jar" : actualModuleJars.keySet().first())
       libSources = filesToSourceWithMappings(layoutSpec, uberJarFile, librariesToMerge, buildContext)
       if (isSeparateUberJar) {
@@ -118,7 +129,7 @@ final class JarPackager {
       String jarPath = entry.key
       Path jarFile = outputDir.resolve(jarPath)
       List sourceList = new ArrayList()
-      if (libSources != null && (!isRootDir || jarPath == BaseLayout.PLATFORM_JAR)) {
+      if (libSources != null) {
         sourceList.addAll(libSources)
         libSources = null
       }
@@ -265,6 +276,10 @@ final class JarPackager {
 
     MethodHandle isLibraryMergeable = BuildHelper.getInstance(buildContext).isLibraryMergeable
 
+    if (!layout.includedProjectLibraries.isEmpty()) {
+      buildContext.messages.debug("included project libraries: " + layout.includedProjectLibraries.join("\n"))
+    }
+
     for (ProjectLibraryData libraryData in layout.includedProjectLibraries) {
       String relativePath = libraryData.relativeOutputPath
       if (relativePath != null && !relativePath.isEmpty()) {
@@ -277,22 +292,29 @@ final class JarPackager {
         throw new IllegalArgumentException("Cannot find library ${libraryData.libraryName} in the project")
       }
 
-      boolean removeVersionFromJarName = layout instanceof PlatformLayout &&
-                                         ((PlatformLayout)layout)
-                                           .projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName)
       String libName = library.name
       List<Path> files = getLibraryFiles(library, copiedFiles, false)
-      if (!removeVersionFromJarName && !libraryData.standalone && isLibraryMergeable.invokeWithArguments(libName)) {
+
+      PackMode packMode = libraryData.packMode
+      if (layout instanceof PlatformLayout &&
+          ((PlatformLayout)layout).projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName)) {
+        packMode = PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME
+      }
+      else if (packMode == PackMode.MERGED && !isLibraryMergeable.invokeWithArguments(libName)) {
+        packMode = PackMode.STANDALONE_MERGED
+      }
+
+      if (packMode == PackMode.MERGED) {
         toMerge.put(library, files)
       }
-      else if (libName != "Gradle" && !removeVersionFromJarName) {
+      else if (packMode == PackMode.STANDALONE_MERGED) {
         String fileName = libNameToMergedJarFileName(libName)
         buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), files, layoutSpec, buildContext)
       }
       else {
         for (Path file : files) {
           String fileName = file.fileName.toString()
-          if (removeVersionFromJarName) {
+          if (packMode == PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
             fileName = removeVersionFromJar(fileName)
           }
           buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), List.of(file), layoutSpec, buildContext)
@@ -330,6 +352,7 @@ final class JarPackager {
 
     return toMerge
   }
+
 
   private static String removeVersionFromJar(String fileName) {
     Matcher matcher = fileName =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN

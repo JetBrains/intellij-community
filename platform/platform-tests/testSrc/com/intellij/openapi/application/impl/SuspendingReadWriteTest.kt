@@ -170,8 +170,12 @@ class NonBlocking : SuspendingReadWriteTest() {
   fun `test read action is cancelled by write and restarted`(): Unit = runBlocking {
     val job = twoAttemptJob(this, ReadConstraints.unconstrained())
     runWriteAction {}
-    UIUtil.dispatchAllInvocationEvents()
-    job.waitTimeout()
+    withTimeout(1000) {
+      while (job.isActive) {
+        coroutineContext.ensureActive()
+        UIUtil.dispatchAllInvocationEvents()
+      }
+    }
   }
 
   fun `test read action with constraints is cancelled by write and restarted`(): Unit = runBlocking {

@@ -54,7 +54,7 @@ public interface ToolWindowEx extends ToolWindow {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void setUseLastFocusedOnActivation(@SuppressWarnings("unused") boolean focus) {
+  default void setUseLastFocusedOnActivation(boolean focus) {
   }
 
   final class Border extends EmptyBorder {

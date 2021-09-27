@@ -1,2 +1,0 @@
-lib/jna.jar:backend/lib/jna.jar:Frameworks/FleetBackend 2020.3 EAP.app/Contents/lib/jna.jar
-lib/jna-platform.jar:backend/lib/jna-platform.jar:Frameworks/FleetBackend 2020.3 EAP.app/Contents/lib/jna-platform.jar

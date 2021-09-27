@@ -1,17 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
-import java.io.*;
-import java.lang.reflect.Method;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
@@ -46,87 +41,16 @@ public class Bootstrap {
     }
     if (!Files.isDirectory(target)) throw new Exception("Not a directory: " + target);
 
-    ClassLoader cl = Bootstrap.class.getClassLoader();
-    URL dependenciesTxt = cl.getResource("dependencies.txt");
-    if (dependenciesTxt == null) throw new Exception("Missing dependencies.txt file in classpath");
-
-    Map<String, byte[]> classes = new HashMap<>();
-    for (Path dependencyFile : readDependenciesTxt(target, dependenciesTxt)) {
-      // Load dependency JARs in memory not to lock them on disk
-      collectClassesFromJar(dependencyFile, classes);
+    List<String> runnerArgs = new ArrayList<>();
+    runnerArgs.add("apply");
+    runnerArgs.add(args[0]);
+    runnerArgs.add("--toolbox-ui");
+    if (Boolean.getBoolean(NO_BACKUP_PROPERTY)) {
+      runnerArgs.add("--no-backup");
     }
 
-    URL jarsInMemoryUrl = createInMemoryUrlClassesRoot(classes);
-    URL updaterUrl = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
-
-    try (URLClassLoader loader = new URLClassLoader(new URL[]{updaterUrl, jarsInMemoryUrl}, null)) {
-      Class<?> runner = loader.loadClass("com.intellij.updater.Runner");
-      Method main = runner.getMethod("main", String[].class);
-
-      List<String> runnerArgs = new ArrayList<>();
-      runnerArgs.add("apply");
-      runnerArgs.add(args[0]);
-      runnerArgs.add("--toolbox-ui");
-      if (Boolean.getBoolean(NO_BACKUP_PROPERTY)) {
-        runnerArgs.add("--no-backup");
-      }
-
-      //noinspection SSBasedInspection
-      main.invoke(null, (Object)runnerArgs.toArray(new String[0]));
-    }
-  }
-
-  private static void collectClassesFromJar(Path jarFile, Map<String, byte[]> classes) throws IOException {
-    byte[] buffer = new byte[1024];
-
-    try (JarInputStream is = new JarInputStream(Files.newInputStream(jarFile))) {
-      JarEntry nextEntry;
-      while ((nextEntry = is.getNextJarEntry()) != null) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(Math.max((int)nextEntry.getSize(), 1024));
-
-        int len;
-        while ((len = is.read(buffer)) > 0) {
-          outputStream.write(buffer, 0, len);
-        }
-
-        classes.put('/' + nextEntry.getName(), outputStream.toByteArray());
-      }
-    }
-  }
-
-  private static URL createInMemoryUrlClassesRoot(Map<String, byte[]> classes) throws MalformedURLException {
-    return new URL("x-in-memory", null, -1, "/", new URLStreamHandler() {
-      @Override
-      protected URLConnection openConnection(URL u) throws IOException {
-        byte[] data = classes.get(u.getFile());
-        if (data == null) throw new FileNotFoundException(u.getFile());
-
-        return new URLConnection(u) {
-          @Override
-          public void connect() { }
-
-          @Override
-          public InputStream getInputStream() {
-            return new ByteArrayInputStream(data);
-          }
-        };
-      }
-    });
-  }
-
-  private static List<Path> readDependenciesTxt(Path basePath, URL dependenciesTxtUrl) throws Exception {
-    List<Path> files = new ArrayList<>();
-
-    try (BufferedReader br = new BufferedReader(new InputStreamReader(dependenciesTxtUrl.openStream(), StandardCharsets.UTF_8))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        Path file = Stream.of(line.split(":")).map(basePath::resolve).filter(Files::exists).findFirst().orElse(null);
-        if (file == null) throw new Exception("Cannot find dependency '" + line + "' in " + basePath);
-        files.add(file);
-      }
-    }
-
-    return files;
+    //noinspection SSBasedInspection
+    Runner.main(runnerArgs.toArray(new String[0]));
   }
 
   private static boolean isMac() {

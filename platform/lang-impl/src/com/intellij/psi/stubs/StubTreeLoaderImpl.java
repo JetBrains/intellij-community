@@ -92,11 +92,18 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   @Override
   @Nullable
   public ObjectStubTree<?> readFromVFile(@NotNull Project project, final @NotNull VirtualFile vFile) {
-    if (DumbService.getInstance(project).isDumb() || NoAccessDuringPsiEvents.isInsideEventProcessing()) {
+    if ((DumbService.getInstance(project).isDumb() &&
+         (!FileBasedIndex.isIndexAccessDuringDumbModeEnabled() ||
+          FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != DumbModeAccessType.RELIABLE_DATA_ONLY)) ||
+        NoAccessDuringPsiEvents.isInsideEventProcessing()) {
       return null;
     }
 
-    boolean wasIndexedAlready = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isFileUpToDate(vFile);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    if (!(fileBasedIndex instanceof FileBasedIndexImpl)) {
+      return null;
+    }
+    boolean wasIndexedAlready = ((FileBasedIndexImpl)fileBasedIndex).isFileUpToDate(vFile);
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
     boolean saved = document == null || !FileDocumentManager.getInstance().isDocumentUnsaved(document);

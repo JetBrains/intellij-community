@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Parameter 'runnable' is never used
 
 fun foo(runnable: Runnable) {}
 

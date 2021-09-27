@@ -42,8 +42,9 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   public final int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
-  private final @Nullable Supplier<@Nls @NotNull String> myAccessibleNameProvider;
+  private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
   private AnAction myNavigateAction = new NavigateAction<>(this);
+  @NotNull
   private final GutterIconRenderer.Alignment myIconAlignment;
   private final GutterIconNavigationHandler<T> myNavigationHandler;
 
@@ -52,11 +53,11 @@ public class LineMarkerInfo<T extends PsiElement> {
    * See {@link LineMarkerProvider#getLineMarkerInfo(PsiElement)} javadoc
    * for specific quirks on which elements to use for line markers.
    *
-   * @param element                the element for which the line marker is created.
-   * @param range                  the range (relative to beginning of file) with which the marker is associated
-   * @param icon                   the icon to show in the gutter for the line marker
-   * @param tooltipProvider        the callback to calculate the tooltip for the gutter icon
-   * @param navHandler             the handler executed when the gutter icon is clicked
+   * @param element the element for which the line marker is created.
+   * @param range the range (relative to beginning of file) with which the marker is associated
+   * @param icon the icon to show in the gutter for the line marker
+   * @param tooltipProvider the callback to calculate the tooltip for the gutter icon
+   * @param navHandler the handler executed when the gutter icon is clicked
    * @param accessibleNameProvider the callback to provide a localized accessible name for the icon (for screen readers)
    */
   public LineMarkerInfo(@NotNull T element,
@@ -153,7 +154,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
                         Icon icon,
-                        @SuppressWarnings("unused") int updatePass,
+                        int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
@@ -171,7 +172,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
-                        @SuppressWarnings("unused") int updatePass,
+                        int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
     this(element, new TextRange(startOffset, startOffset), icon, null, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
@@ -236,7 +237,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     @Override
     public @NotNull String getAccessibleName() {
       Supplier<@Nls String> provider = myInfo.myAccessibleNameProvider;
-      return provider != null ? provider.get() : super.getAccessibleName();
+      return provider == null ? super.getAccessibleName() : provider.get();
     }
 
     @Override

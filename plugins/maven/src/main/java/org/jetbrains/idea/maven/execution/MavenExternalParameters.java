@@ -157,7 +157,7 @@ public final class MavenExternalParameters {
                                       : EncodingProjectManager.getInstance(project);
     params.setCharset(encodingManager.getDefaultCharset());
 
-    addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters, runConfiguration);
+    addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters);
     MavenUtil.addEventListener(mavenVersion, params);
 
     return params;
@@ -413,16 +413,18 @@ public final class MavenExternalParameters {
                                          String mavenHome,
                                          MavenGeneralSettings coreSettings,
                                          MavenRunnerSettings runnerSettings,
-                                         MavenRunnerParameters parameters,
-                                         @Nullable MavenRunConfiguration runConfiguration) {
+                                         MavenRunnerParameters parameters) {
     encodeCoreAndRunnerSettings(coreSettings, mavenHome, parametersList);
 
     if (runnerSettings.isSkipTests()) {
       parametersList.addProperty("skipTests", "true");
     }
 
-    addProperty(parametersList, runnerSettings.getMavenProperties().entrySet());
-    if (runConfiguration != null) addProperty(parametersList, runConfiguration.getSettings().getMavenProperties().entrySet());
+    for (Map.Entry<String, String> entry : runnerSettings.getMavenProperties().entrySet()) {
+      if (entry.getKey().length() > 0) {
+        parametersList.addProperty(entry.getKey(), entry.getValue());
+      }
+    }
 
     for (String goal : parameters.getGoals()) {
       parametersList.add(goal);
@@ -434,14 +436,6 @@ public final class MavenExternalParameters {
     }
 
     addOption(parametersList, "P", encodeProfiles(parameters.getProfilesMap()));
-  }
-
-  private static void addProperty(ParametersList parametersList, Set<Map.Entry<String, String>> mavenProperties) {
-    for (Map.Entry<String, String> entry : mavenProperties) {
-      if (entry.getKey().length() > 0) {
-        parametersList.addProperty(entry.getKey(), entry.getValue());
-      }
-    }
   }
 
   private static void addOption(ParametersList cmdList, @NonNls String key, @NonNls String value) {

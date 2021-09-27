@@ -1,7 +1,7 @@
 <problems>
     <problem>
         <file>SomeQualifiedExpressionInRange.kt</file>
-        <line>4</line>
+        <line>7</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="SomeQualifiedExpressionInRange.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -9,7 +9,7 @@
     </problem>
     <problem>
         <file>Simple.kt</file>
-        <line>5</line>
+        <line>6</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="Simple.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -17,7 +17,7 @@
     </problem>
     <problem>
         <file>PropertiesNames.kt</file>
-        <line>5</line>
+        <line>8</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="PropertiesNames.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -25,7 +25,7 @@
     </problem>
     <problem>
         <file>Getters.kt</file>
-        <line>5</line>
+        <line>8</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="Getters.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -33,7 +33,7 @@
     </problem>
     <problem>
         <file>DataClassParametersOrder.kt</file>
-        <line>5</line>
+        <line>9</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="DataClassParametersOrder.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -41,7 +41,7 @@
     </problem>
     <problem>
         <file>DataClass.kt</file>
-        <line>5</line>
+        <line>9</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="DataClass.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -49,7 +49,7 @@
     </problem>
     <problem>
         <file>EntriesCallIsMissing.kt</file>
-        <line>6</line>
+        <line>7</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="EntriesCallIsMissing.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -57,7 +57,7 @@
     </problem>
     <problem>
         <file>DataClassFirstNPropertiesUsed.kt</file>
-        <line>5</line>
+        <line>8</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="DataClassFirstNPropertiesUsed.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -137,7 +137,7 @@
     </problem>
     <problem>
         <file>KeyOnly.kt</file>
-        <line>5</line>
+        <line>6</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/KeyOnly.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -145,7 +145,7 @@
     </problem>
     <problem>
         <file>DataClassNotAllPropertiesUsed.kt</file>
-        <line>5</line>
+        <line>6</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/DataClassNotAllPropertiesUsed.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -161,7 +161,7 @@
     </problem>
     <problem>
         <file>OnlyKeyUsed.kt</file>
-        <line>5</line>
+        <line>7</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/OnlyKeyUsed.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -177,7 +177,7 @@
     </problem>
     <problem>
         <file>DataClassWithDestructuring.kt</file>
-        <line>6</line>
+        <line>8</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/DataClassWithDestructuring.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -185,7 +185,7 @@
     </problem>
     <problem>
         <file>DataClassWithDestructuringFakeConflict.kt</file>
-        <line>6</line>
+        <line>8</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/DataClassWithDestructuringFakeConflict.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -201,7 +201,7 @@
     </problem>
     <problem>
         <file>KeyOnlyWithDestructuring.kt</file>
-        <line>4</line>
+        <line>5</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/KeyOnlyWithDestructuring.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -209,7 +209,7 @@
     </problem>
     <problem>
         <file>KeyValueWithDestructuring.kt</file>
-        <line>4</line>
+        <line>6</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/KeyValueWithDestructuring.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -217,7 +217,7 @@
     </problem>
     <problem>
         <file>FakeEntries.kt</file>
-        <line>8</line>
+        <line>10</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/FakeEntries.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>

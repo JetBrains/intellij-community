@@ -10,14 +10,14 @@ public interface ClsCustomNavigationPolicy {
   ExtensionPointName<ClsCustomNavigationPolicy> EP_NAME = ExtensionPointName.create("com.intellij.psi.clsCustomNavigationPolicy");
 
   @Nullable
-  default PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsFileImpl clsFile) { return null; }
+  default PsiElement getNavigationElement(@NotNull ClsFileImpl clsFile) { return null; }
 
   @Nullable
-  default PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsClassImpl clsClass) { return null; }
+  default PsiElement getNavigationElement(@NotNull ClsClassImpl clsClass) { return null; }
 
   @Nullable
-  default PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsMethodImpl clsMethod) { return null; }
+  default PsiElement getNavigationElement(@NotNull ClsMethodImpl clsMethod) { return null; }
 
   @Nullable
-  default PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsFieldImpl clsField) { return null; }
+  default PsiElement getNavigationElement(@NotNull ClsFieldImpl clsField) { return null; }
 }

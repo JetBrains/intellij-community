@@ -121,6 +121,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testNonNullWhenUnknown() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
+
   public void testReturningNullFromTypeAnnotatedNullableMethod() {
     doTestWithCustomAnnotations();
   }

@@ -383,7 +383,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 
-  static boolean belongsToScope(VirtualFile file, VirtualFile restrictedTo, GlobalSearchScope filter) {
+  static boolean belongsToScope(@Nullable VirtualFile file, @Nullable VirtualFile restrictedTo, @Nullable GlobalSearchScope filter) {
     if (!(file instanceof VirtualFileWithId) || !file.isValid()) {
       return false;
     }
@@ -663,7 +663,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           myConnection.disconnect();
         }
 
-        CorruptionMarker.markIndexesAsClosed();
+        //CorruptionMarker.markIndexesAsClosed();
       }
       catch (Throwable e) {
         LOG.error("Problems during index shutdown", e);
@@ -993,8 +993,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private void indexUnsavedDocuments(@NotNull final ID<?, ?> indexId,
                                      @Nullable Project project,
-                                     final GlobalSearchScope filter,
-                                     final VirtualFile restrictedFile) {
+                                     @Nullable GlobalSearchScope filter,
+                                     @Nullable VirtualFile restrictedFile) {
     if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
       return; // no need to index unsaved docs        // todo: check scope ?
     }
@@ -1965,8 +1965,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
-  public @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope,
-                                            @Nullable Project project) {
+  public @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope, @Nullable Project project) {
     if (scope == null) return projectIndexableFiles(project);
     IdFilter filter = extractFileEnumeration(scope);
     if (filter != null) return filter;

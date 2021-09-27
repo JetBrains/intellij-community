@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.sun.jdi.BooleanValue
-import com.sun.jdi.LongValue
-import com.sun.jdi.ObjectReference
-import com.sun.jdi.ThreadReference
+import com.google.gson.Gson
+import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
@@ -27,6 +25,12 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     private val enhanceStackTraceWithThreadDumpMethod by MethodMirrorDelegate("enhanceStackTraceWithThreadDump", javaLangListMirror)
     private val dumpMethod by MethodMirrorDelegate("dumpCoroutinesInfo", javaLangListMirror, "()Ljava/util/List;")
 
+    private val dumpCoroutinesInfoAsJsonAndReferences by MethodDelegate<ArrayReference>("dumpCoroutinesInfoAsJsonAndReferences", "()[Ljava/lang/Object;")
+    private val enhanceStackTraceWithThreadDumpAsJsonMethod by MethodDelegate<StringReference>(
+        "enhanceStackTraceWithThreadDumpAsJson",
+        "(Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;)Ljava/lang/String;"
+    )
+
     val isInstalled: Boolean by lazy { isInstalled(context) }
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext) =
@@ -34,17 +38,41 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
 
     fun isInstalled(context: DefaultExecutionContext): Boolean =
             isInstalledInDebugMethod.value(instance, context)?.booleanValue() ?:
-            isInstalledInCoreMethod.value(instance, context)?.booleanValue()
-            ?: throw IllegalStateException("isInstalledMethod not found")
+            isInstalledInCoreMethod.value(instance, context)?.booleanValue()  ?:
+            false
 
     fun enhanceStackTraceWithThreadDump(
             context: DefaultExecutionContext,
             coroutineInfo: ObjectReference,
-            lastObservedStackTrace: ObjectReference
+            coroutineInfoMirror: CoroutineInfo
+    ): List<MirrorOfStackTraceElement> {
+        if (enhanceStackTraceWithThreadDumpAsJsonMethod.method != null) {
+            return enhanceStackTraceWithThreadDumpAsJson(context, coroutineInfo)
+        }
+        val lastObservedStackTrace = coroutineInfoMirror.getLastObservedStackTrace(coroutineInfo, context)
+            ?: return emptyList()
+        return enhanceStackTraceWithThreadDump(context, coroutineInfo, lastObservedStackTrace)
+    }
+
+    private fun enhanceStackTraceWithThreadDumpAsJson(
+        context: DefaultExecutionContext,
+        coroutineInfo: ObjectReference,
+    ): List<MirrorOfStackTraceElement> {
+        instance ?: return emptyList()
+        val stackTraceInfoAsJsonString = enhanceStackTraceWithThreadDumpAsJsonMethod.value(instance, context, coroutineInfo)?.value()
+            ?: return emptyList()
+        val result = Gson().fromJson(stackTraceInfoAsJsonString, Array<MirrorOfStackTraceElement>::class.java)
+        return result?.toList().orEmpty()
+    }
+
+    private fun enhanceStackTraceWithThreadDump(
+        context: DefaultExecutionContext,
+        coroutineInfo: ObjectReference,
+        lastObservedStackTrace: ObjectReference
     ): List<MirrorOfStackTraceElement> {
         instance ?: return emptyList()
         val list = enhanceStackTraceWithThreadDumpMethod.mirror(instance, context, coroutineInfo, lastObservedStackTrace)
-                   ?: return emptyList()
+            ?: return emptyList()
         return list.values.mapNotNull { stackTraceElement.mirror(it, context) }
     }
 
@@ -52,6 +80,32 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
         instance ?: return emptyList()
         val referenceList = dumpMethod.mirror(instance, context) ?: return emptyList()
         return referenceList.values.mapNotNull { coroutineInfo.mirror(it, context) }
+    }
+
+    fun canDumpCoroutinesInfoAsJsonAndReferences() =
+        dumpCoroutinesInfoAsJsonAndReferences.method != null
+
+    fun dumpCoroutinesInfoAsJsonAndReferences(executionContext: DefaultExecutionContext) =
+        dumpCoroutinesInfoAsJsonAndReferences.value(instance, executionContext)
+
+    fun getCoroutineInfo(
+        value: ObjectReference,
+        context: DefaultExecutionContext,
+        coroutineContext: MirrorOfCoroutineContext,
+        sequenceNumber: Long?,
+        state: String?,
+        lastObservedThread: ThreadReference?,
+        lastObservedFrame: ObjectReference?
+    ): MirrorOfCoroutineInfo {
+        return coroutineInfo.fetchMirror(
+            value,
+            context,
+            coroutineContext,
+            sequenceNumber,
+            state,
+            lastObservedThread,
+            lastObservedFrame
+        )
     }
 
     fun getCoroutineInfo(value: ObjectReference?, context: DefaultExecutionContext): MirrorOfCoroutineInfo? {
@@ -119,9 +173,8 @@ class DebugCoroutineInfoImpl(context: DefaultExecutionContext) :
         }
 
         return MirrorOfCoroutineInfo(
-            value,
-            sequenceNumber.value(value)?.longValue(),
             coroutineContext,
+            sequenceNumber.value(value)?.longValue(),
             state,
             lastObservedThread.value(value),
             lastObservedFrame.mirror(value, context)?.reference,
@@ -140,7 +193,7 @@ class CoroutineInfo private constructor(
     private val contextFieldRef by FieldMirrorDelegate("context", CoroutineContext(context))
     private val sequenceNumberField by FieldDelegate<LongValue>("sequenceNumber")
     private val creationStackTraceMethod by MethodMirrorDelegate("getCreationStackTrace", JavaUtilAbstractCollection(context))
-    private val stateMethod by MethodMirrorDelegate<ObjectReference, String>("getState", JavaLangObjectToString(context))
+    private val stateMethod by MethodDelegate<StringReference>("getState", "()Ljava/lang/String;")
     private val lastObservedStackTraceMethod by MethodDelegate<ObjectReference>("lastObservedStackTrace")
 
     private val lastObservedFrameField by FieldDelegate<ObjectReference>("lastObservedFrame")
@@ -162,32 +215,53 @@ class CoroutineInfo private constructor(
         }
     }
 
+    fun fetchMirror(
+        value: ObjectReference,
+        context: DefaultExecutionContext,
+        coroutineContext: MirrorOfCoroutineContext,
+        sequenceNumber: Long?,
+        state: String?,
+        lastObservedThread: ThreadReference?,
+        lastObservedFrame: ObjectReference?
+    ): MirrorOfCoroutineInfo {
+        return MirrorOfCoroutineInfo(
+            coroutineContext,
+            sequenceNumber,
+            state,
+            lastObservedThread,
+            lastObservedFrame,
+            getEnhancedStackTraceProvider(value, context),
+            getCreationStackTraceProvider(value, context)
+        )
+    }
+
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfCoroutineInfo {
-        val state = stateMethod.mirror(value, context)
+        val state = stateMethod.value(value, context)
         val coroutineContext = contextFieldRef.mirror(value, context)
         val sequenceNumber = sequenceNumberField.value(value)?.longValue()
-        val enhancedStackTraceProvider = {
-            val lastObservedStackTrace = lastObservedStackTraceMethod.value(value, context)
-            if (lastObservedStackTrace != null)
-                debugProbesImplMirror.enhanceStackTraceWithThreadDump(context, value, lastObservedStackTrace)
-            else
-                emptyList()
-        }
-        val creationStackTraceProvider = {
+        return MirrorOfCoroutineInfo(
+            coroutineContext,
+            sequenceNumber,
+            state?.value(),
+            lastObservedThreadField.value(value),
+            lastObservedFrameField.value(value),
+            getEnhancedStackTraceProvider(value, context),
+            getCreationStackTraceProvider(value, context)
+        )
+    }
+
+    fun getLastObservedStackTrace(value: ObjectReference, context: DefaultExecutionContext) =
+        lastObservedStackTraceMethod.value(value, context)
+
+    private fun getCreationStackTraceProvider(value: ObjectReference, context: DefaultExecutionContext) =
+        StackTraceMirrorProvider {
             val creationStackTraceMirror = creationStackTraceMethod.mirror(value, context)
             creationStackTraceMirror?.values?.mapNotNull { stackTraceElement.mirror(it, context) }
         }
 
-        return MirrorOfCoroutineInfo(
-            value,
-            sequenceNumber,
-            coroutineContext,
-            state,
-            lastObservedThreadField.value(value),
-            lastObservedFrameField.value(value),
-            enhancedStackTraceProvider,
-            creationStackTraceProvider
-        )
-    }
+    private fun getEnhancedStackTraceProvider(value: ObjectReference, context: DefaultExecutionContext) =
+        StackTraceMirrorProvider {
+            debugProbesImplMirror.enhanceStackTraceWithThreadDump(context, value, this)
+       }
 }
 

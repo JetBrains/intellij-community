@@ -82,7 +82,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     }
 
     if (lst == null) {
-      lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project, editor.document, file)
+      lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project!!, editor.document, file)
     }
     readBaseVersion(file, status.repositoryPath)
   }

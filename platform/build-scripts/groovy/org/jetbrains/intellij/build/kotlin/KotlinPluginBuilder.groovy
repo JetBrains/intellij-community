@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ResourcesGenerator
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
@@ -113,9 +114,22 @@ class KotlinPluginBuilder {
   }
 
   static PluginLayout kotlinPlugin() {
+    KotlinPluginKind kind = KotlinPluginKind.valueOf(Objects.requireNonNullElse(System.getProperty("kotlin.plugin.kind"), "IJ"))
+    return kotlinPlugin(kind)
+  }
+
+  static PluginLayout kotlinPlugin(KotlinPluginKind kind) {
     return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
-      directoryName = "Kotlin"
-      mainJarName = "kotlin-plugin.jar"
+      switch (kind) {
+        case KotlinPluginKind.AC_KMM:
+          directoryName = "AppCodeKMMPlugin"
+          mainJarName = "appcode-kmm-plugin.jar"
+          break;
+        default:
+          directoryName = "Kotlin"
+          mainJarName = "kotlin-plugin.jar"
+      }
+
       boolean isUltimate
       try {
         Class.forName("org.jetbrains.intellij.build.IdeaUltimateProperties")
@@ -123,8 +137,6 @@ class KotlinPluginBuilder {
       } catch (ClassNotFoundException ignored) {
         isUltimate = false
       }
-
-      KotlinPluginKind kind = KotlinPluginKind.valueOf(Objects.requireNonNullElse(System.getProperty("kotlin.plugin.kind"), "IJ"))
 
       for (String moduleName : MODULES) {
         withModule(moduleName)
@@ -142,12 +154,56 @@ class KotlinPluginBuilder {
         withModule("kotlin-ultimate.ultimate-native")
       }
 
+      if (kind == KotlinPluginKind.AC_KMM) {
+        withProjectLibrary("kxml2")
+        withProjectLibrary("org.jetbrains.kotlin:backend.native:mobile")
+        withModuleLibrary("precompiled-android-annotations", "android.sdktools.android-annotations", "")
+        withModuleLibrary("precompiled-common", "android.sdktools.common", "")
+        withModuleLibrary("precompiled-ddmlib", "android.sdktools.ddmlib", "")
+
+        withModule("kotlin-ultimate.appcode-kmm")
+        withModule("intellij.android.kotlin.idea.common")
+        withModule("kotlin-ultimate.apple-gradle-plugin-api")
+        withModule("kotlin-ultimate.common-cidr-mobile")
+        withModule("kotlin-ultimate.common-native")
+        withModule("kotlin-ultimate.mobile-native")
+        withModule("kotlin-ultimate.projectTemplate")
+        withModule("kotlin-ultimate.kotlin-ocswift")
+
+        withBin("../mobile-ide/common-native/scripts", "scripts")
+
+        def kotlinServicesModule = "kotlin.gradle.gradle-tooling"
+        withModuleOutputPatches(kotlinServicesModule, new ResourcesGenerator() {
+          @Override
+          File generateResources(BuildContext context) {
+            def mobileServicesModule = "kotlin-ultimate.mobile-native"
+            def servicesFilePath = "META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService"
+
+            def kotlinServices = context.findFileInModuleSources(kotlinServicesModule, servicesFilePath)
+            if (kotlinServices == null) {
+              throw new IllegalStateException("Could not find the ModelBuilderServices file in $kotlinServicesModule")
+            }
+
+            def mobileServices = context.findFileInModuleSources(mobileServicesModule, servicesFilePath)
+            if (mobileServices == null) {
+              throw new IllegalStateException("Could not find the ModelBuilderServices file in $mobileServicesModule")
+            }
+            def tmpDir = context.paths.tempDir.resolve("kmm-ModelBuilderServices-patch")
+            def patchFile = tmpDir.resolve("META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService")
+            def content = Files.readString(kotlinServices) + "\n" + Files.readString(mobileServices)
+            Files.createDirectories(patchFile.parent)
+            patchFile.write(content)
+            return tmpDir.toFile();
+          }
+        })
+      }
+
       String jpsPluginJar = "jps/kotlin-jps-plugin.jar"
       withModule("kotlin.jps-plugin", jpsPluginJar)
       withProjectLibraryUnpackedIntoJar("kotlinc.compiler-components-for-jps", jpsPluginJar)
 
       String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
-      withProjectLibrary(kotlincKotlinCompiler, "", true)
+      withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
 
       withModuleOutputPatches(MAIN_KOTLIN_PLUGIN_MODULE, new ResourcesGenerator() {
         @Override
@@ -172,8 +228,8 @@ class KotlinPluginBuilder {
       withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
 
-      withProjectLibrary("kotlin-reflect", "", true)
-      withProjectLibrary("kotlin-stdlib-jdk8", "", true)
+      withProjectLibrary("kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlin-stdlib-jdk8", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("javaslang")
       withProjectLibrary("kotlinx-collections-immutable-jvm")
       withProjectLibrary("javax-inject")
@@ -241,6 +297,12 @@ class KotlinPluginBuilder {
               )
               break
             case KotlinPluginKind.AC_KMM:
+              text = replace(text, "<id>([^<]+)</id>", "<id>com.intellij.appcode.kmm</id>")
+              text = replace(text, "<idea-version[^/>]+/>", "")
+              text = replace(text, "<name>([^<]+)</name>", "")
+              text = replace(text, "(?s)<description>.*</description>", "")
+              text = replace(text, "(?s)<change-notes>.*</change-notes>", "")
+              text = replace(text, "</idea-plugin>", "<xi:include href=\"/META-INF/plugin.production.xml\" />\n</idea-plugin>")
               break
             default:
               throw new IllegalStateException("Unknown kind = $kind")

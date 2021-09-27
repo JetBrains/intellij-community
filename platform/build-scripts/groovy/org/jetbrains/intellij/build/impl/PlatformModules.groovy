@@ -14,6 +14,8 @@ import javax.xml.parsers.DocumentBuilderFactory
 import java.nio.file.Files
 import java.nio.file.Path
 
+import static org.jetbrains.intellij.build.impl.ProjectLibraryData.PackMode
+
 @CompileStatic
 final class PlatformModules {
   /**
@@ -133,6 +135,8 @@ final class PlatformModules {
                                              List<JpsLibrary> additionalProjectLevelLibraries,
                                              BuildContext buildContext) {
     PlatformLayout layout = new PlatformLayout()
+    // used only in modules that packed into Java
+    layout.excludedProjectLibraries.add("jps-javac-extension")
     productLayout.platformLayoutCustomizer.accept(layout)
 
     Set<String> alreadyPackedModules = new HashSet<>()
@@ -171,7 +175,7 @@ final class PlatformModules {
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
       "intellij.platform.extensions",
-    ), productLayout, layout)
+      ), productLayout, layout)
 
     jar(BaseLayout.PLATFORM_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
     jar(BaseLayout.PLATFORM_JAR, List.of(
@@ -194,7 +198,7 @@ final class PlatformModules {
       "intellij.platform.resources",
       "intellij.platform.resources.en",
       "intellij.platform.colorSchemes",
-    ), productLayout, layout)
+      ), productLayout, layout)
 
     jar("stats.jar", List.of(
       "intellij.platform.statistics",
@@ -225,7 +229,7 @@ final class PlatformModules {
     }
 
     for (String libraryName in productLayout.projectLibrariesToUnpackIntoMainJar) {
-      layout.projectLibrariesToUnpack.putValue(libraryName, productLayout.mainJarName)
+      layout.withProjectLibraryUnpackedIntoJar(libraryName, productLayout.mainJarName)
     }
 
     String productPluginSourceModuleName = buildContext.productProperties.applicationInfoModule
@@ -238,20 +242,31 @@ final class PlatformModules {
       }
     }
 
+    Map<String, PackMode> customPackMode = Map.of(
+      // jna uses native lib
+      "jna", PackMode.STANDALONE_MERGED,
+      "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+    )
+
+    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
+      "JDOM",
+      "Trove4j",
+    ))
+
     for (JpsLibrary library in additionalProjectLevelLibraries) {
       String name = library.name
       if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(name) &&
           !layout.projectLibrariesToUnpack.values().contains(name) &&
           !layout.excludedProjectLibraries.contains(name)) {
-        layout.withProjectLibrary(name)
+        layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
       }
     }
 
-    // jna uses native lib
-    layout.withProjectLibrary("jna", true)
-
-    layout.withProjectLibrariesFromIncludedModules(buildContext)
-    layout.removeVersionFromProjectLibraryJarNames("jetbrains-annotations-java5")
+    Set<JpsLibrary> librariesToInclude = layout.computeProjectLibrariesFromIncludedModules(buildContext).keySet()
+    for (JpsLibrary library in librariesToInclude) {
+      String name = library.name
+      layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
+    }
     return layout
   }
 

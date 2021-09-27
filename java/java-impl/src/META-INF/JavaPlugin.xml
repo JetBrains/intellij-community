@@ -2082,11 +2082,6 @@
       <descriptionDirectoryName>EditRangeIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.analysis.EditReassignedTextAttributesAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AnnotateIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>

@@ -47,7 +47,7 @@ public final class NewProjectUtil {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void createNewProject(@SuppressWarnings("unused") @Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
+  public static void createNewProject(@Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
     createNewProject(wizard);
   }
 

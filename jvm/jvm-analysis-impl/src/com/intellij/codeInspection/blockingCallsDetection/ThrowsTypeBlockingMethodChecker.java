@@ -4,6 +4,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +21,9 @@ final class ThrowsTypeBlockingMethodChecker implements BlockingMethodChecker {
 
   @Override
   public boolean isMethodBlocking(@NotNull MethodContext context) {
-    for (PsiClassType throwType : context.getMethod().getThrowsList().getReferencedTypes()) {
+    if (!isInStandardLibrary(context.getElement())) return false;
+
+    for (PsiClassType throwType : context.getElement().getThrowsList().getReferencedTypes()) {
       PsiClass resolvedExceptionClass = throwType.resolve();
       if (resolvedExceptionClass == null) continue;
 
@@ -36,5 +39,12 @@ final class ThrowsTypeBlockingMethodChecker implements BlockingMethodChecker {
   private static boolean isBlockingException(PsiClass resolvedExceptionClass, String blockingFqn) {
     return InheritanceUtil.isInheritor(resolvedExceptionClass, blockingFqn)
            && !NON_BLOCKING_EXCEPTION_TYPES.contains(resolvedExceptionClass.getQualifiedName());
+  }
+
+  private static boolean isInStandardLibrary(PsiMethod method) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return false;
+    String classQualifiedName = containingClass.getQualifiedName();
+    return classQualifiedName != null && classQualifiedName.startsWith("java");
   }
 }

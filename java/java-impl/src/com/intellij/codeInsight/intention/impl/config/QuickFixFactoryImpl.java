@@ -1105,4 +1105,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     if (descriptor == null) return null;
     return new LocalQuickFixAsIntentionAdapter(new UnnecessaryDefaultInspection.DeleteDefaultFix(), descriptor);
   }
+
+
+  @Override
+  public @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation,
+                                                               @NotNull PsiAnnotation.TargetType target) {
+    return new AddAnnotationTargetFix(annotation, target);
+  }
 }

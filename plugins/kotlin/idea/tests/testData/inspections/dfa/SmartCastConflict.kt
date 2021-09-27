@@ -101,3 +101,27 @@ fun doubleIf(x: String?) {
     if (x == null || y == null) return
     println(y.trim())
 }
+
+fun testWhen(x: String?) {
+    val b = x == null
+    if (b) {
+        when {
+            <warning descr="Condition is always false">x != null</warning> -> {
+                println(x.trim())
+            }
+        }
+        return
+    }
+    when {
+        x != null -> {
+            println(x.trim())
+        }
+    }
+}
+
+fun negatedTypeTest(x: Any) {
+    val b = x is String
+    if (!b) return
+    if (x !is String) return
+    x.trim()
+}

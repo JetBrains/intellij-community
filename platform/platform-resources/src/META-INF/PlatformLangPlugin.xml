@@ -73,6 +73,13 @@
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
+    <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager"
+                    serviceImplementation="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
+    <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.LineBookmarkProvider" order="last"/>
+    <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.ModuleBookmarkProvider"/>
+    <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>
+    <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.GroupListProvider"/>
+    <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"

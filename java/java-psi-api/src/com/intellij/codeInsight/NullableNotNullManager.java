@@ -237,7 +237,7 @@ public abstract class NullableNotNullManager {
       }
     };
     NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, false, filtered);
-    return result == null ? null : result.getAnnotation();
+    return result == null || !nullabilities.contains(result.getNullability()) ? null : result.getAnnotation();
   }
 
   private @Nullable NullabilityAnnotationInfo findPlainAnnotation(
@@ -260,6 +260,7 @@ public abstract class NullableNotNullManager {
     if (memberAnno != null) {
       Nullability nullability = annotations.getNullability(memberAnno.annotation.getQualifiedName());
       if (nullability == null) return null;
+      nullability = correctNullability(nullability, memberAnno.annotation);
       if (type != null) {
         for (PsiAnnotation typeAnno : type.getApplicableAnnotations()) {
           if (typeAnno == memberAnno.annotation) continue;
@@ -277,6 +278,10 @@ public abstract class NullableNotNullManager {
     }
     if (type instanceof PsiPrimitiveType) return null;
     return findAnnotationInTypeHierarchy(type, annotations);
+  }
+
+  protected @NotNull Nullability correctNullability(@NotNull Nullability nullability, @NotNull PsiAnnotation annotation) {
+    return nullability;
   }
 
   private static boolean areDifferentNullityAnnotations(@NotNull PsiAnnotation memberAnno, @NotNull PsiAnnotation typeAnno) {
@@ -437,6 +442,7 @@ public abstract class NullableNotNullManager {
         if (qualifiedNames.qualifiedNames().contains(qualifiedName)) {
           Nullability nullability = qualifiedNames.getNullability(qualifiedName);
           if (nullability != null) {
+            nullability = correctNullability(nullability, annotation);
             result.set(new NullabilityAnnotationInfo(annotation, nullability, false));
           }
           return false;

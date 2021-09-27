@@ -400,6 +400,17 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
+  protected @NotNull Nullability correctNullability(@NotNull Nullability nullability, @NotNull PsiAnnotation annotation) {
+    if (nullability == Nullability.NOT_NULL && annotation.hasQualifiedName(Jsr305Support.JAVAX_ANNOTATION_NONNULL)) {
+      Nullability correctedNullability = Jsr305Support.extractNullityFromWhenValue(annotation);
+      if (correctedNullability != null) {
+        return correctedNullability;
+      }
+    }
+    return nullability;
+  }
+
+  @Override
   public long getModificationCount() {
     return myTracker.getModificationCount();
   }

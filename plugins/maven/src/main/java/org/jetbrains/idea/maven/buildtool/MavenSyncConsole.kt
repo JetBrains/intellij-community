@@ -152,18 +152,19 @@ class MavenSyncConsole(private val myProject: Project) {
     doFinish()
   }
 
-
   @Synchronized
   fun terminated(exitCode: Int) = doIfImportInProcess {
+    if (EXIT_CODE_OK == exitCode || EXIT_CODE_SIGTERM == exitCode) doFinish() else doTerminate(exitCode) }
+
+  private fun doTerminate(exitCode: Int) {
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete")
     tasks.forEach { completeTask(it.first, it.second, FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))) }
 
     mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "",
-                                                      FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))))
+      FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))))
     finished = true
     started = false
-
   }
 
   @Synchronized
@@ -502,6 +503,10 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
+  companion object {
+    val EXIT_CODE_OK = 0
+    val EXIT_CODE_SIGTERM = 143
+  }
 }
 
 interface ArtifactSyncListener {

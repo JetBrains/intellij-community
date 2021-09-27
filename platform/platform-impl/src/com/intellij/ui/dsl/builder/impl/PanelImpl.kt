@@ -53,7 +53,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
-  override fun twoColumnRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?): Row {
+  override fun twoColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?): Row {
     if (column1 == null && column2 == null) {
       throw UiDslException("Both columns cannot be null")
     }
@@ -76,6 +76,45 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
           }
           else {
             column2()
+          }
+        }
+      }
+    }.layout(RowLayout.PARENT_GRID)
+  }
+
+  override fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?, column3: (Row.() -> Unit)?): Row {
+    if (column1 == null && column2 == null && column3 == null) {
+      throw UiDslException("All columns cannot be null")
+    }
+
+    return row {
+      panel {
+        row {
+          if (column1 == null) {
+            cell()
+          }
+          else {
+            column1()
+          }
+        }
+      }.gap(RightGap.COLUMNS)
+      panel {
+        row {
+          if (column2 == null) {
+            cell()
+          }
+          else {
+            column2()
+          }
+        }
+      }.gap(RightGap.COLUMNS)
+      panel {
+        row {
+          if (column3 == null) {
+            cell()
+          }
+          else {
+            column3()
           }
         }
       }

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
@@ -40,8 +42,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
-  private boolean myPromptUpdateNeeded = true;
-  private String myPrompt = "";
+  private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
   private final Queue<Consumer<TtyConnector>> myPendingActionsToExecute = new LinkedList<>();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
@@ -76,17 +77,11 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   public void handleEnterPressed() {
-    myPromptUpdateNeeded = true;
+    myPrompt.reset();
   }
 
   public void handleAnyKeyPressed() {
-    if (myPromptUpdateNeeded) {
-      myPrompt = getLineAtCursor();
-      if (LOG.isDebugEnabled()) {
-        LOG.info("Guessed shell prompt: " + myPrompt);
-      }
-      myPromptUpdateNeeded = false;
-    }
+    myPrompt.onKeyPressed();
   }
 
   public void setCommandHistoryFilePath(@Nullable String commandHistoryFilePath) {
@@ -100,18 +95,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   @NotNull
   public String getTypedShellCommand() {
-    if (myPromptUpdateNeeded) {
-      return "";
-    }
-    String line = getLineAtCursor();
-    return StringUtil.trimStart(line, myPrompt);
-  }
-
-  private @NotNull String getLineAtCursor() {
-    return processTerminalBuffer(textBuffer -> {
-      TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
-      return line != null ? line.getText() : "";
-    });
+    return myPrompt.getTypedShellCommand();
   }
 
   <T> T processTerminalBuffer(@NotNull Function<TerminalTextBuffer, T> processor) {
@@ -273,5 +257,70 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return getProcessTtyConnector(((ProxyTtyConnector)connector).getConnector());
     }
     return null;
+  }
+
+  private final class Prompt {
+    private volatile @NotNull String myPrompt = "";
+    private final AtomicInteger myTypings = new AtomicInteger(0);
+    private TerminalLine myTerminalLine;
+
+    private void reset() {
+      myTypings.set(0);
+      myTerminalLine = null;
+    }
+
+    private void onKeyPressed() {
+      TerminalLine terminalLine = processTerminalBuffer(textBuffer -> {
+        return textBuffer.getLine(getLineNumberAtCursor());
+      });
+      if (terminalLine != myTerminalLine) {
+        myTypings.set(0);
+        myTerminalLine = terminalLine;
+      }
+      if (myTypings.get() == 0) {
+        myPrompt = getLineText(terminalLine);
+        myTerminalLine = terminalLine;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Guessed shell prompt: " + myPrompt);
+        }
+      }
+      else {
+        String prompt = getLineText(terminalLine);
+        if (prompt.startsWith(myPrompt)) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Guessed prompt confirmed by typing# " + (myTypings.get() + 1) + ": " + prompt);
+          }
+        }
+        else {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Prompt rejected by typing#" + (myTypings.get() + 1) +", new prompt: " + prompt);
+          }
+          myPrompt = prompt;
+          myTypings.set(0);
+        }
+      }
+      myTypings.incrementAndGet();
+    }
+
+    private @NotNull String getTypedShellCommand() {
+      if (myTypings.get() == 0) {
+        return "";
+      }
+      String line = getLineAtCursor();
+      return StringUtil.trimStart(line, myPrompt);
+    }
+
+    private @NotNull String getLineAtCursor() {
+      return processTerminalBuffer(textBuffer -> {
+        TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
+        return line != null ? line.getText() : "";
+      });
+    }
+
+    private @NotNull String getLineText(@Nullable TerminalLine line) {
+      return processTerminalBuffer(textBuffer -> {
+        return line != null ? line.getText() : "";
+      });
+    }
   }
 }

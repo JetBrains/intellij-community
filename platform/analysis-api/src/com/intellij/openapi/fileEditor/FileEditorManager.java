@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -14,6 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+/**
+ * @see FileEditorManagerListener
+ */
 public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
@@ -98,7 +101,7 @@ public abstract class FileEditorManager {
   /**
    * @return all opened files including ones which were opened by guests during a collaborative development session.
    * Order of files in the array corresponds to the order of host's editor tabs, order for guests isn't determined.
-   * There're cases when only editors for of a particular user is needed (e.g. a search scope 'open files'),
+   * There are cases when only editors for of a particular user is needed (e.g. a search scope 'open files'),
    * but at the same time editor notifications should be shown to all users
    */
   @ApiStatus.Experimental
@@ -250,7 +253,7 @@ public abstract class FileEditorManager {
 
   /**
    * {@link FileEditorManager} supports asynchronous opening of text editors, i.e. when one of 'openFile' methods returns, returned
-   * editor might not be fully initialized yet. This method allows to delay (if needed) execution of given runnable until editor is
+   * editor might not be fully initialized yet. This method allows delaying (if needed) execution of given runnable until editor is
    * fully loaded.
    */
   public abstract void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable);

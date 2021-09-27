@@ -16,8 +16,7 @@ public interface ExternalSystemWorkspaceContributor {
    * Finds project coordinates for external project that corresponding to given module.
    *
    * @param module         is a module to find project coordinates of corresponding external project.
-   * @param modelsProvider is a modifiable model of current modification session.
    * @return found external project coordinates.
    */
-  @Nullable ProjectCoordinate findProjectId(Module module, IdeModifiableModelsProvider modelsProvider);
+  @Nullable ProjectCoordinate findProjectId(Module module);
 }

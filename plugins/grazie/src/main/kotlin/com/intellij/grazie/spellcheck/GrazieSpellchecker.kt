@@ -4,17 +4,22 @@ package com.intellij.grazie.spellcheck
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detector.heuristics.rule.RuleFilter
+import com.intellij.grazie.detector.utils.collections.emptyLinkedSet
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.toLinkedSet
+import com.intellij.openapi.application.ex.ApplicationUtil
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClassLoaderUtil
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import org.languagetool.rules.spelling.hunspell.HunspellRule
 import org.slf4j.LoggerFactory
+import java.util.concurrent.Callable
 
 object GrazieSpellchecker : GrazieStateLifecycle {
   private const val MAX_SUGGESTIONS_COUNT = 3
@@ -31,16 +36,31 @@ object GrazieSpellchecker : GrazieStateLifecycle {
   private val logger = LoggerFactory.getLogger(GrazieSpellchecker::class.java)
 
   data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule, val suggestLimit: Int) {
-    fun check(word: String): Boolean = synchronized(speller) {
+    fun check(word: String): Boolean? = synchronized(speller) {
+      if (word.isBlank()) return true
+
       ClassLoaderUtil.computeWithClassLoader<Boolean, Throwable>(GraziePlugin.classLoader) {
-        !speller.isMisspelled(word) || !speller.isMisspelled(word.capitalize())
+        if (speller.match(tool.getRawAnalyzedSentence(word)).isEmpty()) {
+          if (!speller.isMisspelled(word)) true
+          else {
+            // if the speller does not return matches, but the word is still misspelled (not in the dictionary),
+            // then this word was ignored by the rule (e.g. alien word), and we cannot be sure about its correctness
+            // let's try adding a small change to a word to see if it's alien
+            val mutated = word + word.last() + word.last()
+            if (speller.match(tool.getRawAnalyzedSentence(mutated)).isEmpty()) null else true
+          }
+        } else false
       }
     }
 
     fun suggest(text: String): Set<String> = synchronized(speller) {
       ClassLoaderUtil.computeWithClassLoader<Set<String>, Throwable>(GraziePlugin.classLoader) {
         speller.match(tool.getRawAnalyzedSentence(text))
-          .flatMap { it.suggestedReplacements }
+          .flatMap { match ->
+            match.suggestedReplacements.map {
+              text.replaceRange(match.fromPos, match.toPos, it)
+            }
+          }
           .take(suggestLimit).toSet()
       }
     }
@@ -80,11 +100,13 @@ object GrazieSpellchecker : GrazieStateLifecycle {
   fun isCorrect(word: String): Boolean? {
     val myCheckers = filterCheckers(word)
 
-    if (myCheckers.isEmpty()) return null
-
-    return myCheckers.any { speller ->
+    var isAlien = true
+    myCheckers.forEach { speller ->
       try {
-        speller.check(word)
+        when (speller.check(word)) {
+          true -> return true
+          false -> isAlien = false
+        }
       }
       catch (t: Throwable) {
         if (t.isFromHunspellRuleInit()) {
@@ -92,27 +114,38 @@ object GrazieSpellchecker : GrazieStateLifecycle {
         }
 
         logger.warn("Got exception during check for spelling mistakes by LanguageTool with word: $word", t)
-        false
       }
     }
+
+    return if (isAlien) null else false
   }
 
   /**
    * Checks text for spelling mistakes.
    */
   fun getSuggestions(word: String): LinkedSet<String> {
-    return filterCheckers(word).mapNotNull { speller ->
-      try {
-        speller.suggest(word)
-      }
-      catch (t: Throwable) {
-        if (t.isFromHunspellRuleInit()) {
-          disableHunspellRuleInitialization(speller.speller)
-        }
+    val filtered = filterCheckers(word)
+    if (filtered.isEmpty()) return emptyLinkedSet()
 
-        logger.warn("Got exception during suggest for spelling mistakes by LanguageTool with word: $word", t)
-        null
-      }
-    }.flatten().toLinkedSet()
+    val indicator = EmptyProgressIndicator.notNullize(ProgressManager.getGlobalProgressIndicator())
+    return ApplicationUtil.runWithCheckCanceled(Callable {
+      filtered.mapNotNull { speller ->
+        indicator.checkCanceled()
+        try {
+          speller.suggest(word)
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (t: Throwable) {
+          if (t.isFromHunspellRuleInit()) {
+            disableHunspellRuleInitialization(speller.speller)
+          }
+
+          logger.warn("Got exception during suggest for spelling mistakes by LanguageTool with word: $word", t)
+          null
+        }
+      }.flatten().toLinkedSet()
+    }, indicator)
   }
 }

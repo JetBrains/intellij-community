@@ -10,13 +10,13 @@ import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
-import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
+import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.ui.components.JBTextField
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
@@ -145,7 +145,7 @@ class MavenRunConfigurationSettingsEditor(
       project,
       MavenDistributionsInfo(),
       { asDistributionInfo(settings.mavenHome ?: MavenServerManager.BUNDLED_MAVEN_3) },
-      { settings.mavenHome = asMavenHome(it) }
+      { settings.mavenHome = it?.let(::asMavenHome) ?: MavenServerManager.BUNDLED_MAVEN_3 }
     ).addValidation {
       if (!MavenUtil.isValidMavenHome(it.settings.mavenHome)) {
         throw RuntimeConfigurationError(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))

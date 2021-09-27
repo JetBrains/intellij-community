@@ -32,7 +32,7 @@ public interface UsageFilteringRuleProvider {
    * @deprecated implement/call {@link #getApplicableRules(Project)}
    */
   @Deprecated
-  default UsageFilteringRule @NotNull [] getActiveRules(@SuppressWarnings("unused") @NotNull Project project) {
+  default UsageFilteringRule @NotNull [] getActiveRules(@NotNull Project project) {
     return UsageFilteringRule.EMPTY_ARRAY;
   }
 

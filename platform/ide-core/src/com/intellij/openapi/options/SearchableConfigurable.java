@@ -75,6 +75,11 @@ public interface SearchableConfigurable extends ConfigurableWithId {
 
       @Override
       public void disposeUIResources() {
+        if (myKids != null) {
+          for (Configurable kid : myKids) {
+            kid.disposeUIResources();
+          }
+        }
         myKids = null;
       }
 

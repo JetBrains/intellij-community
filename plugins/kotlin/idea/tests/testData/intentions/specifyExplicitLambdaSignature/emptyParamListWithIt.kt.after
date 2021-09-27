@@ -1,3 +1,4 @@
+// AFTER-WARNING: Variable 'num' is never used
 class TestingUse {
     fun test3(double: (a: Int) -> Int, b: Int): Int {
         return double(b)

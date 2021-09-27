@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.JvmVariableDescriptor
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 
-class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescriptor {
+class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDescriptor() {
     val stable: Boolean = calculateStable()
 
     private fun calculateStable(): Boolean {
@@ -152,7 +152,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                     !target.isExtensionDeclaration()
     }
 }
-class KtItVariableDescriptor(val lambda: KtElement, val type: KotlinType): VariableDescriptor {
+class KtItVariableDescriptor(val lambda: KtElement, val type: KotlinType): JvmVariableDescriptor() {
     override fun getDfType(qualifier: DfaVariableValue?): DfType = type.toDfType(lambda)
     override fun isStable(): Boolean = true
     override fun equals(other: Any?): Boolean = other is KtItVariableDescriptor && other.lambda == lambda

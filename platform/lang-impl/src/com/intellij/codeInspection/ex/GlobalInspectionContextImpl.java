@@ -446,7 +446,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     addProblemsToView(globalSimpleTools);
   }
 
-  private static TextRange getEffectiveRange(SearchScope searchScope, PsiFile file) {
+  private static @NotNull TextRange getEffectiveRange(@NotNull SearchScope searchScope, @NotNull PsiFile file) {
     if (searchScope instanceof LocalSearchScope) {
       List<PsiElement> scopeFileElements = ContainerUtil.filter(((LocalSearchScope)searchScope).getScope(), e -> e.getContainingFile() == file);
       if (!scopeFileElements.isEmpty()) {

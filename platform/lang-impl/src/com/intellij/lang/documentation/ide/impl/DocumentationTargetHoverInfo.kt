@@ -4,11 +4,11 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.lang.documentation.ide.EditorDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.impl.documentationRequest
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -32,7 +32,11 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
   ApplicationManager.getApplication().assertIsNonDispatchThread()
   return runSuspendingAction {
     val request = readAction {
-      injectedThenHost(project, hostEditor, hostOffset, ::psiDocumentationTarget)?.documentationRequest()
+      val targets = injectedThenHost(
+        project, hostEditor, hostOffset,
+        EditorDocumentationTargetProvider.getInstance()::documentationTargets
+      )
+      targets?.singleOrNull()?.documentationRequest()
     }
     if (request == null) {
       return@runSuspendingAction null

@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
@@ -66,12 +67,15 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         private fun recordExpressionValue(anchor: KotlinAnchor, state: DfaMemoryState, value: DfaValue) {
             val oldVal = constantConditions[anchor]
             if (oldVal == ConstantValue.UNKNOWN) return
-            var newVal = when (state.getDfType(value)) {
+            var newVal = when (val dfType = state.getDfType(value)) {
                 DfTypes.TRUE -> ConstantValue.TRUE
                 DfTypes.FALSE -> ConstantValue.FALSE
                 DfTypes.NULL -> ConstantValue.NULL
-                DfTypes.intValue(0), DfTypes.longValue(0) -> ConstantValue.ZERO
-                else -> ConstantValue.UNKNOWN
+                else -> {
+                    val constVal: Number? = dfType.getConstantOfType(Number::class.java)
+                    if (constVal != null && (constVal == 0 || constVal == 0L)) ConstantValue.ZERO
+                    else ConstantValue.UNKNOWN
+                }
             }
             if (oldVal != null && oldVal != newVal) {
                 newVal = ConstantValue.UNKNOWN
@@ -81,7 +85,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
-        // TODO: suppress when condition is required for a smart cast
+        // TODO: do something with always false branches in exhaustive when statements
+        // TODO: return x && y.let {return...}
         var parent = expression.parent
         if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
             // Will be reported for parent qualified expression
@@ -109,15 +114,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
         }
-        if (isAlsoChain(expression)) return true
+        if (isAlsoChain(expression) || isLetConstant(expression) || isUpdateChain(expression)) return true
         when (value) {
             ConstantValue.TRUE -> {
                 if (isSmartCastNecessary(expression, true)) return true
                 if (isPairingConditionInWhen(expression)) return true
-                if (isAssertion(parent)) return true
+                if (isAssertion(parent, true)) return true
             }
             ConstantValue.FALSE -> {
                 if (isSmartCastNecessary(expression, false)) return true
+                if (isAssertion(parent, false)) return true
             }
             ConstantValue.ZERO -> {
                 if (expression.readWriteAccess(false).isWrite) {
@@ -184,24 +190,83 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         return expression.isUsedAsStatement(expression.analyze(BodyResolveMode.FULL))
     }
 
+    private fun isUpdateChain(expression: KtExpression): Boolean {
+        // x = x or ..., etc.
+        if (expression !is KtSimpleNameExpression) return false
+        val binOp = expression.parent as? KtBinaryExpression ?: return false
+        val op = binOp.operationReference.text
+        if (op != "or" && op != "and" && op != "xor" && op != "||" && op != "&&") return false
+        val assignment = binOp.parent as? KtBinaryExpression ?: return false
+        if (assignment.operationToken != KtTokens.EQ) return false
+        val left = assignment.left
+        if (left !is KtSimpleNameExpression || !left.textMatches(expression.text)) return false
+        val variable = expression.mainReference.resolve() as? KtProperty ?: return false
+        val varParent = variable.parent as? KtBlockExpression ?: return false
+        var context: PsiElement = assignment
+        var block = context.parent
+        while (block is KtContainerNode ||
+                block is KtBlockExpression && block.statements.first() == context ||
+                block is KtIfExpression && block.then?.parent == context && block.`else` == null && !hasWritesTo(block.condition, variable)) {
+            context = block
+            block = context.parent
+        }
+        if (block !== varParent) return false
+        var curExpression = variable.nextSibling
+        while (curExpression != context) {
+            if (hasWritesTo(curExpression, variable)) return false
+            curExpression = curExpression.nextSibling
+        }
+        return true
+    }
+
+    private fun hasWritesTo(block: PsiElement?, variable: KtProperty): Boolean {
+        return !PsiTreeUtil.processElements(block, KtSimpleNameExpression::class.java) { ref ->
+            val write = ref.mainReference.isReferenceTo(variable) && ref.readWriteAccess(false).isWrite
+            !write
+        }
+    }
+
     // Do not report on also, as it always returns the qualifier. If necessary, qualifier itself will be reported
     private fun isAlsoChain(expr: KtExpression): Boolean {
         val call = (expr as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression ?: return false
-        val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
-        if (descriptor.name.asString() != "also") return false
-        val packageFragment = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
-        return packageFragment.fqName.asString() == "kotlin"
+        return isCallToMethod(call, "kotlin", "also")
     }
 
-    private fun isAssertion(parent: PsiElement?): Boolean {
-        val valueArg = parent as? KtValueArgument ?: return false
-        val valueArgList = valueArg.parent as? KtValueArgumentList ?: return false
-        val call = valueArgList.parent as? KtCallExpression ?: return false
+    // Do not report x.let { true } or x.let { false } as it's pretty evident
+    private fun isLetConstant(expr: KtExpression): Boolean {
+        val call = (expr as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression ?: return false
+        if (!isCallToMethod(call, "kotlin", "let")) return false
+        val lambda = call.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return false
+        return lambda.bodyExpression?.statements?.singleOrNull() is KtConstantExpression
+    }
+
+    private fun isCallToMethod(call: KtCallExpression, packageName: String, methodName: String): Boolean {
         val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
-        val name = descriptor.name.asString()
-        if (name != "assert" && name != "require" && name != "check") return false
-        val pkg = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
-        return pkg.fqName.asString() == "kotlin"
+        if (descriptor.name.asString() != methodName) return false
+        val packageFragment = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+        return packageFragment.fqName.asString() == packageName
+    }
+
+    private fun isAssertion(parent: PsiElement?, value: Boolean): Boolean {
+        return when (parent) {
+            is KtBinaryExpression ->
+                (parent.operationToken == KtTokens.ANDAND || parent.operationToken == KtTokens.OROR) && isAssertion(parent.parent, value)
+            is KtParenthesizedExpression ->
+                isAssertion(parent.parent, value)
+            is KtPrefixExpression ->
+                parent.operationToken == KtTokens.EXCL && isAssertion(parent.parent, !value)
+            is KtValueArgument -> {
+                if (!value) return false
+                val valueArgList = parent.parent as? KtValueArgumentList ?: return false
+                val call = valueArgList.parent as? KtCallExpression ?: return false
+                val descriptor = call.resolveToCall()?.resultingDescriptor ?: return false
+                val name = descriptor.name.asString()
+                if (name != "assert" && name != "require" && name != "check") return false
+                val pkg = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+                return pkg.fqName.asString() == "kotlin"
+            }
+            else -> false
+        }
     }
 
     /**
@@ -313,14 +378,14 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         if (!shouldSuppress(cv, expr)) {
                             val key = when (cv) {
                                 ConstantValue.TRUE ->
-                                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression)
+                                    if (shouldReportAsValue(expr))
                                         "inspection.message.value.always.true"
                                     else if (logicalChain(expr))
-                                        "inspection.message.condition.always.true.when.reached" 
-                                    else 
+                                        "inspection.message.condition.always.true.when.reached"
+                                    else
                                         "inspection.message.condition.always.true"
                                 ConstantValue.FALSE ->
-                                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression)
+                                    if (shouldReportAsValue(expr))
                                         "inspection.message.value.always.false"
                                     else if (logicalChain(expr))
                                         "inspection.message.condition.always.false.when.reached"
@@ -331,7 +396,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                                 else -> throw IllegalStateException("Unexpected constant: $cv")
                             }
                             val highlightType =
-                                if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression) ProblemHighlightType.WEAK_WARNING
+                                if (shouldReportAsValue(expr)) ProblemHighlightType.WEAK_WARNING
                                 else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
                             holder.registerProblem(expr, KotlinBundle.message(key), highlightType)
                         }
@@ -375,6 +440,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
     }
 
+    private fun shouldReportAsValue(expr: KtExpression) =
+        expr is KtSimpleNameExpression || expr is KtQualifiedExpression && expr.selectorExpression is KtSimpleNameExpression
+
     private fun logicalChain(expr: KtExpression): Boolean {
         var context = expr
         var parent = context.parent
@@ -393,14 +461,20 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     {
         val context = anchor.analyze(BodyResolveMode.FULL)
         if (context.diagnostics.forElement(anchor).any
-            { it.factory == Errors.CAST_NEVER_SUCCEEDS || it.factory == Errors.SENSELESS_COMPARISON || it.factory == Errors.USELESS_IS_CHECK }
+            { it.factory == Errors.CAST_NEVER_SUCCEEDS
+                    || it.factory == Errors.SENSELESS_COMPARISON
+                    || it.factory == Errors.SENSELESS_NULL_IN_WHEN
+                    || it.factory == Errors.USELESS_IS_CHECK
+                    || it.factory == Errors.DUPLICATE_LABEL_IN_WHEN }
         ) {
             return true
         }
         val suppressionCache = KotlinCacheService.getInstance(anchor.project).getSuppressionCache()
         return suppressionCache.isSuppressed(anchor, "CAST_NEVER_SUCCEEDS", Severity.WARNING) ||
                 suppressionCache.isSuppressed(anchor, "SENSELESS_COMPARISON", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "USELESS_IS_CHECK", Severity.WARNING)
+                suppressionCache.isSuppressed(anchor, "SENSELESS_NULL_IN_WHEN", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, "USELESS_IS_CHECK", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, "DUPLICATE_LABEL_IN_WHEN", Severity.WARNING)
     }
 
     private fun shouldSuppressWhenCondition(

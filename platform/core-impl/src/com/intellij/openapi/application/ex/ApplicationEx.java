@@ -66,7 +66,7 @@ public interface ApplicationEx extends Application {
 
   void setSaveAllowed(boolean value);
 
-  default void exit(@SuppressWarnings("unused") int flags) {
+  default void exit(int flags) {
     exit();
   }
 

@@ -97,13 +97,28 @@ fun AnActionEvent.environment(): ExecutionEnvironment? {
   return runToolbarData()?.environment
 }
 
+fun ExecutionEnvironment.isRunning(): Boolean? {
+  return this.contentToReuse?.processHandler?.let {
+    !it.isProcessTerminating && !it.isProcessTerminated
+  }
+}
+
+
+fun AnActionEvent.isProcessTerminating(): Boolean {
+  return this.environment()?.isProcessTerminating() == true
+}
+
+fun ExecutionEnvironment.isProcessTerminating(): Boolean {
+  return this.contentToReuse?.processHandler?.isProcessTerminating == true
+}
+
 internal fun AnActionEvent.id(): String? {
   return runToolbarData()?.id
 }
 
 internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
   return ExecutorGroup.getGroupIfProxy(this.executor)?.let { executorGroup ->
-    RunToolbarProcess.getProcesses().firstOrNull{
+    RunToolbarProcess.getProcesses().firstOrNull {
       it.executorId == executorGroup.id
     }
   } ?: run {

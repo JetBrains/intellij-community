@@ -96,10 +96,10 @@ class GotItTooltip(@NonNls val id: String,
   private var maxCount = 1
   private var onBalloonCreated: (Balloon) -> Unit = {}
 
-  // Ease the access (remove private or val to var) if fine tuning is needed.
+  // Ease the access (remove private or val to var) if fine-tuning is needed.
   private val savedCount: (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
-  private val checkCount: (String) -> Boolean = { savedCount(it) < maxCount }
-  var canShow: () -> Boolean = { true }
+  var showCondition: (String) -> Boolean = { savedCount(it) in 0 until maxCount }
+
   private val gotIt: (String) -> Unit = {
     val count = savedCount(it)
     if (count in 0 until maxCount) PropertiesComponent.getInstance().setValue(it, (count + 1).toString())
@@ -240,7 +240,7 @@ class GotItTooltip(@NonNls val id: String,
   /**
    * Returns <code>true</code> if this tooltip can be shown at the given properties settings.
    */
-  override fun canShow(): Boolean = canShow.let { it() } && checkCount("$PROPERTY_PREFIX.$id")
+  override fun canShow(): Boolean = showCondition("$PROPERTY_PREFIX.$id")
 
   /**
    * Show tooltip for the given component and point to the component.

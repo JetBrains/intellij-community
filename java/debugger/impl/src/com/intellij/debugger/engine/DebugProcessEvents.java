@@ -45,8 +45,8 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
-import com.sun.jdi.event.*;
 import com.sun.jdi.event.EventQueue;
+import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import one.util.streamex.StreamEx;
@@ -448,23 +448,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private void processVMDeathEvent(SuspendContextImpl suspendContext, @Nullable Event event) {
     // do not destroy another process on reattach
-    VirtualMachine vm = getVirtualMachineProxy().getVirtualMachine();
-    if (isAttached() && (event == null || vm == event.virtualMachine())) {
-      try {
-        preprocessEvent(suspendContext, null);
-        cancelRunToCursorBreakpoint();
-      }
-      finally {
-        DebuggerEventThread eventThread = myEventThreads.get(vm);
-        if (eventThread != null) {
-          eventThread.stopListening();
-          myEventThreads.remove(vm);
+    if (isAttached()) {
+      VirtualMachine vm = getVirtualMachineProxy().getVirtualMachine();
+      if (event == null || vm == event.virtualMachine()) {
+        try {
+          preprocessEvent(suspendContext, null);
+          cancelRunToCursorBreakpoint();
         }
-        closeProcess(false);
+        finally {
+          DebuggerEventThread eventThread = myEventThreads.get(vm);
+          if (eventThread != null) {
+            eventThread.stopListening();
+            myEventThreads.remove(vm);
+          }
+          closeProcess(false);
+        }
       }
     }
 
-    if(event != null) {
+    if (event != null) {
       showStatusText(this, event);
     }
   }

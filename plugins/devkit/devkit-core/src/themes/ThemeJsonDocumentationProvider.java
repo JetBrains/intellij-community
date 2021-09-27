@@ -80,7 +80,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
         final PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createTypeByFQClassName(source);
 
         StringBuilder typeBuilder = new StringBuilder();
-        JavaDocInfoGeneratorFactory.create(element.getProject(), null, false).generateType(typeBuilder, type, element);
+        JavaDocInfoGeneratorFactory.create(element.getProject(), null).generateType(typeBuilder, type, element);
         return typeBuilder.toString(); //NON-NLS
       });
     }

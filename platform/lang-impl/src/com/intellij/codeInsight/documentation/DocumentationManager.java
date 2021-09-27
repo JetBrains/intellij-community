@@ -464,17 +464,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   /**
    * Asks to show quick doc for the target element.
    *
-   * @param editor        editor with an element for which quick do should be shown
-   * @param element       target element which documentation should be shown
-   * @param original      element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
-   *                      A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
-   *                      declaration but {@code 'element'} argument is a {@code Runnable} descriptor
-   * @param closeCallback callback to be notified on target hint close (if any)
-   * @param documentation precalculated documentation
-   * @param closeOnSneeze flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
-   *                      two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
-   *                      on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
-   *                      at the first situation but don't want to do that at the second
+   * @param editor             editor with an element for which quick do should be shown
+   * @param element            target element which documentation should be shown
+   * @param original           element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
+   *                           A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
+   *                           declaration but {@code 'element'} argument is a {@code Runnable} descriptor
+   * @param closeCallback      callback to be notified on target hint close (if any)
+   * @param documentation      precalculated documentation
+   * @param closeOnSneeze      flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
+   *                           two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
+   *                           on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
+   *                           at the first situation but don't want to do that at the second
    * @param useStoredPopupSize whether popup size previously set by user (via mouse-dragging) should be used, or default one should be used
    */
   public void showJavaDocInfo(@NotNull Editor editor,
@@ -1425,7 +1425,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return LibraryUtil.findLibraryEntry(virtualFile, project);
   }
 
-  protected ActionCallback cancelAndFetchDocInfoByLink(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
+  protected ActionCallback cancelAndFetchDocInfoByLink(@NotNull DocumentationComponent component,
+                                                       @NotNull DocumentationCollector provider) {
     return cancelAndFetchDocInfo(component, provider);
   }
 
@@ -1802,7 +1803,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @NlsSafe @Nullable String externalUrl,
     @Nullable DocumentationProvider provider
   ) {
-    return decorate(text, getLocationText(element), getExternalText(element, externalUrl, provider));
+    HtmlChunk locationInfo = Optional.ofNullable(provider)
+      .map(it -> it.getLocationInfo(element))
+      .orElseGet(() -> DocumentationProviderEx.getDefaultLocationInfo(element));
+    return decorate(text, locationInfo, getExternalText(element, externalUrl, provider));
   }
 
   @Internal
@@ -1928,7 +1932,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     try {
       return new URL(url).toURI().getHost();
     }
-    catch (URISyntaxException | MalformedURLException ignored) { }
+    catch (URISyntaxException | MalformedURLException ignored) {
+    }
     return null;
   }
 
@@ -1954,47 +1959,5 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @Contract(pure = true)
   public static String addExternalLinksIcon(String text) {
     return EXTERNAL_LINK_PATTERN.matcher(text).replaceAll(EXTERNAL_LINK_REPLACEMENT);
-  }
-
-  @RequiresReadLock
-  @RequiresBackgroundThread
-  private static @Nullable HtmlChunk getLocationText(@Nullable PsiElement element) {
-    if (element != null) {
-      PsiFile file = element.getContainingFile();
-      VirtualFile vfile = file == null ? null : file.getVirtualFile();
-
-      if (vfile == null) return null;
-
-      SearchScope scope = element.getUseScope();
-      if (scope instanceof LocalSearchScope) {
-        return null;
-      }
-
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-      Module module = fileIndex.getModuleForFile(vfile);
-
-      if (module != null && !ModuleType.isInternal(module)) {
-        if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
-        return HtmlChunk.fragment(
-          HtmlChunk.tag("icon").attr("src", ModuleType.get(module).getId()),
-          HtmlChunk.nbsp(),
-          HtmlChunk.text(module.getName())
-        );
-      }
-      else {
-        List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
-        for (OrderEntry order : entries) {
-          if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-            return HtmlChunk.fragment(
-              HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
-              HtmlChunk.nbsp(),
-              HtmlChunk.text(order.getPresentableName())
-            );
-          }
-        }
-      }
-    }
-
-    return null;
   }
 }

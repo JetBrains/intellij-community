@@ -430,7 +430,6 @@ public class SearchTextField extends JPanel {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
   public void setSearchIcon(final Icon icon) {
   }
 

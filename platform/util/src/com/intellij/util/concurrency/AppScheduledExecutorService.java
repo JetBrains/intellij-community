@@ -4,6 +4,7 @@ package com.intellij.util.concurrency;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.JobFutureTask;
+import com.intellij.openapi.progress.JobRunnable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
@@ -153,7 +154,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     public void execute(@NotNull Runnable command) {
       if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
-        super.execute(JobFutureTask.jobRunnable(command));
+        super.execute(JobRunnable.jobRunnable(command));
       }
       else {
         super.execute(command);

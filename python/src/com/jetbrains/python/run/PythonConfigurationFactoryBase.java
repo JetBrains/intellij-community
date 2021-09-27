@@ -31,4 +31,9 @@ public abstract class PythonConfigurationFactoryBase extends ConfigurationFactor
   public boolean isApplicable(@NotNull Project project) {
     return PlatformUtils.isPyCharm() || PythonSdkUtil.hasValidSdk();
   }
+
+  @Override
+  public boolean isEditableInDumbMode() {
+    return true;
+  }
 }

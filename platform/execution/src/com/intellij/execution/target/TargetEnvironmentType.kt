@@ -8,6 +8,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
@@ -51,8 +52,23 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   open fun createVolumeContributionUI(): TargetSpecificVolumeContributionUI? = null
 
   companion object {
+    /**
+     * For retrieving the list of target types available for Run Configurations use [getTargetTypesForRunConfigurations].
+     */
     @JvmField
     val EXTENSION_NAME = ExtensionPointName.create<TargetEnvironmentType<*>>("com.intellij.executionTargetType")
+
+    /**
+     * Returns the types that might be shown in "Run on" for Run Configurations.
+     *
+     * The classes annotated with [HideFromRunOn] are excluded.
+     *
+     * @see HideFromRunOn
+     */
+    @JvmStatic
+    @ApiStatus.Experimental
+    fun getTargetTypesForRunConfigurations(): List<TargetEnvironmentType<*>> =
+      EXTENSION_NAME.extensionList.filter { it.javaClass.isAnnotationPresent(HideFromRunOn::class.java) }
 
     @JvmStatic
     fun <Type, Config, State> duplicateTargetConfiguration(type: Type, template: Config): Config

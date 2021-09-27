@@ -39,6 +39,7 @@ private val myFocusModeCheckBox                       get() = CheckboxDescriptor
 private val myCbShowIntentionBulbCheckBox             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.bulb"), PropertyBinding(model::isShowIntentionBulb, model::setShowIntentionBulb))
 private val myCodeLensCheckBox                        get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.editor.preview.popup"), uiSettings::showEditorToolTip)
 private val myRenderedDocCheckBox                     get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.rendered.doc.comments"), PropertyBinding(model::isDocCommentRenderingEnabled, model::setDocCommentRenderingEnabled))
+private val myDocSyntaxHighlightingCheckBox           get() = CheckboxDescriptor(IdeBundle.message("checkbox.enable.doc.syntax.highlighting"), PropertyBinding(model::isDocSyntaxHighlightingEnabled, model::setDocSyntaxHighlightingEnabled))
 // @formatter:on
 
 class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
@@ -99,6 +100,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       fullRow {
         checkBox(myRenderedDocCheckBox)
         component(createReaderModeComment()).withLargeLeftGap()
+      }
+      row {
+        checkBox(myDocSyntaxHighlightingCheckBox)
       }
 
       for (configurable in configurables) {

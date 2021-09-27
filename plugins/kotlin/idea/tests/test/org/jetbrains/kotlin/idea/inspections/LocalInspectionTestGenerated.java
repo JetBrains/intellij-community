@@ -953,6 +953,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/catchIgnoresException")
+    public static class CatchIgnoresException extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyUnderscore.kt")
+        public void testAlreadyUnderscore() throws Exception {
+            runTest("testData/inspectionsLocal/catchIgnoresException/alreadyUnderscore.kt");
+        }
+
+        @TestMetadata("hasBody.kt")
+        public void testHasBody() throws Exception {
+            runTest("testData/inspectionsLocal/catchIgnoresException/hasBody.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("testData/inspectionsLocal/catchIgnoresException/hasComment.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/inspectionsLocal/catchIgnoresException/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/collections")
     public abstract static class Collections extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -8156,6 +8184,36 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/inLocalClass.kt");
         }
 
+        @TestMetadata("innerClassConstructorCall.kt")
+        public void testInnerClassConstructorCall() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall2.kt")
+        public void testInnerClassConstructorCall2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall2.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall3.kt")
+        public void testInnerClassConstructorCall3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall3.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall4.kt")
+        public void testInnerClassConstructorCall4() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall4.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall5.kt")
+        public void testInnerClassConstructorCall5() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall5.kt");
+        }
+
+        @TestMetadata("innerClassConstructorCall6.kt")
+        public void testInnerClassConstructorCall6() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/innerClassConstructorCall6.kt");
+        }
+
         @TestMetadata("noOuterClassMemberReference.kt")
         public void testNoOuterClassMemberReference() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassMemberReference.kt");
@@ -11319,6 +11377,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("equalsWithEOLComment.kt")
             public void testEqualsWithEOLComment() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/equalsWithEOLComment.kt");
+            }
+
+            @TestMetadata("equalsWithIndex.kt")
+            public void testEqualsWithIndex() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/equalsWithIndex.kt");
             }
 
             @TestMetadata("equalsWithNullOther.kt")

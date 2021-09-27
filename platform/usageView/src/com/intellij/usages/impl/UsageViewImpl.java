@@ -777,7 +777,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  @SuppressWarnings("deprecation")
   protected UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
@@ -787,16 +786,15 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
     for (UsageFilteringRuleProvider provider : providers) {
+      //noinspection deprecation
       ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
     return list.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
-  protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(
-    @NotNull Project project,
-    @NotNull UsageViewSettings usageViewSettings,
-    @Nullable UsageViewPresentation presentation
-  ) {
+  protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(@NotNull Project project,
+                                                                        @NotNull UsageViewSettings usageViewSettings,
+                                                                        @Nullable UsageViewPresentation presentation) {
     List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<UsageGroupingRule> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
@@ -919,7 +917,6 @@ public class UsageViewImpl implements UsageViewEx {
   /**
    * Creates filtering actions for the toolbar
    */
-  @SuppressWarnings("deprecation")
   protected void addFilteringFromExtensionPoints(@NotNull DefaultActionGroup group) {
     if (getPresentation().isCodeUsages()) {
       JComponent component = getComponent();
@@ -930,6 +927,7 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
     for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
+      //noinspection deprecation
       AnAction[] providerActions = provider.createFilteringActions(this);
       for (AnAction action : providerActions) {
         group.add(action);

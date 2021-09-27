@@ -1,3 +1,15 @@
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'c' is never used
+// AFTER-WARNING: Parameter 'c' is never used
+// AFTER-WARNING: Parameter 'f' is never used
+// AFTER-WARNING: Parameter 'i' is never used
 open class Foo(f: Boolean.(Int<caret>) -> String) {
     constructor(a: Int, f: (Int, Boolean) -> String) : this({ i -> f(i, this) })
     constructor(a: Int) : this({ i -> (::g)(i, this) })

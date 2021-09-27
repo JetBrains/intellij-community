@@ -50,6 +50,11 @@ object SourceNavigationHelper {
     private var forceResolve = false
 
     @TestOnly
+    fun resetForceResolve() {
+        forceResolve = false
+    }
+
+    @TestOnly
     fun setForceResolve(forceResolve: Boolean) {
         SourceNavigationHelper.forceResolve = forceResolve
     }

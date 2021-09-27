@@ -26,6 +26,7 @@ internal class RescanIndexesAction : RecoveryAction {
     val updater = object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
       override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistory {
         try {
+          IndexingFlag.cleanupProcessedFlag()
           val history = super.performScanningAndIndexing(indicator)
           historyFuture.complete(history)
           return history

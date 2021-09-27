@@ -6,7 +6,7 @@
 
   <properties>
     <gradle.version>7.2</gradle.version>
-    <junit.version>5.7.1</junit.version>
+    <junit.version>5.8.1</junit.version>
     <kotlin.version>1.5.10</kotlin.version>
 
     <!-- OpenJFX release trains -->
@@ -108,7 +108,7 @@
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>1.12.1</version>
+        <version>1.13.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

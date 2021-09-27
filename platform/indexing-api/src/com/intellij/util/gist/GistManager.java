@@ -50,21 +50,6 @@ public abstract class GistManager {
                                                           @NotNull NullableFunction<? super PsiFile, ? extends Data> calcData);
 
   /**
-   * Create a new {@link PsiFileGist} which is shared across projects, so its data can't depend on project.
-   * @param <Data>       the type of the data to cache
-   * @param id           a unique identifier of this data
-   * @param version      should be incremented each time the {@code externalizer} or {@code calcData} logic changes.
-   * @param externalizer used to store the data to the disk and retrieve it
-   * @param calcData     calculates the data by the file content when needed
-   * @return the gist object, where {@link PsiFileGist#getFileData} can later be used to retrieve the cached data
-   */
-  @NotNull
-  public abstract <Data> PsiFileGist<Data> newPsiFileProjectIndependentGist(@NotNull @NonNls String id,
-                                                                            int version,
-                                                                            @NotNull DataExternalizer<Data> externalizer,
-                                                                            @NotNull NullableFunction<? super PsiFile, ? extends Data> calcData);
-
-  /**
    * Force all gists to be recalculated on the next request.
    */
   public abstract void invalidateData();
@@ -73,10 +58,4 @@ public abstract class GistManager {
    * Force all gists for the given file to be recalculated on the next request.
    */
   public abstract void invalidateData(@NotNull VirtualFile file);
-
-  /**
-   * Checks if {@link PsiFileGist} uses memory storage instead of persistent storage.
-   * @returns true if {@link PsiFile}'s state doesn't match VFS.
-   */
-  public abstract boolean shouldUseMemoryStorage(@NotNull PsiFile file);
 }

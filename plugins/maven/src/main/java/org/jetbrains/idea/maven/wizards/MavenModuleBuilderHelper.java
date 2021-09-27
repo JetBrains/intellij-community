@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -211,7 +212,8 @@ public class MavenModuleBuilderHelper {
     runner.run(params, settings, () -> copyGeneratedFiles(workingDir, pom, project, props.get("artifactId")));
   }
 
-  private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project, String artifactId) {
+  @VisibleForTesting
+  void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project, String artifactId) {
     try {
       artifactId = artifactId != null ? artifactId : myProjectId.getArtifactId();
       if (artifactId != null) {

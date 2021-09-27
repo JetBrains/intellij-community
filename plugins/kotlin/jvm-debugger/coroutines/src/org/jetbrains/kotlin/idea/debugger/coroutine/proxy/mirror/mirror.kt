@@ -11,11 +11,9 @@ data class MirrorOfStandaloneCoroutine(
 )
 
 data class MirrorOfCoroutineContext(
-    val that: ObjectReference,
     val name: String?,
     val id: Long?,
-    val dispatcher: String?,
-    val job: ObjectReference?
+    val dispatcher: String?
 )
 
 data class MirrorOfCoroutineOwner(val that: ObjectReference, val coroutineInfo: MirrorOfCoroutineInfo?)
@@ -25,9 +23,8 @@ data class MirrorOfDebugProbesImpl(val that: ObjectReference, val instance: Obje
 data class MirrorOfWeakReference(val that: ObjectReference, val reference: ObjectReference?)
 
 data class MirrorOfCoroutineInfo(
-    val that: ObjectReference,
-    val sequenceNumber: Long?,
     val context: MirrorOfCoroutineContext?,
+    val sequenceNumber: Long?,
     val state: String?,
     val lastObservedThread: ThreadReference?,
     val lastObservedFrame: ObjectReference?,
@@ -41,17 +38,11 @@ data class MirrorOfCoroutineStackFrame(
     val stackTraceElement: MirrorOfStackTraceElement?
 )
 
-
 data class MirrorOfStackTraceElement(
-    val that: ObjectReference,
-    val declaringClassObject: ObjectReference?,
-    val moduleName: String?,
-    val moduleVersion: String?,
-    val declaringClass: String?,
-    val methodName: String?,
+    val declaringClass: String,
+    val methodName: String,
     val fileName: String?,
-    val lineNumber: Int?,
-    val format: Byte?
+    val lineNumber: Int?
 ) {
     fun stackTraceElement() =
             StackTraceElement(

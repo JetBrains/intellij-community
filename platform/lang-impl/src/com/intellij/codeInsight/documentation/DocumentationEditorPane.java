@@ -111,16 +111,17 @@ public class DocumentationEditorPane extends JEditorPane {
   }
 
   private int definitionPreferredWidth() {
-    int preferredDefinitionWidth = getPreferredDefinitionWidth();
+    int preferredDefinitionWidth = getPreferredSectionWidth("definition");
+    int preferredLocationWidth = Math.max(getPreferredSectionWidth("bottom-no-content"), getPreferredSectionWidth("bottom"));
     if (preferredDefinitionWidth < 0) {
       return -1;
     }
     int preferredContentWidth = getPreferredContentWidth(getDocument().getLength());
-    return Math.max(preferredContentWidth, preferredDefinitionWidth);
+    return Math.max(preferredContentWidth, Math.max(preferredDefinitionWidth, preferredLocationWidth));
   }
 
-  private int getPreferredDefinitionWidth() {
-    View definition = findDefinition(getUI().getRootView(this));
+  private int getPreferredSectionWidth(String sectionClassName) {
+    View definition = findSection(getUI().getRootView(this), sectionClassName);
     return definition == null ? -1 : (int)definition.getPreferredSpan(View.X_AXIS);
   }
 
@@ -142,12 +143,12 @@ public class DocumentationEditorPane extends JEditorPane {
     return contentLengthPreferredSize;
   }
 
-  private static @Nullable View findDefinition(@NotNull View view) {
-    if ("definition".equals(view.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
+  private static @Nullable View findSection(@NotNull View view, @NotNull String sectionClassName) {
+    if (sectionClassName.equals(view.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
       return view;
     }
     for (int i = 0; i < view.getViewCount(); i++) {
-      View definition = findDefinition(view.getView(i));
+      View definition = findSection(view.getView(i), sectionClassName);
       if (definition != null) {
         return definition;
       }

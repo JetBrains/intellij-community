@@ -35,6 +35,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
@@ -887,26 +888,7 @@ public final class EditorWindow {
       setNeedsRepaint(true);
 
       Rectangle r = getTabbedPane().getTabs().getDropArea();
-      switch (myPosition) {
-        case CENTER:
-          break;
-        case UP:
-          r.height /= 2;
-          break;
-        case LEFT:
-          r.width /= 2;
-          break;
-        case DOWN:
-          int h = r.height / 2;
-          r.height -= h;
-          r.y += h;
-          break;
-        case RIGHT:
-          int w = r.width / 2;
-          r.width -= w;
-          r.x += w;
-          break;
-      }
+      TabsUtil.updateBoundsWithDropSide(r, myPosition.mySwingConstant);
       myRectangle = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
     }
   }

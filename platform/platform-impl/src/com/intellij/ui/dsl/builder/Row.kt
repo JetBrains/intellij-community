@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.*
-import javax.swing.event.HyperlinkEvent
 
 /**
  * Determines relation between row grid and parent's grid
@@ -83,12 +82,17 @@ interface Row {
   fun layout(rowLayout: RowLayout): Row
 
   /**
+   * The row becomes resizable and occupies all free space. For several resizable rows extra free space is divided between rows equally
+   */
+  fun resizableRow(): Row
+
+  /**
    * Adds comment after the row. Visibility and enabled state of the row affects row comment as well
    */
   fun rowComment(@NlsContexts.DetailedDescription comment: String,
                  maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Row
 
-  fun <T : JComponent> cell(component: T): Cell<T>
+  fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
 
   /**
    * Adds an empty cell in the grid
@@ -102,6 +106,8 @@ interface Row {
    * The row is invisible while there is an invisible parent
    */
   fun visible(isVisible: Boolean): Row
+
+  fun visibleIf(predicate: ComponentPredicate): Row
 
   /**
    * Sets enabled state of the row including comment [Row.comment] and all children recursively.
@@ -152,19 +158,23 @@ interface Row {
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
+  fun labelHtml(@NlsContexts.Label text: String,
+                action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
+
   fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = -1): Cell<JLabel>
 
   fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
 
-  fun commentHtml(@NlsContexts.DetailedDescription text: String, action: (HyperlinkEvent) -> Unit): Cell<JEditorPane>
+  fun commentHtml(@NlsContexts.DetailedDescription text: String,
+                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
-   * Creates focusable link with text inside. Should not be used with html inside
+   * Creates focusable link with text inside. Should not be used with html in [text]
    */
   fun link(@NlsContexts.LinkLabel text: String, action: (ActionEvent) -> Unit): Cell<ActionLink>
 
   /**
-   * Creates focusable browser link with text inside. Should not be used with html inside
+   * Creates focusable browser link with text inside. Should not be used with html in [text]
    */
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 
@@ -180,6 +190,8 @@ interface Row {
                                 fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
 
   fun intTextField(range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
+
+  fun textArea(): Cell<JBTextArea>
 
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 

@@ -59,19 +59,21 @@ public class Jsr305Support implements AnnotationPackageSupport {
   public static boolean isNullabilityNickName(@NotNull PsiClass candidate) {
     String qname = candidate.getQualifiedName();
     if (qname == null || qname.startsWith("javax.annotation.")) return false;
-    return getNickNamedNullability(candidate) != Nullability.UNKNOWN;
+    return getNickNamedNullability(candidate) != null;
   }
 
-  @NotNull
-  public static Nullability getNickNamedNullability(@NotNull PsiClass psiClass) {
-    if (AnnotationUtil.findAnnotation(psiClass, TYPE_QUALIFIER_NICKNAME) == null) return Nullability.UNKNOWN;
+  /**
+   * @param psiClass annotation class
+   * @return nicknamed nullability declared by this annotation; null if this annotation is not a nullability nickname annotation
+   */
+  public static @Nullable Nullability getNickNamedNullability(@NotNull PsiClass psiClass) {
+    if (AnnotationUtil.findAnnotation(psiClass, TYPE_QUALIFIER_NICKNAME) == null) return null;
 
     PsiAnnotation nonNull = AnnotationUtil.findAnnotation(psiClass, JAVAX_ANNOTATION_NONNULL);
-    return nonNull != null ? extractNullityFromWhenValue(nonNull) : Nullability.UNKNOWN;
+    return nonNull != null ? extractNullityFromWhenValue(nonNull) : null;
   }
 
-  @NotNull
-  private static Nullability extractNullityFromWhenValue(@NotNull PsiAnnotation nonNull) {
+  public static @Nullable Nullability extractNullityFromWhenValue(@NotNull PsiAnnotation nonNull) {
     PsiAnnotationMemberValue when = nonNull.findAttributeValue("when");
     if (when instanceof PsiReferenceExpression) {
       String refName = ((PsiReferenceExpression)when).getReferenceName();
@@ -81,13 +83,16 @@ public class Jsr305Support implements AnnotationPackageSupport {
       if ("MAYBE".equals(refName) || "NEVER".equals(refName)) {
         return Nullability.NULLABLE;
       }
+      if ("UNKNOWN".equals(refName)) {
+        return Nullability.UNKNOWN;
+      }
     }
 
     // 'when' is unknown and annotation is known -> default value (for javax.annotation.Nonnull is ALWAYS)
-    if (when == null && JAVAX_ANNOTATION_NONNULL.equals(nonNull.getQualifiedName())) {
+    if (when == null) {
       return Nullability.NOT_NULL;
     }
-    return Nullability.UNKNOWN;
+    return null;
   }
 
   @NotNull

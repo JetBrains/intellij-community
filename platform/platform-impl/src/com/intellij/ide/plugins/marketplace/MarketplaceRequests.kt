@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.auth.PluginHostAuthService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
@@ -156,6 +158,9 @@ class MarketplaceRequests : PluginInfoProvider {
           if (eTag != null) {
             connection.setRequestProperty("If-None-Match", eTag)
           }
+          service<PluginHostAuthService>()
+            .connectionTuner
+            .tune(connection)
         }
         .productNameAsUserAgent()
         .connect { request ->

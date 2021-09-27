@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.memberPullUp;
 
@@ -78,7 +78,7 @@ public final class PullUpConflictsUtil {
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final Set<PsiMethod> abstrMethods = new HashSet<>(abstractMethods);
-    if (superClass != null) {
+    if (superClass != null && movedMembers2Super) {
       for (PsiMethod method : subclass.getMethods()) {
         if (!movedMembers.contains(method) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
           if (method.findSuperMethods(superClass).length > 0) {

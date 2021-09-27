@@ -1,8 +1,24 @@
 // WITH_RUNTIME
-fun assertCall(x: Int) {
+fun assertCall(x: Int, b: Boolean, c: Boolean) {
     if (x < 0) return
-    assert(x >= 0)
-    assert(<warning descr="Condition is always false">x < 0</warning>)
+    if (Math.random() > 0.5) {
+        assert(x >= 0)
+    }
+    if (Math.random() > 0.5) {
+        assert(b && x >= 0)
+    }
+    if (Math.random() > 0.5) {
+        assert(b || x >= 0)
+    }
+    if (Math.random() > 0.5) {
+        assert(<warning descr="Condition is always false">c && <warning descr="Condition is always false when reached">!(b || <warning descr="Condition is always true when reached">x >= 0</warning>)</warning></warning>)
+    }
+    if (Math.random() > 0.5) {
+        assert(c && !(b || x < 0))
+    }
+    if (Math.random() > 0.5) {
+        assert(<warning descr="Condition is always false">x < 0</warning>)
+    }
 }
 fun requireCall(x: Int) {
     if (x < 0) return
@@ -48,3 +64,24 @@ interface MyFuture<T> {
     fun get():T?
 }
 class X
+
+fun updateChain(b: Boolean, c: Boolean): Int {
+    var x = 0
+    if (b) x = x or 1
+    if (c) x = x or 2
+    return x
+}
+fun updateChainBoolean(b: Boolean, c: Boolean): Boolean {
+    var x = false
+    x = x || b
+    x = x || c
+    return x
+}
+fun updateChainInterrupted(b: Boolean, c: Boolean): Int {
+    var x = 0
+    x++
+    <warning descr="Value is always zero">x--</warning>
+    if (b) x = <weak_warning descr="Value is always zero">x</weak_warning> or 1
+    if (c) x = x or 2
+    return x
+}

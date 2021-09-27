@@ -39,9 +39,16 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
   }
 
   fun getBuildProcessClasspath(project: Project): List<String> {
-    val rawClasspath = computeRawBuildProcessClasspath(project)
+    val appClassPath = ClasspathBootstrap.getBuildProcessApplicationClasspath()
+    val pluginClassPath = getBuildProcessPluginsClasspath(project)
+    val rawClasspath = appClassPath + pluginClassPath
     synchronized(lastClasspathLock) {
       if (rawClasspath != lastRawClasspath) {
+        if (LOG.isDebugEnabled) {
+          LOG.debug("buildProcessAppClassPath: $appClassPath")
+          LOG.debug("buildProcessPluginClassPath: $appClassPath")
+        }
+
         lastRawClasspath = rawClasspath
         lastFilteredClasspath = filterOutOlderVersions(rawClasspath)
         if (LOG.isDebugEnabled && lastRawClasspath != lastFilteredClasspath) {
@@ -52,10 +59,6 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
       }
       return lastFilteredClasspath!!
     }
-  }
-
-  private fun computeRawBuildProcessClasspath(project: Project): List<String> {
-    return ClasspathBootstrap.getBuildProcessApplicationClasspath() + getBuildProcessPluginsClasspath(project)
   }
 
   /**
@@ -137,7 +140,7 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
 
     private fun computeCompileServerPluginsClasspath(): List<String> {
       val classpath = ArrayList<String>()
-      for (serverPlugin in CompileServerPlugin.EP_NAME.extensions) {
+      for (serverPlugin in CompileServerPlugin.EP_NAME.extensionList) {
         val pluginId = serverPlugin.pluginDescriptor.pluginId
         val plugin = PluginManagerCore.getPlugin(pluginId)
         LOG.assertTrue(plugin != null, pluginId)
@@ -172,9 +175,12 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
       data class JarInfo(val path: String, val title: String, val version: String)
 
       fun readTitleAndVersion(path: String): JarInfo? {
-        val file = File(path)
-        if (!file.isFile || !FileUtil.extensionEquals(file.name, "jar")) return null
-        JarFile(file).use {
+        val file = Path.of(path)
+        if (!Files.isRegularFile(file) || !FileUtil.extensionEquals(file.fileName.toString(), "jar")) {
+          return null
+        }
+
+        JarFile(file.toFile()).use {
           val attributes = it.manifest?.mainAttributes ?: return null
           val title = attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE) ?: return null
           val version = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION) ?: return null
@@ -202,7 +208,8 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
     }
 
     //todo[nik] this is a temporary compatibility fix; we should update plugin layout so JAR names correspond to module names instead.
-    private val OLD_TO_NEW_MODULE_NAME = mapOf(
+    @Suppress("SpellCheckingInspection")
+    private val OLD_TO_NEW_MODULE_NAME = hashMapOf(
       "kotlin-jps-plugin" to "kotlin.jps-plugin",
       "kotlin-jps-common" to "kotlin.jps-common",
       "kotlin-common" to "kotlin.common",

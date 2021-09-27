@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiElement
@@ -31,20 +32,17 @@ import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getBindingContext(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
 
-    override fun getBindingContextIfAny(element: KtElement): BindingContext? =
-        try {
-            getBindingContext(element)
-        } catch (e: Exception) {
-            e.returnIfNoDescriptorForDeclarationException { null }
-        }
-
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
-        return KotlinTypeMapper(
-            getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
-            JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,
-            useOldInlineClassesManglingScheme = false
-        )
+    override fun getBindingContextIfAny(element: KtElement): BindingContext? = try {
+        getBindingContext(element)
+    } catch (e: Exception) {
+        e.returnIfNoDescriptorForDeclarationException { null }
     }
+
+    override fun getTypeMapper(element: KtElement): KotlinTypeMapper = KotlinTypeMapper(
+        getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
+        JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,
+        useOldInlineClassesManglingScheme = false
+    )
 
     override fun isJvmElement(psiElement: PsiElement): Boolean {
         if (allModulesSupportJvm(psiElement.project)) return true
@@ -58,9 +56,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
         return module == null || TargetPlatformDetector.getPlatform(module).isJvm()
     }
 
-    override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings {
-        return element.languageVersionSettings
-    }
+    override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings = element.languageVersionSettings
 
     override fun getReferenceVariants(ktElement: KtElement, nameHint: String): Sequence<DeclarationDescriptor> {
         val resolutionFacade = ktElement.getResolutionFacade()
@@ -69,15 +65,13 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
         return call.resolveCandidates(bindingContext, resolutionFacade).map { it.candidateDescriptor }.asSequence()
     }
 
-    private fun allModulesSupportJvm(project: Project): Boolean =
-        CachedValuesManager.getManager(project)
-            .getCachedValue(project) {
-                Result.create(
-                    ModuleManager.getInstance(project).modules.all { module ->
-                        TargetPlatformDetector.getPlatform(module).isJvm()
-                    },
-                    ProjectRootModificationTracker.getInstance(project)
-                )
-            }
-
+    private fun allModulesSupportJvm(project: Project): Boolean = CachedValuesManager.getManager(project).getCachedValue(project) {
+        Result.create(
+            ModuleManager.getInstance(project).modules.all { module ->
+                ProgressManager.checkCanceled()
+                TargetPlatformDetector.getPlatform(module).isJvm()
+            },
+            ProjectRootModificationTracker.getInstance(project),
+        )
+    }
 }

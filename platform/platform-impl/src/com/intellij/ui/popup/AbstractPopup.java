@@ -493,7 +493,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
-    if (UiInterceptors.tryIntercept(this)) return;
+    if (UiInterceptors.tryIntercept(this, aPoint)) return;
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
@@ -1030,7 +1030,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       myMoveListener = moveListener;
     }
 
-    myListeners.forEach(listener -> listener.beforeShown(new LightweightWindowEvent(this)));
+    notifyListeners();
 
     myPopup.setRequestFocus(myRequestFocus);
 
@@ -1162,6 +1162,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myState = State.SHOWN;
 
     afterShowSync();
+  }
+
+  public void notifyListeners() {
+    myListeners.forEach(listener -> listener.beforeShown(new LightweightWindowEvent(this)));
   }
 
   private static void fitToVisibleArea(Rectangle targetBounds) {

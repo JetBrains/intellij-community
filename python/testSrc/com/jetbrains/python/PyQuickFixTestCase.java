@@ -74,4 +74,15 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
     assertEmpty(myFixture.filterAvailableIntentions(hint));
   }
+
+  protected void doMultiFileTest(@NotNull Class inspectionClass, @NotNull String hint) {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.enableInspections(inspectionClass);
+    myFixture.configureByFile("main.py");
+    myFixture.checkHighlighting(true, false, false);
+
+    final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(true) + "/main_after.py", true);
+  }
 }

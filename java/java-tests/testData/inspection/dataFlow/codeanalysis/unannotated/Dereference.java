@@ -1,4 +1,4 @@
-import org.jspecify.annotations.*;
+import org.jspecify.nullness.*;
 
 class X {
   int f;

@@ -76,7 +76,10 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
@@ -101,6 +104,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.*;
 import java.util.jar.JarFile;
@@ -1042,29 +1046,37 @@ public final class PlatformTestUtil {
   public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
                                                                           @NotNull String executorId,
                                                                           long timeoutInSeconds) throws InterruptedException {
-    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
+    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId, null);
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
-    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler, processHandler::isProcessTerminated, 60);
+    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
+                              processHandler::isProcessTerminated, 60);
     return result.first;
   }
 
-  public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
-                                                                                                        @NotNull String executorId)
+  /**
+   * @see PlatformTestUtil#executeConfiguration(RunConfiguration, com.intellij.execution.Executor, java.util.function.Consumer)
+   */
+  public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull String executorId,
+    @Nullable Consumer<RunContentDescriptor> contentDescriptorProcessor)
     throws InterruptedException {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     assertNotNull("Unable to find executor: " + executorId, executor);
-    return executeConfiguration(runConfiguration, executor);
+    return executeConfiguration(runConfiguration, executor, contentDescriptorProcessor);
   }
 
   /**
    * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns a pair of {@link ExecutionEnvironment} and
    * {@link RunContentDescriptor}.
+   *
+   * @param descriptorProcessor optional processor for the run content descriptor of executed configuration
    */
   public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
     @NotNull RunConfiguration runConfiguration,
-    @NotNull Executor executor
-  ) throws InterruptedException {
+    @NotNull Executor executor,
+    @Nullable Consumer<? super RunContentDescriptor> descriptorProcessor) throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1081,6 +1093,9 @@ public final class PlatformTestUtil {
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, descriptor -> {
       LOG.debug("Process started");
+      if (descriptorProcessor != null) {
+        descriptorProcessor.accept(descriptor);
+      }
       ProcessHandler processHandler = descriptor.getProcessHandler();
       assertNotNull(processHandler);
       processHandler.addProcessListener(new ProcessAdapter() {
