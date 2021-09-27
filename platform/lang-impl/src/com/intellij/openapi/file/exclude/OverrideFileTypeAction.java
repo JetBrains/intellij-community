@@ -21,20 +21,27 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class OverrideFileTypeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    boolean canBeOverridden = file != null && !file.isDirectory() && OverrideFileTypeManager.getInstance().getFileValue(file) == null;
+    VirtualFile[] files = getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) == null);
+    boolean canBeOverridden = files.length != 0;
+    if (canBeOverridden) {
+      e.getPresentation().setDescription(ActionsBundle.message("action.OverrideFileTypeAction.verbose.description", files[0].getName(), files.length-1));
+    }
+    else {
+      e.getPresentation().setDescription(ActionsBundle.message("action.OverrideFileTypeAction.description"));
+    }
     e.getPresentation().setEnabledAndVisible(canBeOverridden);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null) return;
+    VirtualFile[] files = getContextFiles(e, file->OverrideFileTypeManager.getInstance().getFileValue(file) == null);
+    if (files.length == 0) return;
     DefaultActionGroup group = new DefaultActionGroup();
     // although well-behaved types have unique names, file types coming from plugins can be wild
     Map<String, List<String>> duplicates = Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
@@ -58,7 +65,7 @@ class OverrideFileTypeAction extends AnAction {
       }
       @NlsActions.ActionText
       String displayText = type.getDisplayName() + StringUtil.notNullize(dupHint);
-      group.add(new ChangeToThisFileTypeAction(displayText, file, type));
+      group.add(new ChangeToThisFileTypeAction(displayText, files, type));
     }
     JBPopupFactory.getInstance()
       .createActionGroupPopup(ActionsBundle.message("group.OverrideFileTypeAction.title"),
@@ -66,27 +73,40 @@ class OverrideFileTypeAction extends AnAction {
       .showInBestPositionFor(e.getDataContext());
   }
 
+  @NotNull
+  static VirtualFile @NotNull [] getContextFiles(@NotNull AnActionEvent e, @NotNull Predicate<? super VirtualFile> additionalPredicate) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files == null) return VirtualFile.EMPTY_ARRAY;
+    return Arrays.stream(files)
+      .filter(file -> file != null && !file.isDirectory())
+      .filter(additionalPredicate)
+      .toArray(VirtualFile[]::new);
+  }
+
   private static class ChangeToThisFileTypeAction extends AnAction {
-    private final VirtualFile myFile;
+    private final @NotNull VirtualFile @NotNull [] myFiles;
     private final FileType myType;
 
     ChangeToThisFileTypeAction(@NotNull @NlsActions.ActionText String displayText,
-                               @NotNull VirtualFile file,
+                               @NotNull VirtualFile @NotNull [] files,
                                @NotNull FileType type) {
-      super(displayText,
-            ActionsBundle.message("action.ChangeToThisFileTypeAction.description", file.getName(), type.getDescription()), type.getIcon());
-      myFile = file;
+      super(displayText, ActionsBundle.message("action.ChangeToThisFileTypeAction.description", type.getDescription()), type.getIcon());
+      myFiles = files;
       myType = type;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      OverrideFileTypeManager.getInstance().addFile(myFile, myType);
+      for (VirtualFile file : myFiles) {
+        if (file.isValid() && !file.isDirectory()) {
+          OverrideFileTypeManager.getInstance().addFile(file, myType);
+        }
+      }
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = myFile.isValid() && !myFile.isDirectory();
+      boolean enabled = ContainerUtil.exists(myFiles, file -> file.isValid() && !file.isDirectory());
       e.getPresentation().setEnabled(enabled);
     }
   }

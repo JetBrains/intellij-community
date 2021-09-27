@@ -3,7 +3,6 @@ package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,15 +10,15 @@ import org.jetbrains.annotations.NotNull;
 class ReverteOverrideFileTypeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    boolean overridden = file != null && !file.isDirectory() && OverrideFileTypeManager.getInstance().getFileValue(file) != null;
-    e.getPresentation().setEnabledAndVisible(overridden);
+    VirtualFile[] files = OverrideFileTypeAction.getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) != null);
+    e.getPresentation().setEnabledAndVisible(files.length != 0);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null) return;
-    OverrideFileTypeManager.getInstance().removeFile(file);
+    VirtualFile[] files = OverrideFileTypeAction.getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) != null);
+    for (VirtualFile file : files) {
+      OverrideFileTypeManager.getInstance().removeFile(file);
+    }
   }
 }
