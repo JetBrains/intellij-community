@@ -5,7 +5,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.messages.AlertMessagesManager
 import com.intellij.settingsSync.SETTINGS_SYNC_ENABLED_PROPERTY
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
@@ -57,9 +56,6 @@ class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync"
           button(message("config.button.disable")) {
             disableSync()
           }.visibleIf(LoggedInPredicate().and(EnabledPredicate()))
-          button(message("config.button.logout")) {
-            logout()
-          }.visibleIf(LoggedInPredicate())
         }
       }
       row {
@@ -107,25 +103,6 @@ class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync"
 
     if (result != RESULT_CANCEL) {
       SettingsSyncSettings.getInstance().syncEnabled = false
-    }
-  }
-
-  private fun logout() {
-    val logoutButtonText = message("logout.dialog.button")
-    val buttons = arrayOf(Messages.getCancelButton(), logoutButtonText)
-    val logoutButtonIndex = buttons.indexOf(logoutButtonText)
-    val result = AlertMessagesManager.instance().showMessageDialog(
-      null, configPanel,
-      message("logout.dialog.message"),
-      message("logout.dialog.title"),
-      arrayOf(Messages.getCancelButton(), message("logout.dialog.button")),
-      defaultOptionIndex = logoutButtonIndex,
-      focusedOptionIndex = logoutButtonIndex,
-      Messages.getQuestionIcon(),
-      null, null
-    )
-    if (result == logoutButtonIndex) {
-      SettingsSyncAuthService.getInstance().logout()
     }
   }
 
