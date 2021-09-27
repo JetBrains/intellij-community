@@ -61,6 +61,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
@@ -75,7 +76,7 @@ public class InspectionTree extends Tree {
   private boolean myQueueUpdate;
   private final OccurenceNavigator myOccurenceNavigator = new MyOccurrenceNavigator();
   private final InspectionResultsView myView;
-  private final Map<ProblemDescriptionNode, Promise<String>> scheduledTooltipTasks = new HashMap<>();
+  private final ConcurrentHashMap<ProblemDescriptionNode, Promise<String>> scheduledTooltipTasks = new ConcurrentHashMap<>();
 
   public InspectionTree(@NotNull InspectionResultsView view) {
     myView = view;
@@ -213,39 +214,28 @@ public class InspectionTree extends Tree {
 
     if (!node.needCalculateTooltip()) return node.getToolTipText();
 
-    Promise<@NlsContexts.Tooltip String> tooltipLazy;
-    synchronized (scheduledTooltipTasks) {
-      tooltipLazy = scheduledTooltipTasks.get(node);
-      if (tooltipLazy == null) {
-        final Runnable removeTask = () -> {
-          synchronized (scheduledTooltipTasks) {
-            scheduledTooltipTasks.remove(node);
-          }
-        };
+    Promise<@NlsContexts.Tooltip String> tooltipLazy = scheduledTooltipTasks.computeIfAbsent(node, key -> {
+      final var tooltipManager = IdeTooltipManager.getInstance();
+      final Component component = e.getComponent();
 
-        final var tooltipManager = IdeTooltipManager.getInstance();
-        final Component component = e.getComponent();
-        tooltipLazy = ReadAction.nonBlocking(() -> node.getToolTipText())
-          .finishOnUiThread(ModalityState.any(), tooltipText -> {
-            tooltipManager.updateShownTooltip(component);
-          })
-          .submit(AppExecutorUtil.getAppExecutorService())
-          .onError(throwable -> {
-            if (!(throwable instanceof CancellationException)) {
-              LOG.error("Exception in ProblemDescriptionNode#getToolTipText", throwable);
-            }
-            removeTask.run();
-          })
-          .onSuccess(tooltipText -> removeTask.run());
-        scheduledTooltipTasks.put(node, tooltipLazy);
-      }
-    }
+      return ReadAction.nonBlocking(() -> node.getToolTipText())
+        .finishOnUiThread(ModalityState.any(), tooltipText -> {
+          tooltipManager.updateShownTooltip(component);
+        })
+        .submit(AppExecutorUtil.getAppExecutorService())
+        .onError(throwable -> {
+          if (!(throwable instanceof CancellationException)) {
+            LOG.error("Exception in ProblemDescriptionNode#getToolTipText", throwable);
+          }
+          scheduledTooltipTasks.remove(node);
+        })
+        .onSuccess(tooltipText -> scheduledTooltipTasks.remove(node));
+    });
+
     if (tooltipLazy.isSucceeded()) {
       try {
         final String text = tooltipLazy.blockingGet(0);
-        synchronized (scheduledTooltipTasks) {
-          scheduledTooltipTasks.remove(node);
-        }
+        scheduledTooltipTasks.remove(node);
         return text;
       }
       catch (TimeoutException | ExecutionException error) {
