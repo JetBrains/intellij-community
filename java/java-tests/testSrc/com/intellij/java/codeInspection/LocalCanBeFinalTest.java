@@ -44,7 +44,7 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
-  public void testSwitchBraches() {
+  public void testSwitchBranches() {
     myTool.REPORT_PARAMETERS = false;
     myTool.REPORT_VARIABLES = true;
     doTest();
