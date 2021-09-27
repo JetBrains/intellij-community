@@ -48,6 +48,7 @@ import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
@@ -1111,5 +1112,17 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation,
                                                                @NotNull PsiAnnotation.TargetType target) {
     return new AddAnnotationTargetFix(annotation, target);
+  }
+
+  @Override
+  @Nullable
+  public IntentionAction createMergeDuplicateAttributesFix(@NotNull PsiNameValuePair pair) {
+    final PsiReference reference = pair.getReference();
+    if (reference == null) return null;
+    final PsiMethod resolved = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
+    if (resolved == null) return null;
+    final PsiType returnType = resolved.getReturnType();
+    if (!(returnType instanceof PsiArrayType)) return null;
+    return new MergeDuplicateAttributesFix(pair);
   }
 }

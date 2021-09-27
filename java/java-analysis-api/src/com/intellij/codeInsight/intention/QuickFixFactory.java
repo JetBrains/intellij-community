@@ -547,4 +547,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo);
 
   public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
+
+  @Nullable
+  public abstract IntentionAction createMergeDuplicateAttributesFix(@NotNull PsiNameValuePair pair);
 }

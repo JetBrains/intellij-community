@@ -104,7 +104,11 @@ public final class AnnotationsHighlightUtil {
       if (Objects.equals(attribute.getName(), name)) {
         String description = JavaErrorBundle.message("annotation.duplicate.attribute",
                                                        name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(pair));
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMergeDuplicateAttributesFix(pair));
+        return info;
       }
     }
 
@@ -680,7 +684,7 @@ public final class AnnotationsHighlightUtil {
     PsiClass container = getRepeatableContainer(annotation);
     if (container == null) return null;
 
-    PsiMethod[] methods = !container.isAnnotationType() ? PsiMethod.EMPTY_ARRAY 
+    PsiMethod[] methods = !container.isAnnotationType() ? PsiMethod.EMPTY_ARRAY
                                                         : container.findMethodsByName("value", false);
     if (methods.length == 0) {
       return JavaErrorBundle.message("annotation.container.no.value", container.getQualifiedName());
@@ -709,11 +713,11 @@ public final class AnnotationsHighlightUtil {
           if (repeatableTargets.contains(containerTarget)) {
             continue;
           }
-          if (containerTarget == PsiAnnotation.TargetType.ANNOTATION_TYPE && 
+          if (containerTarget == PsiAnnotation.TargetType.ANNOTATION_TYPE &&
               (repeatableTargets.contains(PsiAnnotation.TargetType.TYPE) || repeatableTargets.contains(PsiAnnotation.TargetType.TYPE_USE))) {
             continue;
           }
-          if ((containerTarget == PsiAnnotation.TargetType.TYPE || containerTarget == PsiAnnotation.TargetType.TYPE_PARAMETER) && 
+          if ((containerTarget == PsiAnnotation.TargetType.TYPE || containerTarget == PsiAnnotation.TargetType.TYPE_PARAMETER) &&
               repeatableTargets.contains(PsiAnnotation.TargetType.TYPE_USE)) {
             continue;
           }
