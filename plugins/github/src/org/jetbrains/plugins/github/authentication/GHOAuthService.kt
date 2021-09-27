@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
 import com.intellij.collaboration.auth.credentials.Credentials
@@ -23,8 +23,6 @@ internal class GHOAuthService : OAuthServiceBase<Credentials>() {
 
   override val name: String get() = "github/oauth"
   override val authorizationCodeUrl: Url get() = newFromEncoded("http://127.0.0.1:$port/${RestService.PREFIX}/$name/authorization_code")
-  override val successRedirectUrl: Url get() = SERVICE_URL.resolve("complete")
-  override val errorRedirectUrl: Url get() = SERVICE_URL.resolve("error")
 
   override fun revokeToken(token: String) {
     TODO("Not yet implemented")
@@ -47,7 +45,7 @@ internal class GHOAuthService : OAuthServiceBase<Credentials>() {
     val instance: GHOAuthService
       get() = service()
 
-    private val SERVICE_URL: Url = newFromEncoded("https://account.jetbrains.com/github/oauth/intellij")
+    val SERVICE_URL: Url = newFromEncoded("https://account.jetbrains.com/github/oauth/intellij")
 
     val AUTHORIZE_URL: Url
       get() = SERVICE_URL.resolve("authorize")

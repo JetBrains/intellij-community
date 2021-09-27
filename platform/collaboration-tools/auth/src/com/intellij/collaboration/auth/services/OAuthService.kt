@@ -12,14 +12,10 @@ import java.util.concurrent.CompletableFuture
  *
  * @property name name of the service
  * @property authorizationCodeUrl URL for getting the exchange code
- * @property successRedirectUrl redirect URL when authorization is completed successfully
- * @property errorRedirectUrl redirect URL when authorization is failed
  */
 interface OAuthService<T : Credentials> {
   val name: String
   val authorizationCodeUrl: Url
-  val successRedirectUrl: Url
-  val errorRedirectUrl: Url
 
   /**
    * Starting the authorization flow

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.google.authorization
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -51,11 +51,6 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
 
   override val name: String get() = "google/oauth"
   override val authorizationCodeUrl: Url get() = newFromEncoded("http://localhost:$port/${RestService.PREFIX}/$name/authorization_code")
-
-  //TODO: Maybe fix them to something like https://account.jetbrains.com/[SERVICE NAME]/intellij/[...] or create these pages somewhere? 🤔
-  // note: so far, these addresses are 404
-  override val successRedirectUrl: Url get() = newFromEncoded("http://localhost:$port/success")
-  override val errorRedirectUrl: Url get() = newFromEncoded("http://localhost:$port/error")
 
   override fun updateAccessToken(refreshToken: String): CompletableFuture<GoogleCredentials> {
     if (!currentRequest.compareAndSet(null, CompletableFuture())) {
