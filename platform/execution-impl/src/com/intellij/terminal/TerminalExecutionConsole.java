@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
+import com.google.common.base.Ascii;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -33,7 +34,6 @@ import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
-import com.jediterm.terminal.util.CharUtils;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +107,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     myDataStream.append(text);
 
     if (foregroundColor != null) {
-      myDataStream.append((char)CharUtils.ESC + "[39m"); //restore default foreground color
+      myDataStream.append((char)Ascii.ESC + "[39m"); //restore default foreground color
     }
     myContentHelper.onContentTypePrinted(text, ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
   }
@@ -119,7 +119,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   @NotNull
   private static String encodeColor(@NotNull Color color) {
-    return ((char)CharUtils.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
+    return ((char)Ascii.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
            color.getBlue() + "m";
   }
 
