@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -13,18 +13,14 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
-import com.jediterm.terminal.ui.TerminalAction;
-import com.jediterm.terminal.ui.TerminalActionProviderBase;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
-import java.util.List;
 
 public final class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
   private static final Logger LOG = Logger.getInstance(TerminalSessionEditor.class);
@@ -109,6 +105,11 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
   @Override
   public FileEditorLocation getCurrentLocation() {
     return null;
+  }
+
+  @Override
+  public VirtualFile getFile() {
+    return myFile;
   }
 
   @Override
