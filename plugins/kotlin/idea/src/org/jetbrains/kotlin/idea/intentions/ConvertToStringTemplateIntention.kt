@@ -37,9 +37,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val replacement = buildReplacement(element)
-        runWriteAction {
-            element.replaced(replacement)
-        }
+        element.replaced(replacement)
     }
 
     companion object {
