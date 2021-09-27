@@ -288,17 +288,17 @@ public final class CommandMerger {
         }
 
         // if undo is block by other global command, trying to split global command and undo only local change in editor
-        if (!undoRedo.isRedo() && undoRedo.myUndoableGroup.isGlobal() && Registry.is("ide.undo.fallback")) {
-          if (myManager.splitGlobalCommand(editor, undoRedo, myUndoConfirmationPolicy)) {
-            var splittedUndo = createUndoOrRedo(editor, isUndo);
+        if (isUndo && undoRedo.myUndoableGroup.isGlobal() && Registry.is("ide.undo.fallback")) {
+          if (myManager.splitGlobalCommand(editor, undoRedo)) {
+            var splittedUndo = createUndoOrRedo(editor, true);
             if (splittedUndo != null) undoRedo = splittedUndo;
           }
         }
       }
       if (!undoRedo.execute(false, isInsideStartFinishGroup)) return;
 
-      if(editor != null && undoRedo.isRedo() && Registry.is("ide.undo.fallback")){
-        myManager.gatherGlobalCommand(editor, undoRedo);
+      if(editor != null && !isUndo && Registry.is("ide.undo.fallback")){
+        myManager.gatherGlobalCommand(undoRedo);
       }
 
       isInsideStartFinishGroup = undoRedo.myUndoableGroup.isInsideStartFinishGroup(isUndo, isInsideStartFinishGroup);

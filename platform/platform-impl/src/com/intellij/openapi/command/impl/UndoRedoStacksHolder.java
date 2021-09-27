@@ -104,15 +104,17 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
 
   public boolean replaceOnStacks(@NotNull UndoableGroup group, @NotNull UndoableGroup newGroup) {
     boolean hasAffectedItems = false;
+
     for (LinkedList<UndoableGroup> stack : getAffectedStacks(group)) {
-      int i = stack.indexOf(group);
-      if (i < 0) continue;
+      for (var stackIterator = stack.listIterator(); stackIterator.hasNext(); ) {
+        var currentGroup = stackIterator.next();
+        if (currentGroup != group) continue;
 
-      hasAffectedItems = true;
-
-      stack.remove(group);
-      stack.add(i, newGroup);
+        stackIterator.set(newGroup);
+        hasAffectedItems = true;
+      }
     }
+
     return hasAffectedItems;
   }
 

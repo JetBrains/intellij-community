@@ -335,6 +335,10 @@ final class UndoableGroup implements Dumpable {
     return myCommandTimestamp;
   }
 
+  UndoConfirmationPolicy getConfirmationPolicy(){
+    return myConfirmationPolicy;
+  }
+
   @Nullable
   private StartMarkAction getStartMark() {
     for (UndoableAction action : myActions) {

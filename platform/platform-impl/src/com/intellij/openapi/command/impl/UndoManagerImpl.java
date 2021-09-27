@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
 @ApiStatus.NonExtendable
@@ -510,85 +510,95 @@ public class UndoManagerImpl extends UndoManager {
   /**
    * In case of global group blocking undo we can perform undo locally and separate undone changes from others stacks
    */
-  public boolean splitGlobalCommand(@NotNull FileEditor editor,
-                                    @NotNull UndoRedo undoRedo,
-                                    @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
-    boolean commandHasSplitted = false;
+  public boolean splitGlobalCommand(@NotNull FileEditor editor, @NotNull UndoRedo undoRedo) {
     var group = undoRedo.myUndoableGroup;
     Collection<DocumentReference> refs = getDocRefs(editor);
-    if (refs == null) return false;
+    if (refs == null || refs.size() != 1) return false;
+    var docRef = refs.iterator().next();
 
     var clientState = getClientState();
     if (clientState == null) return false;
     var stackHolder = getStackHolder(clientState, true);
 
-    for (DocumentReference each : refs) {
-      var stack = stackHolder.getStack(each);
-      if (stack.getLast() == group) {
-        stack.remove(group);
-        var localActions = ContainerUtil.filter(
-          group.getActions(),
-          i -> i.getAffectedDocuments() != null
-               && ContainerUtil.exists(i.getAffectedDocuments(), doc -> doc == each));
-        if (localActions.isEmpty()) continue;
+    var stack = stackHolder.getStack(docRef);
+    if (stack.getLast() == group) {
+      var actions = separateLocalAndNonLocalActions(group.getActions(), docRef);
+      if (actions.first.isEmpty()) return false;
 
-        var replacingGroup = new UndoableGroup("Local " + group.getCommandName(),
-                                               false,
-                                               group.getCommandTimestamp(),
-                                               group.getStateBefore(),
-                                               group.getStateAfter(),
-                                               // only action that changes file locally
-                                               localActions,
-                                               stackHolder, getProject(), undoConfirmationPolicy, group.isTransparent(),
-                                               group.isValid());
-        stack.add(replacingGroup);
+      stack.removeLast();
 
-        var groupWithoutLocalChanges = new UndoableGroup(group.getCommandName(),
-                                                         group.isGlobal(),
-                                                         group.getCommandTimestamp(),
-                                                         group.getStateBefore(),
-                                                         group.getStateAfter(),
-                                                         // all action except local
-                                                         ContainerUtil.filter(group.getActions(), action -> !localActions.contains(action)),
-                                                         stackHolder, getProject(), undoConfirmationPolicy, group.isTransparent(),
-                                                         group.isValid());
+      var replacingGroup = new UndoableGroup("Local " + group.getCommandName(),
+                                             false,
+                                             group.getCommandTimestamp(),
+                                             group.getStateBefore(),
+                                             group.getStateAfter(),
+                                             // only action that changes file locally
+                                             actions.first,
+                                             stackHolder, getProject(), group.getConfirmationPolicy(), group.isTransparent(),
+                                             group.isValid());
+      stack.add(replacingGroup);
 
-        if (stackHolder.replaceOnStacks(group, groupWithoutLocalChanges)) {
-          replacingGroup.setOriginalContext(new UndoableGroup.UndoableGroupOriginalContext(group, groupWithoutLocalChanges));
-        }
+      var groupWithoutLocalChanges = new UndoableGroup(group.getCommandName(),
+                                                       group.isGlobal(),
+                                                       group.getCommandTimestamp(),
+                                                       group.getStateBefore(),
+                                                       group.getStateAfter(),
+                                                       // all action except local
+                                                       actions.second,
+                                                       stackHolder, getProject(), group.getConfirmationPolicy(), group.isTransparent(),
+                                                       group.isValid());
 
-        commandHasSplitted = true;
+      if (stackHolder.replaceOnStacks(group, groupWithoutLocalChanges)) {
+        replacingGroup.setOriginalContext(new UndoableGroup.UndoableGroupOriginalContext(group, groupWithoutLocalChanges));
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private static Pair<List<UndoableAction>, List<UndoableAction>> separateLocalAndNonLocalActions(@NotNull List<? extends UndoableAction> actions,
+                                                                                                  @NotNull DocumentReference affectedDocument) {
+    var localActions = new SmartList<UndoableAction>();
+    var nonLocalActions = new SmartList<UndoableAction>();
+    for (UndoableAction action : actions) {
+      var affectedDocuments = action.getAffectedDocuments();
+      if (affectedDocuments != null && affectedDocuments.length == 1 && affectedDocuments[0].equals(affectedDocument)) {
+        localActions.add(action);
+      }
+      else {
+        nonLocalActions.add(action);
       }
     }
 
-    return commandHasSplitted;
+    return new Pair<>(localActions, nonLocalActions);
   }
 
   /**
    * If we redo group that was splitted before, we gather that group into global cammand(as it was before splitting)
    * and recover that command on all stacks
    */
-  public void gatherGlobalCommand(@NotNull FileEditor editor, @NotNull UndoRedo undoRedo) {
+  public void gatherGlobalCommand(@NotNull UndoRedo undoRedo) {
     var group = undoRedo.myUndoableGroup;
     UndoableGroup.UndoableGroupOriginalContext context = group.getGroupOriginalContext();
     if (context == null) return;
 
-    Collection<DocumentReference> refs = getDocRefs(editor);
-    if (refs == null) return;
+    Collection<DocumentReference> refs = group.getAffectedDocuments();
+    if (refs.size() > 1) return;
+    var docRef = refs.iterator().next();
 
     var clientState = getClientState();
     if (clientState == null) return;
     var stackHolder = getStackHolder(clientState, true);
-    for (DocumentReference each : refs) {
-      var stack = stackHolder.getStack(each);
-      if (stack.getLast() != group) continue;
+    var stack = stackHolder.getStack(docRef);
+    if (stack.getLast() != group) return;
 
-      var shouldGatherGroup = stackHolder.replaceOnStacks(context.getCurrentStackGroup(), context.getOriginalGroup());
-      if (!shouldGatherGroup) continue;
+    var shouldGatherGroup = stackHolder.replaceOnStacks(context.getCurrentStackGroup(), context.getOriginalGroup());
+    if (!shouldGatherGroup) return;
 
-      stack.remove(group);
-      stack.add(context.getOriginalGroup());
-    }
+    stack.removeLast();
+    stack.add(context.getOriginalGroup());
   }
 
   private boolean isUndoOrRedoAvailable(@NotNull Collection<? extends DocumentReference> refs, boolean isUndo) {

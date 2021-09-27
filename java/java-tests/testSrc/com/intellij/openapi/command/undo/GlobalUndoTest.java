@@ -588,7 +588,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     return new Pair<>(barEditor, fooEditor);
   }
 
-  public void testUndoFallbackToLocalStack() throws Exception{
+  public void testUndoFallbackToLocalStack() {
     Registry.get("ide.undo.fallback").setValue(true, getTestRootDisposable());
     Pair<Editor, Editor> pair = prepareTestUndoFallback();
     var barEditor = pair.first;
@@ -600,7 +600,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertTrue("Foo.java doesn't contains last rename result", fooEditor.getDocument().getText().contains("FooRenamed"));
 
   }
-  public void testUndoFallbackToLocalStackAndRedo() throws Exception{
+  public void testUndoFallbackToLocalStackAndRedo() {
     Registry.get("ide.undo.fallback").setValue(true, getTestRootDisposable());
     Pair<Editor, Editor> pair = prepareTestUndoFallback();
     var barEditor = pair.first;
