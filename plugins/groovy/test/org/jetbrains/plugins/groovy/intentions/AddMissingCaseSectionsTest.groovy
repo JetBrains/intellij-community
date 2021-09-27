@@ -54,7 +54,7 @@ def foo(A b) {
 
   void 'test sealed'() {
     doTest """
-sealed class A {}
+abstract sealed class A {}
 class B extends A {}
 class C extends A {}
 class D extends A {}

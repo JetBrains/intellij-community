@@ -154,7 +154,7 @@ def foo(A b) {
 
   void 'test complete sealed class'() {
     highlightingTest """
-sealed class A {}
+abstract sealed class A {}
 class B extends A {}
 class C extends A {}
 
@@ -238,5 +238,23 @@ def foo(A a) {
         case B -> 30
     }
 }""", GrSwitchExhaustivenessCheckInspection
+  }
+
+  void 'test nested sealed'() {
+    highlightingTest"""
+abstract sealed class A {}
+class B extends A {}
+abstract sealed class C extends A {}
+class D extends C {}
+class E extends C {}
+
+def foo(A a) {
+  def x = switch (a) {
+    case B -> 30
+    case D -> 20
+    case E -> 40
+  }
+}
+""", GrSwitchExhaustivenessCheckInspection
   }
 }

@@ -1518,4 +1518,12 @@ public final class PsiUtil {
     GrCaseSection[] sections = switchElement.getCaseSections();
     return ContainerUtil.and(sections, elem -> elem.getColon() != null);
   }
+
+  public static @NotNull List<@NotNull PsiClass> getAllPermittedClassesJvmAware(@NotNull PsiClass clazz) {
+    if (clazz instanceof GrTypeDefinition) {
+      return SealedUtil.getAllPermittedClasses((GrTypeDefinition)clazz);
+    } else {
+      return ContainerUtil.map(clazz.getPermitsListTypes(), PsiClassType::resolve);
+    }
+  }
 }

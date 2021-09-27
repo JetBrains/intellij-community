@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitch
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClasses
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.isNullLiteral
 import javax.swing.JComponent
 import kotlin.math.max
@@ -75,7 +75,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       val elementsToInsert = if (clazz is GrEnumTypeDefinition) {
         checkEnum(clazz, resolvedPatterns)
       } else {
-        checkPatternMatchingOnType(clazz, resolvedPatterns)
+        checkPatternMatchingOnType(clazz, resolvedPatterns.filterIsInstance<PsiClass>())
       }
       val nullElement = if (shouldReportNulls && !(patterns.any { it is GrLiteral && it.isNullLiteral() })) {
         listOf(GroovyPsiElementFactory.getInstance(switchElement.project).createLiteralFromValue(null))
@@ -91,20 +91,17 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       return constants.asList() - existingPatterns
     }
 
-    private fun checkPatternMatchingOnType(clazz: GrTypeDefinition, existingPatterns: List<PsiElement>): List<PsiElement> {
-      // todo: Support java sealed classes
-      val resolvedClasses = existingPatterns.filterIsInstance<PsiClass>()
-      val permittedSubclasses = getAllPermittedClasses(clazz)
-      val necessarySubclasses = permittedSubclasses - resolvedClasses
-      if (permittedSubclasses.isNotEmpty()) {
-        return necessarySubclasses
-      }
-      else if (resolvedClasses.all { !clazz.isInheritor(it, true) }) {
-        return listOf(clazz)
-      }
-      else {
+    private fun checkPatternMatchingOnType(clazz: PsiClass, resolvedClasses: List<PsiClass>): List<PsiElement> {
+      if (resolvedClasses.any { clazz === it || clazz.isInheritor(it, true) }) {
         return emptyList()
       }
+      if (clazz is GrTypeDefinition) {
+        val permittedSubclasses = PsiUtil.getAllPermittedClassesJvmAware(clazz)
+        if (permittedSubclasses.isNotEmpty() && (clazz.isInterface || clazz.hasModifierProperty(PsiModifier.ABSTRACT))) {
+          return permittedSubclasses.flatMap { checkPatternMatchingOnType(it, resolvedClasses) }
+        }
+      }
+      return listOf(clazz)
     }
 
     private fun handlePrimitiveType(switchElement: GrSwitchElement,
