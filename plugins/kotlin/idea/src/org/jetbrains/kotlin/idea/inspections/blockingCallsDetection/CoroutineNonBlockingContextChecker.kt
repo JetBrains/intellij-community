@@ -22,14 +22,14 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.isOverridableOrOverrides
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.receiverValue
-import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.BLOCKING_CONTEXT_ANNOTATION
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.BLOCKING_EXECUTOR_ANNOTATION
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_CONTEXT
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_SCOPE
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.DEFAULT_DISPATCHER_FQN
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.FLOW_PACKAGE_FQN
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.IO_DISPATCHER_FQN
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.MAIN_DISPATCHER_FQN
-import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.NONBLOCKING_CONTEXT_ANNOTATION
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.NONBLOCKING_EXECUTOR_ANNOTATION
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.findFlowOnCall
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
@@ -175,10 +175,10 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     private fun DeclarationDescriptor?.isBlockFriendlyDispatcher(): ContextType {
         if (this == null) return UNSURE
 
-        val hasBlockingAnnotation = annotations.hasAnnotation(FqName(BLOCKING_CONTEXT_ANNOTATION))
+        val hasBlockingAnnotation = annotations.hasAnnotation(FqName(BLOCKING_EXECUTOR_ANNOTATION))
         if (hasBlockingAnnotation) return BLOCKING
 
-        val hasNonBlockingAnnotation = annotations.hasAnnotation(FqName(NONBLOCKING_CONTEXT_ANNOTATION))
+        val hasNonBlockingAnnotation = annotations.hasAnnotation(FqName(NONBLOCKING_EXECUTOR_ANNOTATION))
         if (hasNonBlockingAnnotation) return NONBLOCKING
 
         val fqnOrNull = fqNameOrNull()?.asString() ?: return NONBLOCKING

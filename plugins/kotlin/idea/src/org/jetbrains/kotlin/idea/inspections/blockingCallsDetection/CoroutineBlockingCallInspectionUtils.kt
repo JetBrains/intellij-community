@@ -63,8 +63,8 @@ internal object CoroutineBlockingCallInspectionUtils {
         return candidate ?: dotQualifiedExpression.findFlowOnCall()
     }
 
-    const val BLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.BlockingContext"
-    const val NONBLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.NonBlockingContext"
+    const val BLOCKING_EXECUTOR_ANNOTATION = "org.jetbrains.annotations.BlockingExecutor"
+    const val NONBLOCKING_EXECUTOR_ANNOTATION = "org.jetbrains.annotations.NonBlockingExecutor"
     const val IO_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.IO"
     const val MAIN_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Main"
     const val DEFAULT_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Default"
