@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.blockingCallsDetection.ContextType.UNSURE;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -40,10 +41,10 @@ public final class AnnotationBasedNonBlockingContextChecker implements NonBlocki
   @Override
   public ContextType isContextNonBlockingFor(@NotNull ElementContext elementContext) {
     UCallExpression callExpression = UastContextKt.toUElement(elementContext.getElement(), UCallExpression.class);
-    if (callExpression == null) return BLOCKING.INSTANCE;
+    if (callExpression == null) return UNSURE.INSTANCE;
 
     UMethod callingMethod = UastUtils.getParentOfType(callExpression, UMethod.class);
-    if (callingMethod == null) return BLOCKING.INSTANCE;
+    if (callingMethod == null) return UNSURE.INSTANCE;
     PsiMethod psiCallingMethod = callingMethod.getJavaPsi();
 
     if (AnnotationUtil.findAnnotation(psiCallingMethod, myNonBlockingAnnotations, false) != null) {
@@ -58,6 +59,6 @@ public final class AnnotationBasedNonBlockingContextChecker implements NonBlocki
     PsiClass containingClass = psiCallingMethod.getContainingClass();
     boolean isClassAnnotated = containingClass != null
                 && AnnotationUtil.findAnnotation(containingClass, myNonBlockingAnnotations, false) != null;
-    return isClassAnnotated ? NONBLOCKING.INSTANCE : BLOCKING.INSTANCE;
+    return isClassAnnotated ? NONBLOCKING.INSTANCE : UNSURE.INSTANCE;
   }
 }
