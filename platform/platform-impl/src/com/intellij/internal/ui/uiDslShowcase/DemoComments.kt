@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.panel
 
 @Demo(title = "Comments",
-  description = "Comments is a gray (depends on color scheme) text which can be assigned to cell (placed under cell), rows or placed in any cell directly")
+  description = "Comment is a gray (depends on color scheme) text which can be assigned to cell (placed under cell), rows or placed in any cell directly")
 fun demoComments(): DialogPanel {
   return panel {
     row {

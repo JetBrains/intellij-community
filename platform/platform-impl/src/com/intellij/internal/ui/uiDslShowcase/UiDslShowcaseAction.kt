@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.util.ui.JBEmptyBorder
 import java.awt.Dimension
 import javax.swing.JComponent
 import kotlin.reflect.KFunction
@@ -25,7 +26,9 @@ val DEMOS = arrayOf(
   ::demoRowLayout,
   ::demoComponentLabels,
   ::demoComments,
-  ::demoComponents
+  ::demoComponents,
+  ::demoGaps,
+  ::demoGroups
 )
 
 class UiDslShowcaseAction : DumbAwareAction("UI DSL Showcase") {
@@ -75,6 +78,7 @@ private class UiDslShowcaseDialog(project: Project?) : DialogWrapper(project, nu
       val dialogPanel = demo.call()
       if (annotation.scrollbar) {
         row {
+          dialogPanel.border = JBEmptyBorder(10)
           cell(dialogPanel, JBScrollPane(dialogPanel))
             .horizontalAlign(HorizontalAlign.FILL)
             .verticalAlign(VerticalAlign.FILL)

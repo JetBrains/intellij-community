@@ -197,7 +197,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       val leftGap = if (cellIndex == 0) firstCellIndent else 0
       val label = (cell as? CellImpl<*>)?.component as? JLabel
       if (label != null && cell.rightGap == RightGap.SMALL && cellIndex < cells.size - 1 &&
-          isAllowedLabel(cells[cellIndex + 1]) && (cells[cellIndex + 1] as? CellImpl<*>)?.label == null) {
+          isAllowedLabel(cells[cellIndex + 1]) && (cells[cellIndex + 1] as? CellImpl<*>)?.label == null &&
+          cell.verticalAlign == VerticalAlign.CENTER && cell.horizontalAlign == HorizontalAlign.LEFT) {
         warn("Panel.row(label) or Cell.label should be used for labeled components, label = ${label.text}")
       }
 
