@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -229,9 +230,11 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     List<String> duplicates = new ArrayList<>();
     for (List<IntentionAction> list : map.values()) {
       if (list.size() > 1) {
-        duplicates.add(list.size() + " intention duplicates found for " + IntentionActionDelegate.unwrap(list.get(0))
-                       + " (" + list.get(0).getClass()
-                       + "; plugin " + PluginManager.getInstance().getPluginOrPlatformByClassName(list.get(0).getClass().getName()) + ")");
+        String duplicateDescriptions = StringUtil.join(list, a -> {
+          Class<?> fixClass = IntentionActionDelegate.unwrap(a).getClass();
+          return "Registered: " + fixClass + " from plugin " + PluginManager.getInstance().getPluginOrPlatformByClassName(fixClass.getName());
+        }, "\n");
+        duplicates.add(list.size() + " intention duplicates found for " + IntentionActionDelegate.unwrap(list.get(0)) + ":\n" + duplicateDescriptions);
       }
     }
 
