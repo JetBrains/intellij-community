@@ -8,9 +8,9 @@ import org.jetbrains.kotlin.psi.Call
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 class KtInvokeFunctionReferenceDescriptorsImpl(expression: KtCallExpression) : KtInvokeFunctionReference(expression), KtDescriptorsBasedReference {
     override fun isReferenceTo(element: PsiElement): Boolean =
