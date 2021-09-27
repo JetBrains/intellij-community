@@ -16,7 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.isNullLiteral
@@ -70,25 +69,27 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
 
 
     private fun handleClassType(switchElement: GrSwitchElement, conditionalType: PsiClassType, patterns: List<GrExpression>) {
-      val clazz = conditionalType.resolve() as? GrTypeDefinition ?: return
+      val clazz = conditionalType.resolve() ?: return
       val resolvedPatterns = patterns.mapNotNull { (it as? GrReferenceExpression)?.resolve() }
-      val elementsToInsert = if (clazz is GrEnumTypeDefinition) {
+      val elementsToInsert = if (clazz.isEnum) {
         checkEnum(clazz, resolvedPatterns)
-      } else {
+      }
+      else {
         checkPatternMatchingOnType(clazz, resolvedPatterns.filterIsInstance<PsiClass>())
       }
       val nullElement = if (shouldReportNulls && !(patterns.any { it is GrLiteral && it.isNullLiteral() })) {
         listOf(GroovyPsiElementFactory.getInstance(switchElement.project).createLiteralFromValue(null))
-      } else {
+      }
+      else {
         emptyList()
       }
       val allElementsToInsert = (elementsToInsert + nullElement)
       insertErrors(switchElement, allElementsToInsert.isNotEmpty(), allElementsToInsert)
     }
 
-    private fun checkEnum(clazz: GrEnumTypeDefinition, existingPatterns: List<PsiElement>): List<PsiElement> {
-      val constants = clazz.enumConstants
-      return constants.asList() - existingPatterns
+    private fun checkEnum(clazz: PsiClass, existingPatterns: List<PsiElement>): List<PsiElement> {
+      val constants = clazz.allFields.filterIsInstance<PsiEnumConstant>()
+      return constants - existingPatterns
     }
 
     private fun checkPatternMatchingOnType(clazz: PsiClass, resolvedClasses: List<PsiClass>): List<PsiElement> {
