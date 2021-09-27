@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces.EDITOR_INLAY
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
@@ -79,7 +80,7 @@ internal class VcsCodeAuthorInlayHintsCollector(
 
   private fun invokeAnnotateAction(event: MouseEvent, contextComponent: JComponent) {
     val action = ActionManager.getInstance().getAction("Annotate")
-    invokeAction(action, contextComponent, "InlayHints.CodeAuthor", event, null)
+    invokeAction(action, contextComponent, EDITOR_INLAY, event, null)
   }
 
   private fun InlayPresentation.withUserIcon(): InlayPresentation =
