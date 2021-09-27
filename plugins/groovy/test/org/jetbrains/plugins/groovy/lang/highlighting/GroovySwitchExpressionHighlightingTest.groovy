@@ -223,4 +223,20 @@ def foo(A b) {
 }
 """, inspection
   }
+
+  void 'test highlight with only one subclass matched'() {
+    highlightingTest """
+class A {
+
+}
+
+class B extends A {}
+
+
+def foo(A a) {
+    def x = <weak_warning>switch</weak_warning> (a) {
+        case B -> 30
+    }
+}""", GrSwitchExhaustivenessCheckInspection
+  }
 }

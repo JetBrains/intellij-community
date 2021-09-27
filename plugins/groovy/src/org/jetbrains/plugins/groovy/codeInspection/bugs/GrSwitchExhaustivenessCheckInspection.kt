@@ -99,11 +99,11 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       if (permittedSubclasses.isNotEmpty()) {
         return necessarySubclasses
       }
-      else if (!resolvedClasses.any { clazz.isInheritor(it, true) }) {
-        return emptyList()
+      else if (resolvedClasses.all { !clazz.isInheritor(it, true) }) {
+        return listOf(clazz)
       }
       else {
-        return listOf(clazz)
+        return emptyList()
       }
     }
 
