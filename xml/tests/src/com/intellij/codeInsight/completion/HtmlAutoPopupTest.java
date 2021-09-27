@@ -47,6 +47,12 @@ public class HtmlAutoPopupTest extends CompletionAutoPopupTestCase {
     doTestNoPopup(XHtmlFileType.INSTANCE, "<div><caret></div>", "p");
   }
 
+  public void testDoNotShowPopupAfterSpace() {
+    doTestNoPopup(HtmlFileType.INSTANCE, "<div>foo<caret></div>", " ");
+    type("a");
+    assertNotNull(getLookup());
+  }
+
   public void testAfterAmpersand() {
     doTestPopup(HtmlFileType.INSTANCE, "<div>&<caret></div>", "s");
     myFixture.type("t");
