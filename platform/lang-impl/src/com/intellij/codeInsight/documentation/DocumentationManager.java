@@ -1846,10 +1846,49 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @NlsSafe @Nullable String externalUrl,
     @Nullable DocumentationProvider provider
   ) {
-    HtmlChunk locationInfo = Optional.ofNullable(provider)
-      .map(it -> it.getLocationInfo(element))
-      .orElseGet(() -> DocumentationProviderEx.getDefaultLocationInfo(element));
-    return decorate(text, locationInfo, getExternalText(element, externalUrl, provider));
+    return decorate(text, getLocationText(element), getExternalText(element, externalUrl, provider));
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  private static @Nullable HtmlChunk getLocationText(@Nullable PsiElement element) {
+    if (element != null) {
+      PsiFile file = element.getContainingFile();
+      VirtualFile vfile = file == null ? null : file.getVirtualFile();
+
+      if (vfile == null) return null;
+
+      SearchScope scope = element.getUseScope();
+      if (scope instanceof LocalSearchScope) {
+        return null;
+      }
+
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+      Module module = fileIndex.getModuleForFile(vfile);
+
+      if (module != null && !ModuleType.isInternal(module)) {
+        if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
+        return HtmlChunk.fragment(
+          HtmlChunk.tag("icon").attr("src", ModuleType.get(module).getId()),
+          HtmlChunk.nbsp(),
+          HtmlChunk.text(module.getName())
+        );
+      }
+      else {
+        List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
+        for (OrderEntry order : entries) {
+          if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
+            return HtmlChunk.fragment(
+              HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
+              HtmlChunk.nbsp(),
+              HtmlChunk.text(order.getPresentableName())
+            );
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   @Internal

@@ -168,62 +168,6 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
         return if (element == null) null else getText(element, originalElement, true)
     }
 
-    override fun getLocationInfo(element: PsiElement?): HtmlChunk? {
-        if (element !is KtExpression) return null
-
-        val baseInfo = DocumentationProviderEx.getDefaultLocationInfo(element)
-
-        val resolutionFacade = element.getResolutionFacade()
-        val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
-        val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return baseInfo
-
-        if (!DescriptorUtils.isLocal(descriptor)) {
-            val containingDeclaration = descriptor.containingDeclaration
-            if (containingDeclaration == null) return baseInfo
-
-            val fqNameSection = containingDeclaration.fqNameSafe
-                .takeUnless { it.isRoot }
-                ?.let {
-                    @Nls val link = StringBuilder().apply {
-                        DocumentationManagerUtil.createHyperlink(
-                            this, it.asString(), highlight(it.asString()) { asClassName }, false, false
-                        )
-                    }
-                    HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
-                        HtmlChunk.nbsp(),
-                        HtmlChunk.raw(link.toString()),
-                        HtmlChunk.br()
-                    )
-                }
-                ?: HtmlChunk.empty()
-
-            val fileNameSection = descriptor
-                .safeAs<DeclarationDescriptorWithSource>()
-                ?.source
-                ?.containingFile
-                ?.name
-                ?.takeIf { containingDeclaration is PackageFragmentDescriptor }
-                ?.let {
-                    HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
-                        HtmlChunk.nbsp(),
-                        HtmlChunk.text(it),
-                        HtmlChunk.br()
-                    )
-                }
-                ?: HtmlChunk.empty()
-
-            return HtmlChunk.fragment(
-                fqNameSection,
-                fileNameSection,
-                baseInfo ?: HtmlChunk.empty()
-            )
-        }
-
-        return baseInfo
-    }
-
     @Nls
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
         return getText(element, originalElement, false)
