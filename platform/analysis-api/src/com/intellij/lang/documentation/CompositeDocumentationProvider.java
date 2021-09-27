@@ -124,18 +124,6 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public @Nullable HtmlChunk getLocationInfo(@Nullable PsiElement element) {
-    for (DocumentationProvider provider : getAllProviders()) {
-      HtmlChunk result = provider.getLocationInfo(element);
-      if (result != null) {
-        LOG.debug("getLocationInfo: ", provider);
-        return result;
-      }
-    }
-    return null;
-  }
-
-  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
       List<String> result = provider.getUrlFor(element, originalElement);

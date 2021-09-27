@@ -149,55 +149,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return substitutor;
   }
 
-  @Override
-  public @Nullable HtmlChunk getLocationInfo(@Nullable PsiElement element) {
-    if (element == null) return null;
-
-    HtmlChunk baseInfo = DocumentationProviderEx.getDefaultLocationInfo(element);
-    JavaDocHighlightingManager highlightingManager = JavaDocHighlightingManagerImpl.getInstance();
-
-    @NlsSafe String ownerLink = null;
-    String ownerIcon = null;
-
-    if (element instanceof PsiClass) {
-      PsiFile file = element.getContainingFile();
-      if (file instanceof PsiJavaFile) {
-        String packageName = ((PsiJavaFile)file).getPackageName();
-        if (!packageName.isEmpty()) {
-          PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
-          StringBuilder packageFqnBuilder = new StringBuilder();
-          appendStyledSpan(packageFqnBuilder, highlightingManager.getClassNameAttributes(), packageName);
-          ownerLink = generateLink(aPackage, packageFqnBuilder.toString(), false, false);
-          ownerIcon = "AllIcons.Nodes.Package";
-        }
-      }
-    }
-    else if (element instanceof PsiMember) {
-      PsiClass parentClass = ((PsiMember)element).getContainingClass();
-      if (parentClass != null && !PsiUtil.isArrayClass(parentClass)) {
-        String qName = parentClass.getQualifiedName();
-        if (qName != null) {
-          StringBuilder classFqnBuilder = new StringBuilder();
-          appendStyledSpan(classFqnBuilder, highlightingManager.getClassNameAttributes(), qName);
-          generateTypeParameters(parentClass, classFqnBuilder, highlightingManager);
-          ownerLink = generateLink(parentClass, classFqnBuilder.toString(), false, false);
-          ownerIcon = "AllIcons.Nodes.Class";
-        }
-      }
-    }
-
-    if (ownerLink != null) {
-      return HtmlChunk.fragment(
-        HtmlChunk.tag("icon").attr("src", ownerIcon),
-        HtmlChunk.nbsp(),
-        HtmlChunk.raw(ownerLink),
-        HtmlChunk.br(),
-        baseInfo != null ? baseInfo : HtmlChunk.empty()
-      );
-    }
-    return baseInfo;
-  }
-
   private static String generateLink(PsiElement element, String label, boolean plainLink, boolean isRenderedDoc) {
     String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
     if (refText != null) {
