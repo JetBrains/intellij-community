@@ -23,36 +23,27 @@ object RustProject {
         val basePath = "src/main/kotlin/org/rust"
 
         listOf(
-            HighlightFile("$basePath/ide/inspections/RsExternalLinterInspection.kt"),
-            HighlightFile("$basePath/ide/injected/RsDoctestLanguageInjector.kt"),
-            HighlightFile("$basePath/cargo/runconfig/filters/RegexpFileLinkFilter.kt"),
-            HighlightFile("$basePath/cargo/util/CargoOptions.kt"),
-            HighlightFile("$basePath/lang/core/macros/MacroExpansionManager.kt"),
+            //HighlightFile("$basePath/lang/core/stubs/StubImplementations.kt"),
             HighlightFile("$basePath/lang/core/resolve/NameResolution.kt"),
-
-            TypeAndAutocompleteInFile(
-                filePath = "$basePath/cargo/runconfig/filters/RegexpFileLinkFilter.kt",
-                typeAfter = "fun applyFilter(line: String, entireLength: Int): Filter.Result? {",
-                textToType = "val a = l",
-                expectedLookupElements = listOf("line"),
-                note = "in-method completion",
-            ),
-
-            TypeAndAutocompleteInFile(
-                 filePath =  "$basePath/lang/core/resolve/NameResolution.kt",
-                 typeAfter = "private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)",
-                 textToType = "\nval a = ",
-                 expectedLookupElements = listOf("processAssocTypeVariants"),
-                 note = "top-level completion",
-             ),
-
-             TypeAndAutocompleteInFile(
-                 filePath =  "$basePath/lang/core/resolve/NameResolution.kt",
-                 typeAfter = "testAssert { cameFrom.context == scope }",
-                 textToType = "\nval a = s",
-                 expectedLookupElements = listOf(),
-                 note = "in big method in big file completion",
-             ),
+            HighlightFile("$basePath/ide/annotator/RsErrorAnnotator.kt"),
+            HighlightFile("$basePath/lang/core/types/infer/TypeInferenceWalker.kt"),
+            HighlightFile("$basePath/lang/utils/RsDiagnostic.kt"),
+            HighlightFile("$basePath/lang/core/resolve/ImplLookup.kt"),
+            HighlightFile("$basePath/lang/core/macros/MacroExpansionManager.kt"),
+            HighlightFile("$basePath/cargo/util/CargoOptions.kt"),
+            HighlightFile("$basePath/lang/core/types/infer/TypeInference.kt"),
+            HighlightFile("$basePath/lang/core/CompilerFeatures.kt"),
+            HighlightFile("$basePath/lang/core/macros/ExpandedMacroStorage.kt"),
+            HighlightFile("$basePath/lang/core/psi/ext/RsQualifiedNamedElement.kt"),
+            HighlightFile("$basePath/ide/presentation/RsPsiRenderer.kt"),
+            HighlightFile("$basePath/cargo/project/workspace/CargoWorkspace.kt"),
+            HighlightFile("$basePath/cargo/project/model/impl/CargoProjectImpl.kt"),
+            HighlightFile("$basePath/lang/core/resolve2/FacadeResolve.kt"),
+            HighlightFile("$basePath/lang/core/resolve2/DefCollector.kt"),
+            HighlightFile("$basePath/lang/core/psi/RsPsiFactory.kt"),
+            HighlightFile("$basePath/lang/core/parser/RustParserUtil.kt"),
+            HighlightFile("$basePath/lang/core/macros/MacroExpansionTask.kt"),
+            HighlightFile("$basePath/cargo/toolchain/tools/Cargo.kt"),
         )
     }
 }
