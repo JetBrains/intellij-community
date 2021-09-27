@@ -25,7 +25,6 @@ import git4idea.repo.GitRepository
 import org.assertj.core.api.Assertions
 import org.junit.Assert.assertEquals
 import java.io.File
-import java.util.*
 
 fun GitRepository.assertStatus(file: VirtualFile, status: Char) {
   assertStatus(getFilePath(file), status)
@@ -119,7 +118,7 @@ fun ChangeListManager.waitScheduledChangelistDeletions() {
 }
 
 fun ChangeListManager.assertChangeListExists(comment: String): LocalChangeList {
-  val changeLists = changeListsCopy
+  val changeLists = changeLists
   val list = changeLists.find { it.comment == comment }
   HeavyPlatformTestCase.assertNotNull("Didn't find changelist with comment '$comment' among: ${dumpChangeLists()}", list)
   return list!!
