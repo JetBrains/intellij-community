@@ -99,7 +99,14 @@ final class JarPackager {
         "OroMatcher",
         "jgoodies-forms",
         "jgoodies-common",
-        "NanoXML"
+        "NanoXML",
+        // see ArtifactRepositoryManager.getClassesFromDependencies
+        "plexus-utils",
+        "Guava",
+        "http-client",
+        "commons-codec",
+        "commons-logging",
+        "commons-lang3"
       )
       mergeLibsByPredicate("3rd-party-rt.jar", librariesToMerge, outputDir, layoutSpec, buildContext) { libsThatUsedInJps.contains(it) }
     }
