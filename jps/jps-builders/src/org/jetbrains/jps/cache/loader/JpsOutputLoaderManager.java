@@ -62,7 +62,6 @@ public class JpsOutputLoaderManager implements Disposable {
     myBuildOutDir = getBuildDirPath(project);
     myServerClient = JpsServerClient.getServerClient();
     myMetadataLoader = new JpsMetadataLoader(projectPath, myServerClient);
-    myNettyClient.requestAuthToken();
     //myWorkspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     // Configure build manager
     //BuildManager buildManager = BuildManager.getInstance();
@@ -122,7 +121,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
   @Nullable
   private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, boolean verbose) {
-    Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote();
+    Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myNettyClient);
 
     String previousCommitId = null;
     //String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);

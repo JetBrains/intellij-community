@@ -12,6 +12,7 @@ import java.util.NoSuchElementException;
 public class GitCommitsIterator implements Iterator<String> {
   private static final Logger LOG = Logger.getInstance(GitCommitsIterator.class);
 
+  private static final Object myLock = new Object();
   private static final int MAX_FETCH_SIZE = 1000;
   private final JpsNettyClient myNettyClient;
   private static List<String> repositoryCommits;
@@ -61,13 +62,24 @@ public class GitCommitsIterator implements Iterator<String> {
   }
 
   private void fetchOldCommits(String latestCommit) {
-    // TODO:: FIX awaiting
-    myNettyClient.requestRepositoryCommits(latestCommit);
-    repositoryCommits = new SmartList<>();
+    synchronized (myLock) {
+      try {
+        // TODO:: FIX awaiting
+        repositoryCommits = new SmartList<>();
+        myNettyClient.requestRepositoryCommits(latestCommit);
+        myLock.wait();
+      }
+      catch (InterruptedException e) {
+        LOG.warn("Can't request repository commits", e);
+      }
+    }
   }
 
   public static void setRepositoryCommits(List<String> commits) {
-    repositoryCommits = commits;
-    fetchedCount += repositoryCommits.size();
+    synchronized (myLock) {
+      repositoryCommits = commits;
+      fetchedCount += repositoryCommits.size();
+      myLock.notify();
+    }
   }
 }

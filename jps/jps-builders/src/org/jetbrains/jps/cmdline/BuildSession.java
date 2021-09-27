@@ -164,8 +164,6 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       if (ProjectStamps.PORTABLE_CACHES) {
         // Try to download caches
-        ChannelFuture channelFuture = myChannel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createAuthTokenRequest()));
-        channelFuture.await();
         JpsOutputLoaderManager loaderManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), myProjectPath, myChannel, mySessionId);
         loaderManager.load(true, false);
       }

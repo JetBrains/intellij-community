@@ -46,8 +46,8 @@ public final class JpsServerClientImpl implements JpsServerClient {
 
   @NotNull
   @Override
-  public Map<String, Set<String>> getCacheKeysPerRemote() {
-    Map<String, List<String>> response = doGetRequest();
+  public Map<String, Set<String>> getCacheKeysPerRemote(@NotNull JpsNettyClient nettyClient) {
+    Map<String, List<String>> response = doGetRequest(nettyClient);
     if (response == null) return Collections.emptyMap();
     Map<String, Set<String>> result = new HashMap<>();
     response.forEach((key, value) -> result.put(GitRepositoryUtil.getRemoteRepoName(key), new HashSet<>(value)));
@@ -143,8 +143,8 @@ public final class JpsServerClientImpl implements JpsServerClient {
     }
   }
 
-  private @Nullable Map<String, List<String>> doGetRequest() {
-    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
+  private @Nullable Map<String, List<String>> doGetRequest(@NotNull JpsNettyClient nettyClient) {
+    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(nettyClient);
     try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
       String url = stringThree + "/commit_history.json";
       HttpGet httpRequest = new HttpGet(url);

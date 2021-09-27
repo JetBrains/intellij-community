@@ -61,7 +61,6 @@ class JpsCachesDownloader {
     List<Pair<File, DownloadableFileUrl>> existingFiles = new CopyOnWriteArrayList<>();
 
     try {
-      myNettyClient.requestAuthToken();
       myNettyClient.sendMainStatusMessage(JpsBuildBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
       long start = System.currentTimeMillis();
       List<Future<Void>> results = new ArrayList<>();
@@ -159,8 +158,7 @@ class JpsCachesDownloader {
   @NotNull
   private File downloadFile(@NotNull final DownloadableFileUrl description, @NotNull final File existingFile) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
-    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
-    myNettyClient.requestAuthToken();
+    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(myNettyClient);
     myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.connecting.to.download.file.text", presentableUrl));
 
     try (CloseableHttpClient client = HttpClientBuilder.create().build()) {

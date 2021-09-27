@@ -14,7 +14,7 @@ import java.util.Set;
 
 public interface JpsServerClient {
   @NotNull
-  Map<String, Set<String>> getCacheKeysPerRemote();
+  Map<String, Set<String>> getCacheKeysPerRemote(@NotNull JpsNettyClient nettyClient);
   @Nullable
   File downloadMetadataById(@NotNull JpsNettyClient nettyClient, @NotNull String metadataId, @NotNull File targetDir);
   File downloadCacheById(@NotNull JpsLoaderContext context, @NotNull String cacheId, @NotNull File targetDir);
