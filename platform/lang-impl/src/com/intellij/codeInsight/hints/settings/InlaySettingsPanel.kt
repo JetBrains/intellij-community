@@ -99,6 +99,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }
     val node = CheckedTreeNode(model)
+    node.isChecked = model.isEnabled
     langNode.add(node)
     return node
   }
@@ -130,5 +131,17 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun getModelLanguage(treeNode: CheckedTreeNode): Language {
     return (treeNode.parent as DefaultMutableTreeNode).userObject as Language
+  }
+
+  fun isModified(): Boolean {
+    return isModified(tree.model.root as DefaultMutableTreeNode)
+  }
+
+  fun isModified(node: DefaultMutableTreeNode): Boolean {
+    if (node.userObject is InlayProviderSettingsModel) {
+      val model = node.userObject as InlayProviderSettingsModel
+      if (((node as CheckedTreeNode).isChecked != model.isEnabled) || model.isModified()) return true
+    }
+    return node.children().toList().any { isModified(it as DefaultMutableTreeNode) }
   }
 }
