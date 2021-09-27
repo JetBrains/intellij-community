@@ -32,8 +32,8 @@ public final class ConsentOptions {
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
   private final boolean myIsEAP;
-  @Nullable
-  private String myProductCodeSuffix;
+  private String myProductCode;
+  private Set<String> myPluginCodes = Set.of();
 
   private static final class InstanceHolder {
     static final ConsentOptions ourInstance;
@@ -119,8 +119,13 @@ public final class ConsentOptions {
     return myIsEAP;
   }
 
-  public void setProductCode(String code) {
-    myProductCodeSuffix = code != null? "." + code.toLowerCase(Locale.ENGLISH) : null;
+  public void setProductCode(String platformCode, Iterable<String> pluginCodes) {
+    myProductCode = platformCode != null? platformCode.toLowerCase(Locale.ENGLISH) : null;
+    Set<String> codes = new HashSet<>();
+    for (String pluginCode : pluginCodes) {
+      codes.add(pluginCode.toLowerCase(Locale.ENGLISH));
+    }
+    myPluginCodes = codes.isEmpty()? Set.of() : Collections.unmodifiableSet(codes);
   }
 
   @Nullable
@@ -135,10 +140,7 @@ public final class ConsentOptions {
 
   @NotNull
   public static Predicate<Consent> condEAPFeedbackConsent() {
-    return consent -> {
-      final String id = consent.getId();
-      return id.startsWith(EAP_FEEDBACK_OPTION_ID) && (id.length() == EAP_FEEDBACK_OPTION_ID.length() || id.charAt(EAP_FEEDBACK_OPTION_ID.length()) == '.');
-    };
+    return consent -> isProductConsentOfKind(EAP_FEEDBACK_OPTION_ID, consent.getId());
   }
 
   /**
@@ -174,15 +176,15 @@ public final class ConsentOptions {
   private boolean setPermission(final String consentId, boolean allowed) {
     final Consent defConsent = getDefaultConsent(consentId);
     if (defConsent != null && !defConsent.isDeleted()) {
-      saveConfirmedConsents(Collections.singleton(new ConfirmedConsent(defConsent.getId(), defConsent.getVersion(), allowed, 0L)));
+      setConsents(Collections.singleton(defConsent.derive(allowed)));
       return true;
     }
     return false;
   }
 
   private String lookupConsentID(String consentId) {
-    final String suffix = myProductCodeSuffix;
-    return suffix != null && PER_PRODUCT_CONSENTS.contains(consentId)? consentId + suffix : consentId;
+    final String productCode = myProductCode;
+    return productCode != null && PER_PRODUCT_CONSENTS.contains(consentId)? consentId + "." + productCode : consentId;
   }
 
   public @Nullable String getConfirmedConsentsString() {
@@ -191,7 +193,16 @@ public final class ConsentOptions {
       final String str = confirmedConsentToExternalString(
         loadConfirmedConsents().values().stream().filter(c -> {
           final Consent def = defaults.get(c.getId());
-          return def != null && !def.isDeleted();
+          if (def != null) {
+            return !def.isDeleted();
+          }
+          for (String prefix : PER_PRODUCT_CONSENTS) {
+            // allow also JB plugin consents, which do not have corresponding 'direct' defaults
+            if (isProductConsentOfKind(prefix, c.getId())) {
+              return true;
+            }
+          }
+          return false;
         })
       );
       return str.isBlank()? null : str;
@@ -271,6 +282,16 @@ public final class ConsentOptions {
       List<ConfirmedConsent> list = new ArrayList<>(confirmedByUser.size());
       for (Consent t : confirmedByUser) {
         list.add(new ConfirmedConsent(t.getId(), t.getVersion(), t.isAccepted(), 0L));
+
+        if (!myPluginCodes.isEmpty()) {
+          final String idPrefix = getProductConsentKind(myProductCode, t.getId());
+          if (idPrefix != null && PER_PRODUCT_CONSENTS.contains(idPrefix)) {
+            for (String pluginCode : myPluginCodes) {
+              list.add(new ConfirmedConsent(idPrefix + "." + pluginCode, t.getVersion(), t.isAccepted(), 0L));
+            }
+          }
+        }
+
       }
       result = list;
     }
@@ -323,7 +344,7 @@ public final class ConsentOptions {
     return confirmedVersion.isOlder(defaultVersion) && confirmedVersion.getMajor() != defaultVersion.getMajor();
   }
 
-  private static boolean needReconfirm(Map<String, Consent> defaults, Map<String, ConfirmedConsent> confirmed) {
+  private boolean needReconfirm(Map<String, Consent> defaults, Map<String, ConfirmedConsent> confirmed) {
     for (Consent defConsent : defaults.values()) {
       if (defConsent.isDeleted()) {
         continue;
@@ -332,6 +353,18 @@ public final class ConsentOptions {
       if (confirmedConsent == null) {
         return true;
       }
+
+      final String consentId = getProductConsentKind(myProductCode, defConsent.getId());
+      if (consentId != null && PER_PRODUCT_CONSENTS.contains(consentId)) {
+        // require confirmation if at least one of installed plugins does not have its own consent
+        for (String pluginCode : myPluginCodes) {
+          final ConfirmedConsent pluginConfirmedConsent = confirmed.get(consentId + "." + pluginCode);
+          if (pluginConfirmedConsent == null) {
+            return true;
+          }
+        }
+      }
+
       final Version confirmedVersion = confirmedConsent.getVersion();
       final Version defaultVersion = defConsent.getVersion();
       // consider only major version differences
@@ -390,11 +423,11 @@ public final class ConsentOptions {
   @NotNull
   private String consentsToJson(@NotNull Stream<Consent> consents) {
     Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-    final String suffix = myProductCodeSuffix;
     return gson.toJson(consents.map(consent -> {
       final ConsentAttributes attribs = consent.toConsentAttributes();
-      if (suffix != null && attribs.consentId.endsWith(suffix)) {
-        attribs.consentId = attribs.consentId.substring(0, attribs.consentId.length() - suffix.length());
+      final String prefix = getProductConsentKind(myProductCode, attribs.consentId);
+      if (prefix != null) {
+        attribs.consentId = prefix;
       }
       return attribs;
     }).toArray());
@@ -432,6 +465,17 @@ public final class ConsentOptions {
     catch (IOException ignored) {
     }
     return result;
+  }
+
+  private static boolean isProductConsentOfKind(final String consentKind, String consentId) {
+    return consentKind != null && consentId.startsWith(consentKind) && (consentId.length() == consentKind.length() || consentId.charAt(consentKind.length()) == '.');
+  }
+
+  private static String getProductConsentKind(final String productCode, String consentId) {
+    if (productCode != null && consentId.endsWith(productCode) && (consentId.length() == productCode.length() || consentId.charAt(consentId.length() - productCode.length() - 1) == '.')) {
+      return consentId.substring(0, consentId.length() - productCode.length() - 1);
+    }
+    return null;
   }
 
   protected interface IOBackend {
