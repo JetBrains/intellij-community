@@ -16,6 +16,8 @@ import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Consumer
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 @CompileStatic
 class KotlinPluginBuilder {
@@ -253,17 +255,24 @@ class KotlinPluginBuilder {
 
       withCustomVersion(new PluginLayout.VersionEvaluator() {
         @Override
-        String evaluate(Path pluginXml, String ideBuildVersion, BuildContext context) {
-          def index = ideBuildVersion.indexOf(".")
-          assert index > 0
-          def major = ideBuildVersion.substring(0, index)
-          def minor = ideBuildVersion.substring(index + 1)
-          def kotlinVersion = context.project.libraryCollection.libraries
-            .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
-            ?.asTyped(JpsRepositoryLibraryType.INSTANCE)
-            ?.properties?.data?.version
-          assert kotlinVersion != null
-          return "${major}-${kotlinVersion}-${kind}${minor}"
+        String evaluate(Path pluginXml, String buildNumber, BuildContext context) {
+          Matcher ijBuildNumber = Pattern.compile("^(\\d+)\\.(\\d+(?:\\.\\d+)?)\$").matcher(buildNumber)
+          if (ijBuildNumber.matches()) {
+            String major = ijBuildNumber.group(1)
+            String minor = ijBuildNumber.group(2)
+            String kotlinVersion = context.project.libraryCollection.libraries
+              .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
+              ?.asTyped(JpsRepositoryLibraryType.INSTANCE)
+              ?.properties?.data?.version
+            if (kotlinVersion == null) {
+              throw new IllegalStateException("Can't determine Kotlin compiler version")
+            }
+            return "${major}-${kotlinVersion}-${kind}${minor}"
+          } else {
+            // Build number isn't recognized as IJ build number then it means build
+            // number must be plain Kotlin plugin version which we can use directly
+            return buildNumber
+          }
         }
       })
 
