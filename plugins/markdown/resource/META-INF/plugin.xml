@@ -35,6 +35,9 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownExtension"
                     interface="org.intellij.plugins.markdown.extensions.MarkdownExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.browserPreviewExtensionProvider"
+                    interface="org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension$Provider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownExportProvider"
                     interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
                     dynamic="true"/>
@@ -226,12 +229,13 @@ Includes the following features:</p>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
 
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
-    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension"/>
-    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension$Provider"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
 
-    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension$Provider"/>
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
 
     <!--suppress PluginXmlValidity -->
@@ -323,5 +327,7 @@ Includes the following features:</p>
       <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
               class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
+    <action id="org.intellij.plugins.markdown.ui.actions.MarkdownOpenDevtoolsAction"
+            class="org.intellij.plugins.markdown.ui.actions.MarkdownOpenDevtoolsAction"/>
   </actions>
 </idea-plugin>

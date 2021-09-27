@@ -21,6 +21,9 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?) 
 
     @JvmStatic
     val generatedAttributeName = "__idea-generated"
+
+    @JvmStatic
+    val ignorePathProcessingAttributeName = "md-do-not-process-path"
   }
 
   private val referenceLinkProvider = ReferenceLinksGeneratingProvider(linkMap, baseURI)
