@@ -3,13 +3,11 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmMetaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.util.JvmInheritanceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -39,8 +37,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final int IS_TESTCASE_MASK  = 0x800000;
   private static final int IS_LOCAL_MASK     = 0x1000000;
 
-  private Set<RefClass> myBases; // singleton (to conserve the memory) or THashSet. guarded by this
-  private Set<RefClass> mySubClasses; // singleton (to conserve the memory) or THashSet. guarded by this
+  private Set<RefClass> myBases; // singleton (to conserve memory) or HashSet. guarded by this
+  private Set<RefClass> mySubClasses; // singleton (to conserve memory) or HashSet. guarded by this
   private List<RefMethod> myConstructors; // guarded by this
   private RefMethodImpl myDefaultConstructor; //guarded by this
   private List<RefMethod> myOverridingMethods; //guarded by this
@@ -90,11 +88,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
           ((RefPackageImpl)getRefJavaManager().getDefaultPackage()).add(this);
         }
       } else {
-        final Module module = ModuleUtilCore.findModuleForPsiElement(containingFile);
-        LOG.assertTrue(module != null);
-        final WritableRefEntity refModule = (WritableRefEntity)getRefManager().getRefModule(module);
-        LOG.assertTrue(refModule != null);
-        refModule.add(this);
+        ((WritableRefEntity)myRefModule).add(this);
       }
     }
 
@@ -188,17 +182,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     setUtilityClass(utilityClass);
 
-
     final PsiClass applet = getRefJavaManager().getApplet();
     setApplet(applet != null && JvmInheritanceUtil.isInheritor(uClass, getRefJavaManager().getAppletQName()));
-
-    //TODO what's the purpose?
-    PsiManager psiManager = getRefManager().getPsiManager();
-    psiManager.dropResolveCaches();
-    PsiFile file = getContainingFile();
-    if (file != null) {
-      InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
-    }
   }
 
   private void initializeSuperReferences(UClass uClass) {
