@@ -3,8 +3,6 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.ide.wizard.getCanonicalPath
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Paths

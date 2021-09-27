@@ -63,12 +63,7 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
     contentRootProperty.dependsOn(moduleNameProperty, pathFromModuleName)
     moduleFileLocationProperty.dependsOn(moduleNameProperty, pathFromModuleName)
 
-    moduleNameProperty.dependsOn(contentRootProperty) {
-      when (val i = contentRoot.lastIndexOf(File.separator)) {
-        -1, contentRoot.lastIndex -> ""
-        else -> contentRoot.substring(i + 1)
-      }
-    }
+    moduleNameProperty.dependsOn(contentRootProperty) { File(contentRoot).name }
     moduleFileLocationProperty.dependsOn(contentRootProperty) { contentRoot }
   }
 
