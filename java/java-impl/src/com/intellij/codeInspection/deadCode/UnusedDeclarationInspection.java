@@ -44,7 +44,6 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
     super(enabledInEditor);
   }
 
-  @Nullable
   @Override
   public String getAlternativeID() {
     return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
@@ -81,7 +80,6 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
     super.runInspection(scope, manager, globalContext, problemDescriptionsProcessor);
   }
 
-  @Nullable
   @Override
   public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return new UnusedVariablesGraphAnnotator(InspectionManager.getInstance(refManager.getProject()), refManager);
@@ -235,12 +233,12 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
   private class UnusedVariablesGraphAnnotator extends RefGraphAnnotator {
     private final InspectionManager myInspectionManager;
     private final GlobalInspectionContextImpl myContext;
-    private final Map<String, Tools> myTools;
+    private final Tools myTools;
 
     UnusedVariablesGraphAnnotator(InspectionManager inspectionManager, RefManager refManager) {
       myInspectionManager = inspectionManager;
       myContext = (GlobalInspectionContextImpl)((RefManagerImpl)refManager).getContext();
-      myTools = myContext.getTools();
+      myTools = myContext.getTools().get(getShortName());
     }
 
     @Override
@@ -268,9 +266,8 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       if (body == null) return;
       PsiCodeBlock bodySourcePsi = ObjectUtils.tryCast(body.getSourcePsi(), PsiCodeBlock.class);
       if (bodySourcePsi == null) return;
-      Tools tools = myTools.get(getShortName());
-      if (!tools.isEnabled(bodySourcePsi)) return;
-      InspectionToolWrapper toolWrapper = tools.getInspectionTool(bodySourcePsi);
+      if (!myTools.isEnabled(bodySourcePsi)) return;
+      InspectionToolWrapper toolWrapper = myTools.getInspectionTool(bodySourcePsi);
       InspectionToolPresentation presentation = myContext.getPresentation(toolWrapper);
       if (((UnusedDeclarationInspection)toolWrapper.getTool()).getSharedLocalInspectionTool().LOCAL_VARIABLE) {
         List<CommonProblemDescriptor> descriptors = new ArrayList<>();
