@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -137,7 +138,12 @@ class YAMLFormattingContext {
   private static boolean startsWithTemplate(@Nullable ASTNode astNode) {
     while (astNode != null) {
       if (astNode instanceof OuterLanguageElement) return true;
-      astNode = astNode.getFirstChildNode();
+      if (YAMLTokenTypes.SEQUENCE_MARKER.equals(astNode.getElementType()) || TokenType.WHITE_SPACE.equals(astNode.getElementType())) {
+        astNode = astNode.getTreeNext();
+      }
+      else {
+        astNode = astNode.getFirstChildNode();
+      }
     }
     return false;
   }
