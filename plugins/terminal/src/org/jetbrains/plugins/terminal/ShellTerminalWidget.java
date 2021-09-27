@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 
-import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -263,40 +261,41 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     private volatile @NotNull String myPrompt = "";
     private final AtomicInteger myTypings = new AtomicInteger(0);
     private TerminalLine myTerminalLine;
+    private int myMaxCursorX = -1;
 
     private void reset() {
       myTypings.set(0);
       myTerminalLine = null;
+      myMaxCursorX = -1;
     }
 
     private void onKeyPressed() {
-      TerminalLine terminalLine = processTerminalBuffer(textBuffer -> {
-        return textBuffer.getLine(getLineNumberAtCursor());
-      });
+      TerminalLine terminalLine = processTerminalBuffer(this::getLineAtCursor);
       if (terminalLine != myTerminalLine) {
         myTypings.set(0);
         myTerminalLine = terminalLine;
+        myMaxCursorX = -1;
       }
+      String prompt = getLineTextUpToCursor(terminalLine);
       if (myTypings.get() == 0) {
-        myPrompt = getLineText(terminalLine);
+        myPrompt = prompt;
         myTerminalLine = terminalLine;
         if (LOG.isDebugEnabled()) {
           LOG.debug("Guessed shell prompt: " + myPrompt);
         }
       }
       else {
-        String prompt = getLineText(terminalLine);
         if (prompt.startsWith(myPrompt)) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Guessed prompt confirmed by typing# " + (myTypings.get() + 1) + ": " + prompt);
+            LOG.debug("Guessed prompt confirmed by typing# " + (myTypings.get() + 1));
           }
         }
         else {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Prompt rejected by typing#" + (myTypings.get() + 1) +", new prompt: " + prompt);
+            LOG.debug("Prompt rejected by typing#" + (myTypings.get() + 1) + ", new prompt: " + prompt);
           }
           myPrompt = prompt;
-          myTypings.set(0);
+          myTypings.set(1);
         }
       }
       myTypings.incrementAndGet();
@@ -306,20 +305,32 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       if (myTypings.get() == 0) {
         return "";
       }
-      String line = getLineAtCursor();
-      return StringUtil.trimStart(line, myPrompt);
+      TerminalLine terminalLine = processTerminalBuffer(this::getLineAtCursor);
+      if (terminalLine != myTerminalLine) {
+        return "";
+      }
+      String lineTextUpToCursor = getLineTextUpToCursor(terminalLine);
+      if (lineTextUpToCursor.startsWith(myPrompt)) {
+        return lineTextUpToCursor.substring(myPrompt.length());
+      }
+      return "";
     }
 
-    private @NotNull String getLineAtCursor() {
-      return processTerminalBuffer(textBuffer -> {
-        TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
-        return line != null ? line.getText() : "";
-      });
+    private @NotNull TerminalLine getLineAtCursor(@NotNull TerminalTextBuffer textBuffer) {
+      return textBuffer.getLine(getLineNumberAtCursor());
     }
 
-    private @NotNull String getLineText(@Nullable TerminalLine line) {
+    private @NotNull String getLineTextUpToCursor(@Nullable TerminalLine line) {
+      if (line == null) return "";
       return processTerminalBuffer(textBuffer -> {
-        return line != null ? line.getText() : "";
+        int cursorX = getTerminal().getCursorX() - 1;
+        String lineStr = line.getText();
+        int maxCursorX = Math.max(myMaxCursorX, cursorX);
+        while (maxCursorX < lineStr.length() && !Character.isWhitespace(lineStr.charAt(maxCursorX))) {
+          maxCursorX++;
+        }
+        myMaxCursorX = maxCursorX;
+        return lineStr.substring(0, Math.min(maxCursorX, lineStr.length()));
       });
     }
   }
