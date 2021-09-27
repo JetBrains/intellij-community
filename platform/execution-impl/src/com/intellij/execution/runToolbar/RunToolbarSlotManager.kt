@@ -303,7 +303,7 @@ class RunToolbarSlotManager(val project: Project) {
           it.clear()
           it.configuration = RunManager.getInstance(project).selectedConfiguration
         } else {
-          removeSlot(it.id, false)
+          removeSlot(it.id)
         }
       }
       else {
@@ -359,7 +359,7 @@ class RunToolbarSlotManager(val project: Project) {
     update()
   }
 
-  internal fun removeSlot(id: String, warningNeeded: Boolean = true) {
+  internal fun removeSlot(id: String) {
     val index = dataIds.indexOf(id)
 
     fun remove() {
@@ -385,7 +385,7 @@ class RunToolbarSlotManager(val project: Project) {
 
     (if (index >= 0) getData(index) else if (mainSlotData.id == id) mainSlotData else null)?.let { slotDate ->
       slotDate.environment?.let {
-        if(!warningNeeded) {
+        if(it.isProcessTerminating()) {
           remove()
         } else if (Messages.showOkCancelDialog(
             project,
