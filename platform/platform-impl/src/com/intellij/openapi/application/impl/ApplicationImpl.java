@@ -713,6 +713,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       return true;
     }
 
+    if (hasUnsafeBgTasks && ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      LOG.error("Headless application has been completed but background tasks are still running! Application will be terminated." +
+                "\nThread dump:\n" + ThreadDumper.dumpThreadsToString());
+      return true;
+    }
+
     AtomicBoolean alreadyGone = new AtomicBoolean(false);
     if (hasUnsafeBgTasks) {
       Runnable dialogRemover = Messages.createMessageDialogRemover(null);
