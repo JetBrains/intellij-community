@@ -45,15 +45,16 @@ fun demoGaps(): DialogPanel {
 
     group("Two columns mode") {
       twoColumnsRow({
-        checkBox("Panel.twoColumnsRow")
+        checkBox("First column")
       }, {
         checkBox("Second column")
-      })
+      }).rowComment("Panel.twoColumnsRow is used")
       row {
-        checkBox("RightGap.COLUMNS")
+        checkBox("Column 1")
           .gap(RightGap.COLUMNS)
         checkBox("Column 2")
       }.layout(RowLayout.PARENT_GRID)
+        .rowComment("RightGap.COLUMNS is used")
     }
 
     group("Examples for vertical gaps") {

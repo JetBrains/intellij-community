@@ -28,7 +28,9 @@ val DEMOS = arrayOf(
   ::demoComments,
   ::demoComponents,
   ::demoGaps,
-  ::demoGroups
+  ::demoGroups,
+  ::demoAvailability,
+  ::demoTips
 )
 
 class UiDslShowcaseAction : DumbAwareAction("UI DSL Showcase") {
@@ -88,6 +90,8 @@ private class UiDslShowcaseDialog(project: Project?) : DialogWrapper(project, nu
       else {
         row {
           cell(dialogPanel)
+            .horizontalAlign(HorizontalAlign.FILL)
+            .resizableColumn()
         }
       }
 

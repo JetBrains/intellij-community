@@ -46,7 +46,7 @@ fun demoGroups(): DialogPanel {
     }
 
     var value = true
-    buttonGroup({ value }, { value = it }, "Panel.buttonGroup") {
+    buttonGroup({ value }, { value = it }, "Panel.buttonGroup:") {
       row {
         radioButton("true", true)
       }
