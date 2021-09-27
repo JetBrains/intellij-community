@@ -19,39 +19,39 @@
       "description": "The border color of the bookmark icon with mnemonic."
     },
     {
-      "key": "AvailableMnemonic.foreground",
+      "key": "BookmarkMnemonicAvailable.foreground",
       "description": "The button text color for the not assigned bookmark mnemonic."
     },
     {
-      "key": "AvailableMnemonic.background",
+      "key": "BookmarkMnemonicAvailable.background",
       "description": "The button background for the not assigned bookmark mnemonic."
     },
     {
-      "key": "AvailableMnemonic.borderColor",
+      "key": "BookmarkMnemonicAvailable.borderColor",
       "description": "The button border color for the not assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.foreground",
+      "key": "BookmarkMnemonicAssigned.foreground",
       "description": "The button text color for the already assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.background",
+      "key": "BookmarkMnemonicAssigned.background",
       "description": "The button background for the already assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.borderColor",
+      "key": "BookmarkMnemonicAssigned.borderColor",
       "description": "The button border color for the already assigned bookmark mnemonic."
     },
     {
-      "key": "CurrentMnemonic.foreground",
+      "key": "BookmarkMnemonicCurrent.foreground",
       "description": "The button text color for the currently selected bookmark mnemonic."
     },
     {
-      "key": "CurrentMnemonic.background",
+      "key": "BookmarkMnemonicCurrent.background",
       "description": "The button background for the currently selected bookmark mnemonic."
     },
     {
-      "key": "CurrentMnemonic.borderColor",
+      "key": "BookmarkMnemonicCurrent.borderColor",
       "description": "The button border color for the currently selected bookmark mnemonic."
     },
     {

@@ -43,13 +43,13 @@
       }
     },
 
-    "AssignedMnemonic": {
+    "BookmarkMnemonicAssigned": {
       "background": "#665632",
       "borderColor": "#665632",
       "foreground": "#BBBBBB"
     },
 
-    "AvailableMnemonic": {
+    "BookmarkMnemonicAvailable": {
       "background": "#3C3F41",
       "borderColor": "#5E6060",
       "foreground": "#BBBBBB"
@@ -123,7 +123,7 @@
       "warningFocusColor": "#AC7920"
     },
 
-    "CurrentMnemonic": {
+    "BookmarkMnemonicCurrent": {
       "background": "#345F85",
       "borderColor": "#345F85",
       "foreground": "#FEFEFE"
