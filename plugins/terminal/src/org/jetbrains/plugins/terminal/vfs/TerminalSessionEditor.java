@@ -43,9 +43,8 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
     myFile.getTerminalWidget().addListener(myListener);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myFile.getTerminalWidget();
   }
 
@@ -54,16 +53,13 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
     return myFile.getTerminalWidget();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myFile.getName();
   }
 
   @Override
-  public void setState(@NotNull FileEditorState state) {
-
-  }
+  public void setState(@NotNull FileEditorState state) { }
 
   @Override
   public boolean isModified() {
@@ -76,34 +72,24 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
   }
 
   @Override
-  public void selectNotify() {
-
-  }
+  public void selectNotify() { }
 
   @Override
-  public void deselectNotify() {
-
-  }
+  public void deselectNotify() { }
 
   @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-
-  }
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
-  }
-
-  @Nullable
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
+  public @Nullable BackgroundEditorHighlighter getBackgroundHighlighter() {
     return null;
   }
 
-  @Nullable
   @Override
-  public FileEditorLocation getCurrentLocation() {
+  public @Nullable FileEditorLocation getCurrentLocation() {
     return null;
   }
 
