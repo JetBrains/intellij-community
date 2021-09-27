@@ -1802,7 +1802,7 @@ public final class HighlightUtil {
           ObjectUtils.notNull(resolved instanceof PsiMethod ? ((PsiMethod)resolved).getContainingClass() : null, aClass);
         for (PsiClass superClass : classT.getSupers()) {
           if (superClass.isInheritor(containingClass, true)) {
-            if (superClass.isInheritor(aClass, true) && superClass.isInterface()) {
+            if (superClass.isInheritor(aClass, true)) {
               return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(qualifier)
                 .descriptionAndTooltip(
