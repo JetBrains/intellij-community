@@ -27,7 +27,8 @@ class OverrideFileTypeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    e.getPresentation().setEnabled(file != null && !file.isDirectory());
+    boolean canBeOverridden = file != null && !file.isDirectory() && OverrideFileTypeManager.getInstance().getFileValue(file) == null;
+    e.getPresentation().setEnabledAndVisible(canBeOverridden);
   }
 
   @Override
