@@ -36,7 +36,8 @@
     "lightBorder": "grey11",
 
     "panel": "grey15",
-    "contentBackground": "white"
+    "contentBackground": "white",
+    "separatorForeground": "grey04"
   },
 
 
@@ -69,7 +70,7 @@
       "selectionInactiveForeground": "foreground",
 
       "separatorColor": "border",
-      "separatorForeground": "grey04",
+      "separatorForeground": "separatorForeground",
 
       "textBackground": "contentBackground",
       "textForeground": "foreground"
@@ -96,14 +97,17 @@
 
     "BookmarkMnemonicAssigned": {
       "background": "#F7C777",
-      "borderColor": "#F7C777"
+      "borderColor": "#F7C777",
+      "foreground": "foreground"
     },
 
     "BookmarkMnemonicAvailable": {
       "background": "white",
-      "borderColor": "componentBorder"
+      "borderColor": "componentBorder",
+      "foreground": "foreground"
     },
 
+    "BigSpinner.background": "panel",
     "BookmarkIcon.background": "#F7C777",
 
     "Borders": {
@@ -149,7 +153,8 @@
       "AccessDisabled.accessDot": "#DB5860",
       "AccessEnabled.accessDot":"#59A869",
       "AccessEnabled.dropdownBorder": "grey11",
-      "AccessEnabled.pillBackground": "grey11"
+      "AccessEnabled.pillBackground": "grey11",
+      "Avatar.foreground": "foreground"
     },
 
     "ComboBox": {
@@ -170,6 +175,7 @@
     "ComboBoxButton.background": "contentBackground",
 
     "CompletionPopup": {
+      "foreground": "foreground",
       "matchForeground": "#2470b3",
       "selectionBackground": "#c5dffc",
       "selectionInactiveBackground": "grey12",
@@ -213,6 +219,7 @@
     },
 
     "DefaultTabs": {
+      "background": "panel",
       "borderColor":  "border",
       "hoverBackground": "#00000019",
       "inactiveColoredTabBackground":  "#00000011",
@@ -241,6 +248,7 @@
     },
 
     "EditorTabs": {
+      "background": "panel",
       "tabInsets": "0,8,0,8",
       "underlinedTabBackground": "white",
       "borderColor": "border",
@@ -273,11 +281,13 @@
     "GotItTooltip": {
       "background": "grey17",
       "borderColor": "grey05",
+      "foreground": "foreground",
       "linkForeground": "linkForeground",
       "shortcutForeground": "infoPanelForeground"
     },
 
     "Group.disabledSeparatorColor": "border",
+    "Group.separatorColor": "border",
 
     "GutterTooltip": {
       "infoForeground": "infoPanelForeground",
@@ -307,9 +317,11 @@
     },
 
     "Label": {
+      "disabledText": "disabledForeground",
       "errorForeground": "#C7222D",
       "infoForeground": "infoPanelForeground",
       "selectedDisabledForeground": "disabledForeground",
+      "selectedForeground": "foreground",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaLabelUI"
     },
 
@@ -359,21 +371,25 @@
 
     "BookmarkMnemonicIcon": {
       "background": "#FEF7EC",
-      "borderColor": "#F4AF3D"
+      "borderColor": "#F4AF3D",
+      "foreground": "foreground"
     },
 
     "NavBar.borderColor": "border",
 
     "NewClass": {
+      "Panel.background": "panel",
       "SearchField.background": "contentBackground",
       "separatorWidth": 10
     },
 
     "Notification": {
+      "background": "panel",
       "borderColor": "border",
       "errorBackground": "#f5e6e7",
       "errorBorderColor": "#e0a8a9",
       "errorForeground": "foreground",
+      "foreground": "foreground",
 
       "MoreButton": {
         "background": "grey13",
@@ -424,6 +440,8 @@
       "borderColor": "grey12",
       "currentOverloadBackground": "grey12",
       "currentParameterForeground": "foreground",
+      "disabledForeground": "disabledForeground",
+      "foreground": "foreground",
       "infoForeground": "infoPanelForeground",
       "lineSeparatorColor": "grey12"
     },
@@ -436,6 +454,7 @@
 
     "Plugins": {
       "background": "contentBackground",
+      "disabledForeground": "disabledForeground",
       "eapTagBackground": "#F2D2CF",
       "hoverBackground": "#EDF6FE",
       "lightSelectionBackground": "#EDF6FE",
@@ -466,6 +485,7 @@
 
     "Popup": {
       "Advertiser": {
+        "background": "panel",
         "borderColor": "border",
         "foreground": "infoPanelForeground"
       },
@@ -482,7 +502,8 @@
 
       "borderColor": "grey05",
       "inactiveBorderColor": "grey05",
-      "separatorColor": "lightBorder"
+      "separatorColor": "lightBorder",
+      "separatorForeground": "separatorForeground"
     },
 
     "PopupMenu": {
@@ -572,12 +593,16 @@
     },
 
     "SearchEverywhere": {
+      "Advertiser.background": "panel",
       "Advertiser.foreground": "infoPanelForeground",
+      "Header.background": "panel",
       "List.separatorColor": "lightBorder",
+      "List.separatorForeground": "separatorForeground",
       "SearchField.background": "contentBackground",
       "SearchField.borderColor": "componentBorder",
       "SearchField.infoForeground": "infoPanelForeground",
-      "Tab.selectedBackground": "grey12"
+      "Tab.selectedBackground": "grey12",
+      "Tab.selectedForeground": "foreground"
     },
 
     "SearchField.errorBackground": "#ffcccc",
@@ -588,7 +613,8 @@
     "SearchOption.selectedBackground": "#DAE4ED",
 
     "Separator": {
-      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI"
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI",
+      "separatorColor": "border"
     },
 
     "Settings.Spotlight.borderColor": "#ffc80064",
@@ -605,11 +631,13 @@
     "SpeedSearch": {
       "background": "contentBackground",
       "borderColor": "grey02",
-      "errorForeground": "#ff0000"
+      "errorForeground": "#ff0000",
+      "foreground": "foreground"
     },
 
     "Spinner": {
       "arrowButtonInsets": "1,1,1,1",
+      "background": "panel",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder",
       "darcula.disabledButtonColor": "panel",
       "darcula.enabledButtonColor": "#6e9bd5",
@@ -633,6 +661,7 @@
       "darkShadow": {
         "os.windows": "grey09"
       },
+      "disabledForeground": "disabledForeground",
       "disabledUnderlineColor": "grey05",
       "focusColor": "#dae4ed",
       "highlight": {
@@ -673,6 +702,7 @@
       "background": "contentBackground",
       "cellNoFocusBorder": "2,3,2,3",
       "descendingSortIcon": "AllIcons.General.ArrowDown",
+      "disabledForeground": "disabledForeground",
       "focusCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "focusSelectedCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "gridColor": "grey17",
@@ -689,6 +719,7 @@
       "background": "contentBackground",
       "bottomSeparatorColor": "lightBorder",
       "cellBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder",
+      "disabledForeground": "disabledForeground",
       "height": {
         "os.default": 25,
         "os.linux": 28
@@ -707,6 +738,7 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI",
 
       "background": "contentBackground",
+      "borderColor": "componentBorder",
       "darcula.error.active": {
         "os.windows": "#f57d7d"
       },
@@ -719,6 +751,7 @@
     "TitledBorder.titleColor": "black",
 
     "TitlePane": {
+      "background": "panel",
       "Button.hoverBackground": "#00000019",
       "inactiveBackground": "panel",
       "inactiveInfoForeground": "grey04",
@@ -747,6 +780,7 @@
       "borderColor": "grey05",
       "infoForeground": "infoPanelForeground",
       "shortcutForeground": "infoPanelForeground",
+      "separatorColor": "border",
 
       "paintBorder": {
         "os.linux": true,
@@ -757,7 +791,8 @@
     "ToolWindow": {
       "Button": {
         "hoverBackground": "#55555528",
-        "selectedBackground": "#55555555"
+        "selectedBackground": "#55555555",
+        "selectedForeground": "foreground"
       },
 
       "Header": {
@@ -835,7 +870,8 @@
       "HgLog.tagIconColor": "grey01",
       "HgLog.tipIconColor": "#ffd100",
 
-      "RefLabel.backgroundBase": "black"
+      "RefLabel.backgroundBase": "black",
+      "RefLabel.foreground": "foreground"
     },
 
     "control": "grey12",
@@ -848,8 +884,10 @@
 
     "WelcomeScreen": {
       "Details.background": "white",
+      "SidePanel.background": "panel",
       "Projects.actions.selectionBackground": "#3587E5",
-      "Projects.actions.background": "#DCEDFE"
+      "Projects.actions.background": "#DCEDFE",
+      "separatorColor": "border"
     },
 
     "Tag": {
