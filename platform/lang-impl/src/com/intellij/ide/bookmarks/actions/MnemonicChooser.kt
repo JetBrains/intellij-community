@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions
 
 import com.intellij.ide.bookmark.BookmarkType
@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.RenderingHints.*
@@ -34,6 +35,8 @@ private val SHARED_LAYOUT by lazy {
   }
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@Deprecated("This class will be removed soon", ReplaceWith("com.intellij.ide.bookmark.actions.BookmarkTypeChooser"), DeprecationLevel.ERROR)
 internal class MnemonicChooser(
   private val manager: BookmarkManager,
   private val current: BookmarkType?,
