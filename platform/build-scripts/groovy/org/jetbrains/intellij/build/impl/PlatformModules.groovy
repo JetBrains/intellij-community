@@ -194,6 +194,7 @@ final class PlatformModules {
       "intellij.platform.vcs.log.impl",
 
       "intellij.platform.collaborationTools",
+      "intellij.platform.collaborationTools.auth",
 
       "intellij.platform.icons",
       "intellij.platform.resources",
