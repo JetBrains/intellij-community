@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 
 class InlayProviderUsageCollector : ProjectUsagesCollector() {
-  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 4)
+  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 5)
 
   private val GLOBAL_SETTINGS_EVENT = INLAY_CONFIGURATION_GROUP.registerEvent(
     "global.inlays.settings",
@@ -113,7 +113,8 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
   private val MODEL_SETTINGS_EVENT = INLAY_CONFIGURATION_GROUP.registerEvent(
     "model.inlays.settings",
     EventFields.Boolean("enabled"),
-    MODEL_ID_EVENT_FIELD
+    MODEL_ID_EVENT_FIELD,
+    EventFields.Language
   )
 
   private val MODEL_OPTIONS_EVENT = INLAY_CONFIGURATION_GROUP.registerVarargEvent(
@@ -157,6 +158,6 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
         EventPair(MODEL_ENABLED_EVENT_FIELD, model.isEnabled),
       ))
     }
-    metrics.add(MODEL_SETTINGS_EVENT.metric(model.isEnabled, model.id))
+    metrics.add(MODEL_SETTINGS_EVENT.metric(model.isEnabled, model.id, language))
   }
 }
