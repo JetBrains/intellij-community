@@ -105,10 +105,7 @@ abstract class EditorDiffPreview(protected val project: Project,
   protected fun init() {
     @Suppress("LeakingThis")
     addSelectionListener {
-      if (VcsLogUiUtil.isDiffPreviewInEditor(project) && Registry.`is`("show.diff.preview.as.editor.tab.with.single.click")) {
-        openPreviewInEditor(false)
-      }
-      else {
+      if (VcsLogUiUtil.isDiffPreviewInEditor(project)) {
         updatePreview(true)
       }
     }

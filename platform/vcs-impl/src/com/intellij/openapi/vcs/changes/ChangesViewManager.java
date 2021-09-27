@@ -449,7 +449,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myDisposed) return;
 
       boolean isEditorPreview = isEditorPreview(myProject);
-      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject) && !isOpenEditorDiffPreviewWithSingleClick.asBoolean();
+      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
 
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
@@ -524,7 +524,7 @@ public class ChangesViewManager implements ChangesViewEx,
         if (toolWindow != null) toolWindow.activate(null);
       });
 
-      editorPreview.installListeners(myView, isOpenEditorDiffPreviewWithSingleClick.asBoolean());
+      editorPreview.installListeners(myView, isOpenEditorDiffPreviewWithSingleClick.asBoolean() && isCommitToolWindowShown(myProject));
       editorPreview.installNextDiffActionOn(myContentPanel);
 
       UIUtil.putClientProperty(myView, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
