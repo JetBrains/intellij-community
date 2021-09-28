@@ -51,7 +51,7 @@ class HmppSourceModuleDependencyFilterTest {
 
     @Test
     fun `incompatible backends are not supported`() {
-        val filter = HmppSourceModuleDependencyFilter(JvmPlatforms.jvm18)
+        val filter = HmppSourceModuleDependencyFilter(JvmPlatforms.jvm8)
 
         assertFalse(
             filter.isSupportedDependency(JsPlatforms.defaultJsPlatform),
@@ -76,10 +76,10 @@ class HmppSourceModuleDependencyFilterTest {
 
     @Test
     fun `jvm16 is supported for jvm18`() {
-        val filter = HmppSourceModuleDependencyFilter(JvmPlatforms.jvm18,)
+        val filter = HmppSourceModuleDependencyFilter(JvmPlatforms.jvm8,)
 
         assertTrue(
-            filter.isSupportedDependency(JvmPlatforms.jvm16),
+            filter.isSupportedDependency(JvmPlatforms.jvm6),
             "Expected jvm18 -> jvm16 to be supported"
         )
     }
@@ -94,10 +94,10 @@ class HmppSourceModuleDependencyFilterTest {
      */
     @Test
     fun `jvm18 is supported for jvm16`() {
-        val filter = HmppSourceModuleDependencyFilter(JvmPlatforms.jvm16)
+        val filter = HmppSourceModuleDependencyFilter(JvmPlatforms.jvm6)
 
         assertTrue(
-            filter.isSupportedDependency(JvmPlatforms.jvm18),
+            filter.isSupportedDependency(JvmPlatforms.jvm8),
             "Expected jvm16 -> jvm18 to be supported"
         )
     }

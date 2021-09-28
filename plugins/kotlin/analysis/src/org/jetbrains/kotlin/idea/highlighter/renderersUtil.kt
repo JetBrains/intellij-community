@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.RenderingFormat
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.hasTypeMismatchErrorOnParameter
-import org.jetbrains.kotlin.resolve.calls.callUtil.hasUnmappedArguments
+import org.jetbrains.kotlin.resolve.calls.util.hasTypeMismatchErrorOnParameter
+import org.jetbrains.kotlin.resolve.calls.util.hasUnmappedArguments
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.ErrorUtils

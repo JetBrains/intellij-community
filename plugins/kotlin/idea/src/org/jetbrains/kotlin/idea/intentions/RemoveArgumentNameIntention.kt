@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.completion.placedOnItsOwnPositionInCall
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 
 class RemoveArgumentNameIntention : SelfTargetingRangeIntention<KtValueArgument>(
