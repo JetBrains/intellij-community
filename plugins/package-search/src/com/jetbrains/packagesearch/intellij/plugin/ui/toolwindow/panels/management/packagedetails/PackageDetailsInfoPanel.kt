@@ -9,7 +9,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRep
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.noInsets
@@ -17,9 +16,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledAsString
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.skipInvisibleComponents
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.withHtmlStyling
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -31,7 +27,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @Suppress("MagicNumber") // Swing dimension constants
-internal class PackageDetailsInfoPanel : JPanel(), Displayable<PackageDetailsInfoPanel.ViewModel> {
+internal class PackageDetailsInfoPanel : JPanel() {
 
     @ScaledPixels private val maxRowHeight = 180.scaled()
 
@@ -107,10 +103,10 @@ internal class PackageDetailsInfoPanel : JPanel(), Displayable<PackageDetailsInf
         val allKnownRepositories: KnownRepositories.All
     )
 
-    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
+    fun display(viewModel: ViewModel) {
         clearPanelContents()
         if (viewModel.packageModel.remoteInfo == null) {
-            return@withContext
+            return
         }
 
         noDataLabel.isVisible = false

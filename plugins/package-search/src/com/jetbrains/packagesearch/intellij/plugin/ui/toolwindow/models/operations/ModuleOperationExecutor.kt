@@ -141,7 +141,7 @@ internal class ModuleOperationExecutor {
     private fun List<OperationFailure<*>>.throwIfAnyFailures() {
         when {
             isEmpty() -> return
-            size > 1 -> throw IllegalStateException("A single operation resulted in multiple failures")
+            size > 1 -> error("A single operation resulted in multiple failures")
         }
     }
 }

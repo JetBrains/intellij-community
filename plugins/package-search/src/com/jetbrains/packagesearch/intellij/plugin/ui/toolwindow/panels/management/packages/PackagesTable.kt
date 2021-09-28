@@ -10,7 +10,6 @@ import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
@@ -27,15 +26,10 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.autosizeColumnsAt
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
-import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ComponentAdapter
@@ -50,24 +44,19 @@ import javax.swing.table.TableCellRenderer
 import javax.swing.table.TableColumn
 import kotlin.math.roundToInt
 
-internal typealias SelectedPackageModelListener = (UiPackageModel<*>?) -> Unit
 internal typealias SearchResultStateChangeListener = (PackageModel.SearchResult, PackageVersion?, PackageScope?) -> Unit
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackagesTable(
     project: Project,
     private val operationExecutor: OperationExecutor,
-    operationFactory: PackageSearchOperationFactory,
-    private val onItemSelectionChanged: SelectedPackageModelListener,
     private val onSearchResultStateChanged: SearchResultStateChangeListener
-) : JBTable(), CopyProvider, DataProvider, Displayable<PackagesTable.ViewModel> {
+) : JBTable(), CopyProvider, DataProvider {
 
     private val operationFactory = PackageSearchOperationFactory()
 
     private val tableModel: PackagesTableModel
         get() = model as PackagesTableModel
-
-    private var selectedUiPackageModel: UiPackageModel<*>? = null
 
     var transferFocusUp: () -> Unit = { transferFocusBackward() }
 
@@ -86,29 +75,27 @@ internal class PackagesTable(
         updatePackageVersion(packageModel, newVersion)
     }
 
-    private val actionsColumn = ActionsColumn(
-        operationExecutor = ::executeActionColumnOperations,
-        operationFactory = operationFactory
-    )
+    private val actionsColumn = ActionsColumn(operationExecutor = ::executeActionColumnOperations)
 
     private val actionsColumnIndex: Int
 
     private val autosizingColumnsIndices: List<Int>
 
     private var targetModules: TargetModules = TargetModules.None
+
     private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
-    private var allKnownRepositories = KnownRepositories.All.EMPTY
+
+    val selectedPackageStateFlow = MutableStateFlow<UiPackageModel<*>?>(null)
 
     private val listSelectionListener = ListSelectionListener {
         val item = getSelectedTableItem()
         if (selectedIndex >= 0 && item != null) {
             TableUtil.scrollSelectionToVisible(this)
             updateAndRepaint()
-            selectedUiPackageModel = item.uiPackageModel
-            onItemSelectionChanged(selectedUiPackageModel)
+            selectedPackageStateFlow.tryEmit(item.uiPackageModel)
             PackageSearchEventsLogger.logPackageSelected(item is PackagesTableItem.InstalledPackage)
         } else {
-            selectedUiPackageModel = null
+            selectedPackageStateFlow.tryEmit(null)
         }
     }
 
@@ -132,7 +119,6 @@ internal class PackagesTable(
         require(columnWeights.sum() == 1.0f) { "The column weights must sum to 1.0" }
 
         model = PackagesTableModel(
-            onlyStable = PackageSearchGeneralConfiguration.getInstance(project).onlyStable,
             columns = arrayOf(nameColumn, scopeColumn, versionColumn, actionsColumn)
         )
 
@@ -254,54 +240,47 @@ internal class PackagesTable(
         val onlyStable: Boolean,
         val targetModules: TargetModules,
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        val allKnownRepositories: KnownRepositories.All,
-        val traceInfo: TraceInfo
     ) {
 
         data class TableItems(
             val items: List<PackagesTableItem<*>>,
-            val indexToSelect: Int?
         ) : List<PackagesTableItem<*>> by items {
 
             companion object {
 
-                val EMPTY = TableItems(items = emptyList(), indexToSelect = null)
+                val EMPTY = TableItems(items = emptyList())
             }
         }
     }
 
-    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
+    fun display(viewModel: ViewModel) {
         knownRepositoriesInTargetModules = viewModel.knownRepositoriesInTargetModules
-        allKnownRepositories = viewModel.allKnownRepositories
         targetModules = viewModel.targetModules
-
-        logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Displaying ${viewModel.items.size} item(s)" }
 
         // We need to update those immediately before setting the items, on EDT, to avoid timing issues
         // where the target modules or only stable flags get updated after the items data change, thus
         // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
         versionColumn.updateData(viewModel.onlyStable, viewModel.targetModules)
-        actionsColumn.updateData(viewModel.onlyStable, viewModel.targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
+        actionsColumn.updateData(
+            viewModel.onlyStable,
+            viewModel.targetModules,
+            viewModel.knownRepositoriesInTargetModules
+        )
 
-        val previouslySelectedPackage = selectedUiPackageModel?.packageModel?.identifier
+        // TODO save current selection and attempt to re-select
+        val previouslySelectedPackage = selectedPackageStateFlow.value?.packageModel?.identifier
         selectionModel.removeListSelectionListener(listSelectionListener)
         tableModel.items = viewModel.items
 
         if (viewModel.items.isEmpty() || previouslySelectedPackage == null) {
             selectionModel.addListSelectionListener(listSelectionListener)
-            onItemSelectionChanged(null)
-            return@withContext
+            return
         }
 
-        autosizeColumnsAt(autosizingColumnsIndices)
+        // TODO size columns
 
         selectionModel.addListSelectionListener(listSelectionListener)
 
-        if (viewModel.items.indexToSelect != null) {
-            selectedIndex = viewModel.items.indexToSelect
-        } else {
-            logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
-        }
         updateAndRepaint()
     }
 
@@ -357,8 +336,7 @@ internal class PackagesTable(
                 val operations = uiPackageModel.packageModel.usageInfo.flatMap {
                     val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
                         uiPackageModel.packageModel,
-                        newVersion,
-                        allKnownRepositories
+                        newVersion
                     )
 
                     operationFactory.createChangePackageVersionOperations(

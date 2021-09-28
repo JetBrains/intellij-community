@@ -23,7 +23,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.onEach
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -54,7 +54,7 @@ internal fun ToolWindow.initialize(project: Project) {
     val panels = buildList {
         this.add(PackageManagementPanel(project))
         if (FeatureFlags.showRepositoriesTab) {
-            this.add(RepositoryManagementPanel(rootDataModelProvider = project.packageSearchDataService))
+            this.add(RepositoryManagementPanel(project))
         }
     }
 
@@ -66,7 +66,7 @@ internal fun ToolWindow.initialize(project: Project) {
 
     isAvailable = false
 
-    project.packageSearchDataService.projectModulesStateFlow
+    project.packageSearchProjectService.projectModulesStateFlow
         .map { it.isNotEmpty() }
         .onEach { logInfo("PackageSearchToolWindowFactory#packageSearchModulesChangesFlow") { "Setting toolWindow.isAvailable = $it" } }
         .onEach(Dispatchers.AppUI) { isAvailable = it }
@@ -74,7 +74,7 @@ internal fun ToolWindow.initialize(project: Project) {
 
     combine(
         project.lookAndFeelFlow,
-        project.packageSearchDataService.projectModulesStateFlow.filter { it.isNotEmpty() }
+        project.packageSearchProjectService.projectModulesStateFlow.filter { it.isNotEmpty() }
     ) { _, _ -> withContext(Dispatchers.AppUI) { contentManager.component.updateAndRepaint() } }
         .launchIn(project.lifecycleScope)
 }
