@@ -118,6 +118,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
     try {
+      header();
       execute();
     }
     catch (Throwable e) {
@@ -136,6 +137,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public void enablePathProfiling() {
     myPathProfiling = true;
   }
+
+  public void header(){}
 
   public Map<Path, Long> getPathProfile() {
     return myCompleteProfile;
