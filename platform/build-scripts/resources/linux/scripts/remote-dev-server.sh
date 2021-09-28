@@ -1,6 +1,9 @@
 #!/bin/sh
 # Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+### Available environment variables to set
+# REMOTE_DEV_SERVER_TRACE: set to any value to get more debug output from this startup script
+
 echo "> Setup and launch IDE in Unattended Host mode"
 
 echo "> Setup initial variables and validate environment state"
