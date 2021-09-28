@@ -6,11 +6,11 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.core.ArgumentPositionData
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -65,11 +66,39 @@ object NamedArgumentCompletion {
     private class NamedArgumentInsertHandler(private val parameterName: Name) : InsertHandler<LookupElement> {
         override fun handleInsert(context: InsertionContext, item: LookupElement) {
             val editor = context.editor
-            val text = parameterName.render()
-            editor.document.replaceString(context.startOffset, context.tailOffset, text)
-            editor.caretModel.moveToOffset(context.startOffset + text.length)
+            val (textAfterCompletionArea, doNeedTrailingSpace) = context.file.findElementAt(context.tailOffset).let { psi ->
+                psi?.siblings()?.firstOrNull { it !is PsiWhiteSpace }?.text to (psi !is PsiWhiteSpace)
+            }
 
-            WithTailInsertHandler.EQ.postHandleInsert(context, item)
+            var text: String
+            var caretOffset: Int
+            when (textAfterCompletionArea) {
+                "=" -> {
+                    text = parameterName.render()
+                    caretOffset = text.length
+                }
+                ")" -> {
+                    text = "${parameterName.render()} = "
+                    caretOffset = text.length
+                }
+                else -> {
+                    if (doNeedTrailingSpace) {
+                        text = "${parameterName.render()} = , "
+                        caretOffset = text.length - 2
+                    } else {
+                        text = "${parameterName.render()} = ,"
+                        caretOffset = text.length - 1
+                    }
+                }
+            }
+
+            if (context.file.findElementAt(context.startOffset - 1)?.let { it !is PsiWhiteSpace && it.text != "(" } == true) {
+                text = " $text"
+                caretOffset++
+            }
+
+            editor.document.replaceString(context.startOffset, context.tailOffset, text)
+            editor.caretModel.moveToOffset(context.startOffset + caretOffset)
         }
     }
 }
