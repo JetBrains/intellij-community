@@ -30,13 +30,13 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new JBColor(() -> UIUtil.getListSelectionForeground(true)));
 
   private JPanel myTopPanel;
-  private JList<FileInfo> myFileList;
+  private JList<PresentableFileInfo> myFileList;
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
   private JComboBox<String> myChangelist;
-  private List<FileInfo> myFiles;
+  private List<PresentableFileInfo> myFiles;
 
-  public ReadOnlyStatusDialog(Project project, @NotNull List<FileInfo> files) {
+  public ReadOnlyStatusDialog(Project project, @NotNull List<PresentableFileInfo> files) {
     super(project);
     setTitle(IdeBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;
@@ -53,7 +53,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     myUsingFileSystemRadioButton.addActionListener(listener);
     (myUsingVcsRadioButton.isEnabled() ? myUsingVcsRadioButton : myUsingFileSystemRadioButton).setSelected(true);
     myChangelist.setEnabled(myUsingVcsRadioButton.isSelected());
-    myFileList.setCellRenderer(TargetPopup.createTargetPresentationRenderer(FileInfo::getTargetPresentation));
+    myFileList.setCellRenderer(TargetPopup.createTargetPresentationRenderer(PresentableFileInfo::getPresentation));
     init();
   }
 
@@ -65,7 +65,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       }
 
       @Override
-      public FileInfo getElementAt(final int index) {
+      public PresentableFileInfo getElementAt(final int index) {
         return myFiles.get(index);
       }
     });
@@ -144,7 +144,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       }
     }
 
-    List<FileInfo> files = new ArrayList<>(myFiles);
+    List<PresentableFileInfo> files = new ArrayList<>(myFiles);
     String changelist = (String)myChangelist.getSelectedItem();
     ReadonlyStatusHandlerImpl.processFiles(files, changelist);
 

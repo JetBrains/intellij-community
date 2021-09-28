@@ -5,15 +5,16 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.navigation.TargetPresentation;
 import com.intellij.navigation.TargetPresentationBuilder;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandlerBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
@@ -72,15 +74,15 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
   @NotNull
   @Override
   protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
-    List<VirtualFile> nonWritableFiles =
-      ContainerUtil.filter(originalFiles, (vf) -> vf != null && !vf.isWritable() && vf.isInLocalFileSystem());
+    List<FileInfo> fileInfos = files.stream()
+      .filter(vf-> vf != null && !vf.isWritable() && vf.isInLocalFileSystem())
+      .map(vf -> new FileInfo(vf, myProject))
+      .collect(Collectors.toList());
 
     // if all files are already writable
-    if (nonWritableFiles.isEmpty()) {
+    if (fileInfos.isEmpty()) {
       return createResultStatus(originalFiles, files);
     }
-
-    final List<FileInfo> fileInfos = SlowOperations.allowSlowOperations(() -> createFileInfos(nonWritableFiles));
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myClearReadOnlyInTests) {
@@ -94,7 +96,12 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
     final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
     if (myState.SHOW_DIALOG) {
-      new ReadOnlyStatusDialog(myProject, fileInfos).show();
+      List<PresentableFileInfo> presentableFileInfos = ActionUtil.underModalProgress(
+        myProject,
+        FileTypesBundle.message("progress.title.resolving.filetype"),
+        () -> createPresentableFileInfos(fileInfos)
+      );
+      new ReadOnlyStatusDialog(myProject, presentableFileInfos).show();
     }
     else {
       processFiles(new ArrayList<>(fileInfos), null); // the collection passed is modified
@@ -103,19 +110,18 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     return createResultStatus(originalFiles, files);
   }
 
-  @NotNull
-  private List<FileInfo> createFileInfos(@NotNull Collection<? extends VirtualFile> nonWritableFiles) {
-    return ContainerUtil.map(nonWritableFiles, (vf) -> {
-      TargetPresentationBuilder builder = TargetPresentation.builder(vf.getPresentableName())
-        .icon(VirtualFilePresentation.getIcon(vf))
-        .presentableText(vf.getPresentableName());
-      VirtualFile vfParent = vf.getParent();
+  private List<PresentableFileInfo> createPresentableFileInfos(List<FileInfo> fileInfos) {
+    return ContainerUtil.map(fileInfos, fileInfo -> {
+      TargetPresentationBuilder builder = TargetPresentation.builder(fileInfo.getFile().getPresentableName())
+        .icon(VirtualFilePresentation.getIcon(fileInfo.getFile()))
+        .presentableText(fileInfo.getFile().getPresentableName());
+      VirtualFile vfParent = fileInfo.getFile().getParent();
       if (vfParent != null) builder = builder.locationText(vfParent.getPresentableUrl());
-      return new FileInfo(vf, builder.presentation(), myProject);
+      return new PresentableFileInfo(fileInfo.getFile(), builder.presentation(), myProject);
     });
   }
 
-  public static void processFiles(@NotNull List<FileInfo> fileInfos, @Nullable String changelist) {
+  public static void processFiles(@NotNull List<? extends FileInfo> fileInfos, @Nullable String changelist) {
     FileInfo[] copy = fileInfos.toArray(new FileInfo[0]);
     MultiMap<HandleType, VirtualFile> handleTypeToFile = new MultiMap<>();
     for (FileInfo fileInfo : copy) {
