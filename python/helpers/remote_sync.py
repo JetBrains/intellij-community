@@ -209,7 +209,8 @@ class RemoteSync(object):
                 return old_root_state[0]
         return self.empty_root_state()
 
-    def empty_root_state(self):
+    @staticmethod
+    def empty_root_state():
         return {
             'path': '',
             'zip_name': '',
@@ -217,13 +218,15 @@ class RemoteSync(object):
             'invalid_entries': [],
         }
 
-    def file_stat(self, path):
+    @staticmethod
+    def file_stat(path):
         os_stat = os.stat(path)
         return {
             'mtime': int(os_stat.st_mtime),
         }
 
-    def is_modified(self, cur_stat, old_stat):
+    @staticmethod
+    def is_modified(cur_stat, old_stat):
         return cur_stat['mtime'] > old_stat['mtime']
 
     def root_id(self, path):
