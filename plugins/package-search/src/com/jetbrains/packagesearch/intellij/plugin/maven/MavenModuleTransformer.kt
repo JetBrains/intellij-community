@@ -5,11 +5,12 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchMavenConfiguration
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-private class MavenModuleTransformer : ModuleTransformer {
+internal class MavenModuleTransformer : ModuleTransformer {
 
     override fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
         nativeModules.mapNotNull { nativeModule ->
@@ -38,6 +39,7 @@ private class MavenModuleTransformer : ModuleTransformer {
                     MavenNavigationUtil.createNavigatableForDependency(project, buildFile, it)
                 }
             },
+            availableScopes = project.packageSearchMavenConfiguration.getMavenScopes()
         )
     }
 }

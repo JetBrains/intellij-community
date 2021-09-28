@@ -5,12 +5,13 @@ import org.jetbrains.annotations.Nls
 
 internal data class PackagesHeaderData(
     @Nls val labelText: String,
-    val count: Int?,
+    val count: Int,
     val availableUpdatesCount: Int,
     val updateOperations: List<PackageSearchOperation<*>>
 ) {
 
     companion object {
-        val EMPTY = PackagesHeaderData("", null, 0, emptyList())
+
+        val EMPTY = PackagesHeaderData("", 0, 0, emptyList())
     }
 }

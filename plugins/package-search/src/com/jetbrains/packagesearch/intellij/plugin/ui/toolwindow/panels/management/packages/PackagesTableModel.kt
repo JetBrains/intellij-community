@@ -6,7 +6,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 
 internal class PackagesTableModel(
-    var onlyStable: Boolean,
     vararg val columns: ColumnInfo<PackagesTableItem<*>, *>
 ) : ListTableModel<PackagesTableItem<*>>(*columns) {
 

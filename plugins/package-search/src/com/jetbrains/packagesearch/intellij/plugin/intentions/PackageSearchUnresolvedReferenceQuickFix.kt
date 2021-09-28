@@ -10,7 +10,7 @@ import com.intellij.psi.PsiReference
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
+import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
 import java.util.regex.Pattern
 
 class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : IntentionAction, LowPriorityAction, Iconable {
@@ -20,7 +20,7 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         PackageSearchToolWindowFactory.activateToolWindow(project) {
-            project.packageSearchDataService.programmaticSearchQueryStateFlow.tryEmit(ref.canonicalText)
+            project.uiStateModifier.setSearchQuery(ref.canonicalText)
         }
     }
 

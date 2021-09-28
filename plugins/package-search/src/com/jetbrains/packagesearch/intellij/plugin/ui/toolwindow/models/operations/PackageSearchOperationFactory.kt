@@ -2,15 +2,84 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operati
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.highestVersionByName
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.upgradeCandidateVersionOrNull
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedRepository
+import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal class PackageSearchOperationFactory {
+
+    inline fun <reified T : PackageModel> computeInstallActionsFor(
+        packageModel: T,
+        moduleModel: ModuleModel,
+        defaultScope: PackageScope,
+        knownRepositories: KnownRepositories.InTargetModules,
+        onlyStable: Boolean
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.SearchResult) return emptyList()
+
+        val versionToInstall = PackageVersionUtils.highestVersionByName(packageModel.getAvailableVersions(onlyStable))
+        return createAddPackageOperations(
+            packageModel = packageModel,
+            version = versionToInstall,
+            scope = defaultScope,
+            targetModules = TargetModules.from(moduleModel),
+            repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, versionToInstall)
+        )
+    }
+
+    inline fun <reified T : PackageModel> computeUpgradeActionsFor(
+        packageModel: T,
+        moduleModel: ModuleModel,
+        knownRepositories: KnownRepositories.InTargetModules,
+        onlyStable: Boolean
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.Installed) return emptyList()
+
+        return packageModel.usageInfo.asSequence()
+            .filter { it.projectModule == moduleModel.projectModule }
+            .flatMap { usageInfo ->
+                val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(
+                    currentVersion = usageInfo.version,
+                    availableVersions = packageModel.getAvailableVersions(onlyStable)
+                ) ?: return@flatMap emptyList()
+
+                createChangePackageVersionOperations(
+                    packageModel = packageModel,
+                    newVersion = upgradeVersion,
+                    targetModules = TargetModules.from(moduleModel),
+                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, upgradeVersion)
+                )
+            }
+            .toList()
+    }
+
+    inline fun <reified T : PackageModel> computeRemoveActionsFor(
+        packageModel: T,
+        moduleModel: ModuleModel
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.Installed) return emptyList()
+
+        return packageModel.usageInfo.asSequence()
+            .filter { it.projectModule == moduleModel.projectModule }
+            .flatMap { usageInfo ->
+                createRemovePackageOperations(
+                    packageModel = packageModel,
+                    version = usageInfo.version,
+                    scope = usageInfo.scope,
+                    targetModules = TargetModules.from(moduleModel)
+                )
+            }
+            .toList()
+    }
 
     fun createChangePackageVersionOperations(
         packageModel: PackageModel.Installed,
