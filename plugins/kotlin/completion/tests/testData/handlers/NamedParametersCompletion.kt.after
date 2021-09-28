@@ -1,4 +1,4 @@
-fun foo(paramTest: Int = 12)
+fun foo(paramTest: Int = 12) {}
 
 fun test() {
     // '=' is expected
