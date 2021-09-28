@@ -34,16 +34,16 @@ private fun createDocumentationPopup(
   popupUI: DocumentationPopupUI,
   popupContext: PopupContext,
 ): AbstractPopup {
-  return JBPopupFactory.getInstance()
+  val builder = JBPopupFactory.getInstance()
     .createComponentPopupBuilder(popupUI.component, popupUI.preferableFocusComponent)
     .setProject(project)
     .addUserData(ClientId.current)
     .setResizable(true)
     .setMovable(true)
     .setFocusable(true)
-    .setRequestFocus(popupContext !is LookupPopupContext) // otherwise, it won't be possible to interact with completion
-    .setCancelOnClickOutside(popupContext !is LookupPopupContext) // otherwise, selecting lookup items by mouse would close the popup
     .setModalContext(false)
+  popupContext.preparePopup(builder)
+  return builder
     .createPopup() as AbstractPopup
 }
 

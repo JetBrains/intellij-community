@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
@@ -13,6 +14,11 @@ import java.awt.event.ComponentEvent
 internal abstract class SecondaryPopupContext : PopupContext {
 
   abstract val referenceComponent: Component
+
+  override fun preparePopup(builder: ComponentPopupBuilder) {
+    builder.setRequestFocus(false) // otherwise, it won't be possible to continue interacting with lookup/SE
+    builder.setCancelOnClickOutside(false) // otherwise, selecting lookup items by mouse, or resizing SE would close the popup
+  }
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     val resized = popupUI.useStoredSize()
