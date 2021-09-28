@@ -37,6 +37,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
@@ -407,12 +408,10 @@ public final class StartupUtil {
     EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown.join(), newConfigDir, args, log));
     appStarter.importFinished(newConfigDir);
 
-    if (!ConfigImportHelper.isConfigImported()) {
-      // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
-      EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
-    }
     activity.end();
-    PluginManagerCore.scheduleDescriptorLoading();
+    if (!PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()) {
+      PluginManagerCore.scheduleDescriptorLoading();
+    }
   }
 
   private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull Thread busyThread) {
@@ -915,14 +914,14 @@ public final class StartupUtil {
   /**
    * Used in Rider
    */
-  private static void runStartupWizard(@NotNull AppStarter appStarter) {
+  public static void runStartupWizard() {
     String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getWelcomeWizardDialog();
     if (stepsDialogName == null) return;
 
     try {
       Class<?> dialogClass = Class.forName(stepsDialogName);
-      Constructor<?> constr = dialogClass.getConstructor(AppStarter.class);
-      ((CommonCustomizeIDEWizardDialog) constr.newInstance(appStarter)).showIfNeeded();
+      Constructor<?> ctor = dialogClass.getConstructor(AppStarter.class);
+      ((CommonCustomizeIDEWizardDialog)ctor.newInstance((AppStarter)null)).showIfNeeded();
     }
     catch (Throwable e) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
@@ -930,6 +929,7 @@ public final class StartupUtil {
     }
 
     PluginManagerCore.invalidatePlugins();
+    PluginManagerCore.scheduleDescriptorLoading();
   }
 
   // must be called from EDT
