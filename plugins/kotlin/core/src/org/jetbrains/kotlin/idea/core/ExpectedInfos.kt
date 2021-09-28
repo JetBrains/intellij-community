@@ -293,6 +293,8 @@ class ExpectedInfos(
         var parameterType = parameter?.type
 
         if (parameterType != null && parameterType.containsError()) {
+            // Type inference for parameter is failed (because we are in the middle
+            // of completing some argument and not yet all arguments may be passed)
             val originalParameter = descriptor.original.valueParameters[parameter!!.index]
             parameter = originalParameter
             descriptor = descriptor.original
