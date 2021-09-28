@@ -50,17 +50,30 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     EDT.assertIsEdt()
 
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
-    val lookup = LookupManager.getActiveLookup(editor)
     val currentPopup = getPopup()
-    if (lookup != null && currentPopup != null) {
-      // lookup can't handle actions itself, so we have to handle this case here
+    if (currentPopup != null) {
+      // focused popup would eat the shortcut itself
+      // => at this point there is an unfocused documentation popup near lookup or search component
       currentPopup.focusPreferredComponent()
       return
     }
 
-    // Explicit invocation moves focus to preview tab (if visible).
-    if (toolWindowManager.focusVisiblePreview()) {
-      return
+    val lookup = LookupManager.getActiveLookup(editor)
+    val quickSearchComponent = quickSearchComponent(project)
+
+    if (lookup == null && quickSearchComponent == null) {
+      // no popups
+      if (toolWindowManager.focusVisiblePreview()) {
+        // Explicit invocation moves focus to a visible preview tab.
+        return
+      }
+    }
+    else {
+      // some popup is already visible
+      if (toolWindowManager.hasVisiblePreview()) {
+        // don't show another popup is a preview tab is visible, it will be updated
+        return
+      }
     }
 
     val targets = dataContext.getData(DOCUMENTATION_TARGETS_KEY) ?: return
@@ -71,11 +84,10 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
 
-    val popupContext = if (lookup != null) {
-      LookupPopupContext(lookup)
-    }
-    else {
-      ProjectPopupContext(project, editor)
+    val popupContext = when {
+      lookup != null -> LookupPopupContext(lookup)
+      quickSearchComponent != null -> QuickSearchPopupContext(project, quickSearchComponent)
+      else -> ProjectPopupContext(project, editor)
     }
     showDocumentation(request, popupContext)
   }
