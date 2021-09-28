@@ -15,7 +15,6 @@ final class JavaPluginLayout {
       withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
       withModule("intellij.platform.jps.build", "jps-builders.jar")
       withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
-      withModule("intellij.platform.tracing")
       withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
       withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
       withModule("intellij.java.resources", mainJarName)

@@ -66,6 +66,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
-    <orderEntry type="module" module-name="intellij.platform.tracing" />
+    <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
   </component>
 </module>

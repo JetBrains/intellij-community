@@ -73,6 +73,7 @@ final class CommunityRepositoryModules {
       withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt")
       withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt")
     },
+    plugin("intellij.platform.tracing.ide"),
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
       withModule("intellij.maven.server", "maven-server-api.jar")

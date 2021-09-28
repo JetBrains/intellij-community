@@ -3,7 +3,7 @@
   <id>com.intellij.tracing.ide</id>
   <vendor>JetBrains</vendor>
 
-  <depends>com.intellij.modules.java</depends>
+  <depends optional="false">com.intellij.modules.java</depends>
 
   <actions>
     <action class="com.intellij.tracing.ide.ToggleBuildTracingAction" internal="true" id="toggle.tracing.action"/>
