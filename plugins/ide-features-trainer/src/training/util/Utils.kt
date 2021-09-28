@@ -225,3 +225,16 @@ internal val learningPanelWasOpenedInCurrentVersion: Boolean
     val savedBuild = BuildNumber.fromString(savedValue) ?: return false
     return savedBuild >= ApplicationInfo.getInstance().build
   }
+
+internal fun filterUnseenLessons(newLessons: List<Lesson>): List<Lesson> {
+  val zeroBuild = BuildNumber("", 0, 0)
+  val maxSeenVersion = newLessons.filter { it.passed }.maxOfOrNull { lesson ->
+    lesson.properties.availableSince?.let { BuildNumber.fromString(it) }
+    ?: zeroBuild
+  }
+  val unseenLessons = if (maxSeenVersion == null) newLessons
+  else newLessons.filter { lesson ->
+    (lesson.properties.availableSince?.let { BuildNumber.fromString(it) } ?: zeroBuild) > maxSeenVersion
+  }
+  return unseenLessons
+}
