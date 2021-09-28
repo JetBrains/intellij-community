@@ -480,7 +480,7 @@ public abstract class DialogWrapper {
    */
   protected @Nullable Border createContentPaneBorder() {
     if (getStyle() == DialogStyle.COMPACT) {
-      if ((SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance"))
+      if ((SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", true))
           || (SystemInfo.isWindows && SystemInfo.isJetBrainsJvm)) {
         return JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
       }
