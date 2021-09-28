@@ -26,7 +26,7 @@ class UnusedMainParameterInspection : AbstractKotlinInspection() {
                     parameter,
                     KotlinBundle.message("since.kotlin.1.3.main.parameter.is.not.necessary"),
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                    IntentionWrapper(RemoveUnusedFunctionParameterFix(parameter), parameter.containingFile)
+                    IntentionWrapper(RemoveUnusedFunctionParameterFix(parameter))
                 )
             }
         })

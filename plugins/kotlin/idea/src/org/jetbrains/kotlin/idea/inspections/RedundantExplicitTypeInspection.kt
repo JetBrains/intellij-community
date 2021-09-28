@@ -28,7 +28,7 @@ class RedundantExplicitTypeInspection : AbstractKotlinInspection() {
                     typeReference,
                     KotlinBundle.message("explicitly.given.type.is.redundant.here"),
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                    IntentionWrapper(RemoveExplicitTypeIntention(), property.containingKtFile)
+                    IntentionWrapper(RemoveExplicitTypeIntention())
                 )
             }
         })

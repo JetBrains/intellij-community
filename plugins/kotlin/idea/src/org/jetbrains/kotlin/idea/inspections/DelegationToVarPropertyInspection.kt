@@ -20,7 +20,7 @@ class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
                 parameter,
                 KotlinBundle.message("delegating.to.var.property.does.not.take.its.changes.into.account"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(ChangeVariableMutabilityFix(parameter, false), parameter.containingFile),
+                IntentionWrapper(ChangeVariableMutabilityFix(parameter, false)),
                 RemoveVarKeyword()
             )
         })

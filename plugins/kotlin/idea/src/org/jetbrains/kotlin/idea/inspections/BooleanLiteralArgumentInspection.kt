@@ -69,20 +69,20 @@ class BooleanLiteralArgumentInspection(
             }
             val fix = if (argument != valueArguments.lastOrNull { !it.isNamed() }) {
                 if (argument == valueArguments.firstOrNull()) {
-                    IntentionWrapper(AddNamesToCallArgumentsIntention(), argument.containingKtFile)
+                    AddNamesToCallArgumentsIntention()
                 } else {
-                    IntentionWrapper(AddNamesToFollowingArgumentsIntention(), argument.containingKtFile)
+                    AddNamesToFollowingArgumentsIntention()
                 }
             } else {
-                IntentionWrapper(AddNameToArgumentIntention(), argument.containingKtFile)
+                AddNameToArgumentIntention()
             }
             holder.registerProblemWithoutOfflineInformation(
                 argument, KotlinBundle.message("boolean.literal.argument.without.parameter.name"),
-                isOnTheFly, highlightType, fix
+                isOnTheFly, highlightType, IntentionWrapper(fix)
             )
         })
 
-    override fun createOptionsPanel(): JComponent? {
+    override fun createOptionsPanel(): JComponent {
         val panel = MultipleCheckboxOptionsPanel(this)
         panel.addCheckbox(KotlinBundle.message("report.also.on.call.with.single.boolean.literal.argument"), "reportSingle")
         return panel

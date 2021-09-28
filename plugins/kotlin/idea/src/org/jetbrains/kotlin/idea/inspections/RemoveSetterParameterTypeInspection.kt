@@ -23,7 +23,7 @@ class RemoveSetterParameterTypeInspection : AbstractKotlinInspection() {
                 typeReference,
                 KotlinBundle.message("redundant.setter.parameter.type"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                IntentionWrapper(RemoveExplicitTypeIntention(), parameter.containingKtFile)
+                IntentionWrapper(RemoveExplicitTypeIntention())
             )
         }
     }
