@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataOrFail
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.io.File
 import java.util.*
 
@@ -58,22 +59,22 @@ var DataNode<out ModuleData>.hasKotlinPlugin: Boolean
         kotlinGradleProjectDataOrFail.hasKotlinPlugin = value
     }
 
-// FIXME-ank6: there is no KotlinGradleSourceSetData#compilerArgumentsBySourceSet
-// @Deprecated("Use KotlinGradleSourceSetData#compilerArgumentsBySourceSet instead", level = DeprecationLevel.ERROR)
-var DataNode<out ModuleData>.compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet
+@Deprecated("Use KotlinGradleSourceSetData#compilerArgumentsBySourceSet instead", level = DeprecationLevel.ERROR)
+var DataNode<out ModuleData>.compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet?
     @Suppress("DEPRECATION_ERROR")
-    get() = when (data) {
-        is GradleSourceSetData -> ExternalSystemApiUtil.find(this, KotlinGradleSourceSetData.KEY)
-            ?.data
-            ?.let { mapOf(it.sourceSetName to it.compilerArguments) }
-            ?: error("Failed to find KotlinGradleSourceSetData for $this")
-        else -> hashMapOf<String, ArgsInfo>().apply {
-            ExternalSystemApiUtil.getChildren(this@compilerArgumentsBySourceSet, GradleSourceSetData.KEY).forEach {
-                putAll(it.compilerArgumentsBySourceSet)
-            }
+    get() = compilerArgumentsBySourceSet()
+    set(value) = throw UnsupportedOperationException("Changing of compilerArguments is available only through GradleSourceSetData.")
+
+fun DataNode<out ModuleData>.compilerArgumentsBySourceSet(): CompilerArgumentsBySourceSet? = when (data) {
+    is GradleSourceSetData -> ExternalSystemApiUtil.find(this, KotlinGradleSourceSetData.KEY)
+        ?.data
+        ?.let { mapOf(it.sourceSetName to it.compilerArguments) }
+    else -> ExternalSystemApiUtil.getChildren(this@compilerArgumentsBySourceSet, GradleSourceSetData.KEY).ifNotEmpty {
+        hashMapOf<String, ArgsInfo>().also { result ->
+            forEach { result.putAll(it.compilerArgumentsBySourceSet().orEmpty()) }
         }
     }
-    set(value) = throw UnsupportedOperationException("Changing of compilerArguments is available only through GradleSourceSetData.")
+}
 
 @Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
 var DataNode<out ModuleData>.additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet
