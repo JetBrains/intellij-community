@@ -30,7 +30,7 @@ class MavenRunConfigurationSettings : Cloneable {
   var isPrintErrorStackTraces: Boolean = false
   var isAlwaysUpdateSnapshots: Boolean = false
   var failureBehavior: FailureMode? = null
-  var isExecuteGoalsRecursive: Boolean = false
+  var isExecuteGoalsRecursive: Boolean = true
 
   /** @see MavenRunnerSettings */
   var jreName: String? = null

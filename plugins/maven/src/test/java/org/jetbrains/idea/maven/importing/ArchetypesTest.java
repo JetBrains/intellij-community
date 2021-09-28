@@ -94,6 +94,5 @@ public class ArchetypesTest extends MavenTestCase {
     Assert.assertEquals(groupIdValue, parametersList.getPropertyValue(groupId));
     Assert.assertEquals(artifactIdValue, parametersList.getPropertyValue(artifactId));
     Assert.assertTrue(parametersList.hasParameter(mavenArchetypeGeneratorPlugin));
-    System.out.println(1);
   }
 }
