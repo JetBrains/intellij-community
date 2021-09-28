@@ -4,16 +4,16 @@ package com.intellij.ide.actions.searcheverywhere.ml.model
 import com.intellij.internal.ml.FeatureMapper
 
 
-class SearchEverywhereActionsRankingModel(private val provider: SearchEverywhereActionsRankingModelProvider) {
+internal class SearchEverywhereRankingModel(private val provider: SearchEverywhereMLRankingModelProvider) {
   val model by lazy { provider.model }
 
   fun predict(features: Map<String, Any>): Double {
     return model.predict(buildArray(model.featuresOrder, features))
   }
 
-  private fun buildArray(featuresOrder: Array<FeatureMapper>, features: Map<String, Any>) : DoubleArray {
+  private fun buildArray(featuresOrder: Array<FeatureMapper>, features: Map<String, Any>): DoubleArray {
     val array = DoubleArray(featuresOrder.size)
-    for(i in featuresOrder.indices) {
+    for (i in featuresOrder.indices) {
       val mapper = featuresOrder[i]
       val value = features[mapper.featureName]
       array[i] = mapper.asArrayValue(value)
