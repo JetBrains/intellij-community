@@ -470,7 +470,19 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitYieldStatement(PsiYieldStatement statement) {
     super.visitYieldStatement(statement);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkYieldOutsideSwitchExpression(statement));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkYieldExpressionType(statement));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkYieldExpressionType(statement.getExpression()));
+  }
+
+  @Override
+  public void visitExpressionStatement(PsiExpressionStatement statement) {
+    super.visitExpressionStatement(statement);
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiSwitchLabeledRuleStatement) {
+      PsiSwitchBlock switchBlock = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
+      if (switchBlock instanceof PsiSwitchExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)switchBlock)) {
+        myHolder.add(HighlightUtil.checkYieldExpressionType(statement.getExpression()));
+      }
+    }
   }
 
   @Override
