@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.calls.callUtil.getValueArgumentsInParentheses
+import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 import kotlin.reflect.KClass
 
 class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
