@@ -39,7 +39,7 @@ public final class AnnotationBasedNonBlockingContextChecker implements NonBlocki
   }
 
   @Override
-  public ContextType isContextNonBlockingFor(@NotNull ElementContext elementContext) {
+  public ContextType computeContextType(@NotNull ElementContext elementContext) {
     UCallExpression callExpression = UastContextKt.toUElement(elementContext.getElement(), UCallExpression.class);
     if (callExpression == null) return UNSURE.INSTANCE;
 

@@ -63,7 +63,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         return languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
     }
 
-    override fun isContextNonBlockingFor(elementContext: ElementContext): ContextType {
+    override fun computeContextType(elementContext: ElementContext): ContextType {
         val element = elementContext.element
         if (element !is KtCallExpression) return UNSURE
 
