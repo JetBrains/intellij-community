@@ -44,7 +44,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v24"
+    const val SERIALIZER_VERSION = "v25"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -376,7 +376,7 @@ class EntityStorageSerializerImpl(
       // Write indexes
       storage.indexes.softLinks.writeSoftLinks(output, kryo)
 
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.entityId2VirtualFileUrl)
+      storage.indexes.virtualFileIndex.entityId2VirtualFileUrl.writeEntityIdToVfu(kryo, output)
       kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2EntityId)
       kryo.writeObject(output, storage.indexes.virtualFileIndex.entityId2JarDir)
 
@@ -393,6 +393,24 @@ class EntityStorageSerializerImpl(
     finally {
       flush(output)
     }
+  }
+
+  private fun EntityId2Vfu.writeEntityIdToVfu(kryo: Kryo, output: Output) {
+    output.writeInt(this.keys.size)
+    this.forEach { (key: EntityId, value) ->
+      kryo.writeObject(output, key.toSerializableEntityId())
+      kryo.writeClassAndObject(output, value)
+    }
+  }
+
+  private fun readEntityIdToVfu(kryo: Kryo, input: Input): EntityId2Vfu {
+    val index = EntityId2Vfu()
+    repeat(input.readInt()) {
+      val entityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId()
+      val value = kryo.readClassAndObject(input) as Any
+      index[entityId] = value
+    }
+    return index
   }
 
   private fun MultimapStorageIndex.writeSoftLinks(output: Output, kryo: Kryo) {
@@ -527,7 +545,7 @@ class EntityStorageSerializerImpl(
         // Read indexes
         val softLinks = readSoftLinks(input, kryo)
 
-        val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as EntityId2Vfu
+        val entityId2VirtualFileUrlInfo = readEntityIdToVfu(kryo, input)
         val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as Vfu2EntityId
         val entityId2JarDir = kryo.readObject(input, BidirectionalMultiMap::class.java) as BidirectionalMultiMap<EntityId, VirtualFileUrl>
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
