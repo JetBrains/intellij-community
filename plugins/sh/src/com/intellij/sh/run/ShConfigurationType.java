@@ -38,6 +38,11 @@ public final class ShConfigurationType extends SimpleConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(ShConfigurationType.class);
   }
 
+  @Override
+  public boolean isEditableInDumbMode() {
+    return true;
+  }
+
   public static @Nullable String getDefaultShell() {
     return EnvironmentUtil.getValue("SHELL");
   }
