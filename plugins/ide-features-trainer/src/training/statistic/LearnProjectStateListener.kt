@@ -92,9 +92,13 @@ private fun considerNotifyAboutNewLessons(project: Project) {
   }
   showingNotificationIsConsidered = true
   val newLessons = CourseManager.instance.newLessons
-  if (newLessons.isEmpty() || newLessons.any { it.passed }) {
+  if (newLessons.isEmpty()) {
     return
   }
+  if (filterUnseenLessons(newLessons).isEmpty()) {
+    return
+  }
+
   val cooldown = 5
   val startCounter = 2
   val sessionCounter = PropertiesComponent.getInstance().getInt(NOTIFICATION_SESSION_COUNTER, startCounter) + 1
@@ -104,7 +108,6 @@ private fun considerNotifyAboutNewLessons(project: Project) {
   }
   notifyAboutNewLessons(project, newLessons)
 }
-
 
 private fun notifyAboutNewLessons(project: Project, newLessons: List<Lesson>) {
   val newLessonsCount = newLessons.filter { !it.passed }.size
