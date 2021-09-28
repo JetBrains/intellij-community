@@ -1455,7 +1455,7 @@
     <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
     <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
 
-    <lang.documentationLinkHandler implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkResolver"/>
+    <lang.documentationLinkResolver implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkResolver"/>
     <getDataRule key="documentation.targets"
                  implementationClass="com.intellij.lang.documentation.ide.impl.DocumentationTargetsDataRule"/>
     <applicationService serviceInterface="com.intellij.lang.documentation.ide.EditorDocumentationTargetProvider"
