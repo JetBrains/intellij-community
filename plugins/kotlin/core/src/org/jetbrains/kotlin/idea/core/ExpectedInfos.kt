@@ -157,12 +157,12 @@ class ExpectedInfos(
     private val useOuterCallsExpectedTypeCount: Int = 0
 ) {
     fun calculate(expressionWithType: KtExpression): Collection<ExpectedInfo> {
-        val expectedInfos = calculateForArgument(expressionWithType)
+        val expectedInfos = calculateForElvis(expressionWithType)
+            ?: calculateForArgument(expressionWithType)
             ?: calculateForFunctionLiteralArgument(expressionWithType)
             ?: calculateForIndexingArgument(expressionWithType)
             ?: calculateForEqAndAssignment(expressionWithType)
             ?: calculateForIf(expressionWithType)
-            ?: calculateForElvis(expressionWithType)
             ?: calculateForBlockExpression(expressionWithType)
             ?: calculateForWhenEntryValue(expressionWithType)
             ?: calculateForExclOperand(expressionWithType)
@@ -178,7 +178,11 @@ class ExpectedInfos(
     }
 
     private fun calculateForArgument(expressionWithType: KtExpression): Collection<ExpectedInfo>? {
-        val argument = expressionWithType.parent as? KtValueArgument ?: return null
+        var valueArgumentCandidate = expressionWithType.parent
+        if (valueArgumentCandidate !is KtValueArgument) { // Avoid parsing errors like KTIJ-18231
+            valueArgumentCandidate = valueArgumentCandidate.parent
+        }
+        val argument = valueArgumentCandidate as? KtValueArgument ?: return null
         val argumentList = argument.parent as? KtValueArgumentList ?: return null
         val callElement = argumentList.parent as? KtCallElement ?: return null
         return calculateForArgument(callElement, argument)
