@@ -188,7 +188,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertFalse(settings.getUseProjectSettings());
         assertEquals(LanguageVersion.KOTLIN_1_1, settings.getLanguageLevel());
         assertEquals(LanguageVersion.KOTLIN_1_0, settings.getApiLevel());
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
         assertEquals("1.7", arguments.getJvmTarget());
@@ -215,7 +215,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertFalse(settings.getUseProjectSettings());
         assertEquals(LanguageVersion.KOTLIN_1_1, settings.getLanguageLevel());
         assertEquals(LanguageVersion.KOTLIN_1_0, settings.getApiLevel());
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
         assertEquals("1.7", arguments.getJvmTarget());
@@ -242,7 +242,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertFalse(settings.getUseProjectSettings());
         assertEquals(LanguageVersion.KOTLIN_1_1, settings.getLanguageLevel());
         assertEquals(LanguageVersion.KOTLIN_1_0, settings.getApiLevel());
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
         assertEquals("1.7", arguments.getJvmTarget());
@@ -257,7 +257,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertFalse(settings.getUseProjectSettings());
         assertEquals(LanguageVersion.KOTLIN_1_4, settings.getLanguageLevel());
         assertEquals(LanguageVersion.KOTLIN_1_2, settings.getApiLevel());
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), settings.getTargetPlatform());
         assertEquals("1.4", arguments.getLanguageVersion());
         assertEquals("1.2", arguments.getApiVersion());
         assertEquals("1.8", arguments.getJvmTarget());
@@ -356,7 +356,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     public void testProjectWithoutFacetWithJvmTarget18() {
-        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), PlatformKt.getPlatform(getModule()));
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), PlatformKt.getPlatform(getModule()));
     }
 
     private static class LibraryCountingRootPolicy extends RootPolicy<Integer> {
