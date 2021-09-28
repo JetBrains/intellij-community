@@ -316,8 +316,17 @@ class ExpectedInfos(
             ArgumentPositionData.Named(descriptor, callType, argumentName)
         } else {
             val namedArgumentCandidates = if (!isFunctionLiteralArgument && !isArrayAccess && descriptor.hasStableParameterNames()) {
-                val usedParameters = argumentToParameter.filter { it.key != argument }.map { it.value }.toSet()
-                descriptor.valueParameters.filter { it !in usedParameters }
+                val alreadyPassedParameters =
+                    // Suggest only parameter names which are not used yet
+                    call.valueArguments.mapNotNullTo(mutableSetOf()) { it.getArgumentName()?.asName } +
+                            // plus not parameter names which are already successfully mapped
+                            // (everything that goes after argumentIndex may be incorrectly parsed)
+                            argumentToParameter
+                                .filter { (arg, _) ->
+                                    call.valueArguments.indexOf(arg).takeIf { it != -1 }?.let { it < argumentIndex } == true
+                                }
+                                .map { (_, param) -> param.name }
+                descriptor.valueParameters.filter { it.name !in alreadyPassedParameters }
             } else {
                 emptyList()
             }
