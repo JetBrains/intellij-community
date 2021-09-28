@@ -69,10 +69,12 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
     val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
     val authorAspect = annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR } ?: return null
 
-    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted)
+    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
   }
 
   protected abstract fun isAccepted(element: PsiElement): Boolean
+
+  protected open fun getClickHandler(element: PsiElement): () -> Unit = {}
 
   override fun createSettings(): NoSettings = NoSettings()
   override val isVisibleInSettings: Boolean get() = isCodeAuthorEnabledForApplication()

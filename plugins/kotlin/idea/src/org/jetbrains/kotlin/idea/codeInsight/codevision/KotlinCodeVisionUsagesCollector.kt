@@ -15,7 +15,7 @@ internal class KotlinCodeVisionUsagesCollector : CounterUsagesCollector() {
         internal const val FUNCTION_LOCATION = "function"
         internal const val PROPERTY_LOCATION = "property"
 
-        private val GROUP = EventLogGroup("kotlin.code.vision", 1)
+        private val GROUP = EventLogGroup("kotlin.code.vision", 2)
 
         private val LOCATION_FIELD = EventFields.String(
             "location",
@@ -25,9 +25,11 @@ internal class KotlinCodeVisionUsagesCollector : CounterUsagesCollector() {
         private val USAGES_CLICKED_EVENT = GROUP.registerEvent("usages.clicked")
         private val INHERITORS_CLICKED_EVENT = GROUP.registerEvent("inheritors.clicked", LOCATION_FIELD)
         private val SETTINGS_CLICKED_EVENT = GROUP.registerEvent("setting.clicked")
+        private val CODE_AUTHOR_CLICKED_EVENT = GROUP.registerEvent("code.author.clicked", LOCATION_FIELD)
 
         fun logUsagesClicked(project: Project?) = USAGES_CLICKED_EVENT.log(project)
         fun logInheritorsClicked(project: Project?, location: String) = INHERITORS_CLICKED_EVENT.log(project, location)
         fun logSettingsClicked(project: Project?) = SETTINGS_CLICKED_EVENT.log(project)
+        fun logCodeAuthorClicked(project: Project?, location: String) = CODE_AUTHOR_CLICKED_EVENT.log(project, location)
     }
 }
