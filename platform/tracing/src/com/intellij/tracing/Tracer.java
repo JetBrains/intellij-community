@@ -61,7 +61,7 @@ public class Tracer {
   }
 
   public static void finishTracer(Consumer<Exception> exceptionHandler) {
-    if (!running) throw new IllegalStateException("Tracer already finished");
+    if (fileState == null) return;
     new FlushingTask(fileState, true, exceptionHandler).run();
     fileState = null;
     executor.shutdown();
@@ -157,6 +157,7 @@ public class Tracer {
 
     @Override
     public void run() {
+      if (fileState == null) return;
       synchronized (fileState) {
         if (fileState.finished) return;
         try {

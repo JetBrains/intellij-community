@@ -44,8 +44,9 @@ internal class TracingProjectTaskListener : ProjectTaskListener {
   }
 
   override fun finished(result: ProjectTaskManager.Result) {
-    span?.complete()
     val tracingService = TracingService.getInstance()
+    if (!tracingService.isTracingEnabled()) return
+    span?.complete()
     Tracer.finishTracer { exception ->
       handleException(tracingService, exception)
     }
