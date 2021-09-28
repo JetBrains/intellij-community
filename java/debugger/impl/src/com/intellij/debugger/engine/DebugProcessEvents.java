@@ -7,13 +7,9 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -22,6 +18,7 @@ import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,8 +42,10 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
+import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
@@ -58,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -251,7 +251,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event, notifiedClassPrepareEventRequestors);
                     }
                     else if (event instanceof LocatableEvent) {
-                      preloadThreadInfo(((LocatableEvent)event).thread());
+                      preloadEventInfo(((LocatableEvent)event));
                       //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
                       //ModificationWatchpointEvent, StepEvent, WatchpointEvent
                       if (event instanceof StepEvent) {
@@ -409,6 +409,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       // breakpoints should be initialized after all processAttached listeners work
       ApplicationManager.getApplication().runReadAction(() -> {
         if (session != null) {
+          // reload to make sure that source positions are initialized
+          DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().reloadBreakpoints();
+
           session.initBreakpoints();
         }
       });
@@ -445,23 +448,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private void processVMDeathEvent(SuspendContextImpl suspendContext, @Nullable Event event) {
     // do not destroy another process on reattach
-    VirtualMachine vm = getVirtualMachineProxy().getVirtualMachine();
-    if (isAttached() && (event == null || vm == event.virtualMachine())) {
-      try {
-        preprocessEvent(suspendContext, null);
-        cancelRunToCursorBreakpoint();
-      }
-      finally {
-        DebuggerEventThread eventThread = myEventThreads.get(vm);
-        if (eventThread != null) {
-          eventThread.stopListening();
-          myEventThreads.remove(vm);
+    if (isAttached()) {
+      VirtualMachine vm = getVirtualMachineProxy().getVirtualMachine();
+      if (event == null || vm == event.virtualMachine()) {
+        try {
+          preprocessEvent(suspendContext, null);
+          cancelRunToCursorBreakpoint();
         }
-        closeProcess(false);
+        finally {
+          DebuggerEventThread eventThread = myEventThreads.get(vm);
+          if (eventThread != null) {
+            eventThread.stopListening();
+            myEventThreads.remove(vm);
+          }
+          closeProcess(false);
+        }
       }
     }
 
-    if(event != null) {
+    if (event != null) {
       showStatusText(this, event);
     }
   }
@@ -493,55 +498,77 @@ public class DebugProcessEvents extends DebugProcessImpl {
     boolean shouldResume = false;
 
     final Project project = getProject();
-    if (hint != null) {
-      final int nextStepDepth = hint.getNextStepDepth(suspendContext);
-      if (nextStepDepth == RequestHint.RESUME) {
-        getSession().clearSteppingThrough();
-        shouldResume = true;
-      }
-      else if (nextStepDepth != RequestHint.STOP) {
-        final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
-        doStep(suspendContext, threadProxy, hint.getSize(), nextStepDepth, hint);
-        shouldResume = true;
-      }
-
-      if(!shouldResume && hint.isRestoreBreakpoints()) {
-        DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().enableBreakpoints(this);
-      }
-    }
-
-    if(shouldResume) {
-      getSuspendManager().voteResume(suspendContext);
-    }
-    else {
-      showStatusText("");
-      stopWatchingMethodReturn();
-      getSuspendManager().voteSuspend(suspendContext);
+    while (true) {
       if (hint != null) {
-        final MethodFilter methodFilter = hint.getMethodFilter();
-        if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
-          final String message =
-            JavaDebuggerBundle.message("notification.method.has.not.been.called", ((NamedMethodFilter)methodFilter).getMethodName());
-          XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
+        final int nextStepDepth = hint.getNextStepDepth(suspendContext);
+        if (nextStepDepth == RequestHint.RESUME) {
+          getSession().clearSteppingThrough();
+          shouldResume = true;
         }
-        if (hint.wasStepTargetMethodMatched()) {
-          suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
+        else if (nextStepDepth == RequestHint.STOP) {
+          if (hint.getParentHint() != null) {
+            hint = hint.getParentHint();
+            continue;
+          }
+        }
+        else {
+          final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
+          hint.doStep(this, suspendContext, threadProxy, hint.getSize(), nextStepDepth);
+          shouldResume = true;
+        }
+
+        if (!shouldResume && hint.isRestoreBreakpoints()) {
+          DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().enableBreakpoints(this);
         }
       }
+
+      if (shouldResume) {
+        getSuspendManager().voteResume(suspendContext);
+      }
+      else {
+        showStatusText("");
+        stopWatchingMethodReturn();
+        getSuspendManager().voteSuspend(suspendContext);
+        if (hint != null) {
+          final MethodFilter methodFilter = hint.getMethodFilter();
+          if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
+            final String message =
+              JavaDebuggerBundle.message("notification.method.has.not.been.called", ((NamedMethodFilter)methodFilter).getMethodName());
+            XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
+          }
+          if (hint.wasStepTargetMethodMatched()) {
+            suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
+          }
+        }
+      }
+      return;
     }
   }
 
-  // Preload thread info in "parallel" commands, to avoid sync jdwp requests after
-  private static void preloadThreadInfo(@Nullable ThreadReference thread) {
-    if (Registry.is("debugger.preload.thread.info") && thread != null) {
-      if (DebuggerUtilsAsync.isAsyncEnabled() && thread instanceof ThreadReferenceImpl) {
+  // Preload event info in "parallel" commands, to avoid sync jdwp requests after
+  private static void preloadEventInfo(LocatableEvent event) {
+    if (Registry.is("debugger.preload.event.info") && DebuggerUtilsAsync.isAsyncEnabled()) {
+      List<CompletableFuture> commands = new ArrayList<>();
+      ThreadReference thread = event.thread();
+      if (thread instanceof ThreadReferenceImpl) {
         ThreadReferenceImpl t = (ThreadReferenceImpl)thread;
-        try {
-          CompletableFuture.allOf(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)).get(1, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException ignored) {
-        }
-        catch (Exception e) {
+        commands.addAll(List.of(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)));
+      }
+      Location location = event.location();
+      if (location instanceof LocationImpl) {
+        commands.add(DebuggerUtilsEx.getMethodAsync((LocationImpl)location));
+      }
+      try {
+        CompletableFuture.allOf(commands.toArray(CompletableFuture[]::new)).get(1, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (TimeoutException e) {
+        LOG.error("Timeout while preloading thread data", ThreadDumper.dumpThreadsToString());
+      }
+      catch (Exception e) {
+        Throwable throwable = DebuggerUtilsAsync.unwrap(e);
+        if (!(throwable instanceof IncompatibleThreadStateException)) {
           DebuggerUtilsAsync.logError(e);
         }
       }
@@ -594,7 +621,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
         }
-        catch (Exception e) { // catch everything here to be able vote
+        catch (VMDisconnectedException e) {
+          throw e;
+        }
+        catch (Exception e) { // catch everything else here to be able to vote
           LOG.error(e);
         }
         finally {

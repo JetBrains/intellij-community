@@ -5,7 +5,7 @@ import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.utils.HtmlUtilsKt;
 import com.intellij.grazie.utils.PsiUtilsKt;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.grazie.utils.Text;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
@@ -13,14 +13,13 @@ import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.*;
@@ -57,7 +56,15 @@ public class JavaTextExtractor extends TextExtractor {
     if (root instanceof PsiLiteralExpression &&
         allowedDomains.contains(LITERALS) &&
         ((PsiLiteralExpression) root).getValue() instanceof String) {
-      return TextContentBuilder.FromPsi.build(root, LITERALS);
+      TextContent content = TextContentBuilder.FromPsi.build(root, LITERALS);
+      int indent = PsiLiteralUtil.getTextBlockIndent((PsiLiteralExpression)root);
+      if (indent >= 0 && indent < 1000 && content != null) {
+        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("(?<=\n)" + "\\s".repeat(indent)), content), TextContent.Exclusion::exclude));
+        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("\\\\\n"), content), TextContent.Exclusion::exclude));
+        return content.trimWhitespace();
+      }
+
+      return content;
     }
 
     return null;

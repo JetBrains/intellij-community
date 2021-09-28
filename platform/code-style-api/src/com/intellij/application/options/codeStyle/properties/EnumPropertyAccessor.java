@@ -26,9 +26,13 @@ public class EnumPropertyAccessor extends ExternalStringAccessor<Enum<?>> implem
     final Enum<?>[] enumConstants = myEnumClass.getEnumConstants();
     if (enumConstants != null) {
       for (Enum<?> enumConstant : enumConstants) {
-        myEnumMap.put(StringUtil.toLowerCase(enumConstant.toString()), enumConstant);
+        myEnumMap.put(getExternalString(enumConstant), enumConstant);
       }
     }
+  }
+
+  private static String getExternalString(Enum<?> enumConstant) {
+    return StringUtil.toLowerCase(enumConstant.toString().replace(" ", "_"));
   }
 
   @NotNull
@@ -47,7 +51,7 @@ public class EnumPropertyAccessor extends ExternalStringAccessor<Enum<?>> implem
   @Override
   protected String toExternal(@NotNull Enum<?> value) {
     List<String> names = myEnumMap.getKeysByValue(value);
-    assert names != null && names.size() > 0 : "Unexpected value " + value.toString();
+    assert names != null && names.size() > 0 : "Unexpected value " + value;
     return names.get(0);
   }
 }

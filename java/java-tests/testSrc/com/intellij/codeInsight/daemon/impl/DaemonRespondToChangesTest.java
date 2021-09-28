@@ -70,6 +70,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -114,6 +115,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -1796,7 +1798,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private volatile boolean runHeavyProcessing;
   public void testDaemonDisablesItselfDuringHeavyProcessing() {
-    executeWithReparseDelay(0, () -> {
+    runWithReparseDelay(0, () -> {
       runHeavyProcessing = false;
       try {
         Set<Editor> applied = Collections.synchronizedSet(new HashSet<>());
@@ -1853,7 +1855,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDaemonDoesNotDisableItselfDuringVFSRefresh() {
-    executeWithReparseDelay(0, () -> {
+    runWithReparseDelay(0, () -> {
       runHeavyProcessing = false;
       try {
         Set<Editor> applied = Collections.synchronizedSet(new HashSet<>());
@@ -2071,7 +2073,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
     myDaemonCodeAnalyzer.restart();
-    executeWithReparseDelay(0, () -> {
+    runWithReparseDelay(0, () -> {
       for (int i = 0; i < 1000; i++) {
         caretRight();
         UIUtil.dispatchAllInvocationEvents();
@@ -2092,7 +2094,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private static void executeWithReparseDelay(int reparseDelayMs, @NotNull Runnable task) {
+  private static void runWithReparseDelay(int reparseDelayMs, @NotNull Runnable task) {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int oldDelay = settings.getAutoReparseDelay();
     settings.setAutoReparseDelay(reparseDelayMs);
@@ -2143,7 +2145,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCodeFoldingPassRestartsOnRegionUnfolding() {
-    executeWithReparseDelay(0, () -> {
+    runWithReparseDelay(0, () -> {
       @Language("JAVA")
       String text = "class Foo {\n" +
                     "    void m() {\n" +
@@ -2168,7 +2170,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testChangingSettingsHasImmediateEffectOnOpenedEditor() {
-    executeWithReparseDelay(0, () -> {
+    runWithReparseDelay(0, () -> {
       @Language("JAVA")
       String text = "class C { \n" +
                     "  void m() {\n" +
@@ -2837,7 +2839,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
   public void testTypingMustRescheduleDaemonBackByReparseDelayMillis() {
     EmptyAnnotator emptyAnnotator = new EmptyAnnotator();
-    executeWithReparseDelay(2000, () -> useAnnotatorsIn(JavaLanguage.INSTANCE, new MyRecordingAnnotator[]{emptyAnnotator}, () -> {
+    runWithReparseDelay(2000, () -> useAnnotatorsIn(JavaLanguage.INSTANCE, new MyRecordingAnnotator[]{emptyAnnotator}, () -> {
             @Language("JAVA")
             String text = "class X {\n}";
             configureByText(JavaFileType.INSTANCE, text);
@@ -2972,7 +2974,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           @Override
           public void visitField(PsiField field) {
             holder.registerProblem(field.getNameIdentifier(), diagnosticText.get());
-            System.out.println("reported: "+diagnosticText);
             super.visitField(field);
           }
 
@@ -3035,6 +3036,46 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> intention.invoke(getProject(), getEditor(), getFile()));
     assertEquals(1, highlightErrors().size());
+  }
+
+  private static final String wordToAnnotate = "annotate_here";
+  public static class MiddleOfTextAnnotator extends MyRecordingAnnotator {
+    static volatile boolean doAnnotate = true;
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiPlainText && doAnnotate) {
+        int i = element.getText().indexOf(wordToAnnotate);
+        if (i != -1) {
+          holder.newAnnotation(HighlightSeverity.WARNING, "warning").range(new TextRange(i, i+wordToAnnotate.length())).create();
+          iDidIt();
+        }
+      }
+    }
+  }
+  public void testDaemonMustClearHighlightersInVisibleAreaAfterRestartWhenAnnotatorDoesNotReturnAnyAnnotationsAnymore() {
+    configureByText(PlainTextFileType.INSTANCE, "blah blah\n".repeat(1000) +
+                                                "<caret>" + wordToAnnotate +
+                                                "\n" +
+                                                "balh blah\n".repeat(1000));
+    EditorImpl editor = (EditorImpl)getEditor();
+    editor.getScrollPane().getViewport().setSize(1000, 1000);
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    Point2D visualPoint = editor.offsetToPoint2D(editor.getCaretModel().getOffset());
+    editor.getScrollPane().getViewport().setViewPosition(new Point((int)visualPoint.getX(), (int)visualPoint.getY()));
+    editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight() - (int)visualPoint.getY()));
+    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MiddleOfTextAnnotator()}, ()->{
+      MiddleOfTextAnnotator.doAnnotate = true;
+      List<HighlightInfo> infos = doHighlighting();
+      HighlightInfo info = assertOneElement(infos);
+      assertEquals("warning", info.getDescription());
+      MiddleOfTextAnnotator.doAnnotate = false;
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
+      assertEmpty(doHighlighting());
+    });
   }
 }
 

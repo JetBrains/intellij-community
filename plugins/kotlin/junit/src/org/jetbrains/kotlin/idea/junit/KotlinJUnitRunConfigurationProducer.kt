@@ -6,8 +6,13 @@ import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ModuleBasedConfiguration
-import com.intellij.execution.junit.*
+import com.intellij.execution.junit.JUnitConfiguration
+import com.intellij.execution.junit.JUnitConfigurationProducer
+import com.intellij.execution.junit.JUnitConfigurationType
+import com.intellij.execution.junit.PatternConfigurationProducer
+import com.intellij.execution.testframework.AbstractInClassConfigurationProducer
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Ref
@@ -103,8 +108,9 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
 
         val contextWithLightElement = createDelegatingContextWithLightElement(fromContext, sourceElement)
         // TODO: use TestClassConfigurationProducer when constructor becomes public
-        return object : AbstractTestClassConfigurationProducer(JUnitConfigurationType.getInstance()) {}
-            .onFirstRun(contextWithLightElement, context, performRunnable)
+        return object : AbstractInClassConfigurationProducer<JUnitConfiguration>() {
+            override fun getConfigurationFactory(): ConfigurationFactory = JUnitConfigurationType.getInstance().factory
+        }.onFirstRun(contextWithLightElement, context, performRunnable)
     }
 
     private fun createDelegatingContextWithLightElement(

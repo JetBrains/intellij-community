@@ -202,7 +202,7 @@ public class IOResource {
       }
   }
 
-  Reader escaped6(InputStream stream, String cs) throws UnsupportedEncodingException {
+  Reader escaped6(InputStream stream, String cs) throws <error descr="Cannot resolve symbol 'UnsupportedEncodingException'">UnsupportedEncodingException</error> {
     return cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs);
   }
 

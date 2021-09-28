@@ -19,13 +19,13 @@ internal class ReindexAction : RecoveryAction {
 
   override fun performSync(project: Project): List<CacheInconsistencyProblem> {
     invokeAndWaitIfNeeded {
-      val tumbler = FileBasedIndexTumbler()
+      val tumbler = FileBasedIndexTumbler("Reindex recovery action")
       tumbler.turnOff()
       try {
         CorruptionMarker.requestInvalidation()
       }
       finally {
-        tumbler.turnOn(reason = "Reindex recovery action")
+        tumbler.turnOn()
       }
     }
     DumbUtilImpl.waitForSmartMode(project)

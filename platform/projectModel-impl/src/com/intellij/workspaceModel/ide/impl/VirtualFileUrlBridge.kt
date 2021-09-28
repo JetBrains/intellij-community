@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 
-class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl, jarProtocol: Boolean) :
+class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
   VirtualFileUrlImpl(id, manager), VirtualFilePointer {
   @Volatile
   private var file: VirtualFile? = null

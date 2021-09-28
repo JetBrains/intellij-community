@@ -165,8 +165,16 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return myInheritGroupId;
   }
 
+  public void setInheritGroupId(boolean inheritGroupId) {
+    myInheritGroupId = inheritGroupId;
+  }
+
   public boolean isInheritVersion() {
     return myInheritVersion;
+  }
+
+  public void setInheritVersion(boolean inheritVersion) {
+    myInheritVersion = inheritVersion;
   }
 
   public void setProjectId(MavenId id) {

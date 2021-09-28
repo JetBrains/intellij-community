@@ -53,10 +53,10 @@ class KotlinChainTransformerImpl(private val typeExtractor: CallTypeExtractor) :
     private fun createCallArgument(callExpression: KtCallExpression, arg: KtValueArgument): CallArgument {
         fun KtValueArgument.toCallArgument(): CallArgument {
             val argExpression = getArgumentExpression()!!
-            return CallArgumentImpl(KotlinPsiUtil.getTypeName(argExpression.resolveType()), this.text)
+            return CallArgumentImpl(KotlinPsiUtil.getTypeName(argExpression.resolveType()!!), this.text)
         }
 
-        val bindingContext = callExpression.getResolutionFacade().analyzeWithAllCompilerChecks(listOf(callExpression)).bindingContext
+        val bindingContext = callExpression.getResolutionFacade().analyzeWithAllCompilerChecks(callExpression).bindingContext
         val resolvedCall = callExpression.getResolvedCall(bindingContext) ?: return arg.toCallArgument()
         val parameter = resolvedCall.getParameterForArgument(arg) ?: return arg.toCallArgument()
         return CallArgumentImpl(KotlinPsiUtil.getTypeName(parameter.type), arg.text)

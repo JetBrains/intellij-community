@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -40,7 +41,7 @@ object ReviewAddedImports {
         if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.YES &&
             !imported.isEmpty()
         ) {
-            if (ApplicationManager.getApplication().isUnitTestMode) {
+            if (isUnitTestMode()) {
                 importsToBeReviewed = imported
                 removeImports(project, file, importsToBeDeleted)
                 return
@@ -67,7 +68,7 @@ object ReviewAddedImports {
         @Nls info: String,
         hyperlinkListener: HyperlinkListener
     ) {
-        if (ApplicationManager.getApplication().isUnitTestMode) return
+        if (isUnitTestMode()) return
         val hint = LightweightHint(HintUtil.createInformationLabel(info, hyperlinkListener, null, null))
         val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE
         HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER, flags, 0, false)

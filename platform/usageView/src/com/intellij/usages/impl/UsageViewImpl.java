@@ -174,6 +174,19 @@ public class UsageViewImpl implements UsageViewEx {
   private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses =
     ContainerUtil.newConcurrentSet();
 
+  private Runnable fusRunnable = () -> {
+    if (myTree == null) return;
+    DataContext dc = DataManager.getInstance().getDataContext(myTree);
+    Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(dc);
+    if (navigatables != null) {
+      ContainerUtil.filter(navigatables, n -> n.canNavigateToSource() && n instanceof PsiElementUsage).
+        forEach(n -> {
+          PsiElement psiElement = ((PsiElementUsage)n).getElement();
+          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
+      });
+    }
+  };
+
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
                        UsageTarget @NotNull [] targets,
@@ -716,6 +729,7 @@ public class UsageViewImpl implements UsageViewEx {
           UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
           if (selectedProvider != myCurrentUsageContextProvider) {
             tabSelected(selectedProvider);
+            UsageViewStatisticsCollector.logTabSwitched(myProject);
           }
         });
         panel.add(tabbedPane, BorderLayout.CENTER);
@@ -763,7 +777,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  @SuppressWarnings("deprecation")
   protected UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
@@ -773,16 +786,15 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
     for (UsageFilteringRuleProvider provider : providers) {
+      //noinspection deprecation
       ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
     return list.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
-  protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(
-    @NotNull Project project,
-    @NotNull UsageViewSettings usageViewSettings,
-    @Nullable UsageViewPresentation presentation
-  ) {
+  protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(@NotNull Project project,
+                                                                        @NotNull UsageViewSettings usageViewSettings,
+                                                                        @Nullable UsageViewPresentation presentation) {
     List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<UsageGroupingRule> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
@@ -798,8 +810,8 @@ public class UsageViewImpl implements UsageViewEx {
     myTree.setShowsRootHandles(true);
     SmartExpander.installOn(myTree);
     TreeUtil.installActions(myTree);
-    EditSourceOnDoubleClickHandler.install(myTree);
-    EditSourceOnEnterKeyHandler.install(myTree);
+    EditSourceOnDoubleClickHandler.install(myTree, fusRunnable);
+    EditSourceOnEnterKeyHandler.install(myTree, fusRunnable);
 
     TreeUtil.promiseSelectFirst(myTree);
     PopupHandler.installPopupMenu(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
@@ -905,7 +917,6 @@ public class UsageViewImpl implements UsageViewEx {
   /**
    * Creates filtering actions for the toolbar
    */
-  @SuppressWarnings("deprecation")
   protected void addFilteringFromExtensionPoints(@NotNull DefaultActionGroup group) {
     if (getPresentation().isCodeUsages()) {
       JComponent component = getComponent();
@@ -916,6 +927,7 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
     for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
+      //noinspection deprecation
       AnAction[] providerActions = provider.createFilteringActions(this);
       for (AnAction action : providerActions) {
         group.add(action);
@@ -1593,6 +1605,7 @@ public class UsageViewImpl implements UsageViewEx {
     disposeUsageContextPanels();
     isDisposed = true;
     myUpdateAlarm.cancelAllRequests();
+    fusRunnable = null; // Release reference to this
 
     cancelCurrentSearch();
     myRerunAction = null;
@@ -1984,7 +1997,7 @@ public class UsageViewImpl implements UsageViewEx {
       else if (USAGE_VIEW_KEY.is(dataId)) {
         return UsageViewImpl.this;
       }
-      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
       else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
@@ -2013,9 +2026,9 @@ public class UsageViewImpl implements UsageViewEx {
       }
       else {
         DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
-        if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+        if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
           List<TreeNode> selectedNodes = allSelectedNodes();
-          Iterable<DataProvider> slowProviders = selectedProvider == null ? null : PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider);
+          Iterable<DataProvider> slowProviders = selectedProvider == null ? null : PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider);
           slowProviders = ObjectUtils.notNull(slowProviders, Collections.emptyList());
           slowProviders = ContainerUtil.concat(Collections.singletonList(id -> getSlowData(id, selectedNodes)), slowProviders);
           return slowProviders;

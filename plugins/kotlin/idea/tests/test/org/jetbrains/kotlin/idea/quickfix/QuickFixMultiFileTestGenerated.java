@@ -700,6 +700,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/mismatchingArgs/extensionImplicitReceiver.test");
             }
 
+            @TestMetadata("extensionOperator.before.Main.kt")
+            public void testExtensionOperator() throws Exception {
+                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionOperator.before.Main.kt");
+            }
+
             @TestMetadata("extensionWrongReceiver.test")
             public void testExtensionWrongReceiver() throws Exception {
                 runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongReceiver.test");

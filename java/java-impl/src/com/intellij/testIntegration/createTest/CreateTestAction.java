@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -106,7 +106,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       testModule = srcModule;
       if (!propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT)) {
         if (Messages.showOkCancelDialog(project, JavaBundle.message("dialog.message.create.test.in.the.same.source.root"),
-                                        JavaBundle.message("dialog.title.no.test.roots.found"), Messages.getQuestionIcon()) !=
+                                        JavaBundle.message("dialog.title.no.test.roots.found"), Messages.getWarningIcon()) !=
             Messages.OK) {
           return;
         }

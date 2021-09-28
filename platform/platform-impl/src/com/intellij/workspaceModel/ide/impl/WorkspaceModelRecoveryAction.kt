@@ -20,7 +20,7 @@ class WorkspaceModelRecoveryAction : RecoveryAction {
   override val presentableName: String
     get() = IdeBundle.message("invalidate.workspace.model.recovery.action.presentable.name")
   override val actionKey: String
-    get() = "reload workspace model"
+    get() = "reload-workspace-model"
 
   override fun perform(project: Project): CompletableFuture<AsyncRecoveryResult> {
     val file = Paths.get(project.basePath!!)

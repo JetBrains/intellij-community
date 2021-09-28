@@ -868,6 +868,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/frame/catchVariable.kt");
             }
 
+            @TestMetadata("companionObjectGettersAreNotShown.kt")
+            public void testCompanionObjectGettersAreNotShown() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/companionObjectGettersAreNotShown.kt");
+            }
+
             @TestMetadata("coroutineContextFun.kt")
             public void testCoroutineContextFun() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/coroutineContextFun.kt");
@@ -1016,6 +1021,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("frameThis0This0.kt")
             public void testFrameThis0This0() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/frameThis0This0.kt");
+            }
+
+            @TestMetadata("getterOfLateinitVariableIsNotShown.kt")
+            public void testGetterOfLateinitVariableIsNotShown() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/getterOfLateinitVariableIsNotShown.kt");
             }
 
             @TestMetadata("gettersAreNotDuplicated.kt")
@@ -1332,6 +1342,16 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
         @TestMetadata("initializer.kt")
         public void testInitializer() throws Exception {
             runTest("testData/evaluation/multipleBreakpoints/initializer.kt");
+        }
+
+        @TestMetadata("inlineStackTrace.kt")
+        public void testInlineStackTrace() throws Exception {
+            runTest("testData/evaluation/multipleBreakpoints/inlineStackTrace.kt");
+        }
+
+        @TestMetadata("inlineStackTraceWithNestedLambdas.kt")
+        public void testInlineStackTraceWithNestedLambdas() throws Exception {
+            runTest("testData/evaluation/multipleBreakpoints/inlineStackTraceWithNestedLambdas.kt");
         }
 
         @TestMetadata("invisibleDeclarations.kt")

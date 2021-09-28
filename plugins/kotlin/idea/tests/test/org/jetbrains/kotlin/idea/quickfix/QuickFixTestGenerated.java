@@ -1712,6 +1712,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("builtInFunction.kt")
+        public void testBuiltInFunction() throws Exception {
+            runTest("testData/quickfix/autoImports/builtInFunction.kt");
+        }
+
+        @TestMetadata("builtInFunctionAlreadyExists.kt")
+        public void testBuiltInFunctionAlreadyExists() throws Exception {
+            runTest("testData/quickfix/autoImports/builtInFunctionAlreadyExists.kt");
+        }
+
         @TestMetadata("checkNoStackOverflowInImportInnerClassInCurrentFile.kt")
         public void testCheckNoStackOverflowInImportInnerClassInCurrentFile() throws Exception {
             runTest("testData/quickfix/autoImports/checkNoStackOverflowInImportInnerClassInCurrentFile.kt");
@@ -2660,6 +2670,24 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/convertIllegalEscapeToUnicodeEscape")
+    public static class ConvertIllegalEscapeToUnicodeEscape extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("formFeed.kt")
+        public void testFormFeed() throws Exception {
+            runTest("testData/quickfix/convertIllegalEscapeToUnicodeEscape/formFeed.kt");
+        }
+
+        @TestMetadata("formFeedInStringTemplate.kt")
+        public void testFormFeedInStringTemplate() throws Exception {
+            runTest("testData/quickfix/convertIllegalEscapeToUnicodeEscape/formFeedInStringTemplate.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/convertLateinitPropertyToNotNullDelegate")
     public static class ConvertLateinitPropertyToNotNullDelegate extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -2780,6 +2808,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("typeArgument.kt")
         public void testTypeArgument() throws Exception {
             runTest("testData/quickfix/convertToAnonymousObject/typeArgument.kt");
+        }
+
+        @TestMetadata("typeArgument2.kt")
+        public void testTypeArgument2() throws Exception {
+            runTest("testData/quickfix/convertToAnonymousObject/typeArgument2.kt");
         }
 
         @TestMetadata("unit.kt")
@@ -5905,6 +5938,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/deprecatedSymbolUsage/extensionForGenericClass.kt");
         }
 
+        @TestMetadata("extensionReceiverWithVarianceType.kt")
+        public void testExtensionReceiverWithVarianceType() throws Exception {
+            runTest("testData/quickfix/deprecatedSymbolUsage/extensionReceiverWithVarianceType.kt");
+        }
+
         @TestMetadata("implicitCompanionObjectThis.kt")
         public void testImplicitCompanionObjectThis() throws Exception {
             runTest("testData/quickfix/deprecatedSymbolUsage/implicitCompanionObjectThis.kt");
@@ -6480,6 +6518,34 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public void testKeepOutsideWithNamedArgument() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/keepOutsideWithNamedArgument.kt");
             }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/wholeProject")
+            public static class WholeProject extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("explicitLambdaParameter.kt")
+                public void testExplicitLambdaParameter() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/wholeProject/explicitLambdaParameter.kt");
+                }
+
+                @TestMetadata("explicitLambdaParameterWithoutType.kt")
+                public void testExplicitLambdaParameterWithoutType() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/wholeProject/explicitLambdaParameterWithoutType.kt");
+                }
+
+                @TestMetadata("implicitLambdaParameter.kt")
+                public void testImplicitLambdaParameter() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/wholeProject/implicitLambdaParameter.kt");
+                }
+
+                @TestMetadata("implicitLambdaParameterWithPlatformType.kt")
+                public void testImplicitLambdaParameterWithPlatformType() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/wholeProject/implicitLambdaParameterWithPlatformType.kt");
+                }
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -6938,6 +7004,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgImportRuntime.kt");
             }
 
+            @TestMetadata("noImplicitTypeArgInClassWithTypeParam.kt")
+            public void testNoImplicitTypeArgInClassWithTypeParam() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgInClassWithTypeParam.kt");
+            }
+
+            @TestMetadata("noImplicitTypeArgInFunWithTypeParam.kt")
+            public void testNoImplicitTypeArgInFunWithTypeParam() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgInFunWithTypeParam.kt");
+            }
+
             @TestMetadata("nonEmptyVarargRuntime.kt")
             public void testNonEmptyVarargRuntime() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/nonEmptyVarargRuntime.kt");
@@ -7096,6 +7172,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("annotationInTopLevelProperty.kt")
         public void testAnnotationInTopLevelProperty() throws Exception {
             runTest("testData/quickfix/experimental/annotationInTopLevelProperty.kt");
+        }
+
+        @TestMetadata("appendFileAnnotationToAnnotationList.kt")
+        public void testAppendFileAnnotationToAnnotationList() throws Exception {
+            runTest("testData/quickfix/experimental/appendFileAnnotationToAnnotationList.kt");
+        }
+
+        @TestMetadata("appendFileAnnotationToOtherFileAnnotations.kt")
+        public void testAppendFileAnnotationToOtherFileAnnotations() throws Exception {
+            runTest("testData/quickfix/experimental/appendFileAnnotationToOtherFileAnnotations.kt");
+        }
+
+        @TestMetadata("appendFileAnnotationWithAnnotationList.kt")
+        public void testAppendFileAnnotationWithAnnotationList() throws Exception {
+            runTest("testData/quickfix/experimental/appendFileAnnotationWithAnnotationList.kt");
         }
 
         @TestMetadata("basicFunction.kt")

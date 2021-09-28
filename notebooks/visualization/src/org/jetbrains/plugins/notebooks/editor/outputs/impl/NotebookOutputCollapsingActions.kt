@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.editor.outputs.impl
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
@@ -30,7 +31,7 @@ internal class NotebookOutputCollapseAllAction private constructor() : ToggleAct
 
   private fun allCollapsingComponents(e: AnActionEvent): Sequence<CollapsingComponent> {
     val inlayManager = e.notebookCellInlayManager ?: return emptySequence()
-    return NotebookCellLines.get(inlayManager.editor).intervalsIterator().asSequence()
+    return NotebookCellLines.get(inlayManager.editor).intervals.asSequence()
       .filter { it.type == NotebookCellLines.CellType.CODE }
       .mapNotNull { getCollapsingComponents(inlayManager.editor, it) }
       .flatMap { it }
@@ -72,7 +73,7 @@ internal class NotebookOutputCollapseSingleInCellAction private constructor() : 
   }
 
   private fun getExpectedComponent(e: AnActionEvent): CollapsingComponent? =
-    e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
       ?.castSafelyTo<CollapsingComponent>()
       ?.let { expectedComponent ->
         getCollapsingComponents(e)?.singleOrNull { it === expectedComponent }
@@ -101,31 +102,6 @@ private fun markScrollingPositionBeforeOutputCollapseToggle(e: AnActionEvent) {
   val cell = e.dataContext.notebookCellLinesInterval ?: return
   val editor = e.notebookCellInlayManager?.editor ?: return
   val notebookCellEditorScrollingPositionKeeper = editor.notebookCellEditorScrollingPositionKeeper ?: return
-  val nextCell: NotebookCellLines.Interval? = if (cell.lines.last < editor.document.lineCount -1) editor.getCell(cell.lines.last + 1) else null
 
-  val outputsCellVisible = isLineVisible(editor, cell.lines.last)
-  if (!outputsCellVisible && (nextCell == null || !isLineVisible(editor, nextCell.lines.first))) {
-    val cellOutputInlays = editor.inlayModel.getBlockElementsInRange(editor.document.getLineEndOffset(cell.lines.last), editor.document.getLineEndOffset(cell.lines.last))
-    val visibleArea = editor.scrollingModel.visibleAreaOnScrollingFinished
-
-    for (inlay in cellOutputInlays) {
-      val bounds = inlay.bounds ?: continue
-      if (bounds.y < visibleArea.y && bounds.y + bounds.height > visibleArea.y + visibleArea.height) {
-        val inputEvent = e.inputEvent
-        val additionalShift: Int
-        if (inputEvent is MouseEvent) {
-          // Adjust scrolling so, that the collapsed output is under the mouse pointer
-          additionalShift = inputEvent.y - bounds.y - editor.lineHeight
-        } else {
-          // Adjust scrolling so, that the collapsed output is visible on the screen
-          additionalShift = visibleArea.y - bounds.y + editor.lineHeight
-        }
-
-        notebookCellEditorScrollingPositionKeeper.savePosition(cell.lines.last, additionalShift)
-        return
-      }
-    }
-  }
-  val targetCell = if (outputsCellVisible || nextCell == null) cell else nextCell
-  notebookCellEditorScrollingPositionKeeper.savePosition(targetCell.lines.first)
+  notebookCellEditorScrollingPositionKeeper.savePosition(cell.lines.first)
 }

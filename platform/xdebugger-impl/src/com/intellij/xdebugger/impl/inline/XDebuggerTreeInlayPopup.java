@@ -329,6 +329,7 @@ public class XDebuggerTreeInlayPopup<D> {
 
   public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup, boolean canShrink) {
     final Window popupWindow = SwingUtilities.windowForComponent(popup.getContent());
+    if (popupWindow == null) return;
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
     int hMargin = JBUI.scale(30);
@@ -408,6 +409,20 @@ public class XDebuggerTreeInlayPopup<D> {
         actionPanel.add(keymapHint, gridBag.next().insets(topInset, 4, bottomInset, 12));
       }
       actionPanel.setBackground(UIUtil.getToolTipActionBackground());
+      presentation.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (evt.getPropertyName() == Presentation.PROP_TEXT) {
+            button.setText((String)evt.getNewValue());
+            button.repaint();
+          }
+          if (evt.getPropertyName() == Presentation.PROP_ENABLED) {
+            actionPanel.setVisible((Boolean)evt.getNewValue());
+            actionPanel.repaint();
+          }
+        }
+      });
+
       return actionPanel;
     }
 
@@ -437,19 +452,6 @@ public class XDebuggerTreeInlayPopup<D> {
       super(presentation.getText(), action);
       setEnabled(presentation.isEnabled());
       setDataProvider(contextComponent);
-      presentation.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == Presentation.PROP_TEXT) {
-            setText((String)evt.getNewValue());
-            repaint();
-          }
-          if (evt.getPropertyName() == Presentation.PROP_ENABLED) {
-            setEnabled((boolean)evt.getNewValue());
-            repaint();
-          }
-        }
-      });
       setFont(UIUtil.getToolTipFont());
     }
   }

@@ -29,6 +29,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
@@ -410,10 +411,12 @@ public class JavaDebugProcess extends XDebugProcess {
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar,
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
-    Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
-    leftToolbar.add(Separator.getInstance(), beforeRunner);
-    leftToolbar.add(ActionManager.getInstance().getAction("DumpThreads"), beforeRunner);
-    leftToolbar.add(Separator.getInstance(), beforeRunner);
+    if (!Registry.is("debugger.new.tool.window.layout")) {
+      Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
+      leftToolbar.add(Separator.getInstance(), beforeRunner);
+      leftToolbar.add(ActionManager.getInstance().getAction("DumpThreads"), beforeRunner);
+      leftToolbar.add(Separator.getInstance(), beforeRunner);
+    }
 
     Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");
     settings.addAction(new WatchLastMethodReturnValueAction(), beforeSort);
@@ -488,6 +491,24 @@ public class JavaDebugProcess extends XDebugProcess {
       XDebugProcess process = session.getDebugProcess();
       if (process instanceof JavaDebugProcess) {
         return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @deprecated use {@link #getCurrentDebugProcess(AnActionEvent)}
+   */
+  @Nullable
+  @Deprecated
+  public static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
+    if (project != null) {
+      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      if (session != null) {
+        XDebugProcess process = session.getDebugProcess();
+        if (process instanceof JavaDebugProcess) {
+          return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
+        }
       }
     }
     return null;

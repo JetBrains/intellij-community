@@ -165,7 +165,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
-  private @NotNull IComponentStore getStore() {
+  protected @NotNull IComponentStore getStore() {
     return Objects.requireNonNull(getService(IComponentStore.class));
   }
 
@@ -243,11 +243,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return isModuleAdded;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void moduleAdded() {
     isModuleAdded = true;
+    //noinspection deprecation
     processInitializedComponents(ModuleComponent.class, (component, __) -> {
+      //noinspection deprecation
       component.moduleAdded();
       return Unit.INSTANCE;
     });

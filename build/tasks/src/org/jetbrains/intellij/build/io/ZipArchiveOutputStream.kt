@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build.io
 
+import com.intellij.util.io.Murmur3_32Hash
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import java.io.Closeable
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -12,11 +15,15 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
   private var finished = false
   private var entryCount = 0
 
-  private val metadataBuffer = ByteBuffer.allocateDirect(8 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
-  // 1024K should be enough for end of central directory record
+  private val metadataBuffer = ByteBuffer.allocateDirect(12 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
+  // 1 MB should be enough for end of central directory record
   private val buffer = ByteBuffer.allocateDirect(1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
 
   private val tempArray = arrayOfNulls<ByteBuffer>(2)
+
+  private val sizes = IntArrayList()
+  private val names = ArrayList<ByteArray>()
+  private val dataOffsets = IntArrayList()
 
   fun addDirEntry(name: ByteArray) {
     if (finished) {
@@ -53,7 +60,7 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     buffer.flip()
     writeBuffer(buffer)
 
-    writeCentralFileHeader(0, 0, ZipEntry.STORED, 0, metadataBuffer, name, offset)
+    writeCentralFileHeader(0, 0, ZipEntry.STORED, 0, name, offset, dataOffset = 0)
   }
 
   fun writeRawEntry(header: ByteBuffer, content: ByteBuffer, name: ByteArray, size: Int, compressedSize: Int, method: Int, crc: Long) {
@@ -63,6 +70,7 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     }
 
     val offset = channel.position()
+    val dataOffset = offset.toInt() + header.remaining()
     entryCount++
     assert(method != -1)
 
@@ -73,10 +81,10 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     }
     while (header.hasRemaining() || content.hasRemaining())
 
-    writeCentralFileHeader(size, compressedSize, method, crc, metadataBuffer, name, offset)
+    writeCentralFileHeader(size, compressedSize, method, crc, name, offset, dataOffset = dataOffset)
   }
 
-  fun writeRawEntry(content: ByteBuffer, name: ByteArray, size: Int, compressedSize: Int, method: Int, crc: Long) {
+  fun writeRawEntry(content: ByteBuffer, name: ByteArray, size: Int, compressedSize: Int, method: Int, crc: Long, headerSize: Int) {
     if (finished) {
       throw IOException("Stream has already been finished")
     }
@@ -86,13 +94,31 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     assert(method != -1)
 
     writeBuffer(content)
-    writeCentralFileHeader(size, compressedSize, method, crc, metadataBuffer, name, offset)
+    writeCentralFileHeader(size, compressedSize, method, crc, name, offset, dataOffset = offset.toInt() + headerSize)
   }
 
-  fun finish(comment: ByteBuffer?) {
+  private fun writeCustomMetadata(): Int {
+    val optimizedMetadataOffset = channel.position().toInt()
+    // write one by one to channel to avoid buffer overflow
+    writeIntArray(sizes.toIntArray())
+    writeIntArray(dataOffsets.toIntArray())
+    writeIntArray(computeTableIndexes(names))
+    return optimizedMetadataOffset
+  }
+
+  private fun writeIntArray(value: IntArray) {
+    buffer.clear()
+    buffer.asIntBuffer().put(value)
+    buffer.limit(value.size * Int.SIZE_BYTES)
+    writeBuffer(buffer)
+  }
+
+  fun finish() {
     if (finished) {
       throw IOException("This archive has already been finished")
     }
+
+    val optimizedMetadataOffset = writeCustomMetadata()
 
     val centralDirectoryOffset = channel.position()
     // write central directory file header
@@ -104,30 +130,26 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     buffer.clear()
     buffer.putInt(0x06054b50)
     // write 0 to clear reused buffer content
-    // Number of this disk
-    buffer.putShort(0)
-    // Disk where central directory starts
-    buffer.putShort(0)
-    // Number of central directory records on this disk
+    // number of this disk (short), disk where central directory starts (short)
+    buffer.putInt(0)
+    // number of central directory records on this disk
     val shortEntryCount = (entryCount.coerceAtMost(0xffff) and 0xffff).toShort()
     buffer.putShort(shortEntryCount)
-    // Total number of central directory records
+    // total number of central directory records
     buffer.putShort(shortEntryCount)
     buffer.putInt(centralDirectoryLength)
     // Offset of start of central directory, relative to start of archive
     buffer.putInt((centralDirectoryOffset and 0xffffffffL).toInt())
-    // Comment length
-    if (comment == null) {
-      buffer.putShort(0)
-      buffer.flip()
-      writeBuffer(buffer)
-    }
-    else {
-      buffer.putShort((comment.remaining() and 0xffff).toShort())
-      buffer.flip()
-      writeBuffer(buffer)
-      writeBuffer(comment)
-    }
+
+    // comment length
+    buffer.putShort(1 + 4 + 4)
+    // version
+    buffer.put(1)
+    buffer.putInt(sizes.size)
+    buffer.putInt(optimizedMetadataOffset)
+
+    buffer.flip()
+    writeBuffer(buffer)
 
     finished = true
   }
@@ -142,50 +164,62 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
   override fun close() {
     if (!finished) {
       channel.use {
-        finish(null)
+        finish()
       }
     }
   }
+
+  private fun writeCentralFileHeader(size: Int, compressedSize: Int, method: Int, crc: Long, name: ByteArray, offset: Long, dataOffset: Int) {
+    val buffer = metadataBuffer
+    val headerOffset = buffer.position()
+    buffer.putInt(headerOffset, 0x02014b50)
+    // compression method
+    buffer.putShort(headerOffset + 10, method.toShort())
+    // CRC-32 of uncompressed data
+    buffer.putInt(headerOffset + 16, (crc and 0xffffffffL).toInt())
+    // compressed size
+    buffer.putInt(headerOffset + 20, compressedSize)
+    // uncompressed size
+    buffer.putInt(headerOffset + 24, size)
+
+    sizes.add(size)
+    dataOffsets.add(dataOffset)
+    names.add(name)
+
+    // file name length
+    buffer.putShort(headerOffset + 28, (name.size and 0xffff).toShort())
+    // relative offset of local file header
+    buffer.putInt(headerOffset + 42, (offset and 0xffffffffL).toInt())
+    // file name
+    buffer.position(headerOffset + 46)
+    buffer.put(name)
+  }
 }
 
-private fun writeCentralFileHeader(size: Int, compressedSize: Int, method: Int, crc: Long, buffer: ByteBuffer, name: ByteArray, offset: Long) {
-  buffer.putInt(0x02014b50)
-  // write 0 to clear reused buffer content
-  // Version made by
-  buffer.putShort(0)
-  // Version needed to extract (minimum)
-  buffer.putShort(0)
-  // General purpose bit flag
-  buffer.putShort(0)
-  // Compression method
-  buffer.putShort(method.toShort())
-
-  // File last modification time
-  buffer.putShort(0)
-  // File last modification date
-  buffer.putShort(0)
-
-  // CRC-32 of uncompressed data
-  buffer.putInt((crc and 0xffffffffL).toInt())
-  // Compressed size
-  buffer.putInt(compressedSize)
-  // Uncompressed size
-  buffer.putInt(size)
-
-  // File name length
-  buffer.putShort((name.size and 0xffff).toShort())
-  // Extra field length
-  buffer.putShort(0)
-  // File comment length
-  buffer.putShort(0)
-  // Disk number where file starts
-  buffer.putShort(0)
-  // Internal file attributes
-  buffer.putShort(0)
-  // External file attributes
-  buffer.putInt(0)
-  // Relative offset of local file header
-  buffer.putInt((offset and 0xffffffffL).toInt())
-  // File name
-  buffer.put(name)
+private fun computeTableIndexes(names: List<ByteArray>): IntArray {
+  val indexes = IntArray(names.size)
+  val tableSize = names.size * 2
+  val indexToName = arrayOfNulls<ByteArray>(tableSize)
+  @Suppress("ReplaceManualRangeWithIndicesCalls")
+  for (entryIndex in 0 until names.size) {
+    val name = names.get(entryIndex)
+    val nameHash = Murmur3_32Hash.MURMUR3_32.hashBytes(name, 0, name.size - (if (name.last() == '/'.code.toByte()) 1 else 0))
+    var index = Math.floorMod(nameHash, tableSize)
+    while (true) {
+      val found = indexToName[index]
+      if (found == null) {
+        indexes[entryIndex] = index
+        indexToName[index] = name
+        break
+      }
+      else if (name.contentEquals(indexToName[index])) {
+        indexes[entryIndex] = index
+        break
+      }
+      else if (++index == tableSize) {
+        index = 0
+      }
+    }
+  }
+  return indexes
 }

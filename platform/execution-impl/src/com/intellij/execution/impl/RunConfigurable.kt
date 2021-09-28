@@ -29,6 +29,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
@@ -37,7 +38,8 @@ import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.ui.mac.TouchbarDataKeys
+import com.intellij.ui.mac.touchbar.Touchbar
+import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
@@ -260,7 +262,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }, ModalityState.stateForComponent(wholePanel!!))
   }
 
-  open protected fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+  protected open fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
     return runManager.selectedConfiguration
   }
 
@@ -455,18 +457,21 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
 
   override fun createComponent(): JComponent? {
-    val touchbarActions = DefaultActionGroup(toolbarAddAction)
-    TouchbarDataKeys.putActionDescriptor(touchbarActions).setShowText(true).isCombineWithDlgButtons = true
-
     wholePanel = JPanel(BorderLayout())
     DataManager.registerDataProvider(wholePanel!!) { dataId ->
       when (dataId) {
         RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
-        TouchbarDataKeys.ACTIONS_KEY.name -> touchbarActions
         CommonDataKeys.PROJECT.name -> project
         RunConfigurationCreator.KEY.name -> this
         else -> null
       }
+    }
+
+    if (SystemInfo.isMac) {
+      val touchbarActions = DefaultActionGroup(toolbarAddAction)
+      TouchbarActionCustomizations.setShowText(touchbarActions, true)
+      TouchbarActionCustomizations.setCombineWithDlgButtons(touchbarActions, true)
+      Touchbar.setActions(wholePanel!!, touchbarActions)
     }
 
     val leftPanel = createLeftPanel()

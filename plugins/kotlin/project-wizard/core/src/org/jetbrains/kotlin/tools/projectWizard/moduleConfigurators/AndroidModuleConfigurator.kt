@@ -257,7 +257,7 @@ abstract class AndroidTargetConfiguratorBase : TargetConfigurator,
         KotlinNewProjectWizardBundle.message("module.configurator.android.setting.android.plugin"),
         neededAtPhase = GenerationPhase.PROJECT_GENERATION
     ) {
-        description = KotlinNewProjectWizardBundle.message("module.configurator.android.setting.android.plugin.description")
+        tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.android.setting.android.plugin.tooltip")
     }
 }
 

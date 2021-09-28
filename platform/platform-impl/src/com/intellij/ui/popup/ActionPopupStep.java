@@ -26,7 +26,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
 
   private final List<PopupFactoryImpl.ActionItem> myItems;
-  private final @NlsContexts.PopupTitle String myTitle;
+  private final @NlsContexts.PopupTitle @Nullable String myTitle;
   private final Supplier<? extends DataContext> myContext;
   private final String myActionPlace;
   private final boolean myEnableMnemonics;
@@ -38,7 +38,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final Condition<? super AnAction> myPreselectActionCondition;
 
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
-                         @PopupTitle String title,
+                         @PopupTitle @Nullable String title,
                          @NotNull Supplier<? extends DataContext> context,
                          @Nullable String actionPlace,
                          boolean enableMnemonics,
@@ -82,7 +82,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                              boolean showNumbers,
                                                                              boolean useAlphaAsNumbers,
                                                                              boolean showDisabledActions,
-                                                                             @PopupTitle String title,
+                                                                             @PopupTitle @Nullable String title,
                                                                              boolean honorActionMnemonics,
                                                                              boolean autoSelectionEnabled,
                                                                              Supplier<? extends DataContext> contextSupplier,
@@ -196,6 +196,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
+  @Nullable
   public String getTitle() {
     return myTitle;
   }

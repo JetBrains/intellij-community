@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.JavaServiceUtil.ServiceNavigationHandler
 import com.intellij.icons.AllIcons
-import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
@@ -72,14 +71,14 @@ class ServiceLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
     val module = addModule("module foo.bar { uses foo.bar.MyService; provides foo.bar.MyService with foo.bar.impl.MyServiceImpl; }")
     addImplementer("public class <caret>MyServiceImpl implements MyService {\n    @Override public void doWork() {}\n}")
     val file = addMain(text)
-    doTest(file, module, JavaAnalysisBundle.message("service.uses", "foo.bar.MyService"),
+    doTest(file, module, "Uses service <a href=\"#javaClass/foo.bar.MyService\">foo.bar.MyService</a><br/><div style=\"margin-top: 5px\"><font size=\"2\">Click to navigate</font></div>",
            "foo.bar.MyService", PsiUsesStatement::class.java)
   }
 
   private fun doTestImplementer(text: String) {
     val module = addModule("module foo.bar {\n  provides foo.bar.MyService with foo.bar.impl.MyServiceImpl;\n}")
     val file = addImplementer(text)
-    doTest(file, module, JavaAnalysisBundle.message("service.provides", "foo.bar.MyService"),
+    doTest(file, module, "Provides service <a href=\"#javaClass/foo.bar.MyService\">foo.bar.MyService</a><br/><div style=\"margin-top: 5px\"><font size=\"2\">Click to navigate</font></div>",
            "foo.bar.impl.MyServiceImpl", PsiProvidesStatement::class.java)
   }
 

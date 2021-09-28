@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -285,8 +285,8 @@ public class InspectionTree extends Tree {
   }
 
   public void selectNode(InspectionTreeNode node) {
-    TreePath path = getPathFor(node);
-    TreeUtil.selectPath(this, path);
+    TreePath path = TreePathUtil.pathToTreeNode(node);
+    if (path != null) TreeUtil.promiseSelect(this, path);
   }
 
   private static void addElementsInNode(InspectionTreeNode node, Set<? super RefEntity> out) {
@@ -673,21 +673,5 @@ public class InspectionTree extends Tree {
       }
       return false;
     }
-  }
-
-  private TreePath getPathFor(InspectionTreeNode node) {
-    TreePath result = TreePathUtil.pathToTreeNode(node);
-
-    Stack<TreePath> s = new Stack<>();
-    TreePath current = result;
-    while (current != null) {
-      s.add(current);
-      current = current.getParentPath();
-    }
-    while (!s.isEmpty()) {
-      TreePath p = s.pop();
-      expandPath(p);
-    }
-    return result;
   }
 }

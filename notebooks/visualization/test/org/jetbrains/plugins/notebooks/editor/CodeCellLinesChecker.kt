@@ -31,8 +31,8 @@ class CodeCellLinesChecker(private val description: String,
   }
 
   class IntervalsSetter(private val list: MutableList<NotebookCellLines.Interval>, private val startOrdinal: Int) {
-    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange) {
-      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines)
+    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, markers: NotebookCellLines.MarkersAtLines) {
+      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers)
     }
   }
 
@@ -71,10 +71,10 @@ class CodeCellLinesChecker(private val description: String,
         actualIntervalListenerCalls += oldIntervals to newIntervals
       }
     }
-    val codeCellLines = NotebookCellLines.get(editorGetter())
+    val editor = editorGetter()
+    val codeCellLines = NotebookCellLines.get(editor)
     codeCellLines.intervalListeners.addListener(intervalListener)
     val prettyDocumentTextBefore = editorGetter().prettyText
-    val notebookCellLinesChecker = NotebookCellLinesChecker.get(editorGetter())
 
     try {
       handler()
@@ -103,7 +103,7 @@ class CodeCellLinesChecker(private val description: String,
         """.trimMargin("|||")
 
       markers.let { markers ->
-        assertThat(codeCellLines.markersIterator(markersStartOffset).asSequence().toList())
+        assertThat(makeMarkersFromIntervals(editor.document, codeCellLines.intervals).filter { it.offset >= markersStartOffset })
           .describedAs("Markers: $descr")
           .isEqualTo(markers)
       }
@@ -112,9 +112,6 @@ class CodeCellLinesChecker(private val description: String,
           .describedAs("Intervals: $descr")
           .isEqualTo(intervals)
       }
-
-      assertThat(codeCellLines.intervalsCount).isEqualTo(codeCellLines.intervalsIterator().asSequence().toList().size)
-      notebookCellLinesChecker.check(editorGetter().document, codeCellLines)
     }
 
     fun List<Pair<List<NotebookCellLines.Interval>, List<NotebookCellLines.Interval>>>.prettyListeners() =

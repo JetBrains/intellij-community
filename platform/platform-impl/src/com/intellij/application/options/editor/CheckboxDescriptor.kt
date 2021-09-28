@@ -6,7 +6,8 @@ import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.bindSelected
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
 import javax.swing.JRadioButton
@@ -53,14 +54,14 @@ fun Cell.radioButton(ui: CheckboxDescriptor): CellBuilder<JRadioButton> {
   return radioButton(ui.name, ui.binding.get, ui.binding.set, ui.comment)
 }
 
-fun com.intellij.ui.dsl.Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.Cell<JBCheckBox> {
+fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
   val result = checkBox(ui.name)
     .bindSelected(ui.binding.get, ui.binding.set)
   ui.comment?.let { result.comment(it) }
   return result
 }
 
-fun com.intellij.ui.dsl.Row.radioButton(ui: CheckboxDescriptor): com.intellij.ui.dsl.Cell<JBRadioButton> {
+fun Row.radioButton(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBRadioButton> {
   val result = radioButton(ui.name)
     .bindSelected(ui.binding.get, ui.binding.set)
   ui.comment?.let { result.comment(it) }

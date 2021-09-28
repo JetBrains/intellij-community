@@ -44,9 +44,9 @@ import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.codeUsageScopeRestrictedToKotlinSources
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -143,7 +143,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     val propagationTarget = functionUsageInfo is CallerUsageInfo ||
                             (functionUsageInfo is OverriderUsageInfo && !functionUsageInfo.isOriginalOverrider)
 
-                    for (reference in ReferencesSearch.search(callee, callee.useScope.restrictToKotlinSources())) {
+                    for (reference in ReferencesSearch.search(callee, callee.codeUsageScopeRestrictedToKotlinSources())) {
                         val callElement = reference.element.getParentOfTypeAndBranch<KtCallElement> { calleeExpression } ?: continue
                         val usage = if (propagationTarget) {
                             KotlinCallerCallUsage(callElement)

@@ -186,23 +186,18 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       ExceptionUtil.rethrow(toThrow);
     });
     AtomicReference<Throwable> error = new AtomicReference<>();
-    LoggedErrorProcessor old = LoggedErrorProcessor.getInstance();
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
         assertNull(error.get());
         error.set(t);
         return false;
       }
+    }, () -> {
+      IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
+      ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
     });
 
-    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    try {
-      ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(old);
-    }
     assertTrue(run.get());
     assertSame(expectedToBeLogged, error.get());
   }

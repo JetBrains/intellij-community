@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.TestOnly;
   name = "CodeStyleSchemeSettings",
   storages = @Storage("code.style.schemes.xml"),
   additionalExportDirectory = CodeStyleSchemesImpl.CODE_STYLES_DIR_PATH,
-  category = ComponentCategory.CODE
+  category = SettingsCategory.CODE
 )
 public final class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements PersistentStateComponent<Element> {
   public String CURRENT_SCHEME_NAME = CodeStyleScheme.DEFAULT_SCHEME_NAME;

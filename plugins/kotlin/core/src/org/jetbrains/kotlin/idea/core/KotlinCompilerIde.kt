@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.backend.jvm.jvmPhases
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.ClassBuilderFactory
 import org.jetbrains.kotlin.codegen.DefaultCodegenFactory
@@ -101,7 +100,7 @@ class KotlinCompilerIde(
         if (!platform.isCommon() && !platform.isJvm()) return null
 
         val resolutionFacade = resolutionFacadeProvider(file) ?: return null
-        val bindingContextForFiles = resolutionFacade.analyzeWithAllCompilerChecks(listOf(file)).bindingContext
+        val bindingContextForFiles = resolutionFacade.analyzeWithAllCompilerChecks(file).bindingContext
 
         val configuration = initialConfiguration.copy().apply {
             put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)

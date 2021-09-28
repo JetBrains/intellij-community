@@ -39,11 +39,13 @@ object PyExecuteInConsole {
         existingConsole = getSelectedPythonConsole(project)
       }
       if (canUseDebugConsole) {
-        val pythonConsoleView = existingConsole?.executionConsole as? PythonConsoleView
-        if (pythonConsoleView == null || PythonConsoleToolWindow.getInstance(project)?.toolWindow?.isVisible != true) {
+        if (PythonConsoleToolWindow.getInstance(project)?.toolWindow?.isVisible != true) {
           // PY-48207 Currently visible Python Console has a higher priority than a Debug console
-          existingConsole = getCurrentDebugConsole(project)
-          isDebug = true
+          val debugConsole = getCurrentDebugConsole(project)
+          if (debugConsole != null) {
+            existingConsole = debugConsole
+            isDebug = true
+          }
         }
       }
     }

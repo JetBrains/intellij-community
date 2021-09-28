@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchableConfigurable {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
@@ -97,6 +98,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
 
   private final ConfigurableEP<?> myEp;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
+
+  private @Nullable String overriddenId = null;
 
   private ConfigurableWrapper(@NotNull ConfigurableEP<?> ep) {
     myEp = ep;
@@ -204,6 +207,10 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   @NotNull
   @Override
   public String getId() {
+    if (overriddenId != null) {
+      return overriddenId;
+    }
+
     if (myEp.id != null) {
       return myEp.id;
     }
@@ -224,16 +231,23 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
              : myEp.implementationClass;
   }
 
+  @ApiStatus.Experimental
+  public void overrideId(String overridenId) {
+    this.overriddenId = overridenId;
+  }
+
   @NotNull
   public ConfigurableEP<?> getExtensionPoint() {
     return myEp;
   }
 
+  @Override
   public String getParentId() {
     return myEp.parentId;
   }
 
-  public ConfigurableWrapper addChild(Configurable configurable) {
+  @Override
+  public HierarchableConfigurable addChild(Configurable configurable) {
     return new CompositeWrapper(myEp, configurable);
   }
 
@@ -336,7 +350,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     }
 
     @Override
-    public ConfigurableWrapper addChild(Configurable configurable) {
+    public HierarchableConfigurable addChild(Configurable configurable) {
       if (myComparator != null) {
         int index = Arrays.binarySearch(myKids, configurable, myComparator);
         LOG.assertTrue(index < 0, "similar configurable is already exist");

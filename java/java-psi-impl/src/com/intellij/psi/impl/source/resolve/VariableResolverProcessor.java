@@ -114,10 +114,10 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
     return super.execute(element, state);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
-      //noinspection unchecked
       return (T)this;
     }
 

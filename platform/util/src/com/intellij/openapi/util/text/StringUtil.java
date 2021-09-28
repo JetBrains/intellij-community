@@ -127,7 +127,7 @@ public class StringUtil extends StringUtilRt {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
-  public static @NotNull <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
+  public static @NotNull <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
     return Object::toString;
   }
 
@@ -1580,26 +1580,6 @@ public class StringUtil extends StringUtilRt {
   @Deprecated
   public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
     return Formats.formatDuration(duration, unitSeparator);
-  }
-
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull @NonNls String formatDurationPadded(long millis, @NotNull String unitSeparator) {
-    return Formats.formatDurationPadded(millis, unitSeparator);
-  }
-
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull @NonNls String formatDurationApproximate(long duration) {
-    return Formats.formatDurationApproximate(duration);
   }
 
   /**

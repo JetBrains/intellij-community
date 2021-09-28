@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
@@ -63,10 +64,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
@@ -1269,5 +1267,19 @@ public abstract class UsefulTestCase extends TestCase {
   protected void setRegistryPropertyForTest(@NotNull String property, @NotNull String value) {
     Registry.get(property).setValue(value);
     Disposer.register(getTestRootDisposable(), () -> Registry.get(property).resetToDefault());
+  }
+
+  protected void allowAccessToDirsIfExists(@NotNull String @NotNull ... dirNames) {
+    for (String dirName : dirNames) {
+      final Path usrShareDir = Paths.get(dirName);
+      if (Files.exists(usrShareDir)) {
+        final String absolutePath = usrShareDir.toAbsolutePath().toString();
+        LOG.debug(usrShareDir.toString(), " exists, adding to the list of allowed root: ", absolutePath);
+        VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
+      }
+      else {
+        LOG.debug(usrShareDir.toString(), " does not exists");
+      }
+    }
   }
 }

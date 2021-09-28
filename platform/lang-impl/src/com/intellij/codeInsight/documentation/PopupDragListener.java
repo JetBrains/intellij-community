@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,7 +12,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-final class PopupDragListener extends MouseAdapter {
+@Internal
+public final class PopupDragListener extends MouseAdapter {
 
   private final @NotNull JBPopup myPopup;
 
@@ -43,7 +45,7 @@ final class PopupDragListener extends MouseAdapter {
    * @param popup     the popup to drag
    */
   @RequiresEdt
-  static void dragPopupByComponent(@NotNull JBPopup popup, @NotNull JComponent component) {
+  public static void dragPopupByComponent(@NotNull JBPopup popup, @NotNull JComponent component) {
     var listener = new PopupDragListener(popup);
     component.addMouseListener(listener);
     component.addMouseMotionListener(listener);

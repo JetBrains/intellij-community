@@ -457,10 +457,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         myPreviewEditor.getMarkupModel().removeAllHighlighters();
       }
       else {
-        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), true);
+        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), false, EditorKind.PREVIEW);
         DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
-        settings.setLineNumbersShown(false);
         settings.setFoldingOutlineShown(true);
         settings.setLineMarkerAreaShown(true);
         settings.setGutterIconsShown(false);
@@ -629,7 +628,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     if (DATA_KEY.is(dataId)) return this;
     if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;
     if (!ApplicationManager.getApplication().isDispatchThread()) return null;

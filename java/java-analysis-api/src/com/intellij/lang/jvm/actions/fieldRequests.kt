@@ -2,30 +2,34 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.types.JvmSubstitutor
-import com.intellij.lang.jvm.types.JvmType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
 
-fun fieldRequest(
-  name: String,
-  substitutor: JvmSubstitutor,
-  type: JvmType = PsiType.VOID,
-  initializer: PsiElement? = null,
-  modifiers: Collection<JvmModifier> = emptyList(),
-  isConstant: Boolean = false
-) = object : CreateFieldRequest {
+internal class SimpleFieldRequest(
+  private val fieldName: String,
+  private val annotations: Collection<AnnotationRequest>,
+  private val modifiers: Collection<JvmModifier>,
+  private val fieldType: ExpectedTypes,
+  private val targetSubstitutor: JvmSubstitutor,
+  private val initializer: JvmValue? = null,
+  private val isConstant: Boolean,
+) : CreateFieldRequest {
   override fun isValid(): Boolean = true
-
-  override fun getFieldName(): String = name
-
-  override fun getFieldType(): List<ExpectedType> = expectedTypes(type)
-
-  override fun getTargetSubstitutor(): JvmSubstitutor = substitutor
-
-  override fun getInitializer(): PsiElement? = initializer
-
-  override fun getModifiers(): Collection<JvmModifier> = modifiers
-
+  override fun getFieldName() = fieldName
+  override fun getAnnotations() = annotations
+  override fun getModifiers() = modifiers
+  override fun getFieldType() = fieldType
+  override fun getTargetSubstitutor() = targetSubstitutor
+  override fun getInitializer(): JvmValue? = initializer
   override fun isConstant(): Boolean = isConstant
 }
+
+fun fieldRequest(
+  fieldName: String,
+  annotations: Collection<AnnotationRequest>,
+  modifiers: Collection<JvmModifier>,
+  fieldType: ExpectedTypes,
+  targetSubstitutor: JvmSubstitutor,
+  initializer: JvmValue?,
+  isConstant: Boolean,
+): CreateFieldRequest = SimpleFieldRequest(fieldName, annotations, modifiers, fieldType, targetSubstitutor, initializer, isConstant)

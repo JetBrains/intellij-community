@@ -15,7 +15,6 @@ import java.util.List;
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
-@SuppressWarnings("unused")
 public final class SystemInfo {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
@@ -198,11 +197,6 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final boolean isIntel64 = CpuArch.isIntel64();
-
-  /** @deprecated moved; please use {@link CpuArch#isArm64()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final boolean isArm64 = CpuArch.isArm64();
 
   /** @deprecated trivial and mostly outdated */
   @Deprecated

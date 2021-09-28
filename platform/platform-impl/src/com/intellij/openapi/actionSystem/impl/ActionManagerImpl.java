@@ -914,6 +914,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     idToGroupId.putValue(actionId, actionToId.get(group));
   }
 
+  public void addToGroup(@NotNull DefaultActionGroup group, @NotNull AnAction action, @NotNull Constraints constraints) {
+    addToGroupInner(group, action, constraints, false);
+  }
+
   public @Nullable DefaultActionGroup getParentGroup(String groupId,
                                                      @Nullable String actionName,
                                                      @NotNull IdeaPluginDescriptor module) {

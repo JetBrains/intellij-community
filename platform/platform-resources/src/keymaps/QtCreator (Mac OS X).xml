@@ -68,6 +68,7 @@
     <keyboard-shortcut first-keystroke="meta 1"/>
   </action>
   <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow"/>
   <action id="DuplicatesForm.SendToRight"/>
   <action id="FileChooser.GotoProject"/>
   <action id="ActivateFindToolWindow">

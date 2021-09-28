@@ -191,8 +191,7 @@ class ScriptClassRootsCache(
 
         override val hasNewRoots: Boolean
             get() {
-                val scriptCacheDependencies = project.scriptCacheDependencies()
-                return scriptCacheDependencies?.sameAs(cache) == false
+                return cache.allDependenciesClassFiles.isNotEmpty() || cache.allDependenciesSources.isNotEmpty()
             }
     }
 

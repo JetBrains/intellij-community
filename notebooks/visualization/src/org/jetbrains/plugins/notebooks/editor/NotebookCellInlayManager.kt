@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -64,6 +65,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   }
 
   fun update(lines: IntRange) {
+    // TODO Hypothetically, there can be a race between cell addition/deletion and updating of old cells.
     updateQueue.queue(UpdateInlaysTask(this, lines))
   }
 
@@ -115,17 +117,16 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   }
 
   private fun handleRefreshedDocument() {
-    val allCellLines = notebookCellLines.intervalsIterator().asSequence().toList()
     val factories = NotebookCellInlayController.Factory.EP_NAME.extensionList
-    for (interval in allCellLines) {
+    for (interval in notebookCellLines.intervals) {
       for (factory in factories) {
-        val controller = factory.compute(editor, emptyList(), notebookCellLines.getIterator(interval))
+        val controller = factory.compute(editor, emptyList(), notebookCellLines.intervals.listIterator(interval.ordinal))
         if (controller != null) {
           rememberController(controller, interval)
         }
       }
     }
-    addHighlighters(allCellLines)
+    addHighlighters(notebookCellLines.intervals)
     inlaysChanged()
   }
 
@@ -221,7 +222,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       }
       for ((factory, controllers) in seenControllersByFactory) {
         val actualController = if (!Disposer.isDisposed(editor.disposable)) {
-          factory.compute(editor, controllers, notebookCellLines.getIterator(interval))
+          factory.compute(editor, controllers, notebookCellLines.intervals.listIterator(interval.ordinal))
         }
         else {
           null
@@ -251,7 +252,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
         DataProvider { key ->
           when (key) {
             NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY.name -> interval
-            PlatformDataKeys.CONTEXT_COMPONENT.name -> component
+            PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> component
             PlatformDataKeys.EDITOR.name -> editor
             else -> null
           }

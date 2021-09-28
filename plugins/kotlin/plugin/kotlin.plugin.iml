@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="module" module-name="kotlin.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.copyright" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.core" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.coverage" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.formatter" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.git" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.grazie" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.groovy" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.i18n" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.idea" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.injection" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.j2k.idea" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.j2k.new" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.j2k.old" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.j2k.services" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jps-common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jps-plugin" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.junit" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.ml-completion" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.native" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.properties" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.refIndex" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.repl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.scripting" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.spellchecker" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.testng" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="PROVIDED" />
+  </component>
+</module>

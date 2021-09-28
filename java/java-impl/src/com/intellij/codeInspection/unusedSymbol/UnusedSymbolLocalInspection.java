@@ -45,6 +45,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
     private JLabel myFieldVisibilityCb;
     private JLabel myMethodVisibilityCb;
     private JLabel myMethodParameterVisibilityCb;
+    private JCheckBox myCheckParameterExcludingHierarchyCheckBox;
     private JCheckBox myInnerClassesCheckBox;
     private JLabel myInnerClassVisibilityCb;
 
@@ -55,6 +56,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myCheckMethodsCheckBox.setSelected(METHOD);
       myInnerClassesCheckBox.setSelected(INNER_CLASS);
       myCheckParametersCheckBox.setSelected(PARAMETER);
+      myCheckParameterExcludingHierarchyCheckBox.setSelected(myCheckParameterExcludingHierarchy);
       myAccessors.setSelected(!isIgnoreAccessors());
       updateEnableState();
 
@@ -68,6 +70,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           METHOD = myCheckMethodsCheckBox.isSelected();
           setIgnoreAccessors(!myAccessors.isSelected());
           PARAMETER = myCheckParametersCheckBox.isSelected();
+          setCheckParameterExcludingHierarchy(myCheckParameterExcludingHierarchyCheckBox.isSelected());
 
           updateEnableState();
         }
@@ -77,6 +80,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myCheckMethodsCheckBox.addActionListener(listener);
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
+      myCheckParameterExcludingHierarchyCheckBox.addActionListener(listener);
       myInnerClassesCheckBox.addActionListener(listener);
       myAccessors.addActionListener(listener);
      }
@@ -87,6 +91,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       UIUtil.setEnabled(myFieldVisibilityCb, FIELD, true);
       UIUtil.setEnabled(myMethodVisibilityCb, METHOD, true);
       UIUtil.setEnabled(myMethodParameterVisibilityCb, PARAMETER, true);
+      setEnabledExcludingHierarchyCheckbox(getParameterVisibility());
       myAccessors.setEnabled(METHOD);
     }
 
@@ -114,7 +119,10 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
 
       myMethodParameterVisibilityCb = new VisibilityModifierChooser(() -> PARAMETER,
                                                                     myParameterVisibility,
-                                                                    modifier -> setParameterVisibility(modifier));
+                                                                    modifier -> {
+                                                                      setParameterVisibility(modifier);
+                                                                      setEnabledExcludingHierarchyCheckbox(modifier);
+                                                                    });
 
       myAccessors = new JCheckBox() {
         @Override
@@ -122,6 +130,10 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           super.setEnabled(b && METHOD);
         }
       };
+    }
+
+    private void setEnabledExcludingHierarchyCheckbox(@Nullable String modifier) {
+      myCheckParameterExcludingHierarchyCheckBox.setVisible(!PsiModifier.PRIVATE.equals(modifier));
     }
   }
 

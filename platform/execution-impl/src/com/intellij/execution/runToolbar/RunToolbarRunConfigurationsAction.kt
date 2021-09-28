@@ -3,6 +3,7 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -32,7 +33,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
  }
 
   override fun addEditRunConfigurationItem(): Boolean {
-    return false
+    return true
   }
 
   override fun createFinalAction(configuration: RunnerAndConfigurationSettings, project: Project): AnAction {
@@ -62,6 +63,9 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
         e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
+    e.presentation.description = e.runToolbarData()?.let {
+      RunToolbarData.prepareDescription(e.presentation.text, ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.open.combo.text"))
+    }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -88,7 +92,6 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
       override fun doShiftClick() {
         dataContext.editConfiguration()
-        doClick()
       }
     }
   }
@@ -114,7 +117,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     override fun actionPerformed(e: AnActionEvent) {
       e.project?.let {
         e.setConfiguration(configuration)
-        RunToolbarSlotManager.getInstance(it).saveData()
+        RunToolbarSlotManager.getInstance(it).saveSlotsConfiguration()
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
                            configuration,
                            project,

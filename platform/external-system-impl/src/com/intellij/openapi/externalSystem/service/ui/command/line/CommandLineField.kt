@@ -41,9 +41,9 @@ class CommandLineField(
     val textCompletionContributor = JTextCompletionContributor.create<CommandLineField> {
       commandLineInfo.tablesInfo.flatMap { it.completionInfo }
     }
-    val textCompletetionPopup = TextCompletionPopup(project, this, textCompletionContributor)
+    val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor)
     val action = Runnable {
-      textCompletetionPopup.updatePopup(TextCompletionPopup.UpdatePopupType.HIDE)
+      textCompletionPopup.updatePopup(TextCompletionPopup.UpdatePopupType.HIDE)
       val dialog = CommandLineDialog(project, commandLineInfo)
       dialog.whenVariantChosen {
         val separator = if (text.endsWith(" ") || text.isEmpty()) "" else " "

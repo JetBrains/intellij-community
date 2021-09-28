@@ -4,9 +4,9 @@ class Main {
     switch (o) {
       case Integer i :
         System.out.println();
-      case default:
       case null:
         System.out.println(i);
+      case default:
     };
   }
 

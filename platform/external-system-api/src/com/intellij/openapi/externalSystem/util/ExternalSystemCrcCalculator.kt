@@ -14,12 +14,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface ExternalSystemCrcCalculator {
   /**
-   * Checks that CRC calculation should be customised for defined build system [systemId] and build script [file].
+   * Checks that CRC calculation is applicable to defined build system [systemId] and build script [file].
    */
   fun isApplicable(systemId: ProjectSystemId, file: VirtualFile): Boolean
 
   /**
-   * Calculates CRC for [fileText]. [file] content may be not equal [fileText],
+   * Calculates CRC for [fileText]. [file] content may be not equal to [fileText],
    * for example [fileText] can be taken from corresponding [com.intellij.openapi.editor.Document].
    */
   fun calculateCrc(project: Project, file: VirtualFile, fileText: CharSequence): Long?

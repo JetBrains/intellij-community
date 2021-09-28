@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchPar
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.search.isPotentiallyOperator
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
@@ -119,7 +120,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             options: FindUsagesOptions
         ): Boolean {
 
-            if (ApplicationManager.getApplication().isUnitTestMode ||
+            if (isUnitTestMode() ||
                 !isPropertyOfDataClass ||
                 psiElement.getDisableComponentAndDestructionSearch(resetSingleFind = false)
             ) return super.processElementUsages(element, processor, options)

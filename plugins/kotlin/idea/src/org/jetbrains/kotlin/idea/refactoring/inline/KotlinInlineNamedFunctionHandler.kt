@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -10,6 +9,7 @@ import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isAnonymousFunction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
@@ -39,7 +39,7 @@ class KotlinInlineNamedFunctionHandler : AbstractKotlinInlineFunctionHandler<KtN
             editor = editor,
         )
 
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
+        if (!isUnitTestMode()) {
             dialog.show()
         } else {
             try {

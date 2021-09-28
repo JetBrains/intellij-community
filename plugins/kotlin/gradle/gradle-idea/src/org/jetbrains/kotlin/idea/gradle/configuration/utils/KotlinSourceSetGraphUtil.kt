@@ -3,11 +3,12 @@ package org.jetbrains.kotlin.idea.gradle.configuration.utils
 
 import com.google.common.graph.*
 import com.intellij.openapi.util.IntellijInternalApi
-import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
-import org.jetbrains.kotlin.gradle.KotlinPlatform
-import org.jetbrains.kotlin.gradle.KotlinSourceSet
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 
-internal fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {
+@IntellijInternalApi
+fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {
     val graph = createSourceSetDependsOnGraph(model)
     graph.putInferredTestToProductionEdges()
     return graph.immutable
@@ -78,9 +79,11 @@ private fun getFixedDependsOnSourceSets(
 /**
  * @see Graphs.transitiveClosure
  */
-internal val <T> Graph<T>.transitiveClosure: Graph<T> get() = Graphs.transitiveClosure(this)
+@IntellijInternalApi
+val <T> Graph<T>.transitiveClosure: Graph<T> get() = Graphs.transitiveClosure(this)
 
 /**
  * @see ImmutableGraph.copyOf
  */
-internal val <T> Graph<T>.immutable: ImmutableGraph<T> get() = ImmutableGraph.copyOf(this)
+@IntellijInternalApi
+val <T> Graph<T>.immutable: ImmutableGraph<T> get() = ImmutableGraph.copyOf(this)

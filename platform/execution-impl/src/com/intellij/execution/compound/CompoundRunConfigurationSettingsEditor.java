@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +80,7 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
 
   @Override
   protected void applyEditorTo(@NotNull CompoundRunConfiguration compoundConfiguration) throws ConfigurationException {
-    Map<RunConfiguration, ExecutionTarget> checked = new HashMap<>();
+    Map<RunConfiguration, ExecutionTarget> checked = new LinkedHashMap<>();
     for (int i = 0; i < myModel.getSize(); i++) {
       Pair<RunConfiguration, ExecutionTarget> configurationAndTarget = myModel.get(i);
       RunConfiguration configuration = configurationAndTarget.first;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -141,16 +141,16 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testPatternVariableNotUsedAfterwards() {
     doTest("temp", true, false, false, "boolean");
   }
-  public void testPatternVariableDeclarationJava15Preview() {
+  public void testPatternVariableDeclarationJava16() {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, JAVA_LANG_STRING));
   }
   public void testPatternVariableDeclarationUpcastJava16() {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, JAVA_LANG_STRING));
   }
-  public void testPatternVariableDeclarationUsedInLocalJava15Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
-  public void testPatternVariableDeclarationAfterIfJava15Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
-  public void testNonPatternVariableDeclarationTwoBlocksJava15Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
-  public void testNonPatternDeclarationJava15Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationUsedInLocalJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationAfterIfJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testNonPatternVariableDeclarationTwoBlocksJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testNonPatternDeclarationJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
 
   public void testTernaryBothBranches() { doTest("temp", true, false, false, "int"); }
   public void testIfConditionAndChain() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest("temp", true, false, false, JAVA_LANG_STRING)); }

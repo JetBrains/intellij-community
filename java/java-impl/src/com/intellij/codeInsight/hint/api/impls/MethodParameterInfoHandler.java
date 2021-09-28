@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.application.WriteAction;
@@ -710,7 +711,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         }
 
         if (context.isSingleParameterInfo()) {
-          String javaDoc = new JavaDocInfoGenerator(param.getProject(), param).generateMethodParameterJavaDoc();
+          String javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
           if (javaDoc != null) {
             javaDoc = removeHyperlinks(javaDoc);
             if (javaDoc.length() < 100) {

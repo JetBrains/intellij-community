@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
+import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.QuickChangeLookAndFeel
@@ -21,6 +22,7 @@ import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -30,11 +32,12 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.*
-import com.intellij.ui.dsl.Cell
-import com.intellij.ui.dsl.Row
-import com.intellij.ui.dsl.panel
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
@@ -116,6 +119,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }.layout(RowLayout.INDEPENDENT)
 
       row {
+        link(message("link.get.more.themes")) {
+          val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
+          settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+        }
+      }
+
+      row {
         val overrideLaF = checkBox(cdOverrideLaFFont)
           .shouldUpdateLaF()
           .gap(RightGap.SMALL)
@@ -194,7 +204,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
 
-      groupRowsRange (message("group.ui.options")) {
+      group (message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
           yield({ checkBox(cdShowTreeIndents) })
           yield({ checkBox(cdUseCompactTreeIndents) })
@@ -230,9 +240,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val rightIt = rightColumnControls.iterator()
         while (leftIt.hasNext() || rightIt.hasNext()) {
           when {
-            leftIt.hasNext() && rightIt.hasNext() -> twoColumnRow(leftIt.next(), rightIt.next())
-            leftIt.hasNext() -> twoColumnRow(leftIt.next())
-            rightIt.hasNext() -> twoColumnRow(rightIt.next()) // move from right to left
+            leftIt.hasNext() && rightIt.hasNext() -> twoColumnsRow(leftIt.next(), rightIt.next())
+            leftIt.hasNext() -> twoColumnsRow(leftIt.next())
+            rightIt.hasNext() -> twoColumnsRow(rightIt.next()) // move from right to left
           }
         }
 
@@ -276,7 +286,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
 
       groupRowsRange(message("group.antialiasing.mode")) {
-        twoColumnRow(
+        twoColumnsRow(
           {
             val ideAAOptions =
               if (!AntialiasingType.canUseSubpixelAAForIDE())
@@ -312,15 +322,15 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
 
       groupRowsRange(message("group.window.options")) {
-        twoColumnRow(
+        twoColumnsRow(
           { checkBox(cdShowToolWindowBars) },
           { checkBox(cdShowToolWindowNumbers) }
         )
-        twoColumnRow(
+        twoColumnsRow(
           { checkBox(cdLeftToolWindowLayout) },
           { checkBox(cdRightToolWindowLayout) }
         )
-        twoColumnRow(
+        twoColumnsRow(
           {
             checkBox(cdWidescreenToolWindowLayout)
               .gap(RightGap.SMALL)

@@ -24,8 +24,9 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionT
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
-import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangeHintsProvider
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -839,6 +840,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/introduceJavaParameter", pattern = JAVA, testMethodName = "doIntroduceJavaParameterTest")
             model("refactoring/introduceTypeParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceTypeParameterTest")
             model("refactoring/introduceTypeAlias", pattern = KT_OR_KTS, testMethodName = "doIntroduceTypeAliasTest")
+            model("refactoring/introduceConstant", pattern = KT_OR_KTS, testMethodName = "doIntroduceConstantTest")
             model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
             model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
         }
@@ -895,10 +897,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/postfix")
         }
 
+        testClass<AbstractKotlinArgumentsHintsProviderTest> {
+            model("codeInsight/hints/arguments")
+        }
         testClass<AbstractKotlinLambdasHintsProvider> {
             model("codeInsight/hints/lambda")
         }
-        testClass<AbstractKotlinRangeHintsProvider> {
+        testClass<AbstractKotlinRangesHintsProviderTest> {
             model("codeInsight/hints/ranges")
         }
 
@@ -1140,11 +1145,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinMavenInspectionTest> {
-            model("maven-inspections", pattern = "^([\\w\\-]+).xml$".toRegex(), flatten = true)
+            val mavenInspections = "maven-inspections"
+            val pattern = "^([\\w\\-]+).xml$".toRegex()
+            testDataRoot.resolve(mavenInspections).listFiles()!!.onEach { check(it.isDirectory) }.sorted().forEach {
+                model("$mavenInspections/${it.name}", pattern = pattern, flatten = true)
+            }
         }
     }
 
-    testGroup("gradle/gradle-idea/tests", testDataPath = "../../../idea/tests/testData") {
+    testGroup("gradle/gradle-java/tests", testDataPath = "../../../idea/tests/testData") {
         testClass<AbstractGradleConfigureProjectByChangingFileTest> {
             model("configuration/gradle", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
             model("configuration/gsk", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")

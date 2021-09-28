@@ -10,7 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class InstanceofEvaluator extends PatternMatchingBaseEvaluator {
+class InstanceofEvaluator extends PatternLabelEvaluator {
   InstanceofEvaluator(@NotNull Evaluator operandEvaluator,
                       @NotNull TypeEvaluator typeEvaluator,
                       @Nullable Evaluator patternVariable) {

@@ -35,7 +35,7 @@ internal class RefreshIndexableFilesAction : RecoveryAction {
       project.messageBus.connect(actionDisposable).subscribe(VirtualFileManager.VFS_CHANGES, eventLog)
 
       val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-      val rootUrls = fileBasedIndex.getOrderedIndexableFilesProviders(project).flatMap { it.rootUrls }
+      val rootUrls = fileBasedIndex.getIndexableFilesProviders(project).flatMap { it.rootUrls }
       val files = arrayListOf<VirtualFile>()
       for (rootUrl in rootUrls) {
         val file = VirtualFileManager.getInstance().refreshAndFindFileByUrl(rootUrl)

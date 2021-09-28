@@ -30,7 +30,6 @@ public final class ShadowBorderPainter {
   private ShadowBorderPainter() {
   }
 
-  @SuppressWarnings("unused")
   public static BufferedImage createShadow(final JComponent c, final int width, final int height, boolean isPopup) {
     return ourShadowPainter.createShadow(c, width, height);
   }

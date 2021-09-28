@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -64,7 +65,7 @@ public final class Utils extends DataContextUtils {
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
-    Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof EdtDataContext) {
       return new PreCachedDataContext(component);
     }
@@ -137,24 +138,29 @@ public final class Utils extends DataContextUtils {
                                                                @NotNull String place,
                                                                boolean isContextMenu,
                                                                @Nullable Runnable onProcessed,
-                                                               @Nullable JComponent sourceComponent) {
+                                                               @Nullable JComponent menuItem) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
       isInModalContext, presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
+    ActionGroupExpander expander = ActionGroupExpander.getInstance();
+    Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
     if (async) {
-      Set<String> missedKeys = new HashSet<>();
-      list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
-      if (list != null && missedKeys.isEmpty()) {
-        if (onProcessed != null) onProcessed.run();
-        return list;
+      if (expander.allowsFastUpdate(project, place)) {
+        Set<String> missedKeys = new HashSet<>();
+        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
+        if (list != null && missedKeys.isEmpty()) {
+          if (onProcessed != null) onProcessed.run();
+          return list;
+        }
       }
       IdeEventQueue queue = IdeEventQueue.getInstance();
-      CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+      CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
+        project, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      try (AccessToken ignore = cancelOnUserActivityInside(promise, sourceComponent)) {
+      try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -189,13 +195,16 @@ public final class Utils extends DataContextUtils {
   }
 
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
-                                                                 @Nullable JComponent sourceComponent) {
+                                                                 @Nullable Component contextComponent,
+                                                                 @Nullable Component menuItem) {
+    Window window = contextComponent == null ? null : SwingUtilities.getWindowAncestor(contextComponent);
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
       if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
-          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION ||
+          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION &&
+           window != null && window == SwingUtilities.getWindowAncestor(((FocusEvent)event).getComponent()) ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED && UIUtil.getDeepestComponentAt(
-            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != sourceComponent ) {
+            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != menuItem ) {
         ActionUpdater.cancelPromise(promise, event);
       }
       return null;

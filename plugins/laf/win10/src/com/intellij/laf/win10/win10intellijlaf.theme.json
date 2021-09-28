@@ -28,13 +28,13 @@
       "pressedBorderColor": "#cfcfcf"
     },
 
-    "AssignedMnemonic": {
+    "BookmarkMnemonicAssigned": {
       "background": "#F7C777",
       "borderColor": "#F7C777",
       "foreground": "#000000"
     },
 
-    "AvailableMnemonic": {
+    "BookmarkMnemonicAvailable": {
       "background": "#FFFFFF",
       "borderColor": "#C4C4C4",
       "foreground": "#000000"
@@ -90,7 +90,7 @@
       "warningFocusColor": "#e2a53a"
     },
 
-    "CurrentMnemonic": {
+    "BookmarkMnemonicCurrent": {
       "background": "#389FD6",
       "borderColor": "#389FD6",
       "foreground": "#FFFFFF"
@@ -220,9 +220,9 @@
 
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-      "borderInsets": "8,1,8,1",
-      "borderCornerRadiusX": 14,
-      "borderCornerRadiusY": 12,
+      "borderInsets": "6,1,6,1",
+      "borderCornerRadiusX": 16,
+      "borderCornerRadiusY": 16,
       "leftBorderWith": 10,
       "rightBorderWith": 0,
       "translucentBackground": "#f2f2f2",
@@ -233,7 +233,7 @@
       "height": 9,
       "stripeWidth": 1,
       "stripeIndent": 4,
-      "withToEdge": 12,
+      "withToEdge": 10,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
     },
 

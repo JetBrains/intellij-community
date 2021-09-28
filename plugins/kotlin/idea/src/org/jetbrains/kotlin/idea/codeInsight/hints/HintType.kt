@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -124,7 +125,7 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
         KotlinBundle.message("hints.settings.suspending"),
         false
     ) {
-        override fun isApplicable(elem: PsiElement) = elem.isNameReferenceInCall() && ApplicationManager.getApplication().isInternal
+        override fun isApplicable(elem: PsiElement) = elem.isNameReferenceInCall() && isApplicationInternalMode()
 
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val callExpression = elem.parent as? KtCallExpression ?: return emptyList()
@@ -138,7 +139,7 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
     ) {
         override fun isApplicable(elem: PsiElement): Boolean = elem is KtBinaryExpression && elem.isRangeExpression()
 
-        override fun provideHints(elem: PsiElement): List<InlayInfo> {
+        override fun provideHintDetails(elem: PsiElement): List<InlayInfoDetails> {
             val binaryExpression = elem.safeAs<KtBinaryExpression>() ?: return emptyList()
             val leftExp = binaryExpression.left ?: return emptyList()
             val rightExp = binaryExpression.right ?: return emptyList()
@@ -146,20 +147,21 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
             val resolvedCall = binaryExpression.operationReference.resolveToCall()
             val operation = resolvedCall?.candidateDescriptor?.fqNameSafe?.asString() ?: return emptyList()
             val (leftText, rightText) = when (operation) {
-                "kotlin.Int.rangeTo" -> {
-                    KotlinBundle.message("hints.ranges.rangeTo.left") to KotlinBundle.message("hints.ranges.rangeTo.right")
-                }
                 "kotlin.ranges.downTo" -> {
                     KotlinBundle.message("hints.ranges.downTo.left") to KotlinBundle.message("hints.ranges.downTo.right")
                 }
                 "kotlin.ranges.until" -> {
                     KotlinBundle.message("hints.ranges.until.left") to KotlinBundle.message("hints.ranges.until.right")
                 }
-                else -> return emptyList()
+                else -> {
+                    if (operation in rangeToTypes) KotlinBundle.message("hints.ranges.rangeTo.left") to KotlinBundle.message("hints.ranges.rangeTo.right") else return emptyList()
+                }
             }
+            val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset)
+            val rightInfo = InlayInfo(text = rightText, offset = rightExp.startOffset)
             return listOf(
-                InlayInfo(text = leftText, offset = leftExp.endOffset),
-                InlayInfo(text = rightText, offset = rightExp.startOffset)
+                InlayInfoDetails(leftInfo, listOf(TextInlayInfoDetail(leftText, smallText = false))),
+                InlayInfoDetails(rightInfo, listOf(TextInlayInfoDetail(rightText, smallText = false)))
             )
         }
     };
@@ -187,6 +189,16 @@ data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInf
 
 sealed class InlayInfoDetail(val text: String)
 
-class TextInlayInfoDetail(text: String): InlayInfoDetail(text)
+class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text)
 class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text)
 class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text)
+
+private val rangeToTypes = setOf(
+    "kotlin.Byte.rangeTo",
+    "kotlin.Short.rangeTo",
+    "kotlin.Char.rangeTo",
+    "kotlin.Int.rangeTo",
+    "kotlin.Long.rangeTo",
+    "kotlin.UInt.rangeTo",
+    "kotlin.ULong.rangeTo"
+)

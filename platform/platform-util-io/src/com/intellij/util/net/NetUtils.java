@@ -148,6 +148,18 @@ public final class NetUtils {
   }
 
   /**
+   * @deprecated use {@link #copyStreamContent(ProgressIndicator, InputStream, OutputStream, long)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  public static int copyStreamContent(@Nullable ProgressIndicator indicator,
+                                      @NotNull InputStream inputStream,
+                                      @NotNull OutputStream outputStream,
+                                      int expectedContentLength) throws IOException, ProcessCanceledException {
+    return (int)copyStreamContent(indicator, inputStream, outputStream, (long)expectedContentLength);
+  }
+
+  /**
    * @param indicator             progress indicator
    * @param inputStream           source stream
    * @param outputStream          destination stream
@@ -158,10 +170,10 @@ public final class NetUtils {
    * @throws IOException              if IO error occur
    * @throws ProcessCanceledException if process was canceled.
    */
-  public static int copyStreamContent(@Nullable ProgressIndicator indicator,
-                                      @NotNull InputStream inputStream,
-                                      @NotNull OutputStream outputStream,
-                                      int expectedContentLength) throws IOException, ProcessCanceledException {
+  public static long copyStreamContent(@Nullable ProgressIndicator indicator,
+                                       @NotNull InputStream inputStream,
+                                       @NotNull OutputStream outputStream,
+                                       long expectedContentLength) throws IOException, ProcessCanceledException {
     if (indicator != null) {
       indicator.checkCanceled();
       indicator.setIndeterminate(expectedContentLength <= 0);
@@ -169,7 +181,7 @@ public final class NetUtils {
     CountingGZIPInputStream gzipStream = inputStream instanceof CountingGZIPInputStream ? (CountingGZIPInputStream)inputStream : null;
     byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     int count;
-    int bytesWritten = 0;
+    long bytesWritten = 0;
     long bytesRead = 0;
     while ((count = inputStream.read(buffer)) > 0) {
       outputStream.write(buffer, 0, count);

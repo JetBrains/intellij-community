@@ -18,17 +18,14 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
 public class MissingSwitchBodyFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (!(psiElement instanceof PsiSwitchStatement)) return;
-    PsiSwitchStatement switchStatement = (PsiSwitchStatement) psiElement;
+    if (!(psiElement instanceof PsiSwitchBlock)) return;
+    PsiSwitchBlock switchStatement = (PsiSwitchBlock) psiElement;
 
     final Document doc = editor.getDocument();
 

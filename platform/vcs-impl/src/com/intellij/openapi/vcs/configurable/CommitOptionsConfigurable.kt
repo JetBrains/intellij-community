@@ -62,7 +62,6 @@ class CommitOptionsConfigurable(val project: Project) : JBPanel<CommitOptionsCon
     override fun setCommitMessage(currentDescription: String) {}
     override fun getCommitMessage() = ""
 
-    override fun refresh() {}
     override fun saveState() {}
     override fun restoreState() {}
   }

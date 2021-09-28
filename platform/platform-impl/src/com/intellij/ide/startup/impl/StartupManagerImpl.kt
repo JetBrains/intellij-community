@@ -143,7 +143,12 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   override fun startupActivityPassed() = isStartupActivitiesPassed
 
-  override fun postStartupActivityPassed() = postStartupActivitiesPassed == ALL_PASSED
+  override fun postStartupActivityPassed() =
+    when (postStartupActivitiesPassed) {
+      ALL_PASSED -> true
+      -1 -> throw RuntimeException("Aborted; check the log for a reason")
+      else -> false
+    }
 
   override fun getAllActivitiesPassedFuture() = allActivitiesPassed
 
@@ -198,7 +203,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   private fun executeActivityFromExtensionPoint(
     descriptor: PluginDescriptor,
     extensionPointName: String,
-    supplier: Supplier<StartupActivity?>,
+    supplier: Supplier<out StartupActivity?>,
     indicator: ProgressIndicator?,
   ) {
     if (project.isDisposed) {
@@ -222,51 +227,57 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   // Must be executed in a pooled thread outside of project loading modal task. The only exclusion - test mode.
   private fun runPostStartupActivities() {
-    LOG.assertTrue(isStartupActivitiesPassed)
-    val snapshot = PerformanceWatcher.takeSnapshot()
-    // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
-    // (depending on dumb-awareness), but because there is no other concurrent phase,ur
-    // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
-    val dumbAwareActivity = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES)
-    val edtActivity = AtomicReference<Activity?>()
-    val uiFreezeWarned = AtomicBoolean()
-    val counter = AtomicInteger()
-    val dumbService = DumbService.getInstance(project)
-    StartupActivity.POST_STARTUP_ACTIVITY.processWithPluginDescriptor { extension: StartupActivity, pluginDescriptor: PluginDescriptor ->
+    try {
+      LOG.assertTrue(isStartupActivitiesPassed)
+      val snapshot = PerformanceWatcher.takeSnapshot()
+      // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
+      // (depending on dumb-awareness), but because there is no other concurrent phase, we measure it as a sequential activity
+      // to put it on the timeline and make clear what's going at the end (avoiding the last "unknown" phase)
+      val dumbAwareActivity = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES)
+      val edtActivity = AtomicReference<Activity?>()
+      val uiFreezeWarned = AtomicBoolean()
+      val counter = AtomicInteger()
+      val dumbService = DumbService.getInstance(project)
+      StartupActivity.POST_STARTUP_ACTIVITY.processWithPluginDescriptor { extension: StartupActivity, pluginDescriptor: PluginDescriptor ->
+        if (project.isDisposed) {
+          return@processWithPluginDescriptor
+        }
+        if (DumbService.isDumbAware(extension)) {
+          dumbService.runWithWaitForSmartModeDisabled {
+            runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
+          }
+          return@processWithPluginDescriptor
+        }
+        if (edtActivity.get() == null) {
+          edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
+        }
+        counter.incrementAndGet()
+        dumbService.unsafeRunWhenSmart {
+          val duration = runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
+          if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
+            reportUiFreeze(uiFreezeWarned)
+          }
+
+          dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
+        }
+      }
+      dumbUnawarePostActivitiesPassed(edtActivity, counter.get())
+
       if (project.isDisposed) {
-        return@processWithPluginDescriptor
+        return
       }
-      if (DumbService.isDumbAware(extension)) {
-        dumbService.runWithWaitForSmartModeDisabled {
-          runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
-        }
-        return@processWithPluginDescriptor
-      }
-      if (edtActivity.get() == null) {
-        edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
-      }
-      counter.incrementAndGet()
-      dumbService.unsafeRunWhenSmart {
-        val duration = runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
-        if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
-          reportUiFreeze(uiFreezeWarned)
-        }
 
-        dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
+      runPostStartupActivitiesRegisteredDynamically()
+      dumbAwareActivity.end()
+      snapshot.logResponsivenessSinceCreation("Post-startup activities under progress")
+      if (!project.isDisposed && !ApplicationManager.getApplication().isUnitTestMode) {
+        scheduleBackgroundPostStartupActivities()
+        addActivityEpListener(project)
       }
     }
-    dumbUnawarePostActivitiesPassed(edtActivity, counter.get())
-
-    if (project.isDisposed) {
-      return
-    }
-
-    runPostStartupActivitiesRegisteredDynamically()
-    dumbAwareActivity.end()
-    snapshot.logResponsivenessSinceCreation("Post-startup activities under progress")
-    if (!project.isDisposed && !ApplicationManager.getApplication().isUnitTestMode) {
-      scheduleBackgroundPostStartupActivities()
-      addActivityEpListener(project)
+    catch (t: Throwable) {
+      if (ApplicationManager.getApplication().isUnitTestMode) postStartupActivitiesPassed = -1
+      else throw t
     }
   }
 

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -30,10 +29,6 @@ class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackage
     override fun isApplicableTo(element: KtPackageDirective) = element.packageNameExpression != null
 
     override fun applyTo(element: KtPackageDirective, editor: Editor?) {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-            throw UnsupportedOperationException("Do not call applyTo() in the test mode")
-        }
-
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
 
         val file = element.containingKtFile

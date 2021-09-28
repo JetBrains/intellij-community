@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
 import java.io.Closeable
-import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
@@ -109,49 +108,7 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
       writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, input)
       input.position(0)
       assert(input.remaining() == (size + headerSize))
-      resultStream.writeRawEntry(input, name, size, size, ZipEntry.STORED, crc)
-    }
-  }
-
-  fun writeEntry(nameString: String, method: Int, size: Int, stream: InputStream) {
-    assert(size >= 0)
-
-    val name = nameString.toByteArray()
-    val headerSize = 30 + name.size
-
-    if (size == 0) {
-      writeEmptyFile(name, headerSize)
-      return
-    }
-
-    val input = stream.use { it.readNBytes(size) }
-
-    crc32.reset()
-    crc32.update(input)
-    val crc = crc32.value
-
-    if (method == ZipEntry.DEFLATED && size >= 512) {
-      val output = bufferAllocator.allocate(headerSize + size + (size / 2))
-      output.position(headerSize)
-
-      deflater!!.setInput(input)
-      deflater.finish()
-      do {
-        val n = deflater.deflate(output, Deflater.NO_FLUSH)
-        assert(n != 0)
-      }
-      while (!deflater.finished())
-      deflater.reset()
-
-      writeCompressedData(name, size, crc, headerSize, output)
-    }
-    else {
-      val output = bufferAllocator.allocate(headerSize + size)
-      writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, output)
-      output.put(input)
-      output.flip()
-      assert(output.remaining() == (size + headerSize))
-      resultStream.writeRawEntry(output, name, size, size, ZipEntry.STORED, crc)
+      resultStream.writeRawEntry(input, name, size, size, ZipEntry.STORED, crc, headerSize)
     }
   }
 
@@ -196,7 +153,7 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
     writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, output)
     output.position(0)
     assert(output.remaining() == (size + headerSize))
-    resultStream.writeRawEntry(output, name, size, size, ZipEntry.STORED, crc)
+    resultStream.writeRawEntry(output, name, size, size, ZipEntry.STORED, crc, headerSize)
   }
 
   private fun writeCompressedData(name: ByteArray, size: Int, crc: Long, headerSize: Int, output: ByteBuffer) {
@@ -206,7 +163,7 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
     writeLocalFileHeader(name, size, compressedSize, crc, ZipEntry.DEFLATED, output)
     output.position(0)
     assert(output.remaining() == (compressedSize + headerSize))
-    resultStream.writeRawEntry(output, name, size, compressedSize, ZipEntry.DEFLATED, crc)
+    resultStream.writeRawEntry(output, name, size, compressedSize, ZipEntry.DEFLATED, crc, headerSize)
   }
 
   private fun writeEmptyFile(name: ByteArray, headerSize: Int) {
@@ -214,7 +171,7 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
     writeLocalFileHeader(name, size = 0, compressedSize = 0, crc32 = 0, method = ZipEntry.STORED, buffer = input)
     input.position(0)
     input.limit(headerSize)
-    resultStream.writeRawEntry(input, name, 0, 0, ZipEntry.STORED, 0)
+    resultStream.writeRawEntry(input, name, 0, 0, ZipEntry.STORED, 0, headerSize)
   }
 
   fun addDirEntry(name: String) {
@@ -222,8 +179,8 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
     resultStream.addDirEntry(name.toByteArray())
   }
 
-  fun finish(comment: ByteBuffer? = null) {
-    resultStream.finish(comment)
+  fun finish() {
+    resultStream.finish()
   }
 
   override fun close() {

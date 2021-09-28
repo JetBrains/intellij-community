@@ -14,7 +14,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 public class VcsExecutablePathSelector {
   private final JPanel myMainPanel;
@@ -32,12 +30,6 @@ public class VcsExecutablePathSelector {
 
   @Nullable private String mySavedPath;
   @NotNull private String myAutoDetectedPath = "";
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @NotNull Consumer<String> executableTester) {
-    this(vcsName, null, (path) -> executableTester.accept(path));
-  }
 
   public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @Nullable Disposable disposable, @NotNull ExecutableHandler handler) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);

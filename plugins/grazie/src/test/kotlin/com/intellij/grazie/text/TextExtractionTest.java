@@ -96,6 +96,21 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("abc def", extractText("a.java", "class C { String s = \" abc def \"; }", 27).toString());
   }
 
+  public void testJavaTextBlock() {
+    String text = "class C { " +
+                  "  String s = \"\"\"\n" +
+                  "    abc \\\n" +
+                  "    \\\n" +
+                  "    def\n" +
+                  "      ghi\n" +
+                  "    \"\"\"; " +
+                  "}";
+    int offset = text.indexOf("def");
+    TextContent content = extractText("a.java", text, offset);
+    assertEquals("abc def\n  ghi", content.toString());
+    assertEquals(offset, content.textOffsetToFile("abc ".length()));
+  }
+
   public void testNoExtractionInInjectedFragments() {
     InjectedLanguageManager.getInstance(getProject()).registerMultiHostInjector(new MultiHostInjector() {
       @Override
@@ -131,13 +146,24 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertNull(extractText("a.html", "<code>abc</code>", 7));
   }
 
-  public void testBuildingPerformance() {
+  public void testBuildingPerformance_concatenation() {
     String text = "<a/>b".repeat(10_000);
     String expected = "b".repeat(10_000);
     PsiFile file = myFixture.configureByText("a.xml", text);
     TextContentBuilder builder = TextContentBuilder.FromPsi.excluding(e -> e instanceof XmlTag);
-    PlatformTestUtil.startPerformanceTest("TextContent building", 200, () -> {
+    PlatformTestUtil.startPerformanceTest("TextContent building with concatenation", 200, () -> {
       assertEquals(expected, builder.build(file, TextContent.TextDomain.PLAIN_TEXT).toString());
+    }).assertTiming();
+  }
+
+  public void testBuildingPerformance_removingIndents() {
+    String text = "  b\n".repeat(10_000);
+    String expected = "b\n".repeat(10_000).trim();
+    PsiFile file = myFixture.configureByText("a.java", "/*\n" + text + "*/");
+    PsiComment comment = assertInstanceOf(file.findElementAt(10), PsiComment.class);
+    TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" ");
+    PlatformTestUtil.startPerformanceTest("TextContent building with indent removing", 200, () -> {
+      assertEquals(expected, builder.build(comment, TextContent.TextDomain.COMMENTS).toString());
     }).assertTiming();
   }
 

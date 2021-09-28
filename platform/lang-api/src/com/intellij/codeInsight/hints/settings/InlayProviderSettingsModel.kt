@@ -39,6 +39,11 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    */
   abstract fun collectAndApply(editor: Editor, file: PsiFile)
 
+  open fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {
+    // bwc implementation
+    collectAndApply(editor, file)
+  }
+
   open fun createFile(project: Project, fileType: FileType, document:Document): PsiFile {
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)

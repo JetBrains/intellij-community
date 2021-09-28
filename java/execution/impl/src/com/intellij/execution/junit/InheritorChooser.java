@@ -7,7 +7,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +27,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.util.PopupUtilsKt.getBestPopupPosition;
 
@@ -82,7 +83,7 @@ public class InheritorChooser {
         return true;
       }
       if (classes.isEmpty()) return false;
-      final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context.getDataContext());
+      final FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context.getDataContext());
       if (fileEditor instanceof TextEditor) {
         final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
         final PsiFile containingFile = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(document);
@@ -164,6 +165,25 @@ public class InheritorChooser {
         }
       }
       runForClasses(selectedClasses, psiMethod, context, performRunnable);
+    }
+  }
+
+  public static void chooseAbstractClassInheritors(final ConfigurationContext context,
+                                                   final PsiClass psiClass,
+                                                   final Consumer<List<PsiClass>> onClassesChosen) {
+    InheritorChooser inheritorChooser = new InheritorChooser() {
+      @Override
+      protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
+        onClassesChosen.accept(classes);
+      }
+
+      @Override
+      protected void runForClass(PsiClass aClass, PsiMethod psiMethod, ConfigurationContext context, Runnable performRunnable) {
+        onClassesChosen.accept(List.of(aClass));
+      }
+    };
+    if (!inheritorChooser.runMethodInAbstractClass(context, () -> {}, null, psiClass)) {
+      onClassesChosen.accept(List.of(psiClass));
     }
   }
 }

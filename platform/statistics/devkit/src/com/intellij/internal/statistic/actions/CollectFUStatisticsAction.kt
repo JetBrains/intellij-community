@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.google.common.collect.HashMultiset
@@ -95,10 +95,7 @@ internal class CollectFUStatisticsAction : GotoActionBase() {
         for (metric in metrics) {
           val metricData = FUStateUsagesLogger.mergeWithEventData(null, metric.data)!!.build()
           val event = newLogEvent("test.session", "build", "bucket", System.currentTimeMillis(), collector.groupId,
-                                  collector.version.toString(), "recorder.version", "event.id", true)
-          for (datum in metricData) {
-            event.event.addData(datum.key, datum.value)
-          }
+                                  collector.version.toString(), "recorder.version", "event.id", true, metricData)
           val presentation = LogEventSerializer.toString(event)
           result.append(presentation)
           result.append(",\n")

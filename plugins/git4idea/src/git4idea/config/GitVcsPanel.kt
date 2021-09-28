@@ -321,12 +321,11 @@ internal class GitVcsPanel(private val project: Project) :
       row {
         cell {
           label(message("settings.update.method"))
-          comboBox(
-            CollectionComboBoxModel(getUpdateMethods()),
-            { projectSettings.updateMethod },
-            { projectSettings.updateMethod = it!! },
-            renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
-          )
+          buttonGroup({ projectSettings.updateMethod }, { projectSettings.updateMethod = it }) {
+            getUpdateMethods().forEach { saveSetting ->
+              radioButton(saveSetting.methodName, saveSetting)
+            }
+          }
         }
       }
       row {
@@ -339,8 +338,8 @@ internal class GitVcsPanel(private val project: Project) :
           }
         }
       }
-      row {
-        checkBox(cdAutoUpdateOnPush(project))
+      if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
+        updateProjectInfoFilter()
       }
     }
 
@@ -353,21 +352,10 @@ internal class GitVcsPanel(private val project: Project) :
     }
     branchUpdateInfoRow()
     row {
-      val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
-      row {
-        checkBox(cdHidePushDialogForNonProtectedBranches(project))
-          .enableIf(previewPushOnCommitAndPush.selected)
-      }
-    }
-    row {
       checkBox(cdOverrideCredentialHelper)
     }
     for (configurable in configurables) {
       appendDslConfigurableRow(configurable)
-    }
-
-    if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
-      updateProjectInfoFilter()
     }
   }
 

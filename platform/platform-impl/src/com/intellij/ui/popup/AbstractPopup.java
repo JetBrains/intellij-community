@@ -10,10 +10,7 @@ import com.intellij.ide.ui.PopupLocator;
 import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -496,7 +493,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
-    if (UiInterceptors.tryIntercept(this)) return;
+    if (UiInterceptors.tryIntercept(this, aPoint)) return;
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
@@ -565,7 +562,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       }
     }
     RelativePoint location;
-    Component contextComponent = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component contextComponent = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (contextComponent == myComponent) {
       location = new RelativePoint(myComponent, new Point());
     }
@@ -1033,7 +1030,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       myMoveListener = moveListener;
     }
 
-    myListeners.forEach(listener -> listener.beforeShown(new LightweightWindowEvent(this)));
+    notifyListeners();
 
     myPopup.setRequestFocus(myRequestFocus);
 
@@ -1165,6 +1162,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myState = State.SHOWN;
 
     afterShowSync();
+  }
+
+  public void notifyListeners() {
+    myListeners.forEach(listener -> listener.beforeShown(new LightweightWindowEvent(this)));
   }
 
   private static void fitToVisibleArea(Rectangle targetBounds) {

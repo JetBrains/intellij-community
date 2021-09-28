@@ -810,6 +810,17 @@ public final class PyTypeChecker {
     }
   }
 
+  /**
+   * @deprecated use {@link PyTypeChecker#substitute(PyType, GenericSubstitutions, TypeEvalContext)} instead
+   */
+  @Deprecated
+  @Nullable
+  public static PyType substitute(@Nullable PyType type, @NotNull Map<PyGenericType, PyType> substitutions,
+                                  @NotNull TypeEvalContext context) {
+    final var genericSubstitutions = new GenericSubstitutions(substitutions, new LinkedHashMap<>());
+    return substitute(type, genericSubstitutions, context);
+  }
+
   @Nullable
   public static PyType substitute(@Nullable PyType type,
                                   @NotNull GenericSubstitutions substitutions,
@@ -906,11 +917,24 @@ public final class PyTypeChecker {
     return type;
   }
 
+  /**
+   * @deprecated use {@link PyTypeChecker#unifyGenericCallWithParamSpecs(PyExpression, Map, TypeEvalContext)} instead
+   */
+  @Deprecated
   @Nullable
-  public static GenericSubstitutions unifyGenericCall(@Nullable PyExpression receiver,
-                                         @NotNull Map<PyExpression, PyCallableParameter> arguments,
-                                         @NotNull TypeEvalContext context) {
-    final var substitutions = unifyReceiver(receiver, context);
+  public static Map<PyGenericType, PyType> unifyGenericCall(@Nullable PyExpression receiver,
+                                                            @NotNull Map<PyExpression, PyCallableParameter> arguments,
+                                                            @NotNull TypeEvalContext context) {
+    final var result = unifyGenericCallWithParamSpecs(receiver, arguments, context);
+    if (result == null) return null;
+    return result.typeVars;
+  }
+
+  @Nullable
+  public static GenericSubstitutions unifyGenericCallWithParamSpecs(@Nullable PyExpression receiver,
+                                                                    @NotNull Map<PyExpression, PyCallableParameter> arguments,
+                                                                    @NotNull TypeEvalContext context) {
+    final var substitutions = unifyReceiverWithParamSpecs(receiver, context);
     for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
       final PyCallableParameter paramWrapper = entry.getValue();
       final PyType expectedType = paramWrapper.getArgumentType(context);
@@ -961,7 +985,17 @@ public final class PyTypeChecker {
     return match(container.getArgumentType(context), PyUnionType.union(types), context, substitutions);
   }
 
-  public static GenericSubstitutions unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+  /**
+   * @deprecated use {@link PyTypeChecker#unifyReceiverWithParamSpecs(PyExpression, TypeEvalContext)} instead
+   */
+  @Deprecated
+  @NotNull
+  public static Map<PyGenericType, PyType> unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+    return unifyReceiverWithParamSpecs(receiver, context).typeVars;
+  }
+
+  @NotNull
+  public static GenericSubstitutions unifyReceiverWithParamSpecs(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
     // Collect generic params of object type
     final var substitutions = new GenericSubstitutions();
     final PyType qualifierType = receiver != null ? context.getType(receiver) : null;

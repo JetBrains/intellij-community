@@ -199,7 +199,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       final NavigatableErrorTreeElement selectedMessageElement = getSelectedNavigatableElement();
       return selectedMessageElement != null ? selectedMessageElement.getNavigatable() : null;
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {

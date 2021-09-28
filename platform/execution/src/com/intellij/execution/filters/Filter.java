@@ -152,11 +152,7 @@ public interface Filter {
      */
     @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     public final @Nullable TextAttributes highlightAttributes;
-    /**
-     * @deprecated use {@link #getHyperlinkInfo()} instead, the visibility of this field will be decreased.
-     */
-    @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    public final @Nullable HyperlinkInfo hyperlinkInfo;
+    private final @Nullable HyperlinkInfo hyperlinkInfo;
 
     private final TextAttributes myFollowedHyperlinkAttributes;
 

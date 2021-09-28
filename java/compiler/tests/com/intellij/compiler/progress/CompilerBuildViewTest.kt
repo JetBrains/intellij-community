@@ -79,18 +79,18 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Executing pre-compile tasks...\n" +
                                     "Loading Ant configuration...\n" +
                                     "Running Ant tasks...\n" +
-                                    "Cleaning output directories...\n" +
+                                    "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
-                                    "Copying resources... [a]\n" +
-                                    "Parsing java... [a]\n" +
-                                    "Writing classes... [a]\n" +
-                                    "Updating dependency information... [a]\n" +
-                                    "Adding @NotNull assertions... [a]\n" +
-                                    "Adding pattern assertions... [a]\n" +
+                                    "Copying resources… [a]\n" +
+                                    "Parsing java… [a]\n" +
+                                    "Writing classes… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
+                                    "Adding @NotNull assertions… [a]\n" +
+                                    "Adding pattern assertions… [a]\n" +
                                     "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks\n")
-      assertThat(output).contains("Finished, saving caches...\n" +
+      assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks...\n" +
                                   "Loading Ant configuration...\n" +
                                   "Running Ant tasks...\n" +
@@ -103,18 +103,18 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
       assertThat(output).startsWith("Executing pre-compile tasks...\n" +
                                     "Loading Ant configuration...\n" +
                                     "Running Ant tasks...\n" +
-                                    "Cleaning output directories...\n" +
+                                    "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
-                                    "Copying resources... [a]\n" +
-                                    "Parsing java... [a]\n" +
-                                    "Writing classes... [a]\n" +
-                                    "Updating dependency information... [a]\n" +
-                                    "Adding @NotNull assertions... [a]\n" +
-                                    "Adding pattern assertions... [a]\n" +
+                                    "Copying resources… [a]\n" +
+                                    "Parsing java… [a]\n" +
+                                    "Writing classes… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
+                                    "Adding @NotNull assertions… [a]\n" +
+                                    "Adding pattern assertions… [a]\n" +
                                     "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks")
-      assertThat(output).contains("Finished, saving caches...\n" +
+      assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks...\n" +
                                   "Loading Ant configuration...\n" +
                                   "Running Ant tasks...\n" +

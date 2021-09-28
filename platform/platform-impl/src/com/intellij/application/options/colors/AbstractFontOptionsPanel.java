@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.ui.dsl.builder.impl.UtilsKt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
@@ -81,8 +82,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     enableLigaturesHintLabel.setToolTipText(ApplicationBundle.message("ligatures.tooltip"));
     myOnlyMonospacedCheckBox.setFont(JBUI.Fonts.smallFont());
 
-    setLayout(new FlowLayout(FlowLayout.LEFT));
-    add(createControls());
+    addControls();
 
     myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -212,6 +212,11 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     return enableLigaturesHintLabel;
   }
 
+  protected void addControls() {
+    setLayout(new FlowLayout(FlowLayout.LEFT));
+    add(createControls());
+  }
+
   protected AbstractFontCombo<?> createPrimaryFontCombo() {
     FontComboBox primaryCombo = new FontComboBox();
     //noinspection unchecked
@@ -295,20 +300,16 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
     c.gridx = 0;
     c.gridy ++;
-    fontPanel.add(createReaderModeHyperLink(), c);
+    fontPanel.add(createReaderModeComment(), c);
 
     return fontPanel;
   }
 
   @NotNull
-  private static HyperlinkLabel createReaderModeHyperLink() {
-    HyperlinkLabel hyperlinkLabel = new HyperlinkLabel();
-    hyperlinkLabel.setTextWithHyperlink(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"));
-    hyperlinkLabel.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
-    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, hyperlinkLabel);
-
-    hyperlinkLabel.addHyperlinkListener(e -> goToReaderMode());
-    return hyperlinkLabel;
+  private static JEditorPane createReaderModeComment() {
+    return UtilsKt.createHtmlComment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"),
+                                     e -> goToReaderMode()
+    );
   }
 
   protected static void goToReaderMode() {

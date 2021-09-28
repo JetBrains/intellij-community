@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.*;
 
@@ -74,23 +73,16 @@ public abstract class ChangeListManager implements ChangeListModification {
                                          @Nullable @Nls String title,
                                          @Nullable ModalityState state);
 
-  /**
-   * @deprecated use {@link #invokeAfterUpdate(Runnable, InvokeAfterUpdateMode, String, ModalityState)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                         @NotNull InvokeAfterUpdateMode mode,
-                                         @Nullable @Nls String title,
-                                         @Nullable Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
-                                         @Nullable ModalityState state);
-
 
   public abstract boolean areChangeListsEnabled();
 
   public abstract int getChangeListsNumber();
 
+  /**
+   * @deprecated Use {@link #getChangeLists()} instead.
+   */
   @NotNull
+  @Deprecated
   public List<LocalChangeList> getChangeListsCopy() {
     return getChangeLists();
   }

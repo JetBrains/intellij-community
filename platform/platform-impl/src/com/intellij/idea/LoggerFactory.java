@@ -63,7 +63,8 @@ public final class LoggerFactory implements Logger.Factory {
     text = text.replace(LOG_DIR_MACRO, PathManager.getLogPath().replace("\\", "\\\\"));
 
     // JDOM is used instead of XML DOM because of IDEA-173468 (`DOMConfigurator` really wants `Document`)
-    @SuppressWarnings("deprecation") Document document = JDOMUtil.loadDocument(new StringReader(text));
+    //noinspection deprecation
+    Document document = JDOMUtil.loadDocument(new StringReader(text));
     Element element = new DOMOutputter(new JAXPDOMAdapter() {
       @Override
       public org.w3c.dom.Document createDocument() throws JDOMException {

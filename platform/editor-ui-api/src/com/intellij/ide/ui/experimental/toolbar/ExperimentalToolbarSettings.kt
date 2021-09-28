@@ -41,6 +41,9 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
 
   init {
     if (!newToolbarEnabled) {
+      if(!UISettings.instance.state.showMainToolbar && !UISettings.instance.state.showNavigationBar){
+        UISettings.instance.state.showNavigationBar = true
+      }
       toolbarState.state = getToolbarStateByVisibilityFlags(false, UISettings.instance.state.showMainToolbar, false,
                                                             UISettings.instance.state.showNavigationBar)
     }

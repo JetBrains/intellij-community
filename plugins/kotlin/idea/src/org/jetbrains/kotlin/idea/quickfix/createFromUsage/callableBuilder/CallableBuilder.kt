@@ -44,7 +44,9 @@ import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.DialogWithEditor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -540,7 +542,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                     val targetParent = applicableParents.singleOrNull()
                                     if (!(targetParent is KtClass && targetParent.isEnum())) {
                                         throw KotlinExceptionWithAttachments("Enum class expected: ${targetParent?.let { it::class.java }}")
-                                            .withAttachment("targetParent", targetParent?.text)
+                                            .withPsiAttachment("targetParent", targetParent)
                                     }
                                     val hasParameters = targetParent.primaryConstructorParameters.isNotEmpty()
                                     psiFactory.createEnumEntry("$safeName${if (hasParameters) "()" else " "}")
@@ -575,6 +577,10 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                         } else ""
                         psiFactory.createProperty("$modifiers$const$valVar<> $header$accessors")
                     }
+                }
+
+                if (callableInfo is PropertyInfo) {
+                    callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
                 }
 
                 val newInitializer = pointerOfAssignmentToReplace?.element
@@ -738,7 +744,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     TypeExpression.ForDelegationSpecifier(candidates)
                 }
                 else -> throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
-                    .withAttachment("declaration", declaration.text)
+                    .withPsiAttachment("declaration", declaration)
             }
             if (elementToReplace == null) return null
 
@@ -765,7 +771,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 is KtObjectDeclaration -> return null
                 !is KtTypeParameterListOwner -> {
                     throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
-                        .withAttachment("declaration", declaration.text)
+                        .withPsiAttachment("declaration", declaration)
                 }
             }
 
@@ -988,7 +994,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                         PsiDocumentManager.getInstance(project).commitDocument(containingFileEditor.document)
 
                         dialogWithEditor?.close(DialogWrapper.OK_EXIT_CODE)
-                        if (brokenOff && !ApplicationManager.getApplication().isUnitTestMode) return
+                        if (brokenOff && !isUnitTestMode()) return
 
                         // file templates
                         val newDeclaration = PsiTreeUtil.findElementOfClassAtOffset(
@@ -1048,7 +1054,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         }
 
         fun showDialogIfNeeded() {
-            if (!ApplicationManager.getApplication().isUnitTestMode && dialogWithEditor != null && !finished) {
+            if (!isUnitTestMode() && dialogWithEditor != null && !finished) {
                 dialogWithEditor.show()
             }
         }
@@ -1166,7 +1172,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
             insertMember(null, container, declaration, sibling)
         }
         else -> throw KotlinExceptionWithAttachments("Invalid containing element: ${container::class.java}")
-            .withAttachment("container", container.text)
+            .withPsiAttachment("container", container)
     }
 
     when (declaration) {

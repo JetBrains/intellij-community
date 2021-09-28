@@ -76,7 +76,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     }
 
     Project project = initEvent.getProject();
-    Component contextComponent = initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
 
     Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors = createContributors(initEvent, project, contextComponent);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors.keySet());
@@ -153,6 +153,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       myBalloon.setSize(prefSize);
     }
     calcPositionAndShow(initEvent, project, myBalloon);
+  }
+
+  @Override
+  public @NotNull SearchEverywhereUI getCurrentlyShownUI() {
+    checkIsShown();
+    return mySearchEverywhereUI;
   }
 
   private WindowStateService getStateService() {

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+@Deprecated
 public abstract class BreakpointPanelProvider<B> {
 
   /**

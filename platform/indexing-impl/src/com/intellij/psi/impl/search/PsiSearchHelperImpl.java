@@ -190,20 +190,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return AsyncUtil.wrapBoolean(result);
   }
 
-  /**
-   * @deprecated use {@link PsiSearchHelperImpl#processElementsWithWord(SearchScope, String, short, EnumSet, String, SearchSession, TextOccurenceProcessor)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
-                                         @NotNull SearchScope searchScope,
-                                         @NotNull String text,
-                                         short searchContext,
-                                         @NotNull EnumSet<Options> options,
-                                         @Nullable String containerName) {
-    return processElementsWithWord(searchScope, text, searchContext, options, containerName, new SearchSession(), processor);
-  }
-
   public boolean processElementsWithWord(@NotNull SearchScope searchScope,
                                          @NotNull String text,
                                          short searchContext,
@@ -347,7 +333,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     List<VirtualFile> targets = ReadAction.compute(() -> ContainerUtil.filter(session.getTargetVirtualFiles(), scope::contains));
     List<@NotNull VirtualFile> directories;
-    if (!targets.isEmpty()) {
+    if (targets.isEmpty()) {
+      directories = Collections.emptyList();
+    }
+    else {
       priorities.add(targets);
       allFiles.removeAll(targets);
 
@@ -367,9 +356,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         priorities.add(directoryNearTargetFiles);
         allFiles.removeAll(directoryNearTargetFiles);
       }
-    }
-    else {
-      directories = Collections.emptyList();
     }
     if (containerName != null) {
       Set<VirtualFile> intersectionWithContainerFiles = new HashSet<>();
@@ -986,7 +972,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
                                                        @NotNull Map<VirtualFile, Collection<T>> containerNameFiles,
                                                        @NotNull Map<VirtualFile, Collection<T>> restFiles) {
-    int totalSize = 0;
     for (Map.Entry<TextIndexQuery, Collection<T>> entry : singles.entrySet()) {
       ProgressManager.checkCanceled();
       TextIndexQuery key = entry.getKey();
@@ -1040,9 +1025,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
         });
       }
-      totalSize += allFilesForKeys.size();
     }
-    return totalSize;
+    return targetFiles.size() + nearDirectoryFiles.size() + containerNameFiles.size() + restFiles.size();
   }
 
   @Nullable("null means we did not find common container files")

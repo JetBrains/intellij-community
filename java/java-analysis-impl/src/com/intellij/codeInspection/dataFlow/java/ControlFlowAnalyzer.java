@@ -39,6 +39,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -224,7 +225,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         DfaVariableValue staticValue =
           ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, arrayStore), DfaVariableValue.class);
         addInstruction(new ArrayAccessInstruction(
-          transfer, new JavaExpressionAnchor(arrayStore), new ArrayIndexProblem(arrayStore), staticValue));
+          new JavaExpressionAnchor(arrayStore), new ArrayIndexProblem(arrayStore), transfer, staticValue));
       } else {
         addInstruction(new DupInstruction());
       }
@@ -239,7 +240,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (arrayStore != null) {
       DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-      addInstruction(new ArrayStoreInstruction(arrayStore, rExpr, transfer));
+      var staticVariable = ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, arrayStore), DfaVariableValue.class);
+      addInstruction(new JavaArrayStoreInstruction(arrayStore, rExpr, transfer, staticVariable));
     } else {
       addInstruction(new AssignInstruction(rExpr, JavaDfaValueFactory.getExpressionDfaValue(myFactory, lExpr)));
     }
@@ -1254,7 +1256,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
     DfaVariableValue staticValue =
       ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression), DfaVariableValue.class);
-    addInstruction(new ArrayAccessInstruction(transfer, new JavaExpressionAnchor(expression), new ArrayIndexProblem(expression),
+    addInstruction(new ArrayAccessInstruction(new JavaExpressionAnchor(expression), new ArrayIndexProblem(expression), transfer,
                                               staticValue));
     addNullCheck(expression);
     finishElement(expression);
@@ -1740,6 +1742,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         generateBoxingUnboxingInstructionFor(paramExpr, result.getSubstitutor().substitute(parameters[i].getType()));
       }
     }
+    foldVarArgs(call, parameters);
 
     addBareCall(call, methodExpression);
     finishElement(call);
@@ -1854,7 +1857,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       addConditionalErrorThrow();
       DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
-      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
+      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
+                                                 JavaMethodContractUtil.getMethodCallContracts(constructor, null);
       contracts = DfaUtil.addRangeContracts(constructor, contracts);
       addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
       processFailResult(contracts, expression);
@@ -1903,19 +1907,31 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpressionList args = call.getArgumentList();
     PsiMethod ctr = call.resolveConstructor();
     if (args != null) {
-      PsiExpression[] params = args.getExpressions();
-      if (params.length > 0) {
-        PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
-        for (int i = 0; i < params.length; i++) {
-          PsiExpression param = params[i];
-          param.accept(this);
-          if (parameters != null && i < parameters.length) {
-            generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
-          }
+      PsiExpression[] arguments = args.getExpressions();
+      PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
+      for (int i = 0; i < arguments.length; i++) {
+        PsiExpression argument = arguments[i];
+        argument.accept(this);
+        if (parameters != null && i < parameters.length) {
+          generateBoxingUnboxingInstructionFor(argument, parameters[i].getType());
         }
       }
+      foldVarArgs(call, parameters);
     }
     return ctr;
+  }
+
+  private void foldVarArgs(PsiCall call, PsiParameter[] parameters) {
+    if (!MethodCallUtils.isVarArgCall(call)) return;
+    PsiExpressionList args = call.getArgumentList();
+    if (args == null) return;
+    PsiParameter lastParameter = ArrayUtil.getLastElement(parameters);
+    if (lastParameter != null && lastParameter.isVarArgs()) {
+      int arraySize = args.getExpressionCount() - parameters.length + 1;
+      if (arraySize >= 0) {
+        addInstruction(new FoldArrayInstruction(null, DfTypes.typedObject(lastParameter.getType(), Nullability.NOT_NULL), arraySize));
+      }
+    }
   }
 
   @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
@@ -2272,7 +2288,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     new OptionalChainInliner(), new LambdaInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
-    new TransformInliner()
+    new TransformInliner(), new EnumCompareInliner()
   };
 }
 

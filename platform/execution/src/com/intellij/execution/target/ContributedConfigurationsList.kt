@@ -104,7 +104,7 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
   }
 
   companion object {
-    private fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
+    fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
   }
 
   /**

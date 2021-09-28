@@ -441,6 +441,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.actions.JavaDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor$FixerUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.introduceVariable.IntroduceVariableUsagesCollector" version="3"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.introduceParameter.IntroduceParameterUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInspection.deadCode.EntryPointsUsageCollector"/>
@@ -769,7 +770,7 @@
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
     <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
     <registryKey key="java.refactoring.extractMethod.newDuplicatesExtractor"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enable experimental extract duplicates implementation"/>
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
@@ -1196,6 +1197,9 @@
     <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
     <flipCommaIntention.flipper language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaFlipper"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinArgumentsContext"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinParametersContext"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinRecordComponentsContext"/>
     <moveLeftRightHandler language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.JavaMoveLeftRightHandler"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration" order="before xml"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement" order="before declaration"/>
@@ -2151,36 +2155,6 @@
       <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.collections</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopParametersAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopArgumentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinParametersAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinArgumentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopRecordComponentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinRecordComponentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction</className>

@@ -863,7 +863,7 @@ class RootIndex {
     @Nullable
     private Pair<VirtualFile, List<Condition<? super VirtualFile>>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy,
                                                                                         boolean source) {
-      Set</*Library|SyntheticLibrary*/ Object> librariesToIgnore = new HashSet<>();
+      Set</*Library|SyntheticLibrary*/ Object> librariesToIgnore = createLibrarySet();
       for (VirtualFile root : hierarchy) {
         librariesToIgnore.addAll(excludedFromLibraries.get(root));
         if (source && libraryOrSdkSources.contains(root)) {
@@ -876,6 +876,22 @@ class RootIndex {
         }
       }
       return null;
+    }
+
+    @NotNull
+    private static Set</*Library|SyntheticLibrary*/ Object> createLibrarySet() {
+      return CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
+        @Override
+        public int hashCode(Object object) {
+          // reduce complexity of hashCode calculation to speed it up
+          return Objects.hashCode(object instanceof Library ? ((Library)object).getName() : object);
+        }
+
+        @Override
+        public boolean equals(Object o1, Object o2) {
+          return Objects.equals(o1, o2);
+        }
+      });
     }
 
     private static List<Condition<? super VirtualFile>> findInLibraryProducers(@NotNull VirtualFile root,

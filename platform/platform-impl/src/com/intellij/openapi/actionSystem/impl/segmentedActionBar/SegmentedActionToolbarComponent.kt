@@ -146,20 +146,22 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    SegmentedBarPainter.paintActionBarBackground(this, g)
+    paintActiveBorder(g)
   }
 
-  override fun paintBorder(g: Graphics) {
+  private fun paintActiveBorder(g: Graphics) {
     if(isActive || paintBorderForSingleItem) {
       SegmentedBarPainter.paintActionBarBorder(this, g)
     }
+  }
+
+  override fun paintBorder(g: Graphics) {
+    paintActiveBorder(g)
   }
 
   override fun paint(g: Graphics) {
     super.paint(g)
-    if(isActive || paintBorderForSingleItem) {
-      SegmentedBarPainter.paintActionBarBorder(this, g)
-    }
+    paintActiveBorder(g)
   }
 
   private fun addMetadata(component: JComponent, index: Int, count: Int) {

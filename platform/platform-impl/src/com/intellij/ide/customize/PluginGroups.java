@@ -331,16 +331,6 @@ public class PluginGroups {
     private final @Nls String myDescription;
     private final List<String> myPluginIdDescription;
 
-    /**
-     * @deprecated Deprecated due to internationalization of name field
-     */
-    @SuppressWarnings("HardCodedStringLiteral")
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    public Group(@NonNls @NotNull String name, @Nullable Icon icon, @Nullable String description, @NonNls @NotNull List<String> pluginIdDescription) {
-      this(name, name, icon, description, pluginIdDescription);
-
-    }
     public Group(@NonNls @NotNull String id,
                  @Nls @NotNull String name,
                  @Nullable Icon icon,

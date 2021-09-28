@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
@@ -55,7 +56,7 @@ internal class ParameterNameExpression(
             is KtFunction -> declaration.valueParameterList!!
             is KtClass -> declaration.getPrimaryConstructorParameterList()!!
             else -> throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
-                .withAttachment("declaration", declaration.text)
+                .withPsiAttachment("declaration", declaration)
         }
 
         // add names based on selected type

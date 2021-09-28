@@ -6,6 +6,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,7 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
       presentation.setVisible(providerState.isVisible);
       return;
     }
-    Presentation updatedPresentation = Utils.getOrCreateUpdateSession(event).presentation(new AnAction() {
+    Presentation updatedPresentation = Utils.getOrCreateUpdateSession(event).presentation(new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
 

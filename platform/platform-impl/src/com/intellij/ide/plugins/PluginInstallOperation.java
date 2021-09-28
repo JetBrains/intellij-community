@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
@@ -434,16 +435,10 @@ public final class PluginInstallOperation {
 
     int size = pluginNames.size();
     if (size == 1) {
-      return pluginNames.get(0) + " plugin";
+      return pluginNames.get(0);
     }
-    StringBuilder builder = new StringBuilder();
-    StringUtil.join(pluginNames.subList(0, size - 1),
-                    ", ",
-                    builder);
-    return builder.append(" and ")
-      .append(pluginNames.get(size - 1))
-      .append(" plugins")
-      .toString();
+
+    return NlsMessages.formatAndList(pluginNames);
   }
 
   /**

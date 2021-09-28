@@ -222,22 +222,7 @@ public interface CodeStyleSettingsCustomizable {
   @Deprecated
   @Nls String SPACES_BEFORE_LEFT_BRACE = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_BEFORE_LEFT_BRACE;
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String SPACES_BEFORE_KEYWORD = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_BEFORE_KEYWORD;
-  @Deprecated
   @Nls String SPACES_WITHIN = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_WITHIN;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String SPACES_IN_TERNARY_OPERATOR = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TERNARY_OPERATOR;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String SPACES_WITHIN_TYPE_ARGUMENTS = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_WITHIN_TYPE_ARGUMENTS;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String SPACES_IN_TYPE_ARGUMENTS = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_ARGUMENTS;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String SPACES_IN_TYPE_PARAMETERS = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_PARAMETERS;
   @Deprecated
   @Nls String SPACES_OTHER = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_OTHER;
 
@@ -256,68 +241,13 @@ public interface CodeStyleSettingsCustomizable {
   @Nls String WRAPPING_COMMENTS = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_COMMENTS;
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_METHOD_PARAMETERS = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_PARAMETERS;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_METHOD_PARENTHESES = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_PARENTHESES;
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_METHOD_ARGUMENTS_WRAPPING = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_ARGUMENTS_WRAPPING;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nls String WRAPPING_CALL_CHAIN = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_CALL_CHAIN;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_IF_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_IF_STATEMENT;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_FOR_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_FOR_STATEMENT;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_WHILE_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_WHILE_STATEMENT;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_DOWHILE_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_DOWHILE_STATEMENT;
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_SWITCH_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_SWITCH_STATEMENT;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_TRY_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_TRY_STATEMENT;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_TRY_RESOURCE_LIST = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_TRY_RESOURCE_LIST;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_BINARY_OPERATION = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_BINARY_OPERATION;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_EXTENDS_LIST = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_EXTENDS_LIST;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_EXTENDS_KEYWORD = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_EXTENDS_KEYWORD;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_THROWS_LIST = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_THROWS_LIST;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_THROWS_KEYWORD = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_THROWS_KEYWORD;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_TERNARY_OPERATION = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_TERNARY_OPERATION;
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nls String WRAPPING_ASSIGNMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_ASSIGNMENT;
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_FIELDS_VARIABLES_GROUPS = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_FIELDS_VARIABLES_GROUPS;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nls String WRAPPING_ARRAY_INITIALIZER = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_ARRAY_INITIALIZER;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_MODIFIER_LIST = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_MODIFIER_LIST;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_ASSERT_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_ASSERT_STATEMENT;
 
   /**
    * @deprecated use {@link CodeStyleSettingsCustomizableOptions#WRAP_OPTIONS} instead
@@ -367,13 +297,6 @@ public interface CodeStyleSettingsCustomizable {
     CommonCodeStyleSettings.NEXT_LINE_SHIFTED,
     CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
   };
-
-  /**
-   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#WRAP_ON_TYPING_OPTIONS} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String[] WRAP_ON_TYPING_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().WRAP_ON_TYPING_OPTIONS;
 
   int[] WRAP_ON_TYPING_VALUES = {
     CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue,

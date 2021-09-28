@@ -15,11 +15,12 @@
  */
 package com.intellij.testFramework.codeInsight.hierarchy;
 
-import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import groovy.lang.GroovyObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,7 @@ import java.io.IOException;
 /**
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
  */
-public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
+public abstract class HierarchyViewTestBase extends DaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -55,5 +56,7 @@ public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
       relFilePaths[i] = "/" + getBasePath() + "/" + fileNames[i];
     }
     configureByFiles(null, relFilePaths);
+    ExpectedHighlightingData expectedHighlightingData = new ExpectedHighlightingData(myEditor.getDocument(), false, false, false);
+    checkHighlighting(expectedHighlightingData); // ensure there are no syntax errors because they can interfere with hierarchy calculation correctness
   }
 }

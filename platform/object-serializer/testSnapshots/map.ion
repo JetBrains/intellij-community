@@ -4,5 +4,7 @@
     foo:bar
   },
   beanMap:[
-  ]
+  ],
+  emptyMap:{
+  }
 }

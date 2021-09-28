@@ -227,10 +227,14 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             Conversion("kotlin.collections.listOf", "kotlin.collections.filterNotNull", "listOfNotNull")
         ).map {
             when (val replacement = it.replacement) {
-                "min", "max", "minBy", "maxBy" -> listOf(
-                    it.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4),
-                    it
-                )
+                "min", "max", "minBy", "maxBy" -> {
+                    val additionalConversion = if ((replacement == "min" || replacement == "max") && it.addNotNullAssertion) {
+                        it.copy(replacement = "${replacement}Of", replaceableApiVersion = ApiVersion.KOTLIN_1_4, addNotNullAssertion = false, additionalArgument = "{ it }")
+                    } else {
+                        it.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4)
+                    }
+                    listOf(additionalConversion, it)
+                }
                 else -> listOf(it)
             }
         }.flatten()

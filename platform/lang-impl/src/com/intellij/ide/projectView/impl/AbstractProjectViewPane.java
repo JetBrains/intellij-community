@@ -502,7 +502,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       PsiElement[] elements = getPsiElements(selectedUserObjects);
       return elements.length > 0 ? elements : null;
     }
-    if (PlatformDataKeys.PROJECT_CONTEXT.is(dataId)) {
+    if (PlatformCoreDataKeys.PROJECT_CONTEXT.is(dataId)) {
       Object selected = getSingleNodeElement(selectedUserObjects);
       return selected instanceof Project ? selected : null;
     }
@@ -657,13 +657,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @Nullable
   public Object getValueFromNode(@Nullable Object node) {
     return extractValueFromNode(node);
-  }
-
-  /** @deprecated use {@link AbstractProjectViewPane#getValueFromNode(Object)} **/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected Object exhumeElementFromNode(DefaultMutableTreeNode node) {
-    return getValueFromNode(node);
   }
 
   @Nullable

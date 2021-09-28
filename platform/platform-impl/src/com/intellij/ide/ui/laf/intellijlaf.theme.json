@@ -73,13 +73,13 @@
       }
     },
 
-    "AssignedMnemonic": {
+    "BookmarkMnemonicAssigned": {
       "background": "#F7C777",
       "borderColor": "#F7C777",
       "foreground": "#000000"
     },
 
-    "AvailableMnemonic": {
+    "BookmarkMnemonicAvailable": {
       "background": "#FFFFFF",
       "borderColor": "#C4C4C4",
       "foreground": "#000000"
@@ -182,7 +182,7 @@
       "foreground": "#FFFFFF"
     },
 
-    "CurrentMnemonic": {
+    "BookmarkMnemonicCurrent": {
       "background": "#389FD6",
       "borderColor": "#389FD6",
       "foreground": "#FFFFFF"
@@ -463,7 +463,7 @@
       "SearchField.background": "#FFFFFF",
       "SearchField.borderColor": "#C5C5C5",
 
-      "SectionHeader.background": "#C5C5C5",
+      "SectionHeader.background": "#F7F7F7",
       "SectionHeader.foreground": "#787878"
 
     },
@@ -493,9 +493,9 @@
 
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-      "borderInsets": "8,1,8,1",
-      "borderCornerRadiusX": 14,
-      "borderCornerRadiusY": 12,
+      "borderInsets": "6,1,6,1",
+      "borderCornerRadiusX": 16,
+      "borderCornerRadiusY": 16,
       "leftBorderWith": 10,
       "rightBorderWith": 0,
       "translucentBackground": "#f2f2f2",
@@ -506,7 +506,7 @@
       "height": 9,
       "stripeWidth": 1,
       "stripeIndent": 4,
-      "withToEdge": 12,
+      "withToEdge": 10,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
     },
 
@@ -873,6 +873,8 @@
       "Projects.actions.background": "#DCEDFE",
       "separatorColor": "#d1d1d1",
       "SidePanel.background": "#f2f2f2"
-    }
+    },
+
+    "textInactiveText" : "#808080"
   }
 }

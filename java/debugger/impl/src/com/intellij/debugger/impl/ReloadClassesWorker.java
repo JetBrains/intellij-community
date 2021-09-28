@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -183,13 +183,14 @@ class ReloadClassesWorker {
       }
     }
 
+    breakpointManager.reloadBreakpoints();
+
     final Semaphore waitSemaphore = new Semaphore();
     waitSemaphore.down();
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       try {
         if (!project.isDisposed()) {
-          breakpointManager.reloadBreakpoints();
           debugProcess.getRequestsManager().clearWarnings();
           if (LOG.isDebugEnabled()) {
             LOG.debug("requests updated");

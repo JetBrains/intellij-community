@@ -4,7 +4,9 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ModalityState;
@@ -95,7 +97,7 @@ public class NavBarModel {
 
   public void updateModelAsync(@NotNull DataContext dataContext, @Nullable Runnable callback) {
     if (LaterInvocator.isInModalContext() ||
-        PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
+        PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
       return;
     }
 
@@ -119,7 +121,7 @@ public class NavBarModel {
       CommonDataKeys.PSI_FILE,
       CommonDataKeys.PROJECT,
       CommonDataKeys.VIRTUAL_FILE,
-      LangDataKeys.MODULE,
+      PlatformCoreDataKeys.MODULE,
       CommonDataKeys.EDITOR,
       PlatformCoreDataKeys.SELECTED_ITEMS).build();
   }
@@ -181,7 +183,7 @@ public class NavBarModel {
 
   private Object calculateRoot(DataContext dataContext) {
     // Narrow down the root element to the first interesting one
-    Module root = LangDataKeys.MODULE.getData(dataContext);
+    Module root = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (root != null && !ModuleType.isInternal(root)) return root;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);

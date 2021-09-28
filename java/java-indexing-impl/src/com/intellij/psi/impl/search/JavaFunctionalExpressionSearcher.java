@@ -49,6 +49,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,7 +60,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   @Override
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
-    if (ReadAction.compute(() -> p.getEffectiveSearchScope()) == GlobalSearchScope.EMPTY_SCOPE) {
+    if (SearchScope.isEmptyScope(ReadAction.compute(() -> p.getEffectiveSearchScope()))) {
       return;
     }
     Session session = ReadAction.compute(() -> new Session(p, consumer));
@@ -474,7 +475,9 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       scope = parameters.getEffectiveSearchScope();
     }
 
-    public Set<VirtualFile> getFilesLookedInside() {
+    @NotNull
+    @TestOnly
+    Set<VirtualFile> getFilesLookedInside() {
       return filesLookedInside;
     }
 

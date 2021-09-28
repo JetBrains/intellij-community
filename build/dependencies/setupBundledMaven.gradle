@@ -19,6 +19,7 @@ dependencies {
   mavenServer3CommonLibs 'org.apache.maven.shared:maven-dependency-tree:1.2'
   mavenServer3CommonLibs 'org.sonatype.nexus:nexus-indexer:3.0.4'
   mavenServer3CommonLibs 'org.sonatype.nexus:nexus-indexer-artifact:1.0.1'
+  mavenServer3CommonLibs 'org.apache.lucene:lucene-core:2.4.1'
 
   maven3Distribution "org.apache.maven:apache-maven:$bundledMavenVersion:bin@zip"
 }

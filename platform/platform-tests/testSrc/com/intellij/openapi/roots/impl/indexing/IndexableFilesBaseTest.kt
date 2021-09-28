@@ -32,7 +32,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.TestName
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 @RunsInEdt
 abstract class IndexableFilesBaseTest {
@@ -109,7 +108,7 @@ abstract class IndexableFilesBaseTest {
 
   private fun iterateIndexableFiles(processor: (VirtualFile) -> Boolean, project: Project, expectedNumberOfSkippedFiles: Int) {
     val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
-    val providers = fileBasedIndexEx.getOrderedIndexableFilesProviders (project)
+    val providers = fileBasedIndexEx.getIndexableFilesProviders (project)
     val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
     for (provider in providers) {
       provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)

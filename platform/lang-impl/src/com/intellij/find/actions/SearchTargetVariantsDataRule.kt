@@ -38,11 +38,13 @@ class SearchTargetVariantsDataRule : GetDataRule {
     }
     else if (usageTargets.isNotEmpty()) {
       val target: UsageTarget = usageTargets[0]
-      allTargets += if (target is PsiElement2UsageTargetAdapter) {
-        PsiTargetVariant(target.element)
+      if (target is PsiElement2UsageTargetAdapter) {
+        target.element?.let {
+          allTargets += PsiTargetVariant(it)
+        }
       }
       else {
-        CustomTargetVariant(target)
+        allTargets += CustomTargetVariant(target)
       }
     }
 

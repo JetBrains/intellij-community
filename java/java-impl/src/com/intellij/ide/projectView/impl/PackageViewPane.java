@@ -22,7 +22,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -106,7 +106,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     if (PackageElement.DATA_KEY.is(dataId)) {
       final PackageElement packageElement = getSelectedPackageElement();
     }
-    if (LangDataKeys.MODULE.is(dataId)) {
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
       final PackageElement packageElement = getSelectedPackageElement();
       if (packageElement != null) {
         return packageElement.getModule();

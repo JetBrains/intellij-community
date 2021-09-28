@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-@State(name = "DefaultFont", storages = @Storage("editor.xml"), category = ComponentCategory.UI)
+@State(name = "DefaultFont", storages = @Storage("editor.xml"), category = SettingsCategory.UI)
 public final class AppEditorFontOptions implements
                                         PersistentStateComponentWithModificationTracker<AppEditorFontOptions.PersistentFontPreferences> {
   private static final Logger LOG = Logger.getInstance(AppEditorFontOptions.class);

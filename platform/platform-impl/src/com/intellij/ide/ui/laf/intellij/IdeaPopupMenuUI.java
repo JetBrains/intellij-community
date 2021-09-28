@@ -4,7 +4,7 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -77,7 +77,7 @@ public class IdeaPopupMenuUI extends BasicPopupMenuUI {
       g.drawRoundRect(0, 0, rectangle.width - 1, rectangle.height - 1, cornerRadiusX, cornerRadiusY);
     }
     else {
-      int delta = SystemInfo.isMac ? 0 : 1;
+      int delta = SystemInfoRt.isMac ? 0 : 1;
       g.fillRect(0, 0, rectangle.width - delta, rectangle.height - delta);
       g.setColor(borderColor);
       g.drawRect(0, 0, rectangle.width - delta, rectangle.height - delta);
@@ -89,23 +89,23 @@ public class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean hideEmptyIcon(Component c) {
-    if (Registry.is("menu.hide.empty.icon", false)) {
-      Container parent = c.getParent();
-      if (parent instanceof JPopupMenu) {
-        int count = parent.getComponentCount();
-        for (int i = 0; i < count; i++) {
-          Component item = parent.getComponent(i);
-          if (item instanceof JMenuItem) {
-            JMenuItem menuItem = (JMenuItem)item;
-            Icon icon = menuItem.isEnabled() ? menuItem.getIcon() : menuItem.getDisabledIcon();
-            if (icon != null) {
-              return false;
-            }
+    if (!isPartOfPopupMenu(c)) {
+      return false;
+    }
+    Container parent = c.getParent();
+    if (parent instanceof JPopupMenu) {
+      int count = parent.getComponentCount();
+      for (int i = 0; i < count; i++) {
+        Component item = parent.getComponent(i);
+        if (item instanceof JMenuItem) {
+          JMenuItem menuItem = (JMenuItem)item;
+          Icon icon = menuItem.isEnabled() ? menuItem.getIcon() : menuItem.getDisabledIcon();
+          if (icon != null) {
+            return false;
           }
         }
       }
-      return true;
     }
-    return Registry.is("menu.element.hide.empty.icon", false);
+    return true;
   }
 }

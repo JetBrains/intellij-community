@@ -5,8 +5,17 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import java.awt.Component
+import java.beans.PropertyChangeListener
 import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkListener
+
+fun Component.addPropertyChangeListener(parent: Disposable, propertyName: String, listener: PropertyChangeListener) {
+  addPropertyChangeListener(propertyName, listener)
+  Disposer.register(parent) {
+    removePropertyChangeListener(propertyName, listener)
+  }
+}
 
 fun JEditorPane.addHyperLinkListener(parent: Disposable, listener: HyperlinkListener) {
   addHyperlinkListener(listener)

@@ -462,7 +462,8 @@ data class ExtractionGeneratorOptions(
     val target: ExtractionTarget = ExtractionTarget.FUNCTION,
     val dummyName: String? = null,
     val allowExpressionBody: Boolean = true,
-    val delayInitialOccurrenceReplacement: Boolean = false
+    val delayInitialOccurrenceReplacement: Boolean = false,
+    val isConst: Boolean = false
 ) {
     companion object {
         @JvmField

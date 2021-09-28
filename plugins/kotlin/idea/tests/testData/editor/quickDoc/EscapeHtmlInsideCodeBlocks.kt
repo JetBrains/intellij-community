@@ -8,7 +8,7 @@
  */
 class <caret>A<T>
 
-//INFO: <div class='definition'><pre><font color="808080"><i>EscapeHtmlInsideCodeBlocks.kt</i></font><br>public final class <b>A</b>&lt;T&gt;</pre></div><div class='content'><p>Code block:</p>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">class</span> <span style="color:#000000;">A</span><span style="">&lt;</span><span style="color:#20999d;">T</span><span style="">&gt;</span></pre></div><div class='content'><p>Code block:</p>
 //INFO: <pre><code>
-//INFO: A&lt;T&gt;
-//INFO: </code></pre><p>Code span: <code>&lt;T&gt;</code> is type parameter</p></div><table class='sections'></table>
+//INFO: <span style="">A&lt;T&gt;</span>
+//INFO: </code></pre><p>Code span: <code><span style="">&lt;T&gt;</span></code> is type parameter</p></div><table class='sections'></table>

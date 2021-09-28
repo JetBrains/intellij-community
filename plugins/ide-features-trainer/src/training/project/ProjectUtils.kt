@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.project
 
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.ReopenProjectAction
@@ -152,7 +153,14 @@ object ProjectUtils {
     val copied = copyLearningProjectFiles(contentRoot, langSupport)
     if (!copied) return
     createVersionFile(contentRoot)
-    openOrImportLearningProject(contentRoot, openProjectTask, langSupport, postInitCallback)
+    openOrImportLearningProject(contentRoot, openProjectTask, langSupport) {
+      updateLearningModificationTimestamp(it)
+      postInitCallback(it)
+    }
+  }
+
+  private fun updateLearningModificationTimestamp(it: Project) {
+    PropertiesComponent.getInstance(it).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
   }
 
   private fun openOrImportLearningProject(contentRoot: Path,
@@ -168,9 +176,19 @@ object ProjectUtils {
     })
     invokeLater {
       val nioPath = projectDirectoryVirtualFile.toNioPath()
-      val project = ProjectUtil.openOrImport(nioPath, task)
-                    ?: error("Could not create project for ${langSupport.primaryLanguage} at $nioPath")
-      PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
+      val confirmOpenNewProject = GeneralSettings.getInstance().confirmOpenNewProject
+      if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+        GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
+      }
+      val project = try {
+        ProjectUtil.openOrImport(nioPath, task)
+                      ?: error("Cannot create project for ${langSupport.primaryLanguage} at $nioPath")
+      }
+      finally {
+        if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+          GeneralSettings.getInstance().confirmOpenNewProject = confirmOpenNewProject
+        }
+      }
       project.setTrusted(true)
       postInitCallback(project)
     }
@@ -297,8 +315,8 @@ object ProjectUtils {
       modified = true
     }
 
-    val pathname = project.basePath ?: throw IllegalStateException("No Base Path in Learning project")
-    languageSupport.copyLearningProjectFiles(File(pathname), FileFilter {
+    val contentRoodDirectory = contentRootPath.toFile()
+    languageSupport.copyLearningProjectFiles(contentRoodDirectory, FileFilter {
       val path = it.toPath()
       val needCopy = needReplace.contains(path) || !validContent.contains(path)
       modified = needCopy || modified

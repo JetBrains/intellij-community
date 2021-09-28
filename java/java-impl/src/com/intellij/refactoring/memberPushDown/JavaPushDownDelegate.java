@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -238,15 +238,14 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       }
       else if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
-        PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), true);
+        PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
         boolean pushMethodToClass = methodBySignature == null;
-        if (!pushMethodToClass) {
-          //non-abstract method inherited from super class
-          PsiClass containingClass = methodBySignature.getContainingClass();
-          pushMethodToClass = containingClass == sourceClass ||
-                              containingClass != targetClass && methodBySignature.hasModifierProperty(PsiModifier.ABSTRACT);
-        }
         if (pushMethodToClass) {
+          if (Arrays.stream(targetClass.findMethodsBySignature(method, true))
+            .map(m -> m.getContainingClass())
+            .filter(Objects::nonNull).anyMatch(aClass -> aClass.isInheritor(sourceClass, true))) {
+            continue;
+          }
           newMember = (PsiMethod)targetClass.add(method);
           final PsiMethod oldMethod = (PsiMethod)memberInfo.getMember();
           if (sourceClass.isInterface() && !targetClass.isInterface()) {

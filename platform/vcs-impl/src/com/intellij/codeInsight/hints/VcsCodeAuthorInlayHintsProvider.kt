@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.hints.VcsCodeAuthorInlayHintsProvider.Companion.KEY
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -11,36 +14,53 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.actions.VcsAnnotateUtil
 import com.intellij.openapi.vcs.annotate.AnnotationsPreloader
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.ui.layout.*
+import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.CacheableAnnotationProvider
 import javax.swing.JComponent
 
-private fun isCodeAuthorEnabledInRegistry(): Boolean = Registry.`is`("vcs.code.author.inlay.hints")
+private fun isCodeAuthorEnabledForApplication(): Boolean =
+  !application.isUnitTestMode && Registry.`is`("vcs.code.author.inlay.hints")
 
 private fun isCodeAuthorEnabledInSettings(): Boolean =
   InlayHintsProviderExtension.findProviders()
     .filter { it.provider.key == KEY }
     .any { InlayHintsSettings.instance().hintsShouldBeShown(KEY, it.language) }
 
-internal fun isCodeAuthorInlayHintsEnabled(): Boolean = isCodeAuthorEnabledInRegistry() && isCodeAuthorEnabledInSettings()
-
-internal fun refreshCodeAuthorInlayHints() {
-  if (!isCodeAuthorInlayHintsEnabled()) return
-
-  InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+private fun isCodeAuthorEnabledInSettings(language: Language): Boolean {
+  val hasProviderForLanguage = InlayHintsProviderExtension.allForLanguage(language).any { it.key == KEY }
+  return hasProviderForLanguage && InlayHintsSettings.instance().hintsShouldBeShown(KEY, language)
 }
 
-private val KEY = SettingsKey<NoSettings>("vcs.code.author")
+internal fun isCodeAuthorInlayHintsEnabled(): Boolean = isCodeAuthorEnabledForApplication() && isCodeAuthorEnabledInSettings()
+
+@RequiresEdt
+internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
+  if (!isCodeAuthorEnabledForApplication()) return
+
+  val psiFile = PsiManagerEx.getInstanceEx(project).fileManager.getCachedPsiFile(file)
+  if (psiFile != null && !isCodeAuthorEnabledInSettings(psiFile.language)) return
+
+  val editors = VcsAnnotateUtil.getEditors(project, file)
+  val noCodeAuthorEditors = editors.filter { it.getUserData(VCS_CODE_AUTHOR_ANNOTATION) == null }
+  if (noCodeAuthorEditors.isEmpty()) return
+
+  for (editor in noCodeAuthorEditors) InlayHintsPassFactory.clearModificationStamp(editor)
+  if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+}
 
 abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
-    if (!isCodeAuthorEnabledInRegistry()) return null
+    if (!isCodeAuthorEnabledForApplication()) return null
 
     val virtualFile = file.virtualFile ?: return null
     val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
@@ -52,7 +72,7 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
   protected abstract fun isAccepted(element: PsiElement): Boolean
 
   override fun createSettings(): NoSettings = NoSettings()
-  override val isVisibleInSettings: Boolean get() = isCodeAuthorEnabledInRegistry()
+  override val isVisibleInSettings: Boolean get() = isCodeAuthorEnabledForApplication()
 
   override val name: String get() = message("label.code.author.inlay.hints")
   override val key: SettingsKey<NoSettings> get() = KEY
@@ -62,6 +82,10 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
     object : ImmediateConfigurable {
       override fun createComponent(listener: ChangeListener): JComponent = panel {}
     }
+
+  companion object {
+    internal val KEY: SettingsKey<NoSettings> = SettingsKey("vcs.code.author")
+  }
 }
 
 private val VCS_CODE_AUTHOR_ANNOTATION = Key.create<FileAnnotation>("Vcs.CodeAuthor.Annotation")

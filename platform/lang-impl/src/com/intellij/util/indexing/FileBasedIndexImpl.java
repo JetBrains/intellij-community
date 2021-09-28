@@ -113,6 +113,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final boolean myTraceIndexUpdates;
 
   private volatile RegisteredIndexes myRegisteredIndexes;
+  private volatile @Nullable String myShutdownReason;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
 
@@ -134,7 +135,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private @Nullable Runnable myShutDownTask;
   private @Nullable ScheduledFuture<?> myFlushingFuture;
-  private @Nullable ScheduledFuture<?> myHealthСheсkFuture;
+  private @Nullable ScheduledFuture<?> myHealthCheckFuture;
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
@@ -361,7 +362,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void setUpHealthCheck() {
-    myHealthСheсkFuture = AppExecutorUtil
+    myHealthCheckFuture = AppExecutorUtil
       .getAppScheduledExecutorService()
       .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
         myIndexableFilesFilterHolder.runHealthCheck();
@@ -373,7 +374,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     public void run() {
       FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
       if (fileBasedIndex instanceof FileBasedIndexImpl) {
-        ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false);
+        ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false, "IDE shutdown");
       }
     }
   }
@@ -382,7 +383,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 
-  static boolean belongsToScope(VirtualFile file, VirtualFile restrictedTo, GlobalSearchScope filter) {
+  static boolean belongsToScope(@Nullable VirtualFile file, @Nullable VirtualFile restrictedTo, @Nullable GlobalSearchScope filter) {
     if (!(file instanceof VirtualFileWithId) || !file.isValid()) {
       return false;
     }
@@ -418,6 +419,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       LOG.assertTrue(myRegisteredIndexes == null);
       myStorageBufferingHandler.resetState();
       myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
+      myShutdownReason = null;
     }
   }
 
@@ -591,7 +593,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void performShutdown(boolean keepConnection) {
+  void performShutdown(boolean keepConnection, @NotNull String reason) {
+    myShutdownReason = keepConnection ? reason : null;
     RegisteredIndexes registeredIndexes = myRegisteredIndexes;
     if (registeredIndexes == null || !registeredIndexes.performShutdown()) {
       return; // already shut down
@@ -608,9 +611,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         myFlushingFuture.cancel(false);
         myFlushingFuture = null;
       }
-      if (myHealthСheсkFuture != null) {
-        myHealthСheсkFuture.cancel(false);
-        myHealthСheсkFuture = null;
+      if (myHealthCheckFuture != null) {
+        myHealthCheckFuture.cancel(false);
+        myHealthCheckFuture = null;
       }
     }
     finally {
@@ -660,7 +663,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           myConnection.disconnect();
         }
 
-        CorruptionMarker.markIndexesAsClosed();
+        //CorruptionMarker.markIndexesAsClosed();
       }
       catch (Throwable e) {
         LOG.error("Problems during index shutdown", e);
@@ -768,6 +771,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                     @Nullable Project project,
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
+    String shutdownReason = myShutdownReason;
+    if (shutdownReason != null) {
+      LOG.info("FileBasedIndex is currently shutdown because: " + shutdownReason);
+      return false;
+    }
     ProgressManager.checkCanceled();
     SlowOperations.assertSlowOperationsAreAllowed();
     getChangedFilesCollector().ensureUpToDate();
@@ -979,44 +987,29 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  private Set<Document> getUnsavedDocuments() {
-    Document[] documents = myFileDocumentManager.getUnsavedDocuments();
-    if (documents.length == 0) return Collections.emptySet();
-    if (documents.length == 1) return Collections.singleton(documents[0]);
-    return ContainerUtil.set(documents);
-  }
-
-  @NotNull
   private Set<Document> getTransactedDocuments() {
     return myTransactionMap.keySet();
   }
 
   private void indexUnsavedDocuments(@NotNull final ID<?, ?> indexId,
                                      @Nullable Project project,
-                                     final GlobalSearchScope filter,
-                                     final VirtualFile restrictedFile) {
+                                     @Nullable GlobalSearchScope filter,
+                                     @Nullable VirtualFile restrictedFile) {
     if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
       return; // no need to index unsaved docs        // todo: check scope ?
     }
 
-    Collection<Document> documents = getUnsavedDocuments();
-    Set<Document> transactedDocuments = getTransactedDocuments();
-    if (documents.isEmpty()) {
-      documents = transactedDocuments;
-    }
-    else if (!transactedDocuments.isEmpty()) {
-      documents = new HashSet<>(documents);
-      documents.addAll(transactedDocuments);
-    }
-    Document[] uncommittedDocuments = project != null ? PsiDocumentManager.getInstance(project).getUncommittedDocuments() : Document.EMPTY_ARRAY;
-    if (uncommittedDocuments.length > 0) {
-      List<Document> uncommittedDocumentsCollection = Arrays.asList(uncommittedDocuments);
-      if (documents.isEmpty()) documents = uncommittedDocumentsCollection;
-      else {
-        if (!(documents instanceof HashSet)) documents = new HashSet<>(documents);
+    final Set<Document> documents = new HashSet<>();
 
-        documents.addAll(uncommittedDocumentsCollection);
-      }
+    myFileDocumentManager.processUnsavedDocuments(document -> {
+      documents.add(document);
+      return true;
+    });
+
+    documents.addAll(getTransactedDocuments());
+
+    if (project != null) {
+      Collections.addAll(documents, PsiDocumentManager.getInstance(project).getUncommittedDocuments());
     }
 
     if (!documents.isEmpty()) {
@@ -1972,8 +1965,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
-  public @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope,
-                                            @Nullable Project project) {
+  public @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope, @Nullable Project project) {
     if (scope == null) return projectIndexableFiles(project);
     IdFilter filter = extractFileEnumeration(scope);
     if (filter != null) return filter;

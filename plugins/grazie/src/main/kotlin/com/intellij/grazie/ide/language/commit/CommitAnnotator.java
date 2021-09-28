@@ -30,24 +30,23 @@ public class CommitAnnotator implements Annotator {
 
     List<TextChecker> checkers = TextChecker.allCheckers();
     CheckerRunner runner = new CheckerRunner(text);
-    List<TextProblem> descriptors = runner.run(checkers);
-    for (var problem : descriptors) {
+    runner.run(checkers, problem -> {
       if (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) &&
           Text.isSingleSentence(Text.findParagraphRange(text, problem.getReplacementRange()).subSequence(text))) {
-        continue;
+        return null;
       }
 
-      String message = problem.getDescriptionTemplate(true);
       AnnotationBuilder annotation = holder
-        .newAnnotation(HighlightSeverity.WARNING, message)
-        .tooltip(message)
+        .newAnnotation(HighlightSeverity.WARNING, problem.getDescriptionTemplate(true))
+        .tooltip(problem.getTooltipTemplate())
         .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
         .range(text.textRangeToFile(problem.getHighlightRange()));
       for (QuickFix<?> fix : runner.toFixes(problem)) {
         annotation = annotation.withFix((IntentionAction)fix);
       }
       annotation.create();
-    }
+      return null;
+    });
   }
 
 }

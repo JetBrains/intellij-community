@@ -8,7 +8,6 @@ import com.intellij.openapi.project.RootsChangeIndexingInfo
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -31,7 +30,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)
     if (performUpdate && !projectRootManager.isFiringEvent()) {
-      val rootsChangeInfo = WorkspaceEventIndexingInfo(event)
+      val rootsChangeInfo = WorkspaceEventIndexingInfo(event.getAllChanges().toList())
       projectRootManager.rootsChanged.rootsChanged(rootsChangeInfo)
     }
   }
@@ -48,27 +47,6 @@ internal class ProjectRootsChangeListener(private val project: Project) {
   }
 
   companion object {
-    internal fun calculateRootsChangeType(result: ProjectRootManagerImpl.RootsChangeType?,
-                                          change: ProjectRootManagerImpl.RootsChangeType): ProjectRootManagerImpl.RootsChangeType {
-      if (result == ProjectRootManagerImpl.RootsChangeType.GENERIC) return result
-      if (result == null) {
-        return change
-      }
-      else if (change == ProjectRootManagerImpl.RootsChangeType.GENERIC) {
-        return ProjectRootManagerImpl.RootsChangeType.GENERIC
-      }
-      else if (change == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED &&
-               result == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
-        return result
-      }
-      else if (change == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED &&
-               result == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED) {
-        return result
-      }
-      else {
-        return ProjectRootManagerImpl.RootsChangeType.GENERIC
-      }
-    }
 
     internal fun shouldFireRootsChanged(entity: WorkspaceEntity, project: Project): Boolean {
       return when (entity) {
@@ -95,5 +73,5 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     }
   }
 
-  class WorkspaceEventIndexingInfo(val event: VersionedStorageChange) : RootsChangeIndexingInfo()
+  class WorkspaceEventIndexingInfo(val events: List<EntityChange<*>>) : RootsChangeIndexingInfo()
 }

@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
 object DirectiveBasedActionUtils {
     const val DISABLE_ERRORS_DIRECTIVE = "// DISABLE-ERRORS"
+    const val DISABLE_WARNINGS_DIRECTIVE = "// DISABLE-WARNINGS"
+    const val ENABLE_WARNINGS_DIRECTIVE = "// ENABLE-WARNINGS"
 
     fun checkForUnexpectedErrors(file: KtFile, diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }) {
         if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
@@ -23,12 +25,18 @@ object DirectiveBasedActionUtils {
         checkForUnexpected(file, diagnosticsProvider, "// ERROR:", "errors", Severity.ERROR)
     }
 
-    fun checkForUnexpectedWarnings(file: KtFile, diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }) {
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// ENABLE-WARNINGS").isEmpty()) {
+    fun checkForUnexpectedWarnings(
+        file: KtFile,
+        disabledByDefault: Boolean = true,
+        directiveName: String = Severity.WARNING.name,
+        diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }
+    ) {
+        if (disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, ENABLE_WARNINGS_DIRECTIVE).isEmpty() ||
+                !disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_WARNINGS_DIRECTIVE).isNotEmpty()) {
             return
         }
 
-        checkForUnexpected(file, diagnosticsProvider, "// WARNING:", "warnings", Severity.WARNING)
+        checkForUnexpected(file, diagnosticsProvider, "// $directiveName:", "warnings", Severity.WARNING)
     }
 
     private fun checkForUnexpected(
@@ -38,16 +46,21 @@ object DirectiveBasedActionUtils {
         name: String,
         severity: Severity
     ) {
-        val expected = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, directive).sorted()
+        val expected = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, directive)
+            .sorted()
+            .map { "$directive $it" }
 
         val diagnostics = diagnosticsProvider(file)
         val actual = diagnostics
             .filter { it.severity == severity }
-            .map { DefaultErrorMessages.render(it).replace("\n", "<br>") }
+            .map { "$directive ${DefaultErrorMessages.render(it).replace("\n", "<br>")}" }
             .sorted()
 
+        if (actual.isEmpty() && expected.isEmpty()) return
+
         UsefulTestCase.assertOrderedEquals(
-            "All actual $name should be mentioned in test data with '$directive' directive. But no unnecessary $name should be me mentioned",
+            "All actual $name should be mentioned in test data with '$directive' directive. " +
+                    "But no unnecessary $name should be me mentioned, file:\n${file.text}",
             actual,
             expected
         )

@@ -59,7 +59,10 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.PathMappingSettings;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.NetUtils;
@@ -83,6 +86,7 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -359,8 +363,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @NotNull
   private PythonExecution createPythonConsoleExecution(@NotNull Function<TargetEnvironment, HostPort> ideServerPort,
                                                        @NotNull PythonConsoleRunParams runParams,
-                                                       @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    return doCreatePythonConsoleExecution(ideServerPort, runParams, targetEnvironmentRequest);
+                                                       @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
+    return doCreatePythonConsoleExecution(ideServerPort, runParams, helpersAwareTargetRequest);
   }
 
   @NotNull
@@ -404,9 +408,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @NotNull
   private PythonExecution doCreatePythonConsoleExecution(@NotNull Function<TargetEnvironment, HostPort> ideServerPort,
                                                          @NotNull PythonConsoleRunParams runParams,
-                                                         @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+                                                         @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
     PythonExecution pythonConsoleScriptExecution =
-      PydevConsoleCli.createPythonConsoleScriptInClientMode(ideServerPort, targetEnvironmentRequest);
+      PydevConsoleCli.createPythonConsoleScriptInClientMode(ideServerPort, helpersAwareTargetRequest);
+
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
 
     PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(mySdk);
     if (remoteSdkAdditionalData != null) {
@@ -498,7 +504,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       throw new ExecutionException(e);
     }
 
-    TargetEnvironmentRequest targetEnvironmentRequest = createTargetEnvironmentRequest(sdk);
+    HelpersAwareTargetEnvironmentRequest helpersAwareRequest = PythonCommandLineState.getPythonTargetInterpreter(myProject, sdk);
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(ideServerPort, null);
     targetEnvironmentRequest.getLocalPortBindings().add(ideServerPortBinding);
     Function<TargetEnvironment, HostPort> ideServerHostPortOnTarget = targetEnvironment -> {
@@ -521,7 +528,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     PythonConsoleRunParams runParams = createConsoleRunParams(myWorkingDir, sdk, myEnvironmentVariables);
-    PythonExecution pythonConsoleExecution = createPythonConsoleExecution(ideServerHostPortOnTarget, runParams, targetEnvironmentRequest);
+    PythonExecution pythonConsoleExecution = createPythonConsoleExecution(ideServerHostPortOnTarget, runParams, helpersAwareRequest);
     List<String> interpreterOptions;
     if (!StringUtil.isEmptyOrSpaces(runParams.getInterpreterOptions())) {
       interpreterOptions = ParametersListUtil.parse(runParams.getInterpreterOptions());
@@ -585,21 +592,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     public void close() throws IOException {
       // Nothing.
     }
-  }
-
-  /**
-   * @throws IllegalStateException if there is no extension point registered
-   *                               for the type of Python interpreter of the
-   *                               provided SDK
-   * @see PythonInterpreterTargetEnvironmentFactory
-   */
-  @NotNull
-  private static TargetEnvironmentRequest createTargetEnvironmentRequest(@NotNull Sdk sdk) {
-    TargetEnvironmentRequest environmentRequest = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(sdk);
-    if (environmentRequest == null) {
-      throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
-    }
-    return environmentRequest;
   }
 
   @Contract("null -> null")
@@ -1128,7 +1120,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
         PydevConsoleRunner runner =
-          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(LangDataKeys.MODULE));
+          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE));
         runner.run(true);
       }
     }

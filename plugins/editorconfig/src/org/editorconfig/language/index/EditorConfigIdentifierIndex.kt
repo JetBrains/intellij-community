@@ -29,7 +29,9 @@ class EditorConfigIdentifierIndex : FileBasedIndexExtension<String, Int>() {
       }
     }
 
+    isIndexing.set(true)
     it.psiFile.accept(visitor)
+    isIndexing.set(false)
     result
   }
 
@@ -42,6 +44,8 @@ class EditorConfigIdentifierIndex : FileBasedIndexExtension<String, Int>() {
   companion object {
     val id = ID.create<String, Int>("editorconfig.index.name")
     val editorconfigInputFilter = DefaultFileTypeSpecificInputFilter(EditorConfigFileType)
+
+    val isIndexing = ThreadLocal<Boolean>()
 
     private fun isValidReference(identifier: EditorConfigDescribableElement): Boolean {
       identifier.getDescriptor(false) as? EditorConfigReferenceDescriptor ?: return false

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -56,7 +56,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   @Override
   protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_15_PREVIEW;
+    return LanguageLevel.HIGHEST;
   }
 
   public void testSimpleField() { doTestField(); }
@@ -116,11 +116,11 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   public void testRepeatableAnnotations() {
     useJava8();
-    assertEquals("@R(&quot;a&quot;)&nbsp;\n" +
-                 "@R(&quot;b&quot;)&nbsp;\n" +
-                 "class <b>repeatableAnnotations</b>\n" +
-                 "extends <a href=\"psi_element://java.lang.Object\"><code>Object</code></a>",
-                 JavaDocInfoGenerator.generateSignature(getTestClass()));
+    assertEquals(
+      "<span style=\"color:#808000;\">@</span><a href=\"psi_element://R\"><code><span style=\"color:#808000;\">R</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"a\"</span><span style=\"\">)</span>&nbsp;\n" +
+      "<span style=\"color:#808000;\">@</span><a href=\"psi_element://R\"><code><span style=\"color:#808000;\">R</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"b\"</span><span style=\"\">)</span>&nbsp;\n" +
+      "<span style=\"color:#000080;font-weight:bold;\">class</span> <span style=\"color:#000000;\">repeatableAnnotations</span>",
+      new JavaDocInfoGenerator(getProject(), getTestClass()).generateSignature(getTestClass()));
   }
   
   public void testAnonymousAndSuperJavadoc() {

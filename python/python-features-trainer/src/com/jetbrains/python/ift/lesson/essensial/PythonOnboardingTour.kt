@@ -4,16 +4,15 @@ package com.jetbrains.python.ift.lesson.essensial
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
-import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
@@ -26,7 +25,6 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
@@ -40,11 +38,11 @@ import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.xdebugger.XDebuggerBundle
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
@@ -69,7 +67,6 @@ import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.util.invokeActionForFocusContext
 import training.util.learningToolWindow
-import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
@@ -88,6 +85,8 @@ class PythonOnboardingTour :
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"
 
+  private val uiSettings get() = UISettings.instance
+
   override val properties = LessonProperties(
     canStartInDumbMode = true,
     openFileAtStart = false
@@ -96,6 +95,8 @@ class PythonOnboardingTour :
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   private var backupPopupLocation: Point? = null
+  private var hideToolStripesPreference = false
+  private var showNavigationBarPreference = true
 
   val sample: LessonSample = parseLessonSample("""
     def find_average(values)<caret id=3/>:
@@ -122,6 +123,8 @@ class PythonOnboardingTour :
     }
     clearBreakpoints()
 
+    checkUiSettings()
+
     projectTasks()
 
     prepareSample(sample)
@@ -129,6 +132,8 @@ class PythonOnboardingTour :
     openLearnToolwindow()
 
     showInterpreterConfiguration()
+
+    waitIndexingTasks()
 
     runTasks()
 
@@ -147,25 +152,25 @@ class PythonOnboardingTour :
     task {
       text(PythonLessonsBundle.message("python.onboarding.epilog",
                                        getCallBackActionId("CloseProject"),
-                                       returnToWelcomeScreenRemark(),
+                                       LessonUtil.returnToWelcomeScreenRemark(),
                                        LearningUiManager.addCallback { LearningUiManager.resetModulesView() }))
     }
-  }
-
-  private fun returnToWelcomeScreenRemark(): String {
-    val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
-    return if (isSingleProject) PythonLessonsBundle.message("python.onboarding.return.to.welcome") else ""
   }
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
+
+    uiSettings.hideToolStripes = hideToolStripesPreference
+    uiSettings.showNavigationBar = showNavigationBarPreference
+    uiSettings.fireUISettingsChanged()
+
     if (!lessonPassed) return
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
                                                     PythonLessonsBundle.message("python.onboarding.finish.text",
-                                                                                returnToWelcomeScreenRemark()))
+                                                                                LessonUtil.returnToWelcomeScreenRemark()))
         .yesText(PythonLessonsBundle.message("python.onboarding.finish.exit"))
         .noText(PythonLessonsBundle.message("python.onboarding.finish.modules"))
         .icon(FeaturesTrainerIcons.Img.PluginIcon)
@@ -217,25 +222,7 @@ class PythonOnboardingTour :
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    task {
-      // Need to wait until Debugger tab will be selected
-      stateCheck {
-        val f = UIUtil.getParentOfType(JBRunnerTabs::class.java, focusOwner)
-        f?.selectedInfo?.text == XDebuggerBundle.message("xdebugger.debugger.tab.title")
-      }
-    }
-
-    task {
-      val needFirstAction = ActionManager.getInstance().getAction("ShowExecutionPoint")
-      triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-        ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "DebuggerToolbar" && checkFirstButton(ui, needFirstAction)
-      }
-    }
-
-    highlightAllFoundUi(clearPreviousHighlights = false, highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-      ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "DebuggerToolbar" &&
-      checkFirstButton(ui, ActionManager.getInstance().getAction("Rerun"))
-    }
+    highlightDebugActionsToolbar()
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
@@ -275,12 +262,22 @@ class PythonOnboardingTour :
     text(message, useBalloon)
   }
 
-  private fun checkFirstButton(ui: ActionToolbarImpl,
-                               needFirstAction: AnAction?): Boolean {
-    return ui.components.let {
-      it.isNotEmpty<Component?>() && (it[0] as? ActionButton)?.let { first ->
-        first.action == needFirstAction
-      } == true
+  private fun LessonContext.waitIndexingTasks() {
+    task {
+      triggerByUiComponentAndHighlight(highlightInside = false) { progress: NonOpaquePanel ->
+        progress.javaClass.name.contains("InlineProgressPanel")
+      }
+    }
+
+    task {
+      text(PythonLessonsBundle.message("python.onboarding.indexing.description"))
+      waitSmartModeStep()
+    }
+
+    waitBeforeContinue(300)
+
+    prepareRuntimeTask {
+      LearningUiHighlightingManager.clearHighlights()
     }
   }
 
@@ -305,7 +302,6 @@ class PythonOnboardingTour :
     }
 
     task {
-
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
         ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
           val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
@@ -353,6 +349,30 @@ class PythonOnboardingTour :
     prepareRuntimeTask {
       LearningUiHighlightingManager.clearHighlights()
       requestEditorFocus()
+    }
+  }
+
+
+  private fun LessonContext.checkUiSettings() {
+    hideToolStripesPreference = uiSettings.hideToolStripes
+    showNavigationBarPreference = uiSettings.showNavigationBar
+
+    if (!hideToolStripesPreference && (showNavigationBarPreference || uiSettings.showMainToolbar)) {
+      // a small hack to have same tasks count. It is needed to track statistics result.
+      task { }
+      task { }
+      return
+    }
+
+    task {
+      text(PythonLessonsBundle.message("python.onboarding.change.ui.settings"))
+      proceedLink()
+    }
+
+    prepareRuntimeTask {
+      uiSettings.hideToolStripes = false
+      uiSettings.showNavigationBar = true
+      uiSettings.fireUISettingsChanged()
     }
   }
 
@@ -417,32 +437,18 @@ class PythonOnboardingTour :
   }
 
   private fun LessonContext.completionSteps() {
-    val completionPosition = sample.getPosition(2)
-    caret(completionPosition)
     prepareRuntimeTask {
+      setSample(sample.insertAtPosition(2, " / len(<caret>)"))
       FocusManagerImpl.getInstance(project).requestFocusInProject(editor.contentComponent, project)
     }
-    task {
-      text(PythonLessonsBundle.message("python.onboarding.type.division", code(" / l")))
-      proposeRestoreForInvalidText("/len")
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
-        it.toString().contains("string=len;")
-      }
-    }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.choose.len.item",
-                                       code("len(__obj)"), action("EditorChooseLookupItem")))
-      stateCheck {
-        checkEditorModification(completionPosition, "/len()")
-      }
-      restoreByUi()
-    }
-
-    task {
+      text(PythonLessonsBundle.message("python.onboarding.type.division",
+        code(" / len()")))
       text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
-                                       code("values"),
-                                       code("()")))
+        code("values"),
+        code("()"),
+        action("CodeCompletion")))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
         it.toString().contains("values")
       }
@@ -453,17 +459,9 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
                                        code("values"), action("EditorChooseLookupItem")))
       stateCheck {
-        checkEditorModification(completionPosition, "/len(values)")
+        checkEditorModification(sample.getPosition(2), "/len(values)")
       }
       restoreByUi()
-    }
-  }
-
-  private fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
-    proposeRestore {
-      checkExpectedStateOfEditor(previous.sample) {
-        needToType.contains(it.replace(" ", ""))
-      }
     }
   }
 

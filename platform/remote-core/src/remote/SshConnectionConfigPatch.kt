@@ -15,20 +15,22 @@ import java.time.Duration
 data class SshConnectionConfigPatch(
   var hostKeyVerifier: HostKeyVerifier?,
   var serverAliveInterval: Duration?,
-  var proxyParams: ProxyParams?
+  var proxyParams: ProxyParams?,
 ) {
 
   data class ProxyParams(
     var proxyHost: String,
     var proxyPort: Int,
-    var proxyType: Type
+    var proxyType: Type,
+    var authData: ProxyAuthData?,
   ) {
 
-    constructor() : this( "", -1, Type.NO_PROXY)
+    constructor() : this("", -1, Type.NO_PROXY, null)
 
-    fun withProxyHost(value: String) : ProxyParams = apply { proxyHost = value }
-    fun withProxyPort(value: Int) : ProxyParams = apply { proxyPort = value }
-    fun withProxyType(value : Type) : ProxyParams = apply { proxyType = value }
+    fun withProxyHost(value: String): ProxyParams = apply { proxyHost = value }
+    fun withProxyPort(value: Int): ProxyParams = apply { proxyPort = value }
+    fun withProxyType(value: Type): ProxyParams = apply { proxyType = value }
+    fun withProxyAuthData(value: ProxyAuthData) = apply { authData = value }
 
     enum class Type {
 
@@ -37,6 +39,26 @@ data class SshConnectionConfigPatch(
       HTTP,
 
       SOCKS,
+
+      IDE_WIDE_PROXY
+
+    }
+
+    data class ProxyAuthData(
+      var username: String,
+      var password: String,
+      var authType: ProxyAuthType,
+    ) {
+
+      constructor() : this("", "", ProxyAuthType.NO_AUTHORIZATION)
+
+      enum class ProxyAuthType {
+
+        NO_AUTHORIZATION,
+
+        USER_AND_PASSWORD,
+
+      }
     }
   }
   /**
@@ -56,7 +78,7 @@ data class SshConnectionConfigPatch(
   constructor() : this(
     hostKeyVerifier = null,
     serverAliveInterval = null,
-    proxyParams = null
+    proxyParams = null,
   )
 
   fun withHostKeyVerifier(value: HostKeyVerifier): SshConnectionConfigPatch = apply { hostKeyVerifier = value }
@@ -65,7 +87,7 @@ data class SshConnectionConfigPatch(
 
   fun deepCopy(): SshConnectionConfigPatch = copy(
     hostKeyVerifier = hostKeyVerifier?.copy(),
-    proxyParams = proxyParams?.copy()
+    proxyParams = proxyParams?.copy(),
   )
 }
 

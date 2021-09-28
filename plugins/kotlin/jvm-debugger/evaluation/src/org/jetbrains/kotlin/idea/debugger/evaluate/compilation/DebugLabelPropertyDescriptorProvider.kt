@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.descriptors.impl.PackageFragmentDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.getClassDescriptor
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -37,7 +37,7 @@ class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val
         fun getMarkupMap(debugProcess: DebugProcessImpl) = doGetMarkupMap(debugProcess) ?: emptyMap()
 
         private fun doGetMarkupMap(debugProcess: DebugProcessImpl): Map<out Value?, ValueMarkup>? {
-            if (ApplicationManager.getApplication().isUnitTestMode) {
+            if (isUnitTestMode()) {
                 return NodeDescriptorImpl.getMarkupMap(debugProcess)
             }
 

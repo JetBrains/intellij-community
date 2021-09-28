@@ -438,7 +438,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
 
       @Override
-      public <T> T getUserData(Key<T> key) {
+      public <T> T getUserData(@NotNull Key<T> key) {
         return ValueDescriptorImpl.this.getUserData(key);
       }
     };

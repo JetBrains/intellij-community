@@ -1610,6 +1610,64 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/addNamesInCommentToJavaCallArguments")
+    public static class AddNamesInCommentToJavaCallArguments extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constructorCall.kt")
+        public void testConstructorCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/constructorCall.kt");
+        }
+
+        @TestMetadata("kotlinFunctionCall.kt")
+        public void testKotlinFunctionCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/kotlinFunctionCall.kt");
+        }
+
+        @TestMetadata("methodCall.kt")
+        public void testMethodCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCall.kt");
+        }
+
+        @TestMetadata("methodCallWithComments.kt")
+        public void testMethodCallWithComments() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments.kt");
+        }
+
+        @TestMetadata("methodCallWithComments2.kt")
+        public void testMethodCallWithComments2() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments2.kt");
+        }
+
+        @TestMetadata("methodCallWithLambdaArgument.kt")
+        public void testMethodCallWithLambdaArgument() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgument.kt");
+        }
+
+        @TestMetadata("methodCallWithLambdaArgumentOnly.kt")
+        public void testMethodCallWithLambdaArgumentOnly() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgumentOnly.kt");
+        }
+
+        @TestMetadata("methodCallWithNoArguments.kt")
+        public void testMethodCallWithNoArguments() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithNoArguments.kt");
+        }
+
+        @TestMetadata("methodCallWithVararg.kt")
+        public void testMethodCallWithVararg() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
+        }
+
+        @TestMetadata("superTypeCall.kt")
+        public void testSuperTypeCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/superTypeCall.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addNamesToCallArguments")
     public static class AddNamesToCallArguments extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -5706,6 +5764,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertLambdaToReference/extensionProperty.kt");
         }
 
+        @TestMetadata("extensionWithExplicitThis.kt")
+        public void testExtensionWithExplicitThis() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/extensionWithExplicitThis.kt");
+        }
+
         @TestMetadata("fqNameForReceiver.kt")
         public void testFqNameForReceiver() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/fqNameForReceiver.kt");
@@ -5844,6 +5907,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("object.kt")
         public void testObject() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/object.kt");
+        }
+
+        @TestMetadata("outerClassFunction.kt")
+        public void testOuterClassFunction() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/outerClassFunction.kt");
         }
 
         @TestMetadata("platformType.kt")
@@ -5999,6 +6067,64 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("wrongParameterOrder.kt")
         public void testWrongParameterOrder() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/wrongParameterOrder.kt");
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertLambdaToReference/version1_1")
+        public static class Version1_1 extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extension.kt")
+            public void testExtension() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/extension.kt");
+            }
+
+            @TestMetadata("extensionOuterScope.kt")
+            public void testExtensionOuterScope() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/extensionOuterScope.kt");
+            }
+
+            @TestMetadata("inAnonymousObject.kt")
+            public void testInAnonymousObject() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/inAnonymousObject.kt");
+            }
+
+            @TestMetadata("inAnonymousObject2.kt")
+            public void testInAnonymousObject2() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/inAnonymousObject2.kt");
+            }
+
+            @TestMetadata("member.kt")
+            public void testMember() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/member.kt");
+            }
+
+            @TestMetadata("memberInLambdaArgument.kt")
+            public void testMemberInLambdaArgument() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/memberInLambdaArgument.kt");
+            }
+
+            @TestMetadata("memberInScopeFunction.kt")
+            public void testMemberInScopeFunction() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/memberInScopeFunction.kt");
+            }
+
+            @TestMetadata("memberInScopeFunction2.kt")
+            public void testMemberInScopeFunction2() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/memberInScopeFunction2.kt");
+            }
+
+            @TestMetadata("memberOuterScope.kt")
+            public void testMemberOuterScope() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/memberOuterScope.kt");
+            }
+
+            @TestMetadata("outerClassFunction.kt")
+            public void testOuterClassFunction() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/version1_1/outerClassFunction.kt");
+            }
         }
     }
 
@@ -8828,6 +8954,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("stringPlusStringLiteral.kt")
         public void testStringPlusStringLiteral() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/stringPlusStringLiteral.kt");
+        }
+
+        @TestMetadata("superToString.kt")
+        public void testSuperToString() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/superToString.kt");
         }
 
         @TestMetadata("templatePlusStringLiteral.kt")
@@ -12891,6 +13022,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             public void testSumByShorts() throws Exception {
                 runTest("testData/intentions/loopToCallChain/sum/sumByShorts.kt");
             }
+
+            @TestMetadata("sumOfDouble.kt")
+            public void testSumOfDouble() throws Exception {
+                runTest("testData/intentions/loopToCallChain/sum/sumOfDouble.kt");
+            }
+
+            @TestMetadata("sumOfInts.kt")
+            public void testSumOfInts() throws Exception {
+                runTest("testData/intentions/loopToCallChain/sum/sumOfInts.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -14074,6 +14215,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("arrayLiteralForVararg.kt")
         public void testArrayLiteralForVararg() throws Exception {
             runTest("testData/intentions/removeArgumentName/arrayLiteralForVararg.kt");
+        }
+
+        @TestMetadata("arrayLiteralForVararg2.kt")
+        public void testArrayLiteralForVararg2() throws Exception {
+            runTest("testData/intentions/removeArgumentName/arrayLiteralForVararg2.kt");
         }
 
         @TestMetadata("namedArgumentBefore.kt")
@@ -16213,9 +16359,44 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/samConversionToAnonymousObject/typeArgument.kt");
         }
 
+        @TestMetadata("typeArgument2.kt")
+        public void testTypeArgument2() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument2.kt");
+        }
+
+        @TestMetadata("typeArgument3.kt")
+        public void testTypeArgument3() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument3.kt");
+        }
+
+        @TestMetadata("typeArgument4.kt")
+        public void testTypeArgument4() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument4.kt");
+        }
+
+        @TestMetadata("typeArgument5.kt")
+        public void testTypeArgument5() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument5.kt");
+        }
+
+        @TestMetadata("typeArgument6.kt")
+        public void testTypeArgument6() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument6.kt");
+        }
+
+        @TestMetadata("typeArgument7.kt")
+        public void testTypeArgument7() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument7.kt");
+        }
+
         @TestMetadata("typeArgument_ni.kt")
         public void testTypeArgument_ni() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/typeArgument_ni.kt");
+        }
+
+        @TestMetadata("typeArgument_ni2.kt")
+        public void testTypeArgument_ni2() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument_ni2.kt");
         }
 
         @TestMetadata("underScoreParameters.kt")

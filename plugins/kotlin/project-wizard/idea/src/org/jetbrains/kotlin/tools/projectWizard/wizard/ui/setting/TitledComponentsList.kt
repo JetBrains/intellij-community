@@ -52,7 +52,7 @@ open class TitledComponentsList(
         fun JComponent.constraints() = layout.getConstraints(this)
 
         val componentsWithLabels = components.mapNotNull { component ->
-            if (!component.shouldBeShow()) return@mapNotNull null
+            if (!component.shouldBeShown()) return@mapNotNull null
             val label = label(component.title?.let { "$it:" }.orEmpty())
             val tooltip = component.tooltipText?.let { ContextHelpLabel.create(component.tooltipText.orEmpty()) }
 
@@ -72,9 +72,10 @@ open class TitledComponentsList(
             is TitleComponentAlignment.AlignFormTopWithPadding -> alignment.padding.asSpring()
         }
 
-        val maxLabelWidth = componentsWithLabels.fold(componentsWithLabels.first().label.width) { spring, row ->
-            Spring.max(spring, row.label.width)
-        }
+        val maxLabelWidth =
+            componentsWithLabels.fold(componentsWithLabels.firstOrNull()?.label?.width ?: Spring.constant(0)) { spring, row ->
+                Spring.max(spring, row.label.width)
+            }
 
         componentsWithLabels.forEach { (_, tooltipConst, component, _, _, componentMaxWidth) ->
             val maxWidth = componentMaxWidth ?: globalMaxWidth
@@ -88,13 +89,15 @@ open class TitledComponentsList(
         var lastLabel: SpringLayout.Constraints? = null
         var lastComponent: SpringLayout.Constraints? = null
 
+        val tooltipWidth = componentsWithLabels.find { it.tooltip != null }?.tooltip?.width
+
         for (data in componentsWithLabels) {
             val (label, tooltip, component) = data
             label.x = xPanelPadding.asSpring()
             tooltip?.x = label[SpringLayout.EAST] + xGap
             component.x = maxLabelWidth + 2 * xGap
-            if (tooltip != null)
-                component.x += tooltip.width + xGap
+            if (tooltipWidth != null)
+                component.x += tooltipWidth + xGap
 
             if (lastComponent != null && lastLabel != null) {
                 val constraint = lastComponent[SpringLayout.SOUTH] + yGap + data.additionalComponentGap

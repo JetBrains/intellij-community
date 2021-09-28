@@ -72,7 +72,7 @@ class WebServerPageConnectionService {
   /**
    * @return suffix to add to requested file in response
    */
-  fun fileRequested(request: FullHttpRequest, onlyIfHtmlFile: Boolean, fileSupplier: Supplier<out VirtualFile?>): CharSequence? {
+  fun fileRequested(request: FullHttpRequest, onlyIfHtmlFile: Boolean, fileSupplier: Supplier<out VirtualFile?>): String? {
     var reloadRequest = ReloadMode.DISABLED
     val uri = request.uri()
     if (uri != null && uri.contains(RELOAD_URL_PARAM)) {

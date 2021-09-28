@@ -31,7 +31,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
-import java.util.Collections;
 
 public abstract class GraphCommitCellController implements VcsLogCellController {
   @NotNull private final VcsLogData myLogData;

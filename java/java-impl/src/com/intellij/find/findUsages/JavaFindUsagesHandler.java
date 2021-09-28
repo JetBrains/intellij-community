@@ -146,9 +146,12 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
         boolean doSearch = !containsPhysical || myFactory.getFindVariableOptions().isSearchForAccessors;
         if (doSearch) {
           Set<PsiElement> elements = new HashSet<>();
-          if (myFactory.getFindVariableOptions().isSearchForBaseAccessors) {
-            for (PsiMethod accessor : accessors) {
-                ContainerUtil.addAll(elements, SuperMethodWarningUtil.getTargetMethodCandidates(accessor, Collections.emptyList()));
+          for (PsiMethod accessor : accessors) {
+            if (myFactory.getFindVariableOptions().isSearchForBaseAccessors) {
+              ContainerUtil.addAll(elements, SuperMethodWarningUtil.getTargetMethodCandidates(accessor, Collections.emptyList()));
+            }
+            else {
+              elements.add(accessor);
             }
           }
           return PsiUtilCore.toPsiElementArray(elements);

@@ -71,7 +71,9 @@ internal class LessonExecutor(val lesson: KLesson,
   data class TaskData(var shouldRestore: (() -> (() -> Unit)?)? = null,
                       var transparentRestore: Boolean? = null,
                       var highlightPreviousUi: Boolean? = null,
-                      var delayMillis: Int = 0)
+                      var propagateHighlighting: Boolean? = null,
+                      var checkRestoreByTimer: Int? = null,
+                      var delayBeforeRestore: Int = 0)
 
   private val taskActions: MutableList<TaskInfo> = ArrayList()
 
@@ -337,14 +339,17 @@ internal class LessonExecutor(val lesson: KLesson,
           }
         }
       }
-      if (taskData.delayMillis == 0) {
+      if (taskData.delayBeforeRestore == 0) {
         restoreIfNeeded()
       }
       else {
-        Alarm().addRequest(restoreIfNeeded, taskData.delayMillis)
+        Alarm().addRequest(restoreIfNeeded, taskData.delayBeforeRestore)
       }
     }
     currentRestoreFuture = restoreRecorder.futureCheck { checkFunction(); false }
+    taskData.checkRestoreByTimer?.let {
+      restoreRecorder.timerCheck(it) { checkFunction(); false }
+    }
   }
 
   private fun clearRestore() {
@@ -380,12 +385,16 @@ internal class LessonExecutor(val lesson: KLesson,
 
   private fun stepHasBeenCompleted(taskContext: TaskContextImpl, taskInfo: TaskInfo) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (!isTaskCompleted(taskContext)) return
+    // do not process the next step if step is not fully completed
+    // or lesson has been stopped during task completion (dialogs in Recent Files and Restore removed code lessons)
+    if (!isTaskCompleted(taskContext) || hasBeenStopped) return
 
     clearRestore()
     LessonManager.instance.passExercise()
-    if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
-    if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
+    if (taskContext.propagateHighlighting != false) {
+      if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
+      if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
+    }
     for (index in taskInfo.removeAfterDoneMessages) {
       LessonManager.instance.removeMessage(index)
     }

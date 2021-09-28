@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -219,46 +218,4 @@ public abstract class BaseDataReader {
       LOG.error(e);
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #start(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected void start() {
-    DeprecatedMethodException.report("Use start(String) instead");
-    start("");
-  }
-
-  /** @deprecated use one of default policies (recommended) or implement your own */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("NonAtomicOperationOnVolatileField")
-  public static class AdaptiveSleepingPolicy implements SleepingPolicy {
-    private static final int maxSleepTimeWhenIdle = 200;
-    private static final int maxIterationsWithCurrentSleepTime = 50;
-
-    private volatile int myIterationsWithCurrentTime;
-    private volatile int myCurrentSleepTime = sleepTimeWhenIdle;
-
-    @Override
-    public int getTimeToSleep(boolean wasActive) {
-      int currentSleepTime = myCurrentSleepTime; // volatile read
-      if (wasActive) currentSleepTime = sleepTimeWhenWasActive;
-      else if (currentSleepTime == sleepTimeWhenWasActive) {
-        currentSleepTime = sleepTimeWhenIdle;
-        myIterationsWithCurrentTime = 0;
-      }
-      else {
-        int iterationsWithCurrentTime = ++myIterationsWithCurrentTime;
-        if (iterationsWithCurrentTime >= maxIterationsWithCurrentSleepTime) {
-          myIterationsWithCurrentTime = 0;
-          currentSleepTime = Math.min(2* currentSleepTime, maxSleepTimeWhenIdle);
-        }
-      }
-
-      myCurrentSleepTime = currentSleepTime; // volatile write
-      return currentSleepTime;
-    }
-  }
-  //</editor-fold>
 }

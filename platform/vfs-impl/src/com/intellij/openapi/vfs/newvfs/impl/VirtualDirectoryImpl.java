@@ -550,8 +550,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     String name = ourPersistence.getName(id);
     VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
-    if (fileByName != null) {
-      LOG.assertTrue(fileByName.getId() == id, "Name storage is in inconsistent state");
+    if (fileByName != null && fileByName.getId() != id) {
+      String message =
+        "Name storage is in inconsistent state: name id consistency = " + (fileByName.getNameId() == FSRecords.getNameId(name));
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        int actualId = fileByName.getId();
+        String childrenIds;
+        synchronized (myData) {
+          childrenIds = Arrays.toString(myData.myChildrenIds);
+        }
+        message += "\nexpected path = " + VfsImplUtil.getRecordPath(id) + ", id path = " + VfsImplUtil.getRecordIdPath(id) +
+                   "\nactual path = " + VfsImplUtil.getRecordPath(actualId) + ", id path = " + VfsImplUtil.getRecordIdPath(actualId) +
+                   "\ncontaining dir children ids = " + childrenIds +
+                   "\ncontaining dir children = " + ContainerUtil.map(getChildren(), f -> f.getName());
+      }
+      LOG.error(message);
     }
     return fileByName;
   }

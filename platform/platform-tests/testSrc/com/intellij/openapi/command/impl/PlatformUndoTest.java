@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.WriteAction;
@@ -9,7 +9,9 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +20,10 @@ import java.beans.PropertyChangeListener;
 
 public class PlatformUndoTest extends LightPlatformTestCase {
   public void testIncorrectFileEditorDoesNotCauseHanging() {
+    LightVirtualFile file = new LightVirtualFile(getTestName(false));
     Document d1 = EditorFactory.getInstance().createDocument("");
     Document d2 = EditorFactory.getInstance().createDocument("");
-    FileEditor fileEditor = new IncorrectFileEditor(d1, d2);
+    FileEditor fileEditor = new IncorrectFileEditor(file, d1, d2);
     runWithCurrentEditor(fileEditor, () -> {
       WriteAction.run(() -> {
         CommandProcessor.getInstance().runUndoTransparentAction(() -> d1.insertString(0, " "));
@@ -57,10 +60,18 @@ public class PlatformUndoTest extends LightPlatformTestCase {
 
   private static final class IncorrectFileEditor extends UserDataHolderBase implements DocumentsEditor {
     private final JComponent myComponent = new JPanel();
+    private final VirtualFile myFile;
     private final Document[] myDocuments;
 
-    private IncorrectFileEditor(Document @NotNull ... documents) {myDocuments = documents;}
+    private IncorrectFileEditor(VirtualFile file, Document... documents) {
+      myFile = file;
+      myDocuments = documents;
+    }
 
+    @Override
+    public VirtualFile getFile() {
+      return myFile;
+    }
     @Override
     public Document @NotNull [] getDocuments() {
       return myDocuments;

@@ -11,10 +11,11 @@ import com.siyeh.ig.psiutils.SerializationUtils
 import com.siyeh.ig.ui.UiUtils
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.uast.UElement
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-abstract class USerializableInspectionBase : AbstractBaseUastLocalInspectionTool() {
+abstract class USerializableInspectionBase(vararg hint: Class<out UElement>) : AbstractBaseUastLocalInspectionTool(*hint) {
   var ignoreAnonymousInnerClasses = false
 
   private var superClassString: @NonNls String = "java.awt.Component"

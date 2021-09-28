@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.UtilBundle;
@@ -38,14 +38,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,16 +65,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final SeverityRegistrar mySeverityRegistrar;
   private final TObjectIntHashMap<HighlightSeverity> errorCount = new TObjectIntHashMap<>();
   private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
-
-  /**
-   * @deprecated Please use {@link #TrafficLightRenderer(Project, Document)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public TrafficLightRenderer(Project project, Document document, PsiFile psiFile) {
-    this(project, document);
-    DeprecatedMethodException.report("Please use TrafficLightRenderer(Project, Document) instead");
-  }
 
   public TrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
     myProject = project;
@@ -109,15 +97,14 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     return PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
   }
 
-  @NotNull
-  public SeverityRegistrar getSeverityRegistrar() {
+  public @NotNull SeverityRegistrar getSeverityRegistrar() {
     return mySeverityRegistrar;
   }
 
   /**
-   * @return new instance of array filled with number of highlighters with a given severity.
-   * errorCount[idx] == number of highlighters of severity with index idx in this markup model.
-   * severity index can be obtained via com.intellij.codeInsight.daemon.impl.SeverityRegistrar#getSeverityIdx(com.intellij.lang.annotation.HighlightSeverity)
+   * Returns a new instance of an array filled with a number of highlighters with a given severity.
+   * {@code errorCount[idx]} equals to a number of highlighters of severity with index {@code idx} in this markup model.
+   * Severity index can be obtained via `SeverityRegistrar#getSeverityIdx(HighlightSeverity)`.
    */
   protected int @NotNull [] getErrorCount() {
     return cachedErrors.clone();
@@ -160,19 +147,16 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   protected static final class DaemonCodeAnalyzerStatus {
-    public boolean errorAnalyzingFinished; // all passes done
+    public boolean errorAnalyzingFinished;  // all passes are done
     List<ProgressableTextEditorHighlightingPass> passes = Collections.emptyList();
     public int[] errorCount = ArrayUtilRt.EMPTY_INT_ARRAY;
-    @Nls
-    public String reasonWhyDisabled;
-    @Nls
-    public String reasonWhySuspended;
+    public @Nls String reasonWhyDisabled;
+    public @Nls String reasonWhySuspended;
 
     private HeavyProcessLatch.Type heavyProcessType;
-    private boolean fullInspect = true; // By default full inspect mode is expected
+    private boolean fullInspect = true;  // by default, full inspect mode is expected
 
-    public DaemonCodeAnalyzerStatus() {
-    }
+    public DaemonCodeAnalyzerStatus() { }
 
     @Override
     public String toString() {
@@ -186,8 +170,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
   }
 
-  @NotNull
-  protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
+  protected @NotNull DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
     PsiFile psiFile = getPsiFile();
     if (psiFile == null) {
@@ -278,8 +261,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   @Override
-  @NotNull
-  public AnalyzerStatus getStatus() {
+  public @NotNull AnalyzerStatus getStatus() {
     if (PowerSaveMode.isEnabled()) {
       return new AnalyzerStatus(AllIcons.General.InspectionsPowerSaveMode,
                                 InspectionsBundle.message("code.analysis.is.disabled.in.power.save.mode"),
@@ -362,20 +344,18 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
   }
 
-  @NotNull
-  protected UIController createUIController() {
+  protected @NotNull UIController createUIController() {
     return new SimplifiedUIController();
   }
 
-  @NotNull
-  protected final UIController createUIController(@NotNull Editor editor) {
+  protected final @NotNull UIController createUIController(@NotNull Editor editor) {
     boolean mergeEditor = editor.getUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG) == Boolean.TRUE;
     return editor.getEditorKind() == EditorKind.DIFF && !mergeEditor ? new SimplifiedUIController() : new DefaultUIController();
   }
   
   protected abstract class AbstractUIController implements UIController {
     private final boolean inLibrary;
-    private final List<LanguageHighlightLevel> myLevelsList;
+    private final List<LanguageHighlightLevel> myLevelList;
     private List<HectorComponentPanel> myAdditionalPanels = Collections.emptyList();
 
     AbstractUIController() {
@@ -390,7 +370,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         inLibrary = false;
       }
 
-      myLevelsList = initLevels();
+      myLevelList = initLevels();
     }
 
     private @NotNull List<LanguageHighlightLevel> initLevels() {
@@ -408,21 +388,19 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     @Override
-    @NotNull
-    public List<InspectionsLevel> getAvailableLevels() {
+    public @NotNull List<InspectionsLevel> getAvailableLevels() {
       return inLibrary ? Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX) : Arrays.asList(InspectionsLevel.values());
     }
 
-    @NotNull
     @Override
-    public List<LanguageHighlightLevel> getHighlightLevels() {
-      return Collections.unmodifiableList(myLevelsList);
+    public @NotNull List<LanguageHighlightLevel> getHighlightLevels() {
+      return Collections.unmodifiableList(myLevelList);
     }
 
     @Override
     public void setHighLightLevel(@NotNull LanguageHighlightLevel level) {
       PsiFile psiFile = getPsiFile();
-      if (psiFile != null && !getProject().isDisposed() && !myLevelsList.contains(level)) {
+      if (psiFile != null && !getProject().isDisposed() && !myLevelList.contains(level)) {
         FileViewProvider viewProvider = psiFile.getViewProvider();
 
         Language language = Language.findLanguageByID(level.getLangID());
@@ -438,7 +416,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
             HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.FORCE_HIGHLIGHTING);
           }
 
-          myLevelsList.replaceAll(l -> l.getLangID().equals(level.getLangID()) ? level : l);
+          myLevelList.replaceAll(l -> l.getLangID().equals(level.getLangID()) ? level : l);
 
           InjectedLanguageManager.getInstance(getProject()).dropFileCaches(psiFile);
           myDaemonCodeAnalyzer.restart();
@@ -463,6 +441,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
             throw e;
           }
           catch (Throwable e) {
+            //noinspection LoggerInitializedWithForeignClass
             Logger.getInstance(TrafficLightRenderer.class).error(e);
             continue;
           }
@@ -479,7 +458,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       if (myAdditionalPanels.isEmpty()) {
         return true;
       }
-      if (myAdditionalPanels.stream().allMatch(p -> p.canClose())) {
+      if (ContainerUtil.and(myAdditionalPanels, p -> p.canClose())) {
         PsiFile psiFile = getPsiFile();
         if (myAdditionalPanels.stream().filter(p -> p.isModified()).peek(TrafficLightRenderer::applyPanel).count() > 0) {
           if (psiFile != null) {
@@ -512,8 +491,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     catch (ConfigurationException ignored) {}
   }
 
-  @NotNull
-  private static InspectionsLevel getHighlightLevel(boolean highlight, boolean inspect) {
+  private static @NotNull InspectionsLevel getHighlightLevel(boolean highlight, boolean inspect) {
     if (!highlight && !inspect) return InspectionsLevel.NONE;
     else if (highlight && !inspect) return InspectionsLevel.SYNTAX;
     else return InspectionsLevel.ALL;
@@ -583,9 +561,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       return false;
     }
 
-    @NotNull
     @Override
-    public List<AnAction> getActions() {
+    public @NotNull List<AnAction> getActions() {
       return Collections.emptyList();
     }
   }

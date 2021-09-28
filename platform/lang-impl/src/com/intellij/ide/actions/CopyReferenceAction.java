@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -106,6 +107,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     highlight(editor, project, elements);
   }
 
+  @NlsSafe
   protected String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
     return CopyReferenceUtil.doCopy(elements, editor);
   }

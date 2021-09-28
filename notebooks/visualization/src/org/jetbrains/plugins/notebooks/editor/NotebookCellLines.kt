@@ -3,7 +3,6 @@ package org.jetbrains.plugins.notebooks.editor
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.EventDispatcher
-import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 val NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY = DataKey.create<NotebookCellLines.Interval>("NOTEBOOK_CELL_LINES_INTERVAL")
@@ -32,10 +31,18 @@ interface NotebookCellLines {
     override fun compareTo(other: Marker): Int = offset - other.offset
   }
 
+  enum class MarkersAtLines(val hasTopLine: Boolean, val hasBottomLine: Boolean) {
+    NO(false, false),
+    TOP(true, false),
+    BOTTOM(false, true),
+    TOP_AND_BOTTOM(true, true)
+  }
+
   data class Interval(
     val ordinal: Int,
     val type: CellType,
-    val lines: IntRange
+    val lines: IntRange,
+    val markers: MarkersAtLines,
   ) : Comparable<Interval> {
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
   }
@@ -62,15 +69,9 @@ interface NotebookCellLines {
     fun segmentChanged(oldIntervals: List<Interval>, newIntervals: List<Interval>)
   }
 
-  fun getIterator(ordinal: Int): ListIterator<Interval>
-
-  fun getIterator(interval: Interval): ListIterator<Interval>
-
-  fun markersIterator(startOffset: Int = 0): ListIterator<Marker>
-
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
 
-  val intervalsCount: Int
+  val intervals: List<Interval>
 
   val intervalListeners: EventDispatcher<IntervalListener>
 
@@ -81,8 +82,7 @@ interface NotebookCellLines {
       editor.notebookCellLinesProvider?.create(editor.document)
       ?: error("Can't get for $editor with document ${editor.document}")
 
-    /** It's uneasy to change a registry value inside tests. */   // TODO Lies! See SshX11ForwardingTest.
-    @TestOnly
-    var overriddenBinarySearchThreshold: Int? = null
+    fun hasSupport(editor: Editor): Boolean =
+      editor.notebookCellLinesProvider != null
   }
 }

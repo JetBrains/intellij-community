@@ -373,7 +373,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @NotNull
     @Override
     public String getFamilyName() {
-      return JavaBundle.message("inspection.handle.signature.replace.with.fix.name", myReplacementName);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementName);
     }
 
     @Override

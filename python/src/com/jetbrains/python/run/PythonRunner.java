@@ -60,7 +60,6 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
         if (useTargetsAPI && state instanceof PythonCommandLineState) {
           // TODO [cloud-api.python] profile functionality must be applied here:
           //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineFirst() - host:port is put in user data
-          //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineForBuildout()
           executionResult = ((PythonCommandLineState)state).execute(env.getExecutor());
         }
         else if (!useTargetsAPI && state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {

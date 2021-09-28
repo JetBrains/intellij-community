@@ -35,7 +35,8 @@ import java.util.ArrayList
  *
  * For each type short name and fqName is provided (see [TypeInlayInfoDetail]).
  */
-class HintsTypeRenderer private constructor(val options: HintsDescriptorRendererOptions) {
+class HintsTypeRenderer private constructor(override val options: HintsDescriptorRendererOptions) : KotlinIdeDescriptorRenderer(options) {
+
     init {
         check(options.isLocked) { "options have not been locked yet to prevent mutability" }
         check(options.textFormat == RenderingFormat.PLAIN) { "only PLAIN text format is supported" }
@@ -43,30 +44,19 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
         check(!options.renderTypeExpansions) { "Type expansion rendering is unsupported" }
     }
 
-    private val renderer = DescriptorRenderer.COMPACT_WITH_SHORT_TYPES.withOptions {}
+    private val renderer = COMPACT_WITH_SHORT_TYPES.withOptions {}
 
     @Suppress("SuspiciousCollectionReassignment")
     private val functionTypeAnnotationsRenderer: HintsTypeRenderer by lazy {
-        withOptions {
+        HintsTypeRenderer.withOptions {
             excludedTypeAnnotationClasses += listOf(StandardNames.FqNames.extensionFunctionType)
         }
     }
 
-    /* FORMATTING */
-    private fun renderError(keyword: String): String = keyword
-
-    private fun escape(string: String) = options.textFormat.escape(string)
-
-    private fun lt() = escape("<")
-    private fun gt() = escape(">")
-
-    private fun arrow(): String = escape("->")
-
-    /* NAMES RENDERING */
     private fun renderName(name: Name): String = escape(name.render())
 
     /* TYPES RENDERING */
-    fun renderType(type: KotlinType): List<InlayInfoDetail> {
+    fun renderTypeIntoInlayInfo(type: KotlinType): List<InlayInfoDetail> {
         val list = mutableListOf<InlayInfoDetail>()
         return options.typeNormalizer.invoke(type).renderNormalizedTypeTo(list)
     }
@@ -110,6 +100,7 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
             return
         }
         when (val unwrappedType = this.unwrap()) {
+            // KTIJ-19098: platform type (e.g. `String!`) is rendered like a plain text `String!` w/o fqName link
             is FlexibleType -> list.append(unwrappedType.render(renderer, options))
             is SimpleType -> unwrappedType.renderSimpleTypeTo(list)
         }
@@ -138,10 +129,6 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
         } else {
             this.renderDefaultTypeTo(list)
         }
-    }
-
-    private fun shouldRenderAsPrettyFunctionType(type: KotlinType): Boolean {
-        return type.isBuiltinFunctionalType && type.arguments.none { it.isStarProjection }
     }
 
     private fun List<TypeProjection>.renderTypeArgumentsTo(list: MutableList<InlayInfoDetail>) {
@@ -212,7 +199,7 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
         list.append(text, this.declarationDescriptor)
     }
 
-    fun renderClassifierName(klass: ClassifierDescriptor): String = if (ErrorUtils.isError(klass)) {
+    override fun renderClassifierName(klass: ClassifierDescriptor): String = if (ErrorUtils.isError(klass)) {
         klass.typeConstructor.toString()
     } else
         options.hintsClassifierNamePolicy.renderClassifier(klass, this)
@@ -283,9 +270,6 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
         if (isNullable) list.append("?")
     }
 
-    private fun KotlinType.hasModifiersOrAnnotations() =
-        isSuspendFunctionType || !annotations.isEmpty()
-
     fun TypeProjection.renderTypeProjectionTo(list: MutableList<InlayInfoDetail>) =
         listOf(this).appendTypeProjectionsTo(list)
 
@@ -297,7 +281,7 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
             if (next.isStarProjection) {
                 list.append("*")
             } else {
-                val renderedType = renderType(next.type)
+                val renderedType = renderTypeIntoInlayInfo(next.type)
                 if (next.projectionKind != Variance.INVARIANT) {
                     list.append("${next.projectionKind} ")
                 }
@@ -331,18 +315,14 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
         }
     }
 
-    private fun AnnotationDescriptor.isParameterName(): Boolean {
-        return fqName == StandardNames.FqNames.parameterName
-    }
-
-    fun renderAnnotation(annotation: AnnotationDescriptor, target: AnnotationUseSiteTarget?): String {
+    override fun renderAnnotation(annotation: AnnotationDescriptor, target: AnnotationUseSiteTarget?): String {
         return buildString {
             append('@')
             if (target != null) {
                 append(target.renderName + ":")
             }
             val annotationType = annotation.type
-            append(renderType(annotationType))
+            append(renderTypeIntoInlayInfo(annotationType))
         }
     }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -143,7 +144,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         row {
           checkBox(enableWheelFontChange).also { chkEnableWheelFontSizeChange = it.component }
           row {
-            cell {
+            cell(isFullWidth = true) {
               buttonGroup({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it }) {
                 radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.current"), false).enableIf(chkEnableWheelFontSizeChange.selected)
                 radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.all"), true).enableIf(chkEnableWheelFontSizeChange.selected)
@@ -307,8 +308,10 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      titledRow(message("group.quick.documentation")) {
-        row { checkBox(cdShowQuickDocOnMouseMove) }
+      if (!AccessibilityUtils.isScreenReaderDetected()) {
+        titledRow(message("group.quick.documentation")) {
+          row { checkBox(cdShowQuickDocOnMouseMove) }
+        }
       }
       if (!EditorOptionsPageCustomizer.EP_NAME.extensions().anyMatch { it.shouldHideRefactoringsSection() }) {
         titledRow(message("group.refactorings")) {

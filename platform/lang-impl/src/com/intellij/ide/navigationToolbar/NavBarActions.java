@@ -7,7 +7,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
 public abstract class NavBarActions extends AnAction implements DumbAware {
   NavBarActions() {

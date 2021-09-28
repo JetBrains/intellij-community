@@ -721,7 +721,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
-    if (LangDataKeys.MODULE.is(dataId)) {
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
       Module module = selection.get().filter(Module.class).first();
       if (module != null && !module.isDisposed()) return module;
       PsiElement element = selection.get().filter(PsiElement.class).first();
@@ -762,7 +762,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return elements.isEmpty() ? null : elements.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
     }
 
-    if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) {
       return this;
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -858,7 +858,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       myUpdateQueue.rebuildUi();
       if (editor == null) {
-        myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+        myContextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
         getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
           final Component owner = focusManager.getFocusOwner();
           final Component cmp = relativePoint.getComponent();
@@ -898,7 +898,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         }
         else {
           dataManager.getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
-            myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+            myContextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
             DataContext ctx = dataManager.getDataContext(myContextComponent);
             myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(ctx);
           });

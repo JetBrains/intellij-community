@@ -3,28 +3,35 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.containsInside
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.utils.checkWithAttachment
 
 @Suppress("EqualsOrHashCode")
 abstract class SelfTargetingIntention<TElement : PsiElement>(
     val elementType: Class<TElement>,
+    @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
     private var textGetter: () -> @IntentionName String,
+    @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
     private val familyNameGetter: () -> @IntentionFamilyName String = textGetter,
 ) : IntentionAction {
     @Deprecated("Replace with primary constructor", ReplaceWith("SelfTargetingIntention<TElement>(elementType, { text }, { familyName })"))
@@ -35,6 +42,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
     ) : this(elementType, { text }, { familyName })
 
     protected val defaultText: @IntentionName String get() = defaultTextGetter()
+    @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
     protected val defaultTextGetter: () -> @IntentionName String = textGetter
 
     @Deprecated("Replace with `setTextGetter`", ReplaceWith("setTextGetter { text }"))
@@ -53,6 +61,8 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
 
     abstract fun applyTo(element: TElement, editor: Editor?)
 
+    protected open val isKotlinOnlyIntention: Boolean = true
+
     fun getTarget(offset: Int, file: PsiFile): TElement? {
         val leaf1 = file.findElementAt(offset)
         val leaf2 = file.findElementAt(offset - 1)
@@ -65,15 +75,32 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
 
         for (element in elementsToCheck) {
             @Suppress("UNCHECKED_CAST")
-            if (elementType.isInstance(element) && isApplicableTo(element as TElement, offset)) {
-                return element
+            if (elementType.isInstance(element)) {
+                ProgressManager.checkCanceled()
+                if (isApplicableTo(element as TElement, offset)) {
+                    return element
+                }
             }
-            if (!allowCaretInsideElement(element) && element.textRange.containsInside(offset)) break
+
+            if (!allowCaretInsideElement(element)) {
+                val elementTextRange = element.textRange
+                checkWithAttachment(elementTextRange != null, {
+                    "No text range defined for the ${if (element.isValid) "valid" else "invalid"} element $element"
+                }) {
+                    it.withAttachment("intention.txt", this::class)
+                    it.withPsiAttachment("element.kt", element)
+                    it.withPsiAttachment("file.kt", element.containingFile)
+                }
+
+                if (elementTextRange.containsInside(offset)) break
+            }
         }
         return null
     }
 
     fun getTarget(editor: Editor, file: PsiFile): TElement? {
+        if (isKotlinOnlyIntention && file !is KtFile) return null
+
         val offset = editor.caretModel.offset
         return getTarget(offset, file)
     }
@@ -81,7 +108,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
     protected open fun allowCaretInsideElement(element: PsiElement): Boolean = element !is KtBlockExpression
 
     final override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             CREATE_BY_PATTERN_MAY_NOT_REFORMAT = true
         }
         try {
@@ -91,6 +118,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
         }
     }
 
+    @FileModifier.SafeFieldForPreview // inspection should not depend on the file where the fix is applied
     var inspection: IntentionBasedInspection<TElement>? = null
         internal set
 
@@ -105,7 +133,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
      * If [startInWriteAction] returns true, that means that the platform already called `preparePsiElementForWrite`
      * for us (we do not want to call it again because it will throw if the intention is used with Intention Preview).
      *
-     * Otherwise we have to call it ourselves (see javadoc for [getElementToMakeWritable]).
+     * Otherwise, we have to call it ourselves (see javadoc for [getElementToMakeWritable]).
      */
     private fun preparePsiElementForWriteIfNeeded(target: TElement): Boolean {
         if (startInWriteAction()) return true

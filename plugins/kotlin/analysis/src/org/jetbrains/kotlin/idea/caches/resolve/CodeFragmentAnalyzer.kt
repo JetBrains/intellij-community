@@ -66,7 +66,7 @@ class CodeFragmentAnalyzer(
 
     private fun analyzeCodeFragmentContext(codeFragment: KtCodeFragment, bodyResolveMode: BodyResolveMode): ContextInfo {
         fun resolutionFactory(element: KtElement): BindingContext {
-            return resolveElementCache.resolveToElements(listOf(element), bodyResolveMode)
+            return resolveElementCache.resolveToElement(element, bodyResolveMode)
         }
 
         val context = refineContextElement(codeFragment.context)

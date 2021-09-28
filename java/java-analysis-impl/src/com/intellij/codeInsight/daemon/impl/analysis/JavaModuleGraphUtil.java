@@ -21,6 +21,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -90,30 +91,47 @@ public final class JavaModuleGraphUtil {
   }
 
   public static @Nullable PsiJavaModule findDescriptorByModule(@Nullable Module module, boolean inTests) {
-    if (module != null) {
-      Project project = module.getProject();
-      JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-      List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(rootType);
-      List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
-      if (files.size() == 1) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
-        if (psiFile instanceof PsiJavaFile) {
-          return ((PsiJavaFile)psiFile).getModuleDeclaration();
-        }
+    if (module == null) return null;
+    CachedValuesManager valuesManager = CachedValuesManager.getManager(module.getProject());
+    PsiJavaModule javaModule = inTests //to have different providers for production and tests
+                            ? valuesManager.getCachedValue(module, () -> createModuleCacheResult(module, true))
+                            : valuesManager.getCachedValue(module, () -> createModuleCacheResult(module, false));
+    return javaModule != null && javaModule.isValid() ? javaModule : null;
+  }
+
+  @NotNull
+  private static Result<PsiJavaModule> createModuleCacheResult(@NotNull Module module,
+                                                               boolean inTests) {
+    Project project = module.getProject();
+    return new Result<>(findDescriptionByModuleInner(module, inTests), 
+                        ProjectRootModificationTracker.getInstance(project), 
+                        PsiModificationTracker.SERVICE.getInstance(project));
+  }
+
+  @Nullable
+  private static PsiJavaModule findDescriptionByModuleInner(@NotNull Module module, boolean inTests) {
+    Project project = module.getProject();
+    JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+    List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(rootType);
+    List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
+    if (files.size() == 1) {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
+      if (psiFile instanceof PsiJavaFile) {
+        return ((PsiJavaFile)psiFile).getModuleDeclaration();
       }
-      else if (files.isEmpty()) {
-        files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
-        if (files.size() == 1) {
-          VirtualFile manifest = files.get(0);
-          PsiFile manifestPsi = PsiManager.getInstance(project).findFile(manifest);
-          assert manifestPsi != null : manifest;
-          return CachedValuesManager.getCachedValue(manifestPsi, () -> {
-            String name = LightJavaModule.claimedModuleName(manifest);
-            LightJavaModule result =
-              name != null ? LightJavaModule.create(PsiManager.getInstance(project), manifest.getParent().getParent(), name) : null;
-            return Result.create(result, manifestPsi, ProjectRootModificationTracker.getInstance(project));
-          });
-        }
+    }
+    else if (files.isEmpty()) {
+      files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
+      if (files.size() == 1) {
+        VirtualFile manifest = files.get(0);
+        PsiFile manifestPsi = PsiManager.getInstance(project).findFile(manifest);
+        assert manifestPsi != null : manifest;
+        return CachedValuesManager.getCachedValue(manifestPsi, () -> {
+          String name = LightJavaModule.claimedModuleName(manifest);
+          LightJavaModule result =
+            name != null ? LightJavaModule.create(PsiManager.getInstance(project), manifest.getParent().getParent(), name) : null;
+          return Result.create(result, manifestPsi, ProjectRootModificationTracker.getInstance(project));
+        });
       }
     }
 
@@ -158,9 +176,20 @@ public final class JavaModuleGraphUtil {
   private static @NotNull List<Set<PsiJavaModule>> findCycles(Project project) {
     Set<PsiJavaModule> projectModules = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      List<PsiJavaModule> descriptors = ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getSourceRoots(true),
+      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      List<PsiJavaModule> descriptors = ContainerUtil.mapNotNull(moduleRootManager.getSourceRoots(true),
         root -> findDescriptorByFile(root, project));
-      if (descriptors.size() > 1) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
+      if (descriptors.size() > 2) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
+
+      if (descriptors.size() == 2) {
+        if (descriptors.stream()
+              .map(d -> PsiUtilCore.getVirtualFile(d))
+              .filter(Objects::nonNull)
+              .map(moduleRootManager.getFileIndex()::isInTestSourceContent).count() < 2) {
+          return Collections.emptyList();
+        }
+        projectModules.addAll(descriptors);
+      }
       if (descriptors.size() == 1) projectModules.add(descriptors.get(0));
     }
 

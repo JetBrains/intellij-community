@@ -43,13 +43,13 @@
       }
     },
 
-    "AssignedMnemonic": {
+    "BookmarkMnemonicAssigned": {
       "background": "#665632",
       "borderColor": "#665632",
       "foreground": "#BBBBBB"
     },
 
-    "AvailableMnemonic": {
+    "BookmarkMnemonicAvailable": {
       "background": "#3C3F41",
       "borderColor": "#5E6060",
       "foreground": "#BBBBBB"
@@ -123,7 +123,7 @@
       "warningFocusColor": "#AC7920"
     },
 
-    "CurrentMnemonic": {
+    "BookmarkMnemonicCurrent": {
       "background": "#345F85",
       "borderColor": "#345F85",
       "foreground": "#FEFEFE"
@@ -300,9 +300,9 @@
 
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-      "borderInsets": "8,1,8,1",
-      "borderCornerRadiusX": 14,
-      "borderCornerRadiusY": 12,
+      "borderInsets": "6,1,6,1",
+      "borderCornerRadiusX": 16,
+      "borderCornerRadiusY": 16,
       "leftBorderWith": 10,
       "rightBorderWith": 0,
       "translucentBackground": "#3c3f41",
@@ -313,7 +313,7 @@
       "height": 9,
       "stripeWidth": 1,
       "stripeIndent": 4,
-      "withToEdge": 12,
+      "withToEdge": 10,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
     },
 
@@ -504,6 +504,7 @@
     "infoText": "#bbbbbb",
     "text.grayFilter": "-15,-10,100",
     "text": "#bbbbbb",
+    "textInactiveText" : "#808080",
     "textText": "#bbbbbb",
     "window": "#3c3f41"
   },

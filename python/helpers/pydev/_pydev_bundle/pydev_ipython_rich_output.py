@@ -6,6 +6,7 @@ from IPython.core.displaypub import DisplayPublisher
 
 
 class PyDevDisplayHook(DisplayHook):
+    """ Used for execution result """
     def write_format_data(self, format_dict, *args, **kwargs):
         if not is_supported(format_dict):
             super(PyDevDisplayHook, self).write_format_data(format_dict, *args,
@@ -15,10 +16,12 @@ class PyDevDisplayHook(DisplayHook):
             text = format_dict["text/plain"]
             if len(text) > 0 and not text.endswith("\n"):
                 format_dict["text/plain"] = text + "\n"
+        format_dict["execution_count"] = str(self.shell.execution_count)
         send_rich_output(format_dict)
 
 
 class PyDevDisplayPub(DisplayPublisher):
+    """ Used for display() function """
     def publish(self, data, *args, **kwargs):
         if not is_supported(data):
             super(PyDevDisplayPub, self).publish(data, *args, **kwargs)
@@ -52,7 +55,8 @@ def send_rich_output(data):
     if client:
         client.sendRichOutput(data)
     else:
-        print("Client is None!")
+        sys.stderr.write("Client is None!\n")
+        sys.stderr.flush()
 
 
 def patch_stdout():

@@ -33,7 +33,7 @@ public final class ThreadDumper {
   }
 
   @NotNull
-  public static String dumpEdtStackTrace(ThreadInfo[] threadInfos) {
+  public static String dumpEdtStackTrace(ThreadInfo @NotNull [] threadInfos) {
     StringWriter writer = new StringWriter();
     if (threadInfos.length > 0) {
       StackTraceElement[] trace = threadInfos[0].getStackTrace();
@@ -47,7 +47,7 @@ public final class ThreadDumper {
   }
 
   @NotNull
-  public static ThreadDump getThreadDumpInfo(ThreadInfo[] threadInfos) {
+  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos) {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);

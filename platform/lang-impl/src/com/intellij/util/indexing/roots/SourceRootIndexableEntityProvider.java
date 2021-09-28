@@ -2,68 +2,60 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class SourceRootIndexableEntityProvider implements IndexableEntityProvider {
+class SourceRootIndexableEntityProvider implements IndexableEntityProvider.ModuleEntityDependent<SourceRootEntity>,
+                                                   IndexableEntityProvider.Existing<SourceRootEntity> {
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull WorkspaceEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project)
-    throws IndexableEntityResolvingException {
-    if (entity instanceof SourceRootEntity) {
-      SourceRootEntity sourceRootEntity = (SourceRootEntity)entity;
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(sourceRootEntity.getContentRoot().getModule(),
-                                                                     getVirtualFile(sourceRootEntity),
-                                                                     project);
+  public @NotNull Class<SourceRootEntity> getEntityClass() {
+    return SourceRootEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
+                                                                                                      @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                                      @NotNull Project project) {
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.persistentId(), collectRootUrls(entity.getSourceRoots()));
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull SourceRootEntity entity,
+                                                                                                @NotNull Project project) {
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getContentRoot().getModule().persistentId(), entity.getUrl());
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull SourceRootEntity oldEntity,
+                                                                                                   @NotNull SourceRootEntity newEntity) {
+    if (!(newEntity.getUrl().equals(oldEntity.getUrl())) || !newEntity.getRootType().equals(oldEntity.getRootType())) {
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getContentRoot().getModule().persistentId(), newEntity.getUrl());
     }
     return Collections.emptyList();
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull WorkspaceEntity oldEntity,
-                                                                                         @NotNull WorkspaceEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project)
-    throws IndexableEntityResolvingException {
-    if (newEntity instanceof ModuleEntity) {
-      List<VirtualFile> newRoots = collectRoots(((ModuleEntity)newEntity).getSourceRoots());
-      List<VirtualFile> oldRoots = collectRoots(((ModuleEntity)oldEntity).getSourceRoots());
-      return IndexableEntityProviderMethods.INSTANCE.createIterators((ModuleEntity)newEntity, newRoots, oldRoots, project);
-    }
-    else if (newEntity instanceof SourceRootEntity) {
-      SourceRootEntity newSourceRoot = (SourceRootEntity)newEntity;
-      SourceRootEntity oldSourceRoot = (SourceRootEntity)oldEntity;
-
-      if (!(newSourceRoot.getUrl().equals(oldSourceRoot.getUrl())) || !newSourceRoot.getRootType().equals(oldSourceRoot.getRootType())) {
-        return IndexableEntityProviderMethods.INSTANCE.createIterators(newSourceRoot.getContentRoot().getModule(),
-                                                                       getVirtualFile(newSourceRoot), project);
-      }
-    }
-    return Collections.emptyList();
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedModuleEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
+                                                                                                        @NotNull ModuleEntity newEntity,
+                                                                                                        @NotNull Project project) {
+    List<VirtualFileUrl> newRoots = collectRootUrls(newEntity.getSourceRoots());
+    List<VirtualFileUrl> oldRoots = collectRootUrls(oldEntity.getSourceRoots());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.persistentId(), newRoots, oldRoots);
   }
 
   @NotNull
-  private static List<VirtualFile> collectRoots(Sequence<SourceRootEntity> newContentRoots) {
-    return SequencesKt.toList(SequencesKt.mapNotNull(newContentRoots, root -> getVirtualFile(root)));
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFile(@NotNull SourceRootEntity sourceRoot) {
-    VirtualFilePointer url = (VirtualFilePointer)sourceRoot.getUrl();
-    return url.getFile();
+  private static List<VirtualFileUrl> collectRootUrls(Sequence<SourceRootEntity> newContentRoots) {
+    return SequencesKt.toList(SequencesKt.mapNotNull(newContentRoots, root -> root.getUrl()));
   }
 }

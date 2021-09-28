@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -27,7 +28,7 @@ public class MacroAwareTextBrowseFolderListener extends TextBrowseFolderListener
 
     Module module = myFileChooserDescriptor.getUserData(LangDataKeys.MODULE_CONTEXT);
     if (module == null) {
-      module = myFileChooserDescriptor.getUserData(LangDataKeys.MODULE);
+      module = myFileChooserDescriptor.getUserData(PlatformCoreDataKeys.MODULE);
     }
     if (module != null) {
       path = PathMacroManager.getInstance(module).expandPath(path);

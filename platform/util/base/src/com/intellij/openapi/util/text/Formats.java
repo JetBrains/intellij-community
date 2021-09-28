@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,47 +83,5 @@ public final class Formats {
       result.append(unitValues.getLong(i)).append(unitSeparator).append(TIME_UNITS[unitIndices.getInt(i)]);
     }
     return result.toString();
-  }
-
-  private static final String[] PADDED_FORMATS = {"%03d", "%02d", "%02d", "%02d", "%d"};
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull String formatDurationPadded(long millis, @NotNull String unitSeparator) {
-    StringBuilder result = new StringBuilder();
-
-    long millisIn = 1;
-    int i;
-    for (i=1; i < TIME_MULTIPLIERS.length; i++) {
-      long multiplier = TIME_MULTIPLIERS[i];
-      millisIn *= multiplier;
-      if (millis < millisIn) {
-        break;
-      }
-    }
-    long d = millis;
-    for (i-=1; i >= 0; i--) {
-      long multiplier = i==TIME_MULTIPLIERS.length-1 ? 1 : TIME_MULTIPLIERS[i+1];
-      millisIn /= multiplier;
-      long value = d / millisIn;
-      d = d % millisIn;
-      String format = result.length() == 0 ? "%d" : PADDED_FORMATS[i]; // do not pad the most significant unit
-      if (result.length() != 0) result.append(" ");
-      result.append(String.format(format, value)).append(unitSeparator).append(TIME_UNITS[i]);
-    }
-    return result.toString();
-  }
-
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull String formatDurationApproximate(long duration) {
-    return formatDuration(duration, " ", 2);
   }
 }

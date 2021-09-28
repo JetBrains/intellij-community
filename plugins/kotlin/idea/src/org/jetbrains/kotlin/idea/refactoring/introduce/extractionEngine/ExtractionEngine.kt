@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.nonBlocking
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -57,7 +57,7 @@ class ExtractionEngine(
             adjustExtractionData.performAnalysis()
         }
 
-        if (ApplicationManager.getApplication()!!.isUnitTestMode && analysisResult.status != AnalysisResult.Status.SUCCESS) {
+        if (isUnitTestMode() && analysisResult.status != AnalysisResult.Status.SUCCESS) {
             throw BaseRefactoringProcessor.ConflictsInTestsException(analysisResult.messages.map { it.renderMessage() })
         }
 

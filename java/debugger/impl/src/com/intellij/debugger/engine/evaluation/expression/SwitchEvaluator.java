@@ -29,19 +29,44 @@ public class SwitchEvaluator implements Evaluator {
     Object res = null;
     try {
       boolean caseFound = false;
-      for (Evaluator evaluator : myBodyEvaluators) {
+      int defaultLabelNum = -1;
+      for (int i = 0; i < myBodyEvaluators.length; i++) {
+        Evaluator evaluator = myBodyEvaluators[i];
         if (caseFound) {
           res = evaluator.evaluate(context);
         }
         else {
           Evaluator e = DisableGC.unwrap(evaluator);
           if (e instanceof SwitchCaseEvaluator) {
-            res = ((SwitchCaseEvaluator)e).match(unboxedSwitchValue, context);
+            SwitchCaseEvaluator caseEvaluator = (SwitchCaseEvaluator)e;
+            if (caseEvaluator.myDefaultCase) {
+              defaultLabelNum = i;
+              continue;
+            }
+            res = caseEvaluator.match(unboxedSwitchValue, context);
             if (Boolean.TRUE.equals(res)) {
               caseFound = true;
             }
             else if (res instanceof Value) {
               return res;
+            }
+          }
+        }
+      }
+      if (!caseFound && defaultLabelNum != -1) {
+        for (int i = defaultLabelNum; i < myBodyEvaluators.length; i++) {
+          Evaluator evaluator = myBodyEvaluators[i];
+          if (caseFound) {
+            res = evaluator.evaluate(context);
+          }
+          else {
+            caseFound = true;
+            Evaluator e = DisableGC.unwrap(evaluator);
+            if (e instanceof SwitchCaseEvaluator) {
+              res = ((SwitchCaseEvaluator)e).match(unboxedSwitchValue, context);
+              if (res instanceof Value) {
+                return res;
+              }
             }
           }
         }

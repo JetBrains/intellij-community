@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
-import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.ChangeEntry
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl

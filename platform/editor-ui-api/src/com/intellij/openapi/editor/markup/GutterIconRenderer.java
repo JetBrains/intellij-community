@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,6 +164,11 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   }
 
   public enum Alignment {
+    /**
+     * A special alignment option to put icon on top of line number. Used for breakpoints in new UI.
+     */
+    @ApiStatus.Internal
+    LINE_NUMBERS(0),
     LEFT(1),
     RIGHT(3),
     CENTER(2);

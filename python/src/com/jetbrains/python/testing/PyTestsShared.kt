@@ -338,13 +338,13 @@ data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target")
       if (elementAndName != null) {
         // qNameInsideOfDirectory may contain redundant elements like subtests so we use name that was really resolved
         // element.qname can't be used because inherited test resolves to parent
-        return@ra listOf("--target", elementAndName.name.toString())
+        return@ra generatePythonTarget(elementAndName.name.toString(), configuration)
       }
       // Use "full" (path from closest root) otherwise
       val name = (element.containingFile as? PyFile)?.getQName()?.append(qualifiedNameParts.elementName) ?: throw ExecutionException(
         PyBundle.message("python.testing.cant.get.importable.name", element.containingFile))
 
-      return@ra listOf("--target", name.toString())
+      return@ra generatePythonTarget(name.toString(), configuration)
     }
     else {
 
@@ -363,10 +363,13 @@ data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target")
         return@ra listOf("--path", fileSystemPartOfTarget)
       }
 
-      return@ra listOf("--target", "$fileSystemPartOfTarget::$pyTarget")
+      return@ra generatePythonTarget("$fileSystemPartOfTarget::$pyTarget", configuration)
 
     }
   }
+
+  private fun generatePythonTarget(target: String, configuration: PyAbstractTestConfiguration) =
+    listOf("--target", target + configuration.pythonTargetAdditionalParams)
 
   /**
    * @return directory which target is situated
@@ -422,7 +425,7 @@ internal interface PyTestConfigurationWithCustomSymbol {
  */
 abstract class PyAbstractTestConfiguration(project: Project,
                                            private val testFactory: PyAbstractTestFactory<*>)
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory), PyRerunAwareConfiguration,
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired), PyRerunAwareConfiguration,
     RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
 
   override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties =
@@ -430,6 +433,10 @@ abstract class PyAbstractTestConfiguration(project: Project,
       if (isIdTestBased) properties.makeIdTestBased()
     }
 
+  /**
+   * Additional parameters added to the test name for parametrized tests
+   */
+  open val pythonTargetAdditionalParams: String = ""
 
   /**
    * Args after it passed to test runner itself
@@ -488,21 +495,9 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   override fun checkConfiguration() {
     super.checkConfiguration()
-    if (!isFrameworkInstalled()) {
-      throw RuntimeConfigurationWarning(
-        PyBundle.message("runcfg.testing.no.test.framework", testFrameworkName))
-    }
     target.checkValid()
   }
 
-  /**
-   * Check if framework is available on SDK
-   */
-  open fun isFrameworkInstalled(): Boolean {
-    val sdk = sdk ?: return false // No SDK -- no tests
-    val requiredPackage = testFactory.packageRequired ?: return true // No package required
-    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
-  }
 
   override fun isIdTestBased(): Boolean = true
 
@@ -545,9 +540,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     return result + generateRawArguments(true)
   }
 
-  open fun getTestSpec(): List<String> {
-    return target.generateArgumentsLine(this) + generateRawArguments()
-  }
+  fun getTestSpec(): List<String> = target.generateArgumentsLine(this) + generateRawArguments()
 
   /**
    * raw arguments to be added after "--" and passed to runner directly

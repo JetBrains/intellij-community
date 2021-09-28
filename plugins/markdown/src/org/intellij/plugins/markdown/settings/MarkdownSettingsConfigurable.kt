@@ -41,7 +41,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   private val settings
     get() = MarkdownSettings.getInstance(project)
 
-  private lateinit var customStylesheetEditor: Editor
+  private var customStylesheetEditor: Editor? = null
 
   override fun createPanel(): DialogPanel {
     if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
@@ -55,16 +55,14 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       if (MarkdownHtmlPanelProvider.getAvailableProviders().size > 1) {
         htmlPanelProvidersRow()
       }
-      fullRow {
-        label(MarkdownBundle.message("markdown.settings.default.layout"))
+      row(MarkdownBundle.message("markdown.settings.default.layout")) {
         comboBox(
           model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
           prop = settings::splitLayout,
           renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
         )
       }
-      fullRow {
-        label(MarkdownBundle.message("markdown.settings.preview.layout.label"))
+      row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
         comboBox(
           model = DefaultComboBoxModel(arrayOf(false, true)),
           prop = settings::isVerticalSplit,
@@ -115,7 +113,6 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   }
 
   private fun RowBuilder.customCssRow(): Row {
-    customStylesheetEditor = createCustomStylesheetEditor()
     return hideableRow(MarkdownBundle.message("markdown.settings.css.title.name")) {
       fullRow {
         val externalCssCheckBox = checkBox(MarkdownBundle.message("markdown.settings.external.css.path.label"), prop = settings::useCustomStylesheetPath)
@@ -138,19 +135,23 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         }
       }
       fullRow {
-        customStylesheetEditor.component(CCFlags.growX).apply {
-          onApply { settings.customStylesheetText = runReadAction { customStylesheetEditor.document.text } }
-          onIsModified { settings.customStylesheetText != runReadAction { customStylesheetEditor.document.text.takeIf { it.isNotEmpty() } } }
+        val editor = createCustomStylesheetEditor()
+        editor.component(CCFlags.growX).apply {
+          onApply { settings.customStylesheetText = runReadAction { editor.document.text } }
+          onIsModified { settings.customStylesheetText != runReadAction { editor.document.text.takeIf { it.isNotEmpty() } } }
           onReset { resetEditorText(settings.customStylesheetText ?: "") }
         }
+        customStylesheetEditor = editor
         setEditorReadonlyState(isReadonly = !editorCheckbox.component.isSelected)
       }
     }
   }
 
   private fun setEditorReadonlyState(isReadonly: Boolean) {
-    customStylesheetEditor.document.setReadOnly(isReadonly)
-    customStylesheetEditor.contentComponent.isEnabled = !isReadonly
+    customStylesheetEditor?.let {
+      it.document.setReadOnly(isReadonly)
+      it.contentComponent.isEnabled = !isReadonly
+    }
   }
 
   private fun RowBuilder.pandocSettingsRow(): Row {
@@ -173,7 +174,8 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   }
 
   override fun disposeUIResources() {
-    EditorFactory.getInstance().releaseEditor(customStylesheetEditor)
+    customStylesheetEditor?.let(EditorFactory.getInstance()::releaseEditor)
+    customStylesheetEditor = null
     super.disposeUIResources()
   }
 
@@ -236,12 +238,14 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   }
 
   private fun resetEditorText(cssText: String) {
-    if (!customStylesheetEditor.isDisposed) {
-      runWriteAction {
-        val writable = customStylesheetEditor.document.isWritable
-        customStylesheetEditor.document.setReadOnly(false)
-        customStylesheetEditor.document.setText(cssText)
-        customStylesheetEditor.document.setReadOnly(!writable)
+    customStylesheetEditor?.let { editor ->
+      if (!editor.isDisposed) {
+        runWriteAction {
+          val writable = editor.document.isWritable
+          editor.document.setReadOnly(false)
+          editor.document.setText(cssText)
+          editor.document.setReadOnly(!writable)
+        }
       }
     }
   }

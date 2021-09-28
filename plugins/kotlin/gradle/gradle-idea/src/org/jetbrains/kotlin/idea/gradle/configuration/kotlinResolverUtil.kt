@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -23,19 +24,48 @@ private var isNativeDebugSuggestionEnabled
         PropertiesComponent.getInstance().setValue("isNativeDebugSuggestionEnabled", value)
     }
 
+private const val isKotlinJSInspectionsPackSuggestionEnabledPropertyName = "isKotlinJSInspectionsPackSuggestionEnabled"
+
+private var isKotlinJSInspectionsPackSuggestionEnabled
+    get() = PropertiesComponent.getInstance().getBoolean(isKotlinJSInspectionsPackSuggestionEnabledPropertyName, true)
+    set(value) {
+        PropertiesComponent.getInstance().setValue(isKotlinJSInspectionsPackSuggestionEnabledPropertyName, value)
+    }
+
 fun suggestNativeDebug(projectPath: String) {
-    if (!PlatformUtils.isIdeaUltimate()) return
-
-    val pluginId = PluginId.getId("com.intellij.nativeDebug")
-    if (PluginManagerCore.isPluginInstalled(pluginId)) return
-
     if (!isNativeDebugSuggestionEnabled) return
+    suggestPluginInstall(
+        projectPath = projectPath,
+        notificationContent = KotlinIdeaGradleBundle.message("notification.text.native.debug.provides.debugger.for.kotlin.native"),
+        pluginId = PluginId.getId("com.intellij.nativeDebug"),
+        onDontShowAgainActionPerformed = { isNativeDebugSuggestionEnabled = false }
+    )
+}
+
+fun suggestKotlinJsInspectionPackPlugin(projectPath: String) {
+    if (!isKotlinJSInspectionsPackSuggestionEnabled) return
+    suggestPluginInstall(
+        projectPath = projectPath,
+        notificationContent = KotlinIdeaGradleBundle.message("notification.text.kotlin.js.inspections.pack.provides.inspections.and.quick.fixes.for.kotlin.js"),
+        pluginId = PluginId.getId("org.jetbrains.kotlin-js-inspection-pack-plugin"),
+        onDontShowAgainActionPerformed = { isKotlinJSInspectionsPackSuggestionEnabled = false }
+    )
+}
+
+private fun suggestPluginInstall(
+    projectPath: String,
+    @NlsContexts.NotificationContent notificationContent: String,
+    pluginId: PluginId,
+    onDontShowAgainActionPerformed: () -> Unit = { }
+) {
+    if (!PlatformUtils.isIdeaUltimate()) return
+    if (PluginManagerCore.isPluginInstalled(pluginId)) return
 
     val projectManager = ProjectManager.getInstance()
     val project = projectManager.openProjects.firstOrNull { it.basePath == projectPath } ?: return
 
     notificationGroup
-        .createNotification(KotlinIdeaGradleBundle.message("notification.title.plugin.suggestion"), KotlinIdeaGradleBundle.message("notification.text.native.debug.provides.debugger.for.kotlin.native"), NotificationType.INFORMATION)
+        .createNotification(KotlinIdeaGradleBundle.message("notification.title.plugin.suggestion"), notificationContent, NotificationType.INFORMATION)
         .addAction(object : NotificationAction(KotlinIdeaGradleBundle.message("action.text.install")) {
             override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 installAndEnable(project, setOf<@NotNull PluginId>(pluginId)) { notification.expire() }
@@ -43,7 +73,7 @@ fun suggestNativeDebug(projectPath: String) {
         })
         .addAction(object : NotificationAction(KotlinIdeaGradleBundle.message("action.text.dontShowAgain")) {
             override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                isNativeDebugSuggestionEnabled = false
+                onDontShowAgainActionPerformed()
                 notification.expire()
             }
         })

@@ -3,10 +3,12 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.platform.TargetPlatform
 
-internal sealed class LibraryDependencyCandidate {
+@IntellijInternalApi
+sealed class LibraryDependencyCandidate {
     abstract val platform: TargetPlatform
     abstract val libraries: List<LibraryInfo>
 
@@ -31,12 +33,14 @@ internal sealed class LibraryDependencyCandidate {
     }
 }
 
-internal data class DefaultLibraryDependencyCandidate(
+@IntellijInternalApi
+data class DefaultLibraryDependencyCandidate(
     override val platform: TargetPlatform,
     override val libraries: List<LibraryInfo>
 ): LibraryDependencyCandidate()
 
-internal data class KlibLibraryDependencyCandidate(
+@IntellijInternalApi
+data class KlibLibraryDependencyCandidate(
     override val platform: TargetPlatform,
     override val libraries: List<LibraryInfo>,
     val uniqueName: String?,

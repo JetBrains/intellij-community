@@ -17,9 +17,6 @@ package com.intellij.openapi.vcs.ui;
 
 import javax.swing.*;
 
-/**
- * author: lesya
- */
 public interface RefreshableOnComponent extends Refreshable {
   JComponent getComponent();
 }

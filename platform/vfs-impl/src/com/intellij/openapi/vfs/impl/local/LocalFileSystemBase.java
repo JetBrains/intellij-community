@@ -90,11 +90,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
     File ioFile = convertToIOFile(file);
 
-    if (SystemInfo.isUnix) { // avoid opening fifo files
-      FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
-      if (attributes != null && !attributes.isFile()) {
-        throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + attributes.getType() + ')');
-      }
+    if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening fifo files
+      throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + FileSystemUtil.getAttributes(ioFile) + ')');
     }
 
     return ioFile;

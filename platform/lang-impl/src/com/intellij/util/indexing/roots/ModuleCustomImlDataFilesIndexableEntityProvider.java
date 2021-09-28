@@ -2,8 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
@@ -12,31 +11,32 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-public class ModuleCustomImlDataFilesIndexableEntityProvider implements IndexableEntityProvider {
+public class ModuleCustomImlDataFilesIndexableEntityProvider
+  implements IndexableEntityProvider.ModuleEntityDependent<ModuleCustomImlDataEntity> {
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getAddedEntityIterator(@NotNull WorkspaceEntity entity,
-                                                                                      @NotNull WorkspaceEntityStorage storage,
-                                                                                      @NotNull Project project)
-    throws IndexableEntityResolvingException {
-    if (entity instanceof ModuleCustomImlDataEntity) {
-      return IndexableEntityProviderMethods.INSTANCE.createIterators(((ModuleCustomImlDataEntity)entity).getModule(), project);
-    }
+  public @NotNull Class<ModuleCustomImlDataEntity> getEntityClass() {
+    return ModuleCustomImlDataEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity entity,
+                                                                                                @NotNull Project project) {
+    return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().persistentId());
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity oldEntity,
+                                                                                                   @NotNull ModuleCustomImlDataEntity newEntity) {
     return Collections.emptyList();
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableFilesIterator> getReplacedEntityIterator(@NotNull WorkspaceEntity oldEntity,
-                                                                                         @NotNull WorkspaceEntity newEntity,
-                                                                                         @NotNull WorkspaceEntityStorage storage,
-                                                                                         @NotNull Project project)
-    throws IndexableEntityResolvingException {
-    if (newEntity instanceof ModuleEntity) {
-      ModuleEntity oldModuleEntity = (ModuleEntity)oldEntity;
-      ModuleEntity newModuleEntity = (ModuleEntity)newEntity;
-      if (shouldBeReindexed(newModuleEntity, oldModuleEntity)) {
-        return IndexableEntityProviderMethods.INSTANCE.createIterators(newModuleEntity, project);
-      }
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedModuleEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
+                                                                                                        @NotNull ModuleEntity newEntity,
+                                                                                                        @NotNull Project project) {
+    if (shouldBeReindexed(newEntity, oldEntity)) {
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.persistentId());
     }
     return Collections.emptyList();
   }

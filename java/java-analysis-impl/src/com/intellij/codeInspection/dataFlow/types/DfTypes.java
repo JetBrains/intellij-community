@@ -339,6 +339,17 @@ public final class DfTypes {
   }
 
   /**
+   * Returns a non-primitive constant
+   *
+   * @param constant constant value
+   * @param constraint value type constraint
+   * @return a constant type that contains only given constant
+   */
+  public static @NotNull DfConstantType<?> referenceConstant(@NotNull Object constant, @NotNull TypeConstraint constraint) {
+    return new DfReferenceConstantType(constant, constraint, false);
+  }
+
+  /**
    * Returns a primitive constant
    *
    * @param constant constant value

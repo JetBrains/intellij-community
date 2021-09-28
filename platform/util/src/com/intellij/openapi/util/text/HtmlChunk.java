@@ -374,6 +374,10 @@ public abstract class HtmlChunk {
   public static @NotNull Element font(@NonNls @NotNull String color) {
     return tag("font").attr("color", color);
   }
+  
+  public static @NotNull Element font(int size) {
+    return tag("font").attr("size", String.valueOf(size));
+  }
 
   /**
    * @return a &lt;body&gt; element.

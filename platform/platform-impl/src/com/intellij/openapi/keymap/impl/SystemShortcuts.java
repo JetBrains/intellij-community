@@ -288,7 +288,7 @@ public final class SystemShortcuts {
     }
     else {
       final AnAction configureShortcut = DumbAwareAction.create(IdeBundle.message("action.text.modify.shortcut"), e -> {
-        Component component = e.getDataContext().getData(PlatformDataKeys.CONTEXT_COMPONENT);
+        Component component = e.getDataContext().getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
         if (component == null) {
           Window[] frames = Window.getWindows();
           component = frames == null || frames.length == 0 ? null : frames[0];

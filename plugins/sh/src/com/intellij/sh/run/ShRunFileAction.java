@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -39,7 +40,14 @@ final class ShRunFileAction extends DumbAwareAction {
     runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
     if (file instanceof ShFile) {
       @NlsSafe String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
-      runConfiguration.setInterpreterPath(ObjectUtils.notNull(ShShebangParserUtil.getShebangExecutable((ShFile)file), defaultShell));
+      String shebang = ShShebangParserUtil.getShebangExecutable((ShFile)file);
+      if (shebang != null) {
+        Pair<String, String> result = parseInterpreterAndOptions(shebang);
+        runConfiguration.setInterpreterPath(result.first);
+        runConfiguration.setInterpreterOptions(result.second);
+      } else {
+        runConfiguration.setInterpreterPath(defaultShell);
+      }
     }
     else {
       runConfiguration.setInterpreterPath("");
@@ -55,6 +63,17 @@ final class ShRunFileAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isEnabled(e));
+  }
+
+  private static @NotNull Pair<String, String> parseInterpreterAndOptions(@NotNull String shebang) {
+    String[] splitShebang = shebang.split(" ");
+    if (splitShebang.length > 1) {
+      String shebangParam = splitShebang[splitShebang.length - 1];
+      if (!shebangParam.contains("/") && !shebangParam.contains("\\")) {
+        return Pair.create(shebang.substring(0, shebang.length() - shebangParam.length() - 1), shebangParam);
+      }
+    }
+    return Pair.create(shebang, "");
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {

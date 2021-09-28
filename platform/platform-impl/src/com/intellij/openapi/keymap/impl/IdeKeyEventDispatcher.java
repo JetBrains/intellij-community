@@ -73,6 +73,7 @@ import java.util.function.Function;
  */
 public final class IdeKeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
+  private static final KeyStroke F10 = KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -451,7 +452,11 @@ public final class IdeKeyEventDispatcher {
       return true;
     }
 
-    return processActionOrWaitSecondStroke(keyStroke);
+    return processActionOrWaitSecondStroke(keyStroke) ||
+           // We mute standard L&F behaviour on F10 (focusing menu) if some IDE action is bound to F10,
+           // even if that action is currently disabled. Opposite behaviour turns out to be inconvenient,
+           // at least for 'Visual Studio' keymap, where F10 is bound to 'Step Over' (see IDEA-138429).
+           F10.equals(keyStroke);
   }
 
   private boolean processActionOrWaitSecondStroke(KeyStroke keyStroke) {
@@ -597,7 +602,7 @@ public final class IdeKeyEventDispatcher {
 
     List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
     ProgressIndicator indicator = Registry.is("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate") ?
-                                  new PotemkinOverlayProgress(PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext)) :
+                                  new PotemkinOverlayProgress(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrappedContext)) :
                                   new EmptyProgressIndicator();
     Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean> chosenPair = ProgressManager.getInstance().runProcess(() -> {
       Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
@@ -794,32 +799,27 @@ public final class IdeKeyEventDispatcher {
     }
   }
 
-  private static boolean rearrangeByPromoters(List<AnAction> actions, DataContext context) {
+  private static boolean rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext context) {
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
-    for (ActionPromoter promoter : getPromoters(actions)) {
+    List<ActionPromoter> promoters = ContainerUtil.concat(
+      ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
+    for (ActionPromoter promoter : promoters) {
       try {
         List<AnAction> promoted = promoter.promote(readOnlyActions, context);
-        if (promoted == null || promoted.isEmpty()) continue;
-
-        actions.removeAll(promoted);
-        actions.addAll(0, promoted);
+        if (promoted != null && !promoted.isEmpty()) {
+          actions.removeAll(promoted);
+          actions.addAll(0, promoted);
+        }
+        List<AnAction> suppressed = promoter.suppress(readOnlyActions, context);
+        if (suppressed != null && !suppressed.isEmpty()) {
+          actions.removeAll(suppressed);
+        }
       }
       catch (Exception e) {
         LOG.error(e);
       }
     }
     return true;
-  }
-
-  @NotNull
-  private static List<ActionPromoter> getPromoters(@NotNull List<? extends AnAction> candidates) {
-    List<ActionPromoter> promoters = new ArrayList<>(Arrays.asList(ActionPromoter.EP_NAME.getExtensions()));
-    for (AnAction action : candidates) {
-      if (action instanceof ActionPromoter) {
-        promoters.add((ActionPromoter)action);
-      }
-    }
-    return promoters;
   }
 
   private void addActionsFromActiveKeymap(@NotNull Shortcut shortcut) {

@@ -5,7 +5,6 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
 import com.intellij.build.events.impl.OutputBuildEventImpl;
-import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -26,7 +25,6 @@ import java.util.function.Function;
 @ApiStatus.Experimental
 public class MavenLogOutputParser implements BuildOutputParser {
 
-  private boolean myCompleted = false;
   private final List<MavenLoggedEventParser> myRegisteredEvents;
   private final ExternalSystemTaskId myTaskId;
 
@@ -52,7 +50,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
   public synchronized void finish(Consumer<? super BuildEvent> messageConsumer) {
     completeParsers(messageConsumer);
 
-    if (!myCompleted) {
+    if (!myParsingContext.getSessionEnded()) {
       messageConsumer.accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new MavenTaskFailedResultImpl(null)));
     }
   }
@@ -69,13 +67,17 @@ public class MavenLogOutputParser implements BuildOutputParser {
 
   @Override
   public boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer) {
-    if (myCompleted) return false;
+    if (myParsingContext.getSessionEnded()) {
+      checkErrorAfterMavenSessionEnded(line, messageConsumer);
+      return false;
+    }
 
     if (line == null || StringUtil.isEmptyOrSpaces(line)) {
       return false;
     }
     if (MavenSpyOutputParser.isSpyLog(line)) {
       mavenSpyOutputParser.processLine(line, messageConsumer);
+      if (myParsingContext.getSessionEnded()) completeParsers(messageConsumer);
       return true;
     }
     else {
@@ -92,9 +94,17 @@ public class MavenLogOutputParser implements BuildOutputParser {
           return true;
         }
       }
-      if (checkComplete(messageConsumer, logLine)) return true;
     }
     return false;
+  }
+
+  private void checkErrorAfterMavenSessionEnded(String line, Consumer<? super BuildEvent> messageConsumer) {
+    if (!myParsingContext.getProjectFailure()) {
+      if (line.contains("[ERROR]")) {
+        myParsingContext.setProjectFailure(true);
+        messageConsumer.accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new FailureResultImpl()));
+      }
+    }
   }
 
   private void sendMessageToAllParents(@NlsSafe String line, Consumer<? super BuildEvent> messageConsumer) {
@@ -127,26 +137,6 @@ public class MavenLogOutputParser implements BuildOutputParser {
         return nextLine(reader.readLine());
       }
     };
-  }
-
-  private synchronized boolean checkComplete(Consumer<? super BuildEvent> messageConsumer,
-                                             MavenLogEntryReader.MavenLogEntry logLine) {
-    if (logLine.myLine.equals("BUILD FAILURE")) {
-      completeParsers(messageConsumer);
-      messageConsumer
-        .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "",
-                                         new FailureResultImpl()));
-      myCompleted = true;
-      return true;
-    }
-    if (logLine.myLine.equals("BUILD SUCCESS")) {
-      completeParsers(messageConsumer);
-      messageConsumer
-        .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new SuccessResultImpl()));
-      myCompleted = true;
-      return true;
-    }
-    return false;
   }
 
   @Nullable

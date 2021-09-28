@@ -39,7 +39,7 @@ internal class RecentProjectIconHelper {
     private const val ideaDir = Project.DIRECTORY_STORE_FOLDER
 
     fun getDotIdeaPath(path: Path): Path {
-      if (path.isDirectory()) return path.resolve(ideaDir)
+      if (path.isDirectory() || path.parent == null) return path.resolve(ideaDir)
 
       val fileName = path.fileName.toString()
 

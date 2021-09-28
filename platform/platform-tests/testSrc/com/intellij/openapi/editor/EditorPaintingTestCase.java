@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EditorTestUtil;
@@ -316,7 +317,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
 
     private void drawChar(char c, int x, int y) {
-      (getFont().getFontName().contains("Bold") ? myBoldFont : myPlainFont).draw(myDelegate, c, x, y);
+      (StringUtil.containsIgnoreCase(getFont().getFontName(), "bold") ? myBoldFont : myPlainFont).draw(myDelegate, c, x, y);
     }
   }
 

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertToStringTemplateInspection : IntentionBasedInspection<KtBinaryExpression>(
     ConvertToStringTemplateIntention::class,
-    { it -> ConvertToStringTemplateIntention.shouldSuggestToConvert(it) },
+    ConvertToStringTemplateIntention::shouldSuggestToConvert,
     problemText = KotlinBundle.message("convert.concatenation.to.template.before.text")
 )
 
@@ -37,9 +37,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val replacement = buildReplacement(element)
-        runWriteAction {
-            element.replaced(replacement)
-        }
+        element.replaced(replacement)
     }
 
     companion object {
@@ -73,7 +71,8 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
             if (expr == null) return ""
             val expression = KtPsiUtil.safeDeparenthesize(expr).let {
                 when {
-                    (it as? KtDotQualifiedExpression)?.isToString() == true -> it.receiverExpression
+                    (it as? KtDotQualifiedExpression)?.isToString() == true && it.receiverExpression !is KtSuperExpression ->
+                        it.receiverExpression
                     it is KtLambdaExpression && it.parent is KtLabeledExpression -> expr
                     else -> it
                 }

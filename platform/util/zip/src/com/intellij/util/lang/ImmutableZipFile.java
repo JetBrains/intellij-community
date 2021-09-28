@@ -4,6 +4,7 @@ package com.intellij.util.lang;
 import com.intellij.util.io.Murmur3_32Hash;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.EOFException;
@@ -14,11 +15,13 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
 @ApiStatus.Internal
@@ -63,8 +66,10 @@ public final class ImmutableZipFile implements Closeable {
         buffer.rewind();
         mappedBuffer = buffer;
       }
+
       mappedBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
+
     try {
       return populateFromCentralDirectory(mappedBuffer, fileSize);
     }
@@ -100,22 +105,54 @@ public final class ImmutableZipFile implements Closeable {
   /**
    * Returns a named entry, or {@code null} if no entry by that name exists. The name should not contain trailing slashes.
    */
-  public ImmutableZipEntry getEntry(String name) {
+  public @Nullable ImmutableZipEntry getEntry(String name) {
     int index = probe(name, Murmur3_32Hash.MURMUR3_32.hashString(name, 0, name.length()), nameMap);
     return index >= 0 ? nameMap[index] : null;
   }
 
-  public ImmutableZipEntry getEntry(String name, int murmur3HashCode) {
+  public @Nullable ImmutableZipEntry getEntry(String name, int murmur3HashCode) {
     int index = probe(name, murmur3HashCode, nameMap);
     return index >= 0 ? nameMap[index] : null;
   }
 
-  private static ImmutableZipFile populateFromCentralDirectory(@NotNull ByteBuffer buffer, int fileSize) throws IOException {
+  private static @NotNull ImmutableZipFile populateFromCentralDirectory(@NotNull ByteBuffer buffer, int fileSize) throws IOException {
     // https://en.wikipedia.org/wiki/ZIP_(file_format)
     int offset =  readEndSignature(buffer, fileSize);
     int entryCount = buffer.getShort(offset + 10) & 0xffff;
     int centralDirSize = buffer.getInt(offset + 12);
     int centralDirPosition = buffer.getInt(offset + 16);
+
+    int commentSize = buffer.getShort(offset + 20);
+    if (commentSize == 9) {
+      int commentVersion = buffer.get(offset + 22);
+      if (commentVersion == 1) {
+        int pos = buffer.position();
+
+        entryCount = buffer.getInt(offset + 23);
+        buffer.position(buffer.getInt(offset + 27));
+        IntBuffer intBuffer = buffer.asIntBuffer();
+
+        int[] sizes = new int[entryCount];
+        int[] dataOffsets = new int[entryCount];
+        int[] indexes = new int[entryCount];
+        intBuffer.get(sizes);
+        intBuffer.get(dataOffsets);
+        intBuffer.get(indexes);
+
+        buffer.position(pos);
+
+        ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
+
+        int entrySetLength = entryCount * 2 /* expand factor */;
+        ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
+
+        //long start = System.currentTimeMillis();
+        readCentralDirectoryUsingExtraMetadata(buffer, centralDirPosition, centralDirSize, entrySet, entries, sizes, dataOffsets, indexes);
+        //System.out.print("optimized read took " + (System.currentTimeMillis() - start) + " ms");
+        buffer.clear();
+        return new ImmutableZipFile(entrySet, entries, buffer, fileSize);
+      }
+    }
 
     // ensure table is even length
     if (entryCount == 65535) {
@@ -170,7 +207,7 @@ public final class ImmutableZipFile implements Closeable {
       int extraFieldLength = buffer.getShort(offset + 30) & 0xffff;
       int commentLength = buffer.getShort(offset + 32) & 0xffff;
 
-      if (prevEntry != null && prevEntryExpectedDataOffset == (headerOffset - prevEntry.getCompressedSize())) {
+      if (prevEntry != null && prevEntryExpectedDataOffset == (headerOffset - prevEntry.compressedSize)) {
         prevEntry.setDataOffset(prevEntryExpectedDataOffset);
       }
 
@@ -211,6 +248,59 @@ public final class ImmutableZipFile implements Closeable {
     return entryIndex;
   }
 
+  @SuppressWarnings("DuplicatedCode")
+  private static void readCentralDirectoryUsingExtraMetadata(ByteBuffer buffer,
+                                                             int centralDirPosition,
+                                                             int centralDirSize,
+                                                             ImmutableZipEntry[] entrySet,
+                                                             ImmutableZipEntry[] entries,
+                                                             int[] sizes,
+                                                             int[] dataOffsets,
+                                                             int[] indexes)
+    throws EOFException {
+    int offset = centralDirPosition;
+    int entryIndex = 0;
+
+    // assume that file name is not greater than ~2 KiB
+    // JDK impl cheats — it uses jdk.internal.misc.JavaLangAccess.newStringUTF8NoRepl (see ZipCoder.UTF8)
+    // StandardCharsets.UTF_8.decode doesn't benefit from using direct buffer and introduces char buffer allocation for each decode
+    byte[] tempNameBytes = new byte[4096];
+
+    int endOffset = centralDirPosition + centralDirSize;
+    while (offset < endOffset) {
+      if (buffer.getInt(offset) != 33639248) {
+        throw new EOFException("Expected central directory size " + centralDirSize +
+                               " but only at " + offset + " no valid central directory file header signature");
+      }
+
+      int size = sizes[entryIndex];
+      int nameLengthInBytes = buffer.getShort(offset + 28) & 0xffff;
+
+      offset += 46;
+      buffer.position(offset);
+
+      int extraSuffixLength;
+      if (buffer.get((offset + nameLengthInBytes) - 1) == '/') {
+        size = -2;
+        extraSuffixLength = 1;
+      }
+      else {
+        extraSuffixLength = 0;
+      }
+
+      offset += nameLengthInBytes;
+
+      buffer.get(tempNameBytes, 0, nameLengthInBytes);
+      String name = new String(tempNameBytes, 0, nameLengthInBytes - extraSuffixLength, StandardCharsets.UTF_8);
+      int entrySetIndex = indexes[entryIndex];
+      // headerOffset is required only to compute data offset, but dataOffset is already known
+      ImmutableZipEntry entry = new ImmutableZipEntry(name, size, size, -1, nameLengthInBytes, ZipEntry.STORED);
+      entry.setDataOffset(dataOffsets[entryIndex]);
+      entrySet[entrySetIndex] = entry;
+      entries[entryIndex++] = entry;
+    }
+  }
+
   private static int readEndSignature(@NotNull ByteBuffer buffer, int fileSize) throws IOException {
     for (int offset = fileSize - MIN_EOCD_SIZE; offset >= 0; offset--) {
       if (buffer.getInt(offset) == 101010256) {
@@ -229,7 +319,7 @@ public final class ImmutableZipFile implements Closeable {
       if (found == null) {
         return -index - 1;
       }
-      else if (key.equals(found.getName())) {
+      else if (key.equals(found.name)) {
         return index;
       }
       else if (++index == set.length) {

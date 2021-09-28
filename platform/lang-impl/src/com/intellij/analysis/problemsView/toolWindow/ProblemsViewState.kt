@@ -28,7 +28,7 @@ open class ProblemsViewState : BaseState() {
   var sortByName by property(false)
 
   @get:XCollection(style = XCollection.Style.v2)
-  val hideBySeverity: MutableSet<Int> by property(Collections.newSetFromMap(ConcurrentHashMap()), { it.isEmpty() })
+  val hideBySeverity: MutableSet<Int> by property(Collections.newSetFromMap(ConcurrentHashMap())) { it.isEmpty() }
 }
 
 @State(name = "ProblemsViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])

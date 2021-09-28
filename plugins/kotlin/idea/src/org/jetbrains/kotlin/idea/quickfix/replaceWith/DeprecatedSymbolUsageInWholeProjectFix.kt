@@ -37,7 +37,8 @@ class DeprecatedSymbolUsageInWholeProjectFix(
         replacementStrategy.replaceUsagesInWholeProject(
             psiElement,
             progressTitle = KotlinBundle.message("applying.0", text),
-            commandName = text
+            commandName = text,
+            unwrapSpecialUsages = false,
         )
     }
 

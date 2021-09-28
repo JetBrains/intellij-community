@@ -164,15 +164,6 @@ public interface Git {
   @NotNull
   GitCommandResult show(@NotNull GitRepository repository, String @NotNull ... params);
 
-  /**
-   * @deprecated Use {@link #cherryPick(GitRepository, String, boolean, boolean, GitLineHandlerListener...)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
-                              GitLineHandlerListener @NotNull ... listeners);
-
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository,
                               @NotNull String hash,

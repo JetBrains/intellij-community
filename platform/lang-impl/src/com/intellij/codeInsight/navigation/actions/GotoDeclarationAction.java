@@ -146,7 +146,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused") // for external usages only
   public static boolean chooseAmbiguousTarget(@NotNull Editor editor,
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,

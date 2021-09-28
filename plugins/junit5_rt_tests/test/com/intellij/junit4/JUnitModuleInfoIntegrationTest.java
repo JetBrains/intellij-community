@@ -42,12 +42,21 @@ public class JUnitModuleInfoIntegrationTest extends AbstractTestFrameworkCompili
 
   
   public void testModulePathSplit() throws ExecutionException {
+    doTest();
+  }
+
+  public void testModulePathSplitExplicitLauncher() throws Exception {
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-launcher", "1.5.2"), getRepoManager());
+    doTest();
+  }
+
+  private void doTest() throws ExecutionException {
     @Nullable PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("a.Test1", GlobalSearchScope.projectScope(myProject));
     assertNotNull(aClass);
     RunConfiguration runConfiguration = createConfiguration(aClass);
     assertInstanceOf(runConfiguration, JUnitConfiguration.class);
     final JUnitConfiguration configuration = (JUnitConfiguration)runConfiguration;
-    
+
     ProcessOutput processOutput = doStartTestsProcess(configuration);
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));

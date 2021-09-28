@@ -19,6 +19,7 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.testFramework.*
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
@@ -32,6 +33,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
+import kotlin.io.path.absolutePathString
 
 class ReloadProjectTest {
   companion object {
@@ -140,6 +142,21 @@ class ReloadProjectTest {
       assertThat(moduleOptionsEntity.externalSystem).isEqualTo("GRADLE")
       assertThat(moduleOptionsEntity.externalSystemModuleVersion).isEqualTo("42.0")
      }
+  }
+
+  @Test
+  fun `chained module rename`() {
+    loadProjectAndCheckResults("chained-module-rename/initial") { project ->
+      assertThat(ModuleManager.getInstance(project).modules).hasSize(2)
+      copyFilesAndReload(project, "chained-module-rename/update")
+      val modules = ModuleManager.getInstance(project).modules.sortedBy { it.name }
+      assertThat(modules).hasSize(2)
+      val (bar, bar2) = modules
+      assertThat(bar.name).isEqualTo("bar")
+      assertThat(bar2.name).isEqualTo("bar2")
+      assertThat(bar.moduleNioFile.systemIndependentPath).isEqualTo("${project.basePath}/foo/bar.iml")
+      assertThat(bar2.moduleNioFile.systemIndependentPath).isEqualTo("${project.basePath}/bar/bar2.iml")
+    }
   }
 
   private suspend fun copyFilesAndReload(project: Project, relativePath: String) {

@@ -214,15 +214,6 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     myStorage.force();
   }
 
-  public boolean flushSome(int maxPages) {
-    myStorage.flushSomePages(maxPages);
-    if (!myStorage.isDirty()) {
-      force();
-      return true;
-    }
-    return false;
-  }
-
   @Override
   public boolean isDirty() {
     return myIsDirty || myStorage.isDirty();

@@ -3,9 +3,12 @@ package com.intellij.execution.process
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import com.pty4j.windows.WinPtyProcess
+import org.jetbrains.annotations.ApiStatus
 import org.jvnet.winp.WinProcess
 import java.io.File
 
@@ -33,10 +36,32 @@ class ProcessServiceImpl: ProcessService {
   }
 
   override fun sendWinProcessCtrlC(process: Process): Boolean {
-    return createWinProcess(process).sendCtrlC()
+    val r = createWinProcess(process).sendCtrlC()
+    try {
+      process.outputStream?.apply {
+        // CTRL-C on Windows sends "-1" to the stdin
+        // It unblocks ReadConsoleW/ReadFile
+        // Sending CTRL+C with GenerateConsoleCtrlEvent is not enough, because it doesn't unblock ReadConsoleW
+        // There is no such problem on **nix because of siginterrupt
+        // See PY-50064
+        write(-1)
+        flush()
+      }
+    }
+    catch (_: Exception) {
+    }
+    return r
   }
 
+  /**
+   * pid is not enough to emulate CTRL+C on Windows, we need a real process with stdin
+   *
+   * @deprecated use {@link #sendWinProcessCtrlC(Process)}
+   */
+  @kotlin.Deprecated(message = "pid is not enough to emulate CTRL+C on Windows, we need a real process with stdin")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   override fun sendWinProcessCtrlC(pid: Int): Boolean {
+    Logger.getInstance(ProcessServiceImpl::class.java).warn("Deprecated method will be removed")
     return createWinProcess(pid).sendCtrlC()
   }
 
@@ -44,8 +69,8 @@ class ProcessServiceImpl: ProcessService {
     createWinProcess(process).killRecursively();
   }
 
-  override fun isWinPty(process: Process): Boolean {
-    return process is WinPtyProcess;
+  override fun isLocalPtyProcess(process: Process): Boolean {
+    return process is PtyProcess
   }
 
   override fun winPtyChildProcessId(process: Process): Int? {

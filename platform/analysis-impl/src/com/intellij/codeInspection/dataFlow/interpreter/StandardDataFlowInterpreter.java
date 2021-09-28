@@ -305,6 +305,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
           s1.merge(s2);
           return s1;
         });
+    mergedState.widen();
     instructionState = new DfaInstructionState(instructionState.getInstruction(), mergedState);
     myWasForciblyMerged = true;
     return instructionState;

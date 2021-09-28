@@ -2,51 +2,32 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.editor.impl.EditorCssFontResolver;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.text.Element;
-import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
-import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 
 import static com.intellij.codeInsight.documentation.DocumentationComponent.SECTION_COLOR;
 
-final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
+@Internal
+public final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
 
-  private final @NotNull Component myReferenceComponent;
+  private final @NotNull DocumentationHtmlFactory myHtmlFactory;
 
   DocumentationHtmlEditorKit(@NotNull Component referenceComponent) {
     super(true, true);
-    myReferenceComponent = referenceComponent;
+    myHtmlFactory = new DocumentationHtmlFactory(referenceComponent);
     prepareCSS(this);
   }
 
   @Override
-  public ViewFactory getViewFactory() {
-    JBHtmlFactory factory = new JBHtmlFactory() {
-      @Override
-      public View create(Element elem) {
-        View view = super.create(elem);
-        if (view instanceof ImageView) {
-          // we have to work with raw image, apply scaling manually
-          return new DocumentationScalingImageView(elem, myReferenceComponent);
-        }
-        return view;
-      }
-    };
-    factory.setAdditionalIconResolver(src -> {
-      ModuleType<?> id = ModuleTypeManager.getInstance().findByID(src);
-      return id == null ? null : id.getIcon();
-    });
-    return factory;
+  public DocumentationHtmlFactory getViewFactory() {
+    return myHtmlFactory;
   }
 
   private static void prepareCSS(@NotNull JBHtmlEditorKit editorKit) {
@@ -57,7 +38,7 @@ final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
     String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED);
     String borderColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor());
     String sectionColor = ColorUtil.toHtmlColor(SECTION_COLOR);
-    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\"; font-size: 96%;}";
+    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\";}";
 
     StyleSheet styleSheet = editorKit.getStyleSheet();
     styleSheet.addRule("tt" + editorFontStyle);

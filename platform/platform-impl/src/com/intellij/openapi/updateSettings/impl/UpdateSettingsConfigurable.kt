@@ -17,9 +17,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.RowGaps
+import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
@@ -130,9 +130,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
                 }
                 row {
                   label(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
-                }.customize(customRowGaps = RowGaps(top = JBUI.scale(3)))
+                }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(3)))
               }
-            }.customize(customRowGaps = RowGaps(top = JBUI.scale(12)))
+            }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(12)))
           }
         }
       }

@@ -10,8 +10,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.ui.dsl.bindSelected
-import com.intellij.ui.dsl.panel
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 

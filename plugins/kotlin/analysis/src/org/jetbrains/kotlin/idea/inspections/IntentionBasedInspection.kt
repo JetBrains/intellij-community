@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
@@ -14,10 +15,10 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -174,12 +175,19 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
         override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
             assert(startElement == endElement)
             if (!isAvailable(project, file, startElement, endElement)) return
-            if (!FileModificationService.getInstance().prepareFileForWrite(file)) return
+            if (file.isPhysical && !FileModificationService.getInstance().prepareFileForWrite(file)) return
 
             val editor = startElement.findExistingEditor()
             editor?.caretModel?.moveToOffset(startElement.textOffset)
             @Suppress("UNCHECKED_CAST")
             intention.applyTo(startElement as TElement, editor)
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+            val newIntention = intention.getFileModifierForPreview(target) as? SelfTargetingRangeIntention<TElement> ?: return null
+            val newElement = PsiTreeUtil.findSameElementInCopy(startElement, target) as? TElement ?: return null
+            return IntentionBasedQuickFix(newIntention, additionalChecker, newElement)
         }
     }
 

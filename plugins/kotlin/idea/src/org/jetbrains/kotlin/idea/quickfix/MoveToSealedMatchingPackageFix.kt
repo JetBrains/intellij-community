@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlin
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsModel
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 class MoveToSealedMatchingPackageFix(element: KtTypeReference) : KotlinQuickFixAction<KtTypeReference>(element) {
 
     private val moveHandler = 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             MoveKotlinDeclarationsHandler(MoveKotlinDeclarationsHandlerTestActions())
         } else {
             MoveKotlinDeclarationsHandler(false)

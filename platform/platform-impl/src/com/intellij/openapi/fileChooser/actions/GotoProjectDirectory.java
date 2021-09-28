@@ -3,7 +3,7 @@ package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +28,7 @@ public final class GotoProjectDirectory extends FileChooserAction {
 
   @Nullable
   private static VirtualFile getProjectDir(final AnActionEvent e) {
-    final VirtualFile projectFileDir = e.getData(PlatformDataKeys.PROJECT_FILE_DIRECTORY);
+    final VirtualFile projectFileDir = e.getData(PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY);
     return projectFileDir != null && projectFileDir.isValid() ? projectFileDir : null;
   }
 }

@@ -8,9 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 object IndexableEntityProviderMethods {
@@ -26,7 +30,7 @@ object IndexableEntityProviderMethods {
   }
 
   fun findLibraryForEntity(entity: LibraryEntity,
-                           storageAfter: WorkspaceEntityStorage): Library? =
+                           storageAfter: WorkspaceEntityStorage): LibraryBridge? =
     storageAfter.libraryMap.getDataByEntity(entity)
 
   fun createIterators(entity: ModuleEntity, roots: List<VirtualFile>, project: Project): Collection<IndexableFilesIterator> {
@@ -56,15 +60,30 @@ object IndexableEntityProviderMethods {
   }
 
   fun createIterators(entity: ModuleEntity, project: Project): Collection<IndexableFilesIterator> {
-    val module = findModuleForEntity(entity, project)
-    if (module == null) {
-      return emptyList()
+    @Suppress("DEPRECATION")
+    if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
+      val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
+      val entityStorage = WorkspaceModel.Companion.getInstance(project).entityStorage.current
+      for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
+        if (provider is IndexableEntityProvider.Existing) {
+          builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))
+        }
+      }
+      return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     }
-    return ModuleIndexableFilesIteratorImpl.getModuleIterators(module)
+    else {
+      val module = findModuleForEntity(entity, project)
+      if (module == null) {
+        return emptyList()
+      }
+      return ModuleIndexableFilesIteratorImpl.getModuleIterators(module)
+    }
   }
 
-  fun createIterators(library: Library): Collection<IndexableFilesIterator> {
-    return listOf(LibraryIndexableFilesIteratorImpl(library))
+  fun createIterators(library: LibraryBridge): Collection<IndexableFilesIterator> = createIterators(library, library.libraryId)
+
+  fun createIterators(library: Library, libraryId: LibraryId): Collection<IndexableFilesIterator> {
+    return listOf(LibraryBridgeIndexableFilesIteratorImpl(library, libraryId))
   }
 
   fun createIterators(sdk: Sdk): Collection<IndexableFilesIterator> {

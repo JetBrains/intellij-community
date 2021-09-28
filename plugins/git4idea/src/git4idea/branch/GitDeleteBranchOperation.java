@@ -219,7 +219,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   @Override
   @NotNull
-  public String getSuccessMessage() {
+  protected String getSuccessMessage() {
     return GitBundle.message("delete.branch.operation.deleted.branch", formatBranchName(myBranchName));
   }
 

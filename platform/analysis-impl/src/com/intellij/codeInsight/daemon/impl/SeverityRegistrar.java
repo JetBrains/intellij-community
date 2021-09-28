@@ -202,14 +202,15 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
       }
     }
 
-    @SuppressWarnings("deprecation")
+
+    //noinspection deprecation
     JDOMExternalizableStringList readOrder = myReadOrder;
     if (readOrder != null && !readOrder.isEmpty()) {
       readOrder.writeExternal(element);
     }
     else if (!getDefaultOrder().equals(list)) {
       Object2IntMap<HighlightSeverity> orderMap = getOrderMap();
-      @SuppressWarnings("deprecation")
+      //noinspection deprecation
       JDOMExternalizableStringList ext = new JDOMExternalizableStringList(Collections.nCopies(orderMap.size(), ""));
       for (Object2IntMap.Entry<HighlightSeverity> entry : getOrderMap().object2IntEntrySet()) {
         ext.set(entry.getIntValue(), entry.getKey().getName());

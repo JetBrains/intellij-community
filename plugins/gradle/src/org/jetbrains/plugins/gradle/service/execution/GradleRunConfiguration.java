@@ -19,6 +19,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleIdeManager;
 import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+
+import java.util.StringJoiner;
 
 public class GradleRunConfiguration extends ExternalSystemRunConfiguration implements SMRunnerConsolePropertiesProvider,
                                                                                       TargetEnvironmentAwareRunProfile {
@@ -53,6 +57,31 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
 
   public void setScriptDebugEnabled(boolean scriptDebugEnabled) {
     setDebugServerProcess(scriptDebugEnabled);
+  }
+
+  public @NotNull String getRawCommandLine() {
+    StringJoiner commandLine = new StringJoiner(" ");
+    for (String taskName : getSettings().getTaskNames()) {
+      commandLine.add(taskName);
+    }
+    String scriptParameters = getSettings().getScriptParameters();
+    if (StringUtil.isNotEmpty(scriptParameters)) {
+      commandLine.add(scriptParameters);
+    }
+    return commandLine.toString();
+  }
+
+  public void setRawCommandLine(@NotNull String commandLine) {
+    setCommandLine(GradleCommandLine.parse(commandLine));
+  }
+
+  public void setCommandLine(@NotNull GradleCommandLine commandLine) {
+    getSettings().setTaskNames(commandLine.getTasksAndArguments().toList());
+    getSettings().setScriptParameters(commandLine.getScriptParameters().toString());
+  }
+
+  public @NotNull GradleCommandLine getCommandLine() {
+    return GradleCommandLine.parse(getRawCommandLine());
   }
 
   @Nullable

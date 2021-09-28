@@ -6,13 +6,13 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.posi
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -97,6 +97,10 @@ private class GroovyFieldRenderer(
       }
     }
 
+    for (annotation in request.annotations) {
+      field.modifierList?.addAnnotation(annotation.qualifiedName)
+    }
+
     // setup actual modifiers
     for (modifier in modifiersToRender.map(JvmModifier::toPsiModifier)) {
       PsiUtil.setModifierProperty(field, modifier, true)
@@ -108,9 +112,9 @@ private class GroovyFieldRenderer(
       field.initializerGroovy = elementFactory.createExpressionFromText("0", null)
     }
 
-    val initializer = request.initializer
-    if (initializer != null && initializer is PsiExpression) {
-      field.initializer = initializer
+    val requestInitializer = request.initializer
+    if (requestInitializer is JvmLong) {
+      field.initializerGroovy = elementFactory.createExpressionFromText("${requestInitializer.longValue}L", null)
     }
 
     return field

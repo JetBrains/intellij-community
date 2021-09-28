@@ -193,5 +193,9 @@
       <keyboard-shortcut first-keystroke="control shift X" keymap="Emacs" remove="true"/>
       <add-to-group group-id="Diff.EditorPopupMenu"/>
     </action>
+
+    <action id="GithubCopyPathProvider" class="org.jetbrains.plugins.github.GithubCopyPathProvider">
+      <add-to-group group-id="CopyFileReference"/>
+    </action>
   </actions>
 </idea-plugin>

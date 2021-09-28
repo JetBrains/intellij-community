@@ -34,7 +34,7 @@ class KotlinScriptDependenciesClassFinder(private val project: Project) : NonCla
         Normally, only global scopes and 'KotlinScriptScope' contains such a file.
     */
     private fun isApplicable(scope: GlobalSearchScope): Boolean {
-        return true || !useOnlyForScripts || scope.contains(KotlinScriptMarkerFileSystem.rootFile)
+        return !useOnlyForScripts || scope.contains(KotlinScriptMarkerFileSystem.rootFile)
     }
 
     override fun getClassRoots(scope: GlobalSearchScope?): List<VirtualFile> {

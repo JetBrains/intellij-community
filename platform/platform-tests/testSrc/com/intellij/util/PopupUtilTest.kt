@@ -2,7 +2,7 @@
 package com.intellij.util
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.testFramework.MapDataContext
@@ -29,7 +29,7 @@ class PopupUtilTest : AbstractEditorTest() {
     }
     val logicalPosition = editor.caretModel.logicalPosition
     val context = MapDataContext().apply {
-      put(PlatformDataKeys.CONTEXT_COMPONENT, editor.contentComponent)
+      put(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor.contentComponent)
       put(CommonDataKeys.EDITOR, editor)
     }
     val xyBalloonPosition = editor.logicalPositionToXY(logicalPosition)

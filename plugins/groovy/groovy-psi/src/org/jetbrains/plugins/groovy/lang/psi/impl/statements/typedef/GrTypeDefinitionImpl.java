@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
@@ -35,10 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -133,6 +130,22 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Override
   public GrImplementsClause getImplementsClause() {
     return getStubOrPsiChild(GroovyStubElementTypes.IMPLEMENTS_CLAUSE);
+  }
+
+  @Override
+  public @Nullable GrPermitsClause getPermitsClause() {
+    return getStubOrPsiChild(GroovyStubElementTypes.PERMITS_CLAUSE);
+  }
+
+  @Override
+  public @Nullable PsiReferenceList getPermitsList() {
+    return getPermitsClause();
+  }
+
+  @Override
+  public PsiClassType @NotNull [] getPermitsListTypes() {
+    GrPermitsClause permitsClause = getPermitsClause();
+    return permitsClause == null ? PsiClassType.EMPTY_ARRAY : permitsClause.getReferencedTypes();
   }
 
   @Override

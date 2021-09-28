@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -22,6 +21,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
@@ -33,7 +33,7 @@ class ScriptExternalHighlightingPass(
     override fun doCollectInformation(progress: ProgressIndicator) = Unit
 
     override fun doApplyInformationToEditor() {
-        val document = document ?: return
+        val document = document
 
         if (!file.isScript()) return
 
@@ -94,7 +94,7 @@ class ScriptExternalHighlightingPass(
             ScriptDiagnostic.Severity.ERROR -> ERROR
             ScriptDiagnostic.Severity.WARNING -> WARNING
             ScriptDiagnostic.Severity.INFO -> INFORMATION
-            ScriptDiagnostic.Severity.DEBUG -> if (ApplicationManager.getApplication().isInternal) INFORMATION else null
+            ScriptDiagnostic.Severity.DEBUG -> if (isApplicationInternalMode()) INFORMATION else null
         }
     }
 

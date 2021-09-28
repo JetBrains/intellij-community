@@ -1,8 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.testng.KotlinTestNgConfigurationProducer"/>
-  </extensions>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
-    <testFrameworkProvider implementation="org.jetbrains.kotlin.idea.testng.TestNgKotlinTestFrameworkProvider"/>
-  </extensions>
-</idea-plugin>

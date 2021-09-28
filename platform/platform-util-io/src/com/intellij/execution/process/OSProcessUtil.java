@@ -75,15 +75,45 @@ public final class OSProcessUtil {
       UnixProcessManager.sendSignal(pid, UnixProcessManager.SIGKILL);
     }
   }
-
   /**
    * Terminates the process with the specified pid gracefully: on windows sends Ctrl-C,
    * on unix sends the SIGINT signal.
    *
    * @throws UnsupportedOperationException if cannot interrupt the process
-   *
    * @see KillableProcessHandler#destroyProcessGracefully()
    */
+  public static void terminateProcessGracefully(@NotNull Process process) throws RuntimeException {
+    if (SystemInfo.isWindows) {
+      if (Registry.is("disable.winp")) {
+        throw new UnsupportedOperationException("Cannot terminate process, disable.winp=true");
+      }
+      else {
+        try {
+          // there is no need to check return value: `sendCtrlC` either returns
+          // true or throws exception.
+          //noinspection ResultOfMethodCallIgnored
+          ProcessService.getInstance().sendWinProcessCtrlC(process);
+        }
+        catch (Exception e) {
+          throw new UnsupportedOperationException("Failed to terminate process", e);
+        }
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      UnixProcessManager.sendSignal((int)process.pid(), UnixProcessManager.SIGINT);
+    }
+    else {
+      throw new UnsupportedOperationException("Graceful termination is not supported for " + SystemInfo.getOsNameAndVersion());
+    }
+  }
+
+  /**
+   * pid is not enough to emulate CTRL+C on Windows, we need a real process with stdin
+   *
+   * @deprecated use {@link #terminateProcessGracefully(Process)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
   public static void terminateProcessGracefully(int pid) throws RuntimeException {
     if (SystemInfo.isWindows) {
       if (Registry.is("disable.winp")) {

@@ -21,7 +21,7 @@ class RunToolbarPopupController(val project: Project,
                                 val mainWidgetComponent: RunToolbarMainWidgetComponent) : PopupControllerComponentListener, Disposable {
   private val manager = RunToolbarSlotManager.getInstance(project)
   private var popup: JBPopup? = null
-  private var pane: RunToolbarExtraSlotPane = RunToolbarExtraSlotPane(project, {mainWidgetComponent.width}) { cancel() }
+  private var pane: RunToolbarExtraSlotPane = RunToolbarExtraSlotPane(project, {mainWidgetComponent.width})
 
   private val t: Int = JBUI.scale(4)
 
@@ -54,12 +54,8 @@ class RunToolbarPopupController(val project: Project,
     }
 
     mainWidgetComponent.isOpened = true
-    val slotPane = (if (pane.project == project) pane else null) ?: RunToolbarExtraSlotPane(project, {mainWidgetComponent.width}) { cancel() }
+    val slotPane = (if (pane.project == project) pane else null) ?: RunToolbarExtraSlotPane(project, {mainWidgetComponent.width})
     pane = slotPane
-
-    if (manager.slotsCount() == 0) {
-      manager.addAndSaveSlot()
-    }
 
     fun getTrackerRelativePoint(): RelativePoint {
       return RelativePoint(mainWidgetComponent, Point(0, mainWidgetComponent.height + t))

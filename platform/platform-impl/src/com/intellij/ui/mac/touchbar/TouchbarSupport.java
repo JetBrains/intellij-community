@@ -158,16 +158,16 @@ public class TouchbarSupport {
       Disposer.register(popup, tb);
   }
 
-  public static @Nullable Disposable showDialogButtons(@NotNull Container contentPane) {
+  public static @Nullable Disposable showWindowActions(@NotNull Component contentPane) {
     if (!isInitialized || !isEnabled()) {
       return null;
     }
 
-    return CtxDialogs.showDialogButtons(contentPane);
+    return CtxDialogs.showWindowActions(contentPane);
   }
 
-  public static void showDialogButtons(@NotNull Disposable parent, @NotNull Container contentPane) {
-    Disposable tb = showDialogButtons(contentPane);
+  public static void showWindowActions(@NotNull Disposable parent, @NotNull Component contentPane) {
+    Disposable tb = showWindowActions(contentPane);
     if (tb != null) {
       Disposer.register(parent, tb);
     }

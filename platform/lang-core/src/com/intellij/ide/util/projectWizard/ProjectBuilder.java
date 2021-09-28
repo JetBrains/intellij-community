@@ -36,22 +36,6 @@ public abstract class ProjectBuilder {
     return false;
   }
 
-  /**
-   * Used for automatically assigning an SDK to the project when it gets created.
-   * If no SDK is specified in the template project and there is no specific SDK chooser step,
-   * the SDK which is set for the project is the highest version SDK for which
-   * {@code isSuitableSdk} returns true.
-   *
-   * @param sdk the candidate SDK
-   * @return true if the SDK can be used for this project type, false otherwise
-   * @deprecated. Use {@link #isSuitableSdkType(SdkTypeId)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean isSuitableSdk(Sdk sdk) {
-    return isSuitableSdkType(sdk.getSdkType());
-  }
-
   public boolean isSuitableSdkType(SdkTypeId sdkType) {
     return true;
   }

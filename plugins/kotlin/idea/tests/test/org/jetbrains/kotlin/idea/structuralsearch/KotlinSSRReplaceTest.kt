@@ -11,20 +11,17 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.SmartList
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
-abstract class KotlinSSRReplaceTest : BasePlatformTestCase() {
+abstract class KotlinSSRReplaceTest : KotlinLightCodeInsightFixtureTestCase() {
     private val searchConfiguration = SearchConfiguration().apply {
         name = "SSR"
         matchOptions.setFileType(KotlinFileType.INSTANCE)
     }
-
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinLightProjectDescriptor()
 
     protected fun doTest(
         searchPattern: String,

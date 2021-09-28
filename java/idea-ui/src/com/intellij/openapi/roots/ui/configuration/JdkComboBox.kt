@@ -7,8 +7,9 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
+import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.options.ConfigurationException
@@ -16,21 +17,67 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.ui.layout.*
 
-fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>,
-                    project: Project?, moduleBuilder: ModuleBuilder): CellBuilder<JdkComboBox> {
+
+fun Row.sdkComboBox(
+  sdkModel: ProjectSdksModel,
+  sdkProperty: GraphProperty<Sdk?>,
+  project: Project?,
+  moduleBuilder: ModuleBuilder
+): CellBuilder<JdkComboBox> {
+  return component(createSdkComboBox(project, sdkModel, sdkProperty, StdModuleTypes.JAVA.id, moduleBuilder::isSuitableSdkType))
+}
+
+fun com.intellij.ui.dsl.builder.Row.sdkComboBox(
+  context: WizardContext,
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkPropertyId: String,
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
+  sdkFilter: ((Sdk) -> Boolean)? = null,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
+  onNewSdkAdded: ((Sdk) -> Unit)? = null
+): com.intellij.ui.dsl.builder.Cell<JdkComboBox> {
+  val sdksModel = ProjectSdksModel()
+
+  Disposer.register(context.disposable, Disposable {
+    sdksModel.disposeUIResources()
+  })
+
+  val comboBox = createSdkComboBox(context.project, sdksModel, sdkProperty, sdkPropertyId,
+    sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded)
+
+  return cell(comboBox)
+    .validationOnApply { validateSdk(sdkProperty, sdksModel) }
+    .onApply { context.projectJdk = sdkProperty.get() }
+}
+
+fun createSdkComboBox(
+  project: Project?,
+  sdkModel: ProjectSdksModel,
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkPropertyId: String,
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
+  sdkFilter: ((Sdk) -> Boolean)? = null,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
+  onNewSdkAdded: ((Sdk) -> Unit)? = null
+): JdkComboBox {
+
   sdkModel.reset(project)
 
-  val sdkFilter = moduleBuilder::isSuitableSdkType
-  val sdkComboBox = JdkComboBox(project, sdkModel, sdkFilter, JdkComboBox.getSdkFilter(sdkFilter), sdkFilter, null)
-  val moduleType: ModuleType<*> = StdModuleTypes.JAVA
+  val sdkComboBox = JdkComboBox(project, sdkModel, sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded)
 
-  val selectedJdkProperty = "jdk.selected." + moduleType.id
+  val selectedJdkProperty = "jdk.selected.$sdkPropertyId"
   val stateComponent = if (project == null) PropertiesComponent.getInstance() else PropertiesComponent.getInstance(project)
 
   sdkComboBox.addActionListener {
@@ -42,9 +89,9 @@ fun Row.sdkComboBox(sdkModel: ProjectSdksModel, sdkProperty: GraphProperty<Sdk?>
   }
 
   val lastUsedSdk = stateComponent.getValue(selectedJdkProperty)
-  ProjectWizardUtil.preselectJdkForNewModule(project, lastUsedSdk, sdkComboBox, moduleBuilder, sdkFilter)
+  ProjectWizardUtil.preselectJdkForNewModule(project, lastUsedSdk, sdkComboBox, sdkTypeFilter ?: { true })
 
-  return this.component(sdkComboBox)
+  return sdkComboBox
 }
 
 private fun getTargetJdk(sdkComboBox: JdkComboBox, project: Project?): Sdk? {
@@ -58,13 +105,21 @@ private fun getTargetJdk(sdkComboBox: JdkComboBox, project: Project?): Sdk? {
   return null
 }
 
+fun ValidationInfoBuilder.validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): ValidationInfo? {
+  return validateAndGetSdkValidationMessage(sdkProperty, sdkModel)?.let { error(it) }
+}
+
 fun validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): Boolean {
+  return validateAndGetSdkValidationMessage(sdkProperty, sdkModel) == null
+}
+
+private fun validateAndGetSdkValidationMessage(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): @DialogMessage String? {
   if (sdkProperty.get() == null) {
     if (Messages.showDialog(JavaUiBundle.message("prompt.confirm.project.no.jdk"),
                             JavaUiBundle.message("title.no.jdk.specified"),
                             arrayOf(CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()), 1,
                             Messages.getWarningIcon()) != Messages.YES) {
-      return false
+      return JavaUiBundle.message("title.no.jdk.specified")
     }
   }
 
@@ -76,25 +131,35 @@ fun validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): B
     if (Messages.showDialog(JavaUiBundle.message("dialog.message.0.do.you.want.to.proceed", e.message),
                             e.title, arrayOf(CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()), 1,
                             Messages.getWarningIcon()) != Messages.YES) {
-      return false
+      return e.message ?: e.title
     }
   }
-
-  return true
+  return null
 }
 
-fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?): Boolean {
+fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?, technologyName: String? = null): Boolean {
   val sdk = sdkProperty.get()
   if (sdk != null) {
     val wizardVersion = JavaSdk.getInstance().getVersion(sdk)
     if (wizardVersion != null && javaVersion != null) {
       val selectedVersion = JavaSdkVersion.fromVersionString(javaVersion)
       if (selectedVersion != null && !wizardVersion.isAtLeast(selectedVersion)) {
-        Messages.showErrorDialog(JavaStartersBundle.message("message.java.version.not.supported.by.sdk",
-                                                            selectedVersion.description,
-                                                            sdk.name,
-                                                            wizardVersion.description),
-                                 JavaStartersBundle.message("message.title.error"))
+        val message = if (technologyName == null) {
+          JavaStartersBundle.message("message.java.version.not.supported.by.sdk",
+            selectedVersion.description,
+            sdk.name)
+        }
+        else {
+          JavaStartersBundle.message("message.java.version.not.supported.by.sdk.for.technology",
+            selectedVersion.description,
+            sdk.name,
+            technologyName)
+        }
+
+        val currentSdkMessage = JavaStartersBundle.message("message.java.version.current.download", wizardVersion.description)
+        Messages.showErrorDialog("$message $currentSdkMessage",
+          JavaStartersBundle.message("message.title.error"))
+
         return false
       }
     }

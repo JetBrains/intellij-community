@@ -81,7 +81,6 @@ public abstract class PsiAugmentProvider {
   /**
    * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
    */
-  @SuppressWarnings("unused")
   @Deprecated
   @NotNull
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
@@ -116,16 +115,6 @@ public abstract class PsiAugmentProvider {
   //</editor-fold>
 
   //<editor-fold desc="API and the inner kitchen.">
-
-  /**
-   * @deprecated use {@link #collectAugments(PsiElement, Class, String)}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type) {
-    return collectAugments(element, type, null);
-  }
 
   @NotNull
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type,

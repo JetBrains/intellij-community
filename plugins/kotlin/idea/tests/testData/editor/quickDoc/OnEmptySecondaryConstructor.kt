@@ -12,6 +12,6 @@ class Foo {
 fun test() {
     val f = Foo<caret>(10)
 }
-//INFO: <div class='definition'><pre><a href="psi_element://Foo"><code>Foo</code></a><br>public constructor <b>Foo</b>(
-//INFO:     x: Int
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">Foo</span>(
+//INFO:     <span style="color:#000000;">x</span><span style="">: </span><span style="color:#000000;">Int</span>
 //INFO: )</pre></div><div class='content'><p>Documentation is here.</p></div><table class='sections'></table>

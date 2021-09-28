@@ -55,7 +55,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     ListSelection<Change> selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION);
 
-    ListSelection<Change> changesToLocal = selection.map(change -> getChangeWithLocal(change));
+    ListSelection<Change> changesToLocal = selection.map(change -> getChangeWithLocal(change, myUseBeforeVersion));
 
     if (!changesToLocal.isEmpty()) {
       showDiffForChange(project, changesToLocal);
@@ -71,10 +71,13 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     e.getPresentation().setEnabled(project != null && selection != null && !isInAir && canShowDiff(selection.getList()));
   }
 
-  @Nullable
-  private Change getChangeWithLocal(@NotNull Change c) {
-    ContentRevision revision = myUseBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
-    ContentRevision otherRevision = myUseBeforeVersion ? c.getAfterRevision() : c.getBeforeRevision();
+  private boolean canShowDiff(@NotNull List<? extends Change> changes) {
+    return ContainerUtil.exists(changes, c -> getChangeWithLocal(c, myUseBeforeVersion) != null);
+  }
+
+  public static @Nullable Change getChangeWithLocal(@NotNull Change c, boolean useBeforeVersion) {
+    ContentRevision revision = useBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
+    ContentRevision otherRevision = useBeforeVersion ? c.getAfterRevision() : c.getBeforeRevision();
 
     VirtualFile file = getLocalVirtualFileFor(revision);
     if (file == null) file = getLocalVirtualFileFor(otherRevision); // handle renames gracefully
@@ -83,10 +86,6 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     if (revision == null && localRevision == null) return null;
 
     return new Change(revision, localRevision);
-  }
-
-  private boolean canShowDiff(@NotNull List<? extends Change> changes) {
-    return ContainerUtil.exists(changes, c -> getChangeWithLocal(c) != null);
   }
 
   @Nullable

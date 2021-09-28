@@ -1,0 +1,6 @@
+package one.two
+
+annotation class Ann
+
+@Ann
+val a = ""

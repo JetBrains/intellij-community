@@ -124,6 +124,21 @@ final class ReadMostlyRWLock {
     return status;
   }
 
+  // return true if write lock acquired successfully, false if there's at least one active reader and write lock couldn't be acquired
+  boolean startTryWrite() {
+    checkWriteThreadAccess();
+    assert !writeRequested;
+    assert !writeAcquired;
+
+    writeRequested = true;
+    if (areAllReadersIdle()) {
+      writeAcquired = true;
+      return true;
+    }
+    writeRequested = false;
+    return false;
+  }
+
   void endRead(Reader status) {
     checkReadThreadAccess();
     status.readRequested = false;

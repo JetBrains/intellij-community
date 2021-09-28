@@ -13,48 +13,26 @@ import com.intellij.util.containers.ContainerUtil
  * calculates all markers and intervals from scratch for each document update
  */
 class NonIncrementalCellLines private constructor(private val document: Document,
-                                                  private val cellLinesLexer: NotebookCellLinesLexer,
-                                                  private val intervalsGenerator: (Document, List<NotebookCellLines.Marker>) -> List<NotebookCellLines.Interval>) : NotebookCellLines {
+                                                  private val intervalsGenerator: (Document) -> List<NotebookCellLines.Interval>) : NotebookCellLines {
 
-  private var markers: List<NotebookCellLines.Marker> = emptyList()
-  private var intervals: List<NotebookCellLines.Interval> = emptyList()
+  override var intervals: List<NotebookCellLines.Interval> = emptyList()
+    private set
+
   private val documentListener = createDocumentListener()
   override val intervalListeners = EventDispatcher.create(NotebookCellLines.IntervalListener::class.java)
-
-  override val intervalsCount: Int
-    get() = intervals.size
 
   override var modificationStamp: Long = 0
     private set
 
   init {
     document.addDocumentListener(documentListener)
-    updateIntervalsAndMarkers()
-  }
-
-  override fun getIterator(ordinal: Int): ListIterator<NotebookCellLines.Interval> =
-    intervals.listIterator(ordinal)
-
-  override fun getIterator(interval: NotebookCellLines.Interval): ListIterator<NotebookCellLines.Interval> {
-    check(interval == intervals[interval.ordinal])
-    return intervals.listIterator(interval.ordinal)
+    intervals = intervalsGenerator(document)
   }
 
   override fun intervalsIterator(startLine: Int): ListIterator<NotebookCellLines.Interval> {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val ordinal = intervals.find { startLine <= it.lines.last }?.ordinal ?: intervals.size
     return intervals.listIterator(ordinal)
-  }
-
-  override fun markersIterator(startOffset: Int): ListIterator<NotebookCellLines.Marker> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    val ordinal = markers.find { startOffset == it.offset || startOffset < it.offset + it.length }?.ordinal ?: markers.size
-    return markers.listIterator(ordinal)
-  }
-
-  private fun updateIntervalsAndMarkers() {
-    markers = cellLinesLexer.markerSequence(document.charsSequence, 0, 0).toList()
-    intervals = intervalsGenerator(document, markers)
   }
 
   private fun notifyChanged(oldCells: List<NotebookCellLines.Interval>,
@@ -93,7 +71,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
     override fun documentChanged(event: DocumentEvent) {
       ApplicationManager.getApplication().assertWriteAccessAllowed()
       val oldIntervals = intervals
-      updateIntervalsAndMarkers()
+      intervals = intervalsGenerator(document)
 
       val newAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.newLength))
       notifyChanged(oldIntervals, oldAffectedCells, intervals, newAffectedCells)
@@ -103,10 +81,9 @@ class NonIncrementalCellLines private constructor(private val document: Document
   companion object {
     private val map = ContainerUtil.createConcurrentWeakMap<Document, NotebookCellLines>()
 
-    fun get(document: Document, lexerProvider: NotebookCellLinesLexer,
-            intervalsGenerator: (Document, List<NotebookCellLines.Marker>) -> List<NotebookCellLines.Interval>): NotebookCellLines =
+    fun get(document: Document, intervalsGenerator: (Document) -> List<NotebookCellLines.Interval>): NotebookCellLines =
       map.computeIfAbsent(document) {
-        NonIncrementalCellLines(document, lexerProvider, intervalsGenerator)
+        NonIncrementalCellLines(document, intervalsGenerator)
       }
   }
 }

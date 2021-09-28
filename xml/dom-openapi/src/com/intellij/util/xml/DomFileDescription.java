@@ -77,24 +77,10 @@ public class DomFileDescription<T> {
   /**
    * @param namespaceKey namespace identifier
    * @see Namespace
-   * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URLs or DTD public ids. This
-   * function shouldn't use DOM since it may be not initialized for the file at the moment
-   * @deprecated use {@link #registerNamespacePolicy(String, String...)} or override {@link #getAllowedNamespaces(String, XmlFile)} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
-    myNamespacePolicies.put(namespaceKey, policy);
-  }
-
-  /**
-   * @param namespaceKey namespace identifier
-   * @see Namespace
    * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
   public final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {
-    registerNamespacePolicy(namespaceKey, new ConstantFunction<>(Arrays.asList(namespaces)));
+    myNamespacePolicies.put(namespaceKey, new ConstantFunction<>(Arrays.asList(namespaces)));
   }
 
   /**

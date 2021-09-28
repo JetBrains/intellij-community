@@ -19,6 +19,22 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
 
   private val scrollListeners = ArrayList<MarkdownHtmlPanel.ScrollListener>()
 
+  private val scriptingLines get() =
+    scripts.joinToString("\n") {
+      "<script src=\"${PreviewStaticServer.getStaticUrl(resourceProvider, it)}\"></script>"
+    }
+
+  private val stylesLines get() =
+    styles.joinToString("\n") {
+      "<link rel=\"stylesheet\" href=\"${PreviewStaticServer.getStaticUrl(resourceProvider, it)}\"/>"
+    }
+
+  private val contentSecurityPolicy get() =
+    PreviewStaticServer.createCSP(
+      scripts.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) },
+      styles.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
+    )
+
   private val indexContent get() =
     // language=HTML
     """
@@ -41,7 +57,8 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
 
   init {
     Disposer.register(this, browserPipe)
-    PreviewStaticServer.instance.resourceProvider = resourceProvider
+    val resourceProviderRegistration = PreviewStaticServer.instance.registerResourceProvider(resourceProvider)
+    Disposer.register(this, resourceProviderRegistration)
     browserPipe.addBrowserEvents(SET_SCROLL_EVENT)
     browserPipe.subscribe(BrowserPipe.WINDOW_READY_EVENT) {
       delayedContent?.let {
@@ -93,8 +110,9 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
     cefBrowser.executeJavaScript(code, null, 0)
   }
 
-  override fun setHtml(html: String, initialScrollOffset: Int, baseUrl: Path?) {
-    val builder = IncrementalDOMBuilder(html, baseUrl)
+  override fun setHtml(html: String, initialScrollOffset: Int, documentPath: Path?) {
+    val basePath = documentPath?.parent
+    val builder = IncrementalDOMBuilder(html, basePath)
     updateDom(builder.generateRenderClosure(), initialScrollOffset)
     firstUpdate = false
   }
@@ -173,22 +191,6 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
     val scripts get() = baseScripts + extensions.flatMap { it.scripts }
 
     val styles get() = extensions.flatMap { it.styles }
-
-    private val scriptingLines get() =
-      scripts.joinToString("\n") {
-        "<script src=\"${PreviewStaticServer.getStaticUrl(it)}\"></script>"
-      }
-
-    private val stylesLines get() =
-      styles.joinToString("\n") {
-        "<link rel=\"stylesheet\" href=\"${PreviewStaticServer.getStaticUrl(it)}\"/>"
-      }
-
-    private val contentSecurityPolicy get() =
-      PreviewStaticServer.createCSP(
-        scripts.map { PreviewStaticServer.getStaticUrl(it) },
-        styles.map { PreviewStaticServer.getStaticUrl(it) }
-      )
 
     private fun getClassUrl(): String {
       val url = try {

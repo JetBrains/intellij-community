@@ -3,7 +3,7 @@ package com.intellij.openapi.util.registry
 
 import com.intellij.application.options.RegistryManager
 import com.intellij.diagnostic.runActivity
-import com.intellij.openapi.components.ComponentCategory
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -13,7 +13,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@State(name = "Registry", storages = [Storage("ide.general.xml")], useLoadedStateAsExisting = false, category = ComponentCategory.SYSTEM)
+@State(name = "Registry", storages = [Storage("ide.general.xml")], useLoadedStateAsExisting = false, category = SettingsCategory.SYSTEM)
 @ApiStatus.Internal
 internal class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryManager {
   init {

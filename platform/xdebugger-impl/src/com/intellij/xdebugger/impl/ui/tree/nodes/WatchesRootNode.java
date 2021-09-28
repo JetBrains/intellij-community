@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -19,6 +20,7 @@ import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +103,13 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     return myChildren;
   }
 
+  public List<XExpression> getWatchExpressions() {
+    return StreamEx.of(getWatchChildren())
+      .filter(node -> !(node instanceof ResultNode))
+      .map(WatchNode::getExpression)
+      .toList();
+  }
+
   @Override
   public void clearChildren() {
     super.clearChildren();
@@ -111,28 +120,28 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     myChildren.forEach(WatchNodeImpl::computePresentationIfNeeded);
   }
 
-  public void addResultNode(@Nullable XStackFrame stackFrame, @NotNull XExpression expression) {
-    class ResultNode extends WatchNodeImpl {
-      ResultNode(@NotNull XDebuggerTree tree,
-                 @NotNull WatchesRootNode parent,
-                 @NotNull XExpression expression,
-                 @Nullable XStackFrame stackFrame) {
-        super(tree, parent, expression, stackFrame, "result");
-      }
-
-      @Override
-      public void applyPresentation(@Nullable Icon icon,
-                                    @NotNull XValuePresentation valuePresentation, boolean hasChildren) {
-        Icon resultIcon = AllIcons.Debugger.Db_evaluateNode;
-        if (icon instanceof CompositeIcon) {
-          IconUtil.replaceInnerIcon(icon, AllIcons.Debugger.Db_watch, resultIcon);
-        }
-        else {
-          icon = resultIcon;
-        }
-        super.applyPresentation(icon, valuePresentation, hasChildren);
-      }
+  private static class ResultNode extends WatchNodeImpl {
+    ResultNode(@NotNull XDebuggerTree tree,
+               @NotNull WatchesRootNode parent,
+               @NotNull XExpression expression,
+               @Nullable XStackFrame stackFrame) {
+      super(tree, parent, expression, stackFrame, XDebuggerBundle.message("debugger.result.node.name"));
     }
+
+    @Override
+    public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresentation, boolean hasChildren) {
+      Icon resultIcon = AllIcons.Debugger.Db_evaluateNode;
+      if (icon instanceof CompositeIcon) {
+        IconUtil.replaceInnerIcon(icon, AllIcons.Debugger.Db_watch, resultIcon);
+      }
+      else {
+        icon = resultIcon;
+      }
+      super.applyPresentation(icon, valuePresentation, hasChildren);
+    }
+  }
+
+  public void addResultNode(@Nullable XStackFrame stackFrame, @NotNull XExpression expression) {
     WatchNodeImpl message = new ResultNode(myTree, this, expression, stackFrame);
     if (ContainerUtil.getFirstItem(myChildren) instanceof ResultNode) {
       myChildren.set(0, message);

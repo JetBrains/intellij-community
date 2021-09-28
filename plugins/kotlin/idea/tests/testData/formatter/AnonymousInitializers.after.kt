@@ -1,7 +1,6 @@
 annotation class Ann
 class A {
-    init {
-    }
+    init {}
 
     fun foo1() {
 
@@ -9,18 +8,15 @@ class A {
 
     val x: Int = 1
 
-    init {
-    }
+    init {}
 
     fun foo2() {
 
     }
 
-    @Ann init {
-    }
+    @Ann init {}
 
-    @Ann init {
-    }
+    @Ann init {}
 
 
     fun foo3() {
@@ -28,8 +24,7 @@ class A {
     }
 
 
-    init {
-    }
+    init {}
 
     constructor() {
 
@@ -47,6 +42,12 @@ class A {
     val a3 = foo4() // el
 
     /* abc */ init {
+
+    }
+
+    fun foo5() {}
+
+    init {
 
     }
 }

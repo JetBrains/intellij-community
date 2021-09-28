@@ -16,10 +16,10 @@
 
 package selftype;
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
 
-@DefaultNonNull
+@NullMarked
 public class SelfType<T extends SelfType<T>> {
   public void foo(T t) {}
 }
@@ -27,7 +27,7 @@ public class SelfType<T extends SelfType<T>> {
 // jspecify_nullness_not_enough_information
 class B extends SelfType<B> {}
 
-@DefaultNonNull
+@NullMarked
 class C<E extends C<E>> extends SelfType<E> {}
 
 // jspecify_nullness_not_enough_information
@@ -41,7 +41,7 @@ class BK extends B {}
 // jspecify_nullness_not_enough_information
 class CK extends C<CK> {}
 
-@DefaultNonNull
+@NullMarked
 // jspecify_nullness_mismatch
 abstract class Super extends C<@Nullable CK> {
   abstract AK ak();

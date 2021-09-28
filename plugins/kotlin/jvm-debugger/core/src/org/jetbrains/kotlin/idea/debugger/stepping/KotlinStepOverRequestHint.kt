@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.debugger.stepping
 
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -18,12 +20,38 @@ import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Type
 
+open class KotlinRequestHint(
+    stepThread: ThreadReferenceProxyImpl, suspendContext: SuspendContextImpl, stepSize: Int, depth: Int, filter: MethodFilter?, parentHint: RequestHint?
+) : RequestHint(stepThread, suspendContext, stepSize, depth, filter, parentHint) {
+    private val myInlineFilter = createKotlinInlineFilter(suspendContext)
+    override fun isTheSameFrame(context: SuspendContextImpl) =
+        super.isTheSameFrame(context) && (myInlineFilter === null || !myInlineFilter.isNestedInline(context))
+
+    override fun doStep(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl?, stepThread: ThreadReferenceProxyImpl?, size: Int, depth: Int) {
+        if (depth == StepRequest.STEP_OUT) {
+            val frameProxy = suspendContext?.frameProxy
+            val location = frameProxy?.safeLocation()
+            if (location !== null) {
+                val action = getStepOutAction(location, frameProxy)
+                if (action !== KotlinStepAction.StepOut) {
+                    val command = action.createCommand(debugProcess, suspendContext, false)
+                    val hint = command.getHint(suspendContext, stepThread, this)!!
+                    command.step(suspendContext, stepThread, hint)
+                    return
+                }
+            }
+        }
+        super.doStep(debugProcess, suspendContext, stepThread, size, depth)
+    }
+}
+
 // Originally copied from RequestHint
 class KotlinStepOverRequestHint(
     stepThread: ThreadReferenceProxyImpl,
     suspendContext: SuspendContextImpl,
-    private val filter: KotlinMethodFilter
-) : RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OVER, filter) {
+    private val filter: KotlinMethodFilter,
+    parentHint: RequestHint?
+) : RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OVER, filter, parentHint) {
     private companion object {
         private val LOG = Logger.getInstance(KotlinStepOverRequestHint::class.java)
     }

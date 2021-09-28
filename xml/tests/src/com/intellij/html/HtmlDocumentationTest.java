@@ -18,13 +18,13 @@ package com.intellij.html;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import junit.framework.ComparisonFailure;
 
 import java.util.Collections;
 import java.util.List;
 
-public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
+public class HtmlDocumentationTest extends BasePlatformTestCase {
   public void testQuickDocumentationHtml5Tag() {
     doTest("<!DOCTYPE html>\n" +
            "<html>\n" +
@@ -156,10 +156,18 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/api/htmlmediaelement/stalled_event"));
   }
 
+  public void testLookupDocWordCompletions() {
+    myFixture.configureByText("test.html", "<html lang='en'>la<caret>n");
+    PsiElement originalElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(originalElement);
+    PsiElement element = documentationProvider.getDocumentationElementForLookupItem(originalElement.getManager(), "lang", originalElement);
+    assertNull(element);
+  }
+
   private void doTest(String text, String doc, List<String> url) {
-    configureFromFileText("test.html", text);
-    PsiElement originalElement = getFile().findElementAt(getEditor().getCaretModel().getOffset());
-    PsiElement element = DocumentationManager.getInstance(getProject()).findTargetElement(getEditor(), getFile());
+    myFixture.configureByText("test.html", text);
+    PsiElement originalElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    PsiElement element = DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(), myFixture.getFile());
     DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(originalElement);
 
     String generatedDoc = documentationProvider.generateDoc(element, originalElement);

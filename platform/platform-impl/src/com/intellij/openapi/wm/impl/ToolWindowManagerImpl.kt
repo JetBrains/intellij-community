@@ -1379,6 +1379,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
+  fun updateSquareButtons() {
+    val leftToolbar = toolWindowPane!!.getSquareStripeFor(ToolWindowAnchor.LEFT)
+    val rightToolbar = toolWindowPane!!.getSquareStripeFor(ToolWindowAnchor.RIGHT)
+    if (leftToolbar != null) { ToolwindowToolbar.updateButtons(leftToolbar) }
+    if (rightToolbar != null) { ToolwindowToolbar.updateButtons(rightToolbar) }
+
+  }
+
   fun notifySquareButtonByBalloon(options: ToolWindowBalloonShowOptions) {
     val entry = idToEntry[options.toolWindowId]!!
     val existing = entry.balloon

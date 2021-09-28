@@ -27,7 +27,7 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
 
   override fun validate(project: Project, file: VirtualFile): String? {
     return when {
-      PandocExecutableDetector().detect().isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
+      PandocExecutableDetector.detect().isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
       else -> null
     }
   }

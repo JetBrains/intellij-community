@@ -101,13 +101,6 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
-
-      // A very important thing. If we replace a field in one-to-one connection, the previous entity is automatically removed.
-      val existingChild = thisRef.diff.extractOneToOneChild<Child>(connectionId!!, value.id)
-      if (existingChild != null) {
-        thisRef.diff.removeEntity(existingChild)
-      }
-
       thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
     }
   }

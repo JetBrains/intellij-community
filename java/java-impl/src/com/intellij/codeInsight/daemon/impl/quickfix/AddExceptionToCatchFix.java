@@ -48,7 +48,9 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
 
-    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    if (file.isPhysical()) {
+      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    }
 
     PsiCodeBlock catchBlockToSelect = null;
 

@@ -196,6 +196,11 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
     return CompletableFuture()
   }
 
+  override fun timerCheck(delayMillis: Int, checkState: TaskRuntimeContext.() -> Boolean): CompletableFuture<Boolean> {
+    hasDetection = true
+    return CompletableFuture()
+  }
+
   override fun addFutureStep(p: DoneStepContext.() -> Unit) {
     hasDetection = true
   }
@@ -209,6 +214,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
                                                                   highlightBorder: Boolean,
                                                                   highlightInside: Boolean,
                                                                   usePulsation: Boolean,
+                                                                  clearPreviousHighlights: Boolean,
                                                                   selector: ((candidates: Collection<T>) -> T?)?,
                                                                   rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     hasDetection = true
@@ -219,6 +225,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
                                                                                 highlightBorder: Boolean,
                                                                                 highlightInside: Boolean,
                                                                                 usePulsation: Boolean,
+                                                                                clearPreviousHighlights: Boolean,
                                                                                 selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                                                                 finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
     hasDetection = true

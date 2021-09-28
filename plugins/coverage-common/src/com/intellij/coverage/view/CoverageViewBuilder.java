@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -129,6 +130,10 @@ public class CoverageViewBuilder extends AbstractListBuilder {
   }
 
   public void select(Object object) {
-    selectElement(myCoverageViewExtension.getElementToSelect(object), myCoverageViewExtension.getVirtualFile(object));
+    ReadAction.nonBlocking(() -> {
+      final PsiElement element = myCoverageViewExtension.getElementToSelect(object);
+      final VirtualFile file = myCoverageViewExtension.getVirtualFile(object);
+      selectElement(element, file);
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 }

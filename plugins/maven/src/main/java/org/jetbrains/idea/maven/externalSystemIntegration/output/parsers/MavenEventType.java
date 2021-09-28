@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 public enum MavenEventType {
   SESSION_STARTED("SessionStarted"),
+  SESSION_ENDED("SessionEnded"),
   PROJECT_STARTED("ProjectStarted"),
   MOJO_STARTED("MojoStarted"),
   MOJO_SUCCEEDED("MojoSucceeded"),

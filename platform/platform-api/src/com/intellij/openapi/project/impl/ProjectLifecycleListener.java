@@ -45,6 +45,6 @@ public interface ProjectLifecycleListener {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void afterProjectClosed(@SuppressWarnings("unused") @NotNull Project project) {
+  default void afterProjectClosed(@NotNull Project project) {
   }
 }

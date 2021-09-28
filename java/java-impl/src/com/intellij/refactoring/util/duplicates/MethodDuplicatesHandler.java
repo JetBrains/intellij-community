@@ -53,7 +53,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,12 +62,6 @@ import java.util.*;
  * @author dsl
  */
 public class MethodDuplicatesHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  /**
-   * @deprecated Use {@link #getRefactoringName()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final String REFACTORING_NAME = "Replace Code Duplicates";
   private static final Logger LOG = Logger.getInstance(MethodDuplicatesHandler.class);
 
   @Override

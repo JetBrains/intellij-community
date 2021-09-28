@@ -314,7 +314,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
 
       val sessionProducer = session.getProducer(storage) ?: continue
-      if (storageSpec.deprecated || resolution == Resolution.CLEAR) {
+      if (resolution == Resolution.CLEAR ||
+          storageSpec.deprecated && storageSpecs.none { !it.deprecated && it.value == storageSpec.value }) {
         sessionProducer.setState(component, effectiveComponentName, null)
       }
       else {

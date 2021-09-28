@@ -78,5 +78,6 @@
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>

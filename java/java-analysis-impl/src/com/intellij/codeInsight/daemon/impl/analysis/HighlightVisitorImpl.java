@@ -146,7 +146,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected HighlightVisitorImpl(@SuppressWarnings("unused") @NotNull PsiResolveHelper psiResolveHelper) {
+  protected HighlightVisitorImpl(@NotNull PsiResolveHelper psiResolveHelper) {
   }
 
   @NotNull
@@ -1447,6 +1447,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
         catch (IndexNotReadyException ignored) { }
       }
+    }
+
+    if (!myHolder.hasErrorResults() && resultForIncompleteCode != null && HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
+      myHolder.add(HighlightUtil.checkPatternVariableRequired(expression, resultForIncompleteCode));
     }
 
     if (!myHolder.hasErrorResults() && resultForIncompleteCode != null) {

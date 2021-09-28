@@ -171,6 +171,16 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
   }
 
+  protected void assertExcludePatterns(String moduleName, String... expectedPatterns) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    assertUnorderedElementsAreEqual(contentRoot.getExcludePatterns(), Arrays.asList(expectedPatterns));
+  }
+
+  protected void assertNoExcludePatterns(String moduleName, String... nonExpectedPatterns) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    assertDoesntContain(contentRoot.getExcludePatterns(), nonExpectedPatterns);
+  }
+
   protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
     ContentEntry root = getContentRoot(moduleName, contentRoot);
     doAssertContentFolders(root, Arrays.asList(root.getExcludeFolders()), expectedExcudes);

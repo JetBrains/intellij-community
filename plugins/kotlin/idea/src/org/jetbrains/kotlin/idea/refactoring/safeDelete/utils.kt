@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.formatJavaOrLightMethod
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
@@ -65,7 +65,7 @@ fun checkParametersInMethodHierarchy(parameter: PsiParameter): Collection<PsiEle
     val method = parameter.declarationScope as PsiMethod
 
     val parametersToDelete = collectParametersHierarchy(method, parameter)
-    if (parametersToDelete.size <= 1 || ApplicationManager.getApplication().isUnitTestMode) return parametersToDelete
+    if (parametersToDelete.size <= 1 || isUnitTestMode()) return parametersToDelete
 
     val message = KotlinBundle.message("override.declaration.delete.multiple.parameters", formatJavaOrLightMethod(method))
     val exitCode = Messages.showOkCancelDialog(parameter.project, message, IdeBundle.message("title.warning"), Messages.getQuestionIcon())

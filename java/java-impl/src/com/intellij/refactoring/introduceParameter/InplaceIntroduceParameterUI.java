@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -19,15 +19,12 @@ import it.unimi.dsi.fastutil.ints.IntList;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSettingsUI {
   private JComboBox<Integer> myReplaceFieldsCb;
   private boolean myHasWriteAccess;
   private final Project myProject;
   private final TypeSelectorManager myTypeSelectorManager;
-  private final PsiExpression[] myOccurrences;
   private final PsiFile myFile;
 
   public InplaceIntroduceParameterUI(Project project,
@@ -40,10 +37,9 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     super(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     myProject = project;
     myTypeSelectorManager = typeSelectorManager;
-    myOccurrences = occurrences;
     myFile = methodToReplaceIn.getContainingFile();
 
-    for (PsiExpression occurrence : myOccurrences) {
+    for (PsiExpression occurrence : occurrences) {
       if (PsiUtil.isAccessedForWriting(occurrence)) {
         myHasWriteAccess = true;
         break;
@@ -95,26 +91,6 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
 
   public boolean isGenerateFinal() {
     return hasFinalModifier();
-  }
-
-  public void appendOccurrencesDelegate(JPanel myWholePanel) {
-    final GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0);
-    if (myOccurrences.length > 1 && !myIsInvokedOnDeclaration) {
-      gc.gridy++;
-      createOccurrencesCb(gc, myWholePanel, myOccurrences.length);
-      myCbReplaceAllOccurences.addItemListener(
-        new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent e) {
-            updateControls(new JCheckBox[0]);
-          }
-        }
-      );
-    }
-    gc.gridy++;
-    gc.insets.left = 0;
-    createDelegateCb(gc, myWholePanel);
   }
 
   public boolean hasFinalModifier() {

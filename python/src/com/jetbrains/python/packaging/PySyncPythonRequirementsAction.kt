@@ -3,12 +3,12 @@ package com.jetbrains.python.packaging
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 
 
 class PySyncPythonRequirementsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val module = e.getData(LangDataKeys.MODULE) ?: return
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
     syncWithImports(module)
   }
 }

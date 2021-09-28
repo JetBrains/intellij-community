@@ -2,7 +2,8 @@
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
@@ -41,13 +42,14 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
   }
 
   override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val contextComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     val tabLabel = if (contextComponent is BaseLabel) contextComponent else e.getData(ToolWindowContentUi.SELECTED_CONTENT_TAB_LABEL)
     val tabLabelContent = tabLabel?.content ?: return
-    showContentRenamePopup(tabLabel, tabLabelContent)
+    val project = e.project ?: return
+    showContentRenamePopup(tabLabel, tabLabelContent, project)
   }
 
-  private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content) {
+  private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content, project: Project) {
     val textField = JTextField(content.displayName)
     textField.selectAll()
 
@@ -82,7 +84,7 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
               return
             }
             content.displayName = textField.text
-            contentNameUpdated(content)
+            contentNameUpdated(content, project)
           }
           balloon.hide()
         }
@@ -102,5 +104,5 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
   }
 
-  open fun contentNameUpdated(content: Content) {}
+  open fun contentNameUpdated(content: Content, project: Project) {}
 }

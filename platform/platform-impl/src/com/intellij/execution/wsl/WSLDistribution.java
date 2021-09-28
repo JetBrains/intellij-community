@@ -53,8 +53,14 @@ public class WSLDistribution {
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
+  public static final String WSL_EXE = "wsl.exe";
+  public static final String DISTRIBUTION_PARAMETER = "--distribution";
+  public static final String SHELL_PARAMETER = "$SHELL";
+  public static final String EXIT_CODE_PARAMETER = "; exitcode=$?";
+  public static final String EXEC_PARAMETER = "--exec";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
+  private static final String RSYNC = "rsync";
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
@@ -79,8 +85,8 @@ public class WSLDistribution {
   }
 
   /**
-   * @deprecated please don't use it, to be removed
    * @return executable file, null for WSL distributions parsed from `wsl.exe --list` output
+   * @deprecated please don't use it, to be removed
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
@@ -175,16 +181,17 @@ public class WSLDistribution {
    * @return process output
    */
 
-  @SuppressWarnings("UnusedReturnValue")
-  public ProcessOutput copyFromWsl(@NotNull String wslPath,
-                                   @NotNull String windowsPath,
-                                   @Nullable List<String> additionalOptions,
-                                   @Nullable Consumer<? super ProcessHandler> handlerConsumer
+  public void copyFromWsl(@NotNull String wslPath,
+                          @NotNull String windowsPath,
+                          @Nullable List<String> additionalOptions,
+                          @Nullable Consumer<? super ProcessHandler> handlerConsumer
   )
     throws ExecutionException {
+
+
     //noinspection ResultOfMethodCallIgnored
     new File(windowsPath).mkdirs();
-    List<String> command = new ArrayList<>(Arrays.asList("rsync", "-cr"));
+    List<String> command = new ArrayList<>(Arrays.asList(RSYNC, "-cr"));
 
     if (additionalOptions != null) {
       command.addAll(additionalOptions);
@@ -196,7 +203,16 @@ public class WSLDistribution {
       throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
     }
     command.add(targetWslPath + "/");
-    return executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
+    var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
+    if (process.getExitCode() != 0) {
+      // Most common problem is rsync not onstalled
+      if (executeOnWsl(10_000, "type", RSYNC).getExitCode() != 0) {
+        throw new ExecutionException(IdeBundle.message("wsl.no.rsync", this.myDescriptor.getMsId()));
+      }
+      else {
+        throw new ExecutionException(process.getStderr());
+      }
+    }
   }
 
   /**
@@ -301,21 +317,21 @@ public class WSLDistribution {
     String linuxCommandStr = StringUtil.join(linuxCommand, " ");
     if (wslExe != null) {
       commandLine.setExePath(wslExe.toString());
+      commandLine.addParameters(DISTRIBUTION_PARAMETER, getMsId());
       if (isElevated) {
         commandLine.addParameters("-u", "root");
       }
-      commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
         // workaround WSL1 problem: https://github.com/microsoft/WSL/issues/4082
         if (options.getSleepTimeoutSec() > 0 && getVersion() == 1) {
-          linuxCommandStr += "; exitcode=$?; sleep " + options.getSleepTimeoutSec() + "; (exit $exitcode)";
+          linuxCommandStr += EXIT_CODE_PARAMETER + "; sleep " + options.getSleepTimeoutSec() + "; (exit $exitcode)";
         }
 
         if (options.isExecuteCommandInDefaultShell()) {
-          commandLine.addParameters("$SHELL", "-c", linuxCommandStr);
+          commandLine.addParameters(SHELL_PARAMETER, "-c", linuxCommandStr);
         }
         else {
-          commandLine.addParameters("--exec", options.getShellPath());
+          commandLine.addParameters(EXEC_PARAMETER, options.getShellPath());
           if (options.isExecuteCommandInInteractiveShell()) {
             commandLine.addParameters("-i");
           }
@@ -326,7 +342,7 @@ public class WSLDistribution {
         }
       }
       else {
-        commandLine.addParameter("--exec");
+        commandLine.addParameter(EXEC_PARAMETER);
         commandLine.addParameters(linuxCommand);
       }
     }
@@ -359,7 +375,7 @@ public class WSLDistribution {
   }
 
   public static @Nullable Path findWslExe() {
-    File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
+    File file = PathEnvironmentVariableUtil.findInPath(WSL_EXE);
     return file != null ? file.toPath() : null;
   }
 
@@ -473,13 +489,10 @@ public class WSLDistribution {
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
-
   public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    if (wslPath.startsWith(getMntRoot())) {
-      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
-      if (windowsPath != null) {
-        return windowsPath;
-      }
+    String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+    if (windowsPath != null) {
+      return windowsPath;
     }
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
@@ -545,7 +558,7 @@ public class WSLDistribution {
 
   @Override
   public String toString() {
-    return "WSLDistribution{myDescriptor=" + myDescriptor + '}';
+    return myDescriptor.getMsId();
   }
 
   private static void prependCommand(@NotNull List<? super String> command, String @NotNull ... commandToPrepend) {
@@ -562,7 +575,9 @@ public class WSLDistribution {
     return Strings.stringHashCodeInsensitive(getMsId());
   }
 
-  /** @deprecated use {@link WSLDistribution#getUNCRootPath()} instead */
+  /**
+   * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
+   */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @NotNull File getUNCRoot() {
@@ -672,7 +687,7 @@ public class WSLDistribution {
   }
 
   private @Nullable String getWsl1LoopbackAddress() {
-    return WSLUtil.isWsl1(this) == ThreeState.YES ? InetAddress.getLoopbackAddress().getHostAddress() : null;
+    return getVersion() == 1 ? InetAddress.getLoopbackAddress().getHostAddress() : null;
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {

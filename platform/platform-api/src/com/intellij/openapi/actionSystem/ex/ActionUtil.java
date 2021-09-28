@@ -254,7 +254,7 @@ public final class ActionUtil {
     IndexNotReadyException indexError = null;
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
-    Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component != null && !UIUtil.isShowing(component) &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) {
       String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());

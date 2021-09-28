@@ -2,22 +2,19 @@
 package com.intellij.ide.actions.cache
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationListener
-import com.intellij.notification.NotificationType
+import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
-import javax.swing.event.HyperlinkEvent
 
 @Service
 internal class Saul {
@@ -61,27 +58,31 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
   fun perform(recoveryAction: RecoveryAction, project: Project) {
     recoveryAction.performUnderProgress(project, true) { p ->
       if (hasNextRecoveryAction(p)) {
-        askUserToContinue(p)
+        askUserToContinue(p, recoveryAction)
       }
     }
   }
 
-  private fun askUserToContinue(project: Project) {
+  private fun askUserToContinue(project: Project, previousRecoveryAction: RecoveryAction) {
     if (!hasNextRecoveryAction(project)) return
     val recoveryAction = actionSeq.next()
 
-    NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches")
-      .createNotification(IdeBundle.message("notification.cache.diagnostic.helper.title"),
-                          IdeBundle.message("notification.cache.diagnostic.helper.text", recoveryAction.presentableName),
-                          NotificationType.INFORMATION)
-      .setListener(object : NotificationListener.Adapter() {
-        override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
-          notification.expire()
-          if (e.description == "next") {
-            perform(recoveryAction, project)
-          }
-        }
+    val notification = NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
+      .createNotification(
+        IdeBundle.message("notification.cache.diagnostic.helper.title"),
+        IdeBundle.message("notification.cache.diagnostic.helper.text", previousRecoveryAction.presentableName),
+        NotificationType.WARNING
+      )
+    notification
+      .addAction(DumbAwareAction.create(IdeBundle.message("notification.cache.diagnostic.stop.text")) {
+        notification.expire()
+        reportStoppedToFus(project)
       })
+      .addAction(DumbAwareAction.create(recoveryAction.presentableName) {
+        notification.expire()
+        perform(recoveryAction, project)
+      })
+      .setImportant(true)
       .notify(project)
   }
 
@@ -101,6 +102,8 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
     assert(hasNextRecoveryAction(project))
     return next!!
   }
+
+  private fun reportStoppedToFus(project: Project) = CacheRecoveryUsageCollector.recordGuideStoppedEvent(project)
 }
 
 internal fun RecoveryAction.performUnderProgress(project: Project, fromGuide: Boolean, onComplete: (Project) -> Unit = {}) {

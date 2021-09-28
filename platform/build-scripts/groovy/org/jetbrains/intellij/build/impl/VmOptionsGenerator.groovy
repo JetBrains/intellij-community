@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.ProductProperties
 final class VmOptionsGenerator {
   @SuppressWarnings('SpellCheckingInspection')
   static final List<String> COMMON_VM_OPTIONS = List.of(
+    '-XX:+IgnoreUnrecognizedVMOptions',
     '-XX:+UseG1GC',
     '-XX:SoftRefLRUPolicyMSPerMB=50',
     '-XX:CICompilerCount=2',
@@ -31,7 +32,7 @@ final class VmOptionsGenerator {
     Map<String, String> memory =  new LinkedHashMap<>()
     memory.putAll(MEMORY_OPTIONS)
     memory.putAll(productProperties.customJvmMemoryOptions)
-    memory.each {k,v -> result.add(k + v) }
+    memory.each { k, v -> result.add(k + v) }
 
     if (isEAP) {
       // must be consistent with `com.intellij.openapi.application.ConfigImportHelper#updateVMOptions`
@@ -39,6 +40,7 @@ final class VmOptionsGenerator {
     }
 
     result.addAll(COMMON_VM_OPTIONS)
+
     return result
   }
 }

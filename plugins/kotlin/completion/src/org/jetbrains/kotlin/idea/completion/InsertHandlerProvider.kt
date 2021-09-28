@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.util.fuzzyReturnType
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.util.getValueParametersCountFromFunctionType
 import org.jetbrains.kotlin.types.KotlinType
-import java.util.*
 
 class InsertHandlerProvider(
     private val callType: CallType<*>,
@@ -52,8 +51,12 @@ class InsertHandlerProvider(
                     CallType.DEFAULT, CallType.DOT, CallType.SAFE, CallType.SUPER_MEMBERS -> {
                         val needTypeArguments = needTypeArguments(descriptor)
                         val parameters = descriptor.valueParameters
+                        val functionName = descriptor.name
                         when (parameters.size) {
-                            0 -> createNormalFunctionInsertHandler(editor, callType, needTypeArguments, inputValueArguments = false, argumentsOnly = argumentsOnly)
+                            0 -> {
+                                createNormalFunctionInsertHandler(editor, callType, functionName, needTypeArguments,
+                                    inputValueArguments = false, argumentsOnly = argumentsOnly)
+                            }
 
                             1 -> {
                                 if (callType != CallType.SUPER_MEMBERS) { // for super call we don't suggest to generate "super.foo { ... }" (seems to be non-typical use)
@@ -70,10 +73,10 @@ class InsertHandlerProvider(
                                     }
                                 }
 
-                                createNormalFunctionInsertHandler(editor, callType, inputTypeArguments = needTypeArguments, inputValueArguments = true, argumentsOnly = argumentsOnly)
+                                createNormalFunctionInsertHandler(editor, callType, functionName, inputTypeArguments = needTypeArguments, inputValueArguments = true, argumentsOnly = argumentsOnly)
                             }
 
-                            else -> createNormalFunctionInsertHandler(editor, callType, needTypeArguments, inputValueArguments = true, argumentsOnly = argumentsOnly)
+                            else -> createNormalFunctionInsertHandler(editor, callType, functionName, needTypeArguments, inputValueArguments = true, argumentsOnly = argumentsOnly)
                         }
                     }
 

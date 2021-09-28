@@ -311,10 +311,16 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitWhileStatement(PsiWhileStatement statement) {
-      Evaluator bodyEvaluator = accept(statement.getBody());
-      Evaluator conditionEvaluator = accept(statement.getCondition());
-      if (conditionEvaluator != null) {
-        myResult = new WhileStatementEvaluator(new UnBoxingEvaluator(conditionEvaluator), bodyEvaluator, getLabel(statement));
+      CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
+      try {
+        Evaluator bodyEvaluator = accept(statement.getBody());
+        Evaluator conditionEvaluator = accept(statement.getCondition());
+        if (conditionEvaluator != null) {
+          myResult = new WhileStatementEvaluator(new UnBoxingEvaluator(conditionEvaluator), bodyEvaluator, getLabel(statement));
+        }
+      }
+      finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
       }
     }
 
@@ -369,23 +375,29 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitIfStatement(PsiIfStatement statement) {
-      PsiStatement thenBranch = statement.getThenBranch();
-      if(thenBranch == null) return;
-      thenBranch.accept(this);
-      Evaluator thenEvaluator = myResult;
+      CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
+      try {
+        PsiStatement thenBranch = statement.getThenBranch();
+        if(thenBranch == null) return;
+        thenBranch.accept(this);
+        Evaluator thenEvaluator = myResult;
 
-      PsiStatement elseBranch = statement.getElseBranch();
-      Evaluator elseEvaluator = null;
-      if(elseBranch != null){
-        elseBranch.accept(this);
-        elseEvaluator = myResult;
+        PsiStatement elseBranch = statement.getElseBranch();
+        Evaluator elseEvaluator = null;
+        if(elseBranch != null){
+          elseBranch.accept(this);
+          elseEvaluator = myResult;
+        }
+
+        PsiExpression condition = statement.getCondition();
+        if(condition == null) return;
+        condition.accept(this);
+
+        myResult = new IfStatementEvaluator(new UnBoxingEvaluator(myResult), thenEvaluator, elseEvaluator);
       }
-
-      PsiExpression condition = statement.getCondition();
-      if(condition == null) return;
-      condition.accept(this);
-
-      myResult = new IfStatementEvaluator(new UnBoxingEvaluator(myResult), thenEvaluator, elseEvaluator);
+      finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
+      }
     }
 
     private void visitSwitchBlock(PsiSwitchBlock statement) {
@@ -409,33 +421,39 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     private void visitSwitchLabelStatementBase(PsiSwitchLabelStatementBase statement) {
-      List<Evaluator> evaluators = new SmartList<>();
-      PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
-      boolean defaultCase = statement.isDefaultCase();
-      if (labelElementList != null) {
-        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-          if (labelElement instanceof PsiDefaultCaseLabelElement) {
-            defaultCase = true;
-            continue;
-          } else if (labelElement instanceof PsiPattern) {
-            PatternLabelEvaluator evaluator = getPatternLabelEvaluator((PsiPattern)labelElement);
+      CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
+      try {
+        List<Evaluator> evaluators = new SmartList<>();
+        PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+        boolean defaultCase = statement.isDefaultCase();
+        if (labelElementList != null) {
+          for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+            if (labelElement instanceof PsiDefaultCaseLabelElement) {
+              defaultCase = true;
+              continue;
+            } else if (labelElement instanceof PsiPattern) {
+              PatternLabelEvaluator evaluator = getPatternLabelEvaluator((PsiPattern)labelElement);
+              if (evaluator != null) {
+                evaluators.add(evaluator);
+              }
+              continue;
+            }
+            Evaluator evaluator = accept(labelElement);
             if (evaluator != null) {
               evaluators.add(evaluator);
             }
-            continue;
-          }
-          Evaluator evaluator = accept(labelElement);
-          if (evaluator != null) {
-            evaluators.add(evaluator);
           }
         }
+        if (statement instanceof PsiSwitchLabeledRuleStatement) {
+          myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, defaultCase,
+                                                                 accept(((PsiSwitchLabeledRuleStatement)statement).getBody()));
+        }
+        else {
+          myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, defaultCase);
+        }
       }
-      if (statement instanceof PsiSwitchLabeledRuleStatement) {
-        myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, defaultCase,
-                                                               accept(((PsiSwitchLabeledRuleStatement)statement).getBody()));
-      }
-      else {
-        myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, defaultCase);
+      finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
       }
     }
 
@@ -516,29 +534,35 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitPolyadicExpression " + wideExpression);
       }
-      PsiExpression[] operands = wideExpression.getOperands();
-      operands[0].accept(this);
-      Evaluator result = myResult;
-      PsiType lType = operands[0].getType();
-      for (int i = 1; i < operands.length; i++) {
-        PsiExpression expression = operands[i];
-        if (expression == null) {
-          throwExpressionInvalid(wideExpression);
+      CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
+      try {
+        PsiExpression[] operands = wideExpression.getOperands();
+        operands[0].accept(this);
+        Evaluator result = myResult;
+        PsiType lType = operands[0].getType();
+        for (int i = 1; i < operands.length; i++) {
+          PsiExpression expression = operands[i];
+          if (expression == null) {
+            throwExpressionInvalid(wideExpression);
+          }
+          expression.accept(this);
+          Evaluator rResult = myResult;
+          IElementType opType = wideExpression.getOperationTokenType();
+          PsiType rType = expression.getType();
+          if (rType == null) {
+            throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
+          }
+          final PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
+          if (typeForBinOp == null) {
+            throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", wideExpression.getText()));
+          }
+          myResult = createBinaryEvaluator(result, lType, rResult, rType, opType, typeForBinOp);
+          lType = typeForBinOp;
+          result = myResult;
         }
-        expression.accept(this);
-        Evaluator rResult = myResult;
-        IElementType opType = wideExpression.getOperationTokenType();
-        PsiType rType = expression.getType();
-        if (rType == null) {
-          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
-        }
-        final PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
-        if (typeForBinOp == null) {
-          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", wideExpression.getText()));
-        }
-        myResult = createBinaryEvaluator(result, lType, rResult, rType, opType, typeForBinOp);
-        lType = typeForBinOp;
-        result = myResult;
+      }
+      finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
       }
     }
 
@@ -998,27 +1022,35 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitInstanceOfExpression " + expression);
       }
-      PsiTypeElement checkType = expression.getCheckType();
-      if(checkType == null) {
-        throwExpressionInvalid(expression);
-      }
-      PsiType type = checkType.getType();
-      expression.getOperand().accept(this);
-//    ClassObjectEvaluator typeEvaluator = new ClassObjectEvaluator(type.getCanonicalText());
-      Evaluator operandEvaluator = myResult;
-
-      Evaluator patternVariable = null;
-      PsiPattern pattern = expression.getPattern();
-      if (pattern instanceof PsiTypeTestPattern) {
-        PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
-        if (variable != null) {
-          String variableName = variable.getName();
-          myCurrentFragmentEvaluator.setInitialValue(variableName, null);
-          patternVariable = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, variableName, null);
+      PsiElement parentOfType = PsiTreeUtil.getParentOfType(expression, PsiWhileStatement.class,
+                                                            PsiIfStatement.class, PsiPolyadicExpression.class);
+      CodeFragmentEvaluator oldFragmentEvaluator = parentOfType != null ?
+                                                   myCurrentFragmentEvaluator : setNewCodeFragmentEvaluator();
+      try {
+        PsiTypeElement checkType = expression.getCheckType();
+        if (checkType == null) {
+          throwExpressionInvalid(expression);
         }
-      }
+        PsiType type = checkType.getType();
+        expression.getOperand().accept(this);
+        //    ClassObjectEvaluator typeEvaluator = new ClassObjectEvaluator(type.getCanonicalText());
+        Evaluator operandEvaluator = myResult;
 
-      myResult = new InstanceofEvaluator(operandEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)), patternVariable);
+        Evaluator patternVariable = null;
+        PsiPattern pattern = expression.getPattern();
+        if (pattern instanceof PsiTypeTestPattern) {
+          PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+          if (variable != null) {
+            String variableName = variable.getName();
+            myCurrentFragmentEvaluator.setInitialValue(variableName, null);
+            patternVariable = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, variableName, null);
+          }
+        }
+
+        myResult = new InstanceofEvaluator(operandEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)), patternVariable);
+      } finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
+      }
     }
 
     @Override

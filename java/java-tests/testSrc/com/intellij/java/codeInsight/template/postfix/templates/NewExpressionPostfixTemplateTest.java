@@ -62,4 +62,10 @@ public class NewExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNewAfterNew() {
     doTest();
   }
+
+  public void testNewInaccessible() {
+    myFixture.addClass("class Test {private Test() {}}");
+    doTest();
+  }
+
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 
 /**
@@ -133,17 +134,6 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <E> ArrayList<E> newArrayList(E @NotNull ... array) {
     return new ArrayList<>(Arrays.asList(array));
-  }
-
-  /**
-   * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead
-   */
-  @Deprecated
-  @Contract(pure = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Collection<? extends E> iterable) {
-    DeprecatedMethodException.report("Use `new ArrayList(Collection)` instead. "+iterable.getClass());
-    return new ArrayList<>(iterable);
   }
 
   @Contract(pure = true)
@@ -364,16 +354,6 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <K,V> THashMap<K,V> newIdentityTroveMap() {
     return new THashMap<>(identityStrategy());
-  }
-
-  /**
-   * @deprecated Use {@link TreeSet#TreeSet()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure = true)
-  public static @NotNull <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
-    return new TreeSet<>();
   }
 
   @Contract(pure = true)
@@ -1294,7 +1274,8 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> List<T> append(@NotNull List<? extends T> list, T @NotNull ... values) {
-    return concat(list, Arrays.asList(values));
+    //noinspection unchecked
+    return values.length == 0 ? (List<T>)list : concat(list, Arrays.asList(values));
   }
 
   /**
@@ -1304,7 +1285,8 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> List<T> prepend(@NotNull List<? extends T> list, T @NotNull ... values) {
-    return concat(Arrays.asList(values), list);
+    //noinspection unchecked
+    return values.length == 0 ? (List<T>)list : concat(Arrays.asList(values), list);
   }
 
   /**
@@ -2521,19 +2503,6 @@ public final class ContainerUtil {
     return CollectionFactory.createConcurrentWeakValueMap();
   }
 
-  /**
-   * @deprecated Use {@link CollectionFactory#createConcurrentWeakKeySoftValueMap(int, float, int, HashingStrategy)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(value = "_,_,_,_ -> new", pure = true)
-  static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
-                                                                                 float loadFactor,
-                                                                                 int concurrencyLevel,
-                                                                                 final @NotNull HashingStrategy<? super K> hashingStrategy) {
-    return CollectionFactory.createConcurrentWeakKeySoftValueMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
-  }
-
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftKeySoftValueMap() {
     return CollectionFactory.createConcurrentSoftKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors());
@@ -2568,20 +2537,6 @@ public final class ContainerUtil {
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
     return CollectionFactory.createConcurrentWeakMap();
-  }
-
-  /**
-   * @deprecated use {@link CollectionFactory#createConcurrentSoftMap(int, float, int, HashingStrategy)} instead
-   */
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  @Contract(value = "_,_,_,_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftMap(int initialCapacity,
-                                                                            float loadFactor,
-                                                                            int concurrencyLevel,
-                                                                            @NotNull HashingStrategy<? super K> hashingStrategy) {
-    return CollectionFactory.createConcurrentSoftMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   public static @NotNull <K> HashingStrategy<K> createHashingStrategy(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
@@ -2972,5 +2927,13 @@ public final class ContainerUtil {
     }
     //noinspection unchecked
     return immutableList((T[])list.toArray());
+  }
+
+  public static <T> T reduce(@NotNull List<? extends T> list, T identity, @NotNull BinaryOperator<T> accumulator) {
+    T result = identity;
+    for (T t : list) {
+      result = accumulator.apply(result, t);
+    }
+    return result;
   }
 }

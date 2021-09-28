@@ -84,7 +84,7 @@ class BuildDependenciesDownloader {
   static synchronized Path downloadFileToCacheLocation(Path communityRoot, URI uri) {
     def uriString = uri.toString()
     def lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
-    def fileName = lastNameFromUri.sha256().substring(0, 10) + "-" + lastNameFromUri
+    def fileName = uriString.sha256().substring(0, 10) + "-" + lastNameFromUri
     def targetFile = getDownloadCachePath(communityRoot).resolve(fileName)
 
     downloadFile(uri, targetFile)

@@ -178,7 +178,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
       familyName.equals("Simplify boolean expression") ||
       // A parenthesized enum switch case label is a compilation error
-      familyName.equals("Create enum switch branches");
+      familyName.equals("Create missing enum switch branches");
   }
 
   @NotNull

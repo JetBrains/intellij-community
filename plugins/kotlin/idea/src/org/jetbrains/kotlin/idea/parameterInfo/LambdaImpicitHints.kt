@@ -25,7 +25,7 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): InlayInfoDetails? {
 
     functionDescriptor.extensionReceiverParameter?.let { implicitReceiver ->
         val type = implicitReceiver.type
-        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(bindingContext, lambda).renderType(type)
+        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(bindingContext, lambda).renderTypeIntoInlayInfo(type)
         return InlayInfoDetails(InlayInfo("", lbrace.textRange.endOffset), listOf(TextInlayInfoDetail("this: ")) + renderedType)
     }
 
@@ -33,7 +33,7 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): InlayInfoDetails? {
     if (singleParameter != null && bindingContext[BindingContext.AUTO_CREATED_IT, singleParameter] == true) {
         val type = singleParameter.type
         if (type.isUnit()) return null
-        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(bindingContext, lambda).renderType(type)
+        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(bindingContext, lambda).renderTypeIntoInlayInfo(type)
         return InlayInfoDetails(InlayInfo("", lbrace.textRange.endOffset), listOf(TextInlayInfoDetail("it: ")) + renderedType)
     }
     return null

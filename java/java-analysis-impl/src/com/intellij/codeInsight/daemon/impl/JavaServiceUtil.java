@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -8,6 +8,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -67,7 +70,7 @@ final class JavaServiceUtil {
                     if (interfaceClassName != null) {
                       LineMarkerInfo<PsiElement> info =
                         new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
-                                             e -> JavaAnalysisBundle.message("service.provides", interfaceClassName),
+                                             e -> calculateTooltip("service.provides", interfaceClassName),
                                              new ServiceProvidesNavigationHandler(interfaceClassName, implementerClassName),
                                              GutterIconRenderer.Alignment.LEFT);
                       return Collections.singletonList(info);
@@ -81,6 +84,15 @@ final class JavaServiceUtil {
       }
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static String calculateTooltip(String key, @NlsSafe String interfaceClassName) {
+    return new HtmlBuilder().append(JavaAnalysisBundle.message(key)).append(" ")
+      .appendLink("#javaClass/" + interfaceClassName, interfaceClassName)
+      .br().append(HtmlChunk.text(JavaAnalysisBundle.message("service.click.to.navigate"))
+                     .wrapWith(HtmlChunk.font(2))
+                     .wrapWith(HtmlChunk.div("margin-top: 5px"))).toString();
   }
 
   static List<LineMarkerInfo<PsiElement>> collectServiceLoaderLoadCall(@NotNull PsiIdentifier identifier,
@@ -105,7 +117,7 @@ final class JavaServiceUtil {
                 if (usedClass != null && psiClass.equals(usedClass.resolve())) {
                   LineMarkerInfo<PsiElement> info =
                     new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
-                                         e -> JavaAnalysisBundle.message("service.uses", qualifiedName),
+                                         e -> calculateTooltip("service.uses", qualifiedName),
                                          new ServiceUsesNavigationHandler(qualifiedName),
                                          GutterIconRenderer.Alignment.LEFT);
                   return Collections.singletonList(info);

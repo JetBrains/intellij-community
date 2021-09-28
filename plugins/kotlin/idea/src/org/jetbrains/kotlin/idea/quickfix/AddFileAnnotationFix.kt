@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.renderer.render
  * A quick fix to add file-level annotations, e.g. `@file:OptIn(SomeExperimentalAnnotation::class)`.
  *
  * The fix either creates a new annotation or adds the argument to the existing annotation entry.
- * It does not check whether the annotation class allows duplicating annotations, it is the caller responsibility.
+ * It does not check whether the annotation class allows duplicating annotations; it is the caller responsibility.
  * For example, only one `@file:OptIn(...)` annotation is allowed, so if this annotation entry already exists,
  * the caller should pass the non-null smart pointer to it as the `existingAnnotationEntry` argument.
  *
@@ -52,7 +52,7 @@ class AddFileAnnotationFix(
 
         val psiFactory = KtPsiFactory(fileToAnnotate)
         if (fileToAnnotate.fileAnnotationList == null) {
-            // If there is no existing file-level annotations, create an annotation list with the new annotation
+            // If there are no existing file-level annotations, create an annotation list with the new annotation
             val newAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(annotationText)
             val createdAnnotationList = replaceFileAnnotationList(fileToAnnotate, newAnnotationList)
             fileToAnnotate.addAfter(psiFactory.createWhiteSpace("\n"), createdAnnotationList)
@@ -61,9 +61,10 @@ class AddFileAnnotationFix(
             val annotationList = fileToAnnotate.fileAnnotationList ?: return
             if (existingAnnotationEntry == null) {
                 // There are file-level annotations, but the fix is expected to add a new entry
-                val newAnnotation = psiFactory.createAnnotationEntry(annotationText)
+                val newAnnotation = psiFactory.createFileAnnotation(annotationText)
+                annotationList.add(psiFactory.createWhiteSpace("\n"))
                 annotationList.add(newAnnotation)
-                ShortenReferences.DEFAULT.process(newAnnotation)
+                ShortenReferences.DEFAULT.process(annotationList)
             } else if (innerText != null) {
                 // There is an existing annotation and the non-null argument that should be added to it
                 addArgumentToExistingAnnotation(existingAnnotationEntry, innerText)

@@ -50,11 +50,12 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class TerminalShellCommandHandlerHelper {
-  private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
+  private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandlerHelper.class);
   @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
+  private static final int TYPING_THRESHOLD_MS = 200;
 
   private static Experiments ourExperiments;
   private final ShellTerminalWidget myWidget;
@@ -62,7 +63,7 @@ public final class TerminalShellCommandHandlerHelper {
   private volatile String myWorkingDirectory;
   private volatile Boolean myHasRunningCommands;
   private PropertiesComponent myPropertiesComponent;
-  private final AtomicBoolean myKeyPressed = new AtomicBoolean(false);
+  private final AtomicLong myLastKeyPressedMillis = new AtomicLong();
   private TerminalLineIntervalHighlighting myCommandHighlighting;
   private Disposable myNotificationDisposable;
 
@@ -74,7 +75,7 @@ public final class TerminalShellCommandHandlerHelper {
       TerminalCommandHandlerCustomizer.Companion.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
 
     TerminalModelListener listener = () -> {
-      if (myKeyPressed.compareAndSet(true, false)) {
+      if (System.currentTimeMillis() - myLastKeyPressedMillis.get() < TYPING_THRESHOLD_MS) {
         scheduleCommandHighlighting();
       }
     };
@@ -84,7 +85,7 @@ public final class TerminalShellCommandHandlerHelper {
 
   public void processKeyPressed(KeyEvent e) {
     if (isFeatureEnabled()) {
-      myKeyPressed.set(true);
+      myLastKeyPressedMillis.set(System.currentTimeMillis());
       if (e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiersEx() == 0 && hideNotification()) {
         e.consume();
       }
@@ -165,7 +166,10 @@ public final class TerminalShellCommandHandlerHelper {
     tooltip.show(myWidget.getTerminalPanel(), (component, balloon) -> {
       Rectangle bounds = myWidget.processTerminalBuffer(buffer -> myWidget.getTerminalPanel().getBounds(commandHighlighting));
       if (bounds != null) {
-        int shiftY = BalloonImpl.getAbstractPositionFor(Balloon.Position.below) != ((BalloonImpl)balloon).getPosition() ? 0 : bounds.height;
+        int shiftY = 0;
+        if (balloon instanceof BalloonImpl && BalloonImpl.getAbstractPositionFor(Balloon.Position.below) == ((BalloonImpl)balloon).getPosition()) {
+          shiftY = bounds.height;
+        }
         return new Point(bounds.x + bounds.width / 2, bounds.y + shiftY);
       }
       Disposer.dispose(notificationDisposable);
@@ -246,7 +250,7 @@ public final class TerminalShellCommandHandlerHelper {
       onShellCommandExecuted();
       return false;
     }
-    myKeyPressed.set(true);
+    myLastKeyPressedMillis.set(System.currentTimeMillis());
     String command = myWidget.getTypedShellCommand().trim();
     if (LOG.isDebugEnabled()) {
       LOG.debug("typed shell command to execute: " + command);

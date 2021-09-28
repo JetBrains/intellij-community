@@ -206,7 +206,7 @@ public final class MavenIndicesManager implements Disposable {
 
   @Override
   public void dispose() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
       PathKt.delete(getIndicesDir());
     }
   }

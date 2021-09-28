@@ -59,12 +59,13 @@ class ListPersistentStateComponentsAction : AnAction() {
           if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
             val state = aClass.getAnnotation(State::class.java)
             val roamingType = getRoamingType(state)
+            @Suppress("UNCHECKED_CAST")
             descriptors.add(
               ComponentDescriptor(
                 descriptor?.name?.toString() ?: "",
                 aClass.name,
                 roamingType,
-                getCategory(state, descriptor, roamingType)
+                getCategory(aClass as Class<PersistentStateComponent<*>>, state, descriptor, roamingType)
               )
             )
           }
@@ -74,10 +75,10 @@ class ListPersistentStateComponentsAction : AnAction() {
         )
       }
 
-      private fun getCategory(state: State?, descriptor: PluginDescriptor?, roamingType: String) =
-        if (roamingType != RoamingType.DISABLED.toString()) {
-          if (descriptor?.name == PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.idString) state?.category?.name ?: ""
-          else ComponentCategory.PLUGINS.name
+      private fun getCategory(aClass : Class<PersistentStateComponent<*>>, state: State?, descriptor: PluginDescriptor?, roamingType: String) =
+        if (roamingType != RoamingType.DISABLED.toString() && descriptor != null) {
+          if (descriptor.name == PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.idString) state?.category?.name ?: ""
+          else ComponentCategorizer.getPluginCategory(aClass, descriptor.pluginId).toString()
         }
         else ""
 

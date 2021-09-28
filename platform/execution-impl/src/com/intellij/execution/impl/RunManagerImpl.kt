@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
 import com.intellij.execution.configurations.*
+import com.intellij.execution.runToolbar.RunToolbarSlotManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
@@ -225,6 +226,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     })
 
     BeforeRunTaskProvider.EP_NAME.getPoint(project).addChangeListener(stringIdToBeforeRunProvider::drop, project)
+  }
+
+  override fun shouldSetRunConfigurationFromContext(): Boolean {
+    return Registry.`is`("select.run.configuration.from.context") && !RunToolbarSlotManager.getInstance(project).active
   }
 
   private fun clearSelectedConfigurationIcon() {
@@ -752,7 +757,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun loadState(parentNode: Element) {
-    config.migrateToRegistry()
+    config.migrateToAdvancedSettings()
     val oldSelectedConfigurationId: String?
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
     if (isFirstLoadState) {
@@ -1024,7 +1029,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
     tempConfiguration.isTemporary = true
     addConfiguration(tempConfiguration)
-    if (Registry.`is`("select.run.configuration.from.context")) {
+    if (shouldSetRunConfigurationFromContext()) {
       selectedConfiguration = tempConfiguration
     }
   }

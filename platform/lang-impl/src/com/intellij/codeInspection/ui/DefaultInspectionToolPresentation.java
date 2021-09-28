@@ -18,7 +18,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
   @NotNull protected GlobalInspectionContextImpl myContext;
 
-  public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
+  public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper<?,?> toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     super(toolWrapper, context);
     myContext = context;
   }

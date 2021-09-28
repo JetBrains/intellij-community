@@ -16,6 +16,7 @@ interface KotlinCacheService {
         fun getInstance(project: Project): KotlinCacheService = project.getServiceSafe()
     }
 
+    fun getResolutionFacade(element: KtElement): ResolutionFacade
     fun getResolutionFacade(elements: List<KtElement>): ResolutionFacade
     fun getResolutionFacade(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade
     fun getResolutionFacadeByFile(file: PsiFile, platform: TargetPlatform): ResolutionFacade?

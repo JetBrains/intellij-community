@@ -129,10 +129,47 @@ fun Editor.getCells(lines: IntRange): List<NotebookCellLines.Interval> =
   NotebookCellLines.get(this).getCells(lines).toList()
 
 fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
-  NotebookCellLines.get(this).getIterator(ordinal).next()
+  NotebookCellLines.get(this).intervals[ordinal]
 
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }
+
+val NotebookCellLines.Interval.firstContentLine: Int
+  get() =
+    if (markers.hasTopLine) lines.first + 1
+    else lines.first
+
+val NotebookCellLines.Interval.lastContentLine: Int
+  get() =
+    if (markers.hasBottomLine) lines.last - 1
+    else lines.last
+
+val NotebookCellLines.Interval.contentLines: IntRange
+  get() = firstContentLine .. lastContentLine
+
+fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLines.Marker> {
+  val markers = ArrayList<NotebookCellLines.Marker>()
+
+  fun addMarker(line: Int, type: NotebookCellLines.CellType) {
+    val startOffset = document.getLineStartOffset(line)
+    val endOffset =
+      if (line + 1 < document.lineCount) document.getLineStartOffset(line + 1)
+      else document.getLineEndOffset(line)
+    val length = endOffset - startOffset
+    markers.add(NotebookCellLines.Marker(markers.size, type, startOffset, length))
+  }
+
+  for (interval in intervals) {
+    if (interval.markers.hasTopLine) {
+      addMarker(interval.lines.first, interval.type)
+    }
+    if (interval.markers.hasBottomLine) {
+      addMarker(interval.lines.last, interval.type)
+    }
+  }
+
+  return markers
+}
 
 fun groupNeighborCells(cells: List<NotebookCellLines.Interval>): List<List<NotebookCellLines.Interval>> {
   val groups = SmartList<SmartList<NotebookCellLines.Interval>>()

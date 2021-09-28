@@ -1,21 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.events
 
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonElement
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.util.io.FileUtil
-import java.io.File
-import java.lang.reflect.Type
 import java.util.regex.Pattern
-import kotlin.system.exitProcess
 
 object EventsSchemeBuilder {
   enum class FieldDataType { ARRAY, PRIMITIVE }
@@ -26,7 +16,8 @@ object EventsSchemeBuilder {
                              val version: Int,
                              val schema: Set<EventDescriptor>,
                              val className: String)
-  data class EventsScheme(val commitHash: String?, val buildNumber:String?, val scheme: List<GroupDescriptor>)
+
+  data class EventsScheme(val commitHash: String?, val buildNumber: String?, val scheme: List<GroupDescriptor>)
 
   private fun fieldSchema(field: EventField<*>, fieldName: String, eventName: String, groupId: String): Set<FieldDescriptor> {
     if (field.name.contains(".")) {
@@ -76,11 +67,30 @@ object EventsSchemeBuilder {
   }
 
   @JvmStatic
-  fun buildEventsScheme(): List<GroupDescriptor> {
+  fun buildEventsScheme(): List<GroupDescriptor> = buildEventsScheme(null)
+
+  /**
+   * @param pluginId id of the plugin, only groups registered in that plugin will be used to build scheme.
+   * If null, all registered groups will be used.
+   */
+  @JvmStatic
+  fun buildEventsScheme(pluginId: String?): List<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
-    result.addAll(collectGroupsFromExtensions("counter", FUCounterUsageLogger.instantiateCounterCollectors()))
-    result.addAll(collectGroupsFromExtensions("state", ApplicationUsagesCollector.EP_NAME.extensionList))
-    result.addAll(collectGroupsFromExtensions("state", ProjectUsagesCollector.EP_NAME.extensionList))
+    val counterCollectors = FUCounterUsageLogger.instantiateCounterCollectors(pluginId)
+    result.addAll(collectGroupsFromExtensions("counter", counterCollectors))
+
+    val stateCollectors = ArrayList<FeatureUsagesCollector>()
+    ApplicationUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
+      if (pluginId == null || pluginId == descriptor.pluginId.idString) {
+        stateCollectors.add(collector)
+      }
+    }
+    ProjectUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
+      if (pluginId == null || pluginId == descriptor.pluginId.idString) {
+        stateCollectors.add(collector)
+      }
+    }
+    result.addAll(collectGroupsFromExtensions("state", stateCollectors))
     return result
   }
 
@@ -92,7 +102,7 @@ object EventsSchemeBuilder {
       validateGroupId(collector)
       val group = collector.group ?: continue
       val eventsDescriptors = group.events.groupBy { it.eventId }
-        .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id )) }
+        .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
         .toHashSet()
       val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
       result.add(groupDescriptor)

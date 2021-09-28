@@ -4,6 +4,8 @@ package com.intellij.lang.java.request
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.guessExpectedTypes
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmValue
+import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJvmSubstitutor
@@ -25,6 +27,8 @@ internal class CreateFieldFromJavaUsageRequest(
 
   val anchor: PsiElement? get() = if (useAnchor) reference else null
 
+  override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
+
   override fun getModifiers() = modifiers
 
   override fun getFieldName() = reference.referenceName!!
@@ -35,5 +39,5 @@ internal class CreateFieldFromJavaUsageRequest(
 
   override fun isConstant(): Boolean = isConstant
 
-  override fun getInitializer(): PsiElement? = null
+  override fun getInitializer(): JvmValue? = null
 }

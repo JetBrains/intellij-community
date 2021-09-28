@@ -186,7 +186,11 @@ public final class IoTestUtil {
   }
 
   public static void deleteSubst(@NotNull String substRoot) {
-    runCommand("subst", StringUtil.trimEnd(substRoot, "\\"), "/d");
+    runCommand("subst", StringUtil.trimEnd(substRoot, '\\'), "/d");
+  }
+
+  public static void createFifo(@NotNull String path) {
+    runCommand("mkfifo", path);
   }
 
   private static char getFirstFreeDriveLetter() {

@@ -53,7 +53,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
     public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
                                                                  @NotNull Document document,
                                                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-      ProperTextRange range = ProperTextRange.from(0, document.getTextLength());
+      ProperTextRange range = VisibleHighlightingPassFactory.calculateVisibleRange(document);
       return new ChameleonSyntaxHighlightingPass(file.getProject(), file, document, range, range, null, highlightInfoProcessor);
     }
   }

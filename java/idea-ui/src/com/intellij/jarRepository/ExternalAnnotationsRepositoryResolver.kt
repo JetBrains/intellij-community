@@ -113,6 +113,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
   private fun updateLibrary(roots: MutableList<OrderRoot>?,
                     mavenLibDescriptor: JpsMavenRepositoryLibraryDescriptor,
                     library: Library) {
+    if (library !is LibraryEx || library.isDisposed) return
     if (roots == null || roots.isEmpty()) {
       LOG.info("No annotations found for [$mavenLibDescriptor]")
     } else {

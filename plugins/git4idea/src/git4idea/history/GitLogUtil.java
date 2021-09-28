@@ -28,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.*;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -240,9 +241,11 @@ public final class GitLogUtil {
                                         record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
   }
 
+  /**
+   * Sends hashes to process's stdin (without closing it on Windows).
+   * @see GitHandlerInputProcessorUtil#writeLines(Collection, String, Charset, boolean)
+   */
   public static void sendHashesToStdin(@NotNull Collection<String> hashes, @NotNull GitHandler handler) {
-    // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
-    // see RunnerMediator.sendCtrlEventThroughStream
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
                                                                       "\n",
                                                                       handler.getCharset(),

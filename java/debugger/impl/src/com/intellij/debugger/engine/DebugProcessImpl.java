@@ -249,7 +249,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       else if (renderer instanceof CompletableFuture) {
         //noinspection unchecked
-        return (CompletableFuture<NodeRenderer>)renderer;
+        CompletableFuture<NodeRenderer> future = (CompletableFuture<NodeRenderer>)renderer;
+        LOG.assertTrue(!future.isDone(), "Completed future for " + type);
+        return future;
       }
       CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getApplicableRenderers(myRenderers, type)
         .handle((renderers, throwable) -> {
@@ -1679,10 +1681,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private class StepOutCommand extends StepCommand {
+  public class StepOutCommand extends StepCommand {
     private final int myStepSize;
 
-    StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
+    public StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
       super(suspendContext, null);
       myStepSize = stepSize;
     }
@@ -1692,22 +1694,34 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       showStatusText(JavaDebuggerBundle.message("status.step.out"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl thread = getContextThread();
-      RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
-      hint.setIgnoreFilters(mySession.shouldIgnoreSteppingFilters());
+      RequestHint hint = getHint(suspendContext, thread, null);
       applyThreadFilter(thread);
       startWatchingMethodReturn(thread);
-      doStep(suspendContext, thread, myStepSize, StepRequest.STEP_OUT, hint);
+      step(suspendContext, thread, hint);
       super.contextAction();
+    }
+
+    @Override
+    @NotNull
+    public RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl thread, @Nullable RequestHint parentHint) {
+      RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OUT, null, parentHint);
+      hint.setIgnoreFilters(mySession.shouldIgnoreSteppingFilters());
+      return hint;
+    }
+
+    @Override
+    public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint) {
+      doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_OUT, hint);
     }
   }
 
-  private class StepIntoCommand extends StepCommand {
+  public class StepIntoCommand extends StepCommand {
     private final boolean myForcedIgnoreFilters;
     @Nullable
     private final StepIntoBreakpoint myBreakpoint;
     private final int myStepSize;
 
-    StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
+    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
                            int stepSize) {
       super(suspendContext, methodFilter);
       myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
@@ -1722,8 +1736,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       showStatusText(JavaDebuggerBundle.message("status.step.into"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl stepThread = getContextThread();
-      final RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, myMethodFilter);
-      hint.setResetIgnoreFilters(myMethodFilter != null && !mySession.shouldIgnoreSteppingFilters());
+      final RequestHint hint = getHint(suspendContext, stepThread, null);
       if (myForcedIgnoreFilters) {
         mySession.setIgnoreStepFiltersFlag(getFrameCount(stepThread, suspendContext));
       }
@@ -1732,8 +1745,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myBreakpoint != null) {
         prepareAndSetSteppingBreakpoint(suspendContext, myBreakpoint, hint, false);
       }
-      doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint);
+      step(suspendContext, stepThread, hint);
       super.contextAction();
+    }
+
+    @Override
+    @NotNull
+    public RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
+      final RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, myMethodFilter, parentHint);
+      hint.setResetIgnoreFilters(myMethodFilter != null && !mySession.shouldIgnoreSteppingFilters());
+      return hint;
+    }
+
+    @Override
+    public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint) {
+      doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint);
     }
   }
 
@@ -1763,12 +1789,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       return JavaDebuggerBundle.message("status.step.over");
     }
 
+    @Override
     @NotNull
-    protected RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread) {
+    public RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
       // need this hint while stepping over for JSR45 support:
       // several lines of generated java code may correspond to a single line in the source file,
       // from which the java code was generated
-      RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OVER, myMethodFilter);
+      RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OVER, myMethodFilter, parentHint);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
       hint.setIgnoreFilters(myIsIgnoreBreakpoints || mySession.shouldIgnoreSteppingFilters());
       return hint;
@@ -1781,18 +1808,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       SuspendContextImpl suspendContext = getSuspendContext();
       ThreadReferenceProxyImpl stepThread = getContextThread();
 
-      RequestHint hint = getHint(suspendContext, stepThread);
+      RequestHint hint = getHint(suspendContext, stepThread, null);
 
       applyThreadFilter(stepThread);
 
       startWatchingMethodReturn(stepThread);
 
-      doStep(suspendContext, stepThread, myStepSize, getStepDepth(), hint);
+      step(suspendContext, stepThread, hint);
 
       if (myIsIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
       super.contextAction();
+    }
+
+    @Override
+    public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint) {
+      doStep(suspendContext, stepThread, myStepSize, getStepDepth(), hint);
     }
   }
 
@@ -1840,7 +1872,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private abstract class StepCommand extends ResumeCommand {
+  public abstract class StepCommand extends ResumeCommand {
     @Nullable
     protected final MethodFilter myMethodFilter;
 
@@ -1865,6 +1897,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       else {
         super.resumeAction();
       }
+    }
+
+    public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint) {
+    }
+
+    @Nullable
+    public RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
+      return null;
     }
   }
 
@@ -2117,6 +2157,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         !(myConnection instanceof DelayedRemoteConnection) &&
         myConnection.isServerMode()) {
       createVirtualMachine(environment);
+      if (myIsFailed.get()) {
+        myExecutionResult = null;
+        return null;
+      }
     }
 
     ExecutionResult executionResult;
@@ -2147,6 +2191,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       ((DelayedRemoteConnection)myConnection).setAttachRunnable(() -> createVirtualMachine(environment));
     } else if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
       createVirtualMachine(environment);
+      if (myIsFailed.get()) {
+        myExecutionResult = null;
+        return null;
+      }
     }
 
     return executionResult;
@@ -2174,9 +2222,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myDebugProcessDispatcher.removeListener(this);
       }
     });
-
-    // reload to make sure that source positions are initialized
-    DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().reloadBreakpoints();
 
     getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
@@ -2211,7 +2256,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   // propagate exception only in case we succeeded to obtain execution result,
                   // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
-                  if ((myExecutionResult != null && !terminated) || !connectorIsReady.get()) {
+                  if (((myExecutionResult != null && !terminated) || !connectorIsReady.get()) &&
+                      !ApplicationManager.getApplication().isHeadlessEnvironment()) {
                     ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, sessionName, e);
                   }
                 });

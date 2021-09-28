@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -266,7 +266,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-      return TargetEnvironmentType.EXTENSION_NAME.extensionList
+      return TargetEnvironmentType.getTargetTypesForRunConfigurations()
         .filter { it.isSystemCompatible() }
         .map { CreateNewTargetAction(project, it) }
         .toArray(AnAction.EMPTY_ARRAY)

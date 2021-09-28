@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -204,7 +205,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
         try {
             if (DumbService.isDumb(project)) return null
-            if (ApplicationManager.getApplication().isUnitTestMode) return null
+            if (isUnitTestMode()) return null
             if (file.fileType !== KotlinFileType.INSTANCE) return null
 
             if (CompilerManager.getInstance(project).isExcludedFromCompilation(file)) return null

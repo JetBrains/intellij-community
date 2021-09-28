@@ -32,7 +32,7 @@ public abstract class IntentionManager  {
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
-  public static IntentionManager getInstance(@SuppressWarnings("unused") Project project) {
+  public static IntentionManager getInstance(Project project) {
     return getInstance();
   }
 
@@ -61,15 +61,6 @@ public abstract class IntentionManager  {
    * @return array of actions.
    */
   public abstract @NotNull List<IntentionAction> getAvailableIntentions();
-
-  /**
-   * @deprecated Use {@link #getAvailableIntentions()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final IntentionAction @NotNull [] getAvailableIntentionActions() {
-    return getAvailableIntentions().toArray(IntentionAction.EMPTY_ARRAY);
-  }
 
   /**
    * @deprecated Please use {@code <intentionAction>} extension point instead

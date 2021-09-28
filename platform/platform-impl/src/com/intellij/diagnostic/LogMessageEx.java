@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /** @deprecated use {@link LogMessage} */
@@ -17,21 +14,10 @@ import java.util.List;
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
 public class LogMessageEx extends LogMessage {
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} or {@link LogMessage} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public LogMessageEx(IdeaLoggingEvent event, String title, String notificationText) {
-    super(event.getThrowable(), event.getMessage(), attachments(event));
-  }
 
   // needed for compatibility - some reporters expect/check for instances of this class
   LogMessageEx(Throwable throwable, String message, List<Attachment> attachments, String notificationText) {
     super(throwable, message, attachments);
-  }
-
-  private static List<Attachment> attachments(IdeaLoggingEvent event) {
-    Object data = event.getData();
-    return data instanceof AbstractMessage ? ((AbstractMessage)data).getAllAttachments() : Collections.emptyList();
   }
 
   /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} */
@@ -41,44 +27,4 @@ public class LogMessageEx extends LogMessage {
     return createEvent(new TextBasedThrowable(details), message, attachments);
   }
 
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static IdeaLoggingEvent createEvent(String message, String details, String title, String notificationText, Attachment attachment) {
-    return createEvent(new TextBasedThrowable(details), message, attachment);
-  }
-
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static IdeaLoggingEvent createEvent(String message, String details, String title, String notificationText, Collection<Attachment> attachments) {
-    Attachment[] array = attachments != null ? attachments.toArray(Attachment.EMPTY_ARRAY) : Attachment.EMPTY_ARRAY;
-    return createEvent(new TextBasedThrowable(details), message, array);
-  }
-
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} and {@link AttachmentFactory#createContext} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void error(@NotNull Logger logger, @NotNull String message, String @NotNull ... attachmentText) {
-    error(logger, message, new Throwable(), attachmentText);
-  }
-
-  /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} and {@link AttachmentFactory#createContext} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void error(Logger logger, String message, Throwable cause, String... attachmentText) {
-    StringBuilder detailsBuffer = new StringBuilder();
-    for (String detail : attachmentText) {
-      detailsBuffer.append(detail).append(",");
-    }
-    if (attachmentText.length > 0 && detailsBuffer.length() > 0) {
-      detailsBuffer.setLength(detailsBuffer.length() - 1);
-    }
-    if (detailsBuffer.length() > 0) {
-      logger.error(message, cause, AttachmentFactory.createContext(detailsBuffer));
-    }
-    else {
-      logger.error(message, cause);
-    }
-  }
 }

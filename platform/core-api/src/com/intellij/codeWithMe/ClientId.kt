@@ -95,6 +95,7 @@ data class ClientId(val value: String) {
          * Returns true if and only if the given ID is considered to be local to this process
          */
         @JvmStatic
+        @Deprecated("Use ClientId.isLocal", ReplaceWith("clientId.isLocal", "com.intellij.codeWithMe.ClientId.Companion.isLocal"))
         fun isLocalId(clientId: ClientId?): Boolean {
             return clientId.isLocal
         }
@@ -102,6 +103,7 @@ data class ClientId(val value: String) {
         /**
          * Is true if and only if the given ID is considered to be local to this process
          */
+        @JvmStatic
         val ClientId?.isLocal: Boolean
             get() = this == null || this == localId
 
@@ -110,6 +112,7 @@ data class ClientId(val value: String) {
          * Consider subscribing to a proper lifetime instead of this check.
          */
         @JvmStatic
+        @Deprecated("Use ClientId.isValid", ReplaceWith("clientId.isValid", "com.intellij.codeWithMe.ClientId.Companion.isValid"))
         fun isValidId(clientId: ClientId?): Boolean {
             return clientId.isValid
         }

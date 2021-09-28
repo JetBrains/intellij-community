@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -41,7 +42,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   @Override
-  public <T> T getUserData(Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     if (myUserData == null) {
       return null;
     }
@@ -50,7 +51,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   @Override
-  public <T> void putUserData(Key<T> key, T value) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
     if(myUserData == null) {
       myUserData = new HashMap<>();
     }
@@ -84,7 +85,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         if (e.getCause() instanceof InterruptedException) {
           throw e;
         }
-        if (context.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
+        if (context != null && context.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
           LOG.debug(e);
         }
         else {

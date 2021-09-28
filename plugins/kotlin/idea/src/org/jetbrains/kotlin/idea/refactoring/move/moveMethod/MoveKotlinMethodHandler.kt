@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveMethod
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -15,6 +14,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 
 private const val optionName = "kotlin.enable.move.method.refactoring"
 private val refactoringIsDisabled: Boolean
-    get() = !Registry.`is`(optionName) && !ApplicationManager.getApplication().isUnitTestMode
+    get() = !Registry.`is`(optionName) && !isUnitTestMode()
 
 class MoveKotlinMethodHandler : MoveHandlerDelegate() {
     private fun showErrorHint(project: Project, dataContext: DataContext?, @Nls message: String) {

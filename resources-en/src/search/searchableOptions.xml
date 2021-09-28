@@ -14584,19 +14584,6 @@
     <option name="delimiter" hit="Text block delimiter" />
     <option name="text" hit="Text block delimiter" />
   </configurable>
-  <configurable id="reference.settingsdialog.IDE.editor.colors.Buildout config" configurable_name="Buildout config">
-    <option name="" hit="" />
-    <option name="buildout" hit="Buildout config" />
-    <option name="config" hit="Buildout config" />
-    <option name="comment" hit="Comment" />
-    <option name="key" hit="Key" />
-    <option name="key" hit="Key value separator" />
-    <option name="separator" hit="Key value separator" />
-    <option name="value" hit="Key value separator" />
-    <option name="name" hit="Section name" />
-    <option name="section" hit="Section name" />
-    <option name="value" hit="Value" />
-  </configurable>
   <configurable id="reference.settingsdialog.IDE.editor.colors.CFML" configurable_name="CFML">
     <option name="" hit="" />
     <option name="cfml" hit="CFML" />
@@ -15638,23 +15625,6 @@
     <option name="range" hit="Unicode range" />
     <option name="unicode" hit="Unicode range" />
     <option name="variable" hit="Variable" />
-  </configurable>
-  <configurable id="reference.settingsdialog.IDE.editor.colors.Mako Template" configurable_name="Mako Template">
-    <option name="mako" hit="Mako Template" />
-    <option name="template" hit="Mako Template" />
-    <option name="attribute" hit="Attribute name" />
-    <option name="name" hit="Attribute name" />
-    <option name="attribute" hit="Attribute value" />
-    <option name="value" hit="Attribute value" />
-    <option name="comment" hit="Comment" />
-    <option name="control" hit="Control structure name" />
-    <option name="name" hit="Control structure name" />
-    <option name="structure" hit="Control structure name" />
-    <option name="expression" hit="Substitution expression" />
-    <option name="substitution" hit="Substitution expression" />
-    <option name="tag" hit="Tag" />
-    <option name="name" hit="Tag name" />
-    <option name="tag" hit="Tag name" />
   </configurable>
   <configurable id="reference.settingsdialog.IDE.editor.colors.Markdown" configurable_name="Markdown">
     <option name="markdown" hit="Markdown" />

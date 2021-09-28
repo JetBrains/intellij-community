@@ -18,8 +18,8 @@ public class CompileStepBeforeRunImporter implements BeforeRunTaskImporter {
                                      @NotNull IdeModifiableModelsProvider modelsProvider,
                                      @NotNull RunConfiguration runConfiguration,
                                      @NotNull List<BeforeRunTask> beforeRunTasks,
-                                     @NotNull Map<String, Object> cfg) {
-    ObjectUtils.consumeIfCast(cfg.get("enabled"), Boolean.class, (enabled) -> {
+                                     @NotNull Map<String, Object> configurationData) {
+    ObjectUtils.consumeIfCast(configurationData.get("enabled"), Boolean.class, (enabled) -> {
       if (!enabled) {
         beforeRunTasks.removeIf((it) -> it.getProviderId() == CompileStepBeforeRun.ID);
       }

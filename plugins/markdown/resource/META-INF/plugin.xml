@@ -43,9 +43,13 @@ Includes the following features:</p>
   <extensions defaultExtensionNs="com.intellij">
     <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
 
+    <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenameHandler"/>
+    <automaticRenamerFactory implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenamerFactory"/>
+
     <fileType name="Markdown" extensions="markdown;md" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
-    <lang.fileViewProviderFactory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
+    <lang.fileViewProviderFactory language="Markdown"
+                                  implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
     <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
     <lang.ast.factory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.psi.MarkdownASTFactory"/>
 
@@ -85,6 +89,8 @@ Includes the following features:</p>
 
     <breadcrumbsInfoProvider implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
 
+    <treeStructureProvider implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownTreeStructureProvider"/>
+
     <applicationService serviceImplementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthService"/>
     <filePasteProvider implementation="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportPasteProvider"/>
 
@@ -98,6 +104,7 @@ Includes the following features:</p>
                          key="markdown.settings.name"
                          instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
 
+    <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
@@ -117,11 +124,12 @@ Includes the following features:</p>
     <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownElementTypes"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MissingExtensionPathReferenceProvider"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
-    <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer" />
-    <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />
+    <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
+    <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
     <enterHandlerDelegate id="MarkdownEnterHandler"
                           implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
-    <highlightErrorFilter implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
+    <highlightErrorFilter
+      implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
     <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
 
     <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
@@ -135,23 +143,31 @@ Includes the following features:</p>
                               order="before SmartIndentingBackspaceHandler"/>
 
     <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
-    <editorActionHandler action="EditorIndentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
-    <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
+    <editorActionHandler action="EditorIndentSelection"
+                         implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
+    <editorActionHandler action="EditorUnindentSelection"
+                         implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
 
     <!--Formatting-->
-    <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider
+      implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
     <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
 
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
 
-    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceDownloadLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="HTML" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceDownloadLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML"
+                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
@@ -204,7 +220,7 @@ Includes the following features:</p>
   </projectListeners>
 
   <extensions defaultExtensionNs="org.intellij.markdown">
-    <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider" />
+    <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider"/>
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>

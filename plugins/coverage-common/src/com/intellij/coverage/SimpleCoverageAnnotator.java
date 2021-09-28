@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -180,7 +181,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                   @NotNull final CoverageEngine coverageEngine,
                                                   Set<? super VirtualFile> visitedDirs,
                                                   @NotNull final Map<String, String> normalizedFiles2Files) {
-    if (!index.isInContent(dir) && !index.isInLibrary(dir)) {
+    if (ReadAction.compute(() -> !index.isInContent(dir) && !index.isInLibrary(dir))) {
       return null;
     }
 

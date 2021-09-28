@@ -248,7 +248,7 @@ private class JdkComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.con
     }
 
     override val title: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk")
-    override val tooltipText: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk.desc")
+    override val tooltipText: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk.tooltip")
     override val component: JComponent = jdkComboBox
 }
 

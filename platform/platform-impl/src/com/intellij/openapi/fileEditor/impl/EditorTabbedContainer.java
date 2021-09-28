@@ -28,12 +28,12 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithMnemonics;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
@@ -332,14 +332,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
   }
 
-  /** @deprecated Use {@link EditorTabPresentationUtil#getEditorTabTitle(Project, VirtualFile, EditorWindow)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    return EditorTabPresentationUtil.getEditorTabTitle(project, file);
-  }
-
   public Component getComponentAt(int i) {
     TabInfo tab = myTabs.getTabAt(i);
     return tab.getComponent();
@@ -358,7 +350,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       if (EditorWindow.DATA_KEY.is(dataId)) {
         return myWindow;
       }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
 

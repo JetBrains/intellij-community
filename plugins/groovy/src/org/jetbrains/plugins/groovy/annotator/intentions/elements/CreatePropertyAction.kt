@@ -5,11 +5,11 @@ import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.java.beans.PropertyKind.*
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JvmPsiConversionHelper
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.presentation.java.ClassPresentationUtil
@@ -82,8 +82,9 @@ internal class CreatePropertyAction(
   override fun getActionGroup(): JvmActionGroup = if (readOnly) CreateReadOnlyPropertyActionGroup else CreatePropertyActionGroup
 
   inner class PropertyRequest : CreateFieldRequest {
-
     override fun isValid() = true
+
+    override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
 
     override fun getModifiers() = if (readOnly) listOf(JvmModifier.FINAL) else emptyList()
 
@@ -95,6 +96,6 @@ internal class CreatePropertyAction(
 
     override fun isConstant(): Boolean = false
 
-    override fun getInitializer(): PsiElement? = null
+    override fun getInitializer(): JvmValue? = null
   }
 }

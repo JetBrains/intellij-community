@@ -6,7 +6,6 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.io.File
-import kotlin.system.exitProcess
 
 
 fun main() {
@@ -16,22 +15,17 @@ fun main() {
     File(baseDir).mkdirs()
   }
 
-  try {
-    for (python in File(pythons).listFiles()!!) {
-      if (python.name.startsWith(".")) {
-        continue
-      }
-      val sdkHome = python.absolutePath
-
-      val executable = File(PythonSdkUtil.getPythonExecutable(sdkHome) ?: throw AssertionError("No python on $sdkHome"))
-      println("Packing stdlib of $sdkHome")
-
-      val cph = CapturingProcessHandler(GeneralCommandLine(executable.absolutePath, PythonHelper.GENERATOR3.asParamString(), "-u", baseDir))
-      val output = cph.runProcess()
-      println(output.stdout + output.stderr)
+  for (python in File(pythons).listFiles()!!) {
+    if (python.name.startsWith(".")) {
+      continue
     }
-  }
-  finally {
-    exitProcess(0)
+    val sdkHome = python.absolutePath
+
+    val executable = File(PythonSdkUtil.getPythonExecutable(sdkHome) ?: throw AssertionError("No python on $sdkHome"))
+    println("Packing stdlib of $sdkHome")
+
+    val cph = CapturingProcessHandler(GeneralCommandLine(executable.absolutePath, PythonHelper.GENERATOR3.asParamString(), "-u", baseDir))
+    val output = cph.runProcess()
+    println(output.stdout + output.stderr)
   }
 }

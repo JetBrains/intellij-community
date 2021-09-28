@@ -2,8 +2,8 @@
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmValue;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +30,14 @@ public interface CreateFieldRequest extends ActionRequest {
   @NotNull
   JvmSubstitutor getTargetSubstitutor();
 
-
+  /**
+   * The field initializer. Currently, only value initializers are supported.
+   */
   @Nullable
-  PsiElement getInitializer();
+  JvmValue getInitializer();
+
+  @NotNull
+  Collection<AnnotationRequest> getAnnotations();
 
   /**
    * Implementation are free to render any modifiers as long as they don't contradict with requested ones.
@@ -44,5 +49,10 @@ public interface CreateFieldRequest extends ActionRequest {
   @NotNull
   Collection<JvmModifier> getModifiers();
 
+  /**
+   * Constant fields may be used in annotations and in other constant expressions.
+   *
+   * @return whether the field must be a compile-time constant
+   */
   boolean isConstant();
 }

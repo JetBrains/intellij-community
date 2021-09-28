@@ -52,7 +52,8 @@ class DummyMavenServerConnector(project: @NotNull Project,
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {
-  override fun set(logger: MavenServerLogger?, downloadListener: MavenServerDownloadListener?, token: MavenToken?) {}
+
+
 
   override fun createEmbedder(settings: MavenEmbedderSettings?, token: MavenToken?): MavenServerEmbedder {
     return DummyEmbedder(project)
@@ -78,6 +79,13 @@ class DummyMavenServer(val project: Project) : MavenServer {
     return ProfileApplicationResult(model, MavenExplicitProfiles.NONE)
   }
 
+  override fun createPullLogger(token: MavenToken?): MavenPullServerLogger? {
+    return null
+  }
+
+  override fun createPullDownloadListener(token: MavenToken?): MavenPullDownloadListener? {
+    return null
+  }
 }
 
 class TrustProjectQuickFix : BuildIssueQuickFix {
@@ -129,7 +137,7 @@ class DummyIndexer : MavenServerIndexer {
     return IndexedMavenId(null, null, null, null, null)
   }
 
-  override fun search(indexId: Int, query: Any, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
+  override fun search(indexId: Int, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
     return emptySet()
   }
 

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.util
 import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.memory.utils.StackFrameItem
-import com.intellij.openapi.application.ApplicationManager
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.safeLocation
@@ -31,5 +30,3 @@ fun StackFrameItem.format(): String {
 fun StackFrameProxyImpl.format(): String {
     return safeLocation()?.format() ?: "emptyLocation"
 }
-
-fun isInUnitTest() = ApplicationManager.getApplication().isUnitTestMode

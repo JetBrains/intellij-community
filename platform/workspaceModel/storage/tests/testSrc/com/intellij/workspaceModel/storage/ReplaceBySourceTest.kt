@@ -3,7 +3,9 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
+import com.intellij.workspaceModel.storage.entities.SampleEntity
+import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsGraph
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
@@ -599,7 +601,7 @@ class ReplaceBySourceTest {
     val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
     replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
 
-    ReplaceBySourceAsGraph.replaceBySourceAsGraph(builder, replacement, {it is MySource}, true)
+    ReplaceBySourceAsGraph.replaceBySourceAsGraph(builder, replacement, {it is MySource }, true)
 
     builder.assertConsistency()
   }

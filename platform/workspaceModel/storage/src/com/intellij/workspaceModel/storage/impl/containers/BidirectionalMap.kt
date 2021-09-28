@@ -17,6 +17,7 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
                                                           private val valueToKeysMap: Object2ObjectOpenHashMap<V, Any>) : MutableMap<K, V> {
   constructor() : this(HashSet<V>(), Object2ObjectOpenHashMap<K, V>(), Object2ObjectOpenHashMap<V, Any>())
 
+  @Suppress("UNCHECKED_CAST")
   override fun put(key: K, value: V): V? {
     val oldValue = keyToValueMap.put(key, value)
     if (oldValue != null) {
@@ -59,6 +60,7 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
     valueToKeysMap.clear()
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun getKeysByValue(value: V): List<K>? {
     return valueToKeysMap[value]?.let { keys ->
       if (keys is MutableList<*>) return@let keys as MutableList<K>
@@ -88,6 +90,7 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
     return keyToValueMap[key]
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun removeValue(v: V) {
     val keys = valueToKeysMap.remove(v)
     if (keys != null) {
@@ -132,6 +135,7 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
   override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
     get() = keyToValueMap.entries
 
+  @Suppress("UNCHECKED_CAST")
   fun copy(): BidirectionalMap<K, V> {
     val clonedValueToKeysMap = valueToKeysMap.clone()
     slotsWithList.forEach { value -> clonedValueToKeysMap[value] = SmartList(valueToKeysMap[value] as MutableList<K>) }

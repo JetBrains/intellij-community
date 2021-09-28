@@ -17,17 +17,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-// Stores result of various `FSRecords#list*` methods and the current `FSRecords#localModCount` for optimistic locking support.
+// Stores result of various `FSRecords#list*` methods and the current `FSRecords#getModCount` for optimistic locking support.
 final class ListResult {
   private final int modStamp;
-  final List<ChildInfo> children;  // sorted by `#getId`
-  private int myParentId;
+  final List<? extends ChildInfo> children;  // sorted by `#getId`
+  private final int myParentId;
 
-  ListResult(@NotNull List<ChildInfo> children, int parentId) {
+  ListResult(@NotNull List<? extends ChildInfo> children, int parentId) {
     this(FSRecords.getModCount(parentId), children, parentId);
   }
 
-  private ListResult(int modStamp, List<ChildInfo> children, int parentId) {
+  private ListResult(int modStamp, @NotNull List<? extends ChildInfo> children, int parentId) {
     this.modStamp = modStamp;
     this.children = children;
     myParentId = parentId;
@@ -93,10 +93,10 @@ final class ListResult {
   // in case of a name clash uses ID from the corresponding this list entry and a name from the `otherList` entry
   // (to avoid duplicating ids: preserve old id but supply new name).
   @Contract(pure=true)
-  @NotNull ListResult merge(@NotNull List<ChildInfo> newChildren, boolean isCaseSensitive) {
+  @NotNull ListResult merge(@NotNull List<? extends ChildInfo> newChildren, boolean isCaseSensitive) {
     ListResult newList = new ListResult(newChildren, myParentId);  // assume the list is sorted
     if (children.isEmpty()) return newList;
-    List<ChildInfo> oldChildren = children;
+    List<? extends ChildInfo> oldChildren = children;
     // Both `newChildren` and `oldChildren` are sorted by id, but not `nameId`, so plain O(N) merging is not possible.
     // Instead, try to eliminate entries with the same id from both lists first (since they have the same `nameId`),
     // and compare the rest by (slower) `nameId`.
@@ -163,7 +163,7 @@ final class ListResult {
     if (needToSortResult) {
       result.sort(ChildInfo.BY_ID);
     }
-    List<ChildInfo> newRes = nameToIndex.isEmpty() ? newChildren : result;
+    List<? extends ChildInfo> newRes = nameToIndex.isEmpty() ? newChildren : result;
     return new ListResult(modStamp, newRes, myParentId);
   }
 

@@ -160,6 +160,9 @@
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionGroupExpander"
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionGroupExpanderImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
@@ -770,6 +773,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="settings.changes" version="57"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.IdeErrorDialogUsageCollector"/>
 
@@ -876,6 +880,10 @@
     <actionPromoter implementation="com.intellij.ide.actions.WindowActionPromoter"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsGlobalSummaryManager"/>
 
+    <projectService serviceInterface="com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider"
+                    serviceImplementation="com.intellij.internal.statistic.local.FileTypeUsageLocalSummary"
+                    testServiceImplementation="com.intellij.internal.statistic.local.TestFileTypeUsageSummaryProvider"/>
+
     <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModelCache"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
@@ -892,6 +900,18 @@
 
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.lists.JoinLinesIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.lists.SplitLineIntention</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
@@ -1239,10 +1259,9 @@
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
 
-    <moduleType implementationClass="com.intellij.ide.NewProjectModuleType" id="newWizard.newProjectType" order="first"/>
-    <moduleType implementationClass="com.intellij.ide.NewWizardEmptyModuleType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
-
-    <newProjectWizard implementation="com.intellij.ide.HTMLNewProjectWizard"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewModuleType" id="newWizard.newModuleType"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewProjectType" id="newWizard.newProjectType" order="first"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewEmptyProjectType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 

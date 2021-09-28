@@ -197,7 +197,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
     if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
       return getSelectedChanges().isNotEmpty();
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);

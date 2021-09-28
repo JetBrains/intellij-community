@@ -4,6 +4,7 @@ package com.intellij.usages.impl;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.Language;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +39,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
@@ -148,12 +153,14 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
     SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     AtomicReference<UsageViewEx> usageViewRef = new AtomicReference<>();
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
+    AtomicLong firstItemFoundTS = new AtomicLong();
+    AtomicBoolean tooManyUsages = new AtomicBoolean();
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
-                                    processPresentation, searchScopeToWarnOfFallingOutOf, listener).run();
+                                    processPresentation, searchScopeToWarnOfFallingOutOf, listener, firstItemFoundTS, tooManyUsages).run();
       }
 
       @NotNull
@@ -161,10 +168,34 @@ public class UsageViewManagerImpl extends UsageViewManager {
       public NotificationInfo getNotificationInfo() {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
+        long currentTS = System.nanoTime();
+        long duration = TimeUnit.MILLISECONDS.convert(currentTS - start, TimeUnit.NANOSECONDS);
+
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
-        LOG.debug(notification +" in "+(System.currentTimeMillis()-start) +"ms.");
+        LOG.debug(notification + " in " + duration + "ms.");
+
+        reportFUS(count, TimeUnit.MILLISECONDS.convert(currentTS - firstItemFoundTS.get(), TimeUnit.NANOSECONDS),
+                  duration, tooManyUsages.get());
+
         return new NotificationInfo("Find Usages",
                                     UsageViewBundle.message("notification.title.find.usages.finished"), notification);
+      }
+
+      private void reportFUS(int count, long firstResultTS, long duration, boolean tooManyUsages) {
+          PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
+          if (element != null) {
+            Class<? extends PsiElement> targetClass = element.getClass();
+            Language language = element.getLanguage();
+            SearchScope scope = null;
+
+            if (element instanceof DataProvider) {
+              scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
+            }
+
+            UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language,
+                                                           count, firstResultTS, duration, tooManyUsages,
+                                                           CodeNavigateSource.FindToolWindow);
+          }
       }
     };
     ProgressManager.getInstance().run(task);
@@ -218,7 +249,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public static void showTooManyUsagesWarningLater(@NotNull Project project,
                                                    @NotNull TooManyUsagesStatus tooManyUsagesStatus,
                                                    @NotNull ProgressIndicator indicator,
-                                                   @Nullable UsageViewEx usageView) {
+                                                   @Nullable UsageViewEx usageView,
+                                                   @Nullable Consumer<UsageLimitUtil.Result> onUserClicked) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
       String message = UsageViewBundle.message("find.excessive.usage.count.prompt");
@@ -230,6 +262,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
         indicator.cancel();
       }
       tooManyUsagesStatus.userResponded();
+
+      if (onUserClicked != null) {
+        onUserClicked.accept(ret);
+      }
     });
   }
 

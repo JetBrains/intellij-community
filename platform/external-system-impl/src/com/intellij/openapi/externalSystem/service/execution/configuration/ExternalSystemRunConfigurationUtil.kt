@@ -7,20 +7,20 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.ui.*
 import com.intellij.ide.macro.MacrosDialog
+import com.intellij.ide.wizard.getCanonicalPath
+import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineField
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionComboBox
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
-import com.intellij.openapi.externalSystem.service.ui.getModelPath
-import com.intellij.openapi.externalSystem.service.ui.getUiPath
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
+import com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
+import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
@@ -96,16 +96,6 @@ fun <C : RunConfigurationBase<*>> createTag(
     actionHint = hint
   }
 
-fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addCommandLineFragment(
-  project: Project,
-  commandLineInfo: CommandLineInfo
-) = addCommandLineFragment(
-  project,
-  commandLineInfo,
-  { settings.commandLine },
-  { settings.commandLine = it }
-)
-
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addCommandLineFragment(
   project: Project,
   commandLineInfo: CommandLineInfo,
@@ -163,17 +153,20 @@ fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addDistributionFragment(
   project: Project,
   distributionsInfo: DistributionsInfo,
-  getDistribution: C.() -> DistributionInfo,
-  setDistribution: C.(DistributionInfo) -> Unit
+  getDistribution: C.() -> DistributionInfo?,
+  setDistribution: C.(DistributionInfo?) -> Unit
 ) = add(createDistributionFragment(project, distributionsInfo, getDistribution, setDistribution))
 
 fun <C : RunConfigurationBase<*>> createDistributionFragment(
   project: Project,
   distributionsInfo: DistributionsInfo,
-  getDistribution: C.() -> DistributionInfo,
-  setDistribution: C.(DistributionInfo) -> Unit
+  getDistribution: C.() -> DistributionInfo?,
+  setDistribution: C.(DistributionInfo?) -> Unit
 ) = createSettingsEditorFragment<C, DistributionComboBox>(
-  DistributionComboBox(project, distributionsInfo),
+  DistributionComboBox(project, distributionsInfo).apply {
+    specifyLocationActionName = distributionsInfo.comboBoxActionName
+    distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
+  },
   distributionsInfo,
   { it, c -> c.selectedDistribution = it.getDistribution() },
   { it, c -> it.setDistribution(c.selectedDistribution) },
@@ -274,10 +267,10 @@ fun <C : RunConfigurationBase<*>> createPathFragment(
       }
     },
     pathFragmentInfo.fileChooserDescriptor
-  ) { getUiPath(it.path) },
+  ) { getPresentablePath(it.path) },
   pathFragmentInfo,
-  { getPath()?.let(::getUiPath) },
-  { setPath(it?.let(::getModelPath)) }
+  { getPath()?.let(::getPresentablePath) },
+  { setPath(it?.let(::getCanonicalPath)) }
 )
 
 fun <S, C> createLabeledTextSettingsEditorFragment(

@@ -9,7 +9,6 @@ import com.intellij.ide.util.PsiClassListCellRenderer
 import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
@@ -197,7 +197,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
 
         val renderer = ClassRenderer()
         val sortedClasses = classesToProcess.sortedWith(renderer.comparator)
-        if (ApplicationManager.getApplication().isUnitTestMode) return implementInClass(element, sortedClasses)
+        if (isUnitTestMode()) return implementInClass(element, sortedClasses)
 
         val list = JBList(sortedClasses).apply {
             selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION

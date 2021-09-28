@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
@@ -6,13 +6,18 @@ import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.Nls.Capitalization.Title
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.util.function.Supplier
 
 class ProviderWithSettings<T: Any>(
   val info: ProviderInfo<T>,
@@ -71,14 +76,27 @@ class CollectorWithSettings<T : Any>(
    * Use only for settings preview.
    */
   fun collectTraversingAndApply(editor: Editor, file: PsiFile, enabled: Boolean) {
+    val hintsBuffer = collectTraversing(editor, file, enabled)
+    applyToEditor(file, editor, hintsBuffer)
+  }
+
+  fun collectTraversingAndApplyOnEdt(editor: Editor, file: PsiFile, enabled: Boolean) {
+    val hintsBuffer = collectTraversing(editor, file, enabled)
+    invokeLater { applyToEditor(file, editor, hintsBuffer) }
+  }
+
+  fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
     if (enabled) {
       val traverser = SyntaxTraverser.psiTraverser(file)
       traverser.forEach {
         collectHints(it, editor)
       }
     }
-    val buffer = sink.complete()
-    InlayHintsPass.applyCollected(buffer, file, editor)
+    return sink.complete()
+  }
+
+  fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
+    InlayHintsPass.applyCollected(hintsBuffer, file, editor)
   }
 }
 
@@ -99,13 +117,22 @@ fun InlayPresentation.dimension() = Dimension(width, height)
 private typealias ConstrPresent<C> = ConstrainedPresentation<*, C>
 
 object InlayHintsUtils {
+  fun getDefaultInlayHintsProviderPopupActions(
+    providerKey: SettingsKey<*>,
+    providerName: Supplier<@Nls(capitalization = Title) String>
+  ): List<AnAction> =
+    listOf(
+      DisableInlayHintsProviderAction(providerKey, providerName),
+      ConfigureInlayHintsProviderAction(providerKey)
+    )
+
   /**
    * Function updates list of old presentations with new list, taking into account priorities.
    * Both lists must be sorted.
    *
    * @return list of updated constrained presentations
    */
-  fun <Constraint: Any> produceUpdatedRootList(
+  fun <Constraint : Any> produceUpdatedRootList(
     new: List<ConstrPresent<Constraint>>,
     old: List<ConstrPresent<Constraint>>,
     editor: Editor,

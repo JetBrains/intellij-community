@@ -121,6 +121,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testNonNullWhenUnknown() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
+
   public void testReturningNullFromTypeAnnotatedNullableMethod() {
     doTestWithCustomAnnotations();
   }
@@ -260,6 +266,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testLambdaAfterNullCheck() { doTest(); }
   public void testFlatMapSideEffect() { doTest(); }
   public void testOptionalValueTracking() { doTest(); }
+  public void testOptionalAsQualifier() { doTest(); }
   public void testClearZeroesSize() { doTest(); }
   public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
 
@@ -338,4 +345,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testReturnOrElseNull() { doTestWith(insp -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
   public void testArrayIntersectionType() { doTest(); }
+  public void testFunctionType() { doTest(); }
+  public void testJsr305TypeUseNoLocal() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
 }

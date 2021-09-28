@@ -145,15 +145,22 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
+  static void clearAllCaches() {
+    for (Map<String, Object> map : ourPrevMaps.values()) {
+      map.clear();
+    }
+    ourPrevMaps.clear();
+  }
+
   private static void preGetAllData(@NotNull Component component, @NotNull Map<String, Object> cachedData) {
     long start = System.currentTimeMillis();
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
 
     ArrayList<Object> slowProviders = new ArrayList<>();
-    cachedData.put(PlatformDataKeys.CONTEXT_COMPONENT.getName(), component);
+    cachedData.put(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName(), component);
     cachedData.put(PlatformDataKeys.MODALITY_STATE.getName(), ModalityState.stateForComponent(component));
-    cachedData.put(PlatformDataKeys.IS_MODAL_CONTEXT.getName(), IdeKeyEventDispatcher.isModalContext(component));
-    cachedData.put(PlatformDataKeys.SLOW_DATA_PROVIDERS.getName(), slowProviders);
+    cachedData.put(PlatformCoreDataKeys.IS_MODAL_CONTEXT.getName(), IdeKeyEventDispatcher.isModalContext(component));
+    cachedData.put(PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getName(), slowProviders);
 
     DataKey<?>[] keys = DataKey.allKeys();
     BitSet computed = new BitSet(keys.length);
@@ -162,19 +169,19 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       if (dataProvider == null) continue;
       for (int i = 0; i < keys.length; i++) {
         DataKey<?> key = keys[i];
-        if (key == PlatformDataKeys.IS_MODAL_CONTEXT ||
-            key == PlatformDataKeys.CONTEXT_COMPONENT ||
+        if (key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+            key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
             key == PlatformDataKeys.MODALITY_STATE) {
           continue;
         }
         boolean alreadyComputed = computed.get(i);
-        Object data = !alreadyComputed || key == PlatformDataKeys.SLOW_DATA_PROVIDERS ?
+        Object data = !alreadyComputed || key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS ?
                       dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key)) : null;
         if (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR) data = validateEditor((Editor)data, component);
         if (data == null) continue;
 
         computed.set(i, true);
-        if (key == PlatformDataKeys.SLOW_DATA_PROVIDERS) {
+        if (key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS) {
           ContainerUtil.addAll(slowProviders, (Iterable<?>)data);
           continue;
         }
@@ -184,10 +191,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     for (int i = 0; i < keys.length; i++) {
       DataKey<?> key = keys[i];
       if (computed.get(i) ||
-          key == PlatformDataKeys.IS_MODAL_CONTEXT ||
-          key == PlatformDataKeys.CONTEXT_COMPONENT ||
+          key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+          key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
           key == PlatformDataKeys.MODALITY_STATE ||
-          key == PlatformDataKeys.SLOW_DATA_PROVIDERS) {
+          key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS) {
         continue;
       }
       cachedData.put(key.getName(), NullResult.Initial);
@@ -204,14 +211,14 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static final GetDataRule ourFileEditorRule = new FileEditorRule();
 
   private static @Nullable GetDataRule getFastDataRule(@NotNull DataKey<?> key) {
-    return key == PlatformDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
+    return key == PlatformCoreDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
   }
 
   @Override
   public String toString() {
     return (this instanceof InjectedDataContext ? "injected:" : "") +
            (myMissedKeysIfFrozen != null ? "frozen:" : "") +
-           "component=" + getData(PlatformDataKeys.CONTEXT_COMPONENT);
+           "component=" + getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
   }
 
   @Override

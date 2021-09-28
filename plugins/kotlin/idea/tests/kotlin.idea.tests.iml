@@ -22,6 +22,7 @@
     <orderEntry type="library" scope="TEST" name="Trove4j" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="kotlin.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
@@ -69,6 +70,7 @@
     <orderEntry type="module" module-name="kotlin.i18n" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.maven" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.junit" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.ml-completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="TEST" />

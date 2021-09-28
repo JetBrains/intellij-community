@@ -3,7 +3,7 @@ package org.jetbrains.plugins.emojipicker.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -50,7 +50,7 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
       return new Context(input, p -> p.showInBestPositionFor(editor));
     }
 
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component instanceof EmojiSearchField) {
       // Easy way to block recursive pickers
       return null;

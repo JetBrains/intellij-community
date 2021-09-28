@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.PlatformUtils
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildEventConsumer
@@ -101,7 +102,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       }
     }
 
-    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true) null
+    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true || PlatformUtils.isFleetBackend()) null
     else {
       connection.putUserData(targetPreparationKey, true)
       val targetTypeId = serverEnvironmentSetup.environmentConfiguration.typeId

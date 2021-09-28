@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,7 @@ public class GradleWorkspaceContributor implements ExternalSystemWorkspaceContri
 
   @Nullable
   @Override
-  public ProjectCoordinate findProjectId(Module module, IdeModifiableModelsProvider modelsProvider) {
+  public ProjectCoordinate findProjectId(Module module) {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
       return null;
     }

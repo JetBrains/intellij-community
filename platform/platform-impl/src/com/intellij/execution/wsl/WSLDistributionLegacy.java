@@ -72,19 +72,4 @@ public final class WSLDistributionLegacy extends WSLDistribution {
 
     return super.getWslPath(windowsPath);
   }
-
-  @Nullable
-  @Override
-  public String getWindowsPath(@NotNull String wslPath) {
-    String windowsPath = super.getWindowsPath(wslPath);
-    if (windowsPath != null) {
-      return windowsPath;
-    }
-
-    String wslRootInHost = WSL_ROOT_IN_WINDOWS_PROVIDER.getValue();
-    if (wslRootInHost == null) {
-      return null;
-    }
-    return FileUtil.toSystemDependentName(wslRootInHost + wslPath);
-  }
 }

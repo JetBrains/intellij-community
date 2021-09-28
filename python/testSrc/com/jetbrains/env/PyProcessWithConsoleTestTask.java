@@ -125,6 +125,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
    * @param e exception (root cause)
    */
   protected void exceptionThrown(@NotNull Throwable e, @NotNull T runner) {
+    Logger.getInstance(PyProcessWithConsoleTestTask.class).error(e);
     Assert.fail("Exception thrown, see logs for details: " + e.getMessage());
   }
 

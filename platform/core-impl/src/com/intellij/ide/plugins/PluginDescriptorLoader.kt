@@ -404,8 +404,11 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
   val pathResolver = ClassPathXmlPathResolver(
     classLoader = classLoader,
-    isRunningFromSources = (isRunningFromSources && !isInDevServerMode) || platformPrefix == "CodeServer",
+    isRunningFromSources = isRunningFromSources && !isInDevServerMode,
   )
+  val useCoreClassLoader = pathResolver.isRunningFromSources ||
+                           platformPrefix.startsWith("CodeServer") ||
+                           java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
   if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
       (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
     val dataLoader = object : DataLoader {
@@ -429,7 +432,7 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
                                               isBundled = true,
                                               id = null,
                                               moduleName = null,
-                                              useCoreClassLoader = pathResolver.isRunningFromSources)
+                                              useCoreClassLoader = useCoreClassLoader)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
     context.result.add(descriptor, overrideUseIfCompatible = false)
   }
@@ -441,7 +444,8 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
       pool.invoke(LoadDescriptorsFromClassPathAction(urlToFilename = urlToFilename,
                                                      context = context,
                                                      platformPluginURL = platformPluginURL,
-                                                     pathResolver = pathResolver))
+                                                     pathResolver = pathResolver,
+        useCoreClassLoader = useCoreClassLoader))
     }
   }
 
@@ -594,11 +598,17 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
   val urlToFilename = LinkedHashMap<URL, String>()
   collectPluginFilesInClassPath(loader, urlToFilename)
   val buildNumber = BuildNumber.fromString("2042.42")!!
-  val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
+  val context = DescriptorListLoadingContext(disabledPlugins = Collections.emptySet(),
                                              result = PluginLoadingResult(brokenPluginVersions = emptyMap(),
                                                                           productBuildNumber = Supplier { buildNumber },
                                                                           checkModuleDependencies = false))
-  LoadDescriptorsFromClassPathAction(urlToFilename, context, null, ClassPathXmlPathResolver(loader, isRunningFromSources = false)).compute()
+  LoadDescriptorsFromClassPathAction(
+    urlToFilename = urlToFilename,
+    context = context,
+    platformPluginURL = null,
+    pathResolver = ClassPathXmlPathResolver(loader, isRunningFromSources = false),
+    useCoreClassLoader = true
+  ).compute()
   context.result.finishLoading()
   return context.result.getEnabledPlugins()
 }
@@ -656,7 +666,8 @@ private class LoadDescriptorsFromDirAction(private val dir: Path,
 private class LoadDescriptorsFromClassPathAction(private val urlToFilename: Map<URL, String>,
                                                  private val context: DescriptorListLoadingContext,
                                                  private val platformPluginURL: URL?,
-                                                 private val pathResolver: ClassPathXmlPathResolver) : RecursiveAction() {
+                                                 private val pathResolver: ClassPathXmlPathResolver,
+                                                 private val useCoreClassLoader: Boolean) : RecursiveAction() {
   public override fun compute() {
     val tasks = ArrayList<ForkJoinTask<IdeaPluginDescriptorImpl?>>(urlToFilename.size)
     urlToFilename.forEach(BiConsumer { url, filename ->
@@ -730,7 +741,7 @@ private class LoadDescriptorsFromClassPathAction(private val urlToFilename: Map<
       // it is very important to not set useCoreClassLoader = true blindly
       // - product modules must uses own class loader if not running from sources
       val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = basePath, isBundled = true, id = null, moduleName = null,
-                                                useCoreClassLoader = pathResolver.isRunningFromSources)
+                                                useCoreClassLoader = useCoreClassLoader)
       descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
       // do not set jarFiles by intention - doesn't make sense
       return descriptor

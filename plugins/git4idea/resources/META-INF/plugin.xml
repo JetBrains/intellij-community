@@ -385,6 +385,14 @@
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
     </group>
+
+    <group id="Git.Experimental.Branch.Popup.Actions">
+      <reference ref="Vcs.UpdateProject"/>
+      <reference ref="CheckinProject"/>
+      <reference ref="Git.Commit.Stage"/>
+      <reference ref="Vcs.Push"/>
+      <reference ref="Vcs.QuickListPopupAction"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -630,7 +638,9 @@
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
-    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowStandaloneDiffFromStashAction"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="git4idea.stash.ui.GitCompareWithLocalFromStashAction"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
@@ -667,5 +677,7 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.index.CommitModeListener" topic="com.intellij.vcs.commit.CommitModeManager$CommitModeListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
   </projectListeners>
 </idea-plugin>

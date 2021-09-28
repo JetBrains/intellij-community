@@ -12,7 +12,7 @@ import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-@State(name = "DiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = ComponentCategory.CODE)
+@State(name = "DiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = SettingsCategory.CODE)
 class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
   data class SharedSettings(
     var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true

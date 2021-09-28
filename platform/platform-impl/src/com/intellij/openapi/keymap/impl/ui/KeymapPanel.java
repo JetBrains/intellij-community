@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.VMOptions;
@@ -18,6 +18,7 @@ import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.SystemShortcuts;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
@@ -38,6 +39,7 @@ import com.intellij.ui.mac.touchbar.Helpers;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -55,6 +57,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -97,12 +100,16 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           @Override
           public void actionPerformed(ActionEvent e) {
             NationalKeyboardSupport.getInstance().setEnabled(nationalKeyboardsSupport.isSelected());
-            VMOptions.writeOption(NationalKeyboardSupport.getVMOption(), "=",
-                                  Boolean.toString(NationalKeyboardSupport.getInstance().getEnabled()));
-            ApplicationManager.getApplication().invokeLater(
-              () -> ApplicationManager.getApplication().restart(),
-              ModalityState.NON_MODAL
-            );
+            try {
+              VMOptions.setProperty(NationalKeyboardSupport.getVMOption(), Boolean.toString(NationalKeyboardSupport.getInstance().getEnabled()));
+              ApplicationManager.getApplication().invokeLater(
+                () -> ApplicationManager.getApplication().restart(),
+                ModalityState.NON_MODAL
+              );
+            }
+            catch (IOException x) {
+              Messages.showErrorDialog(keymapPanel, IoErrorText.message(x), OptionsBundle.message("cannot.save.settings.default.dialog.title"));
+            }
           }
         });
       nationalKeyboardsSupport.setSelected(NationalKeyboardSupport.getInstance().getEnabled());

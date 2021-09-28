@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -24,6 +25,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.Test
 
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
@@ -438,7 +440,7 @@ class TestingTasksImpl extends TestingTasks {
     if (isRunningInBatchMode()) {
       def mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
       def pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
-      def root = Paths.get(mainModuleTestsOutput);
+      def root = Paths.get(mainModuleTestsOutput)
       Files.walk(root)
         .filter({ it -> 
             pattern.matcher(root.relativize(it).toString()).matches() 
@@ -478,6 +480,12 @@ class TestingTasksImpl extends TestingTasks {
     List<String> args = new ArrayList<>()
     args.add("-classpath")
     List<String> classpath = new ArrayList<>(bootstrapClasspath)
+
+    ["JUnit5", "JUnit5Launcher", "JUnit5Vintage"].forEach { libName ->
+      context.projectModel.project.libraryCollection.findLibrary(libName)
+        .getFiles(JpsOrderRootType.COMPILED).forEach { it -> classpath.add(it.getAbsolutePath()) }
+    }
+
     if (!isBootstrapSuiteDefault() || isRunningInBatchMode()) {
       classpath.addAll(testClasspath)
     }
@@ -492,14 +500,15 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
 
-    args.add("com.intellij.tests.JUnit5SuiteRunner")
+    args.add("com.intellij.tests.JUnit5Runner")
     args.add(suiteName)
     if (methodName != null) {
       args.add(methodName)
     }
     File argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
-    def builder = new ProcessBuilder((options.customJrePath != null ? "$options.customJrePath" : context.paths.jdkHome) + "/bin/java", 
-                                     '@' + argFile.getAbsolutePath())
+    def javaPath = (options.customJrePath != null ? "$options.customJrePath" : System.getProperty("java.home")) + "/bin/java"
+    context.messages.info("Starting tests on java from $javaPath")
+    def builder = new ProcessBuilder(javaPath, '@' + argFile.getAbsolutePath())
     builder.environment().putAll(envVariables)
     final Process exec = builder.start()
     new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start()
@@ -507,7 +516,7 @@ class TestingTasksImpl extends TestingTasks {
     exec.waitFor()
   }
 
-  private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
+  private Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
     return new Runnable() {
       @Override
       void run() {
@@ -526,7 +535,7 @@ class TestingTasksImpl extends TestingTasks {
         }
         catch (UnsupportedEncodingException ignored) { }
         catch (IOException e) {
-          e.printStackTrace()
+          context.messages.error(e.getMessage(), e)
         }
       }
     }
@@ -650,7 +659,6 @@ class TestingTasksImpl extends TestingTasks {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
       context.gradle.run('Setting up testing dependencies', 'setupBundledMaven')
-      context.kotlinBinaries.setUpPlugin(context, true)
     }
   }
 

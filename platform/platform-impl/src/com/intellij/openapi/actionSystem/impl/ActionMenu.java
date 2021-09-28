@@ -338,7 +338,7 @@ public final class ActionMenu extends JBMenu {
       DataManager dataManager = DataManager.getInstance();
       @SuppressWarnings("deprecation") DataContext contextFromFocus = dataManager.getDataContext();
       context = contextFromFocus;
-      if (PlatformDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
+      if (PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
         IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)this);
         context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor((Window)frame));
       }

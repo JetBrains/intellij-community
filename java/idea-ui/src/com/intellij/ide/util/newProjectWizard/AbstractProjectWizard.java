@@ -38,13 +38,13 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   @Nullable
   private WizardDelegate myDelegate;
 
-  public AbstractProjectWizard(@Nls String title, Project project, String defaultPath) {
+  public AbstractProjectWizard(@Nls String title, @Nullable Project project, String defaultPath) {
     super(title, project);
     myWizardContext = initContext(project, defaultPath, getDisposable());
     myWizardContext.putUserData(AbstractWizard.KEY, this);
   }
 
-  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, Project project, Component dialogParent) {
+  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, @Nullable Project project, Component dialogParent) {
     super(title, dialogParent);
     myWizardContext = initContext(project, null, getDisposable());
     myWizardContext.putUserData(AbstractWizard.KEY, this);

@@ -156,7 +156,6 @@ public class DeclarationParser {
 
   private void parseEnumConstants(final PsiBuilder builder) {
     boolean first = true;
-    boolean seenCommaBefore = false;
     while (builder.getTokenType() != null) {
       if (expect(builder, JavaTokenType.SEMICOLON)) {
         return;
@@ -431,7 +430,7 @@ public class DeclarationParser {
     if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
         builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
       LanguageLevel level = getLanguageLevel(builder);
-      return level.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
+      return level.isAtLeast(LanguageLevel.JDK_16);
     }
     return false;
   }
@@ -1036,7 +1035,7 @@ public class DeclarationParser {
         builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, this::doParseAnnotationValue, "expected.value");
     }
     else {
-      result = myParser.getExpressionParser().parseConditional(builder);
+      result = myParser.getExpressionParser().parseConditional(builder, 0);
     }
 
     return result;

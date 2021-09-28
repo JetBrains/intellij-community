@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -41,7 +40,6 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -87,7 +85,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
@@ -686,7 +683,14 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       VirtualFile file = getSelectedPropertiesFile();
       return file == null ? null : new FileSelectInContext(myProject, file);
     }
+    else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      return List.of((DataProvider)this::getSlowData);
+    }
 
+    return null;
+  }
+
+  private Object getSlowData(@NotNull String dataId) {
     if (!CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return null;
 
     for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
@@ -699,10 +703,12 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(virtualFile, myProject);
       LOG.assertTrue(file != null);
 
-      final List<IProperty> properties = getPropertiesByName(file, name);
-      if (properties == null) return null;
+      final List<IProperty> properties = file.findPropertiesByKey(name);
 
-      if (properties.isEmpty()) return new Navigatable[]{ file.getContainingFile() };
+      if (properties.isEmpty()) {
+        return new Navigatable[]{ file.getContainingFile() };
+      }
+
       return properties
         .stream()
         .map(IProperty::getPsiElement)
@@ -712,18 +718,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
         .toArray(Navigatable[]::new);
     }
     return null;
-  }
-
-  @Contract(pure = true)
-  private static @Nullable List<IProperty> getPropertiesByName(@NotNull PropertiesFile file, @NotNull String name) {
-    final Callable<List<IProperty>> findProperties = () -> file.findPropertiesByKey(name);
-    try {
-      return ApplicationUtil.runWithCheckCanceled(ReadAction.nonBlocking(findProperties)::executeSynchronously,
-                                                  new EmptyProgressIndicator());
-    }
-    catch (Exception e) {
-      return null;
-    }
   }
 
   private VirtualFile getSelectedPropertiesFile() {

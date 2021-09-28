@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,6 +22,7 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.isOneLineMode) return null
     val savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP)
+    if (DiffUtil.isDiffEditor(editor)) return null
     val currentStamp = getCurrentModificationStamp(file)
     if (savedStamp != null && savedStamp == currentStamp) return null
 
@@ -41,7 +42,7 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
   companion object {
     fun forceHintsUpdateOnNextPass() {
       for (editor in EditorFactory.getInstance().allEditors) {
-        editor.putUserData(PSI_MODIFICATION_STAMP, null)
+        clearModificationStamp(editor)
       }
       ProjectManager.getInstance().openProjects.forEach { project ->
         DaemonCodeAnalyzer.getInstance(project).restart()
@@ -60,6 +61,8 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
     fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
       editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file))
     }
+
+    fun clearModificationStamp(editor: Editor) = editor.putUserData(PSI_MODIFICATION_STAMP, null)
 
     private fun getCurrentModificationStamp(file: PsiFile): Long {
       return file.manager.modificationTracker.modificationCount

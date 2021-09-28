@@ -1,20 +1,23 @@
 package com.intellij.grazie.text;
 
+import com.intellij.grazie.grammar.strategy.StrategyUtils;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.ranges.IntRange;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class TextContentImpl implements TextContent {
+class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
   final List<TokenInfo> tokens;
   private volatile String text;
@@ -89,7 +92,7 @@ class TextContentImpl implements TextContent {
   public String toString() {
     String text = this.text;
     if (text == null) {
-      this.text = text = StringUtil.join(tokens, "");
+      this.text = text = StringUtil.join(tokens, t -> t.text, "");
     }
     return text;
   }
@@ -195,12 +198,12 @@ class TextContentImpl implements TextContent {
 
   @Override
   public TextContent excludeRange(TextRange rangeInText) {
-    return rangeInText.getLength() == 0 ? this : excludeRange(rangeInText, false);
+    return rangeInText.getLength() == 0 ? this : excludeRanges(List.of(Exclusion.exclude(rangeInText)));
   }
 
   @Override
   public TextContent markUnknown(TextRange rangeInText) {
-    return excludeRange(rangeInText, true);
+    return excludeRanges(List.of(Exclusion.markUnknown(rangeInText)));
   }
 
   @Override
@@ -210,39 +213,61 @@ class TextContentImpl implements TextContent {
                ((PsiToken) token).rangeInPsi.shiftRight(((PsiToken) token).psi.getTextRange().getStartOffset()).intersectsStrict(rangeInFile));
   }
 
-  private TextContent excludeRange(TextRange range, boolean unknown) {
+  @Override
+  public TextContent excludeRanges(List<Exclusion> ranges) {
     ProgressManager.checkCanceled();
-    if (range.getStartOffset() < 0 || range.getEndOffset() > length()) {
-      throw new IllegalArgumentException("Text range " + range + " should be between 0 and " + length());
+    if (ranges.isEmpty()) return this;
+
+    if (ranges.get(0).start < 0 || ranges.get(ranges.size() - 1).end > length()) {
+      throw new IllegalArgumentException("Text ranges " + ranges + " should be between 0 and " + length());
     }
-    if (range.getStartOffset() == 0 && range.getEndOffset() == length()) {
-      PsiToken first = (PsiToken) tokens.get(0);
-      return new TextContentImpl(domain, Collections.singletonList(
-        new PsiToken("", first.psi,
-          TextRange.from(first.rangeInPsi.getStartOffset(), 0),
-          unknown || first.unknown || ((PsiToken) tokens.get(tokens.size() - 1)).unknown)));
+    for (int i = 1; i < ranges.size(); i++) {
+      if (ranges.get(i - 1).end > ranges.get(i).start) {
+        throw new IllegalArgumentException("Ranges should be sorted and non-intersecting: " + ranges);
+      }
     }
 
     int[] offsets = getTokenOffsets();
-    int i1 = findTokenIndex(range.getStartOffset(), offsets, true);
-    int i2 = findTokenIndex(range.getEndOffset(), offsets, false);
-    PsiToken t1 = (PsiToken) tokens.get(i1);
-    PsiToken t2 = (PsiToken) tokens.get(i2);
+    List<Exclusion>[] affectingExclusions = getAffectingExclusions(ranges, offsets);
 
-    List<TokenInfo> newTokens = new ArrayList<>(tokens.subList(0, i1));
-    if (range.getStartOffset() > offsets[i1]) {
-      newTokens.add(t1.withRange(TextRange.from(t1.rangeInPsi.getStartOffset(), range.getStartOffset() - offsets[i1])));
+    List<TokenInfo> newTokens = new ArrayList<>();
+    for (int i = 0; i < tokens.size(); i++) {
+      List<Exclusion> affecting = affectingExclusions[i];
+      TokenInfo token = tokens.get(i);
+      if (affecting == null) {
+        newTokens.add(token);
+      } else if (token instanceof PsiToken) {
+        newTokens.addAll(((PsiToken)token).splitToken(offsets[i], affecting));
+      }
     }
-    if (unknown) {
-      newTokens.add(new PsiToken("", t1.psi, TextRange.from(t1.rangeInPsi.getStartOffset() + range.getStartOffset() - offsets[i1], 0), true));
-    }
-    int token2End = offsets[i2] + t2.length();
-    if (token2End > range.getEndOffset()) {
-      newTokens.add(t2.withRange(new TextRange(t2.rangeInPsi.getEndOffset() - token2End + range.getEndOffset(), t2.rangeInPsi.getEndOffset())));
-    }
-    newTokens.addAll(tokens.subList(i2 + 1, tokens.size()));
 
+    if (newTokens.isEmpty()) {
+      PsiToken first = (PsiToken) tokens.get(0);
+      newTokens.add(new PsiToken("", first.psi, TextRange.from(first.rangeInPsi.getStartOffset(), 0),
+                                 first.unknown || ((PsiToken)tokens.get(tokens.size() - 1)).unknown));
+    }
+    
     return new TextContentImpl(domain, newTokens);
+  }
+
+  private @Nullable List<Exclusion> @NotNull [] getAffectingExclusions(List<Exclusion> ranges, int[] offsets) {
+    @SuppressWarnings("unchecked") List<Exclusion>[] affectingExclusions = new List[tokens.size()];
+
+    for (Exclusion range : ranges) {
+      boolean emptyRange = range.start == range.end;
+      if (emptyRange && !range.markUnknown) continue;
+
+      int i1 = findTokenIndex(range.start, offsets, true);
+      int i2 = findTokenIndex(range.end, offsets, emptyRange);
+      while (i2 > 0 && tokens.get(i2).length() == 0) i2--;
+
+      for (int j = i1; j <= i2; j++) {
+        List<Exclusion> affecting = affectingExclusions[j];
+        if (affecting == null) affectingExclusions[j] = affecting = new ArrayList<>();
+        affecting.add(range);
+      }
+    }
+    return affectingExclusions;
   }
 
   private int[] getTokenOffsets() {
@@ -278,6 +303,19 @@ class TextContentImpl implements TextContent {
       return excludeRange(new TextRange(end, text.length())).excludeRange(new TextRange(0, start));
     }
     return this;
+  }
+
+  @Override
+  public TextContent removeIndents(Set<Character> indentChars) {
+    LinkedHashSet<IntRange> ranges = StrategyUtils.INSTANCE.indentIndexes(this, indentChars);
+    List<Exclusion> exclusions = StreamEx.of(ranges)
+      .sorted(Comparator.comparingInt(IntRange::getFirst))
+      .map(range -> {
+        int end = range.getEndInclusive() + 1;
+        return new Exclusion(range.getStart(), end, hasUnknownFragmentsIn(new TextRange(range.getStart(), end)));
+      })
+      .toList();
+    return excludeRanges(exclusions);
   }
 
   private static boolean isSpace(String text, int start) {
@@ -335,7 +373,7 @@ class TextContentImpl implements TextContent {
       return psi.getTextRange().getStartOffset() + rangeInPsi.getStartOffset();
     }
 
-    PsiToken withRange(TextRange range) {
+    private PsiToken withRange(TextRange range) {
       assert range.getLength() > 0;
       assert !unknown;
       return new PsiToken(range.shiftLeft(rangeInPsi.getStartOffset()).substring(text), psi, range, false);
@@ -346,12 +384,42 @@ class TextContentImpl implements TextContent {
       if (this == o) return true;
       if (!(o instanceof PsiToken)) return false;
       PsiToken psiToken = (PsiToken) o;
-      return unknown == psiToken.unknown && psi.equals(psiToken.psi) && rangeInPsi.equals(psiToken.rangeInPsi);
+      return unknown == psiToken.unknown && psi.equals(psiToken.psi) && (unknown || rangeInPsi.equals(psiToken.rangeInPsi));
     }
 
     @Override
     public int hashCode() {
       return Objects.hash(psi, rangeInPsi, unknown);
+    }
+
+    @Override
+    public String toString() {
+      return unknown ? "?" : super.toString();
+    }
+
+    private List<PsiToken> splitToken(int tokenStart, List<Exclusion> affecting) {
+      int tokenEnd = tokenStart + length();
+      if (affecting.size() == 1 && affecting.get(0).start < tokenStart && affecting.get(0).end > tokenEnd) {
+        return Collections.emptyList();
+      }
+
+      List<PsiToken> shreds = new ArrayList<>();
+      int startInPsi = rangeInPsi.getStartOffset();
+      int prevEnd = tokenStart;
+      for (Exclusion range : affecting) {
+        if (range.start > prevEnd) {
+          shreds.add(withRange(TextRange.from(startInPsi + prevEnd - tokenStart, range.start - prevEnd)));
+        }
+        if (range.markUnknown) {
+          shreds.add(new PsiToken("", psi, TextRange.from(startInPsi + range.start - tokenStart, 0), true));
+        }
+        prevEnd = range.end;
+      }
+      Exclusion lastRange = affecting.get(affecting.size() - 1);
+      if (tokenEnd > lastRange.end) {
+        shreds.add(withRange(new TextRange(startInPsi + lastRange.end - tokenStart, startInPsi + length())));
+      }
+      return shreds;
     }
   }
 }

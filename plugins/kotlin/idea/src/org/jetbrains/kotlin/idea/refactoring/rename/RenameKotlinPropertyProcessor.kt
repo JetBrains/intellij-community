@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.navigation.NavigationItem
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pass
@@ -41,6 +40,7 @@ import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -128,7 +128,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
         DFS.dfs(
             listOf(initialClassDescriptor),
-            DFS.Neighbors<ClassDescriptor> { DescriptorUtils.getSuperclassDescriptors(it) },
+            DFS.Neighbors { DescriptorUtils.getSuperclassDescriptors(it) },
             object : DFS.AbstractNodeHandler<ClassDescriptor, Unit>() {
                 override fun beforeChildren(current: ClassDescriptor): Boolean {
                     if (current == initialClassDescriptor) return true
@@ -140,9 +140,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                     return true
                 }
 
-                override fun result() {
-
-                }
+                override fun result() {}
             }
         )
 
@@ -153,11 +151,13 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                 val methodName = accessorNameByPropertyName(newName, it) ?: return@mapNotNull null
                 object : KtLightMethod by it {
                     override fun getName() = methodName
+                    override fun getSourceElement(): PsiElement? = it.getSourceElement()
                 }
             }
+
             DFS.dfs(
                 listOf(initialPsiClass),
-                DFS.Neighbors<PsiClass> { DirectClassInheritorsSearch.search(it) },
+                DFS.Neighbors { DirectClassInheritorsSearch.search(it) },
                 object : DFS.AbstractNodeHandler<PsiClass, Unit>() {
                     override fun beforeChildren(current: PsiClass): Boolean {
                         if (current == initialPsiClass) return true
@@ -179,9 +179,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                         return true
                     }
 
-                    override fun result() {
-
-                    }
+                    override fun result() {}
                 }
             )
         }
@@ -211,7 +209,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
             return callableDeclaration
         }
 
-        if (ApplicationManager.getApplication()!!.isUnitTestMode) return deepestSuperDeclaration
+        if (isUnitTestMode()) return deepestSuperDeclaration
 
         val containsText: String? =
             deepestSuperDeclaration.fqName?.parent()?.asString() ?: (deepestSuperDeclaration.parent as? KtClassOrObject)?.name
@@ -268,7 +266,9 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                 } else {
                     substitutedJavaElement.toLightMethods().firstOrNull { it.name == name }
                 }
-            } else substitutedJavaElement
+            } else
+                substitutedJavaElement
+
             renameCallback.pass(elementToProcess)
         }
 
@@ -284,7 +284,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     }
 
     class PropertyMethodWrapper(private val propertyMethod: PsiMethod) : PsiNamedElement by propertyMethod,
-        NavigationItem by propertyMethod {
+                                                                         NavigationItem by propertyMethod {
         override fun getName() = propertyMethod.name
         override fun setName(name: String) = this
         override fun copy() = this
@@ -313,7 +313,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         ) {
             val accessorToRename = if (element == getter) setter else getter
             val newAccessorName = if (element == getter) JvmAbi.setterName(newPropertyName) else JvmAbi.getterName(newPropertyName)
-            if (ApplicationManager.getApplication().isUnitTestMode || Messages.showYesNoDialog(
+            if (isUnitTestMode() || Messages.showYesNoDialog(
                     KotlinBundle.message("text.do.you.want.to.rename.0.as.well", accessorToRename.name),
                     RefactoringBundle.message("rename.title"),
                     Messages.getQuestionIcon()
@@ -331,18 +331,22 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
                     suffix
                 ) else null
             } else null
+
             val adjustedPropertyName = mangledPropertyName ?: newPropertyName
             if (element is KtDeclaration && adjustedPropertyName != null) {
                 val wrapper = PropertyMethodWrapper(propertyMethod)
                 when {
                     JvmAbi.isGetterName(propertyMethod.name) && getterJvmName == null ->
                         allRenames[wrapper] = JvmAbi.getterName(adjustedPropertyName)
+
                     JvmAbi.isSetterName(propertyMethod.name) && setterJvmName == null ->
                         allRenames[wrapper] = JvmAbi.setterName(adjustedPropertyName)
                 }
             }
+
             addRenameElements(propertyMethod, (element as PsiNamedElement).name, adjustedPropertyName, allRenames, scope)
         }
+
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
@@ -433,7 +437,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     ) {
         val newNameUnquoted = newName.unquote()
         if (element is KtLightMethod) {
-            if (element.modifierList.findAnnotation(DescriptorUtils.JVM_NAME.asString()) != null) {
+            if (element.modifierList.hasAnnotation(DescriptorUtils.JVM_NAME.asString())) {
                 return super.renameElement(element, newName, usages, listener)
             }
 
@@ -478,8 +482,13 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
             val refElement = usage.reference?.resolve()
             if (refElement is PsiMethod) {
                 val refElementName = refElement.name
-                val refElementNameToCheck =
-                    (if (usage is MangledJavaRefUsageInfo) KotlinTypeMapper.InternalNameMapper.demangleInternalName(refElementName) else null) ?: refElementName
+                val refElementNameToCheck = (
+                        if (usage is MangledJavaRefUsageInfo)
+                            KotlinTypeMapper.InternalNameMapper.demangleInternalName(refElementName)
+                        else
+                            null
+                        ) ?: refElementName
+
                 when (refElementNameToCheck) {
                     oldGetterName -> UsageKind.GETTER_USAGE
                     oldSetterName -> UsageKind.SETTER_USAGE
@@ -492,20 +501,20 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
         super.renameElement(
             element.copy(), JvmAbi.setterName(newNameUnquoted).quoteIfNeeded(),
-            refKindUsages[UsageKind.SETTER_USAGE]?.toTypedArray() ?: arrayOf<UsageInfo>(),
-            null
+            refKindUsages[UsageKind.SETTER_USAGE]?.toTypedArray() ?: arrayOf(),
+            null,
         )
 
         super.renameElement(
             element.copy(), JvmAbi.getterName(newNameUnquoted).quoteIfNeeded(),
-            refKindUsages[UsageKind.GETTER_USAGE]?.toTypedArray() ?: arrayOf<UsageInfo>(),
-            null
+            refKindUsages[UsageKind.GETTER_USAGE]?.toTypedArray() ?: arrayOf(),
+            null,
         )
 
         super.renameElement(
             element, newName,
-            refKindUsages[UsageKind.SIMPLE_PROPERTY_USAGE]?.toTypedArray() ?: arrayOf<UsageInfo>(),
-            null
+            refKindUsages[UsageKind.SIMPLE_PROPERTY_USAGE]?.toTypedArray() ?: arrayOf(),
+            null,
         )
 
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }

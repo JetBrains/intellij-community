@@ -5,12 +5,16 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.NamedMethodFilter
 import com.intellij.util.Range
+import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
+import com.sun.jdi.Method
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DECLARATION
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.debugger.getInlineFunctionNamesAndBorders
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -37,7 +41,7 @@ class KotlinOrdinaryMethodFilter(target: KotlinMethodSmartStepTarget) : NamedMet
         val method = location.method()
         val actualMethodName = method.name()
 
-        if (!nameMatches(actualMethodName)) {
+        if (!nameMatches(method, location)) {
             return false
         }
 
@@ -74,7 +78,7 @@ class KotlinOrdinaryMethodFilter(target: KotlinMethodSmartStepTarget) : NamedMet
         // Element is lost. But we know that name is matches, so stop.
         val declaration = runReadAction { declarationPtr?.element } ?: return true
 
-        val psiManager = currentDeclaration.manager
+        val psiManager = runReadAction { currentDeclaration.manager }
         if (psiManager.areElementsEquivalent(currentDeclaration, declaration)) {
             return true
         }
@@ -85,11 +89,16 @@ class KotlinOrdinaryMethodFilter(target: KotlinMethodSmartStepTarget) : NamedMet
         }
     }
 
-    private fun nameMatches(actualName: String): Boolean {
-        return when (actualName) {
-            targetMethodName -> true
-            "$targetMethodName$DEFAULT_PARAMS_IMPL_SUFFIX" -> true
-            else -> false
-        }
+    private fun nameMatches(method: Method, location: Location): Boolean {
+        return method.name() == targetMethodName ||
+               method.name() == "$targetMethodName$DEFAULT_PARAMS_IMPL_SUFFIX" ||
+               // A correct way here is to memorize the original location (where smart step into was started)
+               // and filter out ranges that contain that original location.
+               // Otherwise, nested inline with the same method name will not work correctly.
+               method.getInlineFunctionNamesAndBorders().filter { location in it.value }.any { it.key.isInlinedFromFunction(targetMethodName) }
     }
 }
+
+private fun LocalVariable.isInlinedFromFunction(methodName: String) =
+    name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
+    name().substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName

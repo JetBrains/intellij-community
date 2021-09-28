@@ -52,7 +52,6 @@ public final class CollectionFactory {
 
   @Contract(value = "_,_,_ -> new", pure = true)
   public static @NotNull <K, V> Map<K, V> createWeakMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> hashingStrategy) {
-    //noinspection deprecation
     return new WeakHashMap<>(initialCapacity, loadFactor, hashingStrategy);
   }
 

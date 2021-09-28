@@ -2,17 +2,17 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.CommonBundle
-import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.Executor
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.*
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.ide.ActivityTracker
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.messages.MessageBusConnection
 import java.util.function.Function
 import javax.swing.SwingUtilities
 
@@ -23,6 +23,7 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private val runToolbarSettings = RunToolbarSettings.getInstance(project)
+  private var connection: MessageBusConnection? = null
 
   private val slotListeners = mutableListOf<SlotListener>()
   internal fun addListener(listener: SlotListener) {
@@ -98,6 +99,28 @@ class RunToolbarSlotManager(val project: Project) {
             addSlot().configuration = entry
           }
         }
+        LOG.info("SLOT MANAGER restoreRunConfigurations: $runConfigurations")
+
+        val con = project.messageBus.connect()
+        connection = con
+
+        con.subscribe(RunManagerListener.TOPIC, object : RunManagerListener {
+          override fun runConfigurationSelected(settings: RunnerAndConfigurationSettings?) {
+            if (!getUpdateMainBySelected() || mainSlotData.configuration == settings) return
+
+            mainSlotData.environment?.let {
+              val slot = addSlot()
+              slot.configuration = settings
+              LOG.info("SLOT MANAGER runConfigurationSelected: $settings first slot added ")
+              moveToTop(slot.id)
+            } ?: kotlin.run {
+              mainSlotData.configuration = settings
+              LOG.info("SLOT MANAGER runConfigurationSelected: $settings change main configuration ")
+              update()
+            }
+          }
+        })
+
         listeners.forEach { it.enabled() }
       } else {
         listeners.forEach { it.disabled()  }
@@ -107,7 +130,19 @@ class RunToolbarSlotManager(val project: Project) {
       slotListeners.forEach { it.rebuildPopup() }
     }
 
+  private fun getUpdateMainBySelected(): Boolean {
+    return runToolbarSettings.getUpdateMainBySelected()
+  }
+
+  private fun getMoveNewOnTop(): Boolean {
+    return runToolbarSettings.getMoveNewOnTop()
+  }
+
   private fun clear() {
+    connection?.let {
+      it.disconnect()
+      connection = null
+    }
     mainSlotData.clear()
     dataIds.clear()
     slotsData.clear()
@@ -135,18 +170,24 @@ class RunToolbarSlotManager(val project: Project) {
 
   init {
     SwingUtilities.invokeLater {
-      if(project.isDisposed) return@invokeLater
+      if (project.isDisposed) return@invokeLater
 
       slotsData[mainSlotData.id] = mainSlotData
 
       addListener(RunToolbarShortcutHelper(project))
 
-      Disposer.register(project, {
+      Disposer.register(project) {
+        connection?.disconnect()
         listeners.clear()
         stateListeners.clear()
         slotListeners.clear()
-      })
+      }
     }
+  }
+
+  private fun update() {
+    saveSlotsConfiguration()
+    updateState()
   }
 
   internal fun getMainOrFirstActiveProcess(): RunToolbarProcess? {
@@ -182,12 +223,50 @@ class RunToolbarSlotManager(val project: Project) {
     }
   }
 
-  fun getState(): State {
+  internal fun getState(): State {
     return state
   }
 
+  internal fun processStarted(env: ExecutionEnvironment) {
+    if (getMoveNewOnTop()) {
+      addNewProcessOnTop(env)
+    }
+    else {
+      addNewProcessOnBottom(env)
+    }
 
-  fun processStarted(env: ExecutionEnvironment) {
+    ActivityTracker.getInstance().inc()
+  }
+
+  private fun addNewProcessOnTop(env: ExecutionEnvironment) {
+    val appropriateSettings = slotsData.values.map { it }.filter { it.configuration == env.runnerAndConfigurationSettings }
+    val emptySlotsWithConfiguration = appropriateSettings.filter { it.environment == null }
+
+    var newSlot = false
+    val slot = appropriateSettings.firstOrNull { it.environment?.executionId == env.executionId }
+               ?: emptySlotsWithConfiguration.firstOrNull {
+                 it.waitingForProcess.contains(env.executor.id)
+               }
+               ?: emptySlotsWithConfiguration.firstOrNull()
+               ?: kotlin.run {
+                 newSlot = true
+                 addSlot()
+               }
+
+    slot.environment = env
+    slot.waitingForProcess.clear()
+    LOG.info("SLOT MANAGER process started: $env (${env.executionId}) ")
+
+    activeProcesses.updateActiveProcesses(slotsData)
+    if (newSlot) {
+      moveToTop(slot.id)
+    }
+    else {
+      update()
+    }
+  }
+
+  private fun addNewProcessOnBottom(env: ExecutionEnvironment) {
     val appropriateSettings = slotsData.values.map { it }.filter { it.configuration == env.runnerAndConfigurationSettings }
     val emptySlotsWithConfiguration = appropriateSettings.filter { it.environment == null }
 
@@ -205,14 +284,36 @@ class RunToolbarSlotManager(val project: Project) {
     LOG.info("SLOT MANAGER process started: $env (${env.executionId}) ")
 
     activeProcesses.updateActiveProcesses(slotsData)
-    updateState()
+    update()
   }
 
-  fun processStopped(executionId: Long) {
-    slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.environment = null
+  fun processTerminating(env: ExecutionEnvironment) {
+    slotsData.values.firstOrNull { it.environment?.executionId == env.executionId }?.let {
+      it.environment = env
+    }
+    activeProcesses.updateActiveProcesses(slotsData)
+    updateState()
+    ActivityTracker.getInstance().inc()
+  }
+
+  fun processTerminated(executionId: Long) {
+    slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.let {
+      if (it.environment?.getRunToolbarProcess()?.isTemporaryProcess() == true) {
+        if (it == mainSlotData && slotsData.size == 1) {
+          it.clear()
+          it.configuration = RunManager.getInstance(project).selectedConfiguration
+        } else {
+          removeSlot(it.id)
+        }
+      }
+      else {
+        it.environment = null
+      }
+    }
     LOG.info("SLOT MANAGER process stopped: $executionId ")
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
+    ActivityTracker.getInstance().inc()
   }
 
   fun extraSlotCount(): Int {
@@ -221,7 +322,7 @@ class RunToolbarSlotManager(val project: Project) {
 
   internal fun addAndSaveSlot(): SlotDate {
     val slot = addSlot()
-    saveData()
+    saveSlotsConfiguration()
     return slot
   }
 
@@ -243,70 +344,90 @@ class RunToolbarSlotManager(val project: Project) {
     } else null
   }
 
+
   internal fun moveToTop(id: String) {
     if(mainSlotData.id == id) return
 
     slotsData[id]?.let { newMain ->
       val oldMain = mainSlotData
       mainSlotData = newMain
+
       dataIds.remove(id)
       dataIds.add(0, oldMain.id)
     }
 
-    updateState()
-    saveData()
+    update()
   }
 
   internal fun removeSlot(id: String) {
     val index = dataIds.indexOf(id)
 
-    if(index >= 0) {
-      fun remove() {
-
-        slotsData.remove(id)
-        dataIds.remove(id)
-
-        SwingUtilities.invokeLater {
-          slotListeners.forEach { it.slotRemoved(index) }
+    fun remove() {
+      if (id == mainSlotData.id) {
+        if (dataIds.isNotEmpty()) {
+          val firstSlotId = dataIds[0]
+          slotsData[firstSlotId]?.let {
+            mainSlotData = it
+            slotsData.remove(id)
+            dataIds.remove(it.id)
+          }
         }
       }
+      else {
+        slotsData.remove(id)
+        dataIds.remove(id)
+      }
 
-      getData(index)?.let { slotDate ->
-        slotDate.environment?.let {
-          if (Messages.showOkCancelDialog(
-              project,
-              LangBundle.message("run.toolbar.remove.active.process.slot.message"),
-              LangBundle.message("run.toolbar.remove.active.process.slot.title", it.runnerAndConfigurationSettings?.name ?: ""),
-              LangBundle.message("run.toolbar.remove.active.process.slot.ok"),
-              CommonBundle.getCancelButtonText(),
-              Messages.getQuestionIcon()/*, object : DialogWrapper.DoNotAskOption.Adapter() {
+      SwingUtilities.invokeLater {
+        slotListeners.forEach { it.slotRemoved(index) }
+      }
+    }
+
+    (if (index >= 0) getData(index) else if (mainSlotData.id == id) mainSlotData else null)?.let { slotDate ->
+      slotDate.environment?.let {
+        if(it.isProcessTerminating()) {
+          remove()
+        } else if (Messages.showOkCancelDialog(
+            project,
+            LangBundle.message("run.toolbar.remove.active.process.slot.message"),
+            LangBundle.message("run.toolbar.remove.active.process.slot.title", it.runnerAndConfigurationSettings?.name ?: ""),
+            LangBundle.message("run.toolbar.remove.active.process.slot.ok"),
+            CommonBundle.getCancelButtonText(),
+            Messages.getQuestionIcon()/*, object : DialogWrapper.DoNotAskOption.Adapter() {
               override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
 
               }
             }*/) == Messages.OK) {
-            it.contentToReuse?.let {
-              ExecutionManagerImpl.stopProcess(it)
-            }
-
-            remove()
+          it.contentToReuse?.let {
+            ExecutionManagerImpl.stopProcess(it)
           }
-        } ?: run {
+
           remove()
         }
-      } ?: slotListeners.forEach { it.rebuildPopup() }
-    } else {
-      slotListeners.forEach { it.rebuildPopup() }
-    }
+      } ?: run {
+        remove()
+      }
+    } ?: slotListeners.forEach { it.rebuildPopup() }
 
-    saveData()
+    update()
   }
 
-  fun saveData() {
+  internal fun saveSlotsConfiguration() {
     val list = mutableListOf<String>()
     list.add(mainSlotData.id)
     list.addAll(dataIds)
 
-    runToolbarSettings.setRunConfigurations( list.mapNotNull{ slotsData[it]?.configuration }.toMutableList())
+    if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
+      val runManager = RunManager.getInstance(project)
+      if (mainSlotData.configuration !=null && mainSlotData.configuration != runManager.selectedConfiguration && mainSlotData.environment?.getRunToolbarProcess()?.isTemporaryProcess() != true) {
+        runManager.selectedConfiguration = mainSlotData.configuration
+        LOG.info("SLOT MANAGER (saveSlotsConfiguration) change selected configuration by main: ${mainSlotData.configuration} ")
+      }
+    }
+
+    val configurtions = list.mapNotNull { slotsData[it]?.configuration }.toMutableList()
+    LOG.info("SLOT MANAGER saveSlotsConfiguration: ${configurtions} ")
+    runToolbarSettings.setRunConfigurations(configurtions)
   }
 }
 
@@ -335,7 +456,7 @@ class ActiveProcesses {
 
   internal fun updateActiveProcesses(slotsData: MutableMap<String, SlotDate>) {
     processes.clear()
-    val list = slotsData.values.filter{it.environment != null}.toMutableList()
+    val list = slotsData.values.filter { it.environment != null }.toMutableList()
     activeSlots = list
     list.mapNotNull { it.environment }.forEach{ environment ->
       environment.getRunToolbarProcess()?.let {

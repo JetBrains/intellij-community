@@ -38,12 +38,16 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
+import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -115,8 +119,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     glassPane.setVisible(false);
 
     updateComponentsAndResize();
-
-    setAutoRequestFocus(false);
 
     // at this point a window insets may be unavailable,
     // so we need resize window when it is shown
@@ -354,7 +356,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }));
 
-      TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
+      TouchbarActionCustomizations.setShowText(myTouchbarActions, true);
+      Touchbar.setActions(this, myTouchbarActions);
     }
 
     @Override
@@ -477,7 +480,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST);
-            TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
+            TouchbarActionCustomizations.setComponent(action, link);
           }
           WelcomeScreenFocusManager.installFocusable(FlatWelcomeFrame.this, button, action, KeyEvent.VK_DOWN,
                                                      KeyEvent.VK_UP,
@@ -490,11 +493,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
 
       return mainPanel;
-    }
-
-    @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      return TouchbarDataKeys.ACTIONS_KEY.is(dataId) ? myTouchbarActions : null;
     }
   }
 

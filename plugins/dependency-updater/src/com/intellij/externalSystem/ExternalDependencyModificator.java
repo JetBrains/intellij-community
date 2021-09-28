@@ -11,9 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Represents API for modification external system build script files.
- * Also, modifier should create build file model to take access for build files elements:
- * dependencies, repositories, etc.
+ * Represents API for modification of external system build script files.
+ * This modificator gives bounded read/write access for build files model: dependencies, repositories, etc.
  *
  * @see DependencyModifierService
  */

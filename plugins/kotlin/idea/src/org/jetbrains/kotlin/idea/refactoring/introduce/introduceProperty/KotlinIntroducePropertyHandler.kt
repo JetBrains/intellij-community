@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetS
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHintByKey
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -84,7 +84,7 @@ class KotlinIntroducePropertyHandler(
 
                 editor.caretModel.moveToOffset(property.textOffset)
                 editor.selectionModel.removeSelection()
-                if (editor.settings.isVariableInplaceRenameEnabled && !ApplicationManager.getApplication().isUnitTestMode) {
+                if (editor.settings.isVariableInplaceRenameEnabled && !isUnitTestMode()) {
                     with(PsiDocumentManager.getInstance(project)) {
                         commitDocument(editor.document)
                         doPostponedOperationsAndUnblockDocument(editor.document)

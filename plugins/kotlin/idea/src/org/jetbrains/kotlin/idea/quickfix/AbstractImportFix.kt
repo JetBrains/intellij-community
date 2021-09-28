@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.HintAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -17,6 +16,9 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
@@ -40,9 +43,11 @@ import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.isSelectorInQualified
@@ -59,6 +64,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.collectFunctions
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Check possibility and perform fix for unresolved references.
@@ -88,9 +94,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         if (!element.isValid || isOutdated()) return false
 
-        if (ApplicationManager.getApplication().isUnitTestMode && HintManager.getInstance()
-                .hasShownHintsThatWillHideByOtherHint(true)
-        ) return false
+        if (isUnitTestMode() && HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
 
         if (suggestions.isEmpty()) return false
 
@@ -119,18 +123,10 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     }
 
     fun createActionWithAutoImportsFilter(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
-        val filteredSuggestions = filterSuggestions(element)
+        val filteredSuggestions = KotlinAutoImportsFilter.filterSuggestionsIfApplicable(element.containingKtFile, suggestions)
+            ?: suggestions
 
         return createSingleImportAction(project, editor, element, filteredSuggestions)
-    }
-
-    private fun filterSuggestions(
-        element: KtExpression
-    ): Collection<FqName> {
-        return KotlinAutoImportsFilter
-            .findRelevantExtension(element.containingKtFile)
-            ?.filterSuggestions(suggestions)
-            ?: suggestions
     }
 
     fun collectSuggestions(): Collection<FqName> {
@@ -280,8 +276,19 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
             ) { it == name }
         )
 
-        return result
+        val importedFqNamesAsAlias = getImportedFqNamesAsAlias(element)
+        return result.filterNot {
+            val importableFqName = it.importableFqName
+            importableFqName?.parentOrNull() in StandardNames.BUILT_INS_PACKAGE_FQ_NAMES && importableFqName !in importedFqNamesAsAlias
+        }
     }
+
+    private fun getImportedFqNamesAsAlias(element: KtElement?) =
+        element?.containingKtFile
+            ?.importDirectives
+            ?.filter { it.alias != null }
+            ?.mapNotNull { it.importedFqName }
+            ?: emptyList()
 }
 
 // This is required to be abstract to reduce bunch file size
@@ -608,15 +615,14 @@ internal class ImportForMismatchingArgumentsFix(
 
     override fun elementsToCheckDiagnostics(): Collection<PsiElement> {
         val element = element ?: return emptyList()
-        val callExpression = element.parent as? KtCallExpression ?: return emptyList()
-        return callExpression.valueArguments +
-                callExpression.valueArguments.mapNotNull { it.getArgumentExpression() } +
-                callExpression.valueArguments.mapNotNull { it.getArgumentName()?.referenceExpression } +
-                listOfNotNull(
-                    callExpression.valueArgumentList,
-                    callExpression.referenceExpression(),
-                    callExpression.typeArgumentList
-                )
+        return when (val parent = element.parent) {
+            is KtCallExpression -> parent.valueArguments +
+                    parent.valueArguments.mapNotNull { it.getArgumentExpression() } +
+                    parent.valueArguments.mapNotNull { it.getArgumentName()?.referenceExpression } +
+                    listOfNotNull(parent.valueArgumentList, parent.referenceExpression(), parent.typeArgumentList)
+            is KtBinaryExpression -> listOf(element)
+            else -> emptyList()
+        }
     }
 
     override fun fillCandidates(
@@ -680,9 +686,10 @@ internal class ImportForMismatchingArgumentsFix(
 
     companion object MyFactory : Factory() {
         override fun createImportAction(diagnostic: Diagnostic): ImportForMismatchingArgumentsFix? {
-            //TODO: not only KtCallExpression
-            val callExpression = diagnostic.psiElement.getStrictParentOfType<KtCallExpression>() ?: return null
-            val nameExpression = callExpression.calleeExpression as? KtNameReferenceExpression ?: return null
+            val element = diagnostic.psiElement
+            val nameExpression = element.takeIf { it.elementType == KtNodeTypes.OPERATION_REFERENCE }.safeAs<KtSimpleNameExpression>()
+                ?: element.getStrictParentOfType<KtCallExpression>()?.calleeExpression?.safeAs<KtNameReferenceExpression>()
+                ?: return null
             return ImportForMismatchingArgumentsFix(nameExpression)
         }
     }
@@ -707,16 +714,16 @@ internal object ImportForMissingOperatorFactory : ImportFixBase.Factory() {
 }
 
 
-private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpression, name: String): Collection<ClassDescriptor> {
-    val platform = TargetPlatformDetector.getPlatform(expressionForPlatform.containingKtFile)
-    return when {
-        platform.isJvm() -> getJvmClassesByName(name)
-        else -> getKotlinClasses({ it == name },
-            // Enum entries should be contributes with members import fix
-                                 psiFilter = { ktDeclaration -> ktDeclaration !is KtEnumEntry },
-                                 kindFilter = { kind -> kind != ClassKind.ENUM_ENTRY })
-    }
-}
+private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpression, name: String): Collection<ClassDescriptor> =
+    if (TargetPlatformDetector.getPlatform(expressionForPlatform.containingKtFile).isJvm())
+        getJvmClassesByName(name)
+    else
+        getKotlinClasses(
+            nameFilter = { it == name },
+            // Enum entries should be contributed with members import fix
+            psiFilter = { ktDeclaration -> ktDeclaration !is KtEnumEntry },
+            kindFilter = { kind -> kind != ClassKind.ENUM_ENTRY },
+        )
 
 private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDescriptor ->
     callType.descriptorKindFilter.accepts(descriptor)

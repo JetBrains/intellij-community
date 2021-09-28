@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -53,7 +54,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-@State(name = "ActionMacroManager", storages = @Storage("macros.xml"))
+@State(name = "ActionMacroManager", storages = @Storage("macros.xml"), category = SettingsCategory.UI)
 public final class ActionMacroManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ActionMacroManager.class);
 
@@ -524,7 +525,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
 
       if (plainType && ready && !isEnter) {
-        myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
+        myRecordingMacro.appendKeyPressed(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
         notifyUser(Character.valueOf(e.getKeyChar()).toString(), true);
       }
       else if ((!plainType && ready) || isEnter) {

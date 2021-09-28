@@ -8,6 +8,8 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 
 abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationProvider {
 
@@ -125,6 +127,12 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
     }
 
     override fun listRepositoriesInModule(module: ProjectModule): Collection<UnifiedDependencyRepository> =
-        DependencyModifierService.getInstance(module.nativeModule.project)
-            .declaredRepositories(module.nativeModule)
+        runCatching {
+            DependencyModifierService.getInstance(module.nativeModule.project)
+                .declaredRepositories(module.nativeModule)
+        }.getOrElse {
+            if (it !is ProcessCanceledException) logWarn(this::class.qualifiedName!!, it)
+            else throw it
+            emptyList()
+        }
 }

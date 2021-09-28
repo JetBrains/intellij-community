@@ -42,8 +42,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -821,7 +819,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myViewContentPanel.repaint();
     createToolbarActions(newPane);
 
-    myAutoScrollToSourceHandler.install(newPane.myTree);
+    if (newPane.myTree != null) {
+      myAutoScrollToSourceHandler.install(newPane.myTree);
+      myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
+    }
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null && newSubId != null) {
@@ -831,7 +832,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         newPane.select(selectedPsiElement, virtualFile, true);
       }
     }
-    myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
     myProject.getMessageBus().syncPublisher(ProjectViewListener.TOPIC).paneShown(newPane, currentPane);
 
     logProjectViewPaneChangedEvent(currentPane, newPane);
@@ -1171,29 +1171,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public void changeView() {
-    final List<AbstractProjectViewPane> views = new ArrayList<>(myId2Pane.values());
-    views.remove(getCurrentProjectViewPane());
-    views.sort(PANE_WEIGHT_COMPARATOR);
-
-    IPopupChooserBuilder<AbstractProjectViewPane> builder = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(views)
-      .setRenderer(new DefaultListCellRenderer() {
-        @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          AbstractProjectViewPane pane = (AbstractProjectViewPane)value;
-          setText(pane.getTitle());
-          return this;
-        }
-      })
-      .setTitle(IdeBundle.message("title.popup.views"))
-      .setItemChosenCallback(pane -> changeView(pane.getId()));
-    if (!views.isEmpty()) {
-      builder = builder.setSelectedValue(views.get(0), true);
-    }
-    builder
-      .createPopup()
-      .showInCenterOf(getComponent());
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -1266,7 +1244,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (paneSpecificData != null) return paneSpecificData;
       }
 
-      if (LangDataKeys.MODULE.is(dataId)) {
+      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
         VirtualFile[] virtualFiles = (VirtualFile[])getData(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
         if (virtualFiles == null || virtualFiles.length <= 1) return null;
         final Set<Module> modules = new HashSet<>();
@@ -1287,7 +1265,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (LangDataKeys.IDE_VIEW.is(dataId)) {
         return myIdeView;
       }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HelpID.PROJECT_VIEWS;
       }
       if (QuickActionProvider.KEY.is(dataId)) {

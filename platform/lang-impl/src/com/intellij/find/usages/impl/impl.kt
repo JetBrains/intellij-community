@@ -70,7 +70,8 @@ fun <O> buildUsageViewQuery(project: Project,
   }
 }
 
-internal fun <O> buildQuery(
+@ApiStatus.Internal
+fun <O> buildQuery(
   project: Project,
   target: SearchTarget,
   handler: UsageHandler<O>,

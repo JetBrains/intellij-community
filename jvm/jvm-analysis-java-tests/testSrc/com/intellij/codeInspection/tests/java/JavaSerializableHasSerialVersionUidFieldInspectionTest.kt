@@ -1,12 +1,8 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.SerializableHasSerialVersionUidFieldInspectionTestBase
-import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 
 class JavaSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {
-  override fun getBasePath() =
-    JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/serializablehasserialversionuidfield"
-
   fun `test highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       import java.io.Serializable;

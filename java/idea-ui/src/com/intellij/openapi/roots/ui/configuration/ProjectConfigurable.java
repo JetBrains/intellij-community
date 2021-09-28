@@ -148,8 +148,10 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       extension.setDefault(myUi.isDefaultLanguageLevel());
       myUi.applyProjectJdkConfigurable();
 
-      ((ProjectEx)myProject).setProjectName(getProjectName());
-      if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
+      if (myProject instanceof ProjectEx) {
+        ((ProjectEx)myProject).setProjectName(getProjectName());
+        if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
+      }
     });
   }
 

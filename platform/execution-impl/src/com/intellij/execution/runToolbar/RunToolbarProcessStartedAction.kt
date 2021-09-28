@@ -4,6 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.Key
@@ -39,6 +40,9 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
               e.presentation.text = ""
               e.presentation.icon = null
             }
+            e.presentation.description = RunToolbarData.prepareDescription(e.presentation.text,
+              ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.open.toolwindow.text"))
+
             true
           } ?: false
         } ?: false
@@ -90,7 +94,6 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
 
       override fun doShiftClick() {
         dataContext.editConfiguration()
-        doClick()
       }
 
       override fun isArrowVisible(presentation: Presentation): Boolean {
@@ -101,10 +104,13 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
         isVisible = presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
           environment.getRunToolbarProcess()?.let {
             updatePresentation(it)
+            if(environment.isProcessTerminating()) {
+              process.text = ActionsBundle.message("action.RunToolbarRemoveSlotAction.terminating")
+            }
             true
           }
-        } ?: false
 
+        } ?: false
       }
 
       private fun updatePresentation(it: RunToolbarProcess) {
@@ -140,15 +146,15 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
         minimumSize = JBDimension(JBUI.scale(40), minHeight, true)
       }
 
-      private val pane = object : JPanel(){
+      private val pane =  object : JPanel(){
         override fun getInsets(): Insets {
-          return JBUI.insets(0, 8, 0, 8)
+          return JBUI.insets(0, 0, 0, 3)
         }
       }.apply {
-        layout = MigLayout("ins 0, fill, gapx 3, novisualpadding", "[][]push")
+        layout = MigLayout("ins 0, fill, novisualpadding", "4[shp 1]3[]")
 
         add(setting, "ay center, pushx, wmin 10")
-        add(process, "ay center, pushx")
+        add(process, "ay center, pushx, wmin 0")
 
        // setting.font = UIUtil.getToolbarFont()
         process.font = UIUtil.getToolbarFont()

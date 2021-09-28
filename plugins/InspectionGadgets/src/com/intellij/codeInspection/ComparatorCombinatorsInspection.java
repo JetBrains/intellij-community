@@ -57,7 +57,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           String qualifiedName = Objects.requireNonNull(StringUtil.substringBefore(replacementText, "("));
           @NonNls String methodName = "Comparator." + StringUtil.getShortName(qualifiedName);
           final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description2", methodName);
-          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(InspectionGadgetsBundle.message("replace.with.comparator.fix.text", methodName)));
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(CommonQuickFixBundle.message("fix.replace.with.x", methodName)));
           return;
         }
         if (lambda.getBody() instanceof PsiCodeBlock) {

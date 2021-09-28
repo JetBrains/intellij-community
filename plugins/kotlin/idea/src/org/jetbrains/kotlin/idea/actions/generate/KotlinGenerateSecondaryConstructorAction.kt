@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.actions.generate
 
 import com.intellij.ide.util.MemberChooser
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -56,7 +56,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         val candidates = superClassDescriptor.constructors
             .filter { it.isVisible(classDescriptor) }
             .map { DescriptorMemberChooserObject(DescriptorToSourceUtilsIde.getAnyDeclaration(project, it) ?: klass, it) }
-        if (ApplicationManager.getApplication().isUnitTestMode || candidates.size <= 1) return candidates
+        if (isUnitTestMode() || candidates.size <= 1) return candidates
 
         return with(MemberChooser(candidates.toTypedArray(), false, true, klass.project)) {
             title = JavaBundle.message("generate.constructor.super.constructor.chooser.title")
@@ -75,7 +75,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             .map { context.get(BindingContext.VARIABLE, it) as PropertyDescriptor }
             .map { DescriptorMemberChooserObject(it.source.getPsi()!!, it) }
             .toList()
-        if (ApplicationManager.getApplication().isUnitTestMode || candidates.isEmpty()) return candidates
+        if (isUnitTestMode() || candidates.isEmpty()) return candidates
 
         return with(MemberChooser(candidates.toTypedArray(), true, true, klass.project, false, null)) {
             title = KotlinBundle.message("action.generate.secondary.constructor.choose.properties")

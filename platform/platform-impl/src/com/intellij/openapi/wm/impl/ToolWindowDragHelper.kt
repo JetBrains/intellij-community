@@ -92,6 +92,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   fun getToolWindow(startScreenPoint: RelativePoint): ToolWindowImpl? {
     val decorators = ArrayList(ComponentUtil.findComponentsOfType(pane, InternalDecoratorImpl::class.java))
     for (decorator in decorators) {
+      if (!decorator.mode.isTopLevel) continue
       val bounds = decorator.headerScreenBounds
       if (bounds != null && bounds.contains(startScreenPoint.screenPoint)) {
         val point = startScreenPoint.getPoint(decorator)
@@ -177,7 +178,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
         if (w is JDialog) {
           val locationOnScreen = event.locationOnScreen
           if (mySourceIsHeader) {
-            val decorator = ComponentUtil.getParentOfType(InternalDecoratorImpl::class.java, window.component)
+            val decorator = InternalDecoratorImpl.findTopLevelDecorator(window.component)
             if (decorator != null) {
               val shift = SwingUtilities.convertPoint(decorator, decorator.location, w)
               locationOnScreen.translate(-shift.x, -shift.y)

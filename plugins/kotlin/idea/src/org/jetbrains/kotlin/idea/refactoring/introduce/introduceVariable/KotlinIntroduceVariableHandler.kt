@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
@@ -37,10 +36,7 @@ import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.*
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
@@ -346,7 +342,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 is KtExpression -> candidate
                 is KtStringTemplateEntryWithExpression -> candidate.expression
                 else -> throw KotlinExceptionWithAttachments("Unexpected candidate element ${candidate::class.java}")
-                    .withAttachment("candidate.kt", candidate.text)
+                    .withPsiAttachment("candidate.kt", candidate)
             }
         }
 
@@ -517,7 +513,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         val typeArgumentList = getQualifiedTypeArgumentList(KtPsiUtil.safeDeparenthesize(physicalExpression))
 
-        val isInplaceAvailable = editor != null && !ApplicationManager.getApplication().isUnitTestMode
+        val isInplaceAvailable = editor != null && !isUnitTestMode()
 
         val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(occurrenceContainer)
 
@@ -634,7 +630,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     return occurrence.extractableSubstringInfo?.contentRange ?: occurrence.textRange
                 }
             }
-            ApplicationManager.getApplication().invokeLater {
+            invokeLater {
                 chooser.showChooser(expression, allOccurrences, callback)
             }
         } else {
@@ -756,7 +752,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     ) { candidateContainers, doRefactoring ->
         if (editor == null) {
             doRefactoring(candidateContainers.first())
-        } else if (ApplicationManager.getApplication().isUnitTestMode) {
+        } else if (isUnitTestMode()) {
             doRefactoring(candidateContainers.last())
         } else {
             chooseContainerElementIfNecessary(

@@ -17,8 +17,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -49,7 +49,6 @@ class MavenSyncConsole(private val myProject: Project) {
   private var mySyncId = createTaskId()
   private var finished = false
   private var started = false
-  private var wrapperProgressIndicator: WrapperProgressIndicator? = null
   private var hasErrors = false
   private var hasUnresolved = false
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
@@ -80,7 +79,6 @@ class MavenSyncConsole(private val myProject: Project) {
     finished = false
     hasErrors = false
     hasUnresolved = false
-    wrapperProgressIndicator = WrapperProgressIndicator()
     mySyncView = syncView
     shownIssues.clear()
     mySyncId = createTaskId()
@@ -154,18 +152,19 @@ class MavenSyncConsole(private val myProject: Project) {
     doFinish()
   }
 
-
   @Synchronized
   fun terminated(exitCode: Int) = doIfImportInProcess {
+    if (EXIT_CODE_OK == exitCode || EXIT_CODE_SIGTERM == exitCode) doFinish() else doTerminate(exitCode) }
+
+  private fun doTerminate(exitCode: Int) {
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete")
     tasks.forEach { completeTask(it.first, it.second, FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))) }
 
     mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "",
-                                                      FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))))
+      FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))))
     finished = true
     started = false
-
   }
 
   @Synchronized
@@ -179,33 +178,42 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   fun finishWrapperResolving(e: Throwable? = null) {
     if (e != null) {
-      addWarning(SyncBundle.message("maven.sync.wrapper.failure"), e.localizedMessage)
+      addBuildIssue(object : BuildIssue {
+        override val title: String = SyncBundle.message("maven.sync.wrapper.failure")
+        override val description: String = SyncBundle.message("maven.sync.wrapper.failure.description",
+          e.localizedMessage, OpenMavenSettingsQuickFix.ID)
+        override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix())
+        override fun getNavigatable(project: Project): Navigatable? = null
+      }, MessageEvent.Kind.WARNING)
     }
     completeTask(mySyncId, SyncBundle.message("maven.sync.wrapper"), SuccessResultImpl())
   }
 
-  fun progressIndicatorForWrapper(): ProgressIndicator {
-    return wrapperProgressIndicator ?: EmptyProgressIndicator()
+  fun progressIndicatorForWrapper(project: Project, taskInfo: TaskInfo): BackgroundableProcessIndicator {
+    return WrapperProgressIndicator(project, taskInfo)
   }
 
-  inner class WrapperProgressIndicator : EmptyProgressIndicator() {
+  inner class WrapperProgressIndicator(project: Project, taskInfo: TaskInfo) : BackgroundableProcessIndicator(project, taskInfo) {
     var myFraction: Long = 0
+
     override fun setText(text: String) = doIfImportInProcess {
+      super.setText(text)
       addText(SyncBundle.message("maven.sync.wrapper"), text, true)
     }
 
     override fun setFraction(fraction: Double) = doIfImportInProcess {
+      super.setFraction(fraction)
       val newFraction = (fraction * 100).toLong()
       if (myFraction == newFraction) return@doIfImportInProcess
       myFraction = newFraction;
       mySyncView.onEvent(mySyncId,
-                         ProgressBuildEventImpl(SyncBundle.message("maven.sync.wrapper"), SyncBundle.message("maven.sync.wrapper"),
-                                                System.currentTimeMillis(),
-                                                SyncBundle.message("maven.sync.wrapper.dowloading"),
-                                                100,
-                                                myFraction,
-                                                "%"
-                         ))
+        ProgressBuildEventImpl(SyncBundle.message("maven.sync.wrapper"), SyncBundle.message("maven.sync.wrapper"),
+          System.currentTimeMillis(),
+          SyncBundle.message("maven.sync.wrapper.downloading.progress", myFraction, 100) ,
+          100,
+          myFraction,
+          "%"
+        ))
     }
   }
 
@@ -254,8 +262,7 @@ class MavenSyncConsole(private val myProject: Project) {
       MavenLog.LOG.warn(e)
       hasErrors = true
       @Suppress("HardCodedStringLiteral")
-      mySyncView.onEvent(mySyncId,
-                         createMessageEvent(e))
+      mySyncView.onEvent(mySyncId, createMessageEvent(e))
     }
     else {
       this.startImport(progressListener)
@@ -328,7 +335,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun showBuildIssue(keyPrefix: String, dependency: String, quickFix: BuildIssueQuickFix,) = doIfImportInProcess {
+  private fun showBuildIssue(keyPrefix: String, dependency: String, quickFix: BuildIssueQuickFix) = doIfImportInProcess {
     hasErrors = true
     hasUnresolved = true
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
@@ -496,6 +503,10 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
+  companion object {
+    val EXIT_CODE_OK = 0
+    val EXIT_CODE_SIGTERM = 143
+  }
 }
 
 interface ArtifactSyncListener {

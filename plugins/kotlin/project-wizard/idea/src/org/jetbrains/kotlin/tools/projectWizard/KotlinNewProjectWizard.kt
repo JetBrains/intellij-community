@@ -1,72 +1,101 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard
 
-import com.intellij.ide.*
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.BuildSystemWithSettings
-import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.generators.NewProjectWizardSdkData
+import com.intellij.ide.wizard.*
+import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
-import java.awt.Dimension
-import java.awt.event.ItemListener
-import javax.swing.JComponent
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.util.SystemProperties
+import org.jetbrains.kotlin.tools.projectWizard.core.div
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
+import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
+import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.EmptySingleModuleProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
+import java.util.*
 
-class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
-  override val language: String = "Kotlin"
-  override var settingsFactory = { KotlinSettings() }
+class KotlinNewProjectWizard : NewProjectWizard {
 
-  override fun settingsList(settings: KotlinSettings): List<SettingsComponent> {
-      val buildSystems = settings.buildSystems.value
+    companion object {
+        private const val DEFAULT_GROUP_ID = "me.user"
 
-      var component: JComponent = JBLabel()
-      panel {
-          row {
-              component = buttonSelector(buildSystems, settings.buildSystemProperty) { it.name }.component
-          }.largeGapAfter()
-      }
+        fun generateProject(
+            presetBuilder: NewProjectWizardModuleBuilder? = null,
+            project: Project,
+            projectPath: String,
+            projectName: String,
+            sdk: Sdk?,
+            buildSystemType: BuildSystemType,
+            projectGroupId: String? = suggestGroupId(),
+            artifactId: String? = projectName,
+            version: String? = "1.0-SNAPSHOT"
+        ) {
+            val builder = presetBuilder ?: NewProjectWizardModuleBuilder()
+            builder.apply {
+                wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
 
-      settings.propertyGraph.afterPropagation {
-          buildSystems.forEach { it.advancedSettings().apply { isVisible = false } }
-          settings.buildSystemProperty.get().advancedSettings().apply { isVisible = true }
-      }
+                wizard.jdk = sdk
+                wizard.context.writeSettings {
+                    StructurePlugin.name.reference.setValue(projectName)
+                    StructurePlugin.projectPath.reference.setValue(projectPath / projectName)
 
-      val sdkCombo = JdkComboBox(null, ProjectSdksModel(), null, null, null, null)
-          .apply { minimumSize = Dimension(0, 0) }
-          .also { combo -> combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk }) }
+                    projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
+                    artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }
+                    version?.let { StructurePlugin.version.reference.setValue(it) }
 
-      // These are IDE-plugin based build-systems, i.e. Gradle and Maven
-      if (buildSystems.isNotEmpty()) {
-          settings.buildSystemProperty.set(buildSystems.first())
-      }
+                    BuildSystemPlugin.type.reference.setValue(buildSystemType)
 
-      return listOf(
-          LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")), component),
-          LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo)
-      ).plus(buildSystems.map { JustComponent(it.advancedSettings()) })
-  }
+                    applyProjectTemplate(EmptySingleModuleProjectTemplate)
+                }
+            }.commit(project, null, null)
+        }
 
-  override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(project, settings)
-  }
-}
-
-class KotlinSettings {
-    var sdk: Sdk? = null
-    val propertyGraph: PropertyGraph = PropertyGraph()
-    val buildSystems: Lazy<List<KotlinBuildSystemWithSettings<out Any?>>> = lazy {
-        KotlinBuildSystemType.EP_NAME.extensionList.map { KotlinBuildSystemWithSettings(it) }
+        private fun suggestGroupId(): String {
+            val username = SystemProperties.getUserName()
+            if (!username.matches("[\\w\\s]+".toRegex())) return DEFAULT_GROUP_ID
+            val usernameAsGroupId = username.trim().lowercase(Locale.getDefault()).split("\\s+".toRegex()).joinToString(separator = ".")
+            return "me.$usernameAsGroupId"
+        }
     }
 
-    val buildSystemProperty: GraphProperty<KotlinBuildSystemWithSettings<*>> = propertyGraph.graphProperty {
-        buildSystems.value.first()
+
+    override val name: String = "Kotlin"
+
+    override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
+
+    class Step(parent: NewProjectWizardLanguageStep) :
+        AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, KotlinBuildSystemType.EP_NAME),
+        NewProjectWizardBuildSystemData,
+        NewProjectWizardLanguageData by parent,
+        NewProjectWizardSdkData {
+
+        override val self = this
+        override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
+        override val buildSystemProperty by ::stepProperty
+        override val buildSystem by ::step
+        override lateinit var sdkComboBox: Cell<JdkComboBox>
+        override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+        override val sdk by sdkProperty
+
+        override fun setupCommonUI(builder: Panel) {
+            with(builder) {
+                row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+                    sdkComboBox = sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id)
+                        .columns(COLUMNS_MEDIUM)
+                }
+            }
+        }
     }
 }
-
-open class KotlinBuildSystemWithSettings<P>(val buildSystemType: KotlinBuildSystemType<P>) :
-    BuildSystemWithSettings<KotlinSettings, P>(buildSystemType)

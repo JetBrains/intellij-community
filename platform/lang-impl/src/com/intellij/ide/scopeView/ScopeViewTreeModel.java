@@ -3,8 +3,8 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyPasteUtil;
-import com.intellij.ide.bookmarks.Bookmark;
-import com.intellij.ide.bookmarks.BookmarksListener;
+import com.intellij.ide.bookmark.BookmarksListener;
+import com.intellij.ide.bookmark.FileBookmarksListener;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.NodeSortOrder;
 import com.intellij.ide.projectView.impl.CompoundIconProvider;
@@ -114,22 +114,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     Disposer.register(this, model);
     root = new ProjectNode(project, settings);
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
-      @Override
-      public void bookmarkAdded(@NotNull Bookmark bookmark) {
-        bookmarkChanged(bookmark);
-      }
-
-      @Override
-      public void bookmarkRemoved(@NotNull Bookmark bookmark) {
-        bookmarkChanged(bookmark);
-      }
-
-      @Override
-      public void bookmarkChanged(@NotNull Bookmark bookmark) {
-        notifyPresentationChanged(bookmark.getFile());
-      }
-    });
+    connection.subscribe(BookmarksListener.TOPIC, new FileBookmarksListener(file -> notifyPresentationChanged(file)));
     connection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {

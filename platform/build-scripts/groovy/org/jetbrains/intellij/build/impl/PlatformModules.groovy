@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -15,14 +14,14 @@ import javax.xml.parsers.DocumentBuilderFactory
 import java.nio.file.Files
 import java.nio.file.Path
 
-import static org.jetbrains.intellij.build.impl.BaseLayout.PLATFORM_JAR
+import static org.jetbrains.intellij.build.impl.ProjectLibraryData.PackMode
 
 @CompileStatic
 final class PlatformModules {
   /**
    * List of modules which are included into lib/platform-api.jar in all IntelliJ based IDEs.
    */
-  static List<String> PLATFORM_API_MODULES = List.of(
+  static final List<String> PLATFORM_API_MODULES = List.of(
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
     "intellij.platform.core",
@@ -60,7 +59,7 @@ final class PlatformModules {
   /**
    * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs.
    */
-  static List<String> PLATFORM_IMPLEMENTATION_MODULES = List.of(
+  static final List<String> PLATFORM_IMPLEMENTATION_MODULES = List.of(
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
@@ -108,152 +107,167 @@ final class PlatformModules {
 
   private static final String UTIL_JAR = "util.jar"
 
-  @CompileDynamic
+  static jar(String relativeJarPath,
+             Collection<String> moduleNames,
+             ProductModulesLayout productLayout,
+             PlatformLayout layout) {
+    for (String moduleName : moduleNames) {
+      if (!productLayout.excludedModuleNames.contains(moduleName)) {
+        layout.withModule(moduleName, relativeJarPath)
+      }
+    }
+  }
+
+  static addModule(String moduleName, ProductModulesLayout productLayout, PlatformLayout layout) {
+    if (!productLayout.excludedModuleNames.contains(moduleName)) {
+      layout.withModule(moduleName)
+    }
+  }
+
+  static addModule(String moduleName, String relativeJarPath, ProductModulesLayout productLayout, PlatformLayout layout) {
+    if (!productLayout.excludedModuleNames.contains(moduleName)) {
+      layout.withModule(moduleName, relativeJarPath)
+    }
+  }
+
   static PlatformLayout createPlatformLayout(ProductModulesLayout productLayout,
                                              Set<String> allProductDependencies,
                                              List<JpsLibrary> additionalProjectLevelLibraries,
                                              BuildContext buildContext) {
-    PlatformLayout.platform(productLayout.platformLayoutCustomizer) {
-      BaseLayoutSpec.metaClass.addModule = { String moduleName ->
-        if (!productLayout.excludedModuleNames.contains(moduleName)) {
-          withModule(moduleName)
-        }
-      }
-      BaseLayoutSpec.metaClass.addModule = { String moduleName, String relativeJarPath ->
-        if (!productLayout.excludedModuleNames.contains(moduleName)) {
-          withModule(moduleName, relativeJarPath)
-        }
-      }
+    PlatformLayout layout = new PlatformLayout()
+    // used only in modules that packed into Java
+    layout.excludedProjectLibraries.add("jps-javac-extension")
+    productLayout.platformLayoutCustomizer.accept(layout)
 
-      productLayout.additionalPlatformJars.entrySet().each {
-        String jarName = it.key
-        it.value.each {
-          addModule(it, jarName)
-        }
-      }
+    Set<String> alreadyPackedModules = new HashSet<>()
+    for (Map.Entry<String, Collection<String>> entry in productLayout.additionalPlatformJars.entrySet()) {
+      jar(entry.key, entry.value, productLayout, layout)
+      alreadyPackedModules.addAll(entry.value)
+    }
 
-      for (String module in PLATFORM_API_MODULES) {
-        addModule(module, "platform-api.jar")
-      }
-      for (String module in PLATFORM_IMPLEMENTATION_MODULES) {
-        addModule(module, PLATFORM_JAR)
-      }
-      for (String module in productLayout.productApiModules) {
-        addModule(module, "openapi.jar")
-      }
+    jar("platform-api.jar", PLATFORM_API_MODULES, productLayout, layout)
+    jar("openapi.jar", productLayout.productApiModules, productLayout, layout)
 
-      for (String module in productLayout.productImplementationModules) {
+    for (String module in productLayout.productImplementationModules) {
+      if (!productLayout.excludedModuleNames.contains(module) && !alreadyPackedModules.contains(module)) {
         boolean isRelocated = module == "intellij.xml.dom.impl" ||
                               module == "intellij.platform.structuralSearch" ||
                               module == "intellij.platform.duplicates.analysis"
-        addModule(module, isRelocated ? PLATFORM_JAR : productLayout.mainJarName)
-      }
-
-      productLayout.moduleExcludes.entrySet().each {
-        layout.moduleExcludes.putValues(it.key, it.value)
-      }
-
-      addModule("intellij.platform.util", UTIL_JAR)
-      addModule("intellij.platform.util.rt", UTIL_JAR)
-      addModule("intellij.platform.util.zip", UTIL_JAR)
-      addModule("intellij.platform.util.classLoader", UTIL_JAR)
-      addModule("intellij.platform.util.text.matching", UTIL_JAR)
-      addModule("intellij.platform.util.base", UTIL_JAR)
-      addModule("intellij.platform.util.xmlDom", UTIL_JAR)
-      addModule("intellij.platform.util.ui", UTIL_JAR)
-      addModule("intellij.platform.util.ex", UTIL_JAR)
-      addModule("intellij.platform.ide.util.io", UTIL_JAR)
-      addModule("intellij.platform.ide.util.io.impl", UTIL_JAR)
-      addModule("intellij.platform.ide.util.netty", UTIL_JAR)
-      addModule("intellij.platform.extensions", UTIL_JAR)
-
-      withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
-      addModule("intellij.platform.statistics", "stats.jar")
-      addModule("intellij.platform.statistics.uploader", "stats.jar")
-      addModule("intellij.platform.statistics.config", "stats.jar")
-      addModule("intellij.platform.statistics.devkit")
-
-      for (String module in List.of("intellij.relaxng",
-                                    "intellij.json",
-                                    "intellij.spellchecker",
-                                    "intellij.xml.analysis.impl",
-                                    "intellij.xml.psi.impl",
-                                    "intellij.xml.structureView.impl",
-                                    "intellij.xml.impl")) {
-        addModule(module, PLATFORM_JAR)
-      }
-
-      addModule("intellij.platform.vcs.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.dvcs.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.log.graph.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.log.impl", PLATFORM_JAR)
-      addModule("intellij.platform.collaborationTools", PLATFORM_JAR)
-
-      addModule("intellij.platform.objectSerializer.annotations")
-
-      addModule("intellij.platform.bootstrap")
-      addModule("intellij.java.guiForms.rt")
-      addModule("intellij.platform.boot", "bootstrap.jar")
-
-      addModule("intellij.platform.icons", PLATFORM_JAR)
-      addModule("intellij.platform.resources", PLATFORM_JAR)
-      addModule("intellij.platform.colorSchemes", PLATFORM_JAR)
-      addModule("intellij.platform.resources.en", PLATFORM_JAR)
-
-      addModule("intellij.platform.jps.model.serialization", "jps-model.jar")
-      addModule("intellij.platform.jps.model.impl", "jps-model.jar")
-
-      addModule("intellij.platform.externalSystem.rt", "external-system-rt.jar")
-
-      addModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar")
-
-      if (allProductDependencies.contains("intellij.platform.coverage")) {
-        addModule("intellij.platform.coverage")
-      }
-
-      for (String libraryName in productLayout.projectLibrariesToUnpackIntoMainJar) {
-        withProjectLibraryUnpackedIntoJar(libraryName, productLayout.mainJarName)
-      }
-
-      String productPluginSourceModuleName = buildContext.productProperties.applicationInfoModule
-      if (productPluginSourceModuleName != null) {
-        List<String> modules = getProductPluginContentModules(buildContext, productPluginSourceModuleName)
-        if (modules != null) {
-          for (String name : modules) {
-            withModule(name, PLATFORM_JAR)
-          }
-        }
-      }
-
-      layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
-        "JDOM",
-        "ASM",
-        "Trove4j",
-        "aalto-xml",
-        "netty-buffer",
-        "netty-codec-http",
-        "netty-handler-proxy",
-        "Log4J",
-        "fastutil-min",
-        // used in JPS
-        "maven-resolver-provider",
-        "gson"
-      ))
-
-      for (JpsLibrary library in additionalProjectLevelLibraries) {
-        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(library.name) &&
-            !layout.projectLibrariesToUnpack.values().contains(library.name) &&
-            !layout.excludedProjectLibraries.contains(library.name)) {
-          withProjectLibrary(library.name)
-        }
-      }
-
-      withProjectLibrariesFromIncludedModules(buildContext)
-
-      for (String toRemoveVersion : List.of("jna", "jetbrains-annotations-java5")) {
-        removeVersionFromProjectLibraryJarNames(toRemoveVersion)
+        layout.withModule(module, isRelocated ? BaseLayout.PLATFORM_JAR : productLayout.mainJarName)
       }
     }
+
+    for (Map.Entry<String, Collection<String>> entry in productLayout.moduleExcludes.entrySet()) {
+      layout.moduleExcludes.putValues(entry.key, entry.value)
+    }
+
+    jar(UTIL_JAR, List.of(
+      "intellij.platform.util.rt",
+      "intellij.platform.util.zip",
+      "intellij.platform.util.classLoader",
+      "intellij.platform.util",
+      "intellij.platform.util.text.matching",
+      "intellij.platform.util.base",
+      "intellij.platform.util.xmlDom",
+      "intellij.platform.util.ui",
+      "intellij.platform.util.ex",
+      "intellij.platform.ide.util.io",
+      "intellij.platform.ide.util.io.impl",
+      "intellij.platform.ide.util.netty",
+      "intellij.platform.extensions",
+      ), productLayout, layout)
+
+    jar(BaseLayout.PLATFORM_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
+    jar(BaseLayout.PLATFORM_JAR, List.of(
+      "intellij.relaxng",
+      "intellij.json",
+      "intellij.spellchecker",
+      "intellij.xml.analysis.impl",
+      "intellij.xml.psi.impl",
+      "intellij.xml.structureView.impl",
+      "intellij.xml.impl",
+
+      "intellij.platform.vcs.impl",
+      "intellij.platform.vcs.dvcs.impl",
+      "intellij.platform.vcs.log.graph.impl",
+      "intellij.platform.vcs.log.impl",
+
+      "intellij.platform.collaborationTools",
+
+      "intellij.platform.icons",
+      "intellij.platform.resources",
+      "intellij.platform.resources.en",
+      "intellij.platform.colorSchemes",
+      ), productLayout, layout)
+
+    jar("stats.jar", List.of(
+      "intellij.platform.statistics",
+      "intellij.platform.statistics.uploader",
+      "intellij.platform.statistics.config",
+      ), productLayout, layout)
+
+    jar("bootstrap.jar", List.of(
+      "intellij.platform.bootstrap",
+      "intellij.platform.boot"
+    ), productLayout, layout)
+
+    layout.excludedModuleLibraries.putValue("intellij.platform.credentialStore", "dbus-java")
+
+    addModule("intellij.platform.statistics.devkit", productLayout, layout)
+    addModule("intellij.platform.objectSerializer.annotations", productLayout, layout)
+    addModule("intellij.java.guiForms.rt", productLayout, layout)
+
+    addModule("intellij.platform.jps.model.serialization", "jps-model.jar", productLayout, layout)
+    addModule("intellij.platform.jps.model.impl", "jps-model.jar", productLayout, layout)
+
+    addModule("intellij.platform.externalSystem.rt", "external-system-rt.jar", productLayout, layout)
+
+    addModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar", productLayout, layout)
+
+    if (allProductDependencies.contains("intellij.platform.coverage")) {
+      addModule("intellij.platform.coverage", BaseLayout.PLATFORM_JAR, productLayout, layout)
+    }
+
+    for (String libraryName in productLayout.projectLibrariesToUnpackIntoMainJar) {
+      layout.withProjectLibraryUnpackedIntoJar(libraryName, productLayout.mainJarName)
+    }
+
+    String productPluginSourceModuleName = buildContext.productProperties.applicationInfoModule
+    if (productPluginSourceModuleName != null) {
+      List<String> modules = getProductPluginContentModules(buildContext, productPluginSourceModuleName)
+      if (modules != null) {
+        for (String name : modules) {
+          layout.withModule(name, BaseLayout.PLATFORM_JAR)
+        }
+      }
+    }
+
+    Map<String, PackMode> customPackMode = Map.of(
+      // jna uses native lib
+      "jna", PackMode.STANDALONE_MERGED,
+      "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+    )
+
+    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
+      "JDOM",
+      "Trove4j",
+    ))
+
+    for (JpsLibrary library in additionalProjectLevelLibraries) {
+      String name = library.name
+      if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(name) &&
+          !layout.projectLibrariesToUnpack.values().contains(name) &&
+          !layout.excludedProjectLibraries.contains(name)) {
+        layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
+      }
+    }
+
+    Set<JpsLibrary> librariesToInclude = layout.computeProjectLibrariesFromIncludedModules(buildContext).keySet()
+    for (JpsLibrary library in librariesToInclude) {
+      String name = library.name
+      layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
+    }
+    return layout
   }
 
   private static @Nullable List<String> getProductPluginContentModules(@NotNull BuildContext buildContext,

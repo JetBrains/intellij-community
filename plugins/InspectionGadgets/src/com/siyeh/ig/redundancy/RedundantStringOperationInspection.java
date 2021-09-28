@@ -69,6 +69,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher CHANGE_CASE = anyOf(exactInstanceCall(JAVA_LANG_STRING, "toLowerCase").parameterCount(0),
                                                        exactInstanceCall(JAVA_LANG_STRING, "toUpperCase").parameterCount(0));
   private static final CallMatcher STRING_VALUE_OF = staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("char[]");
+  private static final CallMatcher STRIP =
+    exactInstanceCall(JAVA_LANG_STRING, "strip", "stripLeading", "stripTrailing").parameterCount(0);
 
   public boolean ignoreStringConstructor = false;
 
@@ -106,7 +108,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem)
       .register(STRING_EQUALS, this::getRedundantSubstringEqualsProblem)
       .register(anyOf(STRING_EQUALS, STRING_EQUALS_IGNORE_CASE), this::getRedundantCaseEqualsProblem)
-      .register(STRING_VALUE_OF, call -> getValueOfProblem(call.getArgumentList()));
+      .register(STRING_VALUE_OF, call -> getValueOfProblem(call.getArgumentList()))
+      .register(STRING_IS_EMPTY, this::getStripIsEmptyProblem);
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -404,6 +407,17 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         return getProblem(qualifierCall, "inspection.redundant.string.call.message");
       }
       return null;
+    }
+
+    @Nullable
+    private ProblemDescriptor getStripIsEmptyProblem(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (!STRIP.test(qualifierCall)) return null;
+      PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
+      if (anchor == null) return null;
+      String message = InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "strip", "isBlank");
+      return myManager.createProblemDescriptor(anchor, (TextRange)null, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                               new StripIsEmptyToIsBlankFix());
     }
 
     @Nullable
@@ -804,6 +818,34 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
       ExpressionUtils.bindCallTo(nextCall, myBindCallName);
       ct.replaceAndRestoreComments(substringCall, stringExpr);
+    }
+  }
+
+  private static class StripIsEmptyToIsBlankFix implements LocalQuickFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("remove.redundant.string.fix.text", "isBlank", "strip");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("use.isblank.to.check.if.string.is.whitespace.or.empty");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethodCallExpression stripCall = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      if (stripCall == null) return;
+      PsiMethodCallExpression isEmptyCall = ExpressionUtils.getCallForQualifier(stripCall);
+      if (isEmptyCall == null) return;
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(stripCall.getMethodExpression());
+      if (qualifier == null) return;
+      new CommentTracker().replaceAndRestoreComments(stripCall, qualifier);
+      ExpressionUtils.bindCallTo(isEmptyCall, "isBlank");
     }
   }
 

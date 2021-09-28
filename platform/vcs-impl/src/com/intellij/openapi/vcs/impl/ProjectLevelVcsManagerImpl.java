@@ -677,16 +677,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return myMappings.haveDefaultMapping();
   }
 
-  /**
-   * @deprecated use {@link BackgroundableActionLock}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return new BackgroundableActionEnabledHandler(myProject, action);
-  }
-
   @CalledInAny
   boolean isBackgroundTaskRunning(Object @NotNull ... keys) {
     return myBackgroundRunningTasks.contains(new ActionKey(keys));

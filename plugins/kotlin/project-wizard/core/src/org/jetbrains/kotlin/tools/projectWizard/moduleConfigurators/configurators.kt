@@ -29,7 +29,7 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
             KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version"),
             GenerationPhase.PROJECT_GENERATION
         ) {
-            description = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.description")
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.tooltip")
             defaultValue = value(TargetJvmVersion.JVM_1_8)
             filter = { _, targetJvmVersion ->
                 // we need to make sure that kotlin compiler supports this target
@@ -44,6 +44,7 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
             KotlinNewProjectWizardBundle.message("module.configurator.tests.setting.framework"),
             neededAtPhase = GenerationPhase.PROJECT_GENERATION
         ) {
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.test.framework.tooltip")
             filter = filter@{ reference, kotlinTestFramework ->
                 val module = getModule(reference) ?: return@filter false
                 val configurator = module.configurator

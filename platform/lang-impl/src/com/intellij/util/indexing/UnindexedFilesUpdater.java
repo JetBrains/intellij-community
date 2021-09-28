@@ -345,7 +345,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private List<IndexableFilesIterator> getOrderedProviders() {
     if (myPredefinedIndexableFilesIterators != null) return myPredefinedIndexableFilesIterators;
 
-    List<IndexableFilesIterator> originalOrderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
+    List<IndexableFilesIterator> originalOrderedProviders = myIndex.getIndexableFilesProviders(myProject);
 
     List<IndexableFilesIterator> orderedProviders = new ArrayList<>();
     originalOrderedProviders.stream()
@@ -403,7 +403,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       Object[] moduleValues;
       if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
         pushers = FilePropertyPusher.EP_NAME.getExtensionList();
-        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, (ModuleRootOrigin)origin));
+        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
       }
       else {
         pushers = null;

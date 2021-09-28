@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @see ExternalSystemProjectTracker#markDirty
- * @see ExternalSystemProjectTracker#scheduleProjectRefresh
+ * @see ExternalSystemProjectTracker#markDirtyAllProjects
+ * @see ExternalSystemProjectTracker#scheduleChangeProcessing
  * @deprecated use {@link ExternalSystemProjectTracker} instead
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 public interface ExternalSystemProjectsWatcher {
   void markDirtyAllExternalProjects();
 

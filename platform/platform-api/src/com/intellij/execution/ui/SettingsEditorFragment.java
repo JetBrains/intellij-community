@@ -4,7 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -318,7 +318,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   private Project getProject() {
-    return DataManager.getInstance().getDataContext(myComponent).getData(PlatformDataKeys.PROJECT_CONTEXT);
+    return DataManager.getInstance().getDataContext(myComponent).getData(PlatformCoreDataKeys.PROJECT_CONTEXT);
   }
 
   public void setEditorGetter(@Nullable Function<? super C, ? extends JComponent> editorGetter) {

@@ -1,0 +1,50 @@
+{
+    "name": "vscode-jsp",
+    "displayName": "Java Server Pages (JSP)",
+    "description": "(unmaintained) JSP language support for Visual Studio Code, ported from TextMate's JSP bundle.",
+    "version": "0.0.3",
+    "publisher": "pthorsson",
+    "icon": "ext-icon.png",
+    "author": {
+        "name": "Patrik Thorsson",
+        "url": "https://github.com/pthorsson",
+        "email": "p.thorsson@gmail.com"
+    },
+    "engines": {
+        "vscode": "0.10.x"
+    },
+    "categories": [
+        "Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "jsp",
+                "aliases": [
+                    "Java Server Pages",
+                    "jsp",
+                    "JSP",
+                    "jstl",
+                    "JSTL"
+                ],
+                "extensions": [
+                    ".tag",
+                    ".jsp",
+                    ".jspf"
+                ],
+                "configuration": "./jsp-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "jsp",
+                "scopeName": "text.html.jsp",
+                "path": "./syntaxes/jsp.tmLanguage.json",
+                "embeddedLanguages": {
+                    "source.css": "css",
+                    "source.js": "javascript"
+                }
+            }
+        ]
+    }
+}

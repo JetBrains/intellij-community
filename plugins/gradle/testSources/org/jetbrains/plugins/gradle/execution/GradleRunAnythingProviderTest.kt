@@ -212,7 +212,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       .assertExecutionTree(
         "-\n" +
         " -failed\n" +
-        "  Unknown command-line option '--unknown-option'"
+        "  Task '--unknown-option' not found in root project 'project'."
       )
 
     if (isGradleNewerOrSameAs("7.0")) {
@@ -246,12 +246,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "successful",
         {
           assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' --quiet'...\n" +
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' -q'...\n" +
             "\n" +
             "(?:Starting Gradle Daemon...\n" +
             "Gradle Daemon started in .* ms\n)?" +
             "test args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' --quiet'.\n"
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' -q'.\n"
           )
         }
       )
