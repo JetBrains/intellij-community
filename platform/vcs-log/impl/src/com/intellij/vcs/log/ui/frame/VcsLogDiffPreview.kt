@@ -105,9 +105,7 @@ abstract class EditorDiffPreview(protected val project: Project,
   protected fun init() {
     @Suppress("LeakingThis")
     addSelectionListener {
-      if (VcsLogUiUtil.isDiffPreviewInEditor(project)) {
-        updatePreview(true)
-      }
+      updatePreview(true)
     }
   }
 

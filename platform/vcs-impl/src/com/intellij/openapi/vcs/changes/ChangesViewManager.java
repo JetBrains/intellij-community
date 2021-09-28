@@ -524,7 +524,7 @@ public class ChangesViewManager implements ChangesViewEx,
         if (toolWindow != null) toolWindow.activate(null);
       });
 
-      editorPreview.installListeners(myView, isOpenEditorDiffPreviewWithSingleClick.asBoolean() && isCommitToolWindowShown(myProject));
+      editorPreview.installListeners(myView, isOpenEditorDiffPreviewWithSingleClick.asBoolean());
       editorPreview.installNextDiffActionOn(myContentPanel);
 
       UIUtil.putClientProperty(myView, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
