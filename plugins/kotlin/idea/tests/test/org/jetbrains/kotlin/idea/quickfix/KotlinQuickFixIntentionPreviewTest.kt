@@ -8,40 +8,56 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testIntentionPreview() {
-        @Language("kotlin")
-        val sample = """
+        doTest("""
             fun test(p: Int) {
                 if (<caret>p == null) {
                     println("hello")
                 }
-            }""".trimIndent()
-        myFixture.configureByText("Test.kt", sample)
-        val action = myFixture.findSingleIntention("Simplify comparison")
-        val text = getPreviewText(project, action, file, editor)
-        assertEquals("""
+            }""".trimIndent(),
+            "Simplify comparison",
+            """
             fun test(p: Int) {
-                }""".trimIndent(), text
-        )
+                }""".trimIndent())
     }
 
     fun testConvertConcatenationToTemplate() {
-        @Language("kotlin")
-        val sample = """
+        myFixture.enableInspections(ConvertToStringTemplateInspection())
+        doTest(
+            """
             fun main() {
                 val code = "intention"
                 println(<caret>"Hello World!" + code)
-            }""".trimIndent()
-        myFixture.configureByText("Test.kt", sample)
-        myFixture.enableInspections(ConvertToStringTemplateInspection())
-        val action = myFixture.findSingleIntention("Convert 'String' concatenation to a template")
-        val text = getPreviewText(project, action, file, editor)
-        val buck = '$'
-        assertEquals("""
+            }""".trimIndent(),
+            "Convert 'String' concatenation to a template",
+            """
             fun main() {
                 val code = "intention"
-                println("Hello World!${buck}code")
-            }""".trimIndent(), text
+                println("Hello World!${'$'}code")
+            }""".trimIndent()
         )
     }
 
+    fun testDestructuringDeclaration() {
+        myFixture.enableInspections(ConvertToStringTemplateInspection())
+        doTest(
+            """
+            data class X(val x: Int, val y: Int)
+            
+            val lambda : (X) -> Unit = { <caret>x -> println(x.x+x.y) }""".trimIndent(),
+            "Use destructuring declaration",
+            """
+            data class X(val x: Int, val y: Int)
+
+            val lambda : (X) -> Unit = { (x1, y) -> println(x1+y) }""".trimIndent()
+        )
+    }
+
+    private fun doTest(@Language("kotlin") input: String, actionName: String, @Language("kotlin") output: String) {
+        myFixture.configureByText("Test.kt", input)
+        val action = myFixture.findSingleIntention(actionName)
+        val text = getPreviewText(project, action, file, editor)
+        assertEquals(
+            output, text
+        )
+    }
 }

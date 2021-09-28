@@ -24,6 +24,20 @@ fun <T> runWriteAction(action: () -> T): T {
     return ApplicationManager.getApplication().runWriteAction<T>(action)
 }
 
+/**
+ * Run under the write action if the supplied element is physical; run normally otherwise.
+ *
+ * @param e context element
+ * @param action action to execute
+ * @return result of action execution
+ */
+fun <T> runWriteActionIfPhysical(e: PsiElement, action: () -> T): T {
+    if (e.isPhysical) {
+        return ApplicationManager.getApplication().runWriteAction<T>(action)
+    }
+    return action()
+}
+
 fun <T> runWriteActionInEdt(action: () -> T): T {
     return if (isDispatchThread()) {
         runWriteAction(action)
