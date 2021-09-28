@@ -242,8 +242,8 @@ private val testSuffixes = setOf("test", "tests")
 private val platformNames = mapOf(
     listOf("header", "common", "expect") to CommonPlatforms.defaultCommonPlatform,
     listOf("java", "jvm") to JvmPlatforms.defaultJvmPlatform,
-    listOf("java8", "jvm8") to JvmPlatforms.jvm18,
-    listOf("java6", "jvm6") to JvmPlatforms.jvm16,
+    listOf("java8", "jvm8") to JvmPlatforms.jvm8,
+    listOf("java6", "jvm6") to JvmPlatforms.jvm6,
     listOf("js", "javascript") to JsPlatforms.defaultJsPlatform,
     listOf("native") to NativePlatforms.unspecifiedNativePlatform
 )

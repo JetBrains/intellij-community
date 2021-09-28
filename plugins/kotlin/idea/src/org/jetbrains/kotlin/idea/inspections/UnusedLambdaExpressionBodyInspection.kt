@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tower.NewVariableAsFunctionResolvedCallImpl
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode

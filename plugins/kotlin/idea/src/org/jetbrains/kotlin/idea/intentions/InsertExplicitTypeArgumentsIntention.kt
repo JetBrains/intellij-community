@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.inference.CapturedType
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode

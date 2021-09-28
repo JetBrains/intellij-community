@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.util.OperatorNameConventions

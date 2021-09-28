@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 

@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getExplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getExplicitReceiverValue
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
 

@@ -41,7 +41,7 @@ class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
         ) {
             override fun configureModule(module: Module, model: ModifiableRootModel) {
                 super.configureModule(module, model)
-                module.createFacet(JvmPlatforms.jvm18)
+                module.createFacet(JvmPlatforms.jvm8)
                 val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
 
                 facetSettings?.apply {
