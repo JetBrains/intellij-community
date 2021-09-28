@@ -1816,6 +1816,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/when/addElseBranchEnumStatement.kt");
         }
 
+        @TestMetadata("addElseBranchSealed.kt")
+        public void testAddElseBranchSealed() throws Exception {
+            runTest("../idea/tests/testData/quickfix/when/addElseBranchSealed.kt");
+        }
+
         @TestMetadata("addRemainingBranchesBlankLine.kt")
         public void testAddRemainingBranchesBlankLine() throws Exception {
             runTest("../idea/tests/testData/quickfix/when/addRemainingBranchesBlankLine.kt");

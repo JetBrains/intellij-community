@@ -1098,6 +1098,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("testData/basic/common/boldOrGrayed/NonPredictableSmartCastWithWrongReturnType.kt");
             }
 
+            @TestMetadata("NonPredictableSmartCastWithWrongReturnType.fir.kt")
+            public void testNonPredictableSmartCastWithWrongReturnType_fir() throws Exception {
+                runTest("testData/basic/common/boldOrGrayed/NonPredictableSmartCastWithWrongReturnType.fir.kt");
+            }
+
+            @TestMetadata("NonPredictableSmartCast.fir.kt")
+            public void testNonPredictableSmartCast_fir() throws Exception {
+                runTest("testData/basic/common/boldOrGrayed/NonPredictableSmartCast.fir.kt");
+            }
+
             @TestMetadata("SafeCallAfterNullable.kt")
             public void testSafeCallAfterNullable() throws Exception {
                 runTest("testData/basic/common/boldOrGrayed/SafeCallAfterNullable.kt");
